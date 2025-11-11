@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeClientCommand() *cobra.Command {
+func MakeClientCommand(ctx context.Context) *cobra.Command {
 	var txID uint64
 	var identity string
 	var cmd = &cobra.Command{

@@ -99,7 +99,7 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1", "value": {
-							"FieldID": "bafyreibmntjy3cruz23uhrmzelan3thncsk5ji6jb5xvjgrg5cyeodkazi",
+							"FieldID": "bafyreiaezc5g33yzhyzcgbyiv476lovyztyoliotzksdfogoep5ktgpedq",
 							"Name": "name", "Kind": 11, "Typ":1, "RelationName": null, "IsPrimary": false, "DefaultValue": null, "Size": 0
 						} }
 					]
@@ -124,7 +124,7 @@ func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/name", "value": {
-							"FieldID": "bafyreibmntjy3cruz23uhrmzelan3thncsk5ji6jb5xvjgrg5cyeodkazi",
+							"FieldID": "bafyreiaezc5g33yzhyzcgbyiv476lovyztyoliotzksdfogoep5ktgpedq",
 							"Name": "name", "Kind": 11, "Typ":1, "RelationName": null, "IsPrimary": false, "DefaultValue": null, "Size": 0
 						} }
 					]

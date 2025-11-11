@@ -166,7 +166,6 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotU
 				Request: `
 					query {
 						Users {
-							_docID
 							name
 							age
 						}
@@ -176,9 +175,8 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_GQL_OtherActorCanReadButNotU
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
-							"name":   "Shahzad",
-							"age":    int64(28),
+							"name": "Shahzad",
+							"age":  int64(28),
 						},
 					},
 				},

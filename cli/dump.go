@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeDumpCommand() *cobra.Command {
+func MakeDumpCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "dump",
 		Short: "Dump the contents of DefraDB node-side",

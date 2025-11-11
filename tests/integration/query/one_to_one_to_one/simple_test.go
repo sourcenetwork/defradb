@@ -216,6 +216,7 @@ func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -422,6 +423,7 @@ func TestQueryOneToOneToOneSecondary(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

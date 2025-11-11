@@ -87,6 +87,7 @@ func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

@@ -230,6 +230,7 @@ func TestOneToManyToOneJoinsAreLinkedProperly(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

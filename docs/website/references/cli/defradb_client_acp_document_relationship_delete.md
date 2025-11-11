@@ -20,19 +20,23 @@ Notes:
   - The target document must be registered with ACP already (policy & resource specified).
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
   - If the relationship record was not found, then it will be a no-op.
-  - Learn more about the DefraDB [ACP System](/acp/README.md)
+  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 
-Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5) read a private document:
-  defradb client acp relationship delete \
+
+```
+defradb client acp document relationship delete [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity] [flags]
+```
+
+### Examples
+
+```
+Remove an actor from reading a private document:  
+  defradb client acp document relationship delete \
 	--collection Users \
 	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
 	--relation reader \
 	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
 	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
-
-
-```
-defradb client acp document relationship delete [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity] [flags]
 ```
 
 ### Options

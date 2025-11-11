@@ -134,6 +134,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoins(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

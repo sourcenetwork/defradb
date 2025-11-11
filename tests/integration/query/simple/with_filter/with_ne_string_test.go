@@ -87,6 +87,7 @@ func TestQuerySimpleWithStringNotEqualsNilFilterBlock(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

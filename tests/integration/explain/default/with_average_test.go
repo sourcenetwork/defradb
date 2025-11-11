@@ -89,7 +89,7 @@ func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreia2gcspqdssazilfdtwdccyb6rc6y2r4ryxeujojcdr46f77xwjwu",
+							"collectionID":   "bafyreihlwj5mr73cjwhvkctg6ywd6c2z3kldafxmju7ppcvwqpjjt74p4q",
 							"collectionName": "Book",
 							"filter":         nil,
 							"prefixes": []string{

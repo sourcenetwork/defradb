@@ -47,7 +47,7 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 							},
 							{
 								Name:         "dogs",
-								Kind:         client.NewCollectionKind("bafyreig2a26vnof4pt7mnxjfi2eweca6stcpeahbh6jri76ukkff5udnva", true),
+								Kind:         client.NewCollectionKind("bafyreih2kr3b6xijzkyv7yvjsg32selni5qehaejehf5vig7hpynjnbl5q", true),
 								RelationName: immutable.Some("dog_user"),
 							},
 							{
@@ -73,7 +73,7 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 							},
 							{
 								Name:         "owner",
-								Kind:         client.NewCollectionKind("bafyreiezxal4wrjp2fn6x5pf3kecliun72ky5tvb4deql2j376bmdknuh4", false),
+								Kind:         client.NewCollectionKind("bafyreibhpgygzsmki22sql5ejzcojrrxbc5iuhpydhdzxul5w2znc7zrgu", false),
 								RelationName: immutable.Some("dog_user"),
 								IsPrimary:    true,
 							},
@@ -112,7 +112,7 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 						Fields: []client.CollectionFieldDescription{
 							{
 								Name:    "_docID",
-								FieldID: "bafyreie6fnppc6bkpo5tifamx3rotptp6mveyz5mvkqldkrojpu5ayds74",
+								FieldID: "bafyreihqzhiz3iwro4jozp6kphq4sosg6ccoqcbiaf7rg5dmvea7aux55a",
 								Kind:    client.FieldKind_DocID,
 							},
 							{
@@ -123,7 +123,7 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 							},
 							{
 								Name:         "a_id",
-								FieldID:      "bafyreibctyal4hy7fiupjmfy5rx5y75fuvuvjebx2itn54g2nwbktcbzne",
+								FieldID:      "bafyreieroxmzvqikc6mclepkm5tunroq6yuamr76f2tzu4nkwfy5au6lvi",
 								Kind:         client.FieldKind_DocID,
 								Typ:          client.LWW_REGISTER,
 								RelationName: immutable.Some("user_user"),

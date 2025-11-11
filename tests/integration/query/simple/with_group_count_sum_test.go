@@ -103,6 +103,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCount(t *testi
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

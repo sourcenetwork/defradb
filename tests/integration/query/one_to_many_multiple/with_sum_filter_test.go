@@ -134,6 +134,7 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithAndWithoutFilter(t *tes
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -258,6 +259,7 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithFilters(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

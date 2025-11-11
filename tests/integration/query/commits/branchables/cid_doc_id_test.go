@@ -41,7 +41,7 @@ func TestQueryCommitsBranchables_WithCidAndDocIDParam(t *testing.T) {
 				Request: `query {
 						_commits(
 							docID: "bae-f895da58-3326-510a-87f3-d043ff5424ea",
-							cid: "bafyreiai57cngq2fthjmwmdnqhkugj6u5nqz5wtvpphnel6l2i6jyumevu"
+							cid: "bafyreigvb5smrzfjpunohvfsoi3czzjy4dl3cyhzkutth4lx27wnasnqxa"
 						) {
 							cid
 						}

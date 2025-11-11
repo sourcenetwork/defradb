@@ -6,15 +6,18 @@ Connect to one or more peers
 
 Connect to one or more peers with the given addresses
 
-Example: Connect to a peer
-  defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW...
-  
-Example: Connect to multiple peers
-  defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW... /ip4/0.0.0.0/tcp/9172/p2p/1543LKs...
-		
-
 ```
 defradb client p2p connect <addresses...> [flags]
+```
+
+### Examples
+
+```
+Connect to a peer:  
+  defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW...
+
+Connect to multiple peers:  
+  defradb client p2p connect /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW... /ip4/0.0.0.0/tcp/9172/p2p/1543LKs...
 ```
 
 ### Options

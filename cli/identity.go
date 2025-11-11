@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeIdentityCommand() *cobra.Command {
+func MakeIdentityCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "identity",
 		Short: "Interact with identity features of DefraDB instance",

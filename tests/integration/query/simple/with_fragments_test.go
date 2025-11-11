@@ -49,17 +49,18 @@ func TestQuerySimple_WithFragments_Succeeds(t *testing.T) {
 				Results: map[string]any{
 					"firstUser": []map[string]any{
 						{
-							"Name": "Alice",
-							"Age":  int64(40),
-						},
-					},
-					"lastUser": []map[string]any{
-						{
 							"Name": "Bob",
 							"Age":  int64(21),
 						},
 					},
+					"lastUser": []map[string]any{
+						{
+							"Name": "Alice",
+							"Age":  int64(40),
+						},
+					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -107,6 +108,7 @@ func TestQuerySimple_WithNestedFragments_Succeeds(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -151,6 +153,7 @@ func TestQuerySimple_WithFragmentSpreadAndSelect_Succeeds(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -332,6 +335,7 @@ func TestQuerySimple_WithInlineFragment_Succeeds(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

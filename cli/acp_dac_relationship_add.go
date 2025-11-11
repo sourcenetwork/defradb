@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeDocumentACPRelationshipAddCommand() *cobra.Command {
+func MakeDocumentACPRelationshipAddCommand(ctx context.Context) *cobra.Command {
 	var (
 		collectionArg  string
 		relationArg    string
@@ -41,31 +43,7 @@ Notes:
   - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
   - If the specified relation was not granted the minimum DRI permissions within the policy,
   and a relationship is formed, the subject/actor will still not be able to access the resource.
-  - Learn more about the DefraDB [ACP System](/acp/README.md)
-
-Example: Let another actor (4d092126012ebaf56161716018a71630d99443d9d5217e9d8502bb5c5456f2c5) read a private document:
-  defradb client acp relationship add \
-	--collection Users \
-	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
-	--relation reader \
-	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
-	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
-
-Example: Let all actors read a private document:
-  defradb client acp relationship add \
-	--collection Users \
-	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
-	--relation reader \
-	--actor "*" \
-	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
-
-Example: Creating a dummy relationship does nothing (from database perspective):
-  defradb client acp relationship add \
-	-c Users \
-	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
-	-r dummy \
-	-a did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
-	-i e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
+  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -84,6 +62,22 @@ Example: Creating a dummy relationship does nothing (from database perspective):
 			return writeJSON(cmd, exists)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "Let another actor read a private document",
+		`defradb client acp document relationship add \
+	--collection Users \
+	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+	--relation reader \
+	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
+	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac`)
+
+	EmbedCLIExample(ctx, cmd, "Let all actors read a private document",
+		`defradb client acp document relationship add \
+	--collection Users \
+	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+	--relation reader \
+	--actor "*" \
+	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac`)
 
 	cmd.Flags().StringVarP(
 		&collectionArg,

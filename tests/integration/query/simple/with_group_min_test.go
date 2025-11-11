@@ -242,6 +242,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfInt_Succ
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -429,6 +430,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfFloat_Su
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -560,6 +562,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfMinOfFlo
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

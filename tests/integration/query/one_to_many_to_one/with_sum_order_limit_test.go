@@ -34,9 +34,13 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":                 "Not a Writer",
-							"s1":                   0.0,
-							"NewestPublishersBook": []map[string]any{},
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
+							},
 						},
 						{
 							"name": "John Grisham",
@@ -51,13 +55,9 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 							},
 						},
 						{
-							"name": "Cornelia Funke",
-							"s1":   4.0,
-							"NewestPublishersBook": []map[string]any{
-								{
-									"name": "The Rooster Bar",
-								},
-							},
+							"name":                 "Not a Writer",
+							"s1":                   0.0,
+							"NewestPublishersBook": []map[string]any{},
 						},
 					},
 				},
@@ -85,9 +85,13 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":                 "Not a Writer",
-							"s1":                   0.0,
-							"NewestPublishersBook": []map[string]any{},
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
+							},
 						},
 						{
 							"name": "John Grisham",
@@ -104,13 +108,9 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 							},
 						},
 						{
-							"name": "Cornelia Funke",
-							"s1":   4.0,
-							"NewestPublishersBook": []map[string]any{
-								{
-									"name": "The Rooster Bar",
-								},
-							},
+							"name":                 "Not a Writer",
+							"s1":                   0.0,
+							"NewestPublishersBook": []map[string]any{},
 						},
 					},
 				},
@@ -137,9 +137,9 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Not a Writer",
-							"s1":   0.0,
-							"s2":   0.0,
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"s2":   4.0,
 						},
 						{
 							"name": "John Grisham",
@@ -149,9 +149,9 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 							"s2": float64(4.2) + float64(4.9),
 						},
 						{
-							"name": "Cornelia Funke",
-							"s1":   4.0,
-							"s2":   4.0,
+							"name": "Not a Writer",
+							"s1":   0.0,
+							"s2":   0.0,
 						},
 					},
 				},
@@ -180,9 +180,13 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":                 "Not a Writer",
-							"s1":                   0.0,
-							"OldestPublishersBook": []map[string]any{},
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"OldestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
+							},
 						},
 						{
 							"name": "John Grisham",
@@ -198,13 +202,9 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 							},
 						},
 						{
-							"name": "Cornelia Funke",
-							"s1":   4.0,
-							"OldestPublishersBook": []map[string]any{
-								{
-									"name": "The Rooster Bar",
-								},
-							},
+							"name":                 "Not a Writer",
+							"s1":                   0.0,
+							"OldestPublishersBook": []map[string]any{},
 						},
 					},
 				},

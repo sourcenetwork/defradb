@@ -110,7 +110,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 					"_commits": []map[string]any{
 						{
 							"cid":             gomega.And(collectionCid, uniqueCid),
-							"schemaVersionId": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+							"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 							"delta":           nil,
 							"docID":           nil,
 							"fieldName":       nil,
@@ -124,27 +124,27 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 						},
 						{
 							"cid":             gomega.And(ageCid, uniqueCid),
-							"schemaVersionId": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+							"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 							"delta":           testUtils.CBORValue(21),
-							"docID":           "bae-f895da58-3326-510a-87f3-d043ff5424ea",
+							"docID":           "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
 							"fieldName":       "age",
 							"height":          int64(1),
 							"links":           []map[string]any{},
 						},
 						{
 							"cid":             gomega.And(nameCid, uniqueCid),
-							"schemaVersionId": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+							"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 							"delta":           testUtils.CBORValue("John"),
-							"docID":           "bae-f895da58-3326-510a-87f3-d043ff5424ea",
+							"docID":           "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
 							"fieldName":       "name",
 							"height":          int64(1),
 							"links":           []map[string]any{},
 						},
 						{
 							"cid":             gomega.And(compositeCid, uniqueCid),
-							"schemaVersionId": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+							"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 							"delta":           nil,
-							"docID":           "bae-f895da58-3326-510a-87f3-d043ff5424ea",
+							"docID":           "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
 							"fieldName":       "_C",
 							"height":          int64(1),
 							"links": []map[string]any{

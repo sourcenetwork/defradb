@@ -5,15 +5,19 @@ Lists the encrypted indexes in the database or for a specific collection
 ### Synopsis
 
 Shows the list encrypted indexes in the database or for a specific collection.
-		
+
 If the --collection flag is provided, only the encrypted indexes for that collection will be shown.
 Otherwise, all encrypted indexes in the database will be shown.
 
-Example: show all encrypted indexes for 'Users' collection:
-  defradb client encrypted-index list --collection Users
-
 ```
 defradb client encrypted-index list [-c --collection <collection>] [flags]
+```
+
+### Examples
+
+```
+show all encrypted indexes for 'Users' collection:  
+  defradb client encrypted-index list --collection Users
 ```
 
 ### Options

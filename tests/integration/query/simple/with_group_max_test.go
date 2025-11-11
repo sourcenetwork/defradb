@@ -242,6 +242,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfMaxOfInt_Succ
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -429,6 +430,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfMaxOfFloat_Su
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -560,6 +562,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfMaxOfMaxOfFlo
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

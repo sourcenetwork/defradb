@@ -80,6 +80,7 @@ func TestP2PDocument_AddSingle_ShouldSync(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				NodeID: immutable.Some(1),

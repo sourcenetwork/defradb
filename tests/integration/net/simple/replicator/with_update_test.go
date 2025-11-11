@@ -201,6 +201,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -282,6 +283,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAft
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

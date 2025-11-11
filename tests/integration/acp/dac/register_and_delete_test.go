@@ -389,7 +389,7 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
+							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},
@@ -492,7 +492,7 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-c656865d-26f2-54bd-a05e-a13c6d7200ab",
+							"_docID": "bae-cad49a1d-299c-5c34-9dab-a23f233f1a2f",
 							"name":   "Shahzad",
 							"age":    int64(28),
 						},

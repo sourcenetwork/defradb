@@ -37,7 +37,7 @@ func TestQuerySimple(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c",
+							"_docID": "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b",
 							"Name":   "John",
 							"Age":    int64(21),
 						},
@@ -259,6 +259,7 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.DeleteDoc{
 				CollectionID: 1,
@@ -280,6 +281,7 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

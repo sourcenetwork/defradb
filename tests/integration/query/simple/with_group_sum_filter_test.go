@@ -119,6 +119,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

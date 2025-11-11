@@ -242,6 +242,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -429,6 +430,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -560,6 +562,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

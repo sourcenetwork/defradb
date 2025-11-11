@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeDocumentACPPolicyCommand() *cobra.Command {
+func MakeDocumentACPPolicyCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "policy",
 		Short: "Interact with the document acp policy features of DefraDB instance",

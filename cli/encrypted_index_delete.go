@@ -11,20 +11,18 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeEncryptedIndexDeleteCommand() *cobra.Command {
+func MakeEncryptedIndexDeleteCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var fieldArg string
 	var cmd = &cobra.Command{
-		Use:   "delete -c --collection <collection> --field <field>",
-		Short: "Delete an encrypted index from a collection's field",
-		Long: `Delete an encrypted index from a collection's field.
-
-Example: delete an encrypted index for 'Users' collection on 'name' field:
-  defradb client encrypted-index delete --collection Users --field name
-`,
+		Use:       "delete -c --collection <collection> --field <field>",
+		Short:     "Delete an encrypted index from a collection's field",
+		Long:      `Delete an encrypted index from a collection's field.`,
 		ValidArgs: []string{"collection", "field"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -37,6 +35,10 @@ Example: delete an encrypted index for 'Users' collection on 'name' field:
 			return col.DeleteEncryptedIndex(cmd.Context(), fieldArg)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "delete an encrypted index for 'Users' collection on 'name' field",
+		`defradb client encrypted-index delete --collection Users --field name`)
+
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 	cmd.Flags().StringVar(&fieldArg, "field", "", "Field name to delete encrypted index from")
 

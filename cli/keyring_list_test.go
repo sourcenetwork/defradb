@@ -12,6 +12,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"os"
 	"regexp"
@@ -36,7 +37,7 @@ func TestKeyringList(t *testing.T) {
 		keyBytes, err := crypto.GenerateAES256()
 		require.NoError(t, err)
 		keyHex := hex.EncodeToString(keyBytes)
-		cmd := NewDefraCommand()
+		cmd := NewDefraCommand(context.Background())
 		cmd.SetArgs([]string{"keyring", "import", "--rootdir", rootdir, keyName, keyHex})
 		err = cmd.Execute()
 		require.NoError(t, err)
@@ -44,7 +45,7 @@ func TestKeyringList(t *testing.T) {
 
 	// Run the 'keyring list' command, and require no error on the output
 	var output bytes.Buffer
-	cmd := NewDefraCommand()
+	cmd := NewDefraCommand(context.Background())
 	cmd.SetOut(&output)
 	cmd.SetArgs([]string{"keyring", "list", "--rootdir", rootdir})
 	err = cmd.Execute()

@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeEncryptedIndexCommand() *cobra.Command {
+func MakeEncryptedIndexCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "encrypted-index",
 		Short: "Manage collections' encrypted indexes on a running DefraDB node",

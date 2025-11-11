@@ -73,7 +73,7 @@ func TestColVersionUpdateReplaceName_GivenInactiveCollection_Errors(t *testing.T
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i/Name",
+							"path": "/bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu/Name",
 							"value": "Actors"
 						}
 					]

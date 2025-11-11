@@ -11,22 +11,25 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeBackupImportCommand() *cobra.Command {
+func MakeBackupImportCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "import <input_path>",
 		Short: "Import a JSON data file to the database",
-		Long: `Import a JSON data file to the database.
-
-Example: import data to the database:
-  defradb client import user_data.json`,
-		Args: cobra.ExactArgs(1),
+		Long:  `Import a JSON data file to the database.`,
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 			return cliClient.BasicImport(cmd.Context(), args[0])
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "Import data to the database",
+		`defradb client backup import user_data.json`)
+
 	return cmd
 }

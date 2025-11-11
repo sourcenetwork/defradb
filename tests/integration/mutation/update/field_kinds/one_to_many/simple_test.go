@@ -20,7 +20,7 @@ import (
 )
 
 func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing.T) {
-	author1ID := "bae-4eef9846-aa1b-5f8c-a49b-c3ff1d5d3a00"
+	author1ID := "bae-5059e989-3cae-5584-9357-f3eb81e86241"
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
@@ -72,7 +72,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing
 }
 
 func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.T) {
-	author1ID := "bae-4eef9846-aa1b-5f8c-a49b-c3ff1d5d3a00"
+	author1ID := "bae-5059e989-3cae-5584-9357-f3eb81e86241"
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
@@ -111,8 +111,8 @@ func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.
 }
 
 func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Error(t *testing.T) {
-	author1ID := "bae-4eef9846-aa1b-5f8c-a49b-c3ff1d5d3a00"
-	author2ID := "bae-f9db208d-b31f-5688-b3da-04546546fd69"
+	author1ID := "bae-5059e989-3cae-5584-9357-f3eb81e86241"
+	author2ID := "bae-31e97109-6225-5be2-8c86-b16baa2782a3"
 
 	test := testUtils.TestCase{
 		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
@@ -163,8 +163,8 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Erro
 }
 
 func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
-	author1ID := "bae-4eef9846-aa1b-5f8c-a49b-c3ff1d5d3a00"
-	author2ID := "bae-f9db208d-b31f-5688-b3da-04546546fd69"
+	author1ID := "bae-5059e989-3cae-5584-9357-f3eb81e86241"
+	author2ID := "bae-31e97109-6225-5be2-8c86-b16baa2782a3"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -225,6 +225,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `query {

@@ -30,7 +30,7 @@ func TestColVersionUpdateReplaceFields_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Fields",
+							"path": "/bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/Fields",
 							"value": [{}]
 						}
 					]
@@ -57,7 +57,7 @@ func TestColVersionUpdateReplaceDefaultValue_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i/Fields/1/DefaultValue",
+							"path": "/bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu/Fields/1/DefaultValue",
 							"value": "Alice"
 						}
 					]

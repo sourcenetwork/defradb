@@ -87,6 +87,7 @@ func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

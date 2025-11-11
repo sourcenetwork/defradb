@@ -11,12 +11,13 @@
 package cli
 
 import (
+	"context"
 	"encoding/hex"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeKeyringImportCommand() *cobra.Command {
+func MakeKeyringImportCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "import <name> <private-key-hex>",
 		Short: "Import a private key",
@@ -25,10 +26,7 @@ Store an externally generated key in the keyring.
 
 The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
 This can also be done with a .env file in the working directory or at a path
-defined with the --secret-file flag.
-
-Example:
-  defradb keyring import encryption-key 0000000000000000`,
+defined with the --secret-file flag.`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			keyring, err := openKeyring(cmd)
@@ -42,5 +40,9 @@ Example:
 			return keyring.Set(args[0], keyBytes)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "Import encryption key",
+		`defradb keyring import encryption-key 0000000000000000`)
+
 	return cmd
 }

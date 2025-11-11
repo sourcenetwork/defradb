@@ -53,6 +53,7 @@ func TestQuerySimpleWithGroupByEmpty(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -106,6 +107,7 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -159,6 +161,7 @@ func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -233,6 +236,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -307,6 +311,7 @@ func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *test
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -381,6 +386,7 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -492,6 +498,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -590,6 +597,7 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -688,6 +696,7 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -730,6 +739,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -788,6 +798,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

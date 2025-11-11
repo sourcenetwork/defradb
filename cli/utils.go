@@ -14,8 +14,10 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -206,4 +208,112 @@ func writeJSON(cmd *cobra.Command, out any) error {
 	enc := json.NewEncoder(cmd.OutOrStdout())
 	enc.SetIndent("", "  ")
 	return enc.Encode(out)
+}
+
+// withExampleRegistry injects an ExampleRegitry into the context.
+// This is primarily only needed by the tests but needs to exist
+// in the main CLI package
+func withExampleRegistry(ctx context.Context, registry *exampleRegistry) context.Context {
+	return context.WithValue(ctx, exampleRegistryCtxKey{}, registry)
+}
+
+type exampleRegistry struct {
+	examples map[string]string
+}
+
+func newExampleRegistry() *exampleRegistry {
+	return &exampleRegistry{
+		examples: make(map[string]string),
+	}
+}
+
+// EmbedCLIExample will embed the given CLI usage example into the provided cobra command `Example` field.
+// Most notably, it will also register the example with a `exampleRegistry` if it exists in the provided
+// context. This enables the `exampleRegistry` to expose the examples in a programatic way that can be
+// accessed by the test suite.
+//
+// This means we can maintain correctness between our CLI examples, and docs, while also programatically
+// validating the examples, so they can't drift from the implementation. Note, this is *only* validating
+// the commands, flags, and arguments. Its not actually running the full command execution.
+//
+// It *must* be called *after* the `cmd` object has been defined. Beyond that, it doesn't matter if
+// its before or after the flag definitions. It is reccomended to immedietly follow the command definition
+// for clarity/consistency.
+//
+// You may use any "name", such as a short title or even a somewhat longer description. It is used for
+// uniqueness and for error reporting if an example fails. The actual name used on the registry is
+// combined with the cmd.Short (if it exists).
+//
+// Check out `cli/cli_test.go:TestCLIExamples()` for the test consuming side of the example registry.
+func EmbedCLIExample(ctx context.Context, cmd *cobra.Command, name, usage string) {
+	exampleString := cliExampleToString(name, usage)
+	if cmd.Example != "" {
+		cmd.Example += "\n\n"
+	}
+	cmd.Example += exampleString
+
+	cmdName := cmd.Short
+	if cmdName == "" {
+		cmdName = cmd.Name()
+	}
+	exampleName := cmdName + "/" + name
+	registerCLIExample(ctx, exampleName, usage)
+}
+
+type exampleRegistryCtxKey struct{}
+
+func cliExampleToString(name, usage string) string {
+	// this is intentionally formatted this way, including
+	// the 2 white spaces at the start/end of the lines
+	return fmt.Sprintf(`%s:  
+  %s`, name, usage)
+}
+
+func registerCLIExample(ctx context.Context, name, usage string) {
+	registry, ok := ctx.Value(exampleRegistryCtxKey{}).(*exampleRegistry)
+	if !ok {
+		return
+	}
+
+	_, exists := registry.examples[name]
+	if exists {
+		panic("CLI example with the same name already exists: " + name)
+	}
+
+	if strings.Contains(usage, " | ") {
+		usageParts := strings.Split(usage, "|")
+		usage = usageParts[1]
+	}
+	registry.examples[name] = strings.ReplaceAll(usage, "\\\n", "")
+}
+
+func validateCLIArgs(cmd *cobra.Command, args []string) error {
+	cmd, args, err := cmd.Find(args)
+	if err != nil {
+		return err
+	}
+
+	if !cmd.Runnable() {
+		return fmt.Errorf("command isn't runnable: %s", cmd.Name())
+	}
+
+	flags := cmd.Flags()
+	err = flags.Parse(args)
+	if err != nil {
+		return err
+	}
+
+	remainingArgs := flags.Args()
+
+	if cmd.Args != nil {
+		if err := cmd.Args(cmd, remainingArgs); err != nil {
+			return err
+		}
+	}
+
+	if err := cmd.ValidateRequiredFlags(); err != nil {
+		return err
+	}
+
+	return nil
 }

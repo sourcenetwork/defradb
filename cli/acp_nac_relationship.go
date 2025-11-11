@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeNodeACPRelationshipCommand() *cobra.Command {
+func MakeNodeACPRelationshipCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "relationship",
 		Short: "Interact with the node acp relationship features of DefraDB instance",

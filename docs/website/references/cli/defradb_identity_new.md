@@ -11,16 +11,18 @@ The generated identity contains:
 - A corresponding public key
 - A "did:key" generated from the public key.
 
-Example: generate a new identity with secp256k1 key (default):
-  defradb identity new
-
-Example: generate a new identity with ed25519 key:
-  defradb identity new --type ed25519
-
-
-
 ```
 defradb identity new [flags]
+```
+
+### Examples
+
+```
+generate a new identity with secp256k1 key (default):  
+  defradb identity new
+
+generate a new identity with ed25519 key:  
+  defradb identity new --type ed25519
 ```
 
 ### Options

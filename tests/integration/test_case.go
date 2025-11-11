@@ -176,6 +176,8 @@ type PatchCollection struct {
 
 	// Any error expected from the action. Optional.
 	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
 	ExpectedError string
 }
 
@@ -209,6 +211,9 @@ type GetCollections struct {
 	FilterOptions client.CollectionFetchOptions
 
 	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
 	ExpectedError string
 }
 
@@ -229,6 +234,9 @@ type SetActiveCollectionVersion struct {
 	VersionID string
 
 	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
 	ExpectedError string
 }
 
@@ -711,6 +719,9 @@ type Request struct {
 
 	// The expected (data) results of the issued request.
 	Results map[string]any
+
+	// NonOrderedResults specifies that the results set doesn't need to care about the ordering of the items.
+	NonOrderedResults bool
 
 	// Asserter is an optional custom result asserter.
 	Asserter ResultAsserter

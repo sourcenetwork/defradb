@@ -33,7 +33,7 @@ func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
-						"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
+						"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 					}`,
 			},
 			testUtils.Request{
@@ -82,7 +82,7 @@ func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
-						"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
+						"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 					}`,
 			},
 			testUtils.Request{
@@ -380,7 +380,7 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 					"Author": []map[string]any{
 						{
 							"name":         "John Grisham",
-							"published_id": "bae-131c8f1b-2f61-599e-824f-afc313812c58",
+							"published_id": "bae-ffa6fd8c-8fd7-5da1-81d5-481bb4efd3c6",
 						},
 					},
 				},
@@ -431,7 +431,7 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 					"Book": []map[string]any{
 						{
 							"name":      "Painted House",
-							"author_id": "bae-0362a1da-4a34-5c53-97a3-f5bdcea5d78f",
+							"author_id": "bae-d92e6b41-9df9-519f-b823-c3e13f4e1b0b",
 						},
 					},
 				},

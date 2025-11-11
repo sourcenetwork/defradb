@@ -54,12 +54,12 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Alice",
 							"Age":  int64(19),
+						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
 						},
 					},
 				},
@@ -103,10 +103,10 @@ func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T)
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "Alice",
 						},
 						{
-							"Name": "Alice",
+							"Name": "Bob",
 						},
 					},
 				},

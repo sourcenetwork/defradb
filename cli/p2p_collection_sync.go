@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionSyncCommand() *cobra.Command {
+func MakeP2PCollectionSyncCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "sync [versionID...]",
 		Short: "Synchronize specific collection versions from the network",
@@ -24,13 +24,7 @@ func MakeP2PCollectionSyncCommand() *cobra.Command {
 
 This command allows you to sync collection versions across the network.
 Older versions of a requested collection will also be synced.
-
-Example: sync single collection versions
-  defradb client p2p collection sync bafy123
-
-Example: sync multiple collection versions
-  defradb client p2p collection sync bafy123 bafy456
-  `,
+`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -44,6 +38,12 @@ Example: sync multiple collection versions
 			return cliClient.SyncCollections(ctx, args...)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "sync single collection versions",
+		`defradb client p2p collection sync bafy123`)
+
+	EmbedCLIExample(ctx, cmd, "sync multiple collection versions",
+		`defradb client p2p collection sync bafy123 bafy456`)
 
 	cmd.Flags().Duration("timeout", 0, "Timeout for sync operations")
 	return cmd

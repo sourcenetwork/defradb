@@ -11,6 +11,8 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/immutable"
@@ -18,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeCollectionDescribeCommand() *cobra.Command {
+func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 	var name string
 	var collectionID string
 	var versionID string
@@ -26,20 +28,7 @@ func MakeCollectionDescribeCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "describe",
 		Short: "View collection version.",
-		Long: `Introspect collection types.
-
-Example: view all collections
-  defradb client collection describe
-		
-Example: view collection by name
-  defradb client collection describe --name User
-		
-Example: view collection by collection id
-  defradb client collection describe --collection-id bae123
-		
-Example: view collection by version id. This will also return inactive collections
-  defradb client collection describe --version-id bae123
-		`,
+		Long:  `Introspect collection types.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
@@ -71,6 +60,19 @@ Example: view collection by version id. This will also return inactive collectio
 			return writeJSON(cmd, colDesc)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "view all collections",
+		`defradb client collection describe`)
+
+	EmbedCLIExample(ctx, cmd, "view collection by name",
+		`defradb client collection describe --name User`)
+
+	EmbedCLIExample(ctx, cmd, "view collection by collection id",
+		`defradb client collection describe --collection-id bae123`)
+
+	EmbedCLIExample(ctx, cmd, "view collection by version id",
+		`defradb client collection describe --version-id bae123`)
+
 	cmd.Flags().StringVar(&name, "name", "", "Collection name")
 	cmd.Flags().StringVar(&collectionID, "collection-id", "", "Collection P2P identifier")
 	cmd.Flags().StringVar(&versionID, "version-id", "", "Collection version ID")

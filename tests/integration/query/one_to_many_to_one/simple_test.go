@@ -136,6 +136,7 @@ func TestQueryOneToOneRelations(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

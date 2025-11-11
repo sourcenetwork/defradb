@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -18,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeTxCommitCommand() *cobra.Command {
+func MakeTxCommitCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "commit [id]",
 		Short: "Commit a DefraDB transaction.",

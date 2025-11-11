@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeTxCommand() *cobra.Command {
+func MakeTxCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "tx",
 		Short: "Create, commit, and discard DefraDB transactions",

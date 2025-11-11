@@ -34,8 +34,8 @@ const (
 		"name":	"Islam",
 		"age":	33
 	}`
-	john21DocID  = "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7"
-	islam33DocID = "bae-5adc7327-0249-5925-bee7-52b370a4996d"
+	john21DocID  = "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738"
+	islam33DocID = "bae-0ee3406d-fe46-59d2-b2ce-618eeb24158f"
 )
 
 func updateUserCollectionSchema() *action.AddSchema {

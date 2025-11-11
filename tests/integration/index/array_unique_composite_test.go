@@ -189,6 +189,7 @@ func TestArrayUniqueCompositeIndex_IfDocsHaveNilValues_Succeed(t *testing.T) {
 						{"name": "Shahzad"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

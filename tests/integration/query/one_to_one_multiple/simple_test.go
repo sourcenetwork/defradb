@@ -113,6 +113,7 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -319,6 +320,7 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
