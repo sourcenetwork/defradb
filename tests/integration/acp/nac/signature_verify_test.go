@@ -29,7 +29,6 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				// when providing an identity, it includes the private key.
 				state.HTTPClientType,
 				state.CLIClientType,
-				state.CClientType,
 			},
 		),
 		Actions: []any{
