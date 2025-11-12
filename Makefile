@@ -38,7 +38,7 @@ $(error "No git in $(PATH), version information won't be included")
 else
 VERSION_GOINFO=$(shell go version)
 VERSION_GITCOMMIT=$(shell git rev-parse HEAD)
-VERSION_GITCOMMITDATE=$(shell git show -s --format=%cs HEAD)
+VERSION_GITCOMMITDATE=$(shell git show -s --date=short --format=%cd HEAD)
 ifneq ($(shell git symbolic-ref -q --short HEAD),master)
 VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
 else

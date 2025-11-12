@@ -24,7 +24,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9,
-						"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+						"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -32,7 +32,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
-						"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+						"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -40,7 +40,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "The Client",
 						"rating": 4.5,
-						"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+						"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -48,7 +48,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "Candide",
 						"rating": 4.95,
-						"author_id": "bae-01d16255-d8b0-53cd-9222-5237733e31d7"
+						"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -56,7 +56,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "Zadig",
 						"rating": 4.91,
-						"author_id": "bae-01d16255-d8b0-53cd-9222-5237733e31d7"
+						"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -64,7 +64,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Doc: `{
 						"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 						"rating": 2,
-						"author_id": "bae-c3b6ccf1-8f33-5259-a6d0-ae20594f03bf"
+						"author_id": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -145,6 +145,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -284,6 +285,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -299,7 +301,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9,
-						"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+						"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -307,7 +309,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
-						"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+						"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -315,7 +317,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "The Client",
 						"rating": 4.5,
-						"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+						"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -323,7 +325,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "Candide",
 						"rating": 4.95,
-						"author_id": "bae-01d16255-d8b0-53cd-9222-5237733e31d7"
+						"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -331,7 +333,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "Zadig",
 						"rating": 4.91,
-						"author_id": "bae-01d16255-d8b0-53cd-9222-5237733e31d7"
+						"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -339,7 +341,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Doc: `{
 						"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 						"rating": 2,
-						"author_id": "bae-c3b6ccf1-8f33-5259-a6d0-ae20594f03bf"
+						"author_id": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -385,6 +387,10 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 							"age": int64(327),
 							"_group": []map[string]any{
 								{
+									"name":      "Simon Pelloutier",
+									"published": []map[string]any{},
+								},
+								{
 									"name": "Voltaire",
 									"published": []map[string]any{
 										{
@@ -392,10 +398,6 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 											"rating": 4.95,
 										},
 									},
-								},
-								{
-									"name":      "Simon Pelloutier",
-									"published": []map[string]any{},
 								},
 							},
 						},

@@ -242,6 +242,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfI
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -429,6 +430,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfF
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -560,6 +562,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndAverageOfAverageOfA
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

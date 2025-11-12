@@ -134,6 +134,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithAndWithoutFilter(t *t
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -258,6 +259,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoinsWithFilters(t *testing.T)
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

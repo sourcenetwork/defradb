@@ -185,6 +185,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupAndChildAverageWithDateTim
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -300,6 +301,7 @@ func TestQuerySimpleWithGroupByStringWithRenderedGroupWithFilterAndChildAverageW
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

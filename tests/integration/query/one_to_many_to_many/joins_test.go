@@ -265,6 +265,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

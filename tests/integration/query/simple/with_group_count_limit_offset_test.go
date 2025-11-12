@@ -110,7 +110,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 									"Name": "Bob",
 								},
 								{
-									"Name": "Shahzad",
+									"Name": "John",
 								},
 							},
 						},
@@ -125,6 +125,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

@@ -327,6 +327,7 @@ func TestQuerySimpleWithLikeStringContainsFilterBlockContainsStringMuplitpleResu
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

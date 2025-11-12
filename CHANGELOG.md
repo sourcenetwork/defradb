@@ -1,4 +1,98 @@
 
+<a name="v0.20.0"></a>
+## [v0.20.0](https://github.com/sourcenetwork/defradb/compare/v0.19.0...v0.20.0)
+
+> 2025-10-31
+
+DefraDB v0.20 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.19.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
+
+### Features
+
+* Gate p2p ops with NAC ([#4111](https://github.com/sourcenetwork/defradb/issues/4111))
+* Allow syncing of collection versions over P2P ([#4088](https://github.com/sourcenetwork/defradb/issues/4088))
+* Gate collection doc ops with NAC ([#4100](https://github.com/sourcenetwork/defradb/issues/4100))
+* Gate sec. index ops with NAC ([#4097](https://github.com/sourcenetwork/defradb/issues/4097))
+* Gate verify signature op with NAC ([#4093](https://github.com/sourcenetwork/defradb/issues/4093))
+* Gate DAC ops with NAC ([#4083](https://github.com/sourcenetwork/defradb/issues/4083))
+* Gate collection set active version op with NAC ([#4077](https://github.com/sourcenetwork/defradb/issues/4077))
+* Include query source in collection block ([#4079](https://github.com/sourcenetwork/defradb/issues/4079))
+* Remove LensRegistry ([#4070](https://github.com/sourcenetwork/defradb/issues/4070))
+* Gate collection get op with NAC ([#4075](https://github.com/sourcenetwork/defradb/issues/4075))
+* Rename gql fields to use consistent underscoring ([#4078](https://github.com/sourcenetwork/defradb/issues/4078))
+* Searchable encryption ([#3873](https://github.com/sourcenetwork/defradb/issues/3873))
+* Remove unused context from Txn funcs ([#4056](https://github.com/sourcenetwork/defradb/issues/4056))
+* Only allow zero or one query sources ([#4050](https://github.com/sourcenetwork/defradb/issues/4050))
+* Add Android build support ([#4034](https://github.com/sourcenetwork/defradb/issues/4034))
+* Support Commit API on GQL Subscriptions ([#4019](https://github.com/sourcenetwork/defradb/issues/4019))
+* Gate collection patch op with NAC ([#3996](https://github.com/sourcenetwork/defradb/issues/3996))
+* Handle invalid CGO handles in C bindings ([#3966](https://github.com/sourcenetwork/defradb/issues/3966))
+* Gate schema add op with NAC ([#3905](https://github.com/sourcenetwork/defradb/issues/3905))
+
+### Fixes
+
+* Windows build ([#4124](https://github.com/sourcenetwork/defradb/issues/4124))
+* Allow docs to contain nillable arrays of nillable types ([#4061](https://github.com/sourcenetwork/defradb/issues/4061))
+* Version query with delete ([#4071](https://github.com/sourcenetwork/defradb/issues/4071))
+* Forbid default null value for json field type ([#4069](https://github.com/sourcenetwork/defradb/issues/4069))
+* Default json value ([#4064](https://github.com/sourcenetwork/defradb/issues/4064))
+* Add missing composite commits for change detector ([#4040](https://github.com/sourcenetwork/defradb/issues/4040))
+* Remove recursive issue in versioned fetcher ([#4029](https://github.com/sourcenetwork/defradb/issues/4029))
+* Allow configuring node identity with embedded Defra ([#4023](https://github.com/sourcenetwork/defradb/issues/4023))
+* Passive sync with node chain ([#4012](https://github.com/sourcenetwork/defradb/issues/4012))
+* Signature selection panic ([#4004](https://github.com/sourcenetwork/defradb/issues/4004))
+* Allow JSON variables in GQL ([#3992](https://github.com/sourcenetwork/defradb/issues/3992))
+* Prevent blocking on server close ([#3977](https://github.com/sourcenetwork/defradb/issues/3977))
+* GraphQL SSE event stream ([#3975](https://github.com/sourcenetwork/defradb/issues/3975))
+
+### Documentation
+
+* Update broken docs link in Readme ([#4117](https://github.com/sourcenetwork/defradb/issues/4117))
+
+### Refactoring
+
+* Utilize CGO handles for C bindings ([#3950](https://github.com/sourcenetwork/defradb/issues/3950))
+* Remove SchemaDescription ([#3842](https://github.com/sourcenetwork/defradb/issues/3842))
+* Limit previous collection versions to one or zero ([#4062](https://github.com/sourcenetwork/defradb/issues/4062))
+* Use 64bit cid encoding in blockstore ([#4047](https://github.com/sourcenetwork/defradb/issues/4047))
+* Make net.Host interface easier to consume ([#4009](https://github.com/sourcenetwork/defradb/issues/4009))
+* Standardize errors in C bindings ([#3970](https://github.com/sourcenetwork/defradb/issues/3970))
+* Remove playground source ([#3914](https://github.com/sourcenetwork/defradb/issues/3914))
+* Remove `isArray` from field definition delta ([#4121](https://github.com/sourcenetwork/defradb/issues/4121))
+* Update CLI Examples ([#4095](https://github.com/sourcenetwork/defradb/issues/4095))
+* Move business logic out of net ([#3948](https://github.com/sourcenetwork/defradb/issues/3948))
+* Remove gRPC from net ([#3907](https://github.com/sourcenetwork/defradb/issues/3907))
+* Remove CollectionDefinition ([#3939](https://github.com/sourcenetwork/defradb/issues/3939))
+* Cache collections in context ([#3954](https://github.com/sourcenetwork/defradb/issues/3954))
+
+### Testing
+
+* Test blocking off of patching secondary indexes ([#4044](https://github.com/sourcenetwork/defradb/issues/4044))
+* Add many-to-many integration tests ([#4045](https://github.com/sourcenetwork/defradb/issues/4045))
+
+### Continuous integration
+
+* Fine tune self-hosted workflows ([#4113](https://github.com/sourcenetwork/defradb/issues/4113))
+* Enable Runs-On action runners ([#4106](https://github.com/sourcenetwork/defradb/issues/4106))
+
+### Chore
+
+* Change from net to go-p2p ([#4051](https://github.com/sourcenetwork/defradb/issues/4051))
+* Reduce size of store prefixes ([#4025](https://github.com/sourcenetwork/defradb/issues/4025))
+* Allow test framework to test message relaying ([#4035](https://github.com/sourcenetwork/defradb/issues/4035))
+* Make C binding return types consistent ([#4002](https://github.com/sourcenetwork/defradb/issues/4002))
+* Update contributor section of readme ([#3981](https://github.com/sourcenetwork/defradb/issues/3981))
+* Update readme ([#3979](https://github.com/sourcenetwork/defradb/issues/3979))
+* Bump Go version to 1.24 ([#3946](https://github.com/sourcenetwork/defradb/issues/3946))
+
+### Bot
+
+* Bump github.com/ulikunitz/xz from 0.5.11 to 0.5.14 ([#3973](https://github.com/sourcenetwork/defradb/issues/3973))
+* Bump github.com/vito/go-sse from 1.1.2 to 1.1.3 ([#3616](https://github.com/sourcenetwork/defradb/issues/3616))
+* Update dependencies (bulk dependabot PRs) 2025-08-27 ([#3971](https://github.com/sourcenetwork/defradb/issues/3971))
+
+
 <a name="v0.19.0"></a>
 ## [v0.19.0](https://github.com/sourcenetwork/defradb/compare/v0.18.0...v0.19.0)
 

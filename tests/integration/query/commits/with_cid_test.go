@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithCid(t *testing.T) {
+func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -37,7 +37,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 						_commits(
-							cid: "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm"
+							cid: "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm"
 						) {
 							cid
 						}
@@ -45,7 +45,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 						},
 					},
 				},
@@ -56,7 +56,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
+func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.T) {
 	// cid is for a field commit, see TestQueryCommitsWithDocIDAndFieldId
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -76,7 +76,7 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 						_commits(
-							cid: "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q"
+							cid: "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64"
 						) {
 							cid
 						}
@@ -84,7 +84,7 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
+							"cid": "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 						},
 					},
 				},

@@ -50,7 +50,7 @@ func TestQueryCommitsWithDocIDAndOrderAndLimitAndOffset(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(docID: "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7", order: {height: ASC}, limit: 2, offset: 4) {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: ASC}, limit: 2, offset: 4) {
 							cid
 							height
 						}
@@ -58,11 +58,11 @@ func TestQueryCommitsWithDocIDAndOrderAndLimitAndOffset(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":    "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy",
+							"cid":    "bafyreieira5p74wdicqhelwbjsin7jtnnvvlplngrrcqfapleq2phexqga",
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreiaa6r6d6ure3murz63ebfbmwlmtgm5rc5wbqvucufnku2k3vlgsga",
+							"cid":    "bafyreicq5lp5kzbj4pop6prenjfyrlhzm3ihkamhj4if24lxopybmrye5a",
 							"height": int64(3),
 						},
 					},

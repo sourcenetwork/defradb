@@ -52,7 +52,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 							"Age": int64(32),
 							"_group": []map[string]any{
 								{
-									"Name": "Bob",
+									"Name": "John",
 								},
 							},
 						},
@@ -66,6 +66,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimit(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -112,7 +113,7 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 							"Age": int64(32),
 							"G1": []map[string]any{
 								{
-									"Name": "Bob",
+									"Name": "John",
 								},
 							},
 							"G2": []map[string]any{
@@ -139,6 +140,7 @@ func TestQuerySimpleWithGroupByNumberWithMultipleGroupsWithDifferentLimits(t *te
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -191,6 +193,7 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithHigherLimit(t *testing
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -248,12 +251,13 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndGroupWithLowerLimit(t *testing.
 							"Age": int64(32),
 							"_group": []map[string]any{
 								{
-									"Name": "Bob",
+									"Name": "John",
 								},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

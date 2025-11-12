@@ -66,6 +66,7 @@ func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -168,6 +169,7 @@ func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -279,6 +281,7 @@ func TestQuerySimple_WithNotEqualToXAndNotYFilter_NoError(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

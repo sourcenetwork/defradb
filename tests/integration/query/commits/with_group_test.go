@@ -90,10 +90,10 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							"height": int64(2),
 							"_group": []map[string]any{
 								{
-									"cid": "bafyreic5mqzoba47yzm5pugx5b35visawxi2al2tq7p7x2b6yayklwomga",
+									"cid": "bafyreia5jhb6ughpzd2rjszl4qbdd4w5zrdjfoseyrvnmhm2xiyrudvja4",
 								},
 								{
-									"cid": "bafyreido4fwolghako5ogh4jcy6tr3butjicfwubk27uyuimlm366rtdmy",
+									"cid": "bafyreieira5p74wdicqhelwbjsin7jtnnvvlplngrrcqfapleq2phexqga",
 								},
 							},
 						},
@@ -101,13 +101,13 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							"height": int64(1),
 							"_group": []map[string]any{
 								{
-									"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+									"cid": "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 								},
 								{
-									"cid": "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
+									"cid": "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 								},
 								{
-									"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+									"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 								},
 							},
 						},
@@ -144,7 +144,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+							"cid": "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 							"_group": []map[string]any{
 								{
 									"height": int64(1),
@@ -152,7 +152,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							},
 						},
 						{
-							"cid": "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
+							"cid": "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 							"_group": []map[string]any{
 								{
 									"height": int64(1),
@@ -160,7 +160,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							},
 						},
 						{
-							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 							"_group": []map[string]any{
 								{
 									"height": int64(1),
@@ -217,10 +217,10 @@ func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"docID": "bae-2bb3e007-c40c-5264-8656-45e024cc4776",
+							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 						},
 						{
-							"docID": "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							"docID": "bae-2487fd12-227f-582b-a7ed-3dd5d4b61fce",
 						},
 					},
 				},

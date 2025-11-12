@@ -20,7 +20,7 @@ import (
 )
 
 func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testing.T) {
-	bookID := "bae-7c741c8f-aa89-5a60-bba7-a6537a09deb7"
+	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
 
 	test := testUtils.TestCase{
 		Actions: []any{

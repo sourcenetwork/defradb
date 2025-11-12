@@ -62,6 +62,7 @@ func TestQuerySimple_WithDeletedField(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

@@ -2087,6 +2087,7 @@ nodeLoop:
 			action.ExpectedError,
 			action.Asserter,
 			nodeID,
+			!action.NonOrderedResults,
 		)
 	}
 
@@ -2135,6 +2136,7 @@ func executeSubscriptionRequest(
 						action.ExpectedError,
 						nil,
 						0,
+						true,
 					)
 
 					assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -2197,6 +2199,7 @@ func assertRequestResults(
 	expectedError string,
 	asserter ResultAsserter,
 	nodeID int,
+	ordered bool,
 ) bool {
 	s.CurrentNodeID = nodeID
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
@@ -2238,13 +2241,17 @@ func assertRequestResults(
 		switch exp := expect.(type) {
 		case []map[string]any:
 			actualDocs := ConvertToArrayOfMaps(s.T, actual)
-			assertRequestResultDocs(
+			ok := assertRequestResultDocs(
 				s,
 				nodeID,
 				exp,
 				actualDocs,
 				stack,
+				ordered,
 			)
+			if !ordered {
+				require.True(s.T, ok, "non-ordered expected results: %v not matching actual: %v", exp, actualDocs)
+			}
 
 		case gomega.OmegaMatcher:
 			execGomegaMatcher(exp, s, actual, stack)
@@ -2264,14 +2271,49 @@ func assertRequestResults(
 	return false
 }
 
+// assertRequestResultDocs returns true if the assertion was successful
+//
+// The returned boolean only matters if the assertion is NOT for an ordered set.
 func assertRequestResultDocs(
 	s *state.State,
 	nodeID int,
 	expectedResults []map[string]any,
 	actualResults []map[string]any,
 	stack *assertStack,
+	ordered bool,
 ) bool {
 	// compare results
+	if !ordered {
+		if len(expectedResults) != len(actualResults) {
+			return false
+		}
+		matchedExpectedDocs := make(map[int]struct{}, len(actualResults))
+	actualLoop:
+		for _, actualDoc := range actualResults {
+			found := false
+			for expectedDocIndex, expectedDoc := range expectedResults {
+				if _, ok := matchedExpectedDocs[expectedDocIndex]; ok {
+					// no need to run the process again if this doc was already matched.
+					continue
+				}
+				if len(expectedDoc) != len(actualDoc) {
+					continue
+				}
+				isEqual := assertRequestResultDoc(s, nodeID, actualDoc, expectedDoc, stack, ordered)
+				if isEqual {
+					found = true
+					matchedExpectedDocs[expectedDocIndex] = struct{}{}
+					continue actualLoop
+				}
+			}
+			if !found {
+				return false
+			}
+		}
+
+		return true
+	}
+
 	require.Equal(s.T, len(expectedResults), len(actualResults), "number of results don't match for %s", stack)
 
 	for actualDocIndex, actualDoc := range actualResults {
@@ -2288,64 +2330,114 @@ func assertRequestResultDocs(
 			),
 		)
 
-		assertRequestResultDoc(s, nodeID, actualDoc, expectedDoc, stack)
+		assertRequestResultDoc(s, nodeID, actualDoc, expectedDoc, stack, ordered)
 
 		stack.pop()
 	}
-
-	return false
+	return true
 }
 
+// assertRequestResultDoc return true if the assertion was successful.
+//
+// The returned boolean only matters for non ordered assertions.
 func assertRequestResultDoc(
 	s *state.State,
 	nodeID int,
 	actualDoc map[string]any,
 	expectedDoc map[string]any,
 	stack *assertStack,
-) {
+	ordered bool,
+) bool {
 	for field, actualValue := range actualDoc {
 		stack.pushMap(field)
 
 		switch expectedValue := expectedDoc[field].(type) {
 		case gomega.OmegaMatcher:
-			execGomegaMatcher(expectedValue, s, actualValue, stack)
+			if ordered {
+				execGomegaMatcher(expectedValue, s, actualValue, stack)
+			} else {
+				ok := checkGomegaMatcher(expectedValue, s, actualValue)
+				if !ok {
+					stack.pop()
+					return false
+				}
+			}
 
 		case DocIndex:
 			expectedDocID := s.DocIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
-			assertResultsEqual(
-				s.T,
-				s.ClientType,
-				expectedDocID,
-				actualValue,
-				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
-			)
+			if ordered {
+				assertResultsEqual(
+					s.T,
+					s.ClientType,
+					expectedDocID,
+					actualValue,
+					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+				)
+			} else {
+				ok := isResultsEqual(
+					s.ClientType,
+					expectedDocID,
+					actualValue,
+				)
+				if !ok {
+					stack.pop()
+					return false
+				}
+			}
 		case []map[string]any:
 			actualValueMap := ConvertToArrayOfMaps(s.T, actualValue)
 
-			assertRequestResultDocs(
+			ok := assertRequestResultDocs(
 				s,
 				nodeID,
 				expectedValue,
 				actualValueMap,
 				stack,
+				ordered,
 			)
+			if !ok && !ordered {
+				stack.pop()
+				return false
+			}
 
 		case map[string]any:
 			actualMap, ok := actualValue.(map[string]any)
-			require.True(s.T, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
-			assertRequestResultDoc(s, nodeID, actualMap, expectedValue, stack)
+			if ordered {
+				require.True(s.T, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
+			} else if !ok {
+				return false
+			}
+
+			ok = assertRequestResultDoc(s, nodeID, actualMap, expectedValue, stack, ordered)
+			if !ok && !ordered {
+				stack.pop()
+				return false
+			}
 
 		default:
-			assertResultsEqual(
-				s.T,
-				s.ClientType,
-				expectedValue,
-				actualValue,
-				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
-			)
+			if ordered {
+				assertResultsEqual(
+					s.T,
+					s.ClientType,
+					expectedValue,
+					actualValue,
+					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
+				)
+			} else {
+				ok := isResultsEqual(
+					s.ClientType,
+					expectedValue,
+					actualValue,
+				)
+				if !ok {
+					stack.pop()
+					return false
+				}
+			}
 		}
 		stack.pop()
 	}
+	return true
 }
 
 func ConvertToArrayOfMaps(t testing.TB, value any) []map[string]any {
@@ -2715,6 +2807,24 @@ func execGomegaMatcher(exp gomega.OmegaMatcher, s *state.State, actual any, stac
 			s.StatefulMatchers = append(s.StatefulMatchers, m)
 		}
 	})
+}
+
+// checkGomegaMatcher executes the given gomega matcher and returns true if successful.
+func checkGomegaMatcher(exp gomega.OmegaMatcher, s *state.State, actual any) bool {
+	traverseGomegaMatchers(exp, s, func(m TestStateMatcher) { m.SetTestState(s) })
+
+	success, err := exp.Match(actual)
+	if err != nil || !success {
+		return false
+	}
+
+	traverseGomegaMatchers(exp, s, func(m state.StatefulMatcher) {
+		if !slices.Contains(s.StatefulMatchers, m) {
+			s.StatefulMatchers = append(s.StatefulMatchers, m)
+		}
+	})
+
+	return true
 }
 
 // traverseGomegaMatchers traverses the given gomega matcher and calls the given function

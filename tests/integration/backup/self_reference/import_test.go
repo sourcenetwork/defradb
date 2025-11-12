@@ -26,13 +26,13 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 				ImportContent: `{
 					"User":[
 						{
-							"_docID":"bae-e6b09a7a-47e9-5fbb-9cdc-638bf7bd1878",
+							"_docID":"bae-498fc496-9ad7-5239-b003-1044d326e072",
 							"age":31,
-							"boss_id":"bae-410a76c8-982f-5898-a509-b9e24bea4820",
+							"boss_id":"bae-59a4a7b9-1ce9-557f-bbb8-48485ee44f35",
 							"name":"Bob"
 						},
 						{
-							"_docID":"bae-410a76c8-982f-5898-a509-b9e24bea4820",
+							"_docID":"bae-59a4a7b9-1ce9-557f-bbb8-48485ee44f35",
 							"age":30,
 							"name":"John"
 						}
@@ -63,6 +63,7 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -74,10 +75,10 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"User":[` +
 		`{` +
-		`"_docID":"bae-5c538c2b-648e-504a-88a9-6190a4295e0a",` +
-		`"_docIDNew":"bae-5c538c2b-648e-504a-88a9-6190a4295e0a",` +
+		`"_docID":"bae-498fc496-9ad7-5239-b003-1044d326e072",` +
+		`"_docIDNew":"bae-498fc496-9ad7-5239-b003-1044d326e072",` +
 		`"age":31,` +
-		`"boss_id":"bae-5c538c2b-648e-504a-88a9-6190a4295e0a",` +
+		`"boss_id":"bae-498fc496-9ad7-5239-b003-1044d326e072",` +
 		`"name":"Bob"` +
 		`}` +
 		`]` +
@@ -101,7 +102,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"boss_id": "bae-5c538c2b-648e-504a-88a9-6190a4295e0a"
+					"boss_id": "bae-498fc496-9ad7-5239-b003-1044d326e072"
 				}`,
 			},
 			testUtils.BackupExport{
@@ -167,8 +168,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 					"Book":[
 						{
 							"name":"John and the sourcerers' stone",
-							"author":"bae-1c822348-aa51-50f8-81b7-12b835ecc8bf",
-							"reviewedBy":"bae-1c822348-aa51-50f8-81b7-12b835ecc8bf"
+							"author":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
+							"reviewedBy":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4"
 						}
 					]
 				}`,
@@ -228,8 +229,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 					"Book":[
 						{
 							"name":"John and the sourcerers' stone",
-							"author":"bae-1c822348-aa51-50f8-81b7-12b835ecc8bf",
-							"reviewedBy":"bae-1c822348-aa51-50f8-81b7-12b835ecc8bf"
+							"author":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
+							"reviewedBy":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4"
 						}
 					],
 					"Author":[

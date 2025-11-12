@@ -48,7 +48,7 @@ func TestQueryCommitsBranchables_WithFieldName(t *testing.T) {
 					"_commits": []map[string]any{
 						{
 							// Extra params are used to verify this is a collection level cid
-							"schemaVersionId": "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma",
+							"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 							"docID":           nil,
 							"fieldName":       nil,
 						},

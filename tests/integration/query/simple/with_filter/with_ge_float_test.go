@@ -151,6 +151,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

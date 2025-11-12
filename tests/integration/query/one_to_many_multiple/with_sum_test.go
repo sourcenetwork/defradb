@@ -134,6 +134,7 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoins(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

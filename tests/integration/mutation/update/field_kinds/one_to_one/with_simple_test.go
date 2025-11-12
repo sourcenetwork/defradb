@@ -22,7 +22,7 @@ import (
 // Note: This test should probably not pass, as it contains a
 // reference to a document that doesnt exist.
 func TestMutationUpdateOneToOneNoChild(t *testing.T) {
-	unknownID := "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
+	unknownID := "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -62,7 +62,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne(t *testing.T) {
-	bookID := "bae-7c741c8f-aa89-5a60-bba7-a6537a09deb7"
+	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -210,7 +210,7 @@ func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
 }
 
 func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
-	bookID := "bae-7c741c8f-aa89-5a60-bba7-a6537a09deb7"
+	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
 
 	test := testUtils.TestCase{
 		Actions: []any{

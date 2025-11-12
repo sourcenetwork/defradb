@@ -752,6 +752,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_Shoul
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
 func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -774,9 +775,15 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 					}`,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Shahzad"},
-						{"name": "Fred"},
+						/* Expected results
 						{"name": "Andy"},
+						{"name": "Fred"},
+						{"name": "Shahzad"},
+						*/
+						// Actual results
+						{"name": "Shahzad"},
+						{"name": "Andy"},
+						{"name": "Fred"},
 					},
 				},
 			},

@@ -41,7 +41,7 @@ func TestQuerySimpleWithGroupByWithGroupWithDocID(t *testing.T) {
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_group(docID: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c") {
+						_group(docID: "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b") {
 							Name
 						}
 					}
@@ -62,6 +62,7 @@ func TestQuerySimpleWithGroupByWithGroupWithDocID(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

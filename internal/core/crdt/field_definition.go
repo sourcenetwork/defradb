@@ -27,10 +27,9 @@ type FieldDefinitionDelta struct {
 
 	Name         *string
 	Crdt         *client.CType
-	ScalarKind   *client.ScalarKind
+	ScalarKind   *uint8
 	CollectionID *string
 	RelativeID   *int
-	IsArray      *bool
 }
 
 var _ Delta = (*FieldDefinitionDelta)(nil)
@@ -44,7 +43,6 @@ func (d *FieldDefinitionDelta) IPLDSchemaBytes() []byte {
 		scalarKind optional Int
 		collectionID optional String
 		relativeID optional Int
-		isArray optional Bool
 	}`)
 }
 
@@ -99,32 +97,32 @@ func (f *FieldDefinition) Delta(
 		return nil, false, nil
 	}
 
-	var scalarKind client.ScalarKind
-	var relatedCollectionID string
-	var relativeID int
+	var scalarKind *uint8
+	var relatedCollectionID *string
+	var relativeID *int
 	switch k := new.Kind.(type) {
 	case client.ScalarKind:
-		scalarKind = k
+		kind := uint8(k)
+		scalarKind = &kind
 	case client.ScalarArrayKind:
-		scalarKind = k.SubKind()
+		kind := uint8(k)
+		scalarKind = &kind
 	case *client.CollectionKind:
-		relatedCollectionID = k.CollectionID
+		relatedCollectionID = &k.CollectionID
 	case *client.SelfKind:
-		var err error
-		relativeID, err = strconv.Atoi(k.RelativeID)
+		rID, err := strconv.Atoi(k.RelativeID)
 		if err != nil {
 			return nil, false, nil
 		}
+		relativeID = &rID
 	}
-	isArray := new.Kind.IsArray()
 
 	return &FieldDefinitionDelta{
 		Name:         &new.Name,
 		Crdt:         &new.Typ,
-		ScalarKind:   &scalarKind,
-		CollectionID: &relatedCollectionID,
-		RelativeID:   &relativeID,
-		IsArray:      &isArray,
+		ScalarKind:   scalarKind,
+		CollectionID: relatedCollectionID,
+		RelativeID:   relativeID,
 	}, true, nil
 }
 

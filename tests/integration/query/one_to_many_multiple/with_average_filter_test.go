@@ -134,6 +134,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -258,6 +259,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

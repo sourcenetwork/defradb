@@ -103,6 +103,7 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMaxOfAverageOfInt_
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

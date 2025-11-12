@@ -46,7 +46,7 @@ func TestSignature_IfIdentityHasNoPrivateKey_ShouldUseNodeIdentity(t *testing.T)
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 			},
 			testUtils.UpdateDoc{
 				Identity: testUtils.ClientIdentity(0),
@@ -56,7 +56,7 @@ func TestSignature_IfIdentityHasNoPrivateKey_ShouldUseNodeIdentity(t *testing.T)
 			},
 			testUtils.VerifyBlockSignature{
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreidazqqhrmdd6wnx33obcnd67vce33qbbmdbmzkofpfu77qach36sq",
+				Cid:            "bafyreiemskbirmphqngy3kivou4e4phcuiffcdql4mvqp3twmiipwt3pta",
 			},
 		},
 	}

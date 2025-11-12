@@ -64,6 +64,7 @@ func TestQueryJSON_WithNotEqualFilterWithObject_ShouldFilter(t *testing.T) {
 						{"name": "John"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -211,6 +212,7 @@ func TestQueryJSON_WithNeFilterAgainstNumberField_ShouldFilter(t *testing.T) {
 						{"name": "Shahzad"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -367,6 +369,7 @@ func TestQueryJSON_WithNeFilterAgainstNullField_ShouldFilter(t *testing.T) {
 						{"name": "Shahzad"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

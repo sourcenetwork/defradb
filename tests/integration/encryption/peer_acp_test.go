@@ -371,12 +371,13 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{"name": "John"},
-						{"name": "Shahzad"},
 						{"name": "Fred"},
+						{"name": "John"},
 						{"name": "Islam"},
+						{"name": "Shahzad"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

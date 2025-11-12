@@ -15,6 +15,7 @@ package p2p
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
@@ -124,35 +125,24 @@ func (p *P2P) syncCollection(
 
 		// WARNING - At the moment fields can only ever be added, the following code relies on this.
 		// When we allow the mutation of fields, this code will need to change.
-
-		/*
-			var kind client.FieldKind
-			if fieldDelta.RelativeID != nil {
-				kind = &client.SelfKind{
-					RelativeID: fmt.Sprint(*fieldDelta.RelativeID),
-					// The secondary side of SelfKind relationships are never represented by
-					// blocks, so we can safely hardcode this to `false`
-					Array: false,
-				}
-			} else if fieldDelta.CollectionID != nil {
-				kind = &client.CollectionKind{
-					CollectionID: *fieldDelta.CollectionID,
-					// The secondary side of CollectionKind relationships are never represented by
-					// blocks, so we can safely hardcode this to `false`
-					Array: false,
-				}
-			} else {
-				kind = client.IntToFieldKind(uint8(*fieldDelta.ScalarKind))
+		var kind client.FieldKind
+		if fieldDelta.RelativeID != nil {
+			kind = &client.SelfKind{
+				RelativeID: strconv.Itoa(*fieldDelta.RelativeID),
+				// The secondary side of SelfKind relationships are never represented by
+				// blocks, so we can safely hardcode this to `false`
+				Array: false,
 			}
-		*/
-
-		// TODO - due to a couple of bugs in the blocks, `fieldDelta.RelativeID` and
-		// `fieldDelta.CollectionID` are never nil.  So we overwrite the `kind` produced
-		// by the above code with a scalar kind instead of using the commented out code
-		// above.
-		//
-		// https://github.com/sourcenetwork/defradb/issues/4087
-		kind := client.IntToFieldKind(uint8(*fieldDelta.ScalarKind))
+		} else if fieldDelta.CollectionID != nil {
+			kind = &client.CollectionKind{
+				CollectionID: *fieldDelta.CollectionID,
+				// The secondary side of CollectionKind relationships are never represented by
+				// blocks, so we can safely hardcode this to `false`
+				Array: false,
+			}
+		} else {
+			kind = client.IntToFieldKind(*fieldDelta.ScalarKind)
+		}
 
 		field := client.CollectionFieldDescription{
 			Name: *fieldDelta.Name,

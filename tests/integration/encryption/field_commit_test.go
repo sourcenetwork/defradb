@@ -56,6 +56,7 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

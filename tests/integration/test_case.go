@@ -720,6 +720,9 @@ type Request struct {
 	// The expected (data) results of the issued request.
 	Results map[string]any
 
+	// NonOrderedResults specifies that the results set doesn't need to care about the ordering of the items.
+	NonOrderedResults bool
+
 	// Asserter is an optional custom result asserter.
 	Asserter ResultAsserter
 

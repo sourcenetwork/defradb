@@ -88,6 +88,7 @@ func TestP2PCollectionAddSingle(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

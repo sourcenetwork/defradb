@@ -109,6 +109,7 @@ func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
