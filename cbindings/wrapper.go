@@ -728,7 +728,6 @@ func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.IdentityFree(cIdentity)
-	defer C.IdentityFree(cIdentity)
 
 	var opts C.CollectionOptions
 	opts.version = cVersion
