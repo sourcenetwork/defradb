@@ -27,7 +27,7 @@ extern Result ACPDeleteNACActorRelationship(uintptr_t nodePtr, uintptr_t identit
 char* relation, char* actor);
 extern Result ACPGetNACStatus(uintptr_t nodePtr, uintptr_t identity);
 extern Result BlockVerifySignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid,
-CollectionOptions options);
+uintptr_t identity);
 extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
 extern Result CollectionPatch(uintptr_t nodePtr, char* patch, char* lensConfig, CollectionOptions options);
 extern Result IdentityNew(char* keyType);
@@ -938,28 +938,14 @@ func (w *CWrapper) VerifySignature(ctx context.Context, blockCid string, pubKey 
 	cPubKey := C.CString(pubKey.String())
 	cKeyType := C.CString(string(pubKey.Type()))
 	cBlockCid := C.CString(blockCid)
-
-	cVersion := C.CString("")
-	cCollectionID := C.CString("")
-	cName := C.CString("")
 	cIdentity := identityFromContext(ctx)
 
-	defer C.free(unsafe.Pointer(cVersion))
-	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cPubKey))
 	defer C.free(unsafe.Pointer(cKeyType))
 	defer C.free(unsafe.Pointer(cBlockCid))
 	defer C.IdentityFree(cIdentity)
 
-	var opts C.CollectionOptions
-	opts.version = cVersion
-	opts.collectionID = cCollectionID
-	opts.name = cName
-	opts.identityPtr = cIdentity
-	opts.getInactive = 0
-
-	res := ConvertAndFreeCResult(C.BlockVerifySignature(C.uintptr_t(w.handle), cKeyType, cPubKey, cBlockCid, opts))
+	res := ConvertAndFreeCResult(C.BlockVerifySignature(C.uintptr_t(w.handle), cKeyType, cPubKey, cBlockCid, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
