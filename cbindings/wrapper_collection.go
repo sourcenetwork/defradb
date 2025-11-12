@@ -595,8 +595,8 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 
 	res := ConvertAndFreeCResult(C.IndexDrop(
 		C.uintptr_t(c.w.handle),
-		copts,
 		cIndexName,
+		copts,
 	))
 
 	if res.Status != 0 {
