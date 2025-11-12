@@ -26,10 +26,10 @@ import (
 //export IndexCreate
 func IndexCreate(
 	nodePtr C.uintptr_t,
-	options C.CollectionOptions,
 	indexName *C.char,
 	fieldsStr *C.char,
 	isUnique C.int,
+	options C.CollectionOptions,
 ) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, options.identityPtr)
@@ -124,7 +124,7 @@ func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions) C.Result {
 }
 
 //export IndexDrop
-func IndexDrop(nodePtr C.uintptr_t, options C.CollectionOptions, indexName *C.char) C.Result {
+func IndexDrop(nodePtr C.uintptr_t, indexName *C.char, options C.CollectionOptions) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, options.identityPtr)
 	if err != nil {

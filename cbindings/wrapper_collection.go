@@ -22,9 +22,9 @@ extern Result CollectionListDocIDs(uintptr_t nodePtr, CollectionOptions options)
 extern Result CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted, CollectionOptions options);
 extern Result CollectionUpdate(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 char* updaterStr, CollectionOptions options);
-extern Result IndexCreate(uintptr_t nodePtr, CollectionOptions options, char* indexName, char* fieldsStr, int isUnique);
+extern Result IndexCreate(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique, CollectionOptions options);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options);
-extern Result IndexDrop(uintptr_t nodePtr, CollectionOptions options, char* indexName);
+extern Result IndexDrop(uintptr_t nodePtr, char* indexName, CollectionOptions options);
 extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
