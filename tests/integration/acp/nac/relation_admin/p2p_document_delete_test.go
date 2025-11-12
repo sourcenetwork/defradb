@@ -26,9 +26,7 @@ func TestNAC_AdminRelation_CanP2PDocumentDelete(t *testing.T) {
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.GoClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{

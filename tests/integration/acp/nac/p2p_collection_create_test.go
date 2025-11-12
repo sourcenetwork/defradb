@@ -26,9 +26,7 @@ func TestNAC_GatesP2PCollectionCreate_AuthorizedIdentity_AllowAccess(t *testing.
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.GoClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -76,9 +74,7 @@ func TestNAC_GatesP2PCollectionCreate_NoIdentity_NotAuthorizedError(t *testing.T
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.GoClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -127,9 +123,7 @@ func TestNAC_GatesP2PCollectionCreate_WrongIdentity_NotAuthorizedError(t *testin
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.GoClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
