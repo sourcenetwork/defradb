@@ -68,7 +68,7 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesVerifySignature_GoClient_AllowAccess(t *testing.T) {
+func TestNAC_GatesVerifySignature_GoClient_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some(
