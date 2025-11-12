@@ -556,10 +556,10 @@ func (c *Collection) CreateIndex(
 
 	res := ConvertAndFreeCResult(C.IndexCreate(
 		C.uintptr_t(c.w.handle),
-		copts,
 		cIndexDescName,
 		fields,
 		cUnique,
+		copts,
 	))
 
 	if res.Status != 0 {
