@@ -63,6 +63,15 @@ var FilterModulePath string = getPathRelativeToProjectRoot(
 	"/tests/lenses/rust_wasm32_filter/target/wasm32-unknown-unknown/debug/rust_wasm32_filter.wasm",
 )
 
+// StandardDeviationModulePath is the path to the `Standard deviation` lens module compiled to wasm.
+//
+// The module has two parameters:
+//   - `src` is a string and is the name of the property you wish to evaluate
+//   - `dst` is a string and is the name of the property you wish to write the standard deviation to.
+var StandardDeviationModulePath string = getPathRelativeToProjectRoot(
+	"/tests/lenses/rust_wasm32_std_dev/target/wasm32-unknown-unknown/debug/std_dev.wasm",
+)
+
 func getPathRelativeToProjectRoot(relativePath string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	root := path.Dir(path.Dir(path.Dir(filename)))
