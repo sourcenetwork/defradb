@@ -63,6 +63,7 @@ type parallelNode struct { // serialNode?
 	children     []planNode
 	childIndexes []int
 
+	source    planNode
 	multiscan *multiScanNode
 }
 
@@ -181,7 +182,7 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 	return true, nil
 }
 
-func (p *parallelNode) Source() planNode { return p.multiscan }
+func (p *parallelNode) Source() planNode { return p.source }
 
 func (p *parallelNode) Children() []planNode {
 	return p.children
@@ -202,6 +203,7 @@ func (n *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 		case *dagScanNode:
 			m := &parallelNode{
 				p:         n.planner,
+				source:    newPlan,
 				docMapper: docMapper{n.source.DocumentMap()},
 			}
 			m.addChild(-1, n.source)
@@ -226,6 +228,7 @@ func (n *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 		parallelNode := &parallelNode{
 			p:         n.planner,
 			multiscan: multiscan,
+			source:    multiscan,
 			docMapper: docMapper{n.source.DocumentMap()},
 		}
 		parallelNode.addChild(-1, n.source)
