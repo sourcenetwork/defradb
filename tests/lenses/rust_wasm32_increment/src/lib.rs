@@ -2,7 +2,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-use std::collections::HashMap;
 use std::sync::RwLock;
 use std::error::Error;
 use std::fmt;
@@ -43,21 +42,21 @@ pub struct Parameters {
 static PARAMETERS: RwLock<Option<Parameters>> = RwLock::new(None);
 
 fn try_transform(
-    iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<HashMap<String, serde_json::Value>>>>,
-) -> Result<StreamOption<HashMap<String, serde_json::Value>>, Box<dyn Error>> {
+    iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<serde_json::Value>>>,
+) -> Result<StreamOption<serde_json::Value>, Box<dyn Error>> {
     apply_increment(iter, |current, increment| current + increment)
 }
 
 fn try_inverse(
-    iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<HashMap<String, serde_json::Value>>>>,
-) -> Result<StreamOption<HashMap<String, serde_json::Value>>, Box<dyn Error>> {
+    iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<serde_json::Value>>>,
+) -> Result<StreamOption<serde_json::Value>, Box<dyn Error>> {
     apply_increment(iter, |current, increment| current - increment)
 }
 
 fn apply_increment(
-    iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<HashMap<String, serde_json::Value>>>>,
+    iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<serde_json::Value>>>,
     operation: fn(i64, i64) -> i64,
-) -> Result<StreamOption<HashMap<String, serde_json::Value>>, Box<dyn Error>> {
+) -> Result<StreamOption<serde_json::Value>, Box<dyn Error>> {
     let params = PARAMETERS.read()?
         .clone()
         .ok_or(LensError::ParametersNotSetError)?;
@@ -71,7 +70,10 @@ fn apply_increment(
             None => return Ok(StreamOption::None),
         };
 
-        let field_value = input.get_mut(&params.field)
+        let obj = input.as_object_mut()
+            .ok_or(ModuleError::PropertyNotFoundError{requested: params.field.clone()})?;
+
+        let field_value = obj.get_mut(&params.field)
             .ok_or(ModuleError::PropertyNotFoundError{requested: params.field.clone()})?;
 
         let current_value = field_value.as_i64()
@@ -79,7 +81,7 @@ fn apply_increment(
 
         let new_value = operation(current_value, increment);
 
-        input.insert(params.field.clone(), serde_json::Value::Number(new_value.into()));
+        obj.insert(params.field.clone(), serde_json::Value::Number(new_value.into()));
 
         return Ok(StreamOption::Some(input))
     }
@@ -91,7 +93,6 @@ fn apply_increment(
 mod tests {
     use super::*;
     use serde_json::json;
-    use std::collections::HashMap;
     use serial_test::serial;
 
     // Note: All tests use #[serial] because they share the global PARAMETERS static variable.
@@ -107,16 +108,18 @@ mod tests {
         });
         drop(ptr);
 
-        let mut input_doc = HashMap::new();
-        input_doc.insert(field_name.clone(), json!(30));
+        let input_doc = json!({
+            field_name.clone(): 30
+        });
 
         let input = [Ok(Some(input_doc))];
         let mut it = input.into_iter();
 
         let result = try_transform(&mut it).unwrap();
 
-        let mut expected_result = HashMap::new();
-        expected_result.insert(field_name, json!(35));
+        let expected_result = json!({
+            field_name: 35
+        });
 
         assert_eq!(result, StreamOption::Some(expected_result));
     }
@@ -132,16 +135,18 @@ mod tests {
         });
         drop(ptr);
 
-        let mut input_doc = HashMap::new();
-        input_doc.insert(field_name.clone(), json!(50));
+        let input_doc = json!({
+            field_name.clone(): 50
+        });
 
         let input = [Ok(Some(input_doc))];
         let mut it = input.into_iter();
 
         let result = try_transform(&mut it).unwrap();
 
-        let mut expected_result = HashMap::new();
-        expected_result.insert(field_name, json!(40));
+        let expected_result = json!({
+            field_name: 40
+        });
 
         assert_eq!(result, StreamOption::Some(expected_result));
     }
@@ -156,7 +161,7 @@ mod tests {
         });
         drop(ptr);
 
-        let input: [lens_sdk::Result<Option<HashMap<String, serde_json::Value>>>; 0] = [];
+        let input: [lens_sdk::Result<Option<serde_json::Value>>; 0] = [];
         let mut it = input.into_iter();
 
         let result = try_transform(&mut it).unwrap();
@@ -193,16 +198,18 @@ mod tests {
         });
         drop(ptr);
 
-        let mut input_doc = HashMap::new();
-        input_doc.insert(field_name.clone(), json!(35));
+        let input_doc = json!({
+            field_name.clone(): 35
+        });
 
         let input = [Ok(Some(input_doc))];
         let mut it = input.into_iter();
 
         let result = try_inverse(&mut it).unwrap();
 
-        let mut expected_result = HashMap::new();
-        expected_result.insert(field_name, json!(28));
+        let expected_result = json!({
+            field_name: 28
+        });
 
         assert_eq!(result, StreamOption::Some(expected_result));
     }
@@ -222,8 +229,9 @@ mod tests {
         });
         drop(ptr);
 
-        let mut input_doc_1 = HashMap::new();
-        input_doc_1.insert(field_name.clone(), json!(original_value));
+        let input_doc_1 = json!({
+            field_name.clone(): original_value
+        });
         let input_1 = [Ok(Some(input_doc_1))];
         let mut it_1 = input_1.into_iter();
 
@@ -238,8 +246,9 @@ mod tests {
 
             let inverse_result = try_inverse(&mut it_2).unwrap();
 
-            let mut expected_result = HashMap::new();
-            expected_result.insert(field_name, json!(original_value));
+            let expected_result = json!({
+                field_name: original_value
+            });
 
             assert_eq!(inverse_result, StreamOption::Some(expected_result));
         } else {
