@@ -23,24 +23,24 @@ func TestQuerySimpleWithVersionAndOrder(t *testing.T) {
 			&action.AddSchema{
 				Schema: `
 					type Users {
-						Name: String
+						name: String
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
-					"Name": "John",
+					"name": "John",
 				},
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
-					"Name": "Chris",
+					"name": "Chris",
 				},
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(order: {Name: ASC}) {
-						Name
+					Users(order: {name: ASC}) {
+						name
 						_version {
 							fieldName
 						}
@@ -49,7 +49,7 @@ func TestQuerySimpleWithVersionAndOrder(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Chris",
+							"name": "Chris",
 							"_version": []map[string]any{
 								{
 									"fieldName": "_C",
@@ -57,7 +57,7 @@ func TestQuerySimpleWithVersionAndOrder(t *testing.T) {
 							},
 						},
 						{
-							"Name": "John",
+							"name": "John",
 							"_version": []map[string]any{
 								{
 									"fieldName": "_C",
