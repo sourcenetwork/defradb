@@ -16,8 +16,6 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
@@ -52,13 +50,6 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// C bindings do not support calling functions with non-Secp256k key yet
-			state.GoClientType,
-			state.CLIClientType,
-			state.HTTPClientType,
-			state.JSClientType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -132,13 +123,6 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// C bindings do not support calling functions with non-Secp256k key yet
-			state.GoClientType,
-			state.CLIClientType,
-			state.HTTPClientType,
-			state.JSClientType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -237,13 +221,6 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// C bindings do not support calling functions with non-Secp256k key yet
-			state.GoClientType,
-			state.CLIClientType,
-			state.HTTPClientType,
-			state.JSClientType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -306,13 +283,6 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
-		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// C bindings do not support calling functions with non-Secp256k key yet
-			state.GoClientType,
-			state.CLIClientType,
-			state.HTTPClientType,
-			state.JSClientType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
