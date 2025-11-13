@@ -456,7 +456,6 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
-
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		Actions: []any{
