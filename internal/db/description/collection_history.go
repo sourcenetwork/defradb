@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package lens
+package description
 
 import (
 	"context"
@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
 // collectionHistoryLink represents an item in a particular collection's schema history, it
@@ -55,6 +54,16 @@ func (t *TargetedCollectionHistoryLink) Collection() *client.CollectionVersion {
 	return t.collection
 }
 
+// Next returns the link to the next collection version.
+func (t *TargetedCollectionHistoryLink) Next() immutable.Option[*TargetedCollectionHistoryLink] {
+	return t.next
+}
+
+// Previous returns the link to the previous collection version.
+func (t *TargetedCollectionHistoryLink) Previous() immutable.Option[*TargetedCollectionHistoryLink] {
+	return t.previous
+}
+
 // GetTargetedCollectionHistory returns the history of the schema of the given id, relative
 // to the given target schema version id.
 //
@@ -63,7 +72,7 @@ func GetTargetedCollectionHistory(
 	ctx context.Context,
 	schemaRoot string,
 	targetSchemaVersionID string,
-) (map[schemaVersionID]*TargetedCollectionHistoryLink, error) {
+) (map[string]*TargetedCollectionHistoryLink, error) {
 	history, err := getCollectionHistory(ctx, schemaRoot)
 	if err != nil {
 		return nil, err
@@ -76,7 +85,7 @@ func GetTargetedCollectionHistory(
 		return nil, nil
 	}
 
-	result := map[schemaVersionID]*TargetedCollectionHistoryLink{}
+	result := map[string]*TargetedCollectionHistoryLink{}
 
 	targetLink := &TargetedCollectionHistoryLink{
 		collection: targetHistoryItem.collection,
@@ -96,7 +105,7 @@ func GetTargetedCollectionHistory(
 func linkForwards(
 	currentLink *TargetedCollectionHistoryLink,
 	currentHistoryItem *collectionHistoryLink,
-	result map[schemaVersionID]*TargetedCollectionHistoryLink,
+	result map[string]*TargetedCollectionHistoryLink,
 ) {
 	for _, nextHistoryItem := range currentHistoryItem.next {
 		if _, ok := result[nextHistoryItem.collection.VersionID]; ok {
@@ -123,7 +132,7 @@ func linkForwards(
 func linkBackwards(
 	currentLink *TargetedCollectionHistoryLink,
 	currentHistoryItem *collectionHistoryLink,
-	result map[schemaVersionID]*TargetedCollectionHistoryLink,
+	result map[string]*TargetedCollectionHistoryLink,
 ) {
 	for _, prevHistoryItem := range currentHistoryItem.previous {
 		if _, ok := result[prevHistoryItem.collection.VersionID]; ok {
@@ -150,13 +159,13 @@ func linkBackwards(
 func getCollectionHistory(
 	ctx context.Context,
 	schemaRoot string,
-) (map[schemaVersionID]*collectionHistoryLink, error) {
-	cols, err := description.GetCollectionsByCollectionID(ctx, schemaRoot)
+) (map[string]*collectionHistoryLink, error) {
+	cols, err := GetCollectionsByCollectionID(ctx, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	history := map[schemaVersionID]*collectionHistoryLink{}
+	history := map[string]*collectionHistoryLink{}
 
 	for _, col := range cols {
 		// Convert the temporary types to the cleaner return type:

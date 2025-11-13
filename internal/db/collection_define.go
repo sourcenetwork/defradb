@@ -27,7 +27,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/lens"
 )
 
 func (db *DB) createCollections(
@@ -555,7 +554,7 @@ func (db *DB) shouldReindexForVersionSwitch(
 	ctx context.Context,
 	newActiveCol client.CollectionVersion,
 ) (bool, error) {
-	history, err := lens.GetTargetedCollectionHistory(
+	history, err := description.GetTargetedCollectionHistory(
 		ctx,
 		newActiveCol.CollectionID,
 		newActiveCol.VersionID,

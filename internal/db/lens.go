@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/lens"
 )
 
 func (db *DB) getLensStore(ctx context.Context) store.Store {
@@ -136,7 +135,7 @@ func (db *DB) shouldReindexAfterMigration(
 		return false, client.CollectionVersion{}, err
 	}
 
-	history, err := lens.GetTargetedCollectionHistory(
+	history, err := description.GetTargetedCollectionHistory(
 		ctx,
 		activeCol.CollectionID,
 		activeCol.VersionID,
