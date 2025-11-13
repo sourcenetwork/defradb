@@ -446,18 +446,11 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 				commitSlct := &mapper.CommitSelect{
 					Select: *f,
 				}
-				// handle _version sub selection query differently
-				// if we are executing a regular Scan query
-				// or a TimeTravel query.
+
 				if selectReq.Cid.HasValue() {
-					// for a TimeTravel query, we don't need the Latest
-					// commit. Instead, _version references the CID
-					// of that Target version we are querying.
-					// So instead of a LatestCommit subquery, we need
-					// a commits query with max depth starting from the
-					// target CID version
-					commitSlct.DocID = immutable.Some(selectReq.DocIDs.Value()[0]) // @todo check length
 					commitSlct.Cid = selectReq.Cid
+
+					// We want all the commits, so set the maximum depth
 					commitSlct.Depth = immutable.Some(uint64(math.MaxUint64))
 				}
 
