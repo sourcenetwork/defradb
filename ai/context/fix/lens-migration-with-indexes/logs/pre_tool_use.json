@@ -1,0 +1,25 @@
+[
+  {
+    "session_id": "13815f19-ac52-4e67-87a8-90325c8a3f49",
+    "transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/13815f19-ac52-4e67-87a8-90325c8a3f49.jsonl",
+    "cwd": "/Users/islam/dev/sourcenetwork/defradb",
+    "permission_mode": "default",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Bash",
+    "tool_input": {
+      "command": "eza --tree --git-ignore",
+      "description": "Show project directory tree structure"
+    }
+  },
+  {
+    "session_id": "13815f19-ac52-4e67-87a8-90325c8a3f49",
+    "transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/13815f19-ac52-4e67-87a8-90325c8a3f49.jsonl",
+    "cwd": "/Users/islam/dev/sourcenetwork/defradb",
+    "permission_mode": "default",
+    "hook_event_name": "PreToolUse",
+    "tool_name": "Read",
+    "tool_input": {
+      "file_path": "/Users/islam/dev/sourcenetwork/defradb/ai/docs/org-general-practices.md"
+    }
+  }
+]

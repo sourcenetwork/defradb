@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/lens"
 )
 
 func (db *DB) getLensStore(ctx context.Context) store.Store {
@@ -130,51 +131,24 @@ func (db *DB) shouldReindexAfterMigration(
 	activeCol, err := description.GetActiveCollectionByCollectionID(ctx, dstCol.CollectionID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
-			// No active collection, no reindexing needed
 			return false, client.CollectionVersion{}, nil
 		}
 		return false, client.CollectionVersion{}, err
 	}
 
-	colsWithRoot, err := description.GetCollectionsByCollectionID(ctx, dstCol.CollectionID)
+	history, err := lens.GetTargetedCollectionHistory(
+		ctx,
+		activeCol.CollectionID,
+		activeCol.VersionID,
+	)
 	if err != nil {
 		return false, client.CollectionVersion{}, err
 	}
 
-	isInChain := isMigrationInActiveChain(dstCol, activeCol, colsWithRoot)
-	return isInChain, activeCol, nil
-}
-
-// isMigrationInActiveChain checks if dstCol (where migration was just added) is in the
-// history chain of the activeCol. This means the migration affects the active version.
-func isMigrationInActiveChain(
-	dstCol, activeCol client.CollectionVersion,
-	colsWithRoot []client.CollectionVersion,
-) bool {
-	versionsByID := make(map[string]client.CollectionVersion, len(colsWithRoot))
-	for _, col := range colsWithRoot {
-		versionsByID[col.VersionID] = col
+	if history == nil {
+		return false, activeCol, nil
 	}
 
-	current := activeCol
-
-	for {
-		if current.VersionID == dstCol.VersionID {
-			return true
-		}
-
-		if !current.PreviousVersion.HasValue() {
-			// Reached the end of the chain without finding dstCol
-			return false
-		}
-
-		prevSource := current.PreviousVersion.Value()
-		prevVersion, exists := versionsByID[prevSource.SourceCollectionID]
-		if !exists {
-			// Previous version not found in the chain
-			return false
-		}
-
-		current = prevVersion
-	}
+	_, found := history[dstCol.VersionID]
+	return found, activeCol, nil
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/lens"
 )
 
 func (db *DB) createCollections(
@@ -497,7 +498,6 @@ func (db *DB) setActiveCollectionVersion(
 
 	// The optional collection is used to track if there was a switch to another version.
 	newActiveCol := immutable.None[client.CollectionVersion]()
-	prevActiveCol := immutable.None[client.CollectionVersion]()
 
 	for _, col := range colsWithRoot {
 		if col.VersionID == versionID {
@@ -525,16 +525,19 @@ func (db *DB) setActiveCollectionVersion(
 		if err != nil {
 			return err
 		}
-
-		prevActiveCol = immutable.Some(col)
 	}
 
-	if newActiveCol.HasValue() && prevActiveCol.HasValue() &&
-		hasMigrationBetweenVersions(newActiveCol.Value(), prevActiveCol.Value(), colsWithRoot) {
-		// we need to reindex the new active version because between 2 versions there is a migration
-		err = db.reindexNewActiveVersion(ctx, newActiveCol.Value())
+	if newActiveCol.HasValue() {
+		shouldReindex, err := db.shouldReindexForVersionSwitch(ctx, newActiveCol.Value())
 		if err != nil {
 			return err
+		}
+
+		if shouldReindex {
+			err = db.reindexNewActiveVersion(ctx, newActiveCol.Value())
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -542,53 +545,37 @@ func (db *DB) setActiveCollectionVersion(
 	return db.loadSchema(ctx)
 }
 
-func hasMigrationBetweenVersions(
-	activatedVersion, deactivatedVersion client.CollectionVersion,
-	colsWithRoot []client.CollectionVersion,
-) bool {
-	versionsByID := make(map[string]client.CollectionVersion, len(colsWithRoot))
-	for _, col := range colsWithRoot {
-		versionsByID[col.VersionID] = col
+// shouldReindexForVersionSwitch determines if reindexing is needed when switching
+// to a new active version by examining the full version history DAG using the lens
+// package's GetTargetedCollectionHistory function.
+//
+// This properly handles branching version histories by checking if any version
+// reachable from the new active version has a migration.
+func (db *DB) shouldReindexForVersionSwitch(
+	ctx context.Context,
+	newActiveCol client.CollectionVersion,
+) (bool, error) {
+	history, err := lens.GetTargetedCollectionHistory(
+		ctx,
+		newActiveCol.CollectionID,
+		newActiveCol.VersionID,
+	)
+	if err != nil {
+		return false, err
 	}
 
-	// We don't know which version is newer, so we need to check both directions
-	// Check from activatedVersion backwards toward deactivatedVersion
-	if hasMigrationInChain(activatedVersion, deactivatedVersion, versionsByID) {
-		return true
+	if history == nil {
+		return false, nil
 	}
 
-	// Check from deactivatedVersion backwards toward activatedVersion
-	return hasMigrationInChain(deactivatedVersion, activatedVersion, versionsByID)
-}
-
-// hasMigrationInChain walks backwards from startVersion through PreviousVersion links
-// looking for a lens migration (Transform) until it reaches targetVersion.
-func hasMigrationInChain(
-	startVersion, targetVersion client.CollectionVersion,
-	versionsByID map[string]client.CollectionVersion,
-) bool {
-	current := startVersion
-
-	for {
-		if !current.PreviousVersion.HasValue() {
-			return false
+	for _, historyLink := range history {
+		if historyLink.Collection().PreviousVersion.HasValue() {
+			prevVersion := historyLink.Collection().PreviousVersion.Value()
+			if prevVersion.Transform.HasValue() {
+				return true, nil
+			}
 		}
-
-		prevSource := current.PreviousVersion.Value()
-
-		if prevSource.Transform.HasValue() {
-			return true
-		}
-
-		prevVersion, exists := versionsByID[prevSource.SourceCollectionID]
-		if !exists {
-			return false
-		}
-
-		if prevVersion.VersionID == targetVersion.VersionID {
-			return false
-		}
-
-		current = prevVersion
 	}
+
+	return false, nil
 }

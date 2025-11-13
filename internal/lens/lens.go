@@ -55,7 +55,7 @@ type lens struct {
 	outputPipe         enumerable.Concatenation[LensDoc]
 	unknownVersionPipe enumerable.Queue[LensDoc]
 
-	collectionHistory map[schemaVersionID]*targetedCollectionHistoryLink
+	collectionHistory map[schemaVersionID]*TargetedCollectionHistoryLink
 
 	source enumerable.Queue[lensInput]
 }
@@ -66,7 +66,7 @@ func new(
 	ctx context.Context,
 	store store.Store,
 	targetSchemaVersionID schemaVersionID,
-	collectionHistory map[schemaVersionID]*targetedCollectionHistoryLink,
+	collectionHistory map[schemaVersionID]*TargetedCollectionHistoryLink,
 ) Lens {
 	targetSource := enumerable.NewQueue[LensDoc]()
 	outputPipe := enumerable.Concat(targetSource)

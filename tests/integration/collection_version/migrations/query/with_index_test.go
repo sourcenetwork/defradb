@@ -22,6 +22,14 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
+const (
+	schemaV1 = "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq"
+	schemaV2 = "bafyreighc6zz7674lpd3vwbd3bve5elzol3ijntwtzmw6cspnxkfijdsxa"
+	schemaV3 = "bafyreidmsarf4ac4eihxk3ocqfort3e3pxhb7eumatvkanjsxxkjrn3h6a"
+	schemaV4 = "bafyreidptieeo3tckkyi6jnomavo3noy2mxuv7dfuc76pf2vgxm6ilfazq"
+	schemaV5 = "bafyreia2ls3vfvwbgaunr5si5cpo3be5m7vtbmlzxuzvls5laz74zpwrg4"
+)
+
 func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -29,20 +37,20 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 				Schema: `
 					type Users {
 						name: String @index
-						points: Int
+						age: Int
 					}
 				`,
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
-					"name":   "John",
-					"points": 100,
+					"name": "John",
+					"age":  30,
 				},
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
-					"name":   "Alice",
-					"points": 200,
+					"name": "Alice",
+					"age":  40,
 				},
 			},
 			testUtils.PatchCollection{
@@ -54,15 +62,15 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreiaggrtq3p5esmkyqnmuh2dhwakhxmivacc6xj2vqaig566zc7mq6u",
-					DestinationSchemaVersionID: "bafyreibppsfeecybqx2n24iuev2nzsti7zr4n6tkbeg4kcw5expy6lmgdm",
+					SourceSchemaVersionID:      schemaV1,
+					DestinationSchemaVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
 								Path: lenses.IncrementModulePath,
 								Arguments: map[string]any{
-									"field": "points",
-									"value": 50,
+									"field": "age",
+									"value": 5,
 								},
 							},
 						},
@@ -73,14 +81,14 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 				Request: `query {
 					Users(filter: {name: {_eq: "John"}}) {
 						name
-						points
+						age
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "John",
-							"points": int64(150),
+							"name": "John",
+							"age":  int64(35),
 						},
 					},
 				},
@@ -89,7 +97,7 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 				Request: `query @explain(type: execute) {
 					Users(filter: {name: {_eq: "John"}}) {
 						name
-						points
+						age
 					}
 				}`,
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
@@ -99,14 +107,6 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
-const (
-	schemaV1 = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
-	schemaV2 = "bafyreic75wgihcghabkb6idsnp2rrdugo6drwshiu6wnwypz2oyfwmqdeq"
-	schemaV3 = "bafyreibz2wolrhx2vnrvyh7vg5rlehyekhnivthqom5zft5ku4mhpzi2fa"
-	schemaV4 = "bafyreigpp4pjidheelridixgeppcki44t33dugru5b4hqnicyue5jqtudq"
-	schemaV5 = "bafyreiclhvinnlruvathdewsz3inr55kh4koogikxds3akm23vzzv5vffa"
-)
 
 func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigratedValues(t *testing.T) {
 	test := testUtils.TestCase{
@@ -934,6 +934,369 @@ func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *tes
 					"Users": []map[string]any{
 						{
 							"name": "Fred",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrationCorrectly(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  30,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Alice",
+					"age":  25,
+				},
+			},
+			// Create branch A: v1 -> v2 (no migration)
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
+					]
+				`,
+			},
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV1,
+			},
+			// Create branch B: v1 -> v3 (with migration: age+5)
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }
+					]
+				`,
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.IncrementModulePath,
+							Arguments: map[string]any{
+								"field": "age",
+								"value": 5,
+							},
+						},
+					},
+				}),
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 35}}) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(35),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 35}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV2,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(30),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV1,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(30),
+						},
+					},
+				},
+			},
+			// Switch back to branch B (v3 with migration) - should reindex with migrated values
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV3,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 35}}) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(35),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 35}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrationPerBranch(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+					"age":  20,
+				},
+			},
+			// Create branch A: v1 -> v2 (no migration)
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
+					]
+				`,
+			},
+			// Switch back to v1 to create branch B
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV1,
+			},
+			// Create branch B: v1 -> v3 (migration: age+5)
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }
+					]
+				`,
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.IncrementModulePath,
+							Arguments: map[string]any{
+								"field": "age",
+								"value": 5,
+							},
+						},
+					},
+				}),
+			},
+			// Switch back to v1 to create branch C
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV1,
+			},
+			// Create branch C: v1 -> v4 (migration: age+10)
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "rank", "Kind": "Int"} }
+					]
+				`,
+				Lens: immutable.Some(model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.IncrementModulePath,
+							Arguments: map[string]any{
+								"field": "age",
+								"value": 10,
+							},
+						},
+					},
+				}),
+			},
+			// Test branch C (v4): age should be 30 (20 + 10)
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+							"age":  int64(30), // 20 + 10
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+			// Switch to branch B (v3): age should be 25 (20 + 5)
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV3,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 25}}) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+							"age":  int64(25), // 20 + 5
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 25}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+			// Switch to branch A (v2): age should be 20 (no migration)
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV2,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 20}}) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+							"age":  int64(20), // original
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query @explain(type: execute) {
+					Users(filter: {age: {_eq: 20}}) {
+						name
+					}
+				}`,
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+			// Switch back to root (v1): age should be 20 (original)
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV1,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 20}}) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+							"age":  int64(20), // original
+						},
+					},
+				},
+			},
+			// Final switch back to branch C (v4): verify age is 30 again
+			testUtils.SetActiveCollectionVersion{
+				VersionID: schemaV4,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+							"age":  int64(30), // 20 + 10
 						},
 					},
 				},
