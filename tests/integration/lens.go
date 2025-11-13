@@ -71,4 +71,9 @@ func configureMigration(
 	}
 
 	s.LensIDs = append(s.LensIDs, lensID)
+
+	// After setting migration the collection's Version.Previous.Value().Transform should be set.
+	// that's why we need to refresh collections, so that the in-memory collection versions are updated.
+	// Originally was added for [CreateIndex] to be able to index docs with migrated values.
+	refreshCollections(s)
 }

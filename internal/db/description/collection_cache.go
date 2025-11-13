@@ -89,6 +89,15 @@ func (cache *collectionCache) Add(col client.CollectionVersion) {
 					break
 				}
 			}
+
+			colVersions := cache.CollectionsByID[col.CollectionID]
+			for i := range colVersions {
+				if colVersions[i].VersionID == col.VersionID {
+					colVersions[i] = col
+					break
+				}
+			}
+			cache.CollectionsByID[col.CollectionID] = colVersions
 		}
 	}
 

@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package lens
+package description
 
 import (
 	"context"
@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
 // collectionHistoryLink represents an item in a particular collection's schema history, it
@@ -34,31 +33,46 @@ type collectionHistoryLink struct {
 	previous []*collectionHistoryLink
 }
 
-// targetedCollectionHistoryLink represents an item in a particular collection's schema history, it
+// TargetedCollectionHistoryLink represents an item in a particular collection's schema history, it
 // links to the previous and next version items if they exist and are on the path to
 // the target schema version.
-type targetedCollectionHistoryLink struct {
+type TargetedCollectionHistoryLink struct {
 	// The collection as this point in history.
 	collection *client.CollectionVersion
 
 	// The link to next collection version, if there is one
 	// (for the most recent collection version this will be None).
-	next immutable.Option[*targetedCollectionHistoryLink]
+	next immutable.Option[*TargetedCollectionHistoryLink]
 
 	// The link to the previous collection version, if there is
 	// one (for the initial collection version this will be None).
-	previous immutable.Option[*targetedCollectionHistoryLink]
+	previous immutable.Option[*TargetedCollectionHistoryLink]
 }
 
-// getTargetedCollectionHistory returns the history of the schema of the given id, relative
+// Collection returns the collection version at this point in history.
+func (t *TargetedCollectionHistoryLink) Collection() *client.CollectionVersion {
+	return t.collection
+}
+
+// Next returns the link to the next collection version.
+func (t *TargetedCollectionHistoryLink) Next() immutable.Option[*TargetedCollectionHistoryLink] {
+	return t.next
+}
+
+// Previous returns the link to the previous collection version.
+func (t *TargetedCollectionHistoryLink) Previous() immutable.Option[*TargetedCollectionHistoryLink] {
+	return t.previous
+}
+
+// GetTargetedCollectionHistory returns the history of the schema of the given id, relative
 // to the given target schema version id.
 //
 // This includes any history items that are only known via registered schema migrations.
-func getTargetedCollectionHistory(
+func GetTargetedCollectionHistory(
 	ctx context.Context,
 	schemaRoot string,
 	targetSchemaVersionID string,
-) (map[schemaVersionID]*targetedCollectionHistoryLink, error) {
+) (map[string]*TargetedCollectionHistoryLink, error) {
 	history, err := getCollectionHistory(ctx, schemaRoot)
 	if err != nil {
 		return nil, err
@@ -71,9 +85,9 @@ func getTargetedCollectionHistory(
 		return nil, nil
 	}
 
-	result := map[schemaVersionID]*targetedCollectionHistoryLink{}
+	result := map[string]*TargetedCollectionHistoryLink{}
 
-	targetLink := &targetedCollectionHistoryLink{
+	targetLink := &TargetedCollectionHistoryLink{
 		collection: targetHistoryItem.collection,
 	}
 	result[targetLink.collection.VersionID] = targetLink
@@ -89,9 +103,9 @@ func getTargetedCollectionHistory(
 // Forward collection versions found will in turn be linked both forwards and backwards, allowing
 // branches to be correctly mapped to the target schema version.
 func linkForwards(
-	currentLink *targetedCollectionHistoryLink,
+	currentLink *TargetedCollectionHistoryLink,
 	currentHistoryItem *collectionHistoryLink,
-	result map[schemaVersionID]*targetedCollectionHistoryLink,
+	result map[string]*TargetedCollectionHistoryLink,
 ) {
 	for _, nextHistoryItem := range currentHistoryItem.next {
 		if _, ok := result[nextHistoryItem.collection.VersionID]; ok {
@@ -100,7 +114,7 @@ func linkForwards(
 			continue
 		}
 
-		nextLink := &targetedCollectionHistoryLink{
+		nextLink := &TargetedCollectionHistoryLink{
 			collection: nextHistoryItem.collection,
 			previous:   immutable.Some(currentLink),
 		}
@@ -116,9 +130,9 @@ func linkForwards(
 // Backward collection versions found will in turn be linked both forwards and backwards, allowing
 // branches to be correctly mapped to the target schema version.
 func linkBackwards(
-	currentLink *targetedCollectionHistoryLink,
+	currentLink *TargetedCollectionHistoryLink,
 	currentHistoryItem *collectionHistoryLink,
-	result map[schemaVersionID]*targetedCollectionHistoryLink,
+	result map[string]*TargetedCollectionHistoryLink,
 ) {
 	for _, prevHistoryItem := range currentHistoryItem.previous {
 		if _, ok := result[prevHistoryItem.collection.VersionID]; ok {
@@ -127,7 +141,7 @@ func linkBackwards(
 			continue
 		}
 
-		prevLink := &targetedCollectionHistoryLink{
+		prevLink := &TargetedCollectionHistoryLink{
 			collection: prevHistoryItem.collection,
 			next:       immutable.Some(currentLink),
 		}
@@ -145,13 +159,13 @@ func linkBackwards(
 func getCollectionHistory(
 	ctx context.Context,
 	schemaRoot string,
-) (map[schemaVersionID]*collectionHistoryLink, error) {
-	cols, err := description.GetCollectionsByCollectionID(ctx, schemaRoot)
+) (map[string]*collectionHistoryLink, error) {
+	cols, err := GetCollectionsByCollectionID(ctx, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	history := map[schemaVersionID]*collectionHistoryLink{}
+	history := map[string]*collectionHistoryLink{}
 
 	for _, col := range cols {
 		// Convert the temporary types to the cleaner return type:
