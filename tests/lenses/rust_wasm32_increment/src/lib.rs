@@ -86,3 +86,164 @@ fn apply_increment(
 
     Ok(StreamOption::EndOfStream)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    use std::collections::HashMap;
+    use serial_test::serial;
+
+    // Note: All tests use #[serial] because they share the global PARAMETERS static variable.
+
+    #[test]
+    #[serial]
+    fn test_try_transform_increments_value() {
+        let field_name = "count".to_string();
+        let mut ptr = PARAMETERS.write().unwrap();
+        *ptr = Some(Parameters {
+            field: field_name.clone(),
+            value: json!(5),
+        });
+        drop(ptr);
+
+        let mut input_doc = HashMap::new();
+        input_doc.insert(field_name.clone(), json!(30));
+
+        let input = [Ok(Some(input_doc))];
+        let mut it = input.into_iter();
+
+        let result = try_transform(&mut it).unwrap();
+
+        let mut expected_result = HashMap::new();
+        expected_result.insert(field_name, json!(35));
+
+        assert_eq!(result, StreamOption::Some(expected_result));
+    }
+
+    #[test]
+    #[serial]
+    fn test_try_transform_with_negative_increment() {
+        let field_name = "score".to_string();
+        let mut ptr = PARAMETERS.write().unwrap();
+        *ptr = Some(Parameters {
+            field: field_name.clone(),
+            value: json!(-10),
+        });
+        drop(ptr);
+
+        let mut input_doc = HashMap::new();
+        input_doc.insert(field_name.clone(), json!(50));
+
+        let input = [Ok(Some(input_doc))];
+        let mut it = input.into_iter();
+
+        let result = try_transform(&mut it).unwrap();
+
+        let mut expected_result = HashMap::new();
+        expected_result.insert(field_name, json!(40));
+
+        assert_eq!(result, StreamOption::Some(expected_result));
+    }
+
+    #[test]
+    #[serial]
+    fn test_try_transform_handles_empty_iterator() {
+        let mut ptr = PARAMETERS.write().unwrap();
+        *ptr = Some(Parameters {
+            field: "test_field".to_string(),
+            value: json!(1),
+        });
+        drop(ptr);
+
+        let input: [lens_sdk::Result<Option<HashMap<String, serde_json::Value>>>; 0] = [];
+        let mut it = input.into_iter();
+
+        let result = try_transform(&mut it).unwrap();
+
+        assert_eq!(result, StreamOption::EndOfStream);
+    }
+
+    #[test]
+    #[serial]
+    fn test_try_transform_handles_none_input() {
+        let mut ptr = PARAMETERS.write().unwrap();
+        *ptr = Some(Parameters {
+            field: "test_field".to_string(),
+            value: json!(1),
+        });
+        drop(ptr);
+
+        let input = [Ok(None)];
+        let mut it = input.into_iter();
+
+        let result = try_transform(&mut it).unwrap();
+
+        assert_eq!(result, StreamOption::None);
+    }
+
+    #[test]
+    #[serial]
+    fn test_try_inverse_decrements_value() {
+        let field_name = "balance".to_string();
+        let mut ptr = PARAMETERS.write().unwrap();
+        *ptr = Some(Parameters {
+            field: field_name.clone(),
+            value: json!(7),
+        });
+        drop(ptr);
+
+        let mut input_doc = HashMap::new();
+        input_doc.insert(field_name.clone(), json!(35));
+
+        let input = [Ok(Some(input_doc))];
+        let mut it = input.into_iter();
+
+        let result = try_inverse(&mut it).unwrap();
+
+        let mut expected_result = HashMap::new();
+        expected_result.insert(field_name, json!(28));
+
+        assert_eq!(result, StreamOption::Some(expected_result));
+    }
+
+    #[test]
+    #[serial]
+    fn test_transform_then_inverse_roundtrip() {
+        let field_name = "value".to_string();
+        let original_value = 100;
+        let increment_amount = 42;
+
+        // Transform: 100 + 42 = 142
+        let mut ptr = PARAMETERS.write().unwrap();
+        *ptr = Some(Parameters {
+            field: field_name.clone(),
+            value: json!(increment_amount),
+        });
+        drop(ptr);
+
+        let mut input_doc_1 = HashMap::new();
+        input_doc_1.insert(field_name.clone(), json!(original_value));
+        let input_1 = [Ok(Some(input_doc_1))];
+        let mut it_1 = input_1.into_iter();
+
+        let transform_result = try_transform(&mut it_1).unwrap();
+
+        if let StreamOption::Some(transformed_doc) = transform_result {
+            assert_eq!(transformed_doc.get(&field_name).unwrap(), &json!(142));
+
+            // Inverse: 142 - 42 = 100 (reuse same parameters)
+            let input_2 = [Ok(Some(transformed_doc))];
+            let mut it_2 = input_2.into_iter();
+
+            let inverse_result = try_inverse(&mut it_2).unwrap();
+
+            let mut expected_result = HashMap::new();
+            expected_result.insert(field_name, json!(original_value));
+
+            assert_eq!(inverse_result, StreamOption::Some(expected_result));
+        } else {
+            panic!("Transform should return Some");
+        }
+    }
+}
