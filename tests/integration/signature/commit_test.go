@@ -459,13 +459,6 @@ func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
 
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		SupportedClientTypes: immutable.Some([]state.ClientType{
-			state.GoClientType,
-			state.CLIClientType,
-			state.HTTPClientType,
-			state.JSClientType,
-			state.CClientType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
