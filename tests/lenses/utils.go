@@ -72,6 +72,17 @@ var StandardDeviationModulePath string = getPathRelativeToProjectRoot(
 	"/tests/lenses/rust_wasm32_std_dev/target/wasm32-unknown-unknown/debug/std_dev.wasm",
 )
 
+// IncrementModulePath is the path to the `Increment` lens module compiled to wasm.
+//
+// The module has two parameters:
+//   - `field` is a string and is the name of the numeric property you wish to increment
+//   - `value` is an integer that will be added to the current value of the `field` property.
+//
+// This module has an inverse, which will subtract the `value` from the `field` property.
+var IncrementModulePath string = getPathRelativeToProjectRoot(
+	"/tests/lenses/rust_wasm32_increment/target/wasm32-unknown-unknown/debug/rust_wasm32_increment.wasm",
+)
+
 func getPathRelativeToProjectRoot(relativePath string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	root := path.Dir(path.Dir(path.Dir(filename)))

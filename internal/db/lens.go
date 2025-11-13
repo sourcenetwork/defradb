@@ -99,5 +99,55 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 		return "", err
 	}
 
+	shouldReindex, activeCol, err := db.shouldReindexAfterMigration(ctx, dstCol)
+	if err != nil {
+		return "", err
+	}
+
+	if shouldReindex {
+		err = db.reindexNewActiveVersion(ctx, activeCol)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	return id.String(), nil
+}
+
+// shouldReindexAfterMigration determines if reindexing is needed after adding a migration.
+// Reindexing is needed if:
+// 1. The destination collection is currently active, OR
+// 2. The destination collection is in the history chain of any currently active collection
+// Returns: (shouldReindex bool, activeCollection, error)
+func (db *DB) shouldReindexAfterMigration(
+	ctx context.Context,
+	dstCol client.CollectionVersion,
+) (bool, client.CollectionVersion, error) {
+	if dstCol.IsActive {
+		return true, dstCol, nil
+	}
+
+	activeCol, err := description.GetActiveCollectionByCollectionID(ctx, dstCol.CollectionID)
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			return false, client.CollectionVersion{}, nil
+		}
+		return false, client.CollectionVersion{}, err
+	}
+
+	history, err := description.GetTargetedCollectionHistory(
+		ctx,
+		activeCol.CollectionID,
+		activeCol.VersionID,
+	)
+	if err != nil {
+		return false, client.CollectionVersion{}, err
+	}
+
+	if history == nil {
+		return false, activeCol, nil
+	}
+
+	_, found := history[dstCol.VersionID]
+	return found, activeCol, nil
 }

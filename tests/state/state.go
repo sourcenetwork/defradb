@@ -252,7 +252,7 @@ type State struct {
 	// The VersionIDs of all collection versions created so far by the test.
 	//
 	// WARNING: This does not actually include patch versions yet.  Please add that when
-	// the need arrises.
+	// the need arises.
 	CollectionVersions []string
 
 	// Document IDs by index, by collection index.

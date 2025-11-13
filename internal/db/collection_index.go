@@ -692,3 +692,27 @@ func (db *DB) listAllEncryptedIndexDescriptions(
 
 	return indexes, nil
 }
+
+// reindexNewActiveVersion reindexes all documents in the collection for the new active version.
+func (db *DB) reindexNewActiveVersion(ctx context.Context, col client.CollectionVersion) error {
+	if !col.IsActive {
+		return nil
+	}
+
+	collection, err := db.newCollection(col)
+	if err != nil {
+		return err
+	}
+	for _, colIndex := range collection.indexes {
+		err = colIndex.RemoveAll(ctx)
+		if err != nil {
+			return err
+		}
+		err = collection.indexExistingDocs(ctx, colIndex)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

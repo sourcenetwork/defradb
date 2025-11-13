@@ -455,3 +455,70 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
+	test := testUtils.TestCase{
+		EnableSigning: true,
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int 
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  21,
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						_commits {
+							fieldName
+							signature {
+								type
+								identity
+								value
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+							"signature": map[string]any{
+								"type": coreblock.SignatureTypeECDSA256K,
+								// Confirm that the identity is being returned as hex-encoded string.
+								"identity": "02ae92ce7553993f04400c6976f8cd4540ae076bf0131eec8b35ae0ff9fc577a90",
+								"value":    newSignatureMatcher(makeFieldBlock("age", 21), crypto.KeyTypeSecp256k1),
+							},
+						},
+						{
+							"fieldName": "name",
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": "02ae92ce7553993f04400c6976f8cd4540ae076bf0131eec8b35ae0ff9fc577a90",
+								"value": newSignatureMatcher(
+									makeFieldBlock("name", "John"), crypto.KeyTypeSecp256k1),
+							},
+						},
+						{
+							"fieldName": "_C",
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": "02ae92ce7553993f04400c6976f8cd4540ae076bf0131eec8b35ae0ff9fc577a90",
+								"value":    gomega.Not(gomega.BeEmpty()),
+							},
+						},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

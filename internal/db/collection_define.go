@@ -239,6 +239,9 @@ func (db *DB) patchCollection(
 		}
 	}
 
+	// Track collections that were upgraded from placeholders and may need reindexing
+	var placeholderReplacers []client.CollectionVersion
+
 	for i := 0; i < len(newCollections); i++ {
 		placeholder := newCollections[i]
 		if placeholder.IsPlaceholder {
@@ -246,6 +249,10 @@ func (db *DB) patchCollection(
 			for j, col := range newCollections {
 				if col.VersionID == placeholder.VersionID && !col.IsPlaceholder {
 					newCollections[j].PreviousVersion = placeholder.PreviousVersion
+					// Track this collection as it may have a migration that needs to be applied
+					if col.IsActive {
+						placeholderReplacers = append(placeholderReplacers, newCollections[j])
+					}
 					isFound = true
 					break
 				}
@@ -294,6 +301,16 @@ func (db *DB) patchCollection(
 				DestinationSchemaVersionID: col.VersionID,
 				Lens:                       migration.Value(),
 			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// Reindex any collections that were upgraded from placeholders with migrations
+	for _, col := range placeholderReplacers {
+		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
+			err = db.reindexNewActiveVersion(ctx, col)
 			if err != nil {
 				return err
 			}
@@ -478,6 +495,9 @@ func (db *DB) setActiveCollectionVersion(
 		return err
 	}
 
+	// The optional collection is used to track if there was a switch to another version.
+	newActiveCol := immutable.None[client.CollectionVersion]()
+
 	for _, col := range colsWithRoot {
 		if col.VersionID == versionID {
 			if col.IsActive {
@@ -489,6 +509,8 @@ func (db *DB) setActiveCollectionVersion(
 			if err != nil {
 				return err
 			}
+
+			newActiveCol = immutable.Some(col)
 
 			continue
 		}
@@ -504,6 +526,55 @@ func (db *DB) setActiveCollectionVersion(
 		}
 	}
 
+	if newActiveCol.HasValue() {
+		shouldReindex, err := db.shouldReindexForVersionSwitch(ctx, newActiveCol.Value())
+		if err != nil {
+			return err
+		}
+
+		if shouldReindex {
+			err = db.reindexNewActiveVersion(ctx, newActiveCol.Value())
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	// Load the schema into the clients (e.g. GQL)
 	return db.loadSchema(ctx)
+}
+
+// shouldReindexForVersionSwitch determines if reindexing is needed when switching
+// to a new active version by examining the full version history DAG using the lens
+// package's GetTargetedCollectionHistory function.
+//
+// This properly handles branching version histories by checking if any version
+// reachable from the new active version has a migration.
+func (db *DB) shouldReindexForVersionSwitch(
+	ctx context.Context,
+	newActiveCol client.CollectionVersion,
+) (bool, error) {
+	history, err := description.GetTargetedCollectionHistory(
+		ctx,
+		newActiveCol.CollectionID,
+		newActiveCol.VersionID,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	if history == nil {
+		return false, nil
+	}
+
+	for _, historyLink := range history {
+		if historyLink.Collection().PreviousVersion.HasValue() {
+			prevVersion := historyLink.Collection().PreviousVersion.Value()
+			if prevVersion.Transform.HasValue() {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }

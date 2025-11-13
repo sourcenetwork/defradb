@@ -5,3 +5,4 @@ build:
 	cargo build --target wasm32-unknown-unknown --manifest-path "./rust_wasm32_prepend/Cargo.toml"
 	cargo build --target wasm32-unknown-unknown --manifest-path "./rust_wasm32_filter/Cargo.toml"
 	cargo build --target wasm32-unknown-unknown --manifest-path "./rust_wasm32_std_dev/Cargo.toml"
+	cargo build --target wasm32-unknown-unknown --manifest-path "./rust_wasm32_increment/Cargo.toml"

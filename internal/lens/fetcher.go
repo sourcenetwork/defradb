@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -90,7 +91,8 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[defFields[i].Name] = defFields[i]
 	}
 
-	history, err := getTargetedCollectionHistory(ctx, f.col.Version().CollectionID, f.col.Version().VersionID)
+	history, err := description.GetTargetedCollectionHistory(ctx, f.col.Version().CollectionID,
+		f.col.Version().VersionID)
 	if err != nil {
 		return err
 	}
@@ -98,8 +100,8 @@ func (f *lensedFetcher) Init(
 	f.txn = txn
 
 	for _, historyItem := range history {
-		if historyItem.collection.PreviousVersion.HasValue() &&
-			historyItem.collection.PreviousVersion.Value().Transform.HasValue() {
+		if historyItem.Collection().PreviousVersion.HasValue() &&
+			historyItem.Collection().PreviousVersion.Value().Transform.HasValue() {
 			f.hasMigrations = true
 			break
 		}
