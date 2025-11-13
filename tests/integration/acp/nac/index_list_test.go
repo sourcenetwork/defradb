@@ -27,9 +27,7 @@ func TestNAC_GatesIndexList_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				state.GoClientType,
 				state.HTTPClientType,
 				state.CLIClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{

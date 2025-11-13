@@ -32,8 +32,8 @@ type lensNode struct {
 	source     planNode
 	collection client.CollectionVersion
 
-	input  enumerable.Queue[map[string]any]
-	output enumerable.Enumerable[map[string]any]
+	srcEnumerable enumerable.Enumerable[map[string]any]
+	output        enumerable.Enumerable[map[string]any]
 }
 
 func (p *Planner) Lens(source planNode, docMap *core.DocumentMapping, col client.Collection) *lensNode {
@@ -46,12 +46,14 @@ func (p *Planner) Lens(source planNode, docMap *core.DocumentMapping, col client
 }
 
 func (n *lensNode) Init() error {
-	n.input = enumerable.NewQueue[map[string]any]()
+	n.srcEnumerable = &nodeEnumerable{
+		src: n.source,
+	}
 
 	var pipe enumerable.Enumerable[map[string]any]
 	if n.collection.Query.HasValue() && n.collection.Query.Value().Transform.HasValue() {
 		var err error
-		pipe, err = n.p.lensStore.Transform(n.p.ctx, n.input, n.collection.Query.Value().Transform.Value())
+		pipe, err = n.p.lensStore.Transform(n.p.ctx, n.srcEnumerable, n.collection.Query.Value().Transform.Value())
 		if err != nil {
 			return err
 		}
@@ -59,7 +61,7 @@ func (n *lensNode) Init() error {
 		var err error
 		pipe, err = n.p.lensStore.Transform(
 			n.p.ctx,
-			n.input,
+			n.srcEnumerable,
 			n.collection.PreviousVersion.Value().Transform.Value(),
 		)
 		if err != nil {
@@ -103,14 +105,6 @@ func (n *lensNode) Next() (bool, error) {
 
 	if !sourceHasNext {
 		return false, nil
-	}
-
-	sourceDoc := n.source.Value()
-	sourceLensDoc := n.source.Source().DocumentMap().ToMap(sourceDoc)
-
-	err = n.input.Put(sourceLensDoc)
-	if err != nil {
-		return false, err
 	}
 
 	return n.Next()
@@ -196,4 +190,25 @@ func (n *lensNode) Close() error {
 	}
 
 	return nil
+}
+
+type nodeEnumerable struct {
+	src planNode
+}
+
+var _ enumerable.Enumerable[map[string]any] = (*nodeEnumerable)(nil)
+
+func (e *nodeEnumerable) Next() (bool, error) {
+	return e.src.Next()
+}
+
+func (e *nodeEnumerable) Value() (map[string]any, error) {
+	doc := e.src.Value()
+	lensDoc := e.src.Source().DocumentMap().ToMap(doc)
+
+	return lensDoc, nil
+}
+
+func (e *nodeEnumerable) Reset() {
+	panic("reset not supported - programming error")
 }

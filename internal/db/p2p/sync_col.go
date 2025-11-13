@@ -145,9 +145,10 @@ func (p *P2P) syncCollection(
 		}
 
 		field := client.CollectionFieldDescription{
-			Name: *fieldDelta.Name,
-			Typ:  *fieldDelta.Crdt,
-			Kind: kind,
+			FieldID: fieldCid.String(),
+			Name:    *fieldDelta.Name,
+			Typ:     *fieldDelta.Crdt,
+			Kind:    kind,
 		}
 
 		if *fieldDelta.Name == request.DocIDFieldName {
