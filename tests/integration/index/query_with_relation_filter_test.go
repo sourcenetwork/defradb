@@ -61,6 +61,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 						{"name": "Islam"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req1),
@@ -140,6 +141,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 						{"name": "Fred"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req2),
@@ -431,6 +433,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *t
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -608,6 +611,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request:  makeExplainQuery(req),
@@ -728,6 +732,7 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
@@ -778,6 +783,7 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 						{"model": "iPhone 13"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
@@ -859,6 +865,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 						{"model": "iPhone"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),

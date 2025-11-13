@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeLensCommand() *cobra.Command {
+func MakeLensCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "lens",
 		Short: "Interact with the schema migration system of a running DefraDB instance",

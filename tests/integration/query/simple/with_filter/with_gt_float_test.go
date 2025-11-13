@@ -113,6 +113,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_AllMatchingResult(t *testing
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

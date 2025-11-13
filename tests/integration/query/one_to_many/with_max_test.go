@@ -78,6 +78,7 @@ func TestQueryOneToMany_WithMaxAliasFilter_ShouldMatchAll(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

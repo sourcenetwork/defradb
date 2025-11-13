@@ -12,6 +12,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ import (
 
 // case: no args, meaning `--format text`
 func TestVersionNoArg(t *testing.T) {
-	cmd := MakeVersionCommand()
+	cmd := MakeVersionCommand(context.Background())
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)
 	err := cmd.Execute()
@@ -34,7 +35,7 @@ func TestVersionNoArg(t *testing.T) {
 
 // case: `--full`, meaning `--format text --full`
 func TestVersionFull(t *testing.T) {
-	cmd := MakeVersionCommand()
+	cmd := MakeVersionCommand(context.Background())
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)
 	cmd.SetArgs([]string{"--full"})
@@ -48,7 +49,7 @@ func TestVersionFull(t *testing.T) {
 
 // case: `--format json`
 func TestVersionJSON(t *testing.T) {
-	cmd := MakeVersionCommand()
+	cmd := MakeVersionCommand(context.Background())
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)
 	cmd.SetArgs([]string{"--format", "json"})
@@ -69,7 +70,7 @@ func TestVersionJSON(t *testing.T) {
 
 // case: `--format json --full` (is equivalent to previous one)
 func TestVersionJSONFull(t *testing.T) {
-	cmd := MakeVersionCommand()
+	cmd := MakeVersionCommand(context.Background())
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)
 	cmd.SetArgs([]string{"--format", "json", "--full"})

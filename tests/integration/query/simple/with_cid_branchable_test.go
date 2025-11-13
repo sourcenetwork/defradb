@@ -45,7 +45,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreibs2jbmx6brfwrgvekrgqpqbf7abex3ggebieusof4tonl3rharzi"
+							cid: "bafyreicbmj4ph5cjdn65ugobaqzwrwdcqkf2qqsdfimxdhvc2ceemfkdkq"
 						) {
 						name
 					}
@@ -92,7 +92,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreih64znwk6aehwvysjigowubg5llhjs4kq2ihdv4ovrfnlsljjf6u4"
+							cid: "bafyreidnibv7dlr3flwicfjybi6vguzhotendq73lws5xkeqro6jbhdyq4"
 						) {
 						name
 					}
@@ -139,7 +139,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreiboyz5ilklmxuiltrknoi7ubpuvvxmqidbzwnpe3ag64fqfqrjky4"
+							cid: "bafyreiaxocl4etnz52ojlt4vcfq3wyfsqr35atf5zilp2n324xxsiuobyu"
 						) {
 						name
 					}
@@ -154,6 +154,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

@@ -495,6 +495,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 						{"name": "Shahzad"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -505,6 +506,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{{"name": "Shahzad"}},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -515,6 +517,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{{"name": "John"}},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -528,6 +531,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 						{"name": "Shahzad"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -538,6 +542,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{{"name": "Shahzad"}},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

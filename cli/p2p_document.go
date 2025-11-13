@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PDocumentCommand() *cobra.Command {
+func MakeP2PDocumentCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "document",
 		Short: "Configure the P2P document system",

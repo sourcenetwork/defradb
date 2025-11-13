@@ -12,6 +12,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -52,7 +53,7 @@ const developmentDescription = `Enables a set of features that make development 
  - allows purging of all persisted data 
  - generates temporary node identity if keyring is disabled`
 
-func MakeStartCommand() *cobra.Command {
+func MakeStartCommand(ctx context.Context) *cobra.Command {
 	var identity string
 	var cmd = &cobra.Command{
 		Use:   "start",

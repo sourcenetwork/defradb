@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -22,15 +23,12 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
-func MakeViewAddCommand() *cobra.Command {
+func MakeViewAddCommand(ctx context.Context) *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
 		Use:   "add [query] [sdl] [transform]",
 		Short: "Add new view",
 		Long: `Add new database view.
-
-Example: add from an argument string:
-  defradb client view add 'Foo { name, ...}' 'type Foo { ... }' '{"lenses": [...'
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.RangeArgs(2, 4),
@@ -77,6 +75,10 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			return writeJSON(cmd, defs)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "add from an argument string",
+		`defradb client view add 'Foo { name, ...}' 'type Foo { ... }' '{"lenses": [...'`)
+
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")
 	return cmd
 }

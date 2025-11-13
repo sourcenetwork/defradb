@@ -56,6 +56,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `
@@ -74,6 +75,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -90,26 +92,26 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 						{
 							"_docID":"bae-9828df35-b4cd-5d3a-acab-193c84e521c6",
 							"_docIDNew":"bae-d7b5bc04-26af-570f-9aec-b9c5d923842f",
-							"author_id":"bae-97f27fca-8b97-59f1-afa1-2e63140de933",
+							"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"name":"Game of chains"
 						},
 						{
 							"_docID":"bae-0fa157eb-c762-51af-859d-9d0eb941d2f4",
 							"_docIDNew":"bae-8507cb9a-54ea-5db3-bb38-6b4e6e8f3dbf",
-							"author_id":"bae-97f27fca-8b97-59f1-afa1-2e63140de933",
+							"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"name":"John and the sourcerers' stone"
 						}
 					],
 					"User":[
 						{
-							"_docID":"bae-88fea952-a678-5e05-9895-8a86ac6abc3b",
-							"_docIDNew":"bae-88fea952-a678-5e05-9895-8a86ac6abc3b",
+							"_docID":"bae-be327e0b-a7fa-53ce-b29a-919cce5b5120",
+							"_docIDNew":"bae-be327e0b-a7fa-53ce-b29a-919cce5b5120",
 							"age":31,
 							"name":"Bob"
 						},
 						{
-							"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e",
-							"_docIDNew":"bae-97f27fca-8b97-59f1-afa1-2e63140de933",
+							"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9",
+							"_docIDNew":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"age":31,
 							"name":"John"
 						}
@@ -136,6 +138,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `
@@ -152,17 +155,18 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 						{
 							"name": "John and the sourcerers' stone",
 							"author": map[string]any{
-								"_docID": "bae-97f27fca-8b97-59f1-afa1-2e63140de933",
+								"_docID": "bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							},
 						},
 						{
 							"name": "Game of chains",
 							"author": map[string]any{
-								"_docID": "bae-97f27fca-8b97-59f1-afa1-2e63140de933",
+								"_docID": "bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

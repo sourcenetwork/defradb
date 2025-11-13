@@ -6,18 +6,6 @@ Send a DefraDB GraphQL query request
 
 Send a DefraDB GraphQL query request to the database.
 
-A query request can be sent as a single argument. Example command:
-  defradb client query 'query { ... }'
-
-Do a query request from a file by using the '-f' flag. Example command:
-  defradb client query -f request.graphql
-
-Do a query request from a file and with an identity. Example command:
-  defradb client query -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f -f request.graphql
-
-Or it can be sent via stdin by using the '-' special syntax. Example command:
-  cat request.graphql | defradb client query -
-
 A GraphQL client such as GraphiQL (https://github.com/graphql/graphiql) can be used to interact
 with the database more conveniently.
 
@@ -25,6 +13,23 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 
 ```
 defradb client query [-i --identity] [request] [flags]
+```
+
+### Examples
+
+```
+Single argument query:  
+  defradb client query 'query { ... }'
+
+Query from file:  
+  defradb client query -f request.graphql
+
+Query from file, with a provided identity:  
+  defradb client query -f request.graphql \
+	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f 
+
+Read query from stdin:  
+  cat request.graphql | defradb client query -
 ```
 
 ### Options

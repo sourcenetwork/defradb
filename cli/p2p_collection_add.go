@@ -11,24 +11,18 @@
 package cli
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionAddCommand() *cobra.Command {
+func MakeP2PCollectionAddCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "add [collectionNames]",
 		Short: "Add P2P collections",
 		Long: `Add P2P collections to the synchronized pubsub topics.
-The collections are synchronized between nodes of a pubsub network.
-
-Example: add single collection
-  defradb client p2p collection add User
-
-Example: add multiple collections
-  defradb client p2p collection add User,Address
-		`,
+The collections are synchronized between nodes of a pubsub network.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -45,5 +39,12 @@ Example: add multiple collections
 			return cliClient.AddP2PCollections(cmd.Context(), collectionNames...)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "add single collection",
+		`defradb client p2p collection add User`)
+
+	EmbedCLIExample(ctx, cmd, "add multiple collections",
+		`defradb client p2p collection add User,Address`)
+
 	return cmd
 }

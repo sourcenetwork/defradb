@@ -69,7 +69,7 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	}
 	args = append(args, "--url", w.address)
 
-	cmd := cli.NewDefraCommand()
+	cmd := cli.NewDefraCommand(ctx)
 	cmd.SetOut(stdOutWrite)
 	cmd.SetErr(stdErrWrite)
 	cmd.SetArgs(args)

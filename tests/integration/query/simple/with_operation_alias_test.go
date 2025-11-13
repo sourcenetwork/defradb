@@ -36,7 +36,7 @@ func TestQuerySimpleWithOperationAlias(t *testing.T) {
 				Results: map[string]any{
 					"allUsers": []map[string]any{
 						{
-							"_docID": "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c",
+							"_docID": "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b",
 							"Name":   "John",
 							"Age":    int64(21),
 						},

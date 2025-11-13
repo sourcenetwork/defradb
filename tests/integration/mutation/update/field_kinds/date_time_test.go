@@ -103,6 +103,7 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

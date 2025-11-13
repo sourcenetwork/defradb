@@ -7,15 +7,18 @@ Add replicator(s) and start synchronization
 Add replicator(s) and start synchronization.
 A replicator synchronizes one or all collection(s) from this instance to another.
 
-Example: Add a replicator to replicate the "Users" collection to a peer at the given address
-  defradb client p2p replicator set -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW...
-
-Example: Add a replicator to replicate the "Orders" collection to multiple peers at the given addresses
-  defradb client p2p replicator set -c Orders /ip4/0.0.0.0/tcp/9171/p2p/12D3KooW... /ip4/0.0.0.0/tcp/9172/p2p/1543LKs...
-
-
 ```
 defradb client p2p replicator set [-c, --collection] <addresses...> [flags]
+```
+
+### Examples
+
+```
+Add a replicator to replicate the "Users" collection to a peer:  
+  defradb client p2p replicator set -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko...
+
+Add a replicator to replicate the "Orders" collection to multiple peers:  
+  defradb client p2p replicator set -c Orders /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko... /ip4/0.0.0.0/tcp/9172/p2p/1543LK...
 ```
 
 ### Options

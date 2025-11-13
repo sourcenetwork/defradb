@@ -11,21 +11,20 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeEncryptedIndexListCommand() *cobra.Command {
+func MakeEncryptedIndexListCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var cmd = &cobra.Command{
 		Use:   "list [-c --collection <collection>]",
 		Short: "Lists the encrypted indexes in the database or for a specific collection",
 		Long: `Shows the list encrypted indexes in the database or for a specific collection.
-		
-If the --collection flag is provided, only the encrypted indexes for that collection will be shown.
-Otherwise, all encrypted indexes in the database will be shown.
 
-Example: show all encrypted indexes for 'Users' collection:
-  defradb client encrypted-index list --collection Users`,
+If the --collection flag is provided, only the encrypted indexes for that collection will be shown.
+Otherwise, all encrypted indexes in the database will be shown.`,
 		ValidArgs: []string{"collection"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -50,6 +49,10 @@ Example: show all encrypted indexes for 'Users' collection:
 			}
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "show all encrypted indexes for 'Users' collection",
+		`defradb client encrypted-index list --collection Users`)
+
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 
 	return cmd

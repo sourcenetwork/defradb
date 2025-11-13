@@ -49,7 +49,7 @@ func TestNAC_GatesCollectionSetActiveVersion_AuthorizedIdentity_AllowAccess(t *t
 			// This should work as the identity is authorized.
 			testUtils.SetActiveCollectionVersion{
 				Identity:  testUtils.ClientIdentity(1),
-				VersionID: "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda",
+				VersionID: "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu",
 			},
 		},
 	}
@@ -89,7 +89,7 @@ func TestNAC_GatesCollectionSetActiveVersion_NoIdentity_NotAuthorizedError(t *te
 			// We haven't authorized non-identities. So, this should error.
 			testUtils.SetActiveCollectionVersion{
 				Identity:      testUtils.NoIdentity(),
-				VersionID:     "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda",
+				VersionID:     "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu",
 				ExpectedError: "not authorized to perform operation",
 			},
 		},
@@ -130,7 +130,7 @@ func TestNAC_GatesCollectionSetActiveVersion_WrongIdentity_NotAuthorizedError(t 
 			// Wrong user/identity will also not be authorized.
 			testUtils.SetActiveCollectionVersion{
 				Identity:      testUtils.ClientIdentity(2),
-				VersionID:     "bafyreiaxqzrqv4kecnwweii4ejdccldsjmxhzwbfmxtrsv3itcpfkp4dda",
+				VersionID:     "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu",
 				ExpectedError: "not authorized to perform operation",
 			},
 		},

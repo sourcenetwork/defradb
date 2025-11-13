@@ -28,9 +28,6 @@ func TestNAC_AdminRelation_CanVerifySignature(t *testing.T) {
 				// when providing an identity, it includes the private key.
 				state.HTTPClientType,
 				state.CLIClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -62,7 +59,7 @@ func TestNAC_AdminRelation_CanVerifySignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "not authorized to perform operation",
 			},
 
@@ -78,7 +75,7 @@ func TestNAC_AdminRelation_CanVerifySignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 			},
 		},
 	}
@@ -94,6 +91,7 @@ func TestNAC_AdminRelation_GoClient_CanVerifySignature(t *testing.T) {
 				// Creating of signed documents over HTTP is not supported yet, because signing
 				// requires a private key which we do not pass over HTTP.
 				state.GoClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -125,7 +123,7 @@ func TestNAC_AdminRelation_GoClient_CanVerifySignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "not authorized to perform operation",
 			},
 
@@ -141,7 +139,7 @@ func TestNAC_AdminRelation_GoClient_CanVerifySignature(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "could not find",
 			},
 		},

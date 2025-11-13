@@ -87,12 +87,12 @@ func CollectionCreate(
 	options C.CollectionOptions,
 ) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptions(options)
-
 	ctx, err := contextWithIdentity(ctx, options.identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
+	colOptions := parseCollectionOptions(options)
 
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {

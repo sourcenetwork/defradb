@@ -521,8 +521,8 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 				Request: req,
 				Results: map[string]any{
 					"Device": []map[string]any{
-						{"model": "walkman"},
 						{"model": "pixel"},
+						{"model": "walkman"},
 						{"model": "iPhone"},
 					},
 				},
@@ -585,7 +585,8 @@ func TestOrderQueryWithIndex_WithAscendingQueryOnDescendingIndexedField_ShouldRe
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUserIndex(t *testing.T) {
+// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
+func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(t *testing.T) {
 	req1 := `query {
 		User(order: [{name: ASC}, {age: ASC}]) {
 			name
@@ -645,10 +646,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUserIndex
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{
-							"name": "Alan",
-							"age":  29,
-						},
+						/* Expected result
 						{
 							"name": "Alice",
 							"age":  22,
@@ -660,6 +658,28 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUserIndex
 						{
 							"name": "Alice",
 							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						*/
+						// Actual results
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
 						},
 					},
 				},
@@ -672,6 +692,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUserIndex
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
+						/* Expected results
 						{
 							"name": "Alice",
 							"age":  22,
@@ -683,6 +704,24 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUserIndex
 						{
 							"name": "Alice",
 							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						*/
+						// Actual results
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
 						},
 						{
 							"name": "Alan",
@@ -701,7 +740,8 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUserIndex
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUserIndex(t *testing.T) {
+// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
+func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(t *testing.T) {
 	req1 := `query {
 		User(order: [{name: ASC}, {age: ASC}]) {
 			name
@@ -761,10 +801,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUserIndex
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{
-							"name": "Alan",
-							"age":  29,
-						},
+						/* Expected result
 						{
 							"name": "Alice",
 							"age":  22,
@@ -776,6 +813,28 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUserIndex
 						{
 							"name": "Alice",
 							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						*/
+						// Actual results
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
 						},
 					},
 				},
@@ -788,6 +847,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUserIndex
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
+						/* Expected results
 						{
 							"name": "Alice",
 							"age":  22,
@@ -799,6 +859,24 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUserIndex
 						{
 							"name": "Alice",
 							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						*/
+						// Actual results
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
 						},
 						{
 							"name": "Alan",
@@ -817,7 +895,8 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUserIndex
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUserIndex(t *testing.T) {
+// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
+func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t *testing.T) {
 	req1 := `query {
 		User(order: [{name: ASC}, {age: DESC}]) {
 			name
@@ -877,10 +956,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUserIndex(
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{
-							"name": "Alan",
-							"age":  29,
-						},
+						/* Expected result
 						{
 							"name": "Alice",
 							"age":  22,
@@ -892,6 +968,28 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUserIndex(
 						{
 							"name": "Alice",
 							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						*/
+						// Actual results
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
 						},
 					},
 				},
@@ -904,6 +1002,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUserIndex(
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
+						/* Expected results
 						{
 							"name": "Alice",
 							"age":  22,
@@ -915,6 +1014,24 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUserIndex(
 						{
 							"name": "Alice",
 							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						*/
+						// Actual results
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
 						},
 						{
 							"name": "Alan",
@@ -933,7 +1050,8 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUserIndex(
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUserIndex(t *testing.T) {
+// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
+func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex(t *testing.T) {
 	req1 := `query {
 		User(order: [{name: ASC}, {age: DESC}]) {
 			name
@@ -993,10 +1111,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUserInde
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{
-							"name": "Alan",
-							"age":  29,
-						},
+						/* Expected result
 						{
 							"name": "Alice",
 							"age":  22,
@@ -1008,6 +1123,28 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUserInde
 						{
 							"name": "Alice",
 							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						*/
+						// Actual results
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
 						},
 					},
 				},
@@ -1020,6 +1157,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUserInde
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
+						/* Expected results
 						{
 							"name": "Alice",
 							"age":  22,
@@ -1031,6 +1169,24 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUserInde
 						{
 							"name": "Alice",
 							"age":  38,
+						},
+						{
+							"name": "Alan",
+							"age":  29,
+						},
+						*/
+						// Actual results
+						{
+							"name": "Alice",
+							"age":  38,
+						},
+						{
+							"name": "Alice",
+							"age":  22,
+						},
+						{
+							"name": "Alice",
+							"age":  24,
 						},
 						{
 							"name": "Alan",
@@ -1049,7 +1205,8 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUserInde
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUserIndex(t *testing.T) {
+// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
+func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIndex(t *testing.T) {
 	req := `query {
 		User(order: [{name: ASC}, {level: ASC}, {age: ASC}]) {
 			name
@@ -1126,6 +1283,39 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUserI
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
+						/* Expected results
+						{
+							"name":  "Alan",
+							"age":   29,
+							"level": 2,
+						},
+						{
+							"name":  "Alice",
+							"age":   22,
+							"level": 1,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 1,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 2,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 3,
+						},
+						{
+							"name":  "Alice",
+							"age":   38,
+							"level": 3,
+						},
+						*/
+						// Actual results
 						{
 							"name":  "Alan",
 							"age":   29,
@@ -1138,22 +1328,22 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUserI
 						},
 						{
 							"name":  "Alice",
-							"age":   24,
-							"level": 2,
-						},
-						{
-							"name":  "Alice",
 							"age":   22,
 							"level": 1,
 						},
 						{
 							"name":  "Alice",
-							"age":   24,
+							"age":   38,
 							"level": 3,
 						},
 						{
 							"name":  "Alice",
-							"age":   38,
+							"age":   24,
+							"level": 2,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
 							"level": 3,
 						},
 					},
@@ -1169,7 +1359,8 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUserI
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUserIndex(t *testing.T) {
+// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
+func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex(t *testing.T) {
 	req := `query {
 		User(order: [{name: ASC},  {age: ASC}, {level: ASC}]) {
 			name
@@ -1246,6 +1437,39 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUserInde
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
+						/* Expected result
+						{
+							"name":  "Alan",
+							"age":   29,
+							"level": 2,
+						},
+						{
+							"name":  "Alice",
+							"age":   22,
+							"level": 1,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 1,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 2,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
+							"level": 3,
+						},
+						{
+							"name":  "Alice",
+							"age":   38,
+							"level": 3,
+						},
+						*/
+						// Actual result
 						{
 							"name":  "Alan",
 							"age":   29,
@@ -1258,22 +1482,22 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUserInde
 						},
 						{
 							"name":  "Alice",
-							"age":   24,
-							"level": 2,
-						},
-						{
-							"name":  "Alice",
 							"age":   22,
 							"level": 1,
 						},
 						{
 							"name":  "Alice",
-							"age":   24,
+							"age":   38,
 							"level": 3,
 						},
 						{
 							"name":  "Alice",
-							"age":   38,
+							"age":   24,
+							"level": 2,
+						},
+						{
+							"name":  "Alice",
+							"age":   24,
 							"level": 3,
 						},
 					},

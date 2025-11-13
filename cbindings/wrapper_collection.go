@@ -22,12 +22,13 @@ extern Result CollectionListDocIDs(uintptr_t nodePtr, CollectionOptions options)
 extern Result CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted, CollectionOptions options);
 extern Result CollectionUpdate(uintptr_t nodePtr, char* docIDStr, char* filterStr,
 char* updaterStr, CollectionOptions options);
-extern Result IndexCreate(uintptr_t nodePtr, char* collectionName, char* indexName, char* fieldsStr, int isUnique);
-extern Result IndexList(uintptr_t nodePtr, char* collectionName);
-extern Result IndexDrop(uintptr_t nodePtr, char* collectionName, char* indexName);
+extern Result IndexCreate(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique, CollectionOptions options);
+extern Result IndexList(uintptr_t nodePtr, CollectionOptions options);
+extern Result IndexDrop(uintptr_t nodePtr, char* indexName, CollectionOptions options);
 extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern void IdentityFree(uintptr_t identityPtr);
 */
 import "C"
 
@@ -81,6 +82,7 @@ func (c *Collection) Create(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(encryptedFields))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -128,6 +130,7 @@ func (c *Collection) CreateMany(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(encryptedFields))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -189,6 +192,7 @@ func (c *Collection) Update(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(updater))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -243,6 +247,7 @@ func (c *Collection) Delete(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -279,6 +284,7 @@ func (c *Collection) Exists(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -322,6 +328,7 @@ func (c *Collection) UpdateWithFilter(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cUpdater))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -370,6 +377,7 @@ func (c *Collection) DeleteWithFilter(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -412,11 +420,11 @@ func (c *Collection) Get(
 	cCollectionID := C.CString("")
 	cName := C.CString(c.Version().Name)
 	cIdentity := identityFromContext(ctx)
-
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -456,10 +464,10 @@ func (c *Collection) GetAllDocIDs(
 	cCollectionID := C.CString("")
 	cName := C.CString("")
 	cIdentity := identityFromContext(ctx)
-
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
@@ -511,10 +519,24 @@ func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
 ) (client.IndexDescription, error) {
-	name := C.CString(c.def.Name)
+	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
-	defer C.free(unsafe.Pointer(name))
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cIdentity := identityFromContext(ctx)
+
+	defer C.free(unsafe.Pointer(cName))
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cIndexDescName))
+	defer C.IdentityFree(cIdentity)
+
+	var copts C.CollectionOptions
+	copts.version = cVersion
+	copts.collectionID = cCollectionID
+	copts.name = cName
+	copts.identityPtr = cIdentity
+	copts.getInactive = 0
 
 	orderedFields := make([]string, len(indexDesc.Fields))
 	for i, f := range indexDesc.Fields {
@@ -534,10 +556,10 @@ func (c *Collection) CreateIndex(
 
 	res := ConvertAndFreeCResult(C.IndexCreate(
 		C.uintptr_t(c.w.handle),
-		name,
 		cIndexDescName,
 		fields,
 		cUnique,
+		copts,
 	))
 
 	if res.Status != 0 {
@@ -552,15 +574,29 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	name := C.CString(c.def.Name)
+	cName := C.CString(c.def.Name)
 	cIndexName := C.CString(indexName)
-	defer C.free(unsafe.Pointer(name))
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cIdentity := identityFromContext(ctx)
+
+	defer C.free(unsafe.Pointer(cName))
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cIndexName))
+	defer C.IdentityFree(cIdentity)
+
+	var copts C.CollectionOptions
+	copts.version = cVersion
+	copts.collectionID = cCollectionID
+	copts.name = cName
+	copts.identityPtr = cIdentity
+	copts.getInactive = 0
 
 	res := ConvertAndFreeCResult(C.IndexDrop(
 		C.uintptr_t(c.w.handle),
-		name,
 		cIndexName,
+		copts,
 	))
 
 	if res.Status != 0 {
@@ -570,10 +606,26 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	name := C.CString(c.def.Name)
-	defer C.free(unsafe.Pointer(name))
+	cName := C.CString(c.def.Name)
+	cIndexName := C.CString("")
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cIdentity := identityFromContext(ctx)
 
-	res := ConvertAndFreeCResult(C.IndexList(C.uintptr_t(c.w.handle), name))
+	defer C.free(unsafe.Pointer(cName))
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.free(unsafe.Pointer(cIndexName))
+	defer C.IdentityFree(cIdentity)
+
+	var copts C.CollectionOptions
+	copts.version = cVersion
+	copts.collectionID = cCollectionID
+	copts.name = cName
+	copts.identityPtr = cIdentity
+	copts.getInactive = 0
+
+	res := ConvertAndFreeCResult(C.IndexList(C.uintptr_t(c.w.handle), copts))
 
 	if res.Status != 0 {
 		return []client.IndexDescription{}, errors.New(res.Error)

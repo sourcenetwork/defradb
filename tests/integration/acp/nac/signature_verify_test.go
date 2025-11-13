@@ -29,9 +29,6 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				// when providing an identity, it includes the private key.
 				state.HTTPClientType,
 				state.CLIClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -63,7 +60,7 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(1),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 			},
 		},
 	}
@@ -71,7 +68,7 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesVerifySignature_GoClient_AllowAccess(t *testing.T) {
+func TestNAC_GatesVerifySignature_GoClient_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some(
@@ -79,6 +76,7 @@ func TestNAC_GatesVerifySignature_GoClient_AllowAccess(t *testing.T) {
 				// Creating of signed documents over HTTP is not supported yet, because signing
 				// requires a private key which we do not pass over HTTP.
 				state.GoClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -110,7 +108,7 @@ func TestNAC_GatesVerifySignature_GoClient_AllowAccess(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(1),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "could not find",
 			},
 		},
@@ -134,7 +132,7 @@ func TestNAC_GatesVerifySignature_NoIdentity_NotAuthorizedError(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.NoIdentity(),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "not authorized to perform operation",
 			},
 
@@ -142,7 +140,7 @@ func TestNAC_GatesVerifySignature_NoIdentity_NotAuthorizedError(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.NoIdentity(),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "not authorized to perform operation",
 			},
 		},
@@ -166,7 +164,7 @@ func TestNAC_GatesVerifySignature_WrongIdentity_NotAuthorizedError(t *testing.T)
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "not authorized to perform operation",
 			},
 
@@ -174,7 +172,7 @@ func TestNAC_GatesVerifySignature_WrongIdentity_NotAuthorizedError(t *testing.T)
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreihxhybgbd5vjpoobyrol4unb5p5jy4jy445sf4hcvq5rbo2h56hce",
+				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
 				ExpectedError:  "not authorized to perform operation",
 			},
 		},

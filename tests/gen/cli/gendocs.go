@@ -26,7 +26,7 @@ import (
 
 const defaultBatchSize = 1000
 
-func MakeGenDocCommand() *cobra.Command {
+func MakeGenDocCommand(ctx context.Context) *cobra.Command {
 	var demandJSON string
 	var url string
 	var cmd = &cobra.Command{

@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeCollectionSetActiveCommand() *cobra.Command {
+func MakeCollectionSetActiveCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "set-active [versionID]",
 		Short: "Set the active collection version",

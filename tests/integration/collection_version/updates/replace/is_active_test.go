@@ -30,7 +30,7 @@ func TestColVersionUpdateReplaceIsActive_False(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/IsActive",
+							"path": "/bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/IsActive",
 							"value": false
 						}
 					]
@@ -63,7 +63,7 @@ func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/IsActive",
+							"path": "/bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/IsActive",
 							"value": false
 						}
 					]
@@ -74,7 +74,7 @@ func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/IsActive",
+							"path": "/bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/IsActive",
 							"value": true
 						}
 					]
@@ -116,7 +116,7 @@ func TestColVersionUpdateReplaceIsActive_MultipleVersionsToTrue(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/IsActive",
+							"path": "/bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/IsActive",
 							"value": true
 						}
 					]

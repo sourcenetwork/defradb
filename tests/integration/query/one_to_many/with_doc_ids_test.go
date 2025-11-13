@@ -24,7 +24,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -32,7 +32,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -40,7 +40,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -48,7 +48,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 				Doc: `{
 					"name": "The Firm",
 					"rating": 4.5,
-					"author_id": "bae-c0ecb296-4f8b-5037-a0e7-f10d8d5d5b80"
+					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -64,7 +64,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 					Author {
 						name
 						published (
-								docID: ["bae-54426e27-e18b-5b9e-9bbd-edfa36f6bbc4", "bae-2b225fc7-d8a7-5488-9a45-c4585bdfd4a3"]
+								docID: ["bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7", "bae-dd786ac2-a1c8-54b6-8717-f2ea5aca5520"]
 							) {
 							name
 						}
@@ -85,6 +85,7 @@ func TestQueryOneToManyWithChildDocIDs(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

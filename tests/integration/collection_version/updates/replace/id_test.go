@@ -30,7 +30,7 @@ func TestColVersionUpdateReplaceID_WithEmpty_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/VersionID",
+							"path": "/bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/VersionID",
 							"value": ""
 						}
 					]
@@ -89,13 +89,13 @@ func TestColVersionUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/VersionID",
-							"value": "bafyreihkqi5vwtq7wh66mgjw7biyhrf7ilwzsulzfhrvmzvfppnqmpt5ne"
+							"path": "/bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/VersionID",
+							"value": "bafyreieqhzanpek5ssb7ofi3qelbvl2nwh6s7x3w2mlzbcnqaqol3elltq"
 						},
 						{
 							"op": "replace",
-							"path": "/bafyreihkqi5vwtq7wh66mgjw7biyhrf7ilwzsulzfhrvmzvfppnqmpt5ne/VersionID",
-							"value": "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"
+							"path": "/bafyreieqhzanpek5ssb7ofi3qelbvl2nwh6s7x3w2mlzbcnqaqol3elltq/VersionID",
+							"value": "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"
 						}
 					]
 				`,
@@ -125,13 +125,13 @@ func TestColVersionUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/VersionID",
-							"value": "bafyreidfam5wyt7bsaz6p3z3va2pcqns7dac34u53x2yj5dlq4nkrvylxm"
+							"path": "/bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna/VersionID",
+							"value": "bafyreiguy7x6zs57dgbpuduiacckubvkbgi6bo2oaytu5dlthr2hsmawxu"
 						},
 						{
 							"op": "replace",
-							"path": "/bafyreidfam5wyt7bsaz6p3z3va2pcqns7dac34u53x2yj5dlq4nkrvylxm/VersionID",
-							"value": "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"
+							"path": "/bafyreiguy7x6zs57dgbpuduiacckubvkbgi6bo2oaytu5dlthr2hsmawxu/VersionID",
+							"value": "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"
 						}
 					]
 				`,

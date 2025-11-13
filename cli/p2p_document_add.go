@@ -11,24 +11,18 @@
 package cli
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PDocumentAddCommand() *cobra.Command {
+func MakeP2PDocumentAddCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "add [docIDs]",
 		Short: "Add P2P documents",
 		Long: `Add P2P documents to the synchronized pubsub topics.
-The documents are synchronized between nodes of a pubsub network.
-
-Example: add single document
-  defradb client p2p document add bae123
-
-Example: add multiple documents
-  defradb client p2p document add bae123,bae456
-		`,
+The documents are synchronized between nodes of a pubsub network.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -45,5 +39,12 @@ Example: add multiple documents
 			return cliClient.AddP2PDocuments(cmd.Context(), collectionIDs...)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "add single document",
+		`defradb client p2p document add bae123`)
+
+	EmbedCLIExample(ctx, cmd, "add multiple documents",
+		`defradb client p2p document add bae123,bae456`)
+
 	return cmd
 }

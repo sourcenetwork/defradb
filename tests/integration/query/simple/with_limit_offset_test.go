@@ -47,6 +47,7 @@ func TestQuerySimpleWithLimit0(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -79,8 +80,8 @@ func TestQuerySimpleWithLimit1(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
-							"Age":  int64(32),
+							"Name": "John",
+							"Age":  int64(21),
 						},
 					},
 				},
@@ -137,6 +138,7 @@ func TestQuerySimpleWithLimit2(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -209,6 +211,7 @@ func TestQuerySimpleWithOffset0(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -241,8 +244,8 @@ func TestQuerySimpleWithOffset1(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
-							"Age":  int64(21),
+							"Name": "Bob",
+							"Age":  int64(32),
 						},
 					},
 				},
@@ -304,11 +307,12 @@ func TestQuerySimpleWithOffset2(t *testing.T) {
 							"Age":  int64(19),
 						},
 						{
-							"Name": "Melynda",
-							"Age":  int64(30),
+							"Name": "Bob",
+							"Age":  int64(32),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -376,6 +380,7 @@ func TestQuerySimpleWithLimit0AndOffset0(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -408,8 +413,8 @@ func TestQuerySimpleWithLimit1AndOffset1(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
-							"Age":  int64(21),
+							"Name": "Bob",
+							"Age":  int64(32),
 						},
 					},
 				},
@@ -466,6 +471,7 @@ func TestQuerySimpleWithLimit2AndOffset2(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

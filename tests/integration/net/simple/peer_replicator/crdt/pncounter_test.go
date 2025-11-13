@@ -73,6 +73,7 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
@@ -106,6 +107,7 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

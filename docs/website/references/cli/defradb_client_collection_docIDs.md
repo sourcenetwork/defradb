@@ -5,16 +5,19 @@ List all document IDs (docIDs).
 ### Synopsis
 
 List all document IDs (docIDs).
-		
-Example: list all docID(s):
-  defradb client collection docIDs --name User
-
-Example: list all docID(s), with an identity:
-  defradb client collection docIDs -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User 
-		
 
 ```
 defradb client collection docIDs [-i --identity] [flags]
+```
+
+### Examples
+
+```
+list all docID(s):  
+  defradb client collection docIDs --name User
+
+list all docID(s), with an identity:  
+  defradb client collection docIDs -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User
 ```
 
 ### Options

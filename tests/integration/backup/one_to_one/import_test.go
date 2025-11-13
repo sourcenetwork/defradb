@@ -57,6 +57,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `
@@ -75,6 +76,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -89,22 +91,16 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 				ImportContent: `{
 					"Book":[
 						{
-							"_docID":"bae-af59fdc4-e495-5fd3-a9a6-386249aafdbb",
-							"_docIDNew":"bae-d374c406-c6ea-51cd-9e9b-dd44a97b499c",
-							"author_id":"bae-97f27fca-8b97-59f1-afa1-2e63140de933",
+							"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"name":"John and the sourcerers' stone"
 						}
 					],
 					"User":[
 						{
-							"_docID":"bae-88fea952-a678-5e05-9895-8a86ac6abc3b",
-							"_docIDNew":"bae-88fea952-a678-5e05-9895-8a86ac6abc3b",
 							"age":31,
 							"name":"Bob"
 						},
 						{
-							"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e",
-							"_docIDNew":"bae-97f27fca-8b97-59f1-afa1-2e63140de933",
 							"age":31,
 							"name":"John"
 						}
@@ -131,6 +127,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `
@@ -147,7 +144,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 						{
 							"name": "John and the sourcerers' stone",
 							"author": map[string]any{
-								"_docID": "bae-97f27fca-8b97-59f1-afa1-2e63140de933",
+								"_docID": "bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							},
 						},
 					},
@@ -166,28 +163,20 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 				ImportContent: `{
 					"Book":[
 						{
-							"_docID":"bae-4399f189-138d-5d49-9e25-82e78463677b",
-							"_docIDNew":"bae-78a40f28-a4b8-5dca-be44-392b0f96d0ff",
-							"author_id":"bae-97f27fca-8b97-59f1-afa1-2e63140de933",
+							"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"name":"Game of chains"
 						},
 						{
-							"_docID":"bae-af59fdc4-e495-5fd3-a9a6-386249aafdbb",
-							"_docIDNew":"bae-d374c406-c6ea-51cd-9e9b-dd44a97b499c",
-							"author_id":"bae-97f27fca-8b97-59f1-afa1-2e63140de933",
+							"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"name":"John and the sourcerers' stone"
 						}
 					],
 					"User":[
 						{
-							"_docID":"bae-88fea952-a678-5e05-9895-8a86ac6abc3b",
-							"_docIDNew":"bae-88fea952-a678-5e05-9895-8a86ac6abc3b",
 							"age":31,
 							"name":"Bob"
 						},
 						{
-							"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e",
-							"_docIDNew":"bae-97f27fca-8b97-59f1-afa1-2e63140de933",
 							"age":31,
 							"name":"John"
 						}
@@ -220,7 +209,7 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 				`,
 			},
 			testUtils.BackupImport{
-				ImportContent: `{"User":[{"_docID":"bae-88fea952-a678-5e05-9895-8a86ac6abc3b","_docIDNew":"bae-88fea952-a678-5e05-9895-8a86ac6abc3b","age":31,"name":"Bob"},{"_docID":"bae-a911f9cc-217a-58a3-a2f4-96548197403e","_docIDNew":"bae-97f27fca-8b97-59f1-afa1-2e63140de933","age":31,"name":"John"}],"Book":[{"_docID":"bae-4cb9a1d2-eef3-564d-8695-1ce61c596e5a","_docIDNew":"bae-4cb9a1d2-eef3-564d-8695-1ce61c596e5a","name":"Game of chains"},{"_docID":"bae-556ece21-bf45-5652-8f32-c8a40373e8b5","_docIDNew":"bae-ccdd6d22-7339-5978-b0cb-f25d3d95c06d","author_id":"bae-97f27fca-8b97-59f1-afa1-2e63140de933","favourite_id":"bae-97f27fca-8b97-59f1-afa1-2e63140de933","name":"John and the sourcerers' stone"}]}`,
+				ImportContent: `{"User":[{"age":31,"name":"Bob"},{"age":31,"name":"John"}],"Book":[{"name":"Game of chains"},{"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","favourite_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","name":"John and the sourcerers' stone"}]}`,
 			},
 			testUtils.Request{
 				Request: `
@@ -252,6 +241,7 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

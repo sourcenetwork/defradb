@@ -80,6 +80,7 @@ func TestQueryJSON_WithAllFilterWithAllTypes_ShouldFilter(t *testing.T) {
 						{"name": "Fred"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

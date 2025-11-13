@@ -11,11 +11,15 @@ The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
 This can also be done with a .env file in the working directory or at a path
 defined with the --secret-file flag.
 
-Example:
-  defradb keyring import encryption-key 0000000000000000
-
 ```
 defradb keyring import <name> <private-key-hex> [flags]
+```
+
+### Examples
+
+```
+Import encryption key:  
+  defradb keyring import encryption-key 0000000000000000
 ```
 
 ### Options

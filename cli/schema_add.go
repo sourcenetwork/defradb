@@ -11,13 +11,14 @@
 package cli
 
 import (
+	"context"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeSchemaAddCommand() *cobra.Command {
+func MakeSchemaAddCommand(ctx context.Context) *cobra.Command {
 	var schemaFiles []string
 	var cmd = &cobra.Command{
 		Use:   "add [schema]",
@@ -27,22 +28,7 @@ func MakeSchemaAddCommand() *cobra.Command {
 Schema Object with a '@policy(id:".." resource: "..")' linked will only be accepted if:
   - ACP is available (i.e. ACP is not disabled).
   - The specified resource adheres to the document resource interface (DRI).
-  - Learn more about the DefraDB [ACP System](/acp/README.md)
-
-Example: add from an argument string:
-  defradb client schema add 'type Foo { ... }'
-
-Example: add from file:
-  defradb client schema add -f schema.graphql
-
-Example: add from multiple files:
-  defradb client schema add -f schema1.graphql -f schema2.graphql
-
-Example: add from multiple files:
-  defradb client schema add -f schema1.graphql,schema2.graphql
-
-Example: add from stdin:
-  cat schema.graphql | defradb client schema add -
+  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -88,6 +74,22 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			return nil
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "add from an argument string",
+		`defradb client schema add 'type Foo { ... }'`)
+
+	EmbedCLIExample(ctx, cmd, "add from file",
+		`defradb client schema add -f schema.graphql`)
+
+	EmbedCLIExample(ctx, cmd, "add from multiple files",
+		`defradb client schema add -f schema1.graphql -f schema2.graphql`)
+
+	EmbedCLIExample(ctx, cmd, "add from multiple files (comma-separated)",
+		`defradb client schema add -f schema1.graphql,schema2.graphql`)
+
+	EmbedCLIExample(ctx, cmd, "add from stdin",
+		`cat schema.graphql | defradb client schema add -`)
+
 	cmd.Flags().StringSliceVarP(&schemaFiles, "file", "f", []string{}, "File to load schema from")
 	return cmd
 }

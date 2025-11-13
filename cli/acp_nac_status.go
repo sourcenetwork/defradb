@@ -11,24 +11,23 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeNodeACPStatusCommand() *cobra.Command {
+func MakeNodeACPStatusCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "status [-i --identity]",
 		Short: "Check the node access control status",
 		Long: `Check the node access control status
-
-Example:
-  defradb client acp node status -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 
 Note:
 - If Node ACP is in clean state (not configured) the status has [IsConfigured] == false.
 - If Node ACP is temporarily disabled, then [IsConfigured] == true and [IsEnabled] == false.
 - If Node ACP is enabled then [IsEnabled] == true.
 
-Learn more about the DefraDB [ACP System](/acp/README.md)
+Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -40,5 +39,9 @@ Learn more about the DefraDB [ACP System](/acp/README.md)
 			return writeJSON(cmd, status)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "Check Node ACP status",
+		`defradb client acp node status -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f`)
+
 	return cmd
 }

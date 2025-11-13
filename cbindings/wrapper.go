@@ -26,12 +26,14 @@ char* relation, char* actor);
 extern Result ACPDeleteNACActorRelationship(uintptr_t nodePtr, uintptr_t identity,
 char* relation, char* actor);
 extern Result ACPGetNACStatus(uintptr_t nodePtr, uintptr_t identity);
-extern Result BlockVerifySignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid);
+extern Result BlockVerifySignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid,
+uintptr_t identity);
 extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
 extern Result CollectionPatch(uintptr_t nodePtr, char* patch, char* lensConfig, CollectionOptions options);
 extern Result IdentityNew(char* keyType);
+extern void IdentityFree(uintptr_t identityPtr);
 extern Result NodeIdentity(uintptr_t nodePtr);
-extern Result IndexList(uintptr_t nodePtr, char* collectionName);
+extern Result IndexList(uintptr_t nodePtr, CollectionOptions options);
 extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
@@ -39,18 +41,18 @@ extern Result LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
 extern Result P2PInfo(uintptr_t nodePtr);
-extern Result P2PgetAllReplicators(uintptr_t nodePtr);
-extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* addresses);
-extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* id);
-extern Result P2PcollectionAdd(uintptr_t nodePtr, char* collections);
-extern Result P2PcollectionRemove(uintptr_t nodePtr, char* collections);
-extern Result P2PcollectionGetAll(uintptr_t nodePtr);
-extern Result P2Pconnect(uintptr_t nodePtr, char* peerAddresses);
-extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections);
-extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections);
-extern Result P2PdocumentGetAll(uintptr_t nodePtr);
-extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr);
-extern Result P2PcollectionSync(uintptr_t nodePtr, char* versionIDs, char* timeoutStr);
+extern Result P2PgetAllReplicators(uintptr_t nodePtr, uintptr_t identity);
+extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
+extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
+extern Result P2PcollectionAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PcollectionRemove(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PcollectionGetAll(uintptr_t nodePtr, uintptr_t identity);
+extern Result P2Pconnect(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
+extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PdocumentGetAll(uintptr_t nodePtr, uintptr_t identity);
+extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr, uintptr_t identity);
+extern Result P2PcollectionSync(uintptr_t nodePtr, char* versionIDs, char* timeoutStr, uintptr_t identity);
 extern Result PollSubscription(char* id);
 extern Result CloseSubscription(char* id);
 extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
@@ -122,10 +124,12 @@ func (w *CWrapper) PeerInfo() ([]string, error) {
 func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
 	addrStr := C.CString(strings.Join(addresses, ","))
 	colStr := C.CString(strings.Join(collections, ","))
+	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(addrStr))
 	defer C.free(unsafe.Pointer(colStr))
+	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PsetReplicator(C.uintptr_t(w.handle), colStr, addrStr))
+	res := ConvertAndFreeCResult(C.P2PsetReplicator(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -136,10 +140,12 @@ func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collec
 func (w *CWrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
 	peerID := C.CString(id)
 	colStr := C.CString(strings.Join(collections, ","))
+	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(peerID))
 	defer C.free(unsafe.Pointer(colStr))
+	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PdeleteReplicator(C.uintptr_t(w.handle), colStr, peerID))
+	res := ConvertAndFreeCResult(C.P2PdeleteReplicator(C.uintptr_t(w.handle), colStr, peerID, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -148,7 +154,9 @@ func (w *CWrapper) DeleteReplicator(ctx context.Context, id string, collections 
 }
 
 func (w *CWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	res := ConvertAndFreeCResult(C.P2PgetAllReplicators(C.uintptr_t(w.handle)))
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
+	res := ConvertAndFreeCResult(C.P2PgetAllReplicators(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -162,10 +170,11 @@ func (w *CWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, 
 }
 
 func (w *CWrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
+	cIdentity := identityFromContext(ctx)
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	defer C.free(unsafe.Pointer(colStr))
-
-	res := ConvertAndFreeCResult(C.P2PcollectionAdd(C.uintptr_t(w.handle), colStr))
+	defer C.IdentityFree(cIdentity)
+	res := ConvertAndFreeCResult(C.P2PcollectionAdd(C.uintptr_t(w.handle), colStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -175,9 +184,11 @@ func (w *CWrapper) AddP2PCollections(ctx context.Context, collectionIDs ...strin
 
 func (w *CWrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	colStr := C.CString(strings.Join(collectionIDs, ","))
+	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(colStr))
+	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PcollectionRemove(C.uintptr_t(w.handle), colStr))
+	res := ConvertAndFreeCResult(C.P2PcollectionRemove(C.uintptr_t(w.handle), colStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -186,7 +197,9 @@ func (w *CWrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...st
 }
 
 func (w *CWrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	res := ConvertAndFreeCResult(C.P2PcollectionGetAll(C.uintptr_t(w.handle)))
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
+	res := ConvertAndFreeCResult(C.P2PcollectionGetAll(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -201,9 +214,11 @@ func (w *CWrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 
 func (w *CWrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentAdd(C.uintptr_t(w.handle), docStr))
+	res := ConvertAndFreeCResult(C.P2PdocumentAdd(C.uintptr_t(w.handle), docStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -213,9 +228,11 @@ func (w *CWrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error 
 
 func (w *CWrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentRemove(C.uintptr_t(w.handle), docStr))
+	res := ConvertAndFreeCResult(C.P2PdocumentRemove(C.uintptr_t(w.handle), docStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -224,7 +241,9 @@ func (w *CWrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) err
 }
 
 func (w *CWrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
-	res := ConvertAndFreeCResult(C.P2PdocumentGetAll(C.uintptr_t(w.handle)))
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
+	res := ConvertAndFreeCResult(C.P2PdocumentGetAll(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -242,8 +261,10 @@ func (w *CWrapper) SyncDocuments(
 	collectionName string,
 	docIDs []string,
 ) error {
+	cIdentity := identityFromContext(ctx)
 	docs := C.CString(strings.Join(docIDs, ","))
 	defer C.free(unsafe.Pointer(docs))
+	defer C.IdentityFree(cIdentity)
 
 	deadline, hasDeadline := ctx.Deadline()
 	timerStr := ""
@@ -255,7 +276,7 @@ func (w *CWrapper) SyncDocuments(
 	defer C.free(unsafe.Pointer(cTimerStr))
 	defer C.free(unsafe.Pointer(cCollectionName))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentSync(C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr))
+	res := ConvertAndFreeCResult(C.P2PdocumentSync(C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -264,8 +285,10 @@ func (w *CWrapper) SyncDocuments(
 }
 
 func (w *CWrapper) SyncCollections(ctx context.Context, versionIDs ...string) error {
+	cIdentity := identityFromContext(ctx)
 	versions := C.CString(strings.Join(versionIDs, ","))
 	defer C.free(unsafe.Pointer(versions))
+	defer C.IdentityFree(cIdentity)
 
 	deadline, hasDeadline := ctx.Deadline()
 	timerStr := ""
@@ -275,7 +298,7 @@ func (w *CWrapper) SyncCollections(ctx context.Context, versionIDs ...string) er
 	cTimerStr := C.CString(timerStr)
 	defer C.free(unsafe.Pointer(cTimerStr))
 
-	res := ConvertAndFreeCResult(C.P2PcollectionSync(C.uintptr_t(w.handle), versions, cTimerStr))
+	res := ConvertAndFreeCResult(C.P2PcollectionSync(C.uintptr_t(w.handle), versions, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -293,6 +316,7 @@ func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig)
 
 func (w *CWrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 	cSchema := C.CString(schema)
 	defer C.free(unsafe.Pointer(cSchema))
 
@@ -315,6 +339,7 @@ func (w *CWrapper) AddDACPolicy(
 	policy string,
 ) (client.AddPolicyResult, error) {
 	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 	cPolicy := C.CString(policy)
 	defer C.free(unsafe.Pointer(cPolicy))
 
@@ -348,6 +373,7 @@ func (w *CWrapper) AddDACActorRelationship(
 	defer C.free(unsafe.Pointer(cDocID))
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPAddDACActorRelationship(
@@ -387,6 +413,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	defer C.free(unsafe.Pointer(cDocID))
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPDeleteDACActorRelationship(
@@ -411,6 +438,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 
 func (w *CWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
 	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPGetNACStatus(callHandle, cIdentity))
@@ -423,6 +451,7 @@ func (w *CWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, er
 
 func (w *CWrapper) ReEnableNAC(ctx context.Context) error {
 	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPReEnableNAC(callHandle, cIdentity))
@@ -435,6 +464,7 @@ func (w *CWrapper) ReEnableNAC(ctx context.Context) error {
 
 func (w *CWrapper) DisableNAC(ctx context.Context) error {
 	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPDisableNAC(callHandle, cIdentity))
@@ -455,6 +485,7 @@ func (w *CWrapper) AddNACActorRelationship(
 	cTargetActor := C.CString(targetActor)
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPAddNACActorRelationship(callHandle, cIdentity, cRelation, cTargetActor))
@@ -476,6 +507,7 @@ func (w *CWrapper) DeleteNACActorRelationship(
 	cTargetActor := C.CString(targetActor)
 	defer C.free(unsafe.Pointer(cRelation))
 	defer C.free(unsafe.Pointer(cTargetActor))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.ACPDeleteNACActorRelationship(callHandle, cIdentity, cRelation, cTargetActor))
@@ -499,6 +531,7 @@ func (w *CWrapper) PatchCollection(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var opts C.CollectionOptions
 	opts.identityPtr = cIdentity
@@ -532,6 +565,7 @@ func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, collectionVer
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var opts C.CollectionOptions
 	opts.identityPtr = cIdentity
@@ -678,6 +712,7 @@ func (w *CWrapper) GetCollections(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var opts C.CollectionOptions
 	opts.version = cVersion
@@ -706,11 +741,24 @@ func (w *CWrapper) GetCollections(
 }
 
 func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	colName := C.CString("")
-	defer C.free(unsafe.Pointer(colName))
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cName := C.CString("")
+	cIdentity := identityFromContext(ctx)
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
+
+	var opts C.CollectionOptions
+	opts.version = cVersion
+	opts.collectionID = cCollectionID
+	opts.name = cName
+	opts.identityPtr = cIdentity
+	opts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.IndexList(callHandle, colName))
+	res := ConvertAndFreeCResult(C.IndexList(callHandle, opts))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -766,6 +814,7 @@ func (w *CWrapper) ExecRequest(
 	defer C.free(unsafe.Pointer(cQuery))
 	defer C.free(unsafe.Pointer(cOperation))
 	defer C.free(unsafe.Pointer(cVariables))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	result := C.ExecuteQuery(callHandle, cQuery, cIdentity, cOperation, cVariables)
@@ -853,10 +902,12 @@ func (w *CWrapper) PrintDump(ctx context.Context) error {
 }
 
 func (w *CWrapper) Connect(ctx context.Context, addresses []string) error {
+	cIdentity := identityFromContext(ctx)
 	cPeerAddresses := C.CString(strings.Join(addresses, ","))
 	defer C.free(unsafe.Pointer(cPeerAddresses))
+	defer C.IdentityFree(cIdentity)
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.P2Pconnect(callHandle, cPeerAddresses))
+	res := ConvertAndFreeCResult(C.P2Pconnect(callHandle, cPeerAddresses, cIdentity))
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
@@ -887,11 +938,14 @@ func (w *CWrapper) VerifySignature(ctx context.Context, blockCid string, pubKey 
 	cPubKey := C.CString(pubKey.String())
 	cKeyType := C.CString(string(pubKey.Type()))
 	cBlockCid := C.CString(blockCid)
+	cIdentity := identityFromContext(ctx)
+
 	defer C.free(unsafe.Pointer(cPubKey))
 	defer C.free(unsafe.Pointer(cKeyType))
 	defer C.free(unsafe.Pointer(cBlockCid))
+	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.BlockVerifySignature(C.uintptr_t(w.handle), cKeyType, cPubKey, cBlockCid))
+	res := ConvertAndFreeCResult(C.BlockVerifySignature(C.uintptr_t(w.handle), cKeyType, cPubKey, cBlockCid, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

@@ -11,11 +11,15 @@ The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
 This can also be done with a .env file in the working directory or at a path
 defined with the --secret-file flag.
 
-Example:
-  defradb keyring export encryption-key
-
 ```
 defradb keyring export <name> [flags]
+```
+
+### Examples
+
+```
+Export encryption key:  
+  defradb keyring export encryption-key
 ```
 
 ### Options

@@ -48,7 +48,7 @@ func TestColSync_WithPatchVersionOfUnknownCollection(t *testing.T) {
 			},
 			&action.SyncCollection{
 				NodeID:     1,
-				VersionIDs: []string{"bafyreibdy4dlx5n77g6czx7bgk2edsrnkq6inpr65g4cyoz3qkx2kdk5xe"},
+				VersionIDs: []string{"bafyreics7adsddesun4kqqotr6g6c6ld2t7djlwcbrm4ftbhru3ayindy4"},
 			},
 			testUtils.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
@@ -61,8 +61,26 @@ func TestColSync_WithPatchVersionOfUnknownCollection(t *testing.T) {
 						IsMaterialized: true,
 						// Synced collections are inactive when they first come in
 						IsActive: false,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_NILLABLE_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						// Synced collections are inactive when they first come in
+						IsActive: false,
 						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+							SourceCollectionID: "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
 						}),
 						Fields: []client.CollectionFieldDescription{
 							{
@@ -78,24 +96,6 @@ func TestColSync_WithPatchVersionOfUnknownCollection(t *testing.T) {
 							{
 								Name: "age",
 								Kind: client.FieldKind_NILLABLE_INT,
-								Typ:  client.LWW_REGISTER,
-							},
-						},
-					},
-					{
-						Name:           "Users",
-						IsMaterialized: true,
-						// Synced collections are inactive when they first come in
-						IsActive: false,
-						Fields: []client.CollectionFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-								Typ:  client.NONE_CRDT,
-							},
-							{
-								Name: "name",
-								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
 							},
 						},
@@ -135,7 +135,7 @@ func TestColSync_WithPatchVersionOfKnownCollection(t *testing.T) {
 			},
 			&action.SyncCollection{
 				NodeID:     1,
-				VersionIDs: []string{"bafyreibdy4dlx5n77g6czx7bgk2edsrnkq6inpr65g4cyoz3qkx2kdk5xe"},
+				VersionIDs: []string{"bafyreics7adsddesun4kqqotr6g6c6ld2t7djlwcbrm4ftbhru3ayindy4"},
 			},
 			testUtils.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
@@ -143,32 +143,6 @@ func TestColSync_WithPatchVersionOfKnownCollection(t *testing.T) {
 				},
 				NodeID: immutable.Some(1),
 				ExpectedResults: []client.CollectionVersion{
-					{
-						Name:           "Users",
-						IsMaterialized: true,
-						// Synced collections are inactive when they first come in
-						IsActive: false,
-						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
-						}),
-						Fields: []client.CollectionFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-								Typ:  client.NONE_CRDT,
-							},
-							{
-								Name: "name",
-								Kind: client.FieldKind_NILLABLE_STRING,
-								Typ:  client.LWW_REGISTER,
-							},
-							{
-								Name: "age",
-								Kind: client.FieldKind_NILLABLE_INT,
-								Typ:  client.LWW_REGISTER,
-							},
-						},
-					},
 					{
 						Name:           "Users",
 						IsMaterialized: true,
@@ -184,6 +158,32 @@ func TestColSync_WithPatchVersionOfKnownCollection(t *testing.T) {
 							{
 								Name: "name",
 								Kind: client.FieldKind_NILLABLE_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						// Synced collections are inactive when they first come in
+						IsActive: false,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
+						}),
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+								Typ:  client.NONE_CRDT,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_NILLABLE_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "age",
+								Kind: client.FieldKind_NILLABLE_INT,
 								Typ:  client.LWW_REGISTER,
 							},
 						},

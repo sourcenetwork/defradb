@@ -53,7 +53,7 @@ func TestQuerySimpleWithDocIDFilter_SingleDocumentTargetFound(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						Users(docID: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c") {
+						Users(docID: "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b") {
 							Name
 							Age
 						}
@@ -90,7 +90,7 @@ func TestQuerySimpleWithDocIDFilter_MultipleDocumentsTargetFound(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						Users(docID: "bae-75cb8b0a-00d7-57c8-8906-29687cbbb15c") {
+						Users(docID: "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b") {
 							Name
 							Age
 						}

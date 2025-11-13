@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/hex"
 	"os"
 	"path/filepath"
@@ -31,7 +32,7 @@ func TestKeyringImport(t *testing.T) {
 	require.NoError(t, err)
 	keyHex := hex.EncodeToString(keyBytes)
 
-	cmd := NewDefraCommand()
+	cmd := NewDefraCommand(context.Background())
 	cmd.SetArgs([]string{"keyring", "import", "--rootdir", rootdir, encryptionKeyName, keyHex})
 
 	err = cmd.Execute()

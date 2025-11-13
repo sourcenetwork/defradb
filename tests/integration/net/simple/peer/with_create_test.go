@@ -68,6 +68,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
@@ -165,6 +166,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 						// to the P2P collection.
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
@@ -189,6 +191,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

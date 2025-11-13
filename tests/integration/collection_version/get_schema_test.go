@@ -116,21 +116,10 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 					},
 					{
 						Name:           "Users",
-						IsActive:       true,
-						IsMaterialized: true,
-						Fields: []client.CollectionFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-							},
-						},
-					},
-					{
-						Name:           "Users",
 						IsActive:       false,
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq",
+							SourceCollectionID: "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna",
 						}),
 						Fields: []client.CollectionFieldDescription{
 							{
@@ -145,6 +134,17 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 							},
 						},
 					},
+					{
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -154,8 +154,8 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 }
 
 func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
-	usersSchemaVersion1ID := "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"
-	usersSchemaVersion2ID := "bafyreihkqi5vwtq7wh66mgjw7biyhrf7ilwzsulzfhrvmzvfppnqmpt5ne"
+	usersSchemaVersion1ID := "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"
+	usersSchemaVersion2ID := "bafyreieqhzanpek5ssb7ofi3qelbvl2nwh6s7x3w2mlzbcnqaqol3elltq"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -255,21 +255,10 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
-						IsActive:       true,
-						IsMaterialized: true,
-						Fields: []client.CollectionFieldDescription{
-							{
-								Name: "_docID",
-								Kind: client.FieldKind_DocID,
-							},
-						},
-					},
-					{
-						Name:           "Users",
 						IsActive:       false,
 						IsMaterialized: true,
 						PreviousVersion: immutable.Some(client.CollectionSource{
-							SourceCollectionID: "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq",
+							SourceCollectionID: "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna",
 						}),
 						Fields: []client.CollectionFieldDescription{
 							{
@@ -281,6 +270,17 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 								Name: "name",
 								Kind: client.FieldKind_NILLABLE_STRING,
 								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+					{
+						Name:           "Users",
+						IsActive:       true,
+						IsMaterialized: true,
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: "_docID",
+								Kind: client.FieldKind_DocID,
 							},
 						},
 					},
