@@ -198,7 +198,7 @@ func (n *selectNode) addSubPlan(fieldIndex int, newPlan planNode) error {
 	// if its a scan node, we either replace or create a multinode
 	case *scanNode, *pipeNode:
 		switch newPlan.(type) {
-		case *scanNode, *typeIndexJoin:
+		case *typeIndexJoin:
 			n.source = newPlan
 		case *dagScanNode:
 			m := &parallelNode{
