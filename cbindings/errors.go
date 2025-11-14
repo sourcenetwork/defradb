@@ -24,6 +24,7 @@ const (
 	errInvalidSubscriptionID        = "invalid subscription ID"
 	errGettingSubscription          = "could not retrieve subscription"
 	errInvalidCGOHandle             = "invalid handle"
+	errDatabasePathNotSet           = "database path not set, and home directory could not be determined"
 )
 
 func NewErrAmbiguousCollection() error {

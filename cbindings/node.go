@@ -18,6 +18,8 @@ import "C"
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"runtime/cgo"
 	"strconv"
 	"time"
@@ -40,20 +42,22 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 
 	ctx := context.Background()
 
-	// // Create the directory if it doesn't exist, and inMemory flag is not set
-	// For now this is not done, but we leave it here because we might need it in
-	// the future, when running on mobile platforms.
-	// if !inMemoryFlag {
-	// 	if _, err = os.Stat(gocOptions.DbPath); os.IsNotExist(err) {
-	// 		err := os.MkdirAll(gocOptions.DbPath, 0755)
-	// 		if err != nil {
-	// 			return returnGoC(1, err.Error(), "")
-	// 		}
-	// 	}
-	// }
+	// Use a database path if one is provided, otherwise try to determine the
+	// home directory and use that.
+	var defraPath string
+	if gocOptions.DbPath == "" {
+		home, err := os.UserHomeDir()
+		// This errorshould not happen on any major platform.
+		if err != nil {
+			return returnNewNodeResultC(1, errDatabasePathNotSet, nil)
+		}
+		defraPath = filepath.Join(home, ".defradb")
+	} else {
+		defraPath = gocOptions.DbPath
+	}
 
 	opts := []node.Option{
-		node.WithStorePath(gocOptions.DbPath),
+		node.WithStorePath(defraPath),
 		db.WithLensRuntime(db.Wazero),
 	}
 	if len(listeningAddresses) > 0 {
