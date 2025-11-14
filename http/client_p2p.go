@@ -235,7 +235,7 @@ func (c *Client) SyncDocuments(
 	return err
 }
 
-func (c *Client) SyncCollections(ctx context.Context, versionIDs ...string) error {
+func (c *Client) FetchCollections(ctx context.Context, versionIDs ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections", "sync")
 
 	req := map[string]any{

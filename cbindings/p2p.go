@@ -282,7 +282,7 @@ func P2PcollectionSync(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.SyncCollections(ctx, versionArgs...)
+	err = node.DB.FetchCollections(ctx, versionArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

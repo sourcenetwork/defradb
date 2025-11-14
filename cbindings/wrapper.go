@@ -284,7 +284,7 @@ func (w *CWrapper) SyncDocuments(
 	return nil
 }
 
-func (w *CWrapper) SyncCollections(ctx context.Context, versionIDs ...string) error {
+func (w *CWrapper) FetchCollections(ctx context.Context, versionIDs ...string) error {
 	cIdentity := identityFromContext(ctx)
 	versions := C.CString(strings.Join(versionIDs, ","))
 	defer C.free(unsafe.Pointer(versions))

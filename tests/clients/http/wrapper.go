@@ -114,8 +114,8 @@ func (w *Wrapper) SyncDocuments(
 	return w.client.SyncDocuments(ctx, collectionName, docIDs)
 }
 
-func (w *Wrapper) SyncCollections(ctx context.Context, versionIDs ...string) error {
-	return w.client.SyncCollections(ctx, versionIDs...)
+func (w *Wrapper) FetchCollections(ctx context.Context, versionIDs ...string) error {
+	return w.client.FetchCollections(ctx, versionIDs...)
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {

@@ -95,7 +95,7 @@ func (w *Wrapper) SyncDocuments(
 	panic("not implemented")
 }
 
-func (w *Wrapper) SyncCollections(
+func (w *Wrapper) FetchCollections(
 	ctx context.Context,
 	versionIDs ...string,
 ) error {

@@ -35,7 +35,7 @@ Older versions of a requested collection will also be synced.
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.SyncCollections(ctx, args...)
+			return cliClient.FetchCollections(ctx, args...)
 		},
 	}
 
