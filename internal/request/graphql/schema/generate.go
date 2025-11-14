@@ -915,7 +915,9 @@ func (g *Generator) getNumericFields(obj *gql.Object) map[string]gql.Type {
 		listType, isList := field.Type.(*gql.List)
 		var inputObjectName string
 		if !isList {
-			fieldTypes[field.Name] = gql.NewInputObject(gql.InputObjectConfig{})
+			continue
+
+			// fieldTypes[field.Name] = gql.NewInputObject(gql.InputObjectConfig{})
 		} else if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
