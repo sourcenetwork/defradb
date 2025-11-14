@@ -63,8 +63,7 @@ const (
 
 	ExplainLabel = "explain"
 
-	LatestCommitsName = "_latestCommits"
-	CommitsName       = "_commits"
+	CommitsName = "_commits"
 
 	CommitTypeName           = "Commit"
 	LinksFieldName           = "links"
@@ -134,11 +133,6 @@ var (
 		AverageFieldName: {},
 		MaxFieldName:     {},
 		MinFieldName:     {},
-	}
-
-	CommitQueries = map[string]struct{}{
-		LatestCommitsName: {},
-		CommitsName:       {},
 	}
 
 	VersionFields = []string{

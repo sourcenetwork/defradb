@@ -31,7 +31,7 @@ func parseQueryOperationDefinition(
 	for _, fields := range collectedFields {
 		for _, field := range fields {
 			var parsedSelection request.Selection
-			if _, isCommitQuery := request.CommitQueries[field.Name.Value]; isCommitQuery {
+			if field.Name.Value == request.CommitsName {
 				parsed, err := parseCommitSelect(exe, exe.Schema.QueryType(), field)
 				if err != nil {
 					return nil, []error{err}

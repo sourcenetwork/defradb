@@ -98,19 +98,6 @@ func parseCommitSelect(
 		}
 	}
 
-	// _latestCommits is just syntax sugar around a commits operation.
-	if commit.Name == request.LatestCommitsName {
-		// Depth is not exposed as an input parameter for _latestCommits,
-		// so we can blindly set it here without worrying about existing
-		// values
-		commit.Depth = immutable.Some(uint64(1))
-
-		if !commit.FieldName.HasValue() {
-			// latest commits defaults to composite commits only
-			commit.FieldName = immutable.Some(request.CompositeFieldName)
-		}
-	}
-
 	// no sub fields (unlikely)
 	if field.SelectionSet == nil {
 		return commit, nil

@@ -206,15 +206,3 @@ func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *g
 		},
 	}
 }
-
-func QueryLatestCommits(commitObject *gql.Object) *gql.Field {
-	return &gql.Field{
-		Name:        request.LatestCommitsName,
-		Description: latestCommitsQueryDescription,
-		Type:        gql.NewList(commitObject),
-		Args: gql.FieldConfigArgument{
-			request.DocIDArgName:  NewArgConfig(gql.NewNonNull(gql.ID), commitDocIDArgDescription),
-			request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
-		},
-	}
-}

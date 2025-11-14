@@ -491,7 +491,7 @@ func isSpecialNoOpField(field *mapper.Select, parentField *mapper.Select) bool {
 	if field.CollectionName != "" {
 		return false
 	}
-	isCommit := parentField.Name == request.CommitsName || parentField.Name == request.LatestCommitsName
+	isCommit := parentField.Name == request.CommitsName
 	return isCommit && (field.Name == request.LinksFieldName || field.Name == request.SignatureFieldName)
 }
 

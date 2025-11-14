@@ -31,7 +31,6 @@ func defaultSchema() (gql.Schema, error) {
 	indexFieldInput := types.IndexFieldInputObject(orderEnum)
 
 	queryCommits := types.QueryCommits(commitObject, commitsOrderArg)
-	queryLatestCommits := types.QueryLatestCommits(commitObject)
 
 	sch, err := gql.NewSchema(gql.SchemaConfig{
 		Types: defaultTypes(
@@ -44,7 +43,7 @@ func defaultSchema() (gql.Schema, error) {
 			indexFieldInput,
 			encryptedSearchResult,
 		),
-		Query:        defaultQueryType(queryCommits, queryLatestCommits),
+		Query:        defaultQueryType(queryCommits),
 		Mutation:     defaultMutationType(),
 		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexFieldInput),
 		Subscription: defaultSubscriptionType(queryCommits),
