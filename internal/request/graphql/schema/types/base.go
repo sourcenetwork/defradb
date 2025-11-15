@@ -772,3 +772,17 @@ func IDOperatorBlock() *gql.InputObject {
 		},
 	})
 }
+
+// ScalarAggregateNumericBlock is the default numeric scalar selector
+// for aggregate input arguments
+func ScalarAggregateNumericBlock() *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "ScalarAggregateNumericBlock",
+		Description: scalarAggregateSelectorDescription,
+		Fields: gql.InputObjectConfigFieldMap{
+			"_": &gql.InputObjectFieldConfig{
+				Type: gql.Boolean,
+			},
+		},
+	})
+}
