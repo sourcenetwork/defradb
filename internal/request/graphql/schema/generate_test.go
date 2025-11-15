@@ -15,10 +15,10 @@ import (
 	"os"
 	"testing"
 
-	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	gql "github.com/sourcenetwork/graphql-go"
 )
 
 func TestIntrospectionResult(t *testing.T) {
