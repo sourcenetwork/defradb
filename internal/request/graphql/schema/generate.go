@@ -921,8 +921,6 @@ func (g *Generator) getNumericFields(obj *gql.Object) map[string]gql.Type {
 
 		col := g.typDefCollectionMap[obj.Name()]
 
-		// fmt.Println("Collection:", col.Name)
-		// fmt.Println("field": field.Name)
 		if !isList && isNumeric(field.Type) && isUserDefinedField(field.Name, col) {
 			fieldTypes[field.Name] = g.manager.schema.TypeMap()["ScalarAggregateNumericBlock"]
 		} else if !isList {
