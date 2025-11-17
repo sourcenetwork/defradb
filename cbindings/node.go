@@ -47,7 +47,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	var defraPath string
 	if gocOptions.DbPath == "" {
 		home, err := os.UserHomeDir()
-		// This errorshould not happen on any major platform.
+		// This error should not happen on any major platform.
 		if err != nil {
 			return returnNewNodeResultC(1, errDatabasePathNotSet, nil)
 		}
