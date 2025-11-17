@@ -72,6 +72,13 @@ type P2P interface {
 	// context.WithTimeout can be used to set a timeout for the operation.
 	SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error
 
+	// SyncBranchableCollection requests the latest version of the branchable collection's DAG
+	// from the network and synchronizes it locally. This syncs the collection-level history
+	// for branchable collections (collections marked with @branchable directive).
+	// It doesn't automatically subscribe to the collection for future updates.
+	// context.WithTimeout can be used to set a timeout for the operation.
+	SyncBranchableCollection(ctx context.Context, collectionName string) error
+
 	// FetchCollections fetches the given collection versions from the network.
 	//
 	// It will not complete until a version is found, so it is strongly recommended

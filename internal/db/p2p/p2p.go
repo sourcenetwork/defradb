@@ -167,6 +167,11 @@ func New(
 		return nil, err
 	}
 
+	err = p.host.AddPubSubTopic(collectionSyncTopic, true, p.collectionSyncMessageHandler)
+	if err != nil {
+		return nil, err
+	}
+
 	go p.handleReplicatorRetries(ctx)
 	err = p.loadAndPublishReplicators(ctx)
 	if err != nil {

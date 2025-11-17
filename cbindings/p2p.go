@@ -250,6 +250,36 @@ func P2PdocumentSync(nodePtr C.uintptr_t,
 	return returnC(returnGoC(0, "", ""))
 }
 
+//export P2PbranchableCollectionSync
+func P2PbranchableCollectionSync(nodePtr C.uintptr_t,
+	collectionName *C.char,
+	timeoutStr *C.char,
+	identityPtr C.uintptr_t) C.Result {
+	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	if timeoutStr != nil {
+		timeout, err := time.ParseDuration(C.GoString(timeoutStr))
+		if err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	err = node.DB.SyncBranchableCollection(ctx, C.GoString(collectionName))
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	return returnC(returnGoC(0, "", ""))
+}
+
 //export P2PcollectionSync
 func P2PcollectionSync(nodePtr C.uintptr_t,
 	versionIDs *C.char,

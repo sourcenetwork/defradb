@@ -262,6 +262,20 @@ func (db *DB) SyncDocuments(ctx context.Context, collectionName string, docIDs [
 	return db.p2p.SyncDocuments(ctx, collectionName, docIDs)
 }
 
+// SyncBranchableCollection requests the latest version of the branchable collection's DAG
+// from the network and synchronizes it locally. This syncs the collection-level history
+// for branchable collections (collections marked with @branchable directive).
+// It doesn't automatically subscribe to the collection for future updates.
+// context.WithTimeout can be used to set a timeout for the operation.
+//
+// WARNING: This function does not respect transactions.
+func (db *DB) SyncBranchableCollection(ctx context.Context, collectionName string) error {
+	if db.p2p == nil {
+		return ErrNoP2P
+	}
+	return db.p2p.SyncBranchableCollection(ctx, collectionName)
+}
+
 // FetchCollections syncs the given collection versions to the local node.
 //
 // It will not complete until a version is found, so it is strongly recommended

@@ -210,6 +210,40 @@ func (h *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
+func (h *p2pHandler) SyncBranchableCollection(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	var reqBody struct {
+		CollectionName string `json:"collectionName"`
+		Timeout        string `json:"timeout"`
+	}
+
+	if err := requestJSON(req, &reqBody); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	ctx := req.Context()
+	if reqBody.Timeout != "" {
+		timeout, err := time.ParseDuration(reqBody.Timeout)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	err := db.SyncBranchableCollection(ctx, reqBody.CollectionName)
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
 func (h *p2pHandler) FetchCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
@@ -428,6 +462,29 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	syncDocuments.Responses.Set("400", errorResponse)
 	syncDocuments.Responses.Set("500", errorResponse)
 
+	syncBranchableCollectionRequestSchema := openapi3.NewObjectSchema().
+		WithProperty("collectionName", openapi3.NewStringSchema()).
+		WithProperty("timeout", openapi3.NewStringSchema())
+
+	syncBranchableCollectionRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchema(syncBranchableCollectionRequestSchema))
+
+	syncBranchableCollectionResponse := openapi3.NewResponse().
+		WithDescription("Branchable collection sync completed successfully")
+
+	syncBranchableCollection := openapi3.NewOperation()
+	syncBranchableCollection.Description = "Synchronize a branchable collection's DAG from the network"
+	syncBranchableCollection.OperationID = "peer_sync_branchable_collection"
+	syncBranchableCollection.Tags = []string{"p2p"}
+	syncBranchableCollection.RequestBody = &openapi3.RequestBodyRef{
+		Value: syncBranchableCollectionRequest,
+	}
+	syncBranchableCollection.Responses = openapi3.NewResponses()
+	syncBranchableCollection.Responses.Set("200", &openapi3.ResponseRef{Value: syncBranchableCollectionResponse})
+	syncBranchableCollection.Responses.Set("400", errorResponse)
+	syncBranchableCollection.Responses.Set("500", errorResponse)
+
 	fetchCollectionsRequestSchema := openapi3.NewObjectSchema().
 		WithProperty("versionIDs", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
 		WithProperty("timeout", openapi3.NewStringSchema())
@@ -460,6 +517,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	router.AddRoute("/p2p/collections", http.MethodPost, addPeerCollections, h.AddP2PCollections)
 	router.AddRoute("/p2p/collections", http.MethodDelete, removePeerCollections, h.RemoveP2PCollections)
 	router.AddRoute("/p2p/collections/fetch", http.MethodPost, fetchCollections, h.FetchCollections)
+	router.AddRoute("/p2p/collections/sync-branchable", http.MethodPost, syncBranchableCollection, h.SyncBranchableCollection)
 	router.AddRoute("/p2p/documents", http.MethodGet, getPeerDocuments, h.GetAllP2PDocuments)
 	router.AddRoute("/p2p/documents", http.MethodPost, addPeerDocuments, h.AddP2PDocuments)
 	router.AddRoute("/p2p/documents", http.MethodDelete, removePeerDocuments, h.RemoveP2PDocuments)

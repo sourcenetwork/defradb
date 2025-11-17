@@ -235,6 +235,31 @@ func (c *Client) SyncDocuments(
 	return err
 }
 
+func (c *Client) SyncBranchableCollection(ctx context.Context, collectionName string) error {
+	methodURL := c.http.apiURL.JoinPath("p2p", "collections", "sync-branchable")
+
+	req := map[string]any{
+		"collectionName": collectionName,
+	}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		req["timeout"] = time.Until(deadline).String()
+	}
+	body, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(httpReq)
+	return err
+}
+
 func (c *Client) FetchCollections(ctx context.Context, versionIDs ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections", "sync")
 

@@ -22,6 +22,7 @@ var (
 	errPublishingToDocIDTopic  = errors.New("can't publish log for document")
 	errPublishingToSchemaTopic = errors.New("can't publish log for collection")
 	ErrTimeoutDocSync          = errors.New("timeout while syncing doc")
+	ErrTimeoutCollectionSync   = errors.New("timeout while syncing branchable collection")
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {

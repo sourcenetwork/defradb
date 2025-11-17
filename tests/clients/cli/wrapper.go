@@ -204,6 +204,18 @@ func (w *Wrapper) SyncDocuments(
 	return err
 }
 
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionName string) error {
+	args := []string{"client", "p2p", "collection", "sync-branchable", collectionName}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		args = append(args, "--timeout", time.Until(deadline).String())
+	}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
 func (w *Wrapper) FetchCollections(ctx context.Context, versionIDs ...string) error {
 	args := []string{"client", "p2p", "collection", "sync"}
 

@@ -324,6 +324,11 @@ func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs
 	return txn.db.SyncDocuments(ctx, collectionName, docIDs)
 }
 
+func (txn *Txn) SyncBranchableCollection(ctx context.Context, collectionName string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.SyncBranchableCollection(ctx, collectionName)
+}
+
 func (txn *Txn) FetchCollections(ctx context.Context, versionIDs ...string) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.FetchCollections(ctx, versionIDs...)
