@@ -2068,7 +2068,7 @@
                 ]
             }
         },
-        "/p2p/collections/sync": {
+        "/p2p/collections/fetch": {
             "post": {
                 "description": "Synchronize collection versions from the network",
                 "operationId": "peer_sync_collections",
@@ -2096,6 +2096,47 @@
                 "responses": {
                     "200": {
                         "description": "Document sync completed successfully"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/collections/sync-branchable": {
+            "post": {
+                "description": "Synchronize a branchable collection's DAG from the network",
+                "operationId": "peer_sync_branchable_collection",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "collectionName": {
+                                        "type": "string"
+                                    },
+                                    "timeout": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Branchable collection sync completed successfully"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
