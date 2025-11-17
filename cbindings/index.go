@@ -30,9 +30,10 @@ func IndexCreate(
 	fieldsStr *C.char,
 	isUnique C.int,
 	options C.CollectionOptions,
+	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -87,10 +88,9 @@ func IndexCreate(
 }
 
 //export IndexList
-func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions) C.Result {
+func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
-
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -124,9 +124,12 @@ func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions) C.Result {
 }
 
 //export IndexDrop
-func IndexDrop(nodePtr C.uintptr_t, indexName *C.char, options C.CollectionOptions) C.Result {
+func IndexDrop(nodePtr C.uintptr_t,
+	indexName *C.char,
+	options C.CollectionOptions,
+	identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
