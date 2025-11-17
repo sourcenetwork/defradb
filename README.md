@@ -48,7 +48,7 @@ DISCLAIMER: The software is provided "as is" and is not guaranteed to be stable,
 Install `defradb` by [downloading an executable](https://github.com/sourcenetwork/defradb/releases) or building it locally using the [Go toolchain](https://golang.org/):
 
 ```sh
-git clone git@github.com:sourcenetwork/defradb.git
+git clone https://github.com/sourcenetwork/defradb.git
 cd defradb
 make install
 ```
