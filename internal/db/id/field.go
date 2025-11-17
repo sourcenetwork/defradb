@@ -130,6 +130,21 @@ func SetShortFieldID(
 	return nil
 }
 
+func DeleteShortFieldID(
+	ctx context.Context,
+	collectionShortID uint32,
+	fieldID string,
+) error {
+	uniqueKey := strconv.Itoa(int(collectionShortID)) + ":" + fieldID
+	cache := getFieldShortIDCache(ctx)
+	delete(cache, uniqueKey)
+
+	txn := datastore.CtxMustGetTxn(ctx)
+	key := keys.NewFieldID(collectionShortID, fieldID)
+
+	return txn.Systemstore().Delete(ctx, key.Bytes())
+}
+
 // SetShortFieldID sets and stores the short field ids, if they do not already exist.
 func SetShortFieldIDs(ctx context.Context, collection client.CollectionVersion) error {
 	collectionShortID, err := GetShortCollectionID(ctx, collection.CollectionID)
@@ -145,6 +160,49 @@ func SetShortFieldIDs(ctx context.Context, collection client.CollectionVersion) 
 		}
 
 		err := SetShortFieldID(ctx, collectionShortID, field.FieldID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// WARNING - DeleteShortFieldIDs is dependent on the collection short id still existing
+func DeleteShortFieldIDs(
+	ctx context.Context,
+	collection client.CollectionVersion,
+	allVersions []client.CollectionVersion,
+) error {
+	collectionShortID, err := GetShortCollectionID(ctx, collection.CollectionID)
+	if err != nil {
+		return err
+	}
+
+	previouslyExistingFieldIDs := map[string]struct{}{}
+	for _, version := range allVersions {
+		if version.VersionID == collection.VersionID {
+			continue
+		}
+
+		for _, field := range version.Fields {
+			previouslyExistingFieldIDs[field.FieldID] = struct{}{}
+		}
+	}
+
+	for _, field := range collection.Fields {
+		if field.FieldID == "" {
+			// Short field IDs only exist for fields with full ids
+			continue
+		}
+
+		if _, ok := previouslyExistingFieldIDs[field.FieldID]; ok {
+			// We should only delete short IDs for fields that are unique to this version,
+			// because short IDs remain consistent across all collection versions.
+			continue
+		}
+
+		err := DeleteShortFieldID(ctx, collectionShortID, field.FieldID)
 		if err != nil {
 			return err
 		}
