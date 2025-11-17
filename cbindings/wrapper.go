@@ -52,6 +52,7 @@ extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections, uintptr_t ide
 extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PdocumentGetAll(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr, uintptr_t identity);
+extern Result P2PbranchableCollectionSync(uintptr_t nodePtr, char* collectionName, char* timeoutStr, uintptr_t identity);
 extern Result P2PcollectionSync(uintptr_t nodePtr, char* versionIDs, char* timeoutStr, uintptr_t identity);
 extern Result PollSubscription(char* id);
 extern Result CloseSubscription(char* id);
@@ -277,6 +278,28 @@ func (w *CWrapper) SyncDocuments(
 	defer C.free(unsafe.Pointer(cCollectionName))
 
 	res := ConvertAndFreeCResult(C.P2PdocumentSync(C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr, cIdentity))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
+}
+
+func (w *CWrapper) SyncBranchableCollection(ctx context.Context, collectionName string) error {
+	cIdentity := identityFromContext(ctx)
+	cCollectionName := C.CString(collectionName)
+	defer C.free(unsafe.Pointer(cCollectionName))
+	defer C.IdentityFree(cIdentity)
+
+	deadline, hasDeadline := ctx.Deadline()
+	timerStr := ""
+	if hasDeadline {
+		timerStr = time.Until(deadline).String()
+	}
+	cTimerStr := C.CString(timerStr)
+	defer C.free(unsafe.Pointer(cTimerStr))
+
+	res := ConvertAndFreeCResult(C.P2PbranchableCollectionSync(C.uintptr_t(w.handle), cCollectionName, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
