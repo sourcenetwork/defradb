@@ -428,29 +428,6 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	syncDocuments.Responses.Set("400", errorResponse)
 	syncDocuments.Responses.Set("500", errorResponse)
 
-	syncBranchableCollectionRequestSchema := openapi3.NewObjectSchema().
-		WithProperty("collectionName", openapi3.NewStringSchema()).
-		WithProperty("timeout", openapi3.NewStringSchema())
-
-	syncBranchableCollectionRequest := openapi3.NewRequestBody().
-		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchema(syncBranchableCollectionRequestSchema))
-
-	syncBranchableCollectionResponse := openapi3.NewResponse().
-		WithDescription("Branchable collection sync completed successfully")
-
-	syncBranchableCollection := openapi3.NewOperation()
-	syncBranchableCollection.Description = "Synchronize a branchable collection's DAG from the network"
-	syncBranchableCollection.OperationID = "peer_sync_branchable_collection"
-	syncBranchableCollection.Tags = []string{"p2p"}
-	syncBranchableCollection.RequestBody = &openapi3.RequestBodyRef{
-		Value: syncBranchableCollectionRequest,
-	}
-	syncBranchableCollection.Responses = openapi3.NewResponses()
-	syncBranchableCollection.Responses.Set("200", &openapi3.ResponseRef{Value: syncBranchableCollectionResponse})
-	syncBranchableCollection.Responses.Set("400", errorResponse)
-	syncBranchableCollection.Responses.Set("500", errorResponse)
-
 	fetchCollectionsRequestSchema := openapi3.NewObjectSchema().
 		WithProperty("versionIDs", openapi3.NewArraySchema().WithItems(openapi3.NewStringSchema())).
 		WithProperty("timeout", openapi3.NewStringSchema())
@@ -460,11 +437,11 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 		WithContent(openapi3.NewContentWithJSONSchema(fetchCollectionsRequestSchema))
 
 	fetchCollectionsResponse := openapi3.NewResponse().
-		WithDescription("Document sync completed successfully")
+		WithDescription("Collection fetch completed successfully")
 
 	fetchCollections := openapi3.NewOperation()
-	fetchCollections.Description = "Synchronize collection versions from the network"
-	fetchCollections.OperationID = "peer_sync_collections"
+	fetchCollections.Description = "Fetch collection versions from the network"
+	fetchCollections.OperationID = "peer_fetch_collections"
 	fetchCollections.Tags = []string{"p2p"}
 	fetchCollections.RequestBody = &openapi3.RequestBodyRef{
 		Value: fetchCollectionsRequest,
