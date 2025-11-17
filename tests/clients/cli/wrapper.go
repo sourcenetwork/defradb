@@ -204,8 +204,8 @@ func (w *Wrapper) SyncDocuments(
 	return err
 }
 
-func (w *Wrapper) SyncCollections(ctx context.Context, versionIDs ...string) error {
-	args := []string{"client", "p2p", "collection", "sync"}
+func (w *Wrapper) FetchCollections(ctx context.Context, versionIDs ...string) error {
+	args := []string{"client", "p2p", "collection", "fetch"}
 
 	deadline, hasDeadline := ctx.Deadline()
 	if hasDeadline {

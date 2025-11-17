@@ -2068,7 +2068,7 @@
                 ]
             }
         },
-        "/p2p/collections/sync": {
+        "/p2p/collections/fetch": {
             "post": {
                 "description": "Synchronize collection versions from the network",
                 "operationId": "peer_sync_collections",

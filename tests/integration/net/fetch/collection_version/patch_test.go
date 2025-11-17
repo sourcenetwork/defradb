@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColSync_WithPatchVersionOfUnknownCollection(t *testing.T) {
+func TestColFetch_WithPatchVersionOfUnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -46,7 +46,7 @@ func TestColSync_WithPatchVersionOfUnknownCollection(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.SyncCollection{
+			&action.FetchCollection{
 				NodeID:     1,
 				VersionIDs: []string{"bafyreics7adsddesun4kqqotr6g6c6ld2t7djlwcbrm4ftbhru3ayindy4"},
 			},
@@ -108,7 +108,7 @@ func TestColSync_WithPatchVersionOfUnknownCollection(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColSync_WithPatchVersionOfKnownCollection(t *testing.T) {
+func TestColFetch_WithPatchVersionOfKnownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -133,7 +133,7 @@ func TestColSync_WithPatchVersionOfKnownCollection(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.SyncCollection{
+			&action.FetchCollection{
 				NodeID:     1,
 				VersionIDs: []string{"bafyreics7adsddesun4kqqotr6g6c6ld2t7djlwcbrm4ftbhru3ayindy4"},
 			},

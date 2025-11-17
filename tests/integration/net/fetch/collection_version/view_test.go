@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestColSync_WithView(t *testing.T) {
+func TestColFetch_WithView(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -65,7 +65,7 @@ func TestColSync_WithView(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.SyncCollection{
+			&action.FetchCollection{
 				NodeID:     1,
 				VersionIDs: []string{"{{.CollectionVersionID1}}"},
 			},
@@ -94,7 +94,7 @@ func TestColSync_WithView(t *testing.T) {
 							},
 						},
 						/* There is no good way to dynamically get the transform id at the moment, so unfortunately
-						   we need to disable this assertion for now.  TestColSync_WithView_CanBeActivatedAndQueried
+						   we need to disable this assertion for now.  TestColFetch_WithView_CanBeActivatedAndQueried
 						   does prove that the transform is synced however.
 							Query: immutable.Some(client.QuerySource{
 								Query: request.Select{
@@ -121,7 +121,7 @@ func TestColSync_WithView(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColSync_WithView_CanBeActivatedAndQueried(t *testing.T) {
+func TestColFetch_WithView_CanBeActivatedAndQueried(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -163,7 +163,7 @@ func TestColSync_WithView_CanBeActivatedAndQueried(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.SyncCollection{
+			&action.FetchCollection{
 				NodeID:     1,
 				VersionIDs: []string{"{{.CollectionVersionID1}}"},
 			},
