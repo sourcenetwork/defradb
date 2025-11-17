@@ -13,61 +13,14 @@ package branchable_collection
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestBranchableCollectionSync_WithSimpleBranchableCollection_ShouldSyncCommits(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
-					type User @branchable {
-						name: String
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "John"
-				}`,
-			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 0,
-				TargetNodeID: 1,
-			},
-			&action.SyncBranchableCollection{
-				NodeID:         1,
-				CollectionName: "User",
-			},
-			testUtils.WaitForSync{},
-			testUtils.Request{
-				NodeID: immutable.Some(1),
-				Request: `query {
-					User {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"User": []map[string]any{
-						{
-							"name": "John",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestBranchableCollectionSync_WithMultipleDocuments_ShouldSyncAllCommits(t *testing.T) {
+func TestBranchableCollectionSync_OneNodeEmptyAnotherWithDocs_ShouldCopyAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -130,6 +83,159 @@ func TestBranchableCollectionSync_WithMultipleDocuments_ShouldSyncAllCommits(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestBranchableCollectionSync_WithDifferentDocsOnBothNodes_ShouldSync(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type User @branchable {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"name": "Islam"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "Andy"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"name": "Fred"
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.SyncBranchableCollection{
+				NodeID:         1,
+				CollectionName: "User",
+			},
+			&action.SyncBranchableCollection{
+				NodeID:         0,
+				CollectionName: "User",
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Fred"},
+						{"name": "Andy"},
+						{"name": "John"},
+						{"name": "Islam"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type User @branchable {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "John"
+				}`,
+			},
+			&action.SyncBranchableCollection{
+				NodeID:         1,
+				CollectionName: "User",
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": gomega.HaveLen(1),
+				},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "Islam"
+				}`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"name": "Andy"
+				}`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": gomega.HaveLen(1),
+				},
+			},
+			&action.SyncBranchableCollection{
+				NodeID:         1,
+				CollectionName: "User",
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					User {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": gomega.HaveLen(3),
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
 func TestBranchableCollectionSync_WithNonBranchableCollection_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
