@@ -91,6 +91,10 @@ func (p *parallelNode) Init() error {
 		case *dagScanNode:
 			// Any node types that result in `nextAppend` calls must be executed last, as they are
 			// dependent on the docID set by the `nextMerge` calls.
+			//
+			// For example, there might be two children, a `scanNode` and a `dagScanNode`. As per the logic
+			// in `parallelNode.Next`, the `scanNode` must be executed before the `dagScanNode` as the
+			// `dagScanNode` uses the DocID yielded from the `scanNode`.
 			newChildren[endIndex] = child
 			newChildIndexes[endIndex] = p.childIndexes[i]
 			endIndex--
