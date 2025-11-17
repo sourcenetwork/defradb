@@ -66,8 +66,8 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 							"fieldName": "_C",
 							"links": []map[string]any{
 								{
-									"cid":  createCompositeCid,
-									"name": "_head",
+									"cid":      createCompositeCid,
+									"linkName": "_head",
 								},
 							},
 						},
@@ -76,12 +76,12 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 							"fieldName": "_C",
 							"links": []map[string]any{
 								{
-									"cid":  createAgeCid,
-									"name": "age",
+									"cid":      createAgeCid,
+									"linkName": "age",
 								},
 								{
-									"cid":  createNameCid,
-									"name": "name",
+									"cid":      createNameCid,
+									"linkName": "name",
 								},
 							},
 						},

@@ -25,7 +25,6 @@ import (
 //		CollectionID: Int
 //		SchemaVersionID: String
 //		Delta: String
-//		Previous: [Commit]
 //		Links: [Commit]
 //		Signature: Signature
 //	}
@@ -39,10 +38,10 @@ import (
 // Any self referential type needs to be initialized
 // inside the init() func
 func CommitObject(commitLinkObject *gql.Object) *gql.Object {
-	return gql.NewObject(gql.ObjectConfig{
-		Name:        request.CommitTypeName,
-		Description: commitDescription,
-		Fields: gql.Fields{
+	// we need the fieldThunk since we are creating a circular type reference
+	var commitObject *gql.Object
+	fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
+		fields := gql.Fields{
 			request.HeightFieldName: &gql.Field{
 				Description: commitHeightFieldDescription,
 				Type:        gql.Int,
@@ -69,7 +68,11 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 			},
 			request.LinksFieldName: &gql.Field{
 				Description: commitLinksDescription,
-				Type:        gql.NewList(commitLinkObject),
+				Type:        gql.NewList(commitObject),
+			},
+			request.LinksNameFieldName: &gql.Field{
+				Description: commitLinkNameFieldDescription,
+				Type:        gql.String,
 			},
 			request.SignatureFieldName: &gql.Field{
 				Description: signatureDescription,
@@ -113,8 +116,16 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 					},
 				},
 			},
-		},
+		}
+		return fields, nil
 	})
+
+	commitObject = gql.NewObject(gql.ObjectConfig{
+		Name:        request.CommitTypeName,
+		Description: commitDescription,
+		Fields:      fieldsThunk,
+	})
+	return commitObject
 }
 
 // CommitLink is a named DAG link between commits.

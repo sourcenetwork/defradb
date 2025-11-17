@@ -276,7 +276,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							height
 							links {
 								cid
-								name
+								linkName
 							}
 							signature {
 								type
@@ -294,8 +294,8 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":    int64(2),
 							"links": []map[string]any{
 								{
-									"cid":  ageCreateCid,
-									"name": "_head",
+									"cid":      ageCreateCid,
+									"linkName": "_head",
 								},
 							},
 							"signature": nil,
@@ -326,12 +326,12 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":    int64(2),
 							"links": []map[string]any{
 								{
-									"cid":  createCompositeCid,
-									"name": "_head",
+									"cid":      createCompositeCid,
+									"linkName": "_head",
 								},
 								{
-									"cid":  ageUpdateCid,
-									"name": "age",
+									"cid":      ageUpdateCid,
+									"linkName": "age",
 								},
 							},
 							"signature": nil,
@@ -344,12 +344,12 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  ageCreateCid,
-									"name": "age",
+									"cid":      ageCreateCid,
+									"linkName": "age",
 								},
 								{
-									"cid":  nameCreateCid,
-									"name": "name",
+									"cid":      nameCreateCid,
+									"linkName": "name",
 								},
 							},
 							"_signature": nil,

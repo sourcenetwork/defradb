@@ -102,7 +102,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							height
 							links {
 								cid
-								name
+								linkName
 							}
 						}
 					}`,
@@ -117,8 +117,8 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"height":          int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  compositeCid,
-									"name": nil,
+									"cid":      compositeCid,
+									"linkName": nil,
 								},
 							},
 						},
@@ -149,12 +149,12 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"height":          int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  ageCid,
-									"name": "age",
+									"cid":      ageCid,
+									"linkName": "age",
 								},
 								{
-									"cid":  nameCid,
-									"name": "name",
+									"cid":      nameCid,
+									"linkName": "name",
 								},
 							},
 						},

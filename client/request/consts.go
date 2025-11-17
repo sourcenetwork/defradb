@@ -84,7 +84,7 @@ const (
 	// will be of type [SelfTypeName].
 	SelfTypeName = "Self"
 
-	LinksNameFieldName = "name"
+	LinksNameFieldName = "linkName"
 	CidFieldName       = "cid"
 
 	SignatureTypeFieldName     = "type"
