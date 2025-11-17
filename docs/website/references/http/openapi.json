@@ -2070,8 +2070,8 @@
         },
         "/p2p/collections/fetch": {
             "post": {
-                "description": "Synchronize collection versions from the network",
-                "operationId": "peer_sync_collections",
+                "description": "Fetch collection versions from the network",
+                "operationId": "peer_fetch_collections",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2095,7 +2095,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Document sync completed successfully"
+                        "description": "Collection fetch completed successfully"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
