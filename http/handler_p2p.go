@@ -517,7 +517,8 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	router.AddRoute("/p2p/collections", http.MethodPost, addPeerCollections, h.AddP2PCollections)
 	router.AddRoute("/p2p/collections", http.MethodDelete, removePeerCollections, h.RemoveP2PCollections)
 	router.AddRoute("/p2p/collections/fetch", http.MethodPost, fetchCollections, h.FetchCollections)
-	router.AddRoute("/p2p/collections/sync-branchable", http.MethodPost, syncBranchableCollection, h.SyncBranchableCollection)
+	router.AddRoute("/p2p/collections/sync-branchable", http.MethodPost, syncBranchableCollection,
+		h.SyncBranchableCollection)
 	router.AddRoute("/p2p/documents", http.MethodGet, getPeerDocuments, h.GetAllP2PDocuments)
 	router.AddRoute("/p2p/documents", http.MethodPost, addPeerDocuments, h.AddP2PDocuments)
 	router.AddRoute("/p2p/documents", http.MethodDelete, removePeerDocuments, h.RemoveP2PDocuments)
