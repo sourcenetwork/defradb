@@ -16,14 +16,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionSyncCommand(ctx context.Context) *cobra.Command {
+func MakeP2PCollectionFetchCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "sync [versionID...]",
-		Short: "Synchronize specific collection versions from the network",
-		Long: `Synchronize specific collection versions from the network.
+		Use:   "fetch [versionID...]",
+		Short: "Fetches specific collection versions from the network",
+		Long: `Fetches specific collection versions from the network.
 
-This command allows you to sync collection versions across the network.
-Older versions of a requested collection will also be synced.
+This command allows you to fetch collection versions across the network.
+Older versions of a requested collection will also be fetched.
 `,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -39,12 +39,12 @@ Older versions of a requested collection will also be synced.
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "sync single collection versions",
-		`defradb client p2p collection sync bafy123`)
+	EmbedCLIExample(ctx, cmd, "fetch single collection versions",
+		`defradb client p2p collection fetch bafy123`)
 
-	EmbedCLIExample(ctx, cmd, "sync multiple collection versions",
-		`defradb client p2p collection sync bafy123 bafy456`)
+	EmbedCLIExample(ctx, cmd, "fetch multiple collection versions",
+		`defradb client p2p collection fetch bafy123 bafy456`)
 
-	cmd.Flags().Duration("timeout", 0, "Timeout for sync operations")
+	cmd.Flags().Duration("timeout", 0, "Timeout for fetch operations")
 	return cmd
 }
