@@ -1,0 +1,58 @@
+[
+  {
+    "session_id": "1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0",
+    "transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0.jsonl",
+    "cwd": "/Users/islam/dev/sourcenetwork/defradb",
+    "permission_mode": "default",
+    "hook_event_name": "SubagentStop",
+    "stop_hook_active": false
+  },
+  {
+    "session_id": "1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0",
+    "transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0.jsonl",
+    "cwd": "/Users/islam/dev/sourcenetwork/defradb",
+    "permission_mode": "default",
+    "hook_event_name": "SubagentStop",
+    "stop_hook_active": false
+  },
+  {
+    "session_id": "1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0",
+    "transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0.jsonl",
+    "cwd": "/Users/islam/dev/sourcenetwork/defradb",
+    "permission_mode": "default",
+    "hook_event_name": "SubagentStop",
+    "stop_hook_active": false,
+    "agent_id": "6e066ee2",
+    "agent_transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/agent-6e066ee2.jsonl"
+  },
+  {
+    "session_id": "1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0",
+    "transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0.jsonl",
+    "cwd": "/Users/islam/dev/sourcenetwork/defradb",
+    "permission_mode": "default",
+    "hook_event_name": "SubagentStop",
+    "stop_hook_active": false,
+    "agent_id": "caf4ccb6",
+    "agent_transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/agent-caf4ccb6.jsonl"
+  },
+  {
+    "session_id": "1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0",
+    "transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0.jsonl",
+    "cwd": "/Users/islam/dev/sourcenetwork/defradb",
+    "permission_mode": "default",
+    "hook_event_name": "SubagentStop",
+    "stop_hook_active": false,
+    "agent_id": "a696291f",
+    "agent_transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/agent-a696291f.jsonl"
+  },
+  {
+    "session_id": "1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0",
+    "transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/1a4f86a3-3258-40aa-b0e3-67dba6ad7cb0.jsonl",
+    "cwd": "/Users/islam/dev/sourcenetwork/defradb",
+    "permission_mode": "default",
+    "hook_event_name": "SubagentStop",
+    "stop_hook_active": false,
+    "agent_id": "1429f8b2",
+    "agent_transcript_path": "/Users/islam/.claude/projects/-Users-islam-dev-sourcenetwork-defradb/agent-1429f8b2.jsonl"
+  }
+]

@@ -1,0 +1,169 @@
+# Learnings
+
+## Branchable Collection DAG Structure
+
+**Discovery**: Branchable collections maintain a collection-level DAG that links all document commits.
+
+**Structure:**
+- Each document creation/update generates:
+  1. Field-level commits (one per changed field)
+  2. Document composite commit (links all field commits)
+  3. **Collection composite commit** (links the document composite)
+
+**Implication:**
+- Syncing a branchable collection's DAG syncs the collection-level commits
+- Document-level commits are NOT synced automatically
+- Collection DAG provides verifiable history of all collection changes
+- Enables multi-node verification of collection state
+
+**Evidence:**
+- 1 doc (1 field) = 3 commits total
+- 2 docs (2 fields each) = 8 commits total
+
+---
+
+## Collection Head Storage
+
+**Discovery**: Branchable collections use `HeadstoreColKey` to store their head CID, indexed by collection short ID.
+
+**Key Structure:**
+```go
+HeadstoreColKey{
+    CollectionShortID: uint32,  // Local short ID for storage efficiency
+    Cid: cid.Cid,               // Head commit CID
+}
+```
+
+**Retrieval Process:**
+1. Get collection by name → `CollectionVersion`
+2. Lookup short ID: `GetShortCollectionID(ctx, collectionID)`
+3. Create headstore key: `NewHeadstoreColKey(shortID)`
+4. Query headstore: `headset.List(ctx)`
+
+**Source:** `internal/keys/headstore_collection.go`, `internal/db/id/collection.go`
+
+---
+
+## Context Requirements for ID Lookups
+
+**Discovery**: ID lookup functions require context with initialized caches, even in read-only operations.
+
+**Cache Initialization Pattern:**
+```go
+txnCtx := dbid.InitCollectionShortIDCache(ctx)
+txnCtx = datastore.CtxSetTxn(txnCtx, txn)
+// Now safe to call GetShortCollectionID(txnCtx, ...)
+```
+
+**Why This Is Needed:**
+- ID caches are context-scoped, not global
+- Prevents repeated database lookups
+- Must be initialized before any ID lookup
+- Transaction must be set in context for datastore access
+
+**Common Error:**
+```
+panic: interface conversion: interface {} is nil, not id.collectionShortIDCache
+```
+
+**Lesson:** Always initialize caches in async handlers (pubsub message handlers, goroutines)
+
+---
+
+## SyncDocuments vs. SyncBranchableCollection
+
+**Similarity Matrix:**
+
+| Aspect | SyncDocuments | SyncBranchableCollection |
+|--------|---------------|--------------------------|
+| Pubsub topic | `doc-sync` | `collection-sync` |
+| Request param | `docIDs []string` | `collectionName string` |
+| Response | Multiple items (one per doc) | Single item (one head) |
+| Head retrieval | `HeadstoreDocKey` + fieldID | `HeadstoreColKey` + shortID |
+| Head count | Multiple (one per field) | Single (collection composite) |
+| DAG sync | Per document | Per collection |
+| Merge event | Includes `DocID` | No `DocID` field |
+
+**Pattern Reuse:**
+- Request/reply structs
+- Pubsub publish with response channel
+- Wait/handle response logic
+- DAG sync via `syncDAG()`
+- Merge event publication
+
+---
+
+## IsBranchable Property Sync Behavior
+
+**Discovery**: `IsBranchable` is NOT part of `CollectionDefinitionDelta` and is not synced via `FetchCollections`.
+
+**Why:**
+- `IsBranchable` is immutable (set at collection creation)
+- Not in delta because it never changes
+- Encoded in the collection version ID calculation (different CID for branchable vs. non-branchable)
+
+**Implication for P2P:**
+- Schema must exist on both nodes before syncing collection DAG
+- `FetchCollections` syncs schema structure, not branchability semantics
+- `SyncBranchableCollection` assumes schema already deployed
+- Tests must add schema to both nodes
+
+**Workflow:**
+1. Deploy schema (with `@branchable`) to all nodes
+2. Documents created on node A
+3. Node B calls `SyncBranchableCollection` to get commit history
+4. Node B now has same collection DAG as node A
+
+---
+
+## Pubsub Message Handler Pattern
+
+**Discovery**: Pubsub message handlers run in separate goroutines and need careful context management.
+
+**Handler Signature:**
+```go
+func (p *P2P) handlerName(from string, topic string, msg []byte) ([]byte, error)
+```
+
+**Registration:**
+```go
+err := p.host.AddPubSubTopic(topicName, wantResponse=true, handlerFunc)
+```
+
+**Best Practices:**
+1. Create new transaction for database access
+2. Initialize required caches (ID caches, etc.)
+3. Use CBOR for serialization (matches doc sync)
+4. Handle errors gracefully - return empty results rather than nil
+5. Include sender ID in response for debugging
+
+**Source:** Observed from `docSyncMessageHandler` in `sync_doc.go`
+
+---
+
+## C Bindings Build Process
+
+**Discovery**: C bindings require explicit build step to generate headers.
+
+**Build Command:**
+```bash
+make build-c-shared-linux  # or build-c-shared-android
+```
+
+**Process:**
+1. Temporarily changes `package cbindings` → `package main`
+2. Builds with `-buildmode=c-shared`
+3. Generates `libdefradb.so` and `libdefradb.h`
+4. Restores package names
+
+**Header Generation:**
+- C function declarations are automatically generated by cgo
+- Based on `//export FunctionName` comments
+- Must build shared library to trigger generation
+
+**Workaround for Development:**
+- Stub function to return error
+- Allows Go/HTTP/CLI clients to build
+- Full C implementation enabled after header generation
+
+**Source:** `tools/scripts/build-c-shared-linux.sh`
