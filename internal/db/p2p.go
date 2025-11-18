@@ -269,11 +269,11 @@ func (db *DB) SyncDocuments(ctx context.Context, collectionName string, docIDs [
 // context.WithTimeout can be used to set a timeout for the operation.
 //
 // WARNING: This function does not respect transactions.
-func (db *DB) SyncBranchableCollection(ctx context.Context, collectionName string) error {
+func (db *DB) SyncBranchableCollection(ctx context.Context, collectionID string) error {
 	if db.p2p == nil {
 		return ErrNoP2P
 	}
-	return db.p2p.SyncBranchableCollection(ctx, collectionName)
+	return db.p2p.SyncBranchableCollection(ctx, collectionID)
 }
 
 // FetchCollections syncs the given collection versions to the local node.

@@ -95,7 +95,7 @@ func (w *Wrapper) SyncDocuments(
 	panic("not implemented")
 }
 
-func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionName string) error {
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
 	panic("not implemented")
 }
 

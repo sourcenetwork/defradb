@@ -235,11 +235,11 @@ func (c *Client) SyncDocuments(
 	return err
 }
 
-func (c *Client) SyncBranchableCollection(ctx context.Context, collectionName string) error {
+func (c *Client) SyncBranchableCollection(ctx context.Context, collectionID string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections", "sync-branchable")
 
 	req := map[string]any{
-		"collectionName": collectionName,
+		"collectionID": collectionID,
 	}
 
 	deadline, hasDeadline := ctx.Deadline()

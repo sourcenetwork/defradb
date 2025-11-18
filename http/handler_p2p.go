@@ -214,8 +214,8 @@ func (h *p2pHandler) SyncBranchableCollection(rw http.ResponseWriter, req *http.
 	db := mustGetContextClientDB(req)
 
 	var reqBody struct {
-		CollectionName string `json:"collectionName"`
-		Timeout        string `json:"timeout"`
+		CollectionID string `json:"collectionID"`
+		Timeout      string `json:"timeout"`
 	}
 
 	if err := requestJSON(req, &reqBody); err != nil {
@@ -235,7 +235,7 @@ func (h *p2pHandler) SyncBranchableCollection(rw http.ResponseWriter, req *http.
 		defer cancel()
 	}
 
-	err := db.SyncBranchableCollection(ctx, reqBody.CollectionName)
+	err := db.SyncBranchableCollection(ctx, reqBody.CollectionID)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return

@@ -252,7 +252,7 @@ func P2PdocumentSync(nodePtr C.uintptr_t,
 
 //export P2PbranchableCollectionSync
 func P2PbranchableCollectionSync(nodePtr C.uintptr_t,
-	collectionName *C.char,
+	collectionID *C.char,
 	timeoutStr *C.char,
 	identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
@@ -273,7 +273,7 @@ func P2PbranchableCollectionSync(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.SyncBranchableCollection(ctx, C.GoString(collectionName))
+	err = node.DB.SyncBranchableCollection(ctx, C.GoString(collectionID))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

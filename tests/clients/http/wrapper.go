@@ -114,8 +114,8 @@ func (w *Wrapper) SyncDocuments(
 	return w.client.SyncDocuments(ctx, collectionName, docIDs)
 }
 
-func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionName string) error {
-	return w.client.SyncBranchableCollection(ctx, collectionName)
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	return w.client.SyncBranchableCollection(ctx, collectionID)
 }
 
 func (w *Wrapper) FetchCollections(ctx context.Context, versionIDs ...string) error {

@@ -204,8 +204,8 @@ func (w *Wrapper) SyncDocuments(
 	return err
 }
 
-func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionName string) error {
-	args := []string{"client", "p2p", "collection", "sync-branchable", collectionName}
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	args := []string{"client", "p2p", "collection", "sync-branchable", collectionID}
 
 	deadline, hasDeadline := ctx.Deadline()
 	if hasDeadline {

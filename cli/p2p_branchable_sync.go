@@ -18,7 +18,7 @@ import (
 
 func MakeP2PBranchableSyncCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "sync-branchable [collection-name]",
+		Use:   "sync-branchable [collection-id]",
 		Short: "Synchronize a branchable collection's DAG from the network",
 		Long: `Synchronize a branchable collection's DAG from the network.
 
@@ -27,7 +27,7 @@ This command allows you to sync the collection-level history for branchable coll
 to the collection for future updates.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			collectionName := args[0]
+			collectionID := args[0]
 
 			ctx := cmd.Context()
 			if timeout, _ := cmd.Flags().GetDuration("timeout"); timeout > 0 {
@@ -37,12 +37,12 @@ to the collection for future updates.`,
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.SyncBranchableCollection(ctx, collectionName)
+			return cliClient.SyncBranchableCollection(ctx, collectionID)
 		},
 	}
 
 	EmbedCLIExample(ctx, cmd, "sync branchable collection",
-		`defradb client p2p collection sync-branchable Users`)
+		`defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq`)
 
 	cmd.Flags().Duration("timeout", 0, "Timeout for sync operations")
 	return cmd

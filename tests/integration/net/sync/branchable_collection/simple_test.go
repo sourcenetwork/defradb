@@ -53,8 +53,8 @@ func TestBranchableCollectionSync_OneNodeEmptyAnotherWithDocs_ShouldCopyAll(t *t
 				TargetNodeID: 1,
 			},
 			&action.SyncBranchableCollection{
-				NodeID:         1,
-				CollectionName: "User",
+				NodeID:       1,
+				CollectionID: 0,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
@@ -125,12 +125,12 @@ func TestBranchableCollectionSync_WithDifferentDocsOnBothNodes_ShouldSync(t *tes
 				TargetNodeID: 1,
 			},
 			&action.SyncBranchableCollection{
-				NodeID:         1,
-				CollectionName: "User",
+				NodeID:       1,
+				CollectionID: 0,
 			},
 			&action.SyncBranchableCollection{
-				NodeID:         0,
-				CollectionName: "User",
+				NodeID:       0,
+				CollectionID: 0,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
@@ -177,8 +177,8 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 				}`,
 			},
 			&action.SyncBranchableCollection{
-				NodeID:         1,
-				CollectionName: "User",
+				NodeID:       1,
+				CollectionID: 0,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
@@ -217,8 +217,8 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 				},
 			},
 			&action.SyncBranchableCollection{
-				NodeID:         1,
-				CollectionName: "User",
+				NodeID:       1,
+				CollectionID: 0,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
@@ -249,9 +249,9 @@ func TestBranchableCollectionSync_WithNonBranchableCollection_ShouldError(t *tes
 				`,
 			},
 			&action.SyncBranchableCollection{
-				NodeID:         0,
-				CollectionName: "Users",
-				ExpectedError:  "collection is not branchable",
+				NodeID:        0,
+				CollectionID:  0,
+				ExpectedError: "collection is not branchable",
 			},
 		},
 	}
@@ -263,10 +263,17 @@ func TestBranchableCollectionSync_WithNonExistentCollection_ShouldError(t *testi
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type User @branchable {
+						name: String
+					}
+				`,
+			},
 			&action.SyncBranchableCollection{
-				NodeID:         0,
-				CollectionName: "NonExistent",
-				ExpectedError:  "collection not found",
+				NodeID:        0,
+				CollectionID:  99, // Non-existent collection index
+				ExpectedError: "index out of range",
 			},
 		},
 	}

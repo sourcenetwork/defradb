@@ -77,7 +77,7 @@ type P2P interface {
 	// for branchable collections (collections marked with @branchable directive).
 	// It doesn't automatically subscribe to the collection for future updates.
 	// context.WithTimeout can be used to set a timeout for the operation.
-	SyncBranchableCollection(ctx context.Context, collectionName string) error
+	SyncBranchableCollection(ctx context.Context, collectionID string) error
 
 	// FetchCollections fetches the given collection versions from the network.
 	//

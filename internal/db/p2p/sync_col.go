@@ -34,14 +34,14 @@ const collectionSyncTopic = "collection-sync"
 
 // collectionSyncRequest represents a request to synchronize a branchable collection.
 type collectionSyncRequest struct {
-	CollectionName string `json:"collectionName"`
+	CollectionID string `json:"collectionID"`
 }
 
 // collectionSyncReply represents the response to a collection sync request.
 type collectionSyncReply struct {
-	CollectionName string `json:"collectionName"`
-	Head           []byte `json:"head"` // CID bytes of the collection head
-	Sender         string `json:"sender"`
+	CollectionID string `json:"collectionID"`
+	Head         []byte `json:"head"` // CID bytes of the collection head
+	Sender       string `json:"sender"`
 }
 
 // SyncBranchableCollection initiates a request for the latest version of the branchable
@@ -49,37 +49,35 @@ type collectionSyncReply struct {
 //
 // This function call will block until there is a response for the collection.
 // It is the responsibility of the caller to set an appropriate timeout on the context.
-func (p *P2P) SyncBranchableCollection(ctx context.Context, collectionName string) error {
+func (p *P2P) SyncBranchableCollection(ctx context.Context, collectionID string) error {
 	cols, err := p.db.GetCollections(
 		ctx,
 		client.CollectionFetchOptions{
-			Name: immutable.Some(collectionName),
+			CollectionID: immutable.Some(collectionID),
 		},
 	)
 	if err != nil {
 		return err
 	}
 	if len(cols) == 0 {
-		return client.NewErrCollectionNotFoundForName(collectionName)
+		return client.NewErrCollectionNotFoundForCollectionVersion(collectionID)
 	}
 
 	col := cols[0].Version()
 	if !col.IsBranchable {
-		return errors.New("collection is not branchable", errors.NewKV("Name", collectionName))
+		return errors.New("collection is not branchable", errors.NewKV("CollectionID", collectionID))
 	}
 
-	collectionID := col.CollectionID
-	_, err = p.syncBranchableCollection(ctx, collectionName, collectionID)
+	_, err = p.syncBranchableCollection(ctx, collectionID)
 	return err
 }
 
 // syncBranchableCollection requests branchable collection synchronization from the network.
 func (p *P2P) syncBranchableCollection(
 	ctx context.Context,
-	collectionName string,
 	collectionID string,
 ) (cid.Cid, error) {
-	pubsubReq := &collectionSyncRequest{CollectionName: collectionName}
+	pubsubReq := &collectionSyncRequest{CollectionID: collectionID}
 
 	data, err := cbor.Marshal(pubsubReq)
 	if err != nil {
@@ -91,19 +89,18 @@ func (p *P2P) syncBranchableCollection(
 		return cid.Undef, err
 	}
 
-	return p.waitAndHandleCollectionSyncResponse(ctx, collectionID, collectionName, pubSubRespChan)
+	return p.waitAndHandleCollectionSyncResponse(ctx, collectionID, pubSubRespChan)
 }
 
 // waitAndHandleCollectionSyncResponse handles the response from a peer.
 func (p *P2P) waitAndHandleCollectionSyncResponse(
 	ctx context.Context,
 	collectionID string,
-	collectionName string,
 	pubSubRespChan <-chan client.PubsubResponse,
 ) (cid.Cid, error) {
 	select {
 	case resp := <-pubSubRespChan:
-		return p.handleCollectionSyncResponse(ctx, resp, collectionID, collectionName)
+		return p.handleCollectionSyncResponse(ctx, resp, collectionID)
 
 	case <-ctx.Done():
 		return cid.Undef, ErrTimeoutCollectionSync
@@ -115,7 +112,6 @@ func (p *P2P) handleCollectionSyncResponse(
 	ctx context.Context,
 	resp client.PubsubResponse,
 	collectionID string,
-	collectionName string,
 ) (cid.Cid, error) {
 	if resp.Err != nil {
 		return cid.Undef, resp.Err
@@ -126,15 +122,15 @@ func (p *P2P) handleCollectionSyncResponse(
 		return cid.Undef, err
 	}
 
-	if reply.CollectionName != collectionName {
+	if reply.CollectionID != collectionID {
 		return cid.Undef, errors.New("received response for different collection",
-			errors.NewKV("Expected", collectionName),
-			errors.NewKV("Received", reply.CollectionName))
+			errors.NewKV("Expected", collectionID),
+			errors.NewKV("Received", reply.CollectionID))
 	}
 
 	if len(reply.Head) == 0 {
 		return cid.Undef, errors.New("peer has no commits for collection",
-			errors.NewKV("Name", collectionName))
+			errors.NewKV("CollectionID", collectionID))
 	}
 
 	_, colCid, err := cid.CidFromBytes(reply.Head)
@@ -142,7 +138,7 @@ func (p *P2P) handleCollectionSyncResponse(
 		return cid.Undef, err
 	}
 
-	err = p.syncCollectionAndMerge(ctx, reply.Sender, collectionID, collectionName, colCid)
+	err = p.syncCollectionAndMerge(ctx, reply.Sender, collectionID, colCid)
 	if err != nil {
 		return cid.Undef, err
 	}
@@ -155,7 +151,6 @@ func (p *P2P) syncCollectionAndMerge(
 	ctx context.Context,
 	senderID string,
 	collectionID string,
-	collectionName string,
 	head cid.Cid,
 ) error {
 	err := p.syncCollectionDAG(ctx, head)
@@ -197,22 +192,22 @@ func (p *P2P) collectionSyncMessageHandler(from string, topic string, msg []byte
 		return nil, err
 	}
 
-	head, err := p.processCollectionSyncItem(req.CollectionName)
+	head, err := p.processCollectionSyncItem(req.CollectionID)
 	if err != nil {
 		head = []byte{}
 	}
 
 	reply := &collectionSyncReply{
-		Sender:         p.host.ID(),
-		CollectionName: req.CollectionName,
-		Head:           head,
+		Sender:       p.host.ID(),
+		CollectionID: req.CollectionID,
+		Head:         head,
 	}
 
 	return cbor.Marshal(reply)
 }
 
 // processCollectionSyncItem processes a branchable collection sync request and returns the head CID.
-func (p *P2P) processCollectionSyncItem(collectionName string) ([]byte, error) {
+func (p *P2P) processCollectionSyncItem(collectionID string) ([]byte, error) {
 	clientTxn, err := p.db.NewTxn(true)
 	if err != nil {
 		return nil, err
@@ -222,7 +217,7 @@ func (p *P2P) processCollectionSyncItem(collectionName string) ([]byte, error) {
 	cols, err := p.db.GetCollections(
 		p.ctx,
 		client.CollectionFetchOptions{
-			Name: immutable.Some(collectionName),
+			CollectionID: immutable.Some(collectionID),
 		},
 	)
 	if err != nil || len(cols) == 0 {
@@ -231,7 +226,7 @@ func (p *P2P) processCollectionSyncItem(collectionName string) ([]byte, error) {
 
 	col := cols[0].Version()
 	if !col.IsBranchable {
-		return nil, errors.New("collection is not branchable", errors.NewKV("Name", collectionName))
+		return nil, errors.New("collection is not branchable", errors.NewKV("CollectionID", collectionID))
 	}
 
 	txn := datastore.MustGetFromClientTxn(clientTxn)
@@ -252,7 +247,7 @@ func (p *P2P) processCollectionSyncItem(collectionName string) ([]byte, error) {
 	}
 
 	if len(cids) == 0 {
-		return nil, errors.New("no heads found for branchable collection", errors.NewKV("Name", collectionName))
+		return nil, errors.New("no heads found for branchable collection", errors.NewKV("CollectionID", collectionID))
 	}
 
 	return cids[0].Bytes(), nil

@@ -12,6 +12,7 @@ package action
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
@@ -26,8 +27,8 @@ type SyncBranchableCollection struct {
 	// and subscribed to the collection's pubsub topics.
 	NodeID int
 
-	// CollectionName is the name of the collection to sync.
-	CollectionName string
+	// CollectionID is the index of the collection to sync.
+	CollectionID int
 
 	// Any error expected from the action. Optional.
 	//
@@ -43,8 +44,18 @@ func (a *SyncBranchableCollection) Execute() {
 	ctx, cancel := context.WithTimeout(a.s.Ctx, 5*time.Second)
 	defer cancel()
 
-	node := a.s.Nodes[a.NodeID]
-	err := node.SyncBranchableCollection(ctx, a.CollectionName)
+	nodeState := a.s.Nodes[a.NodeID]
+
+	if a.CollectionID >= len(nodeState.Collections) {
+		err := assertError(a.s.T,
+			errors.New("collection index out of range"),
+			a.ExpectedError)
+		assertExpectedErrorRaised(a.s.T, a.ExpectedError, err)
+		return
+	}
+
+	collection := nodeState.Collections[a.CollectionID]
+	err := nodeState.SyncBranchableCollection(ctx, collection.CollectionID())
 
 	expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
