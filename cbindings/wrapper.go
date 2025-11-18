@@ -28,12 +28,12 @@ char* relation, char* actor);
 extern Result ACPGetNACStatus(uintptr_t nodePtr, uintptr_t identity);
 extern Result BlockVerifySignature(uintptr_t nodePtr, char* keyType, char* publicKey, char* cid,
 uintptr_t identity);
-extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
-extern Result CollectionPatch(uintptr_t nodePtr, char* patch, char* lensConfig, CollectionOptions options);
+extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result CollectionPatch(uintptr_t nodePtr, char* patch, char* lensConfig, uintptr_t identityPtr);
 extern Result IdentityNew(char* keyType);
 extern void IdentityFree(uintptr_t identityPtr);
 extern Result NodeIdentity(uintptr_t nodePtr);
-extern Result IndexList(uintptr_t nodePtr, CollectionOptions options);
+extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
@@ -58,7 +58,7 @@ extern Result CloseSubscription(char* id);
 extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
 char* operationName, char* variables);
 extern Result AddSchema(uintptr_t nodePtr, char* schema, uintptr_t identity);
-extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options);
+extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result VersionGet(int flagFull, int flagJSON);
 extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr);
@@ -533,13 +533,6 @@ func (w *CWrapper) PatchCollection(
 	defer C.free(unsafe.Pointer(cName))
 	defer C.IdentityFree(cIdentity)
 
-	var opts C.CollectionOptions
-	opts.identityPtr = cIdentity
-	opts.version = cVersion
-	opts.collectionID = cCollectionID
-	opts.name = cName
-	opts.getInactive = 0
-
 	migrationStr, migrationErr := optionToString(migration)
 	if migrationErr != nil {
 		return migrationErr
@@ -548,7 +541,7 @@ func (w *CWrapper) PatchCollection(
 	defer C.free(unsafe.Pointer(cMigration))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.CollectionPatch(callHandle, cPatch, cMigration, opts))
+	res := ConvertAndFreeCResult(C.CollectionPatch(callHandle, cPatch, cMigration, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -568,14 +561,13 @@ func (w *CWrapper) SetActiveCollectionVersion(ctx context.Context, collectionVer
 	defer C.IdentityFree(cIdentity)
 
 	var opts C.CollectionOptions
-	opts.identityPtr = cIdentity
 	opts.version = cVersion
 	opts.collectionID = cCollectionID
 	opts.name = cName
 	opts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.SetActiveCollection(callHandle, opts))
+	res := ConvertAndFreeCResult(C.SetActiveCollection(callHandle, opts, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -718,11 +710,10 @@ func (w *CWrapper) GetCollections(
 	opts.version = cVersion
 	opts.collectionID = cCollectionID
 	opts.name = cName
-	opts.identityPtr = cIdentity
 	opts.getInactive = C.int(includeInactive)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.CollectionDescribe(callHandle, opts))
+	res := ConvertAndFreeCResult(C.CollectionDescribe(callHandle, opts, cIdentity))
 
 	if res.Status != 0 {
 		return []client.Collection{}, errors.New(res.Error)
@@ -754,11 +745,10 @@ func (w *CWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName
 	opts.version = cVersion
 	opts.collectionID = cCollectionID
 	opts.name = cName
-	opts.identityPtr = cIdentity
 	opts.getInactive = 0
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.IndexList(callHandle, opts))
+	res := ConvertAndFreeCResult(C.IndexList(callHandle, opts, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
