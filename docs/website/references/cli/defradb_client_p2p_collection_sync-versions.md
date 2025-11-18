@@ -1,10 +1,10 @@
 ## defradb client p2p collection sync-versions
 
-Synchronizes specific collection versions from the network
+Synchronize specific collection versions from the network
 
 ### Synopsis
 
-Synchronizes specific collection versions from the network.
+Synchronize specific collection versions from the network.
 
 This command allows you to synchronize collection versions across the network.
 Older versions of a requested collection will also be synchronized.
@@ -28,7 +28,7 @@ synchronize multiple collection versions:
 
 ```
   -h, --help               help for sync-versions
-      --timeout duration   Timeout for fetch operations
+      --timeout duration   Timeout for sync operations
 ```
 
 ### Options inherited from parent commands
