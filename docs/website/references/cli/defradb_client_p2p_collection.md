@@ -39,12 +39,8 @@ The selected collections synchronize their events on the pubsub network.
 
 * [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
 * [defradb client p2p collection add](defradb_client_p2p_collection_add.md)	 - Add P2P collections
-* [defradb client p2p collection fetch](defradb_client_p2p_collection_fetch.md)	 - Fetches specific collection versions from the network
 * [defradb client p2p collection getall](defradb_client_p2p_collection_getall.md)	 - Get all P2P collections
 * [defradb client p2p collection remove](defradb_client_p2p_collection_remove.md)	 - Remove P2P collections
-<<<<<<< HEAD
 * [defradb client p2p collection sync-branchable](defradb_client_p2p_collection_sync-branchable.md)	 - Synchronize a branchable collection's DAG from the network
-=======
-* [defradb client p2p collection sync-versions](defradb_client_p2p_collection_sync-versions.md)	 - Synchronizes specific collection versions from the network
->>>>>>> refactor/rename-sync-collections
+* [defradb client p2p collection sync-versions](defradb_client_p2p_collection_sync-versions.md)	 - Synchronize specific collection versions from the network
 

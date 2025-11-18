@@ -1,61 +1,34 @@
-<<<<<<<< HEAD:docs/website/references/cli/defradb_client_p2p_collection_sync-branchable.md
-## defradb client p2p collection sync-branchable
-
-Synchronize a branchable collection's DAG from the network
-
-### Synopsis
-
-Synchronize a branchable collection's DAG from the network.
-========
 ## defradb client p2p collection sync-versions
 
-Synchronizes specific collection versions from the network
+Synchronize specific collection versions from the network
 
 ### Synopsis
 
-Synchronizes specific collection versions from the network.
+Synchronize specific collection versions from the network.
 
 This command allows you to synchronize collection versions across the network.
 Older versions of a requested collection will also be synchronized.
->>>>>>>> refactor/rename-sync-collections:docs/website/references/cli/defradb_client_p2p_collection_sync-versions.md
 
-This command allows you to sync the collection-level history for branchable collections
-(collections marked with @branchable directive). It doesn't automatically subscribe
-to the collection for future updates.
 
 ```
-<<<<<<<< HEAD:docs/website/references/cli/defradb_client_p2p_collection_sync-branchable.md
-defradb client p2p collection sync-branchable [collection-name] [flags]
-========
 defradb client p2p collection sync-versions [versionID...] [flags]
->>>>>>>> refactor/rename-sync-collections:docs/website/references/cli/defradb_client_p2p_collection_sync-versions.md
 ```
 
 ### Examples
 
 ```
-<<<<<<<< HEAD:docs/website/references/cli/defradb_client_p2p_collection_sync-branchable.md
-sync branchable collection:  
-  defradb client p2p collection sync-branchable Users
-========
 synchronize single collection versions:  
   defradb client p2p collection sync-versions bafy123
 
 synchronize multiple collection versions:  
   defradb client p2p collection sync-versions bafy123 bafy456
->>>>>>>> refactor/rename-sync-collections:docs/website/references/cli/defradb_client_p2p_collection_sync-versions.md
 ```
 
 ### Options
 
 ```
-<<<<<<<< HEAD:docs/website/references/cli/defradb_client_p2p_collection_sync-branchable.md
-  -h, --help               help for sync-branchable
-      --timeout duration   Timeout for sync operations
-========
   -h, --help               help for sync-versions
       --timeout duration   Timeout for fetch operations
->>>>>>>> refactor/rename-sync-collections:docs/website/references/cli/defradb_client_p2p_collection_sync-versions.md
 ```
 
 ### Options inherited from parent commands

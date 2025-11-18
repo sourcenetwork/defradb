@@ -2068,54 +2068,6 @@
                 ]
             }
         },
-<<<<<<< HEAD
-        "/p2p/collections/fetch": {
-=======
-        "/p2p/collections/sync-versions": {
->>>>>>> refactor/rename-sync-collections
-            "post": {
-                "description": "Fetch collection versions from the network",
-                "operationId": "peer_sync_collection_versions",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "timeout": {
-                                        "type": "string"
-                                    },
-                                    "versionIDs": {
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "type": "array"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    },
-                    "required": true
-                },
-                "responses": {
-                    "200": {
-                        "description": "Collection fetch completed successfully"
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "500": {
-                        "$ref": "#/components/responses/error"
-                    },
-                    "default": {
-                        "description": ""
-                    }
-                },
-                "tags": [
-                    "p2p"
-                ]
-            }
-        },
         "/p2p/collections/sync-branchable": {
             "post": {
                 "description": "Synchronize a branchable collection's DAG from the network",
@@ -2141,6 +2093,50 @@
                 "responses": {
                     "200": {
                         "description": "Branchable collection sync completed successfully"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
+        "/p2p/collections/sync-versions": {
+            "post": {
+                "description": "Synchronize collection versions to the local node",
+                "operationId": "peer_sync_collection_versions",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "timeout": {
+                                        "type": "string"
+                                    },
+                                    "versionIDs": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Collection synchronization completed successfully"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"

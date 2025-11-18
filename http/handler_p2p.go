@@ -471,10 +471,10 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 		WithContent(openapi3.NewContentWithJSONSchema(syncCollectionVersionsRequestSchema))
 
 	syncCollectionVersionsResponse := openapi3.NewResponse().
-		WithDescription("Collection fetch completed successfully")
+		WithDescription("Collection synchronization completed successfully")
 
 	syncCollectionVersions := openapi3.NewOperation()
-	syncCollectionVersions.Description = "Fetch collection versions from the network"
+	syncCollectionVersions.Description = "Synchronize collection versions to the local node"
 	syncCollectionVersions.OperationID = "peer_sync_collection_versions"
 	syncCollectionVersions.Tags = []string{"p2p"}
 	syncCollectionVersions.RequestBody = &openapi3.RequestBodyRef{
