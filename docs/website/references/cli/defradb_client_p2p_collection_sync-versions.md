@@ -1,33 +1,33 @@
-## defradb client p2p collection fetch
+## defradb client p2p collection sync-versions
 
-Fetches specific collection versions from the network
+Synchronizes specific collection versions from the network
 
 ### Synopsis
 
-Fetches specific collection versions from the network.
+Synchronizes specific collection versions from the network.
 
-This command allows you to fetch collection versions across the network.
-Older versions of a requested collection will also be fetched.
+This command allows you to synchronize collection versions across the network.
+Older versions of a requested collection will also be synchronized.
 
 
 ```
-defradb client p2p collection fetch [versionID...] [flags]
+defradb client p2p collection sync-versions [versionID...] [flags]
 ```
 
 ### Examples
 
 ```
-fetch single collection versions:  
-  defradb client p2p collection fetch bafy123
+synchronize single collection versions:  
+  defradb client p2p collection sync-versions bafy123
 
-fetch multiple collection versions:  
-  defradb client p2p collection fetch bafy123 bafy456
+synchronize multiple collection versions:  
+  defradb client p2p collection sync-versions bafy123 bafy456
 ```
 
 ### Options
 
 ```
-  -h, --help               help for fetch
+  -h, --help               help for sync-versions
       --timeout duration   Timeout for fetch operations
 ```
 

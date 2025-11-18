@@ -2068,10 +2068,10 @@
                 ]
             }
         },
-        "/p2p/collections/fetch": {
+        "/p2p/collections/sync-versions": {
             "post": {
                 "description": "Fetch collection versions from the network",
-                "operationId": "peer_fetch_collections",
+                "operationId": "peer_sync_collection_versions",
                 "requestBody": {
                     "content": {
                         "application/json": {

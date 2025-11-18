@@ -65,7 +65,7 @@ func TestColFetch_WithView(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.FetchCollection{
+			&action.SyncCollectionVersions{
 				NodeID:     1,
 				VersionIDs: []string{"{{.CollectionVersionID1}}"},
 			},
@@ -163,7 +163,7 @@ func TestColFetch_WithView_CanBeActivatedAndQueried(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.FetchCollection{
+			&action.SyncCollectionVersions{
 				NodeID:     1,
 				VersionIDs: []string{"{{.CollectionVersionID1}}"},
 			},
