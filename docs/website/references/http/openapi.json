@@ -2068,10 +2068,10 @@
                 ]
             }
         },
-        "/p2p/collections/sync": {
+        "/p2p/collections/sync-versions": {
             "post": {
-                "description": "Synchronize collection versions from the network",
-                "operationId": "peer_sync_collections",
+                "description": "Synchronize collection versions to the local node",
+                "operationId": "peer_sync_collection_versions",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2095,7 +2095,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Document sync completed successfully"
+                        "description": "Collection synchronization completed successfully"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"

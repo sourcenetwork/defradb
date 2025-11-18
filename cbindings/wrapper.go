@@ -52,7 +52,7 @@ extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections, uintptr_t ide
 extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PdocumentGetAll(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr, uintptr_t identity);
-extern Result P2PcollectionSync(uintptr_t nodePtr, char* versionIDs, char* timeoutStr, uintptr_t identity);
+extern Result P2PcollectionSyncVersions(uintptr_t nodePtr, char* versionIDs, char* timeoutStr, uintptr_t identity);
 extern Result PollSubscription(char* id);
 extern Result CloseSubscription(char* id);
 extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
@@ -284,7 +284,7 @@ func (w *CWrapper) SyncDocuments(
 	return nil
 }
 
-func (w *CWrapper) SyncCollections(ctx context.Context, versionIDs ...string) error {
+func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
 	cIdentity := identityFromContext(ctx)
 	versions := C.CString(strings.Join(versionIDs, ","))
 	defer C.free(unsafe.Pointer(versions))
@@ -298,7 +298,7 @@ func (w *CWrapper) SyncCollections(ctx context.Context, versionIDs ...string) er
 	cTimerStr := C.CString(timerStr)
 	defer C.free(unsafe.Pointer(cTimerStr))
 
-	res := ConvertAndFreeCResult(C.P2PcollectionSync(C.uintptr_t(w.handle), versions, cTimerStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PcollectionSyncVersions(C.uintptr_t(w.handle), versions, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

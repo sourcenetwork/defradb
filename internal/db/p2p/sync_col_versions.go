@@ -31,11 +31,11 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
-func (p *P2P) SyncCollections(ctx context.Context, versionIDs ...string) error {
+func (p *P2P) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
 	linkSys := makeLinkSystem(p.host.IPLDStore())
 
 	for _, versionID := range versionIDs {
-		_, err := p.syncCollection(ctx, versionID, linkSys)
+		_, err := p.syncCollectionVersion(ctx, versionID, linkSys)
 		if err != nil {
 			return err
 		}
@@ -44,7 +44,7 @@ func (p *P2P) SyncCollections(ctx context.Context, versionIDs ...string) error {
 	return nil
 }
 
-func (p *P2P) syncCollection(
+func (p *P2P) syncCollectionVersion(
 	ctx context.Context,
 	versionID string,
 	linkSys linking.LinkSystem,
@@ -88,7 +88,7 @@ func (p *P2P) syncCollection(
 		// If there is one, this must be an new version of a collection and
 		// we need to sync the older version(s) recursively.
 		previousID := linkBlock.Heads[0].String()
-		col, err = p.syncCollection(ctx, previousID, linkSys)
+		col, err = p.syncCollectionVersion(ctx, previousID, linkSys)
 		if err != nil {
 			return client.CollectionVersion{}, err
 		}
