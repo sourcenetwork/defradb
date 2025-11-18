@@ -250,8 +250,8 @@ func P2PdocumentSync(nodePtr C.uintptr_t,
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionsSyncVersions
-func P2PcollectionsSyncVersions(nodePtr C.uintptr_t,
+//export P2PcollectionSyncVersions
+func P2PcollectionSyncVersions(nodePtr C.uintptr_t,
 	versionIDs *C.char,
 	timeoutStr *C.char,
 	identityPtr C.uintptr_t) C.Result {
