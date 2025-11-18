@@ -262,6 +262,29 @@ func (db *DB) SyncDocuments(ctx context.Context, collectionName string, docIDs [
 	return db.p2p.SyncDocuments(ctx, collectionName, docIDs)
 }
 
+// SyncCollectionVersions fetches the given collection versions to the local node.
+//
+// It will not complete until a version is found, so it is strongly recommended
+// to set a timeout using `context.WithTimeout`.
+func (db *DB) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+	if db.p2p == nil {
+		return ErrNoP2P
+	}
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	err = db.p2p.SyncCollectionVersions(ctx, versionIDs...)
+	if err != nil {
+		return err
+	}
+
+	return txn.Commit()
+}
+
 // SyncBranchableCollection requests the latest version of the branchable collection's DAG
 // from the network and synchronizes it locally. This syncs the collection-level history
 // for branchable collections (collections marked with @branchable directive).
@@ -274,27 +297,4 @@ func (db *DB) SyncBranchableCollection(ctx context.Context, collectionID string)
 		return ErrNoP2P
 	}
 	return db.p2p.SyncBranchableCollection(ctx, collectionID)
-}
-
-// FetchCollections syncs the given collection versions to the local node.
-//
-// It will not complete until a version is found, so it is strongly recommended
-// to set a timeout using `context.WithTimeout`.
-func (db *DB) FetchCollections(ctx context.Context, versionIDs ...string) error {
-	if db.p2p == nil {
-		return ErrNoP2P
-	}
-
-	ctx, txn, err := ensureContextTxn(ctx, db, false)
-	if err != nil {
-		return err
-	}
-	defer txn.Discard()
-
-	err = db.p2p.FetchCollections(ctx, versionIDs...)
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit()
 }

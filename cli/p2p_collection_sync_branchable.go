@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PBranchableSyncCommand(ctx context.Context) *cobra.Command {
+func MakeP2PCollectionSyncBranchableCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "sync-branchable [collection-id]",
 		Short: "Synchronize a branchable collection's DAG from the network",
@@ -44,6 +44,6 @@ to the collection for future updates.`,
 	EmbedCLIExample(ctx, cmd, "sync branchable collection",
 		`defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq`)
 
-	cmd.Flags().Duration("timeout", 0, "Timeout for sync operations")
+	cmd.Flags().Duration("timeout", 0, "Timeout for fetch operations")
 	return cmd
 }

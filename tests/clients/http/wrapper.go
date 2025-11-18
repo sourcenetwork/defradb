@@ -114,12 +114,12 @@ func (w *Wrapper) SyncDocuments(
 	return w.client.SyncDocuments(ctx, collectionName, docIDs)
 }
 
-func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
-	return w.client.SyncBranchableCollection(ctx, collectionID)
+func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+	return w.client.SyncCollectionVersions(ctx, versionIDs...)
 }
 
-func (w *Wrapper) FetchCollections(ctx context.Context, versionIDs ...string) error {
-	return w.client.FetchCollections(ctx, versionIDs...)
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	return w.client.SyncBranchableCollection(ctx, collectionID)
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {

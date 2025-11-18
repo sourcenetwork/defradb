@@ -204,20 +204,8 @@ func (w *Wrapper) SyncDocuments(
 	return err
 }
 
-func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
-	args := []string{"client", "p2p", "collection", "sync-branchable", collectionID}
-
-	deadline, hasDeadline := ctx.Deadline()
-	if hasDeadline {
-		args = append(args, "--timeout", time.Until(deadline).String())
-	}
-
-	_, err := w.cmd.execute(ctx, args)
-	return err
-}
-
-func (w *Wrapper) FetchCollections(ctx context.Context, versionIDs ...string) error {
-	args := []string{"client", "p2p", "collection", "sync"}
+func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+	args := []string{"client", "p2p", "collection", "sync-versions"}
 
 	deadline, hasDeadline := ctx.Deadline()
 	if hasDeadline {
@@ -227,6 +215,18 @@ func (w *Wrapper) FetchCollections(ctx context.Context, versionIDs ...string) er
 	args = append(args, versionIDs...)
 
 	_, err := w.cmd.execute(context.Background(), args)
+	return err
+}
+
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	args := []string{"client", "p2p", "collection", "sync-branchable", collectionID}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		args = append(args, "--timeout", time.Until(deadline).String())
+	}
+
+	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
