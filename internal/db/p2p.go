@@ -262,7 +262,7 @@ func (db *DB) SyncDocuments(ctx context.Context, collectionName string, docIDs [
 	return db.p2p.SyncDocuments(ctx, collectionName, docIDs)
 }
 
-// SyncCollectionVersions fetches the given collection versions to the local node.
+// SyncCollectionVersions synchronizes the given collection versions to the local node.
 //
 // It will not complete until a version is found, so it is strongly recommended
 // to set a timeout using `context.WithTimeout`.
