@@ -36,17 +36,17 @@ func TestBranchableCollectionSync_OneNodeEmptyAnotherWithDocs_ShouldCopyAll(t *t
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
-				Doc: `{
+				DocMap: map[string]any{
 					"name": "John",
-					"age": 30
-				}`,
+					"age":  30,
+				},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
-				Doc: `{
+				DocMap: map[string]any{
 					"name": "Islam",
-					"age": 25
-				}`,
+					"age":  25,
+				},
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
@@ -98,27 +98,27 @@ func TestBranchableCollectionSync_WithDifferentDocsOnBothNodes_ShouldSync(t *tes
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "John"
-				}`,
+				DocMap: map[string]any{
+					"name": "John",
+				},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(1),
-				Doc: `{
-					"name": "Islam"
-				}`,
+				DocMap: map[string]any{
+					"name": "Islam",
+				},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "Andy"
-				}`,
+				DocMap: map[string]any{
+					"name": "Andy",
+				},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(1),
-				Doc: `{
-					"name": "Fred"
-				}`,
+				DocMap: map[string]any{
+					"name": "Fred",
+				},
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
@@ -172,9 +172,9 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "John"
-				}`,
+				DocMap: map[string]any{
+					"name": "John",
+				},
 			},
 			&action.SyncBranchableCollection{
 				NodeID:       1,
@@ -194,15 +194,15 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "Islam"
-				}`,
+				DocMap: map[string]any{
+					"name": "Islam",
+				},
 			},
 			testUtils.CreateDoc{
 				NodeID: immutable.Some(0),
-				Doc: `{
-					"name": "Andy"
-				}`,
+				DocMap: map[string]any{
+					"name": "Andy",
+				},
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
