@@ -15,11 +15,69 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestBranchableCollection_AddNewField_ShouldAddField(t *testing.T) {
+func TestBranchableCollection_AddNewField_ShouldUpdateCollectionDefinition(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User @branchable {
+						name: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				NodeID: immutable.Some(0),
+				Patch: `
+					[
+						{ "op": "add", "path": "/User/Fields/-", "value": {"Name": "email", "Kind": 11} }
+					]
+				`,
+			},
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					Name: immutable.Some("User"),
+				},
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "User",
+						IsBranchable:   true,
+						IsMaterialized: true,
+						IsActive:       true,
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreibhpgygzsmki22sql5ejzcojrrxbc5iuhpydhdzxul5w2znc7zrgu",
+						}),
+						Fields: []client.CollectionFieldDescription{
+							{
+								Name: request.DocIDFieldName,
+								Kind: client.FieldKind_DocID,
+							},
+							{
+								Name: "name",
+								Kind: client.FieldKind_NILLABLE_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+							{
+								Name: "email",
+								Kind: client.FieldKind_NILLABLE_STRING,
+								Typ:  client.LWW_REGISTER,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestBranchableCollection_AddNewFieldWithMultipleDocs_ShouldAddField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
