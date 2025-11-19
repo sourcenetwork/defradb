@@ -45,6 +45,6 @@ Older versions of a requested collection will also be synchronized.
 	EmbedCLIExample(ctx, cmd, "synchronize multiple collection versions",
 		`defradb client p2p collection sync-versions bafy123 bafy456`)
 
-	cmd.Flags().Duration("timeout", 0, "Timeout for fetch operations")
+	cmd.Flags().Duration("timeout", 0, "Timeout for sync operations")
 	return cmd
 }

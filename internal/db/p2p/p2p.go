@@ -167,7 +167,7 @@ func New(
 		return nil, err
 	}
 
-	err = p.host.AddPubSubTopic(collectionSyncTopic, true, p.collectionSyncMessageHandler)
+	err = p.host.AddPubSubTopic(syncBranchableCollectionTopic, true, p.syncBranchableCollectionMessageHandler)
 	if err != nil {
 		return nil, err
 	}

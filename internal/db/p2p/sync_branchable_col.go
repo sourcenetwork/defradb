@@ -29,16 +29,16 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// collectionSyncTopic is the fixed topic for branchable collection sync operations.
-const collectionSyncTopic = "collection-sync"
+// syncBranchableCollectionTopic is the fixed topic for branchable collection sync operations.
+const syncBranchableCollectionTopic = "sync-branchable"
 
-// collectionSyncRequest represents a request to synchronize a branchable collection.
-type collectionSyncRequest struct {
+// syncBranchableCollectionRequest represents a request to synchronize a branchable collection.
+type syncBranchableCollectionRequest struct {
 	CollectionID string `json:"collectionID"`
 }
 
-// collectionSyncReply represents the response to a collection sync request.
-type collectionSyncReply struct {
+// syncBranchableCollectionReply represents the response to a collection sync request.
+type syncBranchableCollectionReply struct {
 	CollectionID string `json:"collectionID"`
 	Head         []byte `json:"head"` // CID bytes of the collection head
 	Sender       string `json:"sender"`
@@ -77,38 +77,38 @@ func (p *P2P) syncBranchableCollection(
 	ctx context.Context,
 	collectionID string,
 ) (cid.Cid, error) {
-	pubsubReq := &collectionSyncRequest{CollectionID: collectionID}
+	pubsubReq := &syncBranchableCollectionRequest{CollectionID: collectionID}
 
 	data, err := cbor.Marshal(pubsubReq)
 	if err != nil {
 		return cid.Undef, err
 	}
 
-	pubSubRespChan, err := p.host.PublishToTopic(ctx, collectionSyncTopic, data, true)
+	pubSubRespChan, err := p.host.PublishToTopic(ctx, syncBranchableCollectionTopic, data, true)
 	if err != nil {
 		return cid.Undef, err
 	}
 
-	return p.waitAndHandleCollectionSyncResponse(ctx, collectionID, pubSubRespChan)
+	return p.waitAndHandleSyncBranchableCollectionResponse(ctx, collectionID, pubSubRespChan)
 }
 
-// waitAndHandleCollectionSyncResponse handles the response from a peer.
-func (p *P2P) waitAndHandleCollectionSyncResponse(
+// waitAndHandleSyncBranchableCollectionResponse handles the response from a peer.
+func (p *P2P) waitAndHandleSyncBranchableCollectionResponse(
 	ctx context.Context,
 	collectionID string,
 	pubSubRespChan <-chan client.PubsubResponse,
 ) (cid.Cid, error) {
 	select {
 	case resp := <-pubSubRespChan:
-		return p.handleCollectionSyncResponse(ctx, resp, collectionID)
+		return p.handleSyncBranchableCollectionResponse(ctx, resp, collectionID)
 
 	case <-ctx.Done():
 		return cid.Undef, ErrTimeoutCollectionSync
 	}
 }
 
-// handleCollectionSyncResponse processes a single response from a peer.
-func (p *P2P) handleCollectionSyncResponse(
+// handleSyncBranchableCollectionResponse processes a single response from a peer.
+func (p *P2P) handleSyncBranchableCollectionResponse(
 	ctx context.Context,
 	resp client.PubsubResponse,
 	collectionID string,
@@ -117,7 +117,7 @@ func (p *P2P) handleCollectionSyncResponse(
 		return cid.Undef, resp.Err
 	}
 
-	var reply collectionSyncReply
+	var reply syncBranchableCollectionReply
 	if err := cbor.Unmarshal(resp.Data, &reply); err != nil {
 		return cid.Undef, err
 	}
@@ -185,19 +185,19 @@ func (p *P2P) syncCollectionDAG(ctx context.Context, colCid cid.Cid) error {
 	return p.syncDAG(ctx, linkBlock)
 }
 
-// collectionSyncMessageHandler handles incoming branchable collection sync requests from the pubsub network.
-func (p *P2P) collectionSyncMessageHandler(from string, topic string, msg []byte) ([]byte, error) {
-	req := &collectionSyncRequest{}
+// syncBranchableCollectionMessageHandler handles incoming branchable collection sync requests from the pubsub network.
+func (p *P2P) syncBranchableCollectionMessageHandler(from string, topic string, msg []byte) ([]byte, error) {
+	req := &syncBranchableCollectionRequest{}
 	if err := cbor.Unmarshal(msg, req); err != nil {
 		return nil, err
 	}
 
-	head, err := p.processCollectionSyncItem(req.CollectionID)
+	head, err := p.processSyncBranchableCollection(req.CollectionID)
 	if err != nil {
 		head = []byte{}
 	}
 
-	reply := &collectionSyncReply{
+	reply := &syncBranchableCollectionReply{
 		Sender:       p.host.ID(),
 		CollectionID: req.CollectionID,
 		Head:         head,
@@ -206,8 +206,8 @@ func (p *P2P) collectionSyncMessageHandler(from string, topic string, msg []byte
 	return cbor.Marshal(reply)
 }
 
-// processCollectionSyncItem processes a branchable collection sync request and returns the head CID.
-func (p *P2P) processCollectionSyncItem(collectionID string) ([]byte, error) {
+// processSyncBranchableCollection processes a branchable collection sync request and returns the head CID.
+func (p *P2P) processSyncBranchableCollection(collectionID string) ([]byte, error) {
 	clientTxn, err := p.db.NewTxn(true)
 	if err != nil {
 		return nil, err
