@@ -85,9 +85,10 @@ func CollectionCreate(
 	isEncrypted C.int,
 	encryptedFields *C.char,
 	options C.CollectionOptions,
+	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -142,11 +143,16 @@ func CollectionCreate(
 }
 
 //export CollectionDelete
-func CollectionDelete(nodePtr C.uintptr_t, docIDStr *C.char, filterStr *C.char, options C.CollectionOptions) C.Result {
+func CollectionDelete(nodePtr C.uintptr_t,
+	docIDStr *C.char,
+	filterStr *C.char,
+	options C.CollectionOptions,
+	identityPtr C.uintptr_t,
+) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -193,11 +199,11 @@ func CollectionDelete(nodePtr C.uintptr_t, docIDStr *C.char, filterStr *C.char, 
 }
 
 //export CollectionDescribe
-func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions) C.Result {
+func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -221,11 +227,11 @@ func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions) C.Resu
 }
 
 //export CollectionListDocIDs
-func CollectionListDocIDs(nodePtr C.uintptr_t, options C.CollectionOptions) C.Result {
+func CollectionListDocIDs(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -267,11 +273,16 @@ func CollectionListDocIDs(nodePtr C.uintptr_t, options C.CollectionOptions) C.Re
 }
 
 //export CollectionGet
-func CollectionGet(nodePtr C.uintptr_t, docIDStr *C.char, showDeleted C.int, options C.CollectionOptions) C.Result {
+func CollectionGet(nodePtr C.uintptr_t,
+	docIDStr *C.char,
+	showDeleted C.int,
+	options C.CollectionOptions,
+	identityPtr C.uintptr_t,
+) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -303,10 +314,13 @@ func CollectionGet(nodePtr C.uintptr_t, docIDStr *C.char, showDeleted C.int, opt
 }
 
 //export CollectionPatch
-func CollectionPatch(nodePtr C.uintptr_t, patch *C.char, lensConfig *C.char, options C.CollectionOptions) C.Result {
+func CollectionPatch(nodePtr C.uintptr_t,
+	patch *C.char, lensConfig *C.char,
+	identityPtr C.uintptr_t,
+) C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -346,11 +360,12 @@ func CollectionUpdate(
 	filterStr *C.char,
 	updaterStr *C.char,
 	options C.CollectionOptions,
+	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
 	colOptions := parseCollectionOptions(options)
 
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -409,10 +424,10 @@ func CollectionUpdate(
 }
 
 //export SetActiveCollection
-func SetActiveCollection(nodePtr C.uintptr_t, options C.CollectionOptions) C.Result {
+func SetActiveCollection(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 
-	ctx, err := contextWithIdentity(ctx, options.identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
