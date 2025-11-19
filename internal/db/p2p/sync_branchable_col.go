@@ -18,6 +18,7 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -68,82 +69,110 @@ func (p *P2P) SyncBranchableCollection(ctx context.Context, collectionID string)
 		return errors.New("collection is not branchable", errors.NewKV("CollectionID", collectionID))
 	}
 
-	_, err = p.syncBranchableCollection(ctx, collectionID)
-	return err
+	return p.syncBranchableCollection(ctx, collectionID)
 }
 
 // syncBranchableCollection requests branchable collection synchronization from the network.
 func (p *P2P) syncBranchableCollection(
 	ctx context.Context,
 	collectionID string,
-) (cid.Cid, error) {
+) error {
 	pubsubReq := &syncBranchableCollectionRequest{CollectionID: collectionID}
 
 	data, err := cbor.Marshal(pubsubReq)
 	if err != nil {
-		return cid.Undef, err
+		return err
 	}
 
 	pubSubRespChan, err := p.host.PublishToTopic(ctx, syncBranchableCollectionTopic, data, true)
 	if err != nil {
-		return cid.Undef, err
+		return err
 	}
 
 	return p.waitAndHandleSyncBranchableCollectionResponse(ctx, collectionID, pubSubRespChan)
 }
 
-// waitAndHandleSyncBranchableCollectionResponse handles the response from a peer.
+// waitAndHandleSyncBranchableCollectionResponse handles responses from multiple peers.
 func (p *P2P) waitAndHandleSyncBranchableCollectionResponse(
 	ctx context.Context,
 	collectionID string,
 	pubSubRespChan <-chan client.PubsubResponse,
-) (cid.Cid, error) {
-	select {
-	case resp := <-pubSubRespChan:
-		return p.handleSyncBranchableCollectionResponse(ctx, resp, collectionID)
+) error {
+	syncedHeads := make(map[string]cid.Cid)
 
-	case <-ctx.Done():
-		return cid.Undef, ErrTimeoutCollectionSync
+loop:
+	for {
+		select {
+		case resp := <-pubSubRespChan:
+			err := p.handleSyncBranchableCollectionResponse(ctx, resp, collectionID, syncedHeads)
+			if err != nil {
+				return err
+			}
+
+		case <-ctx.Done():
+			if len(syncedHeads) == 0 {
+				return ErrTimeoutCollectionSync
+			}
+			break loop
+		}
 	}
+
+	return nil
 }
 
 // handleSyncBranchableCollectionResponse processes a single response from a peer.
+// It mutates the syncedHeads map to track which heads have been synced.
 func (p *P2P) handleSyncBranchableCollectionResponse(
 	ctx context.Context,
 	resp client.PubsubResponse,
 	collectionID string,
-) (cid.Cid, error) {
+	syncedHeads map[string]cid.Cid,
+) error {
 	if resp.Err != nil {
-		return cid.Undef, resp.Err
+		log.ErrorE("Received error response from peer", resp.Err)
+		return resp.Err
 	}
 
 	var reply syncBranchableCollectionReply
 	if err := cbor.Unmarshal(resp.Data, &reply); err != nil {
-		return cid.Undef, err
+		log.ErrorE("Failed to unmarshal collection sync reply", err)
+		return err
 	}
 
 	if reply.CollectionID != collectionID {
-		return cid.Undef, errors.New("received response for different collection",
-			errors.NewKV("Expected", collectionID),
-			errors.NewKV("Received", reply.CollectionID))
+		log.ErrorE("Received response for different collection",
+			errors.New("collection ID mismatch",
+				errors.NewKV("Expected", collectionID),
+				errors.NewKV("Received", reply.CollectionID)))
+		return nil
 	}
 
 	if len(reply.Head) == 0 {
-		return cid.Undef, errors.New("peer has no commits for collection",
-			errors.NewKV("CollectionID", collectionID))
+		// Peer has no commits for this collection, not an error
+		return nil
 	}
 
 	_, colCid, err := cid.CidFromBytes(reply.Head)
 	if err != nil {
-		return cid.Undef, err
+		log.ErrorE("Failed to parse CID from reply", err)
+		return err
+	}
+
+	cidStr := colCid.String()
+	if _, exists := syncedHeads[cidStr]; exists {
+		return nil
 	}
 
 	err = p.syncCollectionAndMerge(ctx, reply.Sender, collectionID, colCid)
 	if err != nil {
-		return cid.Undef, err
+		log.ErrorE("Failed to sync collection and merge", err,
+			corelog.String("CollectionID", collectionID),
+			corelog.String("Head", cidStr))
+		return err
 	}
 
-	return colCid, nil
+	syncedHeads[cidStr] = colCid
+	return nil
 }
 
 // syncCollectionAndMerge synchronizes a branchable collection from a remote peer and publishes a merge event.
@@ -224,6 +253,7 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([]byte, erro
 		return nil, err
 	}
 
+	// TODO: Can we add test where on node has 2 heads and another one sync with it?
 	col := cols[0].Version()
 	if !col.IsBranchable {
 		return nil, errors.New("collection is not branchable", errors.NewKV("CollectionID", collectionID))

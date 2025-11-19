@@ -41,7 +41,7 @@ var _ Action = (*SyncBranchableCollection)(nil)
 var _ Stateful = (*SyncBranchableCollection)(nil)
 
 func (a *SyncBranchableCollection) Execute() {
-	ctx, cancel := context.WithTimeout(a.s.Ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(a.s.Ctx, 500*time.Millisecond)
 	defer cancel()
 
 	nodeState := a.s.Nodes[a.NodeID]
