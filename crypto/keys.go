@@ -212,7 +212,7 @@ func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 				Y:     y,
 			}
 			compressedBytes = elliptic.MarshalCompressed(elliptic.P256(), x, y)
-			// TODO: use this approach after upgrading to Go v1.25+
+			// TODO: use this approach after upgrading to Go v1.25+ (https://github.com/sourcenetwork/defradb/issues/4205)
 			// pubKey, err := ecdsa.ParseUncompressedPublicKey(elliptic.P256(), keyBytes)
 			// if err != nil {
 			// 	return nil, ErrInvalidECDSAPubKey
@@ -429,7 +429,7 @@ func PrivateKeyFromBytes(keyType KeyType, keyBytes []byte) (PrivateKey, error) {
 				Y:     new(big.Int).SetBytes(pubKeyBytes[33:65]),
 			},
 		}
-		// TODO: use this approach after upgrading to Go v1.25+
+		// TODO: use this approach after upgrading to Go v1.25+ (https://github.com/sourcenetwork/defradb/issues/4205)
 		// privKey, err := ecdsa.ParseRawPrivateKey(elliptic.P256(), keyBytes)
 		// if err != nil {
 		// 	return nil, err
