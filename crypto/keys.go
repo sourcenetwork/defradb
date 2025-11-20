@@ -373,7 +373,9 @@ func (k *secp256r1PrivateKey) Equal(other Key) bool {
 }
 
 func (k *secp256r1PrivateKey) Raw() []byte {
-	return k.key.D.Bytes()
+	buf := make([]byte, 32)
+	k.key.D.FillBytes(buf)
+	return buf
 }
 
 func (k *secp256r1PrivateKey) Type() KeyType {
@@ -381,7 +383,7 @@ func (k *secp256r1PrivateKey) Type() KeyType {
 }
 
 func (k *secp256r1PrivateKey) String() string {
-	return hex.EncodeToString(k.key.D.Bytes())
+	return hex.EncodeToString(k.Raw())
 }
 
 func (k *secp256r1PrivateKey) Sign(data []byte) ([]byte, error) {
