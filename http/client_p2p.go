@@ -52,6 +52,20 @@ func (c *Client) PeerInfo() ([]string, error) {
 	return res, nil
 }
 
+func (c *Client) ActivePeers(ctx context.Context) ([]string, error) {
+	methodURL := c.http.apiURL.JoinPath("p2p", "active-peers")
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var res []string
+	if err := c.http.requestJson(req, &res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (c *Client) Connect(ctx context.Context, addresses []string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "connect")
 

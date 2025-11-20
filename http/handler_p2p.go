@@ -30,6 +30,16 @@ func (h *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, addresses)
 }
 
+func (h *p2pHandler) ActivePeers(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+	peers, err := db.ActivePeers(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, peers)
+}
+
 func (h *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
@@ -274,6 +284,19 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	peerInfo.AddResponse(200, peerInfoResponse)
 	peerInfo.Responses.Set("400", errorResponse)
 
+	activePeersSchema := openapi3.NewArraySchema().
+		WithItems(openapi3.NewStringSchema())
+
+	activePeersResponse := openapi3.NewResponse().
+		WithDescription("Connected peers").
+		WithContent(openapi3.NewContentWithJSONSchema(activePeersSchema))
+
+	activePeers := openapi3.NewOperation()
+	activePeers.OperationID = "active_peers"
+	activePeers.Tags = []string{"p2p"}
+	activePeers.AddResponse(200, activePeersResponse)
+	activePeers.Responses.Set("400", errorResponse)
+
 	connect := openapi3.NewOperation()
 	connect.OperationID = "connect"
 	connect.Tags = []string{"p2p"}
@@ -452,6 +475,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	syncCollectionVersions.Responses.Set("500", errorResponse)
 
 	router.AddRoute("/p2p/info", http.MethodGet, peerInfo, h.PeerInfo)
+	router.AddRoute("/p2p/active-peers", http.MethodGet, activePeers, h.ActivePeers)
 	router.AddRoute("/p2p/connect", http.MethodPost, connect, h.Connect)
 	router.AddRoute("/p2p/replicators", http.MethodGet, getReplicators, h.GetAllReplicators)
 	router.AddRoute("/p2p/replicators", http.MethodPost, setReplicator, h.SetReplicator)

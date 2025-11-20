@@ -206,6 +206,10 @@ func (p *P2P) PeerInfo() ([]string, error) {
 	return p.host.Addresses()
 }
 
+func (p *P2P) ActivePeers(ctx context.Context) ([]string, error) {
+	return p.host.ActivePeers()
+}
+
 // Connect initiates a connection to the peer with the given addresses.
 func (p *P2P) Connect(ctx context.Context, addresses []string) error {
 	return p.host.Connect(ctx, addresses)
