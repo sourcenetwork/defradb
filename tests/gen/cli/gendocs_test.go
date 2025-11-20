@@ -28,7 +28,7 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 	defer close()
 
 	ctx := context.Background()
-	defra.db.AddSchema(ctx, `
+	_, err := defra.db.AddSchema(ctx, `
 	type User { 
 		name: String 
 		devices: [Device]
@@ -37,6 +37,7 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 		model: String
 		owner: User
 	}`)
+	require.NoError(t, err)
 
 	genDocsCmd := MakeGenDocCommand(ctx)
 	outputBuf := bytes.NewBufferString("")
@@ -47,7 +48,7 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
 	})
 
-	err := genDocsCmd.Execute()
+	err = genDocsCmd.Execute()
 	require.NoError(t, err)
 
 	out, err := io.ReadAll(outputBuf)
@@ -68,10 +69,11 @@ func TestGendocsCmd_IfInvalidDemandValue_ReturnError(t *testing.T) {
 	defer close()
 
 	ctx := context.Background()
-	defra.db.AddSchema(ctx, `
+	_, err := defra.db.AddSchema(ctx, `
         type User { 
             name: String 
         }`)
+	require.NoError(t, err)
 
 	genDocsCmd := MakeGenDocCommand(ctx)
 	genDocsCmd.SetArgs([]string{
@@ -79,7 +81,7 @@ func TestGendocsCmd_IfInvalidDemandValue_ReturnError(t *testing.T) {
 		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
 	})
 
-	err := genDocsCmd.Execute()
+	err = genDocsCmd.Execute()
 	require.ErrorContains(t, err, errInvalidDemandValue)
 }
 
@@ -88,10 +90,11 @@ func TestGendocsCmd_IfInvalidConfig_ReturnError(t *testing.T) {
 	defer close()
 
 	ctx := context.Background()
-	defra.db.AddSchema(ctx, `
+	_, err := defra.db.AddSchema(ctx, `
         type User { 
             name: String 
         }`)
+	require.NoError(t, err)
 
 	genDocsCmd := MakeGenDocCommand(ctx)
 	genDocsCmd.SetArgs([]string{
@@ -99,6 +102,6 @@ func TestGendocsCmd_IfInvalidConfig_ReturnError(t *testing.T) {
 		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
 	})
 
-	err := genDocsCmd.Execute()
+	err = genDocsCmd.Execute()
 	require.Error(t, err, gen.NewErrInvalidConfiguration(""))
 }
