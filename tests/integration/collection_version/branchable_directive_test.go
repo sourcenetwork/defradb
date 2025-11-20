@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColVersion_Branchable(t *testing.T) {
+func TestColVersionBranchable_NoArguments_DefaultTrue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -40,7 +40,7 @@ func TestColVersion_Branchable(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColVersion_BranchableIfTrue(t *testing.T) {
+func TestColVersionBranchable_ArgumentIfTrue_ShouldBeTrue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -62,7 +62,7 @@ func TestColVersion_BranchableIfTrue(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColVersion_BranchableIfFalse(t *testing.T) {
+func TestColVersionBranchable_ArgumentIfFalse_ShouldBeFalse(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
