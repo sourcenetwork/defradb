@@ -194,11 +194,30 @@ func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 				Y:     nil,
 			}
 		} else if len(keyBytes) == 65 {
-			pubKey, err := ecdsa.ParseUncompressedPublicKey(elliptic.P256(), keyBytes)
+			if keyBytes[0] != 0x04 {
+				return nil, ErrInvalidECDSAPubKey
+			}
+			_, err := ecdh.P256().NewPublicKey(keyBytes)
 			if err != nil {
 				return nil, ErrInvalidECDSAPubKey
 			}
-			compressedBytes = elliptic.MarshalCompressed(elliptic.P256(), pubKey.X, pubKey.Y)
+			if len(keyBytes) != 65 {
+				return nil, ErrInvalidECDSAPubKey
+			}
+			x := new(big.Int).SetBytes(keyBytes[1:33])
+			y := new(big.Int).SetBytes(keyBytes[33:65])
+			pubKey = &ecdsa.PublicKey{
+				Curve: elliptic.P256(),
+				X:     x,
+				Y:     y,
+			}
+			compressedBytes = elliptic.MarshalCompressed(elliptic.P256(), x, y)
+			// TODO: use this approach after upgrading to Go v1.25+
+			// pubKey, err := ecdsa.ParseUncompressedPublicKey(elliptic.P256(), keyBytes)
+			// if err != nil {
+			// 	return nil, ErrInvalidECDSAPubKey
+			// }
+			// compressedBytes = elliptic.MarshalCompressed(elliptic.P256(), pubKey.X, pubKey.Y)
 		} else {
 			return nil, ErrInvalidECDSAPubKey
 		}
