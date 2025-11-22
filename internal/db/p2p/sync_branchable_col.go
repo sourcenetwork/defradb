@@ -40,9 +40,9 @@ type syncBranchableCollectionRequest struct {
 
 // syncBranchableCollectionReply represents the response to a collection sync request.
 type syncBranchableCollectionReply struct {
-	CollectionID string `json:"collectionID"`
-	Head         []byte `json:"head"` // CID bytes of the collection head
-	Sender       string `json:"sender"`
+	CollectionID string   `json:"collectionID"`
+	Heads        [][]byte `json:"heads"`
+	Sender       string   `json:"sender"`
 }
 
 // SyncBranchableCollection initiates a request for the latest version of the branchable
@@ -147,31 +147,34 @@ func (p *P2P) handleSyncBranchableCollectionResponse(
 		return nil
 	}
 
-	if len(reply.Head) == 0 {
+	if len(reply.Heads) == 0 {
 		// Peer has no commits for this collection, not an error
 		return nil
 	}
 
-	_, colCid, err := cid.CidFromBytes(reply.Head)
-	if err != nil {
-		log.ErrorE("Failed to parse CID from reply", err)
-		return err
+	for _, headBytes := range reply.Heads {
+		_, colCid, err := cid.CidFromBytes(headBytes)
+		if err != nil {
+			log.ErrorE("Failed to parse CID from reply", err)
+			return err
+		}
+
+		cidStr := colCid.String()
+		if _, exists := syncedHeads[cidStr]; exists {
+			continue
+		}
+
+		err = p.syncCollectionAndMerge(ctx, reply.Sender, collectionID, colCid)
+		if err != nil {
+			log.ErrorE("Failed to sync collection and merge", err,
+				corelog.String("CollectionID", collectionID),
+				corelog.String("Head", cidStr))
+			return err
+		}
+
+		syncedHeads[cidStr] = colCid
 	}
 
-	cidStr := colCid.String()
-	if _, exists := syncedHeads[cidStr]; exists {
-		return nil
-	}
-
-	err = p.syncCollectionAndMerge(ctx, reply.Sender, collectionID, colCid)
-	if err != nil {
-		log.ErrorE("Failed to sync collection and merge", err,
-			corelog.String("CollectionID", collectionID),
-			corelog.String("Head", cidStr))
-		return err
-	}
-
-	syncedHeads[cidStr] = colCid
 	return nil
 }
 
@@ -221,22 +224,22 @@ func (p *P2P) syncBranchableCollectionMessageHandler(from string, topic string, 
 		return nil, err
 	}
 
-	head, err := p.processSyncBranchableCollection(req.CollectionID)
+	heads, err := p.processSyncBranchableCollection(req.CollectionID)
 	if err != nil {
-		head = []byte{}
+		heads = [][]byte{}
 	}
 
 	reply := &syncBranchableCollectionReply{
 		Sender:       p.host.ID(),
 		CollectionID: req.CollectionID,
-		Head:         head,
+		Heads:        heads,
 	}
 
 	return cbor.Marshal(reply)
 }
 
-// processSyncBranchableCollection processes a branchable collection sync request and returns the head CID.
-func (p *P2P) processSyncBranchableCollection(collectionID string) ([]byte, error) {
+// processSyncBranchableCollection processes a branchable collection sync request and returns all head CIDs.
+func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, error) {
 	clientTxn, err := p.db.NewTxn(true)
 	if err != nil {
 		return nil, err
@@ -253,7 +256,6 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([]byte, erro
 		return nil, err
 	}
 
-	// TODO: Can we add test where on node has 2 heads and another one sync with it?
 	col := cols[0].Version()
 	if !col.IsBranchable {
 		return nil, errors.New("collection is not branchable", errors.NewKV("CollectionID", collectionID))
@@ -280,5 +282,10 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([]byte, erro
 		return nil, errors.New("no heads found for branchable collection", errors.NewKV("CollectionID", collectionID))
 	}
 
-	return cids[0].Bytes(), nil
+	heads := make([][]byte, len(cids))
+	for i, c := range cids {
+		heads[i] = c.Bytes()
+	}
+
+	return heads, nil
 }

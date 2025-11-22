@@ -211,3 +211,181 @@ func TestBranchableCollectionSync_WithMultipleDocumentHeadsReceivedFromPeers_Sho
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG2(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type User @branchable {
+						name: String
+						origin: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				DocMap: map[string]any{
+					"name":   "John",
+					"origin": "node0",
+				},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(1),
+				DocMap: map[string]any{
+					"name":   "Islam",
+					"origin": "node1",
+				},
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.SyncBranchableCollection{
+				NodeID: 0,
+			},
+			testUtils.WaitForSync{},
+			&action.SyncBranchableCollection{
+				NodeID: 1,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					User {
+						name
+						origin
+					}
+				}`,
+				Results: map[string]any{
+					"User": gomega.ConsistOf(
+						map[string]any{
+							"name":   "John",
+							"origin": "node0",
+						},
+						map[string]any{
+							"name":   "Islam",
+							"origin": "node1",
+						},
+					),
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(t *testing.T) {
+	sameCid1 := testUtils.NewSameValue()
+	sameCid2 := testUtils.NewSameValue()
+	sameCid3 := testUtils.NewSameValue()
+	sameCid4 := testUtils.NewSameValue()
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type User @branchable {
+						name: String
+						origin: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				DocMap: map[string]any{
+					"name":   "John",
+					"origin": "node0",
+				},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(1),
+				DocMap: map[string]any{
+					"name":   "Islam",
+					"origin": "node1",
+				},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(2),
+				DocMap: map[string]any{
+					"name":   "Fred",
+					"origin": "node2",
+				},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(3),
+				DocMap: map[string]any{
+					"name":   "Andy",
+					"origin": "node3",
+				},
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 3,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 3,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 2,
+				TargetNodeID: 3,
+			},
+			&action.SyncBranchableCollection{
+				NodeID: 0,
+			},
+			&action.SyncBranchableCollection{
+				NodeID: 1,
+			},
+			&action.SyncBranchableCollection{
+				NodeID: 2,
+			},
+			&action.SyncBranchableCollection{
+				NodeID: 3,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				Request: `query {
+					_commits(fieldName: null) {
+						cid
+					}
+				}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"cid": sameCid1,
+						},
+						{
+							"cid": sameCid2,
+						},
+						{
+							"cid": sameCid3,
+						},
+						{
+							"cid": sameCid4,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
