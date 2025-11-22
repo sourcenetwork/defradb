@@ -53,8 +53,7 @@ func TestBranchableCollectionSync_OneNodeEmptyAnotherWithDocs_ShouldCopyAll(t *t
 				TargetNodeID: 1,
 			},
 			&action.SyncBranchableCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID: 1,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
@@ -125,12 +124,10 @@ func TestBranchableCollectionSync_WithDifferentDocsOnBothNodes_ShouldSync(t *tes
 				TargetNodeID: 1,
 			},
 			&action.SyncBranchableCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID: 1,
 			},
 			&action.SyncBranchableCollection{
-				NodeID:       0,
-				CollectionID: 0,
+				NodeID: 0,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
@@ -177,8 +174,7 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 				},
 			},
 			&action.SyncBranchableCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID: 1,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
@@ -217,8 +213,7 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 				},
 			},
 			&action.SyncBranchableCollection{
-				NodeID:       1,
-				CollectionID: 0,
+				NodeID: 1,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
@@ -237,6 +232,7 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
 func TestBranchableCollectionSync_WithNonBranchableCollection_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -250,7 +246,6 @@ func TestBranchableCollectionSync_WithNonBranchableCollection_ShouldError(t *tes
 			},
 			&action.SyncBranchableCollection{
 				NodeID:        0,
-				CollectionID:  0,
 				ExpectedError: "collection is not branchable",
 			},
 		},
