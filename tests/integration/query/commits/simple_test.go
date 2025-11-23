@@ -401,13 +401,13 @@ func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
 }
 
 func TestQueryCommits_WithRecursiveLinks_Succeeds(t *testing.T) {
-	// uniqueCid := testUtils.NewUniqueValue()
+	uniqueCid := testUtils.NewUniqueValue()
 
-	// ageUpdateCid := testUtils.NewSameValue()
-	// ageCreateCid := testUtils.NewSameValue()
-	// nameCreateCid := testUtils.NewSameValue()
-	// updateCompositeCid := testUtils.NewSameValue()
-	// createCompositeCid := testUtils.NewSameValue()
+	ageUpdateCid := testUtils.NewSameValue()
+	ageCreateCid := testUtils.NewSameValue()
+	nameCreateCid := testUtils.NewSameValue()
+	updateCompositeCid := testUtils.NewSameValue()
+	createCompositeCid := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -432,11 +432,11 @@ func TestQueryCommits_WithRecursiveLinks_Succeeds(t *testing.T) {
 							docID
 							fieldName
 							height
-							signature { type }
 							links {
 								linkName
-								delta
 								cid
+								height
+								docID
 								links {
 									fieldName
 									linkName
@@ -447,7 +447,103 @@ func TestQueryCommits_WithRecursiveLinks_Succeeds(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"_commits": []map[string]any{},
+					"_commits": []map[string]any{
+						{
+							"cid":       gomega.And(ageUpdateCid, uniqueCid),
+							"delta":     testUtils.CBORValue(22),
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"fieldName": "age",
+							"height":    int64(2),
+							"links": []map[string]any{
+								{
+									"linkName": "_head",
+									"cid":      ageCreateCid,
+									"height":   int64(1),
+									"docID":    "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"links":    []map[string]any{},
+								},
+							},
+						},
+						{
+							"cid":       gomega.And(ageCreateCid, uniqueCid),
+							"delta":     testUtils.CBORValue(21),
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"fieldName": "age",
+							"height":    int64(1),
+							"links":     []map[string]any{},
+						},
+						{
+							"cid":       gomega.And(nameCreateCid, uniqueCid),
+							"delta":     testUtils.CBORValue("John"),
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"fieldName": "name",
+							"height":    int64(1),
+							"links":     []map[string]any{},
+						},
+						{
+							"cid":       gomega.And(updateCompositeCid, uniqueCid),
+							"delta":     nil,
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"fieldName": "_C",
+							"height":    int64(2),
+							"links": []map[string]any{
+								{
+									"cid":      createCompositeCid,
+									"linkName": "_head",
+									"height":   int64(1),
+									"docID":    "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"links": []map[string]any{
+										{
+											"fieldName": "age",
+											"linkName":  "age",
+											"cid":       ageCreateCid,
+										},
+										{
+											"fieldName": "name",
+											"linkName":  "name",
+											"cid":       nameCreateCid,
+										},
+									},
+								},
+								{
+									"cid":      ageUpdateCid,
+									"linkName": "age",
+									"height":   int64(2),
+									"docID":    "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"links": []map[string]any{
+										{
+											"fieldName": "age",
+											"linkName":  "_head",
+											"cid":       ageCreateCid,
+										},
+									},
+								},
+							},
+						},
+						{
+							"cid":       gomega.And(createCompositeCid, uniqueCid),
+							"delta":     nil,
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"fieldName": "_C",
+							"height":    int64(1),
+							"links": []map[string]any{
+								{
+									"cid":      ageCreateCid,
+									"linkName": "age",
+									"height":   uint64(1),
+									"docID":    "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"links":    []map[string]any{},
+								},
+								{
+									"cid":      nameCreateCid,
+									"linkName": "name",
+									"height":   uint64(1),
+									"docID":    "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"links":    []map[string]any{},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
