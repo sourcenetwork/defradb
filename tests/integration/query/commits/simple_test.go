@@ -399,3 +399,59 @@ func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryCommits_WithRecursiveLinks_Succeeds(t *testing.T) {
+	// uniqueCid := testUtils.NewUniqueValue()
+
+	// ageUpdateCid := testUtils.NewSameValue()
+	// ageCreateCid := testUtils.NewSameValue()
+	// nameCreateCid := testUtils.NewSameValue()
+	// updateCompositeCid := testUtils.NewSameValue()
+	// createCompositeCid := testUtils.NewSameValue()
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+						"age":	22
+					}`,
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						_commits {
+							cid
+							delta
+							docID
+							fieldName
+							height
+							signature { type }
+							links {
+								linkName
+								delta
+								cid
+								links {
+									fieldName
+									linkName
+									cid
+								}
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"_commits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

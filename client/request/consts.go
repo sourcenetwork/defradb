@@ -141,6 +141,7 @@ var (
 		SchemaVersionIDFieldName,
 		FieldNameName,
 		DeltaFieldName,
+		LinksNameFieldName,
 	}
 
 	LinksFields = []string{

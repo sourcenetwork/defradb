@@ -11,6 +11,9 @@
 package parser
 
 import (
+	"fmt"
+
+	"github.com/davecgh/go-spew/spew"
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
@@ -32,6 +35,8 @@ func parseCommitSelect(
 
 	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
 	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
+	fmt.Println("PARSE COMMIT SELECT FIELD DEF")
+	spew.Dump(fieldDef)
 
 	for _, argument := range field.Arguments {
 		name := argument.Name.Value
@@ -111,5 +116,7 @@ func parseCommitSelect(
 		return nil, err
 	}
 
+	fmt.Println("PARSE COMMIT SELECT")
+	spew.Dump(commit)
 	return commit, err
 }

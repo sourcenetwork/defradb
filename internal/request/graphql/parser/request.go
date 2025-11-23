@@ -215,6 +215,13 @@ func parseSelectFields(
 				selection = s
 			} else if node.SelectionSet == nil { // regular field
 				selection = parseField(node)
+			} else if node.Name.Value == request.LinksFieldName { // commit links field
+				fmt.Println("parsing links field")
+				s, err := parseCommitSelect(exe, parent, node)
+				if err != nil {
+					return nil, err
+				}
+				selection = s
 			} else { // sub type with extra fields
 				s, err := parseSelect(exe, parent, node)
 				if err != nil {
@@ -258,6 +265,7 @@ func typeFromFieldDef(field *gql.FieldDefinition) (*gql.Object, error) {
 	case *gql.List:
 		fieldObject = ftype.OfType.(*gql.Object)
 	default:
+		fmt.Println("SHIT!")
 		return nil, client.NewErrUnhandledType("field", field)
 	}
 	return fieldObject, nil

@@ -12,9 +12,11 @@ package mapper
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -779,9 +781,15 @@ func getRequestables(
 	collectionName string,
 	store client.TxnStore,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
+	fmt.Println("getRequestables()")
+	spew.Dump(selectRequest)
 	for _, field := range selectRequest.Fields {
+		fmt.Println("field:", field)
+
 		switch f := field.(type) {
 		case *request.Field:
+			fmt.Println("field name:", f.Name)
+			spew.Dump(mapping)
 			// We can map all fields to the first (and only index)
 			// as they support no value modifiers (such as filters/limits/etc).
 			// All fields should have already been mapped by getTopLevelInfo
@@ -800,6 +808,21 @@ func getRequestables(
 			index := mapping.GetNextIndex()
 
 			innerSelect, err := toSelect(ctx, store, rootSelectType, index, f, collectionName)
+			if err != nil {
+				return nil, nil, err
+			}
+			fields = append(fields, innerSelect)
+			mapping.SetChildAt(index, innerSelect.DocumentMapping)
+
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   getRenderKey(&f.Field),
+			})
+
+			mapping.Add(index, f.Name)
+		case *request.CommitSelect:
+			index := mapping.GetNextIndex()
+			innerSelect, err := toCommitSelect(ctx, store, f, index)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -973,14 +996,16 @@ func getTopLevelInfo(
 	}
 
 	switch selectRequest.Name {
-	case request.LinksFieldName:
-		for i, f := range request.LinksFields {
-			mapping.Add(i, f)
-		}
+	// case request.LinksFieldName:
+	// 	for i, f := range request.LinksFields {
+	// 		// spew.Dump(selectRequest)
+	// 		// panic("hi")
+	// 		mapping.Add(i, f)
+	// 	}
 
-		// Setting the type name must be done after adding the fields, as
-		// the typeName index is dynamic, but the field indexes are not
-		mapping.SetTypeName(request.LinksFieldName)
+	// 	// Setting the type name must be done after adding the fields, as
+	// 	// the typeName index is dynamic, but the field indexes are not
+	// 	mapping.SetTypeName(request.LinksFieldName)
 	case request.SignatureFieldName:
 		for i, f := range request.SignatureFields {
 			mapping.Add(i, f)

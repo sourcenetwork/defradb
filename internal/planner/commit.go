@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	cid "github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
@@ -38,9 +40,12 @@ type dagScanNode struct {
 
 	queuedCids []*cid.Cid
 
-	fetcher      fetcher.HeadFetcher
-	prefix       immutable.Option[keys.HeadstoreKey]
-	commitSelect *mapper.CommitSelect
+	fetcher        fetcher.HeadFetcher
+	fetcherStarted bool
+	prefix         immutable.Option[keys.HeadstoreKey]
+	commitSelect   *mapper.CommitSelect
+
+	linksScanNode *dagScanNode
 
 	execInfo dagScanExecInfo
 }
@@ -51,13 +56,32 @@ type dagScanExecInfo struct {
 }
 
 func (p *Planner) DAGScan(commitSelect *mapper.CommitSelect) *dagScanNode {
-	return &dagScanNode{
+	// fmt.Println("DAGSCAN MAPPER SELECT")
+	// spew.Dump(commitSelect)
+
+	node := &dagScanNode{
 		planner:      p,
 		visitedNodes: make(map[string]bool),
 		queuedCids:   []*cid.Cid{},
 		commitSelect: commitSelect,
 		docMapper:    docMapper{commitSelect.DocumentMapping},
 	}
+
+	//  Add the sub dagScan planNodes to handle the
+	// "links" commit selection
+	for _, f := range commitSelect.Fields {
+		switch innerCommit := f.(type) {
+		case *mapper.CommitSelect:
+			// links only go a max depth of one. If you want to
+			// go deeper, use recursive "links" fields
+			innerCommit.Depth = immutable.Some(uint64(0))
+
+			innerNode := p.DAGScan(innerCommit)
+			node.linksScanNode = innerNode
+		}
+	}
+
+	return node
 }
 
 func (p *Planner) CommitSelect(commitSelect *mapper.CommitSelect) (planNode, error) {
@@ -78,7 +102,8 @@ func (n *dagScanNode) Init() error {
 	}
 
 	// only need the head fetcher for non cid specific queries
-	if !n.commitSelect.Cid.HasValue() {
+	if !n.commitSelect.Cid.HasValue() && len(n.queuedCids) == 0 {
+		n.fetcherStarted = true
 		return n.fetcher.Start(n.planner.ctx, n.prefix)
 	}
 
@@ -168,6 +193,8 @@ func (n *dagScanNode) Next() (bool, error) {
 
 	var currentCid *cid.Cid
 
+	fmt.Println("dagScanNode.Next()")
+	fmt.Println("queuedCids:", n.queuedCids)
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
@@ -178,7 +205,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		}
 
 		currentCid = &cid
-	} else if !n.commitSelect.Cid.HasValue() {
+	} else if !n.commitSelect.Cid.HasValue() && n.fetcherStarted {
 		cid, err := n.fetcher.FetchNext()
 		if err != nil || cid == nil {
 			return false, err
@@ -360,38 +387,92 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		)
 	}
 
+	err = n.addLinksFieldToDoc(block, &commit)
+	if err != nil {
+		return core.Doc{}, err
+	}
 	// links
-	linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]
+	// linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]
 
+	// for _, linksIndex := range linksIndexes {
+	// 	links := make([]core.Doc, len(block.Heads)+len(block.Links))
+	// 	linksMapping := n.commitSelect.DocumentMapping.ChildMappings[linksIndex]
+
+	// 	i := 0
+	// 	for _, l := range block.Heads {
+	// 		link := linksMapping.NewDoc()
+	// 		linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, "_head")
+	// 		linksMapping.SetFirstOfName(&link, request.CidFieldName, l.Cid.String())
+
+	// 		links[i] = link
+	// 		i++
+	// 	}
+
+	// 	for _, l := range block.Links {
+	// 		link := linksMapping.NewDoc()
+	// 		if l.Name != "" {
+	// 			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, l.Name)
+	// 		}
+	// 		linksMapping.SetFirstOfName(&link, request.CidFieldName, l.Link.Cid.String())
+
+	// 		links[i] = link
+	// 		i++
+	// 	}
+
+	// 	commit.Fields[linksIndex] = links
+	// }
+
+	return commit, nil
+}
+
+func (n *dagScanNode) addLinksFieldToDoc(block *coreblock.Block, commit *core.Doc) error {
+	linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]
 	for _, linksIndex := range linksIndexes {
-		links := make([]core.Doc, len(block.Heads)+len(block.Links))
 		linksMapping := n.commitSelect.DocumentMapping.ChildMappings[linksIndex]
 
+		// scan for links
+		queuedCids := make([]*cid.Cid, len(block.Heads)+len(block.Links))
+		linkCidsIndex := make(map[string]string)
 		i := 0
-		for _, l := range block.Heads {
-			link := linksMapping.NewDoc()
-			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, "_head")
-			linksMapping.SetFirstOfName(&link, request.CidFieldName, l.Cid.String())
-
-			links[i] = link
+		for _, c := range block.Heads {
+			queuedCids[i] = &c.Cid
+			linkCidsIndex[c.Cid.String()] = "_head"
+			i++
+		}
+		for _, c := range block.Links {
+			queuedCids[i] = &c.Cid
+			linkCidsIndex[c.Cid.String()] = c.Name
 			i++
 		}
 
-		for _, l := range block.Links {
-			link := linksMapping.NewDoc()
-			if l.Name != "" {
-				linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, l.Name)
+		// reset linkScanNode
+		n.linksScanNode.reset()
+		n.linksScanNode.queuedCids = queuedCids
+		links := make([]core.Doc, len(block.Heads)+len(block.Links))
+		i = 0
+		for {
+			next, err := n.linksScanNode.Next()
+			if err != nil {
+				return err
 			}
-			linksMapping.SetFirstOfName(&link, request.CidFieldName, l.Cid.String())
+			if !next {
+				break
+			}
 
+			link := n.linksScanNode.Value()
+			linkCid := linksMapping.FirstOfName(link, request.CidFieldName)
+			linkName, exists := linkCidsIndex[linkCid.(string)]
+			if !exists {
+				return errors.New("bad cid for link")
+			}
+			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, linkName)
 			links[i] = link
 			i++
 		}
-
 		commit.Fields[linksIndex] = links
 	}
 
-	return commit, nil
+	return nil
 }
 
 // addSignatureFieldToDoc adds the signature from the provided block link
@@ -422,4 +503,11 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 	n.commitSelect.DocumentMapping.SetFirstOfName(commit, request.SignatureFieldName, sigDoc)
 
 	return nil
+}
+
+func (n *dagScanNode) reset() {
+	n.visitedNodes = make(map[string]bool)
+	n.queuedCids = make([]*cid.Cid, 0)
+	n.depthVisited = 0
+	n.currentValue = core.Doc{}
 }
