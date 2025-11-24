@@ -18,8 +18,6 @@ import "C"
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 	"runtime/cgo"
 	"strconv"
 	"time"
