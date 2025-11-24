@@ -35,7 +35,7 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 							cid
 							links {
 								cid
-								name
+								linkName
 							}
 						}
 					}
@@ -50,12 +50,144 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 									"cid": "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
-											"name": "Name",
+											"cid":      "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
+											"linkName": "Name",
 										},
 										{
-											"cid":  "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
-											"name": "Age",
+											"cid":      "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
+											"linkName": "Age",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuery_CreateDocWithNestedLatestCommit(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						Age
+						_version {
+							cid
+							links {
+								cid
+								linkName
+								height
+							}
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+							"_version": []map[string]any{
+								{
+									"cid": "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
+									"links": []map[string]any{
+										{
+											"cid":      "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
+											"linkName": "Name",
+											"height":   uint64(1),
+										},
+										{
+											"cid":      "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
+											"linkName": "Age",
+											"height":   uint64(1),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"Age": 22
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						Age
+						_version {
+							cid
+							links {
+								cid
+								linkName
+								height
+							}
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(22),
+							"_version": []map[string]any{
+								{
+									"cid": "bafyreigftnzgbysanputrc65nys3feyebwprvh3x3hucjt5xrkpog2auay",
+									"links": []map[string]any{
+										{
+											"cid":      "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
+											"linkName": "_head",
+											"height":   uint64(1),
+										},
+										{
+											"cid":      "bafyreibvn3oanzbe4uxw2vocro6u7widukuriwi4fctt7jx3np425nxzqa",
+											"linkName": "Age",
+											"height":   uint64(2),
+										},
+									},
+								},
+								{
+									"cid": "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
+									"links": []map[string]any{
+										{
+											"cid":      "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
+											"linkName": "Name",
+											"height":   uint64(1),
+										},
+										{
+											"cid":      "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
+											"linkName": "Age",
+											"height":   uint64(1),
 										},
 									},
 								},
@@ -166,10 +298,10 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 							cid
 							L1: links {
 								cid
-								name
+								linkName
 							}
 							L2: links {
-								name
+								linkName
 							}
 						}
 					}
@@ -184,20 +316,81 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 									"cid": "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
 									"L1": []map[string]any{
 										{
-											"cid":  "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
-											"name": "Name",
+											"cid":      "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
+											"linkName": "Name",
 										},
 										{
-											"cid":  "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
-											"name": "Age",
+											"cid":      "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
+											"linkName": "Age",
 										},
 									},
 									"L2": []map[string]any{
 										{
-											"name": "Name",
+											"linkName": "Name",
 										},
 										{
-											"name": "Age",
+											"linkName": "Age",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						Name
+						Age
+						_version {
+							cid
+							L1: links(fieldName: "Age") {
+								cid
+								linkName
+								height
+							}
+							L2: links(fieldName: "Name") {
+								linkName
+								height
+							}
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+							"_version": []map[string]any{
+								{
+									"cid": "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
+									"L1": []map[string]any{
+										{
+											"cid":      "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
+											"linkName": "Age",
+											"height":   uint64(1),
+										},
+									},
+									"L2": []map[string]any{
+										{
+											"linkName": "Name",
+											"height":   uint64(1),
 										},
 									},
 								},
@@ -240,7 +433,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 							height
 							links {
 								cid
-								name
+								linkName
 							}
 							schemaVersionId
 						}
@@ -260,12 +453,12 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 									"height":    int64(1),
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
-											"name": "Name",
+											"cid":      "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
+											"linkName": "Name",
 										},
 										{
-											"cid":  "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
-											"name": "Age",
+											"cid":      "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
+											"linkName": "Age",
 										},
 									},
 									"schemaVersionId": "bafyreia4ba6igfuvhp225vxxqpkn46lecvkih74g3wxvglum5nnv26m66e",
@@ -315,7 +508,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 							height
 							links {
 								cid
-								name
+								linkName
 							}
 							schemaVersionId
 						}
@@ -336,12 +529,12 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 									"height":    int64(2),
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
-											"name": "_head",
+											"cid":      "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
+											"linkName": "_head",
 										},
 										{
-											"cid":  "bafyreibvn3oanzbe4uxw2vocro6u7widukuriwi4fctt7jx3np425nxzqa",
-											"name": "Age",
+											"cid":      "bafyreibvn3oanzbe4uxw2vocro6u7widukuriwi4fctt7jx3np425nxzqa",
+											"linkName": "Age",
 										},
 									},
 									"schemaVersionId": "bafyreia4ba6igfuvhp225vxxqpkn46lecvkih74g3wxvglum5nnv26m66e",
@@ -354,12 +547,12 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 									"height":    int64(1),
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
-											"name": "Name",
+											"cid":      "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
+											"linkName": "Name",
 										},
 										{
-											"cid":  "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
-											"name": "Age",
+											"cid":      "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
+											"linkName": "Age",
 										},
 									},
 									"schemaVersionId": "bafyreia4ba6igfuvhp225vxxqpkn46lecvkih74g3wxvglum5nnv26m66e",

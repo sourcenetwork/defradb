@@ -19,20 +19,21 @@ import (
 // defaultSchema returns a new gql.Schema containing the default type definitions.
 func defaultSchema() (gql.Schema, error) {
 	orderEnum := types.OrderingEnum()
+	commitsEnum := types.CommitsEnum()
 	crdtEnum := types.CRDTEnum()
 	explainEnum := types.ExplainEnum()
 
 	commitLinkObject := types.CommitLinkObject()
-	commitObject := types.CommitObject(commitLinkObject)
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
 	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
 	commitsFilterArg := types.CommitsFilterArg(commitsFilterFieldNameArg)
+	commitObject := types.CommitObject(commitLinkObject, commitsOrderArg, commitsEnum)
 
 	encryptedSearchResult := types.EncryptedSearchResultObject()
 
 	indexFieldInput := types.IndexFieldInputObject(orderEnum)
 
-	queryCommits := types.QueryCommits(commitObject, commitsOrderArg, commitsFilterArg)
+	queryCommits := types.QueryCommits(commitObject, commitsOrderArg, commitsFilterArg, commitsEnum)
 
 	sch, err := gql.NewSchema(gql.SchemaConfig{
 		Types: defaultTypes(

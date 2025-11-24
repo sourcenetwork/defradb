@@ -93,6 +93,8 @@ const (
 
 	DocIDsFieldName = "docIDs"
 
+	HeadLinkName = "_head"
+
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")
 )

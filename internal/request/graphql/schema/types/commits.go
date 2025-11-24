@@ -37,7 +37,9 @@ import (
 //
 // Any self referential type needs to be initialized
 // inside the init() func
-func CommitObject(commitLinkObject *gql.Object) *gql.Object {
+func CommitObject(commitLinkObject *gql.Object,
+	commitsOrderArg *gql.InputObject,
+	commitsEnum *gql.Enum) *gql.Object {
 	// we need the fieldThunk since we are creating a circular type reference
 	var commitObject *gql.Object
 	fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
@@ -69,6 +71,20 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 			request.LinksFieldName: &gql.Field{
 				Description: commitLinksDescription,
 				Type:        gql.NewList(commitObject),
+				Args: gql.FieldConfigArgument{
+					request.DocIDArgName:  NewArgConfig(gql.ID, commitDocIDArgDescription),
+					request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
+					"order":               NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
+					request.CidArgName:    NewArgConfig(gql.ID, commitCIDArgDescription),
+					"groupBy": NewArgConfig(
+						gql.NewList(
+							gql.NewNonNull(
+								commitsEnum,
+							),
+						),
+						GroupByArgDescription,
+					),
+				},
 			},
 			request.LinksNameFieldName: &gql.Field{
 				Description: commitLinkNameFieldDescription,
@@ -206,6 +222,33 @@ func CommitsFilterArg(fieldNameFilter *gql.InputObject) *gql.InputObject {
 	return selfRefType
 }
 
+func CommitsEnum() *gql.Enum {
+	return gql.NewEnum(
+		gql.EnumConfig{
+			Name:        "commitFields",
+			Description: commitFieldsEnumDescription,
+			Values: gql.EnumValueConfigMap{
+				request.HeightArgName: &gql.EnumValueConfig{
+					Value:       request.HeightArgName,
+					Description: commitHeightFieldDescription,
+				},
+				request.CidArgName: &gql.EnumValueConfig{
+					Value:       request.CidArgName,
+					Description: commitCIDFieldDescription,
+				},
+				request.DocIDArgName: &gql.EnumValueConfig{
+					Value:       request.DocIDArgName,
+					Description: commitDocIDFieldDescription,
+				},
+				request.FieldNameName: &gql.EnumValueConfig{
+					Value:       request.FieldNameName,
+					Description: commitFieldNameFieldDescription,
+				},
+			},
+		},
+	)
+}
+
 func CommitsOrderArg(orderEnum *gql.Enum) *gql.InputObject {
 	return gql.NewInputObject(
 		gql.InputObjectConfig{
@@ -233,6 +276,7 @@ func QueryCommits(
 	commitObject *gql.Object,
 	commitsOrderArg *gql.InputObject,
 	commitsFilterArg *gql.InputObject,
+	commitsEnum *gql.Enum,
 ) *gql.Field {
 	return &gql.Field{
 		Name:        request.CommitsName,
@@ -246,30 +290,7 @@ func QueryCommits(
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
-						gql.NewEnum(
-							gql.EnumConfig{
-								Name:        "commitFields",
-								Description: commitFieldsEnumDescription,
-								Values: gql.EnumValueConfigMap{
-									request.HeightArgName: &gql.EnumValueConfig{
-										Value:       request.HeightArgName,
-										Description: commitHeightFieldDescription,
-									},
-									request.CidArgName: &gql.EnumValueConfig{
-										Value:       request.CidArgName,
-										Description: commitCIDFieldDescription,
-									},
-									request.DocIDArgName: &gql.EnumValueConfig{
-										Value:       request.DocIDArgName,
-										Description: commitDocIDFieldDescription,
-									},
-									request.FieldNameName: &gql.EnumValueConfig{
-										Value:       request.FieldNameName,
-										Description: commitFieldNameFieldDescription,
-									},
-								},
-							},
-						),
+						commitsEnum,
 					),
 				),
 				GroupByArgDescription,
