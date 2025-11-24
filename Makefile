@@ -441,10 +441,6 @@ fix:
 build-c-shared-linux:
 	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
 
-.PHONY build-c-shared-macos:
-build-c-shared-macos:
-	@tools/scripts/build-c-shared-macos.sh $(BUILD_FLAGS)
-
 # Usage: API_LEVEL will be the Android SDK.API level targeted by the build. 
 # For more information, see: https://apilevels.com/
 # The minimum supported API level is 21, which is the default.
