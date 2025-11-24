@@ -12,6 +12,7 @@ package p2p
 
 import (
 	"context"
+	"time"
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
@@ -95,7 +96,14 @@ func (p *P2P) syncBranchableCollection(
 		return err
 	}
 
-	return p.waitAndHandleSyncBranchableCollectionResponse(ctx, collectionID, pubSubRespChan)
+	waitCtx := ctx
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		waitCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+	}
+
+	return p.waitAndHandleSyncBranchableCollectionResponse(waitCtx, collectionID, pubSubRespChan)
 }
 
 // waitAndHandleSyncBranchableCollectionResponse handles responses from multiple peers.

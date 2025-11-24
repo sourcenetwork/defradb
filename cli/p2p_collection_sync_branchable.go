@@ -44,6 +44,10 @@ to the collection for future updates.`,
 	EmbedCLIExample(ctx, cmd, "sync branchable collection",
 		`defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq`)
 
-	cmd.Flags().Duration("timeout", 0, "Timeout for fetch operations")
+	EmbedCLIExample(ctx, cmd, "sync branchable collection with timeout",
+		`defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq `+
+			`--timeout 10s`)
+
+	cmd.Flags().Duration("timeout", 0, "Timeout for sync operations (default: 5s if not specified)")
 	return cmd
 }
