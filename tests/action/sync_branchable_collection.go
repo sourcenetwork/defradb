@@ -14,6 +14,8 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 // SyncBranchableCollection is an action that syncs a branchable collection's DAG
@@ -30,6 +32,9 @@ type SyncBranchableCollection struct {
 	// CollectionID is the index of the collection to sync.
 	CollectionID int
 
+	// Timeout specifies the maximum duration to wait for the sync to complete.
+	Timeout immutable.Option[time.Duration]
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that
@@ -41,7 +46,11 @@ var _ Action = (*SyncBranchableCollection)(nil)
 var _ Stateful = (*SyncBranchableCollection)(nil)
 
 func (a *SyncBranchableCollection) Execute() {
-	ctx, cancel := context.WithTimeout(a.s.Ctx, 500*time.Millisecond)
+	timeout := 500 * time.Millisecond
+	if a.Timeout.HasValue() {
+		timeout = a.Timeout.Value()
+	}
+	ctx, cancel := context.WithTimeout(a.s.Ctx, timeout)
 	defer cancel()
 
 	nodeState := a.s.Nodes[a.NodeID]

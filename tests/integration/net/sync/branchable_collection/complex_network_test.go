@@ -94,10 +94,10 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 				TargetNodeID: 4,
 			},
 			&action.SyncBranchableCollection{
-				NodeID: 0,
+				NodeID:  0,
+				Timeout: immutable.Some(time.Second * 5),
 			},
 			testUtils.WaitForSync{},
-			testUtils.Wait{Duration: time.Second * 5},
 			testUtils.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
