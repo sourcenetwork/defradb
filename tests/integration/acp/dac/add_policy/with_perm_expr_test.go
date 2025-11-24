@@ -88,3 +88,38 @@ resources:
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestACP_AddPolicy_EmptyExpressionInPermission_PermissionIsAccepted(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

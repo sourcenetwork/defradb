@@ -16,43 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_EmptyExpressionInPermission_Error(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-actor:
-  name: actor
-description: a policy
-name: test
-resources:
-- name: users
-  permissions:
-  - expr: owner
-    name: delete
-  - name: read
-  - expr: owner
-    name: update
-  relations:
-  - name: owner
-    types:
-    - actor
-  - name: reader
-    types:
-    - actor
-`,
-
-				ExpectedError: "relation read: error parsing: expression needs: term",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
@@ -83,7 +46,7 @@ resources:
     - actor
 `,
 
-				ExpectedError: "error parsing expression reader ^ owner: unknown token:",
+				ExpectedError: "token recognition error",
 			},
 		},
 	}

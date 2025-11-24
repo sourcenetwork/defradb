@@ -16,41 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_MissingRequiredOwnerRelation_Error(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-actor:
-  name: actor
-description: a policy
-name: a policy
-resources:
-- name: users
-  permissions:
-  - expr: reader
-    name: delete
-  - expr: reader
-    name: read
-  - expr: reader
-    name: update
-  relations:
-  - name: reader
-    types:
-    - actor
-`,
-
-				ExpectedError: "BAD_INPUT",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestACP_AddPolicy_DuplicateOwnerRelation_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
@@ -59,30 +24,24 @@ func TestACP_AddPolicy_DuplicateOwnerRelation_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: a policy
-                    description: a policy
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          owner:
-                            types:
-                              - actor
-
-                    actor:
-                      name: actor
-                `,
+name: a policy
+resources:
+- name: users
+  permissions:
+  - name: read
+    expr: owner
+  - name: update
+    expr: owner
+  - name: delete
+    expr: owner
+  relations:
+  - owner:
+    types
+    - actor
+  - owner:
+    types
+    - actor
+`,
 
 				ExpectedError: "key \"owner\" already set in map",
 			},

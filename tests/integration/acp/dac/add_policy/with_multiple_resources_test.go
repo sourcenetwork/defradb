@@ -117,7 +117,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
+func TestACP_AddPolicy_SecondResourcesMissingOwner_OwnerIsAdded(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -158,8 +158,6 @@ resources:
     types:
     - actor
 `,
-
-				ExpectedError: "BAD_INPUT",
 			},
 		},
 	}

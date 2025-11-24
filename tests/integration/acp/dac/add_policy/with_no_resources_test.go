@@ -81,7 +81,7 @@ func TestACP_AddPolicy_PolicyWithOnlySpace_NameIsRequired(t *testing.T) {
 
 				Policy: " ",
 
-				ExpectedError: "name is required",
+				ExpectedError: "name required",
 			},
 		},
 	}

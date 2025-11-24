@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_OneResourceThatIsEmpty_Error(t *testing.T) {
+func TestACP_AddPolicy_OneResourceThatIsEmpty_DoesntError(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -31,8 +31,6 @@ name: a policy
 resources:
 - name: users
 `,
-
-				ExpectedError: "BAD_INPUT",
 			},
 		},
 	}
