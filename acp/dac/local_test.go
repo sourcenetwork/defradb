@@ -70,30 +70,27 @@ var invalidIdentity = &mockInvalidIdentity{}
 
 var validPolicyID string = "196f584c831c596489278ed2c98ee7a42fc2cf85b2e86276165a03b53b4684fa"
 var validPolicy string = `
-name: test
-description: a policy
-
 actor:
   name: actor
-
+description: a policy
+name: test
 resources:
-  users:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
- `
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`
 
 func Test_LocalACP_InMemory_StartAndClose_NoError(t *testing.T) {
 	ctx := context.Background()

@@ -153,91 +153,88 @@ const NodeACPObject = "NodeObject"
 const NodeACPPolicyResourceName = "node"
 
 const NodeACPPolicy = `
-name: Node ACP Policy
-description: Node ACP Policy
-
 actor:
   name: actor
-
+description: Node ACP Policy
+name: Node ACP Policy
 resources:
-  node:
-    permissions:
-      dac-bypass:
-        expr: owner + admin
-      dac-enable:
-        expr: owner + admin
-      dac-disable:
-        expr: owner + admin
-      dac-purge:
-        expr: owner + admin
-      dac-status:
-        expr: owner + admin
-      dac-relation-add:
-        expr: owner + admin
-      dac-relation-delete:
-        expr: owner + admin
-      dac-policy-add:
-        expr: owner + admin
-      nac-re-enable:
-        expr: owner + admin
-      nac-disable:
-        expr: owner + admin
-      nac-purge:
-        expr: owner + admin
-      nac-status:
-        expr: owner + admin
-      nac-relation-add:
-        expr: owner + admin
-      nac-relation-delete:
-        expr: owner + admin
-      collection-patch:
-        expr: owner + admin
-      collection-get:
-        expr: owner + admin
-      document-read:
-        expr: owner + admin
-      document-update:
-        expr: owner + admin
-      document-delete:
-        expr: owner + admin
-      index-list:
-        expr: owner + admin
-      index-create:
-        expr: owner + admin
-      index-drop:
-        expr: owner + admin
-      p2p-peer-connect:
-        expr: owner + admin
-      p2p-replicator-create:
-        expr: owner + admin
-      p2p-replicator-delete:
-        expr: owner + admin
-      p2p-replicator-list:
-        expr: owner + admin
-      p2p-collection-create:
-        expr: owner + admin
-      p2p-collection-delete:
-        expr: owner + admin
-      p2p-collection-list:
-        expr: owner + admin
-      p2p-document-create:
-        expr: owner + admin
-      p2p-document-delete:
-        expr: owner + admin
-      p2p-document-list:
-        expr: owner + admin
-      signature-verify:
-        expr: owner + admin
-
-    relations:
-      owner:
-        types:
-          - actor
-      admin:
-        manages:
-          - admin
-        types:
-          - actor
+- name: node
+  permissions:
+  - expr: owner + admin
+    name: collection-get
+  - expr: owner + admin
+    name: collection-patch
+  - expr: owner + admin
+    name: dac-bypass
+  - expr: owner + admin
+    name: dac-disable
+  - expr: owner + admin
+    name: dac-enable
+  - expr: owner + admin
+    name: dac-policy-add
+  - expr: owner + admin
+    name: dac-purge
+  - expr: owner + admin
+    name: dac-relation-add
+  - expr: owner + admin
+    name: dac-relation-delete
+  - expr: owner + admin
+    name: dac-status
+  - expr: owner + admin
+    name: document-delete
+  - expr: owner + admin
+    name: document-read
+  - expr: owner + admin
+    name: document-update
+  - expr: owner + admin
+    name: index-create
+  - expr: owner + admin
+    name: index-drop
+  - expr: owner + admin
+    name: index-list
+  - expr: owner + admin
+    name: nac-disable
+  - expr: owner + admin
+    name: nac-purge
+  - expr: owner + admin
+    name: nac-re-enable
+  - expr: owner + admin
+    name: nac-relation-add
+  - expr: owner + admin
+    name: nac-relation-delete
+  - expr: owner + admin
+    name: nac-status
+  - expr: owner + admin
+    name: p2p-collection-create
+  - expr: owner + admin
+    name: p2p-collection-delete
+  - expr: owner + admin
+    name: p2p-collection-list
+  - expr: owner + admin
+    name: p2p-document-create
+  - expr: owner + admin
+    name: p2p-document-delete
+  - expr: owner + admin
+    name: p2p-document-list
+  - expr: owner + admin
+    name: p2p-peer-connect
+  - expr: owner + admin
+    name: p2p-replicator-create
+  - expr: owner + admin
+    name: p2p-replicator-delete
+  - expr: owner + admin
+    name: p2p-replicator-list
+  - expr: owner + admin
+    name: signature-verify
+  relations:
+  - manages:
+    - admin
+    name: admin
+    types:
+    - actor
+  - name: owner
+    types:
+    - actor
 `
 
 func (resourcePermission NodeResourcePermission) String() string {
@@ -270,8 +267,7 @@ const (
 type PolicyMarshalType int32
 
 const (
-	PolicyMarshalType_YAML PolicyMarshalType = 1
-	PolicyMarshalType_JSON PolicyMarshalType = 2
+	PolicyMarshalType_YAML PolicyMarshalType = PolicyMarshalType(types.PolicyMarshalingType_YAML)
 )
 
 // Policy is a data container carrying the necessary data
