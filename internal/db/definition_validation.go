@@ -1138,7 +1138,10 @@ func validateCollectionIsBranchableNotMutated(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol := oldState.collectionsByID[newCol.VersionID]
+		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
+		if !ok {
+			continue
+		}
 
 		if newCol.IsBranchable != oldCol.IsBranchable {
 			errs = append(errs, NewErrColMutatingIsBranchable(newCol.Name))
