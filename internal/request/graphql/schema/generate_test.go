@@ -11,11 +11,14 @@
 package schema
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
 
 	"github.com/sourcenetwork/defradb/client"
 	gql "github.com/sourcenetwork/graphql-go"
@@ -40,7 +43,7 @@ func TestIntrospectionResult(t *testing.T) {
 	_, err = manager.Generator.Generate(ctx, collections)
 	require.NoError(t, err)
 
-	request, err := os.ReadFile("introspection.gql")
+	request, err := os.ReadFile("introspection_query.gql")
 	require.NoError(t, err)
 
 	schema := manager.Schema()
@@ -48,4 +51,11 @@ func TestIntrospectionResult(t *testing.T) {
 	r := gql.Do(params)
 
 	require.Empty(t, r.Errors)
+
+	buf, err := json.Marshal(r.Data)
+	require.NoError(t, err)
+
+	var converter introspection.JsonConverter
+	_, err = converter.GraphQLDocument(bytes.NewReader(buf))
+	require.NoError(t, err)
 }
