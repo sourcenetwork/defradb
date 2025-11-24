@@ -28,7 +28,7 @@ synchronize multiple collection versions:
 
 ```
   -h, --help               help for sync-versions
-      --timeout duration   Timeout for fetch operations
+      --timeout duration   Timeout for sync operations
 ```
 
 ### Options inherited from parent commands
