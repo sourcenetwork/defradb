@@ -700,6 +700,12 @@ func collectionHasDocuments(
 	ctx context.Context,
 	version client.CollectionVersion,
 ) (bool, error) {
+	if !version.IsMaterialized {
+		// Assume that if the collection *was* materialized, and is no longer materialized, that the cached
+		// state was properly disposed of (it should have been).
+		return false, nil
+	}
+
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
@@ -716,30 +722,26 @@ func collectionHasDocuments(
 		}
 	}
 
-	// Assume that if the collection *was* materialized, and is no longer materialized, that the cached
-	// state was properly disposed of (it should have been).
-	if version.IsMaterialized {
-		iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
-			Prefix:   prefixKey.ToDS().Bytes(),
-			KeysOnly: true,
-		})
-		if err != nil {
-			return false, errors.Join(err, iter.Close())
-		}
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   prefixKey.ToDS().Bytes(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return false, errors.Join(err, iter.Close())
+	}
 
-		hasValue, err := iter.Next()
-		if err != nil {
-			return false, errors.Join(err, iter.Close())
-		}
+	hasValue, err := iter.Next()
+	if err != nil {
+		return false, errors.Join(err, iter.Close())
+	}
 
-		if hasValue {
-			return true, iter.Close()
-		}
+	if hasValue {
+		return true, iter.Close()
+	}
 
-		err = iter.Close()
-		if err != nil {
-			return false, err
-		}
+	err = iter.Close()
+	if err != nil {
+		return false, err
 	}
 
 	return false, nil
