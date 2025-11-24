@@ -72,11 +72,11 @@ type P2P interface {
 	// context.WithTimeout can be used to set a timeout for the operation.
 	SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error
 
-	// SyncCollections syncs the given collection versions to the local node.
+	// SyncCollectionVersions synchronizes the given collection versions to local node.
 	//
 	// It will not complete until a version is found, so it is strongly recommended
 	// to set a timeout using `context.WithTimeout`.
-	SyncCollections(ctx context.Context, versionIDs ...string) error
+	SyncCollectionVersions(ctx context.Context, versionIDs ...string) error
 }
 
 type StreamHandler = func(stream io.Reader, peerID string)

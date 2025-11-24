@@ -204,7 +204,7 @@ func (e *nodeEnumerable) Next() (bool, error) {
 
 func (e *nodeEnumerable) Value() (map[string]any, error) {
 	doc := e.src.Value()
-	lensDoc := e.src.Source().DocumentMap().ToMap(doc)
+	lensDoc := e.src.DocumentMap().ToMap(doc)
 
 	return lensDoc, nil
 }

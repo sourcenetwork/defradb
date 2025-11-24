@@ -31,7 +31,6 @@ typedef struct {
     const char* version;
     const char* collectionID;
     const char* name;
-    uintptr_t identityPtr;
     int getInactive;
 } CollectionOptions;
 

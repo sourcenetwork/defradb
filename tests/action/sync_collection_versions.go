@@ -15,14 +15,14 @@ import (
 	"time"
 )
 
-// AddSchema is an action that will add the given GQL schema to the Defra nodes.
-type SyncCollection struct {
+// SyncCollectionVersions is an action that will sync the given collection versions to the local node.
+type SyncCollectionVersions struct {
 	stateful
 
 	// NodeID holds the ID (index) of a node to sync collections to.
 	NodeID int
 
-	// VersionIDs to pass into the `SyncCollections` call.
+	// VersionIDs to pass into the `SyncCollectionVersions` call.
 	VersionIDs []string
 
 	// Any error expected from the action. Optional.
@@ -32,10 +32,10 @@ type SyncCollection struct {
 	ExpectedError string
 }
 
-var _ Action = (*SyncCollection)(nil)
-var _ Stateful = (*SyncCollection)(nil)
+var _ Action = (*SyncCollectionVersions)(nil)
+var _ Stateful = (*SyncCollectionVersions)(nil)
 
-func (a *SyncCollection) Execute() {
+func (a *SyncCollectionVersions) Execute() {
 	replacedVersionIDs := replaceMap(a.s, 0, a.VersionIDs)
 	versionIDs := make([]string, len(a.VersionIDs))
 	for i, originalID := range a.VersionIDs {
@@ -46,7 +46,7 @@ func (a *SyncCollection) Execute() {
 	defer cancel()
 
 	node := a.s.Nodes[a.NodeID]
-	err := node.SyncCollections(ctx, versionIDs...)
+	err := node.SyncCollectionVersions(ctx, versionIDs...)
 
 	expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

@@ -2359,8 +2359,8 @@ func (_c *Txn_SetReplicator_Call) RunAndReturn(run func(ctx context.Context, add
 	return _c
 }
 
-// SyncCollections provides a mock function for the type Txn
-func (_mock *Txn) SyncCollections(ctx context.Context, versionIDs ...string) error {
+// SyncCollectionVersions provides a mock function for the type Txn
+func (_mock *Txn) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
 	var tmpRet mock.Arguments
 	if len(versionIDs) > 0 {
 		tmpRet = _mock.Called(ctx, versionIDs)
@@ -2370,7 +2370,7 @@ func (_mock *Txn) SyncCollections(ctx context.Context, versionIDs ...string) err
 	ret := tmpRet
 
 	if len(ret) == 0 {
-		panic("no return value specified for SyncCollections")
+		panic("no return value specified for SyncCollectionVersions")
 	}
 
 	var r0 error
@@ -2382,20 +2382,20 @@ func (_mock *Txn) SyncCollections(ctx context.Context, versionIDs ...string) err
 	return r0
 }
 
-// Txn_SyncCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SyncCollections'
-type Txn_SyncCollections_Call struct {
+// Txn_SyncCollectionVersions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SyncCollectionVersions'
+type Txn_SyncCollectionVersions_Call struct {
 	*mock.Call
 }
 
-// SyncCollections is a helper method to define mock.On call
+// SyncCollectionVersions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - versionIDs ...string
-func (_e *Txn_Expecter) SyncCollections(ctx interface{}, versionIDs ...interface{}) *Txn_SyncCollections_Call {
-	return &Txn_SyncCollections_Call{Call: _e.mock.On("SyncCollections",
+func (_e *Txn_Expecter) SyncCollectionVersions(ctx interface{}, versionIDs ...interface{}) *Txn_SyncCollectionVersions_Call {
+	return &Txn_SyncCollectionVersions_Call{Call: _e.mock.On("SyncCollectionVersions",
 		append([]interface{}{ctx}, versionIDs...)...)}
 }
 
-func (_c *Txn_SyncCollections_Call) Run(run func(ctx context.Context, versionIDs ...string)) *Txn_SyncCollections_Call {
+func (_c *Txn_SyncCollectionVersions_Call) Run(run func(ctx context.Context, versionIDs ...string)) *Txn_SyncCollectionVersions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2415,12 +2415,12 @@ func (_c *Txn_SyncCollections_Call) Run(run func(ctx context.Context, versionIDs
 	return _c
 }
 
-func (_c *Txn_SyncCollections_Call) Return(err error) *Txn_SyncCollections_Call {
+func (_c *Txn_SyncCollectionVersions_Call) Return(err error) *Txn_SyncCollectionVersions_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *Txn_SyncCollections_Call) RunAndReturn(run func(ctx context.Context, versionIDs ...string) error) *Txn_SyncCollections_Call {
+func (_c *Txn_SyncCollectionVersions_Call) RunAndReturn(run func(ctx context.Context, versionIDs ...string) error) *Txn_SyncCollectionVersions_Call {
 	_c.Call.Return(run)
 	return _c
 }
