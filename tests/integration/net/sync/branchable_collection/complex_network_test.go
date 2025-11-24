@@ -12,7 +12,6 @@ package branchable_collection
 
 import (
 	"testing"
-	"time"
 
 	"github.com/onsi/gomega"
 
@@ -94,8 +93,7 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 				TargetNodeID: 4,
 			},
 			&action.SyncBranchableCollection{
-				NodeID:  0,
-				Timeout: immutable.Some(time.Second * 5),
+				NodeID: 0,
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
