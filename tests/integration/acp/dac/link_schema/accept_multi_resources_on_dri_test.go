@@ -28,44 +28,39 @@ func TestACP_LinkSchema_WithMultipleResources_AcceptSchema(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                      books:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: books
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -134,44 +129,39 @@ func TestACP_LinkSchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testi
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                      books:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: books
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{

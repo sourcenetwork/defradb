@@ -24,30 +24,26 @@ func TestACP_AddPolicy_EmptyExpressionInPermission_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 
 				ExpectedError: "relation read: error parsing: expression needs: term",
 			},
@@ -65,30 +61,27 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: reader ^ owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: reader ^ owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 
 				ExpectedError: "error parsing expression reader ^ owner: unknown token:",
 			},
@@ -106,30 +99,27 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbolNoSpac
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: reader^owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: reader^owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 
 				ExpectedError: "error parsing expression reader^owner: unknown token:",
 			},

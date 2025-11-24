@@ -28,47 +28,42 @@ func TestACP_LinkSchema_UseValidResource_AcceptSchema(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: A Partially DRI Compliant Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      usersValid:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                      usersInvalid:
-                        permissions:
-                          read:
-                            expr: reader - owner
-                          update:
-                            expr: reader
-                          delete:
-                            expr: reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: A Partially DRI Compliant Policy
+name: test
+resources:
+- name: usersInvalid
+  permissions:
+  - expr: reader
+    name: delete
+  - expr: reader - owner
+    name: read
+  - expr: reader
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+- name: usersValid
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{

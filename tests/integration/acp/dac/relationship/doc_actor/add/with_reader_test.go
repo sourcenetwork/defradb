@@ -28,55 +28,43 @@ func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlre
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: owner + deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: owner + reader + updater + deleter
+    name: read
+  - expr: owner + updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -164,55 +152,43 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) 
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: owner + deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: owner + reader + updater + deleter
+    name: read
+  - expr: owner + updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -312,55 +288,43 @@ func TestACP_OwnerGivesReadAccessToAnotherActor_OtherActorCanReadSoCanTheOwner(t
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: owner + deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: owner + reader + updater + deleter
+    name: read
+  - expr: owner + updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -470,55 +434,43 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: owner + deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: owner + reader + updater + deleter
+    name: read
+  - expr: owner + updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -648,55 +600,43 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelet
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: owner + deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: owner + reader + updater + deleter
+    name: read
+  - expr: owner + updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{

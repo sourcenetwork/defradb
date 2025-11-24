@@ -24,15 +24,13 @@ func TestACP_AddPolicy_OneResourceThatIsEmpty_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: a policy
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                `,
+actor:
+  name: actor
+description: a policy
+name: a policy
+resources:
+- name: users
+`,
 
 				ExpectedError: "BAD_INPUT",
 			},

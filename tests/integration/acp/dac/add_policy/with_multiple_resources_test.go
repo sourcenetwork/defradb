@@ -24,46 +24,42 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                      books:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: books
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 		},
 	}
@@ -79,43 +75,39 @@ func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *tes
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                      books:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: books
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 
 				ExpectedError: "resource books missing relation reader",
 			},
@@ -133,43 +125,39 @@ func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                      books:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          reader:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: books
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 
 				ExpectedError: "BAD_INPUT",
 			},

@@ -16,46 +16,41 @@ import (
 )
 
 const employeeCompanyPolicy = `
-name: test
-description: A Policy
-
 actor:
   name: actor
-
+description: A Policy
+name: test
 resources:
-  employees:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
-
-  companies:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
+- name: companies
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+- name: employees
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
 `
 
 func getSetupEmployeeCompanyActions() []any {

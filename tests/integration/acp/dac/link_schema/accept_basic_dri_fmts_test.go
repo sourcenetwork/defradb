@@ -27,28 +27,24 @@ func TestACP_LinkSchema_BasicYAML_SchemaAccepted(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -116,36 +112,24 @@ func TestACP_LinkSchema_BasicJSON_SchemaAccepted(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-					{
-					  "name": "test",
-					  "description": "a policy",
-					  "resources": {
-					    "users": {
-					      "permissions": {
-					        "read": {
-					          "expr": "owner"
-					        },
-					        "update": {
-					          "expr": "owner"
-					        },
-					        "delete": {
-					          "expr": "owner"
-					        }
-					      },
-					      "relations": {
-					        "owner": {
-					          "types": [
-					            "actor"
-					          ]
-					        }
-					      }
-					    }
-					  },
-					  "actor": {
-					    "name": "actor"
-					  }
-					}
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{

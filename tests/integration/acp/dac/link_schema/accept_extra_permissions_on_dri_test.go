@@ -28,32 +28,29 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *tes
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner + reader
-                          delete:
-                            expr: owner + reader
-                          magic:
-                            expr: owner - reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner + reader
+    name: delete
+  - expr: owner - reader
+    name: magic
+  - expr: owner + reader
+    name: read
+  - expr: owner + reader
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -122,32 +119,29 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchem
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          magic:
-                            expr: reader & owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: reader & owner
+    name: magic
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -216,32 +210,29 @@ func TestACP_LinkSchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t *t
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          magic:
-                            expr: reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: reader
+    name: magic
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{

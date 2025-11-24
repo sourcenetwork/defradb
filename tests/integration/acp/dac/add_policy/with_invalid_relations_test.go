@@ -24,24 +24,20 @@ func TestACP_AddPolicy_NoRelations_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: a policy
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                `,
+actor:
+  name: actor
+description: a policy
+name: a policy
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+`,
 
 				ExpectedError: "BAD_INPUT",
 			},
@@ -59,22 +55,20 @@ func TestACP_AddPolicy_NoRelationsLabel_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: a policy
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-                `,
+actor:
+  name: actor
+description: a policy
+name: a policy
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+`,
 
 				ExpectedError: "BAD_INPUT",
 			},

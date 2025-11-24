@@ -11,37 +11,37 @@
 package test_acp_nac
 
 const examplePolicy = `
-    name: Test Policy
-    description: A Policy
-    actor:
-      name: actor
-    resources:
-      users:
-        permissions:
-          read:
-            expr: owner + reader + updater + deleter
-          update:
-            expr: owner + updater
-          delete:
-            expr: owner + deleter
-        relations:
-          owner:
-            types:
-              - actor
-          manager:
-            types:
-              - actor
-            manages:
-              - reader
-              - updater
-              - deleter
-          reader:
-            types:
-              - actor
-          updater:
-            types:
-              - actor
-          deleter:
-            types:
-              - actor
+actor:
+  name: actor
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: owner + deleter
+    name: delete
+  - expr: owner + reader + updater + deleter
+    name: read
+  - expr: owner + updater
+    name: update
+  relations:
+  - name: deleter
+    types:
+    - actor
+  - manages:
+    - reader
+    - updater
+    - deleter
+    name: manager
+    types:
+    - actor
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
 `

@@ -28,30 +28,27 @@ func TestACP_LinkSchema_OwnerMissingRequiredUpdatePermissionOnDRI_SchemaRejected
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: w
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          w:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: w
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: w
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -107,28 +104,25 @@ func TestACP_LinkSchema_OwnerMissingRequiredUpdatePermissionLabelOnDRI_SchemaRej
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                     name: test
-                     description: a policy
-
-                     actor:
-                       name: actor
-
-                     resources:
-                       users:
-                         permissions:
-                           read:
-                             expr: owner
-                           delete:
-                             expr: owner
-
-                         relations:
-                           owner:
-                             types:
-                               - actor
-                           reader:
-                             types:
-                               - actor
-                 `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -180,30 +174,27 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnUpdatePermissionExprOnDRI_Sch
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                     name: test
-                     description: a policy
-
-                     actor:
-                       name: actor
-
-                     resources:
-                       users:
-                         permissions:
-                           read:
-                             expr: owner
-                           update:
-                             expr: updater + owner
-                           delete:
-                             expr: owner
-
-                         relations:
-                           owner:
-                             types:
-                               - actor
-                           updater:
-                             types:
-                               - actor
-                 `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: updater + owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -259,30 +250,27 @@ func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnUpdatePermissionNoSpaceExprOn
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                     name: test
-                     description: a policy
-
-                     actor:
-                       name: actor
-
-                     resources:
-                       users:
-                         permissions:
-                           read:
-                             expr: owner
-                           update:
-                             expr: updater+owner
-                           delete:
-                             expr: owner
-
-                         relations:
-                           owner:
-                             types:
-                               - actor
-                           updater:
-                             types:
-                               - actor
-                 `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: updater+owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -338,30 +326,27 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnUpdatePermissionExprOnDRI_Schem
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                     name: test
-                     description: a policy
-
-                     actor:
-                       name: actor
-
-                     resources:
-                       users:
-                         permissions:
-                           read:
-                             expr: owner
-                           update:
-                             expr: ownerBad
-                           delete:
-                             expr: owner
-
-                         relations:
-                           owner:
-                             types:
-                               - actor
-                           ownerBad:
-                             types:
-                               - actor
-                 `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: ownerBad
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: ownerBad
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{

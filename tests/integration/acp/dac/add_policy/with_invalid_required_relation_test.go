@@ -24,27 +24,24 @@ func TestACP_AddPolicy_MissingRequiredOwnerRelation_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: a policy
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          update:
-                            expr: reader
-                          delete:
-                            expr: reader
-                          read:
-                            expr: reader
-
-                        relations:
-                          reader:
-                            types:
-                              - actor
-                `,
+actor:
+  name: actor
+description: a policy
+name: a policy
+resources:
+- name: users
+  permissions:
+  - expr: reader
+    name: delete
+  - expr: reader
+    name: read
+  - expr: reader
+    name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
 
 				ExpectedError: "BAD_INPUT",
 			},

@@ -41,28 +41,24 @@ func TestACP_AddPolicy_EmptyPolicyCreator_Error(t *testing.T) {
 				Identity: testUtils.NoIdentity(),
 
 				Policy: `
-                    name: test
-                    description: a basic policy that satisfies minimum DRI requirements
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                `,
+actor:
+  name: actor
+description: a basic policy that satisfies minimum DRI requirements
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+`,
 
 				ExpectedError: "policy creator can not be empty",
 			},

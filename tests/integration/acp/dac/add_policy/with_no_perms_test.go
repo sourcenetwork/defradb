@@ -32,22 +32,17 @@ func TestACP_AddPolicy_NoPermissionsOnlyOwner_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  relations:
+  - name: owner
+    types:
+    - actor
+`,
 			},
 		},
 	}
@@ -63,25 +58,20 @@ func TestACP_AddPolicy_NoPermissionsMultiRelations_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 		},
 	}
@@ -97,20 +87,17 @@ func TestACP_AddPolicy_NoPermissionsLabelOnlyOwner_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  relations:
+  - name: owner
+    types:
+    - actor
+`,
 			},
 		},
 	}
@@ -126,23 +113,20 @@ func TestACP_AddPolicy_NoPermissionsLabelMultiRelations_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                `,
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 		},
 	}

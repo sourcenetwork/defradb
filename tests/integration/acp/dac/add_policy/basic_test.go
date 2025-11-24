@@ -24,28 +24,24 @@ func TestACP_AddPolicy_BasicYAML_ValidPolicyID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a basic policy that satisfies minimum DRI requirements
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                `,
+actor:
+  name: actor
+description: a basic policy that satisfies minimum DRI requirements
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+`,
 			},
 		},
 	}
@@ -61,36 +57,24 @@ func TestACP_AddPolicy_BasicJSON_ValidPolicyID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    {
-                      "name": "test",
-                      "description": "a basic policy that satisfies minimum DRI requirements",
-                      "resources": {
-                        "users": {
-                          "permissions": {
-                            "read": {
-                              "expr": "owner"
-                            },
-                            "update": {
-                              "expr": "owner"
-                            },
-                            "delete": {
-                              "expr": "owner"
-                            }
-                          },
-                          "relations": {
-                            "owner": {
-                              "types": [
-                                "actor"
-                              ]
-                            }
-                          }
-                        }
-                      },
-                      "actor": {
-                        "name": "actor"
-                      }
-                    }
-                `,
+actor:
+  name: actor
+description: a basic policy that satisfies minimum DRI requirements
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+`,
 			},
 		},
 	}
