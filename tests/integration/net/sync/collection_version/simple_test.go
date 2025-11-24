@@ -37,7 +37,7 @@ func TestColSync_WithInitialColVersion(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.SyncCollection{
+			&action.SyncCollectionVersions{
 				NodeID:     1,
 				VersionIDs: []string{"bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"},
 			},
@@ -116,7 +116,7 @@ func TestColSync_WithInitialColVersion_CanBeActivatedAndQueried(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.SyncCollection{
+			&action.SyncCollectionVersions{
 				NodeID:     1,
 				VersionIDs: []string{"{{.CollectionVersionID0}}"},
 			},

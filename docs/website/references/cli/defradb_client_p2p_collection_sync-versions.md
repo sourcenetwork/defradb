@@ -1,4 +1,4 @@
-## defradb client p2p collection sync
+## defradb client p2p collection sync-versions
 
 Synchronize specific collection versions from the network
 
@@ -6,28 +6,28 @@ Synchronize specific collection versions from the network
 
 Synchronize specific collection versions from the network.
 
-This command allows you to sync collection versions across the network.
-Older versions of a requested collection will also be synced.
+This command allows you to synchronize collection versions across the network.
+Older versions of a requested collection will also be synchronized.
 
 
 ```
-defradb client p2p collection sync [versionID...] [flags]
+defradb client p2p collection sync-versions [versionID...] [flags]
 ```
 
 ### Examples
 
 ```
-sync single collection versions:  
-  defradb client p2p collection sync bafy123
+synchronize single collection versions:  
+  defradb client p2p collection sync-versions bafy123
 
-sync multiple collection versions:  
-  defradb client p2p collection sync bafy123 bafy456
+synchronize multiple collection versions:  
+  defradb client p2p collection sync-versions bafy123 bafy456
 ```
 
 ### Options
 
 ```
-  -h, --help               help for sync
+  -h, --help               help for sync-versions
       --timeout duration   Timeout for sync operations
 ```
 

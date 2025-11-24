@@ -12,7 +12,7 @@ package p2p
 
 import "context"
 
-func (p *P2P) SyncCollections(ctx context.Context, versionIDs ...string) error {
+func (p *P2P) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
 	// Nil-op, let the JS client return any errors it wants to
 	return nil
 }
