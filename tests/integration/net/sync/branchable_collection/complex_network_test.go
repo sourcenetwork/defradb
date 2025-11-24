@@ -22,6 +22,10 @@ import (
 )
 
 func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldSyncAll(t *testing.T) {
+	// Network topology:
+	// Node 0 ──── Node 1 ──── Node 2
+	//    │
+	//    └─────── Node 3 ──── Node 4
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -91,6 +95,9 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 			&action.SyncBranchableCollection{
 				NodeID: 0,
 			},
+			testUtils.WaitForSync{},
+			testUtils.WaitForSync{},
+			testUtils.WaitForSync{},
 			testUtils.WaitForSync{},
 			testUtils.Request{
 				NodeID: immutable.Some(0),
