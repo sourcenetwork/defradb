@@ -18,8 +18,6 @@ import "C"
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 	"runtime/cgo"
 	"strconv"
 	"time"
@@ -42,23 +40,11 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 
 	ctx := context.Background()
 
-	// Use a database path if one is provided, otherwise try to determine the
-	// home directory and use that.
-	var defraPath string
-	if gocOptions.DbPath == "" {
-		home, err := os.UserHomeDir()
-		// This error should not happen on any major platform.
-		if err != nil {
-			return returnNewNodeResultC(1, errDatabasePathNotSet, nil)
-		}
-		defraPath = filepath.Join(home, ".defradb")
-	} else {
-		defraPath = gocOptions.DbPath
-	}
-
 	opts := []node.Option{
-		node.WithStorePath(defraPath),
 		db.WithLensRuntime(db.Wazero),
+	}
+	if gocOptions.DbPath != "" {
+		opts = append(opts, node.WithStorePath(gocOptions.DbPath))
 	}
 	if len(listeningAddresses) > 0 {
 		opts = append(opts, p2p.WithListenAddresses(listeningAddresses...))
