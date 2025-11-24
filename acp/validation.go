@@ -67,26 +67,13 @@ func ValidateResourceInterface(
 	// resource with the matching name, validate that all required resource interface
 	// permissions actually exist on the target resource.
 	for _, requiredPermission := range requiredResourcePermissions {
-		permissionResponse, ok := resourceResponse.Permissions[requiredPermission]
+		_, ok := resourceResponse.Permissions[requiredPermission]
 		if !ok {
 			return NewErrResourceIsMissingRequiredPermission(
 				resourceName,
 				requiredPermission,
 				policyID,
 			)
-		}
-
-		// Now we need to ensure that the "owner" relation has access to all the required resource
-		// interface permissions. This is important because even if the policy has the required
-		// permissions under the resource, it's possible that those permissions are not granted
-		// to the "owner" relation, this will help users not shoot themseleves in the foot.
-		// TODO-ACP: Better validation, once sourcehub implements meta-policies.
-		// Issue: https://github.com/sourcenetwork/defradb/issues/2359
-		if err := validateExpressionOfRequiredPermission(
-			permissionResponse.Expression,
-			requiredPermission,
-		); err != nil {
-			return err
 		}
 	}
 
