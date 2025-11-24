@@ -51,6 +51,9 @@ type syncBranchableCollectionReply struct {
 // This function call will block until there is a response for the collection.
 // It is the responsibility of the caller to set an appropriate timeout on the context.
 func (p *P2P) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	log.InfoContext(ctx, "Starting branchable collection sync",
+		corelog.String("PeerID", p.host.ID()))
+
 	cols, err := p.db.GetCollections(
 		ctx,
 		client.CollectionFetchOptions{
@@ -84,6 +87,9 @@ func (p *P2P) syncBranchableCollection(
 		return err
 	}
 
+	log.InfoContext(ctx, "Publishing sync request to topic",
+		corelog.String("Topic", syncBranchableCollectionTopic))
+
 	pubSubRespChan, err := p.host.PublishToTopic(ctx, syncBranchableCollectionTopic, data, true)
 	if err != nil {
 		return err
@@ -111,8 +117,11 @@ loop:
 
 		case <-ctx.Done():
 			if len(syncedHeads) == 0 {
+				log.InfoContext(ctx, "Sync timeout with no heads synced")
 				return ErrTimeoutCollectionSync
 			}
+			log.InfoContext(ctx, "Sync completed (context done)",
+				corelog.Int("SyncedHeadsCount", len(syncedHeads)))
 			break loop
 		}
 	}
@@ -139,6 +148,11 @@ func (p *P2P) handleSyncBranchableCollectionResponse(
 		return err
 	}
 
+	log.InfoContext(ctx, "Received sync response from peer",
+		corelog.String("ReceiverID", p.host.ID()),
+		corelog.String("Sender", reply.Sender),
+		corelog.Int("HeadsCount", len(reply.Heads)))
+
 	if reply.CollectionID != collectionID {
 		log.ErrorE("Received response for different collection",
 			errors.New("collection ID mismatch",
@@ -148,7 +162,8 @@ func (p *P2P) handleSyncBranchableCollectionResponse(
 	}
 
 	if len(reply.Heads) == 0 {
-		// Peer has no commits for this collection, not an error
+		log.InfoContext(ctx, "Peer has no heads for collection",
+			corelog.String("Sender", reply.Sender))
 		return nil
 	}
 
@@ -161,16 +176,24 @@ func (p *P2P) handleSyncBranchableCollectionResponse(
 
 		cidStr := colCid.String()
 		if _, exists := syncedHeads[cidStr]; exists {
+			log.InfoContext(ctx, "Skipping already synced head",
+				corelog.String("CID", cidStr))
 			continue
 		}
+
+		log.InfoContext(ctx, "Syncing head from peer",
+			corelog.String("Sender", reply.Sender),
+			corelog.String("CID", cidStr))
 
 		err = p.syncCollectionAndMerge(ctx, reply.Sender, collectionID, colCid)
 		if err != nil {
 			log.ErrorE("Failed to sync collection and merge", err,
-				corelog.String("CollectionID", collectionID),
 				corelog.String("Head", cidStr))
 			return err
 		}
+
+		log.InfoContext(ctx, "Successfully synced and merged head",
+			corelog.String("CID", cidStr))
 
 		syncedHeads[cidStr] = colCid
 	}
@@ -224,10 +247,31 @@ func (p *P2P) syncBranchableCollectionMessageHandler(from string, topic string, 
 		return nil, err
 	}
 
+	log.Info("Received sync request from peer",
+		corelog.String("From", from),
+		corelog.String("PeerID", p.host.ID()))
+
 	heads, err := p.processSyncBranchableCollection(req.CollectionID)
 	if err != nil {
+		log.Info("No heads to send (error retrieving)",
+			corelog.Any("Error", err))
 		heads = [][]byte{}
 	}
+
+	// Convert heads to CID strings for logging
+	headCIDs := make([]string, len(heads))
+	for i, h := range heads {
+		_, c, err := cid.CidFromBytes(h)
+		if err == nil {
+			headCIDs[i] = c.String()
+		}
+	}
+
+	log.Info("Sending sync response",
+		corelog.String("SenderID", p.host.ID()),
+		corelog.String("To", from),
+		corelog.Int("HeadsCount", len(heads)),
+		corelog.Any("HeadCIDs", headCIDs))
 
 	reply := &syncBranchableCollectionReply{
 		Sender:       p.host.ID(),
