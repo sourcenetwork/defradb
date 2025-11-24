@@ -735,16 +735,7 @@ func collectionHasDocuments(
 		return false, errors.Join(err, iter.Close())
 	}
 
-	if hasValue {
-		return true, iter.Close()
-	}
-
-	err = iter.Close()
-	if err != nil {
-		return false, err
-	}
-
-	return false, nil
+	return hasValue, iter.Close()
 }
 
 func validateCollectionDoesNotHaveHigherVersion(
