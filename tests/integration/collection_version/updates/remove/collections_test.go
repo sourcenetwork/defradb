@@ -173,6 +173,43 @@ func TestColVersionUpdateRemoveCollectionWithData(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestColVersionUpdateRemoveCollectionWithSoftDeletedData(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			// Soft delete the document, preserving it in the datastore.
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+				DocID:        0,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{
+							"op": "remove",
+							"path": "/Users"
+						}
+					]
+				`,
+				ExpectedError: "cannot delete a collection that has documents, first delete the documents and then delete the version",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestColVersionUpdateCopyCollectionAddFieldRemoveOriginalCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
