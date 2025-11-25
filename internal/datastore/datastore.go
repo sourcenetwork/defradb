@@ -93,6 +93,10 @@ func (s *datastore) Delete(ctx context.Context, key Key) error {
 	return s.underlying.Delete(ctx, keyBytes)
 }
 
+func (s *datastore) Unsafe() corekv.ReaderWriter {
+	return s.underlying
+}
+
 func (s *datastore) collectionRLock(ctx context.Context, key Key) {
 	colKey, isKeyedByCollection := key.(keys.CollectionedKey)
 	if !isKeyedByCollection {
