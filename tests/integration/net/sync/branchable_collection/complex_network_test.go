@@ -24,7 +24,7 @@ import (
 
 // Make sure peers have time for libp2p data exchange setup.
 // https://github.com/sourcenetwork/defradb/issues/4208
-var waitConnection = testUtils.Wait{Duration: 100 * time.Millisecond}
+var waitConnection = testUtils.Wait{Duration: 200 * time.Millisecond}
 
 func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldSyncAll(t *testing.T) {
 	// Network topology:
