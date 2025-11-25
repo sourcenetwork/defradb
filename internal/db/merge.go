@@ -626,26 +626,14 @@ func syncIndexedDoc(
 	docID client.DocID,
 	col *collection,
 ) error {
-	// remove transaction from old context
-	oldCtx := InitContext(ctx, nil)
-
-	oldDoc, err := col.Get(oldCtx, docID, false)
-	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
-	if !isNewDoc && err != nil {
-		return err
-	}
-
 	doc, err := col.Get(ctx, docID, false)
 	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
 	if !isDeletedDoc && err != nil {
 		return err
 	}
-
-	if isNewDoc {
-		return col.indexNewDoc(ctx, doc)
-	} else if isDeletedDoc {
-		return col.deleteIndexedDoc(ctx, oldDoc)
-	} else {
-		return col.updateDocIndex(ctx, oldDoc, doc)
+	err = col.deleteIndexedDoc(ctx, doc)
+	if err != nil {
+		return err
 	}
+	return col.indexNewDoc(ctx, doc)
 }

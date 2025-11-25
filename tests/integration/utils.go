@@ -207,6 +207,9 @@ func ExecuteTestCase(
 	if inMemoryStore {
 		databases = append(databases, DefraIMType)
 	}
+	if levelStore {
+		databases = append(databases, LevelStoreType)
+	}
 
 	var kmsList []state.KMSType
 	if testCase.KMS.Activated {
