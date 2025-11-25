@@ -40,21 +40,11 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 
 	ctx := context.Background()
 
-	// // Create the directory if it doesn't exist, and inMemory flag is not set
-	// For now this is not done, but we leave it here because we might need it in
-	// the future, when running on mobile platforms.
-	// if !inMemoryFlag {
-	// 	if _, err = os.Stat(gocOptions.DbPath); os.IsNotExist(err) {
-	// 		err := os.MkdirAll(gocOptions.DbPath, 0755)
-	// 		if err != nil {
-	// 			return returnGoC(1, err.Error(), "")
-	// 		}
-	// 	}
-	// }
-
 	opts := []node.Option{
-		node.WithStorePath(gocOptions.DbPath),
 		db.WithLensRuntime(db.Wazero),
+	}
+	if gocOptions.DbPath != "" {
+		opts = append(opts, node.WithStorePath(gocOptions.DbPath))
 	}
 	if len(listeningAddresses) > 0 {
 		opts = append(opts, p2p.WithListenAddresses(listeningAddresses...))
