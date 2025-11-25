@@ -374,6 +374,10 @@ test\:changes:
 test\:js:
 	GOOS=js GOARCH=wasm go test $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
 
+.PHONY: test\:introspectionjs
+test\:introspectionjs:
+	go test -tags nodejs -run ^TestIntrospectionResult$$ ./internal/request/graphql/schema
+
 .PHONY: validate\:codecov
 validate\:codecov:
 	curl --data-binary @.github/codecov.yml https://codecov.io/validate
