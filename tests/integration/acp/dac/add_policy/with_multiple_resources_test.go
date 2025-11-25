@@ -82,24 +82,20 @@ name: test
 resources:
 - name: books
   permissions:
-  - expr: owner
-    name: delete
+  - name: delete
   - expr: owner + reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - name: owner
     types:
     - actor
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
-    name: read
-  - expr: owner
-    name: update
+  - name: delete
+  - name: read
+    expr: reader
+  - name: update
   relations:
   - name: owner
     types:
@@ -109,7 +105,7 @@ resources:
     - actor
 `,
 
-				ExpectedError: "resource books missing relation reader",
+				ExpectedError: "resource does not have relation",
 			},
 		},
 	}

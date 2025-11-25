@@ -84,7 +84,7 @@ resources:
     - actor
 `,
 
-				ExpectedError: "error parsing expression reader^owner: unknown token:",
+				ExpectedError: "token recognition error",
 			},
 		},
 	}

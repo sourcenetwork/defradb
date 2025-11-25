@@ -29,21 +29,18 @@ resources:
 - name: users
   permissions:
   - name: read
-    expr: owner
   - name: update
-    expr: owner
   - name: delete
-    expr: owner
   relations:
-  - owner:
-    types
+  - name: owner
+    types:
     - actor
-  - owner:
-    types
+  - name: owner
+    types:
     - actor
 `,
 
-				ExpectedError: "key \"owner\" already set in map",
+				ExpectedError: "multiple owner relations",
 			},
 		},
 	}

@@ -1,0 +1,745 @@
+// Copyright 2024 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package test_acp_dac_link_schema
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/defradb/tests/action"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	schemaUtils "github.com/sourcenetwork/defradb/tests/integration/collection_version"
+)
+
+func TestACP_LinkSchema_PermissionWithOwnerRemove_ACPEnforcesOwnerAccess(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+
+			testUtils.AddDACPolicy{
+
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+actor:
+  name: actor
+description: A Partially DRI Compliant Policy
+name: test
+resources:
+- name: usersInvalid
+  permissions:
+  - expr: reader
+    name: delete
+  - expr: reader - owner
+    name: read
+  - expr: reader
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+- name: usersValid
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
+			},
+
+			&action.AddSchema{
+				Schema: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "usersInvalid"
+					) {
+						name: String
+						age: Int
+					}
+				`,
+			},
+
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users", // NOTE: "Users" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnUpdatePermissionExprOnDRI_ACPEnforcesAccess(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+
+			testUtils.AddDACPolicy{
+
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: ownerBad
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: ownerBad
+    types:
+    - actor
+`,
+			},
+
+			&action.AddSchema{
+				Schema: `
+ 					type Users @policy(
+						id: "{{.Policy0}}",
+ 						resource: "users"
+ 					) {
+ 						name: String
+ 						age: Int
+ 					}
+ 				`,
+			},
+
+			testUtils.IntrospectionRequest{
+				Request: `
+ 					query {
+ 						__type (name: "Users") {
+ 							name
+ 							fields {
+ 								name
+ 								type {
+ 								name
+ 								kind
+ 								}
+ 							}
+ 						}
+ 					}
+ 				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users", // NOTE: "Users" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnReadPermissionExprOnDRI_ACPEnforcesOwnerAccess(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+
+			testUtils.AddDACPolicy{
+
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner - owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
+			},
+
+			&action.AddSchema{
+				Schema: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "users"
+					) {
+						name: String
+						age: Int
+					}
+				`,
+			},
+
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users", // NOTE: "Users" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDRI_ACPEnforcesOwnerAccess(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+
+			testUtils.AddDACPolicy{
+
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: ownerBad
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: ownerBad
+    types:
+    - actor
+`,
+			},
+
+			&action.AddSchema{
+				Schema: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "users"
+					) {
+						name: String
+						age: Int
+					}
+				`,
+			},
+
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users", // NOTE: "Users" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnReadPermissionExprOnDRI_ACPEnforcesOwnerAccess(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+
+			testUtils.AddDACPolicy{
+
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: owner & reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
+			},
+
+			&action.AddSchema{
+				Schema: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "users"
+					) {
+						name: String
+						age: Int
+					}
+				`,
+			},
+
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users", // NOTE: "Users" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_LinkSchema_OwnerRelationWithInvalidSetOpOnDeletePermissionExprOnDRI_ACPEnforcesOwnerAccess(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+
+			testUtils.AddDACPolicy{
+
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner - owner
+    name: delete
+  - expr: owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
+			},
+
+			&action.AddSchema{
+				Schema: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "users"
+					) {
+						name: String
+						age: Int
+					}
+				`,
+			},
+
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users", // NOTE: "Users" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnDeletePermissionExprOnDRI_ACPEnforcesOwnerAccess(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+
+			testUtils.AddDACPolicy{
+
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: ownerBad
+    name: delete
+  - expr: owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: ownerBad
+    types:
+    - actor
+`,
+			},
+
+			&action.AddSchema{
+				Schema: `
+ 					type Users @policy(
+						id: "{{.Policy0}}",
+ 						resource: "users"
+ 					) {
+ 						name: String
+ 						age: Int
+ 					}
+ 				`,
+			},
+
+			testUtils.IntrospectionRequest{
+				Request: `
+ 					query {
+ 						__type (name: "Users") {
+ 							name
+ 							fields {
+ 								name
+ 								type {
+ 								name
+ 								kind
+ 								}
+ 							}
+ 						}
+ 					}
+ 				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users", // NOTE: "Users" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_LinkSchema_OwnerRelationWithIntersectionSetOpOnDeletePermissionExprOnDRI_ACPEnforcesOwnerAccess(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+
+			testUtils.AddDACPolicy{
+
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+actor:
+  name: actor
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - expr: owner & reader
+    name: delete
+  - expr: owner + reader
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: owner
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
+			},
+
+			&action.AddSchema{
+				Schema: `
+					type Users @policy(
+						id: "{{.Policy0}}",
+						resource: "users"
+					) {
+						name: String
+						age: Int
+					}
+				`,
+			},
+
+			testUtils.IntrospectionRequest{
+				Request: `
+					query {
+						__type (name: "Users") {
+							name
+							fields {
+								name
+								type {
+								name
+								kind
+								}
+							}
+						}
+					}
+				`,
+				ExpectedData: map[string]any{
+					"__type": map[string]any{
+						"name": "Users", // NOTE: "Users" MUST exist
+						"fields": schemaUtils.DefaultFields.Append(
+							schemaUtils.Field{
+								"name": "name",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "String",
+								},
+							},
+						).Append(
+							schemaUtils.Field{
+								"name": "age",
+								"type": map[string]any{
+									"kind": "SCALAR",
+									"name": "Int",
+								},
+							},
+						).Tidy(),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
