@@ -22,6 +22,10 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+// Make sure peers have time for libp2p data exchange setup.
+// https://github.com/sourcenetwork/defradb/issues/4208
+var waitConnection = testUtils.Wait{Duration: 50 * time.Millisecond}
+
 func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldSyncAll(t *testing.T) {
 	// Network topology:
 	// Node 0 ──── Node 1 ──── Node 2
@@ -81,32 +85,22 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			// Make sure peers have time for libp2p data exchange setup.
-			// https://github.com/sourcenetwork/defradb/issues/4208
-			testUtils.Wait{
-				Duration: 20 * time.Millisecond,
-			},
+			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 2,
 			},
-			testUtils.Wait{
-				Duration: 20 * time.Millisecond,
-			},
+			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 3,
 			},
-			testUtils.Wait{
-				Duration: 20 * time.Millisecond,
-			},
+			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 3,
 				TargetNodeID: 4,
 			},
-			testUtils.Wait{
-				Duration: 20 * time.Millisecond,
-			},
+			waitConnection,
 			&action.SyncBranchableCollection{
 				NodeID: 0,
 			},
@@ -232,71 +226,6 @@ func TestBranchableCollectionSync_WithMultipleDocumentHeadsReceivedFromPeers_Sho
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG2(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			&action.AddSchema{
-				Schema: `
-					type User @branchable {
-						name: String
-						origin: String
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				NodeID: immutable.Some(0),
-				DocMap: map[string]any{
-					"name":   "John",
-					"origin": "node0",
-				},
-			},
-			testUtils.CreateDoc{
-				NodeID: immutable.Some(1),
-				DocMap: map[string]any{
-					"name":   "Islam",
-					"origin": "node1",
-				},
-			},
-			testUtils.ConnectPeers{
-				SourceNodeID: 0,
-				TargetNodeID: 1,
-			},
-			&action.SyncBranchableCollection{
-				NodeID: 0,
-			},
-			testUtils.WaitForSync{},
-			&action.SyncBranchableCollection{
-				NodeID: 1,
-			},
-			testUtils.WaitForSync{},
-			testUtils.Request{
-				Request: `query {
-					User {
-						name
-						origin
-					}
-				}`,
-				Results: map[string]any{
-					"User": gomega.ConsistOf(
-						map[string]any{
-							"name":   "John",
-							"origin": "node0",
-						},
-						map[string]any{
-							"name":   "Islam",
-							"origin": "node1",
-						},
-					),
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(t *testing.T) {
 	sameCid1 := testUtils.NewSameValue()
 	sameCid2 := testUtils.NewSameValue()
@@ -349,26 +278,32 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
+			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 3,
 			},
+			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 2,
 			},
+			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 3,
 			},
+			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 2,
 				TargetNodeID: 3,
 			},
+			waitConnection,
 			&action.SyncBranchableCollection{
 				NodeID: 0,
 			},
