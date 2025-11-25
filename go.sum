@@ -2310,8 +2310,10 @@ github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9yS
 github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
 github.com/sourcegraph/go-diff v0.6.1/go.mod h1:iBszgVvyxdc8SFZ7gm69go2KDdt3ag071iBaWPF6cjs=
 github.com/sourcegraph/syntaxhighlight v0.0.0-20170531221838-bd320f5d308e/go.mod h1:HuIsMU8RRBOtsCgI77wP899iHVBQpCmg4ErYMZB+2IA=
-github.com/sourcenetwork/acp_core v0.7.1 h1:qGXXOE3Wi46zuHHg6i/bJBOcmRjRuwX2a8dPtgAMsB8=
-github.com/sourcenetwork/acp_core v0.7.1/go.mod h1:vmxU/mBphMaU2NjKYEFJLSpk5lbRdWDqgsJZNd+WfZ0=
+github.com/sourcenetwork/acp_core v0.7.2-0.20251125184014-b3f2dd33287c h1:oDPHIwfFPIgxQ10np3fBrWuWPoOmyChq1RNoqJn611w=
+github.com/sourcenetwork/acp_core v0.7.2-0.20251125184014-b3f2dd33287c/go.mod h1:vmxU/mBphMaU2NjKYEFJLSpk5lbRdWDqgsJZNd+WfZ0=
+github.com/sourcenetwork/acp_core v0.7.2-0.20251125184641-514ab148c59a h1:pMnhbyfJB1RXi5gj3uVmBBEYvMCisvFbXi/Gv/Pk9j0=
+github.com/sourcenetwork/acp_core v0.7.2-0.20251125184641-514ab148c59a/go.mod h1:vmxU/mBphMaU2NjKYEFJLSpk5lbRdWDqgsJZNd+WfZ0=
 github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e h1:sSvLVomsLBjQpojIu+e32LJlnE8M4nuIsX1mGeU8qo8=
 github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e/go.mod h1:eay5PRQr7fIVAMbTbchTnO9gG65Hg/uYGdc7mguHxoA=
 github.com/sourcenetwork/corekv v0.2.4 h1:Vaapx1HvwOyNQJsAsfv2P8w/AzJ2mYfkyReGkMeobrg=
