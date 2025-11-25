@@ -148,6 +148,47 @@ func (cache *collectionCache) Add(col client.CollectionVersion) {
 	}
 }
 
+func (cache *collectionCache) Delete(version client.CollectionVersion) {
+	delete(cache.CollectionsByVersionID, version.VersionID)
+
+	if cols, ok := cache.CollectionsByID[version.CollectionID]; ok {
+		var indexToRemove int
+		for i, col := range cols {
+			if col.VersionID == version.VersionID {
+				indexToRemove = i
+				break
+			}
+		}
+		cache.CollectionsByID[version.CollectionID] = append(cols[:indexToRemove], cols[indexToRemove+1:]...)
+	}
+
+	var indexToRemove int
+	for i, col := range cache.Collections {
+		if col.VersionID == version.VersionID {
+			indexToRemove = i
+			break
+		}
+	}
+	cache.Collections = append(cache.Collections[:indexToRemove], cache.Collections[indexToRemove+1:]...)
+
+	if version.IsActive {
+		delete(cache.ActiveCollectionsByID, version.CollectionID)
+		delete(cache.ActiveCollectionsByName, version.Name)
+
+		var indexToRemove int
+		for i, col := range cache.ActiveCollections {
+			if col.VersionID == version.VersionID {
+				indexToRemove = i
+				break
+			}
+		}
+		cache.ActiveCollections = append(
+			cache.ActiveCollections[:indexToRemove],
+			cache.ActiveCollections[indexToRemove+1:]...,
+		)
+	}
+}
+
 func (cache *collectionCache) AddAll(cols []client.CollectionVersion) {
 	cache.Collections = make([]client.CollectionVersion, 0, len(cols))
 	cache.ActiveCollections = make([]client.CollectionVersion, 0)
