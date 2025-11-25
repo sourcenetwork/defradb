@@ -19,13 +19,16 @@ defradb client p2p collection sync-branchable [collection-id] [flags]
 ```
 sync branchable collection:  
   defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq
+
+sync branchable collection with timeout:  
+  defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq --timeout 10s
 ```
 
 ### Options
 
 ```
   -h, --help               help for sync-branchable
-      --timeout duration   Timeout for fetch operations
+      --timeout duration   Timeout for sync operations (default: 5s if not specified)
 ```
 
 ### Options inherited from parent commands
