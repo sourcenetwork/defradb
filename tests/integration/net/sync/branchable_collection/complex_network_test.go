@@ -84,28 +84,28 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 			// Make sure peers have time for libp2p data exchange setup.
 			// https://github.com/sourcenetwork/defradb/issues/4208
 			testUtils.Wait{
-				Duration: 10 * time.Millisecond,
+				Duration: 20 * time.Millisecond,
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 2,
 			},
 			testUtils.Wait{
-				Duration: 10 * time.Millisecond,
+				Duration: 20 * time.Millisecond,
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 3,
 			},
 			testUtils.Wait{
-				Duration: 10 * time.Millisecond,
+				Duration: 20 * time.Millisecond,
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 3,
 				TargetNodeID: 4,
 			},
 			testUtils.Wait{
-				Duration: 10 * time.Millisecond,
+				Duration: 20 * time.Millisecond,
 			},
 			&action.SyncBranchableCollection{
 				NodeID: 0,
