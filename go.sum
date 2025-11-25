@@ -683,6 +683,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/BurntSushi/toml v0.4.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/BurntSushi/toml v1.1.0/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
+github.com/ChrisBQu/graphql-go v0.0.0-20251125154955-2718880cc7e0 h1:QLZLtBxhjcBqzO8Wh/KciawSrIc6M+n7aqiNk22Aoqc=
+github.com/ChrisBQu/graphql-go v0.0.0-20251125154955-2718880cc7e0/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/DataDog/datadog-go v4.8.3+incompatible h1:fNGaYSuObuQb5nzeTQqowRAd9bpDIRRV4/gUtIBjh8Q=
@@ -2334,8 +2336,6 @@ github.com/sourcenetwork/go-p2p v0.1.4 h1:SuTrmpkpx2WJVnFNAYXP80cwjLZLrlHKCmeSmM
 github.com/sourcenetwork/go-p2p v0.1.4/go.mod h1:gpPc76Bxm6ZzY76KE+MAH4li4FIkyES0yMdoleVdRfQ=
 github.com/sourcenetwork/goji v0.0.8 h1:6EqGFt18yJ/CxyiPUKZFbK3KFuzGJ5oLnTvFYObZj5k=
 github.com/sourcenetwork/goji v0.0.8/go.mod h1:A/dsoaCbLQ1a5PQfUVCA1zYMHnNAprVhZEmQHIlCfjE=
-github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a h1:wF7VhX0XKuNqhbbDI7RjoIBKFvdKQKucpZlNr/BGE40=
-github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
 github.com/sourcenetwork/immutable v0.3.0 h1:gHPtGvLrTBTK5YpDAhMU+u+S8v1F6iYmc3nbZLryMdc=
 github.com/sourcenetwork/immutable v0.3.0/go.mod h1:GD7ceuh/HD7z6cdIwzKK2ctzgZ1qqYFJpsFp+8qYnbI=
 github.com/sourcenetwork/lens/host-go v0.9.4 h1:VPBnlRoOoAKviA2tOXKZQzUos2P+GYOVxjMGpNOwngU=

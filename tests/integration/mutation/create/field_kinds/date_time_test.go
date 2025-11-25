@@ -104,3 +104,65 @@ func TestMutationCreateFieldKinds_WithDateTimesNanoSecondsAppart(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationCreateFieldKinds_WithDateTimeUsingCurrentTimestamp_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						time: DateTime
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					create_Users(input: {name: "Chris",time: UTCNOW}) {
+						name
+					}
+				}`,
+				// Check for the name, because if the document was created successfully,
+				// then UTCNOW was handled correctly.
+
+				Results: map[string]any{
+					"create_Users": []map[string]any{
+						{
+							"name": "Chris",
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreateFieldKinds_WithDateTime_WithUTCNow(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						time: DateTime
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+                    create_User(input: {time: UTC_NOW}) {
+						time
+                    }
+                }`,
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"time": testUtils.CurrentTimestamp(),
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

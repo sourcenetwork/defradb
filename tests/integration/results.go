@@ -536,3 +536,42 @@ func assertCollectionVersions(
 		}
 	}
 }
+
+// CurrentTimestampMatcher is a matcher that checks if the actual value is a
+//
+//	time.Time within 5 seconds of the current time.
+type CurrentTimestampMatcher struct {
+	testStateMatcher
+}
+
+var _ TestStateMatcher = (*CurrentTimestampMatcher)(nil)
+
+func CurrentTimestamp() *CurrentTimestampMatcher {
+	return &CurrentTimestampMatcher{}
+}
+
+func (matcher *CurrentTimestampMatcher) Match(actual any) (bool, error) {
+	ts, ok := actual.(time.Time)
+	if !ok {
+		return false, fmt.Errorf("expected time.Time, got %T", actual)
+	}
+
+	diff := time.Since(ts)
+	if diff < 0 {
+		diff = -diff
+	}
+
+	if diff > 5*time.Second {
+		return false, fmt.Errorf("timestamp %v is more than 5 seconds away from now", ts)
+	}
+
+	return true, nil
+}
+
+func (matcher *CurrentTimestampMatcher) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected timestamp %v to be within 5 seconds of now", actual)
+}
+
+func (matcher *CurrentTimestampMatcher) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected timestamp %v not to be within 5 seconds of now", actual)
+}

@@ -152,3 +152,46 @@ func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationUpdate_WithDateTimeField_WithUTCNow(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						created_at: DateTime
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"created_at": "2011-07-23T01:11:11-05:00"
+				}`,
+			},
+			// Perform mutation to update using UTC_NOW
+			testUtils.Request{
+				Request: `mutation {
+					update_Users(
+						filter: { name: { _eq: "John" } },
+						input: { created_at: UTC_NOW }
+					) {
+						name
+						created_at
+					}
+				}`,
+				Results: map[string]any{
+					"update_Users": []map[string]any{
+						{
+							"name":       "John",
+							"created_at": testUtils.CurrentTimestamp(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
