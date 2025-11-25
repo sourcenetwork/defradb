@@ -22,15 +22,16 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// Make sure peers have time for libp2p data exchange setup.
-// https://github.com/sourcenetwork/defradb/issues/4208
-var waitConnection = testUtils.Wait{Duration: 200 * time.Millisecond}
-
 func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldSyncAll(t *testing.T) {
 	// Network topology:
 	// Node 0 ──── Node 1 ──── Node 2
 	//    │
 	//    └─────── Node 3 ──── Node 4
+
+	// Make sure peers have time for libp2p data exchange setup.
+	// https://github.com/sourcenetwork/defradb/issues/4208
+	var waitConnection = testUtils.Wait{Duration: 500 * time.Millisecond}
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -231,6 +232,10 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 	sameCid2 := testUtils.NewSameValue()
 	sameCid3 := testUtils.NewSameValue()
 	sameCid4 := testUtils.NewSameValue()
+
+	// Make sure peers have time for libp2p data exchange setup.
+	// https://github.com/sourcenetwork/defradb/issues/4208
+	var waitConnection = testUtils.Wait{Duration: 50 * time.Millisecond}
 
 	test := testUtils.TestCase{
 		Actions: []any{
