@@ -296,6 +296,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG2
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
 func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(t *testing.T) {
 	sameCid1 := testUtils.NewSameValue()
 	sameCid2 := testUtils.NewSameValue()
