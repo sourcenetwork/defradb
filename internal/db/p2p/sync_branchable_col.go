@@ -70,7 +70,7 @@ func (p *P2P) SyncBranchableCollection(ctx context.Context, collectionID string)
 
 	col := cols[0].Version()
 	if !col.IsBranchable {
-		return errors.New("collection is not branchable", errors.NewKV("CollectionID", collectionID))
+		return NewErrCollectionNotBranchable(collectionID)
 	}
 
 	return p.syncBranchableCollection(ctx, collectionID)
@@ -310,7 +310,7 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, er
 
 	col := cols[0].Version()
 	if !col.IsBranchable {
-		return nil, errors.New("collection is not branchable", errors.NewKV("CollectionID", collectionID))
+		return nil, NewErrCollectionNotBranchable(collectionID)
 	}
 
 	txn := datastore.MustGetFromClientTxn(clientTxn)
@@ -331,7 +331,7 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, er
 	}
 
 	if len(cids) == 0 {
-		return nil, errors.New("no heads found for branchable collection", errors.NewKV("CollectionID", collectionID))
+		return nil, NewErrNoHeadsForBranchableCol(collectionID)
 	}
 
 	heads := make([][]byte, len(cids))

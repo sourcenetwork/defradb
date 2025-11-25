@@ -23,6 +23,8 @@ var (
 	errPublishingToSchemaTopic = errors.New("can't publish log for collection")
 	ErrTimeoutDocSync          = errors.New("timeout while syncing doc")
 	ErrTimeoutCollectionSync   = errors.New("timeout while syncing branchable collection")
+	ErrCollectionNotBranchable = errors.New("collection is not branchable")
+	ErrNoHeadsForBranchableCol = errors.New("no heads found for branchable collection")
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {
@@ -42,5 +44,19 @@ func NewErrPublishingToSchemaTopic(inner error, cid, colID string) error {
 		errors.Join(inner, errPublishingToSchemaTopic),
 		errors.NewKV("CID", cid),
 		errors.NewKV("CollectionID", colID),
+	)
+}
+
+func NewErrCollectionNotBranchable(collectionID string) error {
+	return errors.WithStack(
+		ErrCollectionNotBranchable,
+		errors.NewKV("CollectionID", collectionID),
+	)
+}
+
+func NewErrNoHeadsForBranchableCol(collectionID string) error {
+	return errors.WithStack(
+		ErrNoHeadsForBranchableCol,
+		errors.NewKV("CollectionID", collectionID),
 	)
 }
