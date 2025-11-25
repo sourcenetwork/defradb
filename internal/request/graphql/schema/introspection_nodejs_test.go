@@ -8,17 +8,21 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+//go:build nodejs
+// +build nodejs
+
 package schema
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
 
 	"github.com/sourcenetwork/defradb/client"
 	gql "github.com/sourcenetwork/graphql-go"
@@ -52,10 +56,21 @@ func TestIntrospectionResult(t *testing.T) {
 
 	require.Empty(t, r.Errors)
 
-	buf, err := json.Marshal(r.Data)
+	tempDir := t.TempDir()
+	resultFileName := filepath.Join(tempDir, "introspection_data2.json")
+	filebuf, err := json.Marshal(r.Data)
+	require.NoError(t, err)
+	err = os.WriteFile(resultFileName, filebuf, 0644)
 	require.NoError(t, err)
 
-	var converter introspection.JsonConverter
-	_, err = converter.GraphQLDocument(bytes.NewReader(buf))
-	require.NoError(t, err)
+	// this requires running `make deps:test:js` before running this test
+	cmd := exec.Command("../../../../tests/node_modules/.bin/graphql-introspection-json-to-sdl", resultFileName)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Log(string(output))
+		t.FailNow()
+	}
+
+	// this check is mostlyy redundent relative to the err check above, but im leaving it in all the same
+	require.False(t, strings.HasPrefix(string(output), "Error:"))
 }

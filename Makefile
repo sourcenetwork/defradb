@@ -152,6 +152,10 @@ deps\:test:
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
 
+.PHONY: deps\:test\:js
+deps\:test\:js:
+	npm install graphql-introspection-json-to-sdl --prefix tests
+
 .PHONY: deps\:bench
 deps\:bench:
 	go install golang.org/x/perf/cmd/benchstat@latest
