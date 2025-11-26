@@ -56,7 +56,7 @@ func TestNetInfoConnectPeers(t *testing.T) {
 			},
 			&action.ActivePeers{
 				NodeID:   0,
-				Expected: []string{"{{.Peer1Address0}}"},
+				Expected: []string{"{{.Peer1_Address0}}"},
 			},
 		},
 	}
@@ -81,8 +81,8 @@ func TestNetInfoConnectMultiplePeers(t *testing.T) {
 			&action.ActivePeers{
 				NodeID: 0,
 				Expected: []string{
-					"{{.Peer1Address0}}",
-					"{{.Peer2Address0}}",
+					"{{.Peer1_Address0}}",
+					"{{.Peer2_Address0}}",
 				},
 			},
 			testUtils.Wait{
@@ -92,17 +92,17 @@ func TestNetInfoConnectMultiplePeers(t *testing.T) {
 			&action.ActivePeers{
 				NodeID: 1,
 				Expected: []string{
-					"{{.Peer0Address0}}",
+					"{{.Peer0_Address0}}",
 					// Node 1 is connected to node 2, because node 0 added them to the same network
-					"{{.Peer2Address0}}",
+					"{{.Peer2_Address0}}",
 				},
 			},
 			&action.ActivePeers{
 				NodeID: 2,
 				Expected: []string{
-					"{{.Peer0Address0}}",
+					"{{.Peer0_Address0}}",
 					// Node 2 is connected to node 1, because node 0 added them to the same network
-					"{{.Peer1Address0}}",
+					"{{.Peer1_Address0}}",
 				},
 			},
 		},

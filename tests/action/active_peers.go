@@ -29,7 +29,7 @@ type ActivePeers struct {
 	// The expected set of results.
 	//
 	// Respects `replace`, and should typically be provided a string similar to
-	// `{{.Peer1Address0}}`.
+	// `{{.Peer1_Address0}}`.
 	//
 	// The order of elements in the given slice is not asserted.
 	Expected []string

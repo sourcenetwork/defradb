@@ -56,7 +56,7 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 			require.NoError(s.T, err)
 
 			for j, address := range addresses {
-				res["Peer"+strconv.Itoa(i)+"Address"+strconv.Itoa(j)] = address
+				res["Peer"+strconv.Itoa(i)+"_Address"+strconv.Itoa(j)] = address
 			}
 		}
 		return res
