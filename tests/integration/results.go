@@ -563,7 +563,7 @@ func (matcher *CurrentTimestampMatcher) Match(actual any) (bool, error) {
 		parsed, err := time.Parse(time.RFC3339, v)
 		if err != nil {
 			return false, fmt.Errorf(
-				"expected time.Time or RFC3339 string, got unparsable string %q: %v",
+				"expected time.Time or RFC3339 string, got unparsable string %q: %w",
 				v, err,
 			)
 		}
