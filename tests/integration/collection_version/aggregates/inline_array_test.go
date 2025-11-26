@@ -214,27 +214,6 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 										},
 									},
 									map[string]any{
-										"name": "_count",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_deleted",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_docID",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
 											"name": "Users__NumericSelector",
@@ -325,27 +304,6 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 								"name": "_avg",
 								"args": []any{
 									map[string]any{
-										"name": "_count",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_deleted",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
-										"name": "_docID",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
-										},
-									},
-									map[string]any{
 										"name": "_group",
 										"type": map[string]any{
 											"inputFields": []any{
@@ -381,13 +339,6 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 												},
 											},
 											"name": "Users__NumericSelector",
-										},
-									},
-									map[string]any{
-										"name": "_sum",
-										"type": map[string]any{
-											"inputFields": []any{},
-											"name":        "",
 										},
 									},
 									map[string]any{

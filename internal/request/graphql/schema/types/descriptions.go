@@ -183,6 +183,9 @@ These are the set of filter operators available for use when filtering on String
 These are the set of filter operators available for use when filtering on ID
  values.
 `
+	scalarAggregateSelectorDescription string = `
+The scalar field selection type for aggregate input arguments.
+`
 	eqOperatorDescription string = `
 The equality operator - if the target matches the value the check will pass.
 `
