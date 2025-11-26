@@ -92,47 +92,50 @@ const (
 	errCollectionIDCannotBeMutated               string = "collection ID cannot be mutated"
 	errCollectionSchemaVersionIDCannotBeMutated  string = "collection schema version ID cannot be mutated"
 	errCollectionIDCannotBeEmpty                 string = "collection ID cannot be empty"
-	errCollectionsCannotBeDeleted                string = "collections cannot be deleted"
-	errCanNotHavePolicyWithoutACP                string = "can not specify policy on collection, without acp"
-	errRelationMissingField                      string = "relation missing field"
-	errMultipleRelationPrimaries                 string = "relation can only have a single field set as primary"
-	errP2PColHasPolicy                           string = "p2p collection specified has a policy on it"
-	errReplicatorColHasPolicy                    string = "replicator collection specified has a policy on it"
-	errNoTransactionInContext                    string = "no transaction in context"
-	errReplicatorExists                          string = "replicator already exists for %s with peerID %s"
-	errReplicatorDocID                           string = "failed to get docID for replicator"
-	errCanNotEncryptBuiltinField                 string = "can not encrypt build-in field"
-	errFailedToHandleEncKeysReceivedEvent        string = "failed to handle encryption-keys-received event"
-	errSelfReferenceWithoutSelf                  string = "must specify 'Self' kind for self referencing relations"
-	errColNotMaterialized                        string = "non-materialized collections are not supported"
-	errColMutatingIsBranchable                   string = "mutating IsBranchable is not supported"
-	errMaterializedViewAndACPNotSupported        string = "materialized views do not support ACP"
-	errInvalidDefaultFieldValue                  string = "default field value is invalid"
-	errDocIDNotFound                             string = "docID not found"
-	errCollectionWithSchemaRootNotFound          string = "collection with schema root not found"
-	errGetEmbeddingFunc                          string = "failed to get embedding function"
-	errGetEmbeddingField                         string = "failed getting vector embedding field"
-	errFieldNotFound                             string = "field not found"
-	errGetDocForEmbedding                        string = "failed to get previous document for embedding generation"
-	errMissingSignature                          string = "block is missing required signature"
-	errNoIdentityInContext                       string = "no identity found in context"
-	errMissingPermission                         string = "missing permission"
-	errCollectionNameMutated                     string = "collection name cannot be mutated"
-	errUnsupportedTxnType                        string = "unsupported transaction type"
-	errEncryptedIndexUnknownField                string = "encrypted index on non-existent field"
-	errEncryptedIndexAlreadyExists               string = "encrypted index already exists on this field"
-	errEncryptedIndexDoesNotExist                string = "encrypted index does not exist on this field"
-	errNACIsAlreadyDisabled                      string = "node acp is already disabled"
-	errNACIsAlreadyEnabled                       string = "node acp is already enabled"
-	errNACIsNotConfigured                        string = "node acp is not configured"
-	errNACIsEnabledButIsMissingPolicyInfo        string = "node acp is enabled, but is missing policy info"
-	errNACNodeObjectToGateIsNotRegistered        string = "node acp is enabled, but object to gate must be registered"
-	errNACIsEnabledButInstanceIsNotAvailable     string = "node acp is enabled, but the acp instance is not available"
-	errRelationNameEmpty                         string = "relation name cannot be empty"
-	errInvalidCID                                string = "invalid CID"
-	errUnknownCID                                string = "unknown CID, collection ids cannot be manually defined"
-	errMigrationBetweenNonAdjacentVersions       string = "cannot migrate between non-adjacent collection versions"
-	errLensRuntimeNotSupported                   string = "the selected lens runtime is not supported by this build"
+	errCannotDeleteOldVersion                    string = "cannot delete a version that is used by a newer version, " +
+		"first delete the new version"
+	errCannotDeleteCollectionWithDocs string = "cannot delete a collection that has documents, first " +
+		"delete the documents and then delete the version"
+	errCanNotHavePolicyWithoutACP            string = "can not specify policy on collection, without acp"
+	errRelationMissingField                  string = "relation missing field"
+	errMultipleRelationPrimaries             string = "relation can only have a single field set as primary"
+	errP2PColHasPolicy                       string = "p2p collection specified has a policy on it"
+	errReplicatorColHasPolicy                string = "replicator collection specified has a policy on it"
+	errNoTransactionInContext                string = "no transaction in context"
+	errReplicatorExists                      string = "replicator already exists for %s with peerID %s"
+	errReplicatorDocID                       string = "failed to get docID for replicator"
+	errCanNotEncryptBuiltinField             string = "can not encrypt build-in field"
+	errFailedToHandleEncKeysReceivedEvent    string = "failed to handle encryption-keys-received event"
+	errSelfReferenceWithoutSelf              string = "must specify 'Self' kind for self referencing relations"
+	errColNotMaterialized                    string = "non-materialized collections are not supported"
+	errColMutatingIsBranchable               string = "mutating IsBranchable is not supported"
+	errMaterializedViewAndACPNotSupported    string = "materialized views do not support ACP"
+	errInvalidDefaultFieldValue              string = "default field value is invalid"
+	errDocIDNotFound                         string = "docID not found"
+	errCollectionWithSchemaRootNotFound      string = "collection with schema root not found"
+	errGetEmbeddingFunc                      string = "failed to get embedding function"
+	errGetEmbeddingField                     string = "failed getting vector embedding field"
+	errFieldNotFound                         string = "field not found"
+	errGetDocForEmbedding                    string = "failed to get previous document for embedding generation"
+	errMissingSignature                      string = "block is missing required signature"
+	errNoIdentityInContext                   string = "no identity found in context"
+	errMissingPermission                     string = "missing permission"
+	errCollectionNameMutated                 string = "collection name cannot be mutated"
+	errUnsupportedTxnType                    string = "unsupported transaction type"
+	errEncryptedIndexUnknownField            string = "encrypted index on non-existent field"
+	errEncryptedIndexAlreadyExists           string = "encrypted index already exists on this field"
+	errEncryptedIndexDoesNotExist            string = "encrypted index does not exist on this field"
+	errNACIsAlreadyDisabled                  string = "node acp is already disabled"
+	errNACIsAlreadyEnabled                   string = "node acp is already enabled"
+	errNACIsNotConfigured                    string = "node acp is not configured"
+	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
+	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
+	errNACIsEnabledButInstanceIsNotAvailable string = "node acp is enabled, but the acp instance is not available"
+	errRelationNameEmpty                     string = "relation name cannot be empty"
+	errInvalidCID                            string = "invalid CID"
+	errUnknownCID                            string = "unknown CID, collection ids cannot be manually defined"
+	errMigrationBetweenNonAdjacentVersions   string = "cannot migrate between non-adjacent collection versions"
+	errLensRuntimeNotSupported               string = "the selected lens runtime is not supported by this build"
 )
 
 var (
@@ -162,7 +165,8 @@ var (
 	ErrCollectionCollectionIDCannotBeMutated     = errors.New(errCollectionIDCannotBeMutated)
 	ErrCollectionSchemaVersionIDCannotBeMutated  = errors.New(errCollectionSchemaVersionIDCannotBeMutated)
 	ErrCollectionIDCannotBeEmpty                 = errors.New(errCollectionIDCannotBeEmpty)
-	ErrCollectionsCannotBeDeleted                = errors.New(errCollectionsCannotBeDeleted)
+	ErrCannotDeleteOldVersion                    = errors.New(errCannotDeleteOldVersion)
+	ErrCannotDeleteCollectionWithDocs            = errors.New(errCannotDeleteCollectionWithDocs)
 	ErrCanNotHavePolicyWithoutACP                = errors.New(errCanNotHavePolicyWithoutACP)
 	ErrRelationMissingField                      = errors.New(errRelationMissingField)
 	ErrMultipleRelationPrimaries                 = errors.New(errMultipleRelationPrimaries)
@@ -666,10 +670,19 @@ func NewErrCollectionSchemaVersionIDCannotBeMutated(colID string) error {
 	)
 }
 
-func NewErrCollectionsCannotBeDeleted(colID string) error {
+func NewErrCannotDeleteOldVersion(old, new string) error {
 	return errors.New(
-		errCollectionsCannotBeDeleted,
-		errors.NewKV("CollectionID", colID),
+		errCannotDeleteOldVersion,
+		errors.NewKV("TargetCollectionID", old),
+		errors.NewKV("UsedByCollectionID", new),
+	)
+}
+
+func NewErrCannotDeleteCollectionWithDocs(name, versionID string) error {
+	return errors.New(
+		errCannotDeleteCollectionWithDocs,
+		errors.NewKV("Name", name),
+		errors.NewKV("VersionID", versionID),
 	)
 }
 
