@@ -92,6 +92,19 @@ func SetShortCollectionID(
 	return nil
 }
 
+func DeleteShortCollectionID(
+	ctx context.Context,
+	collectionID string,
+) error {
+	cache := getCollectionShortIDCache(ctx)
+	delete(cache, collectionID)
+
+	txn := datastore.CtxMustGetTxn(ctx)
+	key := keys.NewCollectionID(collectionID)
+
+	return txn.Systemstore().Delete(ctx, key.Bytes())
+}
+
 type collectionShortIDCacheKey struct{}
 
 type collectionShortIDCache map[string]uint32
