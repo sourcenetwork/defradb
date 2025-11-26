@@ -551,9 +551,27 @@ func CurrentTimestamp() *CurrentTimestampMatcher {
 }
 
 func (matcher *CurrentTimestampMatcher) Match(actual any) (bool, error) {
-	ts, ok := actual.(time.Time)
-	if !ok {
-		return false, fmt.Errorf("expected time.Time, got %T", actual)
+	var ts time.Time
+
+	// We want this to work with time.Time as well as strings that can
+	// be parsed into a time.Time
+	switch v := actual.(type) {
+
+	case time.Time:
+		ts = v
+
+	case string:
+		parsed, err := time.Parse(time.RFC3339, v)
+		if err != nil {
+			return false, fmt.Errorf(
+				"expected time.Time or RFC3339 string, got unparsable string %q: %v",
+				v, err,
+			)
+		}
+		ts = parsed
+
+	default:
+		return false, fmt.Errorf("expected time.Time or string, got %T", actual)
 	}
 
 	diff := time.Since(ts)
