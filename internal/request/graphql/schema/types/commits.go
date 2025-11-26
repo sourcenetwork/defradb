@@ -26,6 +26,7 @@ import (
 //		SchemaVersionID: String
 //		Delta: String
 //		Links: [Commit]
+//		Heads: [Commit]
 //		Signature: Signature
 //	}
 //
@@ -37,12 +38,30 @@ import (
 //
 // Any self referential type needs to be initialized
 // inside the init() func
-func CommitObject(commitLinkObject *gql.Object,
-	commitsOrderArg *gql.InputObject,
+func CommitObject(commitsOrderArg *gql.InputObject,
 	commitsEnum *gql.Enum) *gql.Object {
 	// we need the fieldThunk since we are creating a circular type reference
 	var commitObject *gql.Object
 	fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
+		commitLinkType := &gql.Field{
+			Description: commitLinksDescription,
+			Type:        gql.NewList(commitObject),
+			Args: gql.FieldConfigArgument{
+				request.DocIDArgName:  NewArgConfig(gql.ID, commitDocIDArgDescription),
+				request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
+				"order":               NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
+				request.CidArgName:    NewArgConfig(gql.ID, commitCIDArgDescription),
+				"groupBy": NewArgConfig(
+					gql.NewList(
+						gql.NewNonNull(
+							commitsEnum,
+						),
+					),
+					GroupByArgDescription,
+				),
+			},
+		}
+
 		fields := gql.Fields{
 			request.HeightFieldName: &gql.Field{
 				Description: commitHeightFieldDescription,
@@ -68,28 +87,8 @@ func CommitObject(commitLinkObject *gql.Object,
 				Description: commitDeltaFieldDescription,
 				Type:        gql.String,
 			},
-			request.LinksFieldName: &gql.Field{
-				Description: commitLinksDescription,
-				Type:        gql.NewList(commitObject),
-				Args: gql.FieldConfigArgument{
-					request.DocIDArgName:  NewArgConfig(gql.ID, commitDocIDArgDescription),
-					request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
-					"order":               NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
-					request.CidArgName:    NewArgConfig(gql.ID, commitCIDArgDescription),
-					"groupBy": NewArgConfig(
-						gql.NewList(
-							gql.NewNonNull(
-								commitsEnum,
-							),
-						),
-						GroupByArgDescription,
-					),
-				},
-			},
-			request.LinksNameFieldName: &gql.Field{
-				Description: commitLinkNameFieldDescription,
-				Type:        gql.String,
-			},
+			request.LinksFieldName: commitLinkType,
+			request.HeadsFieldName: commitLinkType,
 			request.SignatureFieldName: &gql.Field{
 				Description: signatureDescription,
 				Type: gql.NewObject(gql.ObjectConfig{
@@ -142,25 +141,6 @@ func CommitObject(commitLinkObject *gql.Object,
 		Fields:      fieldsThunk,
 	})
 	return commitObject
-}
-
-// CommitLink is a named DAG link between commits.
-// This is primary used for CompositeDAG CRDTs
-func CommitLinkObject() *gql.Object {
-	return gql.NewObject(gql.ObjectConfig{
-		Name:        "CommitLink",
-		Description: commitLinksDescription,
-		Fields: gql.Fields{
-			request.LinksNameFieldName: &gql.Field{
-				Description: commitLinkNameFieldDescription,
-				Type:        gql.String,
-			},
-			request.CidFieldName: &gql.Field{
-				Description: commitLinkCIDFieldDescription,
-				Type:        gql.String,
-			},
-		},
-	})
 }
 
 func CommitsFilterFieldNameArg() *gql.InputObject {

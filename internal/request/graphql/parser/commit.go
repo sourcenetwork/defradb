@@ -35,8 +35,6 @@ func parseCommitSelect(
 
 	fieldDef := gql.GetFieldDef(exe.Schema, parent, field.Name.Value)
 	arguments := gql.GetArgumentValues(fieldDef.Args, field.Arguments, exe.VariableValues)
-	fmt.Println("PARSE COMMIT SELECT FIELD DEF")
-	spew.Dump(fieldDef)
 
 	for _, argument := range field.Arguments {
 		name := argument.Name.Value

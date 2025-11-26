@@ -23,11 +23,11 @@ func defaultSchema() (gql.Schema, error) {
 	crdtEnum := types.CRDTEnum()
 	explainEnum := types.ExplainEnum()
 
-	commitLinkObject := types.CommitLinkObject()
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
 	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
 	commitsFilterArg := types.CommitsFilterArg(commitsFilterFieldNameArg)
-	commitObject := types.CommitObject(commitLinkObject, commitsOrderArg, commitsEnum)
+
+	commitObject := types.CommitObject(commitsOrderArg, commitsEnum)
 
 	encryptedSearchResult := types.EncryptedSearchResultObject()
 
@@ -38,8 +38,8 @@ func defaultSchema() (gql.Schema, error) {
 	sch, err := gql.NewSchema(gql.SchemaConfig{
 		Types: defaultTypes(
 			commitObject,
-			commitLinkObject,
 			commitsOrderArg,
+			commitsEnum,
 			orderEnum,
 			crdtEnum,
 			explainEnum,
@@ -128,8 +128,8 @@ func inlineArrayTypes() []gql.Type {
 // default type map includes all the native scalar types
 func defaultTypes(
 	commitObject *gql.Object,
-	commitLinkObject *gql.Object,
 	commitsOrderArg *gql.InputObject,
+	commitsEnum *gql.Enum,
 	orderEnum *gql.Enum,
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
@@ -208,8 +208,8 @@ func defaultTypes(
 		// aggregate input args
 		scalarAggregateBlock,
 
+		commitsEnum,
 		commitsOrderArg,
-		commitLinkObject,
 		commitObject,
 
 		crdtEnum,

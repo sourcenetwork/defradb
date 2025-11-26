@@ -387,7 +387,24 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		)
 	}
 
-	err = n.addLinksFieldToDoc(block, &commit)
+	// scan for links
+	linkedCids := make([]*cid.Cid, len(block.Links))
+	for i, c := range block.Links {
+		linkedCids[i] = &c.Cid
+	}
+	linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]
+	err = n.addLinksFieldToDoc(linkedCids, linksIndexes, &commit)
+	if err != nil {
+		return core.Doc{}, err
+	}
+
+	// scan for heads
+	blockCids := make([]*cid.Cid, len(block.Heads))
+	for i, c := range block.Heads {
+		blockCids[i] = &c.Cid
+	}
+	headsIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.HeadsFieldName]
+	err = n.addLinksFieldToDoc(blockCids, headsIndexes, &commit)
 	if err != nil {
 		return core.Doc{}, err
 	}
@@ -395,29 +412,13 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	return commit, nil
 }
 
-func (n *dagScanNode) addLinksFieldToDoc(block *coreblock.Block, commit *core.Doc) error {
-	linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]
-	for i, linksIndex := range linksIndexes {
-		linksMapping := n.commitSelect.DocumentMapping.ChildMappings[linksIndex]
-
-		// scan for links
-		queuedCids := make([]*cid.Cid, len(block.Heads)+len(block.Links))
-		linkCidsIndex := make(map[string]string)
-		j := 0
-		for _, c := range block.Heads {
-			queuedCids[j] = &c.Cid
-			linkCidsIndex[c.Cid.String()] = request.HeadLinkName
-			j++
-		}
-		for _, c := range block.Links {
-			queuedCids[j] = &c.Cid
-			linkCidsIndex[c.Cid.String()] = c.Name
-			j++
-		}
-
+// addLinksFieldToDoc is responsible for adding both "links" and "heads" to a commit doc, since the
+// only difference between the two is their link name.
+func (n *dagScanNode) addLinksFieldToDoc(links []*cid.Cid, mappingIndexes []int, commit *core.Doc) error {
+	for i, linksIndex := range mappingIndexes {
 		// reset linkScanNode
 		n.linksScanNodes[i].reset()
-		n.linksScanNodes[i].queuedCids = queuedCids
+		n.linksScanNodes[i].queuedCids = links
 		links := make([]core.Doc, 0)
 		for {
 			next, err := n.linksScanNodes[i].Next()
@@ -429,12 +430,6 @@ func (n *dagScanNode) addLinksFieldToDoc(block *coreblock.Block, commit *core.Do
 			}
 
 			link := n.linksScanNodes[i].Value()
-			linkCid := linksMapping.FirstOfName(link, request.CidFieldName)
-			linkName, exists := linkCidsIndex[linkCid.(string)]
-			if !exists {
-				return errors.New("bad cid for link")
-			}
-			linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, linkName)
 			links = append(links, link)
 		}
 		commit.Fields[linksIndex] = links

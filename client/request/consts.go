@@ -66,6 +66,7 @@ const (
 
 	CommitTypeName           = "Commit"
 	LinksFieldName           = "links"
+	HeadsFieldName           = "heads"
 	SignatureFieldName       = "signature"
 	SignatureTypeName        = "Signature"
 	HeightFieldName          = "height"
