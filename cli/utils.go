@@ -16,7 +16,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -32,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/keyring"
+	"github.com/sourcenetwork/defradb/node"
 )
 
 const (
@@ -172,11 +172,7 @@ func setContextRootDir(cmd *cobra.Command) error {
 		return err
 	}
 	if rootdir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return err
-		}
-		rootdir = filepath.Join(home, ".defradb")
+		rootdir = node.GetDefaultStorePath()
 	}
 	ctx := context.WithValue(cmd.Context(), rootDirContextKey, rootdir)
 	cmd.SetContext(ctx)

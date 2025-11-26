@@ -144,7 +144,6 @@ var collectionUpdateValidators = append(
 		),
 		validateCollectionNotAdded,
 		validateSchemaVersionIDNotMutated,
-		validateCollectionNotRemoved,
 		validateCollectionIsBranchableNotMutated,
 	),
 	globalValidators...,
@@ -643,26 +642,6 @@ func validateSchemaVersionIDNotMutated(
 
 		if newCol.VersionID != oldCol.VersionID {
 			errs = append(errs, NewErrCollectionSchemaVersionIDCannotBeMutated(newCol.VersionID))
-		}
-	}
-
-	return errors.Join(errs...)
-}
-
-func validateCollectionNotRemoved(
-	ctx context.Context,
-	db *DB,
-	newState *definitionState,
-	oldState *definitionState,
-) error {
-	var errs []error
-	for _, oldCol := range oldState.collections {
-		if oldCol.IsPlaceholder {
-			continue
-		}
-
-		if _, ok := newState.collectionsByID[oldCol.VersionID]; !ok {
-			errs = append(errs, NewErrCollectionsCannotBeDeleted(oldCol.VersionID))
 		}
 	}
 
