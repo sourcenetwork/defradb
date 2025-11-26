@@ -122,7 +122,10 @@ func (p *P2P) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	iter, err := p.db.Multistore().Systemstore().Iterator(ctx, corekv.IterOptions{
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewP2PCollectionKey("").Bytes(),
 		KeysOnly: true,
 	})
@@ -145,7 +148,7 @@ func (p *P2P) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 			return nil, errors.Join(err, iter.Close())
 		}
 
-		storeCol, err := p.db.GetCollections(
+		storeCol, err := clientTxn.GetCollections(
 			ctx,
 			client.CollectionFetchOptions{
 				CollectionID: immutable.Some(key.CollectionID),
