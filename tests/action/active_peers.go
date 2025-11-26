@@ -23,10 +23,8 @@ import (
 type ActivePeers struct {
 	stateful
 
-	// NodeID may hold the ID (index) of a node to get active peers for.
-	//
-	// If a value is not provided the update will be applied to all nodes.
-	NodeID immutable.Option[int]
+	// NodeID holds the ID (index) of a node to get active peers for.
+	NodeID int
 
 	// The expected set of results.
 	//
@@ -47,7 +45,7 @@ var _ Action = (*ActivePeers)(nil)
 var _ Stateful = (*ActivePeers)(nil)
 
 func (a *ActivePeers) Execute() {
-	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+	nodeIDs, nodes := getNodesWithIDs(immutable.Some(a.NodeID), a.s.Nodes)
 	for index, node := range nodes {
 		actual, err := node.ActivePeers(a.s.Ctx)
 

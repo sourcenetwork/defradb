@@ -16,14 +16,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestNetInfoPeers_NoP2PConfigured(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.ActivePeers{
-				NodeID:        immutable.Some(0),
+				NodeID:        0,
 				ExpectedError: "no p2p system configured",
 			},
 		},
@@ -37,7 +36,7 @@ func TestNetInfoPeers(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			&action.ActivePeers{
-				NodeID:   immutable.Some(0),
+				NodeID:   0,
 				Expected: []string{},
 			},
 		},
@@ -56,7 +55,7 @@ func TestNetInfoConnectPeers(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			&action.ActivePeers{
-				NodeID:   immutable.Some(0),
+				NodeID:   0,
 				Expected: []string{"{{.Peer1Address0}}"},
 			},
 		},
@@ -80,7 +79,7 @@ func TestNetInfoConnectMultiplePeers(t *testing.T) {
 				TargetNodeID: 0,
 			},
 			&action.ActivePeers{
-				NodeID: immutable.Some(0),
+				NodeID: 0,
 				Expected: []string{
 					"{{.Peer1Address0}}",
 					"{{.Peer2Address0}}",
@@ -91,7 +90,7 @@ func TestNetInfoConnectMultiplePeers(t *testing.T) {
 				Duration: time.Millisecond * 50,
 			},
 			&action.ActivePeers{
-				NodeID: immutable.Some(1),
+				NodeID: 1,
 				Expected: []string{
 					"{{.Peer0Address0}}",
 					// Node 1 is connected to node 2, because node 0 added them to the same network
@@ -99,7 +98,7 @@ func TestNetInfoConnectMultiplePeers(t *testing.T) {
 				},
 			},
 			&action.ActivePeers{
-				NodeID: immutable.Some(2),
+				NodeID: 2,
 				Expected: []string{
 					"{{.Peer0Address0}}",
 					// Node 2 is connected to node 1, because node 0 added them to the same network
