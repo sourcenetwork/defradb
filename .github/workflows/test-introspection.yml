@@ -36,8 +36,5 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Install introspection client
-        run: make deps:test:js
-
       - name: Test Introspection JS Client
         run: make test:introspectionjs

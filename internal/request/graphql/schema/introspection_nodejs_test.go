@@ -63,11 +63,12 @@ func TestIntrospectionResult(t *testing.T) {
 	err = os.WriteFile(resultFileName, filebuf, 0644)
 	require.NoError(t, err)
 
-	// this requires running `make deps:test:js` before running this test
-	cmd := exec.Command("../../../../tests/node_modules/.bin/graphql-introspection-json-to-sdl", resultFileName)
+	cmd := exec.Command("npx", "-y", "graphql-introspection-json-to-sdl", resultFileName)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
+		t.Log("hi")
 		t.Log(string(output))
+		t.Log(err)
 		t.FailNow()
 	}
 
