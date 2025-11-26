@@ -52,7 +52,7 @@ func (w *Wrapper) PeerInfo() ([]string, error) {
 }
 
 func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
-	return nil, nil
+	panic("not implemented")
 }
 
 func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {

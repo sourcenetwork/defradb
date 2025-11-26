@@ -14,12 +14,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestNetInfoPeers_NoP2PConfigured(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some(
+			// Everything besides the JS client is supported, as the JS client does not have
+			// an `ActivePeers` function to call.
+			[]state.ClientType{
+				state.CClientType,
+				state.CLIClientType,
+				state.GoClientType,
+				state.HTTPClientType,
+			},
+		),
 		Actions: []any{
 			&action.ActivePeers{
 				NodeID:        0,
