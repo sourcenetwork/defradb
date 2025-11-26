@@ -556,7 +556,6 @@ func (matcher *CurrentTimestampMatcher) Match(actual any) (bool, error) {
 	// We want this to work with time.Time as well as strings that can
 	// be parsed into a time.Time
 	switch v := actual.(type) {
-
 	case time.Time:
 		ts = v
 
