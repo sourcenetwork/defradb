@@ -193,7 +193,7 @@ func newDB(
 	db.lensNode = node
 
 	if opts.p2p.HasValue() {
-		p, err := p2p.New(ctx, db, node, opts.p2p.Value(), db.nodeIdentity)
+		p, err := p2p.New(ctx, db, node, opts.p2p.Value(), db.nodeIdentity, NewCollectionRetriever(db))
 		if err != nil {
 			return nil, err
 		}

@@ -141,6 +141,7 @@ func defaultTypes(
 	stringOpBlock := types.StringOperatorBlock()
 	blobOpBlock := types.BlobOperatorBlock(types.Blob)
 	dateTimeOpBlock := types.DateTimeOperatorBlock()
+	scalarAggregateBlock := types.ScalarAggregateNumericBlock()
 
 	notNullIntOpBlock := types.NotNullIntOperatorBlock()
 	notNullFloat64OpBlock := types.NotNullFloat64OperatorBlock()
@@ -200,6 +201,9 @@ func defaultTypes(
 		types.NotNullFloat32ListOperatorBlock(notNullFloat32OpBlock),
 		types.NotNullBooleanListOperatorBlock(notNullBooleanOpBlock),
 		types.NotNullStringListOperatorBlock(notNullStringOpBlock),
+
+		// aggregate input args
+		scalarAggregateBlock,
 
 		commitsOrderArg,
 		commitLinkObject,

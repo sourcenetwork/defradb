@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/kms"
 )
 
 var log = corelog.NewLogger("node")
@@ -54,8 +53,6 @@ type Node struct {
 	peer Peer
 	// api http server instance
 	server *http.Server
-	// kms subsystem instance
-	kmsService kms.Service
 	// config values after applying options
 	config *Config
 	// options the node was created with
@@ -112,11 +109,6 @@ func (n *Node) Start(ctx context.Context) error {
 	}
 
 	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, filterOptions[db.Option](n.options)...)
-	if err != nil {
-		return err
-	}
-
-	err = n.startKMS(ctx)
 	if err != nil {
 		return err
 	}

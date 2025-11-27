@@ -8,6 +8,9 @@ coverage
 tests/bench/*.log
 tests/bench/*.svg
 
+tests/package.json
+tests/package-lock.json
+tests/node_modules
 tests/lenses/rust_wasm32_set_default/Cargo.lock
 tests/lenses/rust_wasm32_set_default/target
 tests/lenses/rust_wasm32_set_default/pkg
