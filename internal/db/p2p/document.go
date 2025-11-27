@@ -17,12 +17,16 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (p *P2P) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
 
 	// Ensure we can add all the docIDs to the store on the transaction
 	// before adding to topics.
@@ -33,18 +37,20 @@ func (p *P2P) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 			return err
 		}
 		key := keys.NewP2PDocumentKey(docID)
-		err = p.db.Multistore().Systemstore().Set(ctx, key.Bytes(), []byte{marker})
+		err = txn.Systemstore().Set(ctx, key.Bytes(), []byte{marker})
 		if err != nil {
 			return err
 		}
 	}
 
-	for _, docID := range docIDs {
-		err := p.host.AddPubSubTopic(docID, true, p.pubSubMessageHandler)
-		if err != nil {
-			log.ErrorE("Failed to add pubsub topic.", err)
+	txn.OnSuccess(func() {
+		for _, docID := range docIDs {
+			err := p.host.AddPubSubTopic(docID, true, p.pubSubMessageHandler)
+			if err != nil {
+				log.ErrorE("Failed to add pubsub topic.", err)
+			}
 		}
-	}
+	})
 
 	return nil
 }
@@ -53,6 +59,9 @@ func (p *P2P) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+
 	for _, docID := range docIDs {
 		// ensure that the docID is a real docID.
 		_, err := client.NewDocIDFromString(docID)
@@ -60,18 +69,20 @@ func (p *P2P) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 			return err
 		}
 		key := keys.NewP2PDocumentKey(docID)
-		err = p.db.Multistore().Systemstore().Delete(ctx, key.Bytes())
+		err = txn.Systemstore().Delete(ctx, key.Bytes())
 		if err != nil {
 			return err
 		}
 	}
 
-	for _, docID := range docIDs {
-		err := p.host.RemovePubSubTopic(docID)
-		if err != nil {
-			log.ErrorE("Failed to remove pubsub topic.", err)
+	txn.OnSuccess(func() {
+		for _, docID := range docIDs {
+			err := p.host.RemovePubSubTopic(docID)
+			if err != nil {
+				log.ErrorE("Failed to remove pubsub topic.", err)
+			}
 		}
-	}
+	})
 
 	return nil
 }
@@ -80,7 +91,10 @@ func (p *P2P) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	iter, err := p.db.Multistore().Systemstore().Iterator(ctx, corekv.IterOptions{
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
+	txn := datastore.MustGetFromClientTxn(clientTxn)
+
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{
 		Prefix:   keys.NewP2PDocumentKey("").Bytes(),
 		KeysOnly: true,
 	})
@@ -109,15 +123,23 @@ func (p *P2P) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 }
 
 func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
-	docIDs, err := p.GetAllP2PDocuments(ctx)
+	iter, err := p.db.Multistore().Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   keys.NewP2PDocumentKey("").Bytes(),
+		KeysOnly: true,
+	})
 	if err != nil {
 		return err
 	}
-	for _, docID := range docIDs {
-		err := p.host.AddPubSubTopic(docID, true, p.pubSubMessageHandler)
+	for hasNext, err := iter.Next(); hasNext && err == nil; {
+		var key keys.P2PDocumentKey
+		key, err = keys.NewP2PDocumentKeyFromString(string(iter.Key()))
 		if err != nil {
-			return err
+			break
+		}
+		err = p.host.AddPubSubTopic(key.DocID, true, p.pubSubMessageHandler)
+		if err != nil {
+			break
 		}
 	}
-	return nil
+	return errors.Join(err, iter.Close())
 }
