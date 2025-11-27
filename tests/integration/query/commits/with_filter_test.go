@@ -1,0 +1,274 @@
+// Copyright 2024 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package commits
+
+import (
+	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestQueryCommits_WithFilterFieldNameEqualAge_ReturnsAgeCommit(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(filter: {fieldName: {_eq: "age"}}) {
+							fieldName
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithFilterFieldNameEqualComposite_ReturnsCompositeCommit(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(filter: {fieldName: {_eq: "_C"}}) {
+							fieldName
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "_C",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(filter: {fieldName: {_ne: "_C"}}) {
+							fieldName
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+						},
+						{
+							"fieldName": "name",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithFilterFieldNameOrCondition_ReturnsMatchingCommits(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(filter: {_or: [{fieldName: {_eq: "age"}}, {fieldName: {_eq: "name"}}]}) {
+							fieldName
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+						},
+						{
+							"fieldName": "name",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithFilterFieldNameAndCondition_ReturnsOnlyNameCommit(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(filter: {_and: [{fieldName: {_ne: "_C"}}, {fieldName: {_ne: "age"}}]}) {
+							fieldName
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "name",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithFilterFieldNameEqualUnknown_ReturnsEmptyResult(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(filter: {fieldName: {_eq: "unknown"}}) {
+							fieldName
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithFilterFieldNameAndDepth_ReturnsCommitsAtAllHeights(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{"age": 22}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(filter: {fieldName: {_eq: "age"}}, depth: 2) {
+							fieldName
+							height
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+							"height":    int64(2),
+						},
+						{
+							"fieldName": "age",
+							"height":    int64(1),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithFilterFieldNameAndDocID_ReturnsDocCommits(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"Fred",
+						"age":	23
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", filter: {fieldName: {_eq: "age"}}) {
+							fieldName
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

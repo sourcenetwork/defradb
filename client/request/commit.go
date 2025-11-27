@@ -29,6 +29,7 @@ type CommitSelect struct {
 	Offsetable
 	Orderable
 	Groupable
+	Filterable
 
 	// DocID is an optional filter which when provided will limit commits to those
 	// belonging to the given document.
@@ -59,6 +60,7 @@ func (c CommitSelect) ToSelect() *Select {
 		Offsetable:  c.Offsetable,
 		Orderable:   c.Orderable,
 		Groupable:   c.Groupable,
+		Filterable:  c.Filterable,
 		ChildSelect: c.ChildSelect,
 	}
 }

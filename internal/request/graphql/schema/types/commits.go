@@ -136,6 +136,55 @@ func CommitLinkObject() *gql.Object {
 	})
 }
 
+func CommitsFilterFieldNameArg() *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "CommitsFieldNameFilterArg",
+		Description: "Filter operators for commit fieldName.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.String,
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.String,
+			},
+		},
+	})
+}
+
+func CommitsFilterArg(fieldNameFilter *gql.InputObject) *gql.InputObject {
+	var selfRefType *gql.InputObject
+
+	inputCfg := gql.InputObjectConfig{
+		Name:        "CommitsFilterArg",
+		Description: "Filter argument for commits query.",
+	}
+
+	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(
+		func() (gql.InputObjectConfigFieldMap, error) {
+			return gql.InputObjectConfigFieldMap{
+				request.FieldNameName: &gql.InputObjectFieldConfig{
+					Description: commitFieldNameFieldDescription,
+					Type:        fieldNameFilter,
+				},
+				request.FilterOpAnd: &gql.InputObjectFieldConfig{
+					Description: AndOperatorDescription,
+					Type:        gql.NewList(gql.NewNonNull(selfRefType)),
+				},
+				request.FilterOpOr: &gql.InputObjectFieldConfig{
+					Description: OrOperatorDescription,
+					Type:        gql.NewList(gql.NewNonNull(selfRefType)),
+				},
+			}, nil
+		},
+	)
+
+	inputCfg.Fields = fieldThunk
+	selfRefType = gql.NewInputObject(inputCfg)
+	return selfRefType
+}
+
 func CommitsOrderArg(orderEnum *gql.Enum) *gql.InputObject {
 	return gql.NewInputObject(
 		gql.InputObjectConfig{
@@ -159,16 +208,21 @@ func CommitsOrderArg(orderEnum *gql.Enum) *gql.InputObject {
 	)
 }
 
-func QueryCommits(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *gql.Field {
+func QueryCommits(
+	commitObject *gql.Object,
+	commitsOrderArg *gql.InputObject,
+	commitsFilterArg *gql.InputObject,
+) *gql.Field {
 	return &gql.Field{
 		Name:        request.CommitsName,
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName:  NewArgConfig(gql.ID, commitDocIDArgDescription),
-			request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
-			"order":               NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
-			request.CidArgName:    NewArgConfig(gql.ID, commitCIDArgDescription),
+			request.DocIDArgName:   NewArgConfig(gql.ID, commitDocIDArgDescription),
+			request.FieldNameName:  NewArgConfig(gql.String, commitFieldNameArgDescription),
+			request.FilterClause:   NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
+			"order":                NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
+			request.CidArgName:     NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(

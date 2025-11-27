@@ -95,6 +95,11 @@ func parseCommitSelect(
 			commit.GroupBy = immutable.Some(request.GroupBy{
 				Fields: fields,
 			})
+
+		case request.FilterClause:
+			if v, ok := value.(map[string]any); ok {
+				commit.Filter = immutable.Some(request.Filter{Conditions: v})
+			}
 		}
 	}
 
