@@ -12,11 +12,7 @@ package encryption
 
 import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-
-	"github.com/sourcenetwork/defradb/event"
 )
-
-const RequestKeysEventName = event.Name("enc-keys-request")
 
 // RequestKeysEvent represents a request of a node to fetch an encryption key for a specific
 // docID/field
@@ -61,15 +57,4 @@ func NewResults() (*Results, chan<- Result) {
 	return &Results{
 		output: ch,
 	}, ch
-}
-
-// NewRequestKeysMessage creates a new event message for a request of a node to fetch an encryption key
-// for a specific docID/field
-// It returns the message and the results that can be waited on.
-func NewRequestKeysMessage(keys []cidlink.Link) (event.Message, *Results) {
-	res, ch := NewResults()
-	return event.NewMessage(RequestKeysEventName, RequestKeysEvent{
-		Keys: keys,
-		Resp: ch,
-	}), res
 }

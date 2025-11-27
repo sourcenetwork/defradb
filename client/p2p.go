@@ -25,6 +25,11 @@ type P2P interface {
 	// PeerInfo returns the p2p host list of addresses.
 	PeerInfo() ([]string, error)
 
+	// ActivePeers returns the addresses of peers that are currently connected to.
+	//
+	// Addresses are returned in the multiaddr format (e.g. /ip4/127.0.0.1/tcp/4001/p2p/<PeerID>).
+	ActivePeers(ctx context.Context) ([]string, error)
+
 	// Connect tries to connect to the peer with the given [PeerInfo].
 	Connect(ctx context.Context, addresses []string) error
 
@@ -109,6 +114,10 @@ type Host interface {
 	ID() string
 	// Addrs returns the host's list of addresses.
 	Addresses() ([]string, error)
+	// ActivePeers returns the addresses of peers that are currently connected to.
+	//
+	// Addresses are returned in the multiaddr format (e.g. /ip4/127.0.0.1/tcp/4001/p2p/<PeerID>).
+	ActivePeers() ([]string, error)
 	// Pubkey return the byte slice representation of the host's public key.
 	Pubkey() ([]byte, error)
 	// Connect tries to connect to the peer with the given addresses.

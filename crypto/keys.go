@@ -108,6 +108,11 @@ type secp256r1PublicKey struct {
 	compressedBytes []byte
 }
 
+// secp256r1PrivateKey wraps ecdsa.PrivateKey to implement PrivateKey interface
+type secp256r1PrivateKey struct {
+	key *ecdsa.PrivateKey
+}
+
 // NewPrivateKey creates a new private key of a specific type based on the input
 func NewPrivateKey[T *secp256k1.PrivateKey | *ecdsa.PrivateKey | ed25519.PrivateKey](key T) PrivateKey {
 	switch k := any(key).(type) {
@@ -117,8 +122,10 @@ func NewPrivateKey[T *secp256k1.PrivateKey | *ecdsa.PrivateKey | ed25519.Private
 		}
 		return &secp256k1PrivateKey{key: k}
 	case *ecdsa.PrivateKey:
-		// Private keys for secp256r1 are not supported
-		return nil
+		if k == nil || k.Curve != elliptic.P256() {
+			return nil
+		}
+		return &secp256r1PrivateKey{key: k}
 	case ed25519.PrivateKey:
 		if k == nil || len(k) != ed25519.PrivateKeySize {
 			return nil
@@ -205,6 +212,12 @@ func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 				Y:     y,
 			}
 			compressedBytes = elliptic.MarshalCompressed(elliptic.P256(), x, y)
+			// TODO: use this approach after upgrading to Go v1.25+ (https://github.com/sourcenetwork/defradb/issues/4205)
+			// pubKey, err := ecdsa.ParseUncompressedPublicKey(elliptic.P256(), keyBytes)
+			// if err != nil {
+			// 	return nil, ErrInvalidECDSAPubKey
+			// }
+			// compressedBytes = elliptic.MarshalCompressed(elliptic.P256(), pubKey.X, pubKey.Y)
 		} else {
 			return nil, ErrInvalidECDSAPubKey
 		}
@@ -352,6 +365,44 @@ func (k *ed25519PublicKey) Underlying() any {
 	return k.key
 }
 
+func (k *secp256r1PrivateKey) Equal(other Key) bool {
+	if other.Type() != KeyTypeSecp256r1 {
+		return false
+	}
+	return bytes.Equal(k.Raw(), other.Raw())
+}
+
+func (k *secp256r1PrivateKey) Raw() []byte {
+	buf := make([]byte, 32)
+	k.key.D.FillBytes(buf)
+	return buf
+}
+
+func (k *secp256r1PrivateKey) Type() KeyType {
+	return KeyTypeSecp256r1
+}
+
+func (k *secp256r1PrivateKey) String() string {
+	return hex.EncodeToString(k.Raw())
+}
+
+func (k *secp256r1PrivateKey) Sign(data []byte) ([]byte, error) {
+	hash := sha256.Sum256(data)
+	signature, err := ecdsa.SignASN1(rand.Reader, k.key, hash[:])
+	if err != nil {
+		return nil, err
+	}
+	return signature, nil
+}
+
+func (k *secp256r1PrivateKey) GetPublic() PublicKey {
+	return NewPublicKey(&k.key.PublicKey)
+}
+
+func (k *secp256r1PrivateKey) Underlying() any {
+	return k.key
+}
+
 // PrivateKeyFromBytes creates a private key from raw bytes and key type.
 // This is useful for deserializing private keys.
 func PrivateKeyFromBytes(keyType KeyType, keyBytes []byte) (PrivateKey, error) {
@@ -364,8 +415,28 @@ func PrivateKeyFromBytes(keyType KeyType, keyBytes []byte) (PrivateKey, error) {
 		return &secp256k1PrivateKey{key: privKey}, nil
 
 	case KeyTypeSecp256r1:
-		// Private keys for secp256r1 are not supported
-		return nil, NewErrUnsupportedKeyType(keyType)
+		if len(keyBytes) != 32 {
+			return nil, ErrInvalidECDSAPrivKeyBytes
+		}
+		ecdhPrivKey, err := ecdh.P256().NewPrivateKey(keyBytes)
+		if err != nil {
+			return nil, err
+		}
+		pubKeyBytes := ecdhPrivKey.PublicKey().Bytes()
+		privKey := &ecdsa.PrivateKey{
+			D: new(big.Int).SetBytes(keyBytes),
+			PublicKey: ecdsa.PublicKey{
+				Curve: elliptic.P256(),
+				X:     new(big.Int).SetBytes(pubKeyBytes[1:33]),
+				Y:     new(big.Int).SetBytes(pubKeyBytes[33:65]),
+			},
+		}
+		// TODO: use this approach after upgrading to Go v1.25+ (https://github.com/sourcenetwork/defradb/issues/4205)
+		// privKey, err := ecdsa.ParseRawPrivateKey(elliptic.P256(), keyBytes)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		return &secp256r1PrivateKey{key: privKey}, nil
 
 	case KeyTypeEd25519:
 		if len(keyBytes) != ed25519.PrivateKeySize {
@@ -399,8 +470,11 @@ func GenerateKey(keyType KeyType) (PrivateKey, error) {
 		}
 		return NewPrivateKey(key), nil
 	case KeyTypeSecp256r1:
-		// Private keys for secp256r1 are not supported
-		return nil, NewErrUnsupportedKeyType(keyType)
+		key, err := GenerateSecp256r1()
+		if err != nil {
+			return nil, err
+		}
+		return NewPrivateKey(key), nil
 	case KeyTypeEd25519:
 		key, err := GenerateEd25519()
 		if err != nil {
@@ -423,6 +497,11 @@ func GenerateEd25519() (ed25519.PrivateKey, error) {
 	return priv, err
 }
 
+// GenerateSecp256r1 generates a new secp256r1 (P-256) private key.
+func GenerateSecp256r1() (*ecdsa.PrivateKey, error) {
+	return ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+}
+
 // secp256r1PublicKey implementations
 func (k *secp256r1PublicKey) Equal(other Key) bool {
 	if other.Type() != KeyTypeSecp256r1 {
@@ -440,8 +519,24 @@ func (k *secp256r1PublicKey) Type() KeyType {
 }
 
 func (k *secp256r1PublicKey) Verify(data []byte, sig []byte) (bool, error) {
-	// secp256r1 public keys do not support verification
-	return false, NewErrUnsupportedKeyType(KeyTypeSecp256r1)
+	pubKey := k.key
+	if pubKey.Y == nil {
+		if len(k.compressedBytes) != 33 {
+			return false, ErrInvalidECDSAPubKey
+		}
+		x, y := elliptic.UnmarshalCompressed(elliptic.P256(), k.compressedBytes)
+		if x == nil || y == nil {
+			return false, ErrInvalidECDSAPubKey
+		}
+		pubKey = &ecdsa.PublicKey{
+			Curve: elliptic.P256(),
+			X:     x,
+			Y:     y,
+		}
+	}
+	hash := sha256.Sum256(data)
+	valid := ecdsa.VerifyASN1(pubKey, hash[:], sig)
+	return valid, nil
 }
 
 func (k *secp256r1PublicKey) String() string {

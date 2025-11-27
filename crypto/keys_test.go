@@ -586,9 +586,8 @@ func TestSecp256r1_Verify(t *testing.T) {
 	require.NoError(t, err)
 
 	valid, err := wrappedPubKey.Verify(message, sig)
-	assert.Error(t, err)
-	assert.False(t, valid)
-	assert.ErrorIs(t, err, NewErrUnsupportedKeyType(KeyTypeSecp256r1))
+	assert.NoError(t, err)
+	assert.True(t, valid)
 }
 
 func TestSecp256r1_DID(t *testing.T) {
@@ -668,34 +667,55 @@ func TestPublicKeyFromString_InvalidSecp256r1UncompressedPrefix(t *testing.T) {
 	assert.Equal(t, ErrInvalidECDSAPubKey, err)
 }
 
-func TestPrivateKeyFromBytes_Secp256r1NotSupported(t *testing.T) {
-	parsedKey, err := PrivateKeyFromBytes(KeyTypeSecp256r1, make([]byte, 32))
-	assert.Error(t, err)
-	assert.Nil(t, parsedKey)
-	assert.ErrorIs(t, err, NewErrUnsupportedKeyType(KeyTypeSecp256r1))
+func TestPrivateKeyFromBytes_Secp256r1(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	keyBytes := privKey.D.Bytes()
+	if len(keyBytes) < 32 {
+		padded := make([]byte, 32)
+		copy(padded[32-len(keyBytes):], keyBytes)
+		keyBytes = padded
+	}
+
+	parsedKey, err := PrivateKeyFromBytes(KeyTypeSecp256r1, keyBytes)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+	assert.Equal(t, KeyTypeSecp256r1, parsedKey.Type())
 }
 
-func TestPrivateKeyFromString_Secp256r1NotSupported(t *testing.T) {
-	keyString := hex.EncodeToString(make([]byte, 32))
+func TestPrivateKeyFromString_Secp256r1(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	keyBytes := privKey.D.Bytes()
+	if len(keyBytes) < 32 {
+		padded := make([]byte, 32)
+		copy(padded[32-len(keyBytes):], keyBytes)
+		keyBytes = padded
+	}
+
+	keyString := hex.EncodeToString(keyBytes)
 	parsedKey, err := PrivateKeyFromString(KeyTypeSecp256r1, keyString)
-	assert.Error(t, err)
-	assert.Nil(t, parsedKey)
-	assert.ErrorIs(t, err, NewErrUnsupportedKeyType(KeyTypeSecp256r1))
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+	assert.Equal(t, KeyTypeSecp256r1, parsedKey.Type())
 }
 
-func TestGenerateKey_Secp256r1NotSupported(t *testing.T) {
+func TestGenerateKey_Secp256r1(t *testing.T) {
 	key, err := GenerateKey(KeyTypeSecp256r1)
-	assert.Error(t, err)
-	assert.Nil(t, key)
-	assert.ErrorIs(t, err, NewErrUnsupportedKeyType(KeyTypeSecp256r1))
+	require.NoError(t, err)
+	require.NotNil(t, key)
+	assert.Equal(t, KeyTypeSecp256r1, key.Type())
 }
 
-func TestNewPrivateKey_Secp256r1NotSupported(t *testing.T) {
+func TestNewPrivateKey_Secp256r1(t *testing.T) {
 	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(t, err)
 
 	wrappedKey := NewPrivateKey(privKey)
-	assert.Nil(t, wrappedKey, "secp256r1 private keys should not be supported")
+	require.NotNil(t, wrappedKey)
+	assert.Equal(t, KeyTypeSecp256r1, wrappedKey.Type())
 }
 
 func TestSecp256r1_DID_Comprehensive(t *testing.T) {
@@ -769,4 +789,172 @@ func TestSecp256r1_DID_Comprehensive(t *testing.T) {
 
 		assert.Equal(t, compressedDID, uncompressedDID)
 	})
+}
+
+func TestSecp256r1PrivateKey_SignAndVerify(t *testing.T) {
+	privKey, err := GenerateKey(KeyTypeSecp256r1)
+	require.NoError(t, err)
+	require.NotNil(t, privKey)
+
+	message := []byte("secp256r1")
+	signature, err := privKey.Sign(message)
+	require.NoError(t, err)
+	require.NotEmpty(t, signature)
+
+	pubKey := privKey.GetPublic()
+	require.NotNil(t, pubKey)
+	assert.Equal(t, KeyTypeSecp256r1, pubKey.Type())
+
+	valid, err := pubKey.Verify(message, signature)
+	require.NoError(t, err)
+	assert.True(t, valid)
+
+	wrongMessage := []byte("Wrong message")
+	valid, err = pubKey.Verify(wrongMessage, signature)
+	require.NoError(t, err)
+	assert.False(t, valid)
+}
+
+func TestSecp256r1PrivateKey_SignAndVerifyCompressedKey(t *testing.T) {
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	wrappedPrivKey := NewPrivateKey(privKey)
+	require.NotNil(t, wrappedPrivKey)
+
+	message := []byte("test message")
+	signature, err := wrappedPrivKey.Sign(message)
+	require.NoError(t, err)
+
+	pubKey := NewPublicKey(&privKey.PublicKey)
+	compressedString := pubKey.String()
+	parsedPubKey, err := PublicKeyFromString(KeyTypeSecp256r1, compressedString)
+	require.NoError(t, err)
+
+	valid, err := parsedPubKey.Verify(message, signature)
+	require.NoError(t, err)
+	assert.True(t, valid)
+}
+
+func TestSecp256r1PrivateKey_RawAndString(t *testing.T) {
+	privKey, err := GenerateKey(KeyTypeSecp256r1)
+	require.NoError(t, err)
+
+	rawBytes := privKey.Raw()
+	assert.Len(t, rawBytes, 32)
+
+	keyString := privKey.String()
+	assert.NotEmpty(t, keyString)
+
+	decoded, err := hex.DecodeString(keyString)
+	require.NoError(t, err)
+	assert.Equal(t, rawBytes, decoded)
+}
+
+func TestSecp256r1PrivateKey_Equal(t *testing.T) {
+	privKey1, err := GenerateKey(KeyTypeSecp256r1)
+	require.NoError(t, err)
+
+	privKey2, err := GenerateKey(KeyTypeSecp256r1)
+	require.NoError(t, err)
+	assert.True(t, privKey1.Equal(privKey1))
+	assert.False(t, privKey1.Equal(privKey2))
+
+	rawBytes := privKey1.Raw()
+	if len(rawBytes) < 32 {
+		padded := make([]byte, 32)
+		copy(padded[32-len(rawBytes):], rawBytes)
+		rawBytes = padded
+	}
+	privKey3, err := PrivateKeyFromBytes(KeyTypeSecp256r1, rawBytes)
+	require.NoError(t, err)
+	assert.True(t, privKey1.Equal(privKey3))
+}
+
+func TestSecp256r1PrivateKey_GetPublic(t *testing.T) {
+	privKey, err := GenerateKey(KeyTypeSecp256r1)
+	require.NoError(t, err)
+
+	pubKey := privKey.GetPublic()
+	require.NotNil(t, pubKey)
+	assert.Equal(t, KeyTypeSecp256r1, pubKey.Type())
+
+	message := []byte("test")
+	signature, err := privKey.Sign(message)
+	require.NoError(t, err)
+
+	valid, err := pubKey.Verify(message, signature)
+	require.NoError(t, err)
+	assert.True(t, valid)
+}
+
+func TestSecp256r1PrivateKey_Underlying(t *testing.T) {
+	privKey, err := GenerateKey(KeyTypeSecp256r1)
+	require.NoError(t, err)
+
+	underlying := privKey.Underlying()
+	require.NotNil(t, underlying)
+
+	ecdsaKey, ok := underlying.(*ecdsa.PrivateKey)
+	require.True(t, ok)
+	assert.Equal(t, elliptic.P256(), ecdsaKey.Curve)
+}
+
+func TestSecp256r1PrivateKey_RoundTripSerialization(t *testing.T) {
+	privKey, err := GenerateKey(KeyTypeSecp256r1)
+	require.NoError(t, err)
+
+	keyString := privKey.String()
+	parsedKey, err := PrivateKeyFromString(KeyTypeSecp256r1, keyString)
+	require.NoError(t, err)
+	assert.True(t, privKey.Equal(parsedKey))
+
+	message := []byte("round trip test")
+	sig1, err := privKey.Sign(message)
+	require.NoError(t, err)
+
+	sig2, err := parsedKey.Sign(message)
+	require.NoError(t, err)
+
+	pubKey := privKey.GetPublic()
+	valid1, err := pubKey.Verify(message, sig1)
+	require.NoError(t, err)
+	assert.True(t, valid1)
+
+	valid2, err := pubKey.Verify(message, sig2)
+	require.NoError(t, err)
+	assert.True(t, valid2)
+}
+
+func TestSecp256r1PrivateKeyFromBytes_InvalidLength(t *testing.T) {
+	_, err := PrivateKeyFromBytes(KeyTypeSecp256r1, make([]byte, 16))
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidECDSAPrivKeyBytes, err)
+
+	_, err = PrivateKeyFromBytes(KeyTypeSecp256r1, make([]byte, 64))
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidECDSAPrivKeyBytes, err)
+}
+
+func TestSecp256r1_VerifyWithInvalidSignature(t *testing.T) {
+	privKey, err := GenerateKey(KeyTypeSecp256r1)
+	require.NoError(t, err)
+
+	pubKey := privKey.GetPublic()
+	message := []byte("test message")
+
+	invalidSig := []byte{0x01, 0x02, 0x03, 0x04}
+	valid, err := pubKey.Verify(message, invalidSig)
+	require.NoError(t, err)
+	assert.False(t, valid)
+}
+
+func TestGenerateSecp256r1(t *testing.T) {
+	key, err := GenerateSecp256r1()
+	require.NoError(t, err)
+	require.NotNil(t, key)
+	assert.Equal(t, elliptic.P256(), key.Curve)
+	assert.NotNil(t, key.D)
+	assert.NotNil(t, key.PublicKey.X)
+	assert.NotNil(t, key.PublicKey.Y)
 }
