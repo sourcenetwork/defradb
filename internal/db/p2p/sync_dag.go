@@ -57,7 +57,7 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 // If it encounters errors in the concurrent loading of links, it will return
 // the first error it encountered.
 func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
-	ctx, cancel := context.WithTimeout(p.ctx, p.syncBlockLinkTimeout)
+	ctx, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
 	defer cancel()
 
 	var wg sync.WaitGroup

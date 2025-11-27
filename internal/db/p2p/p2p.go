@@ -211,6 +211,10 @@ func New(
 	return &p, nil
 }
 
+func (p *P2P) KMS() kms.Service {
+	return p.kms
+}
+
 func (p *P2P) SECoordinator() *se.Coordinator {
 	return p.seCoordinator
 }

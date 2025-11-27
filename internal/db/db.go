@@ -37,7 +37,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
-	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
@@ -108,8 +107,6 @@ type DB struct {
 	colMergeQueue *mergeQueue
 
 	p2p *p2p.P2P
-	kms kms.Service
-
 	// Retry intervals when a replicator failure occurs.
 	retryIntervals []time.Duration
 	// timeout duration for syncing block links.
