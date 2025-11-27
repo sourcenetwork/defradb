@@ -44,6 +44,7 @@ const (
 	errEncryptedIndexTypeNotSupported   string = "encrypted index type not supported"
 	errEncryptedIndexOnNonExistentField string = "encrypted index on non-existent field"
 	errEncryptedIndexAlreadyExists      string = "encrypted index already exists on field"
+	errOneToOneMustBeUnique             string = "one-to-one relation must have a unique index"
 )
 
 var (
@@ -228,6 +229,16 @@ func NewErrEncryptedIndexOnNonExistentField(fieldName string) error {
 func NewErrEncryptedIndexAlreadyExists(fieldName string) error {
 	return errors.New(
 		errEncryptedIndexAlreadyExists,
+		errors.NewKV("Field", fieldName),
+	)
+}
+
+// NewErrOneToOneRelationMustBeUnique returns an error indicating that a one-to-one
+// relation field cannot have a non-unique index.
+func NewErrOneToOneRelationMustBeUnique(objectName, fieldName string) error {
+	return errors.New(
+		errOneToOneMustBeUnique,
+		errors.NewKV("Object", objectName),
 		errors.NewKV("Field", fieldName),
 	)
 }

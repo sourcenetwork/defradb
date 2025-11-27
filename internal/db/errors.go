@@ -72,8 +72,7 @@ const (
 	errDocUpdate                                 string = "failed to update doc to collection"
 	errExpectedJSONObject                        string = "expected JSON object"
 	errExpectedJSONArray                         string = "expected JSON array"
-	errOneOneAlreadyLinked                       string = "target document is already linked to another document"
-	errIndexDoesNotMatchName                     string = "the index used does not match the given name"
+	errIndexDoesNotMatchName string = "the index used does not match the given name"
 	errCanNotIndexNonUniqueFields                string = "can not index a doc's field(s) that violates unique index"
 	errInvalidViewQuery                          string = "the query provided is not valid as a View"
 	errCollectionAlreadyExists                   string = "collection already exists"
@@ -543,15 +542,6 @@ func NewErrDocCreate(inner error) error {
 // a doc to a collection
 func NewErrDocUpdate(inner error) error {
 	return errors.Wrap(errDocUpdate, inner)
-}
-
-func NewErrOneOneAlreadyLinked(documentId, targetId, relationName string) error {
-	return errors.New(
-		errOneOneAlreadyLinked,
-		errors.NewKV("DocumentID", documentId),
-		errors.NewKV("TargetID", targetId),
-		errors.NewKV("RelationName", relationName),
-	)
 }
 
 func NewErrIndexDoesNotMatchName(index, name string) error {
