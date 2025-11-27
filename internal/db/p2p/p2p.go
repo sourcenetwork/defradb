@@ -38,6 +38,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
@@ -97,6 +98,7 @@ type P2P struct {
 	db   DB
 	lens *lens.Node
 	host client.Host
+	kms  kms.Service
 
 	// replicators is a map from collection CollectionID => peerId => list of addresses.
 	// This is a cached in-memory copy of the persisted replicators in the database.
@@ -145,6 +147,7 @@ func New(
 	lens *lens.Node,
 	host client.Host,
 	nodeIdentity immutable.Option[identity.Identity],
+	collectionRetriever kms.CollectionRetriever,
 ) (*P2P, error) {
 	p := P2P{
 		ctx:                  ctx,
@@ -181,6 +184,21 @@ func New(
 		return nil, err
 	}
 
+	if nodeIdentity.HasValue() {
+		p.kms, err = kms.NewPubSubService(
+			ctx,
+			host.ID(),
+			host,
+			datastore.EncstoreFrom(db.Rootstore()),
+			db.DocumentACP(),
+			collectionRetriever,
+			nodeIdentity.Value().DID(),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if len(db.SearchableEncryptionKey()) > 0 {
 		coord, err := se.NewCoordinator(&p, host, db, db.SearchableEncryptionKey(), nodeIdentity)
 		if err != nil {
@@ -191,6 +209,10 @@ func New(
 	}
 
 	return &p, nil
+}
+
+func (p *P2P) KMS() kms.Service {
+	return p.kms
 }
 
 func (p *P2P) SECoordinator() *se.Coordinator {
@@ -204,6 +226,10 @@ func (p *P2P) AddPushToReplicatorsHandler(handler PushToReplicatorsHandler) {
 
 func (p *P2P) PeerInfo() ([]string, error) {
 	return p.host.Addresses()
+}
+
+func (p *P2P) ID() string {
+	return p.host.ID()
 }
 
 // Connect initiates a connection to the peer with the given addresses.
