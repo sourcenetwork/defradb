@@ -49,6 +49,18 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 		}
 		return res
 	},
+	"PeerAddresses": func(s *state.State, nodeID int) map[string]string {
+		res := map[string]string{}
+		for i, node := range s.Nodes {
+			addresses, err := node.PeerInfo()
+			require.NoError(s.T, err)
+
+			for j, address := range addresses {
+				res["Peer"+strconv.Itoa(i)+"_Address"+strconv.Itoa(j)] = address
+			}
+		}
+		return res
+	},
 }
 
 // replace returns a new string with any templating placholders (see "text/template") with data drawn

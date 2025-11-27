@@ -211,10 +211,6 @@ func New(
 	return &p, nil
 }
 
-func (p *P2P) KMS() kms.Service {
-	return p.kms
-}
-
 func (p *P2P) SECoordinator() *se.Coordinator {
 	return p.seCoordinator
 }
@@ -228,8 +224,8 @@ func (p *P2P) PeerInfo() ([]string, error) {
 	return p.host.Addresses()
 }
 
-func (p *P2P) ID() string {
-	return p.host.ID()
+func (p *P2P) ActivePeers(ctx context.Context) ([]string, error) {
+	return p.host.ActivePeers()
 }
 
 // Connect initiates a connection to the peer with the given addresses.

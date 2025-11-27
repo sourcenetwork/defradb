@@ -2328,8 +2328,8 @@ github.com/sourcenetwork/corelog v0.0.8 h1:jCo0mFBpWrfhUCGzzN3uUtPGyQv3jnITdPO1s
 github.com/sourcenetwork/corelog v0.0.8/go.mod h1:cMabHgs3kARgYTQeQYSOmaGGP8XMU6sZrHd8LFrL3zA=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 h1:620zKV4rOn7U5j/WsPkk4SFj0z9/pVV4bBx0BpZQgro=
 github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14/go.mod h1:jUoQv592uUX1u7QBjAY4C+l24X9ArhPfifOqXpDHz4U=
-github.com/sourcenetwork/go-p2p v0.1.4 h1:SuTrmpkpx2WJVnFNAYXP80cwjLZLrlHKCmeSmMhUbic=
-github.com/sourcenetwork/go-p2p v0.1.4/go.mod h1:gpPc76Bxm6ZzY76KE+MAH4li4FIkyES0yMdoleVdRfQ=
+github.com/sourcenetwork/go-p2p v0.1.5 h1:1Erf41Z6mEYfcZg5kdsPPz8RvTdB3avD+JnVwqudn7o=
+github.com/sourcenetwork/go-p2p v0.1.5/go.mod h1:gpPc76Bxm6ZzY76KE+MAH4li4FIkyES0yMdoleVdRfQ=
 github.com/sourcenetwork/goji v0.0.8 h1:6EqGFt18yJ/CxyiPUKZFbK3KFuzGJ5oLnTvFYObZj5k=
 github.com/sourcenetwork/goji v0.0.8/go.mod h1:A/dsoaCbLQ1a5PQfUVCA1zYMHnNAprVhZEmQHIlCfjE=
 github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a h1:wF7VhX0XKuNqhbbDI7RjoIBKFvdKQKucpZlNr/BGE40=

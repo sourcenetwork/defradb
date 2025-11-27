@@ -41,6 +41,7 @@ extern Result LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
 extern Result P2PInfo(uintptr_t nodePtr);
+extern Result P2PActivePeers(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PgetAllReplicators(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
 extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
@@ -119,6 +120,23 @@ func (w *CWrapper) PeerInfo() ([]string, error) {
 		return nil, err
 	}
 	return addresses, nil
+}
+
+func (w *CWrapper) ActivePeers(ctx context.Context) ([]string, error) {
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
+
+	res := ConvertAndFreeCResult(C.P2PActivePeers(C.uintptr_t(w.handle), cIdentity))
+
+	if res.Status != 0 {
+		return nil, errors.New(res.Error)
+	}
+
+	peers, err := unmarshalResult[[]string](res.Value)
+	if err != nil {
+		return nil, err
+	}
+	return peers, nil
 }
 
 func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
