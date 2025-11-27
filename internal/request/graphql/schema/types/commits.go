@@ -220,8 +220,8 @@ func QueryCommits(
 		Args: gql.FieldConfigArgument{
 			request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
 			request.FilterClause: NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
-			"order":                NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
-			request.CidArgName:     NewArgConfig(gql.ID, commitCIDArgDescription),
+			"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
+			request.CidArgName:   NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
