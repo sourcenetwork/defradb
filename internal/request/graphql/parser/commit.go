@@ -48,13 +48,6 @@ func parseCommitSelect(
 				commit.CID = immutable.Some(v)
 			}
 
-		case request.FieldNameName:
-			if value == nil {
-				commit.FieldName = immutable.Some("")
-			} else if v, ok := value.(string); ok {
-				commit.FieldName = immutable.Some(v)
-			}
-
 		case request.OrderClause:
 			v, ok := value.([]any)
 			if !ok {

@@ -103,7 +103,7 @@ func TestQueryCommitsWithNullField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(fieldName: null) {
+						_commits(filter: {fieldName: {_eq: null}}) {
 							cid
 						}
 					}`,

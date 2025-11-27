@@ -29,7 +29,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "age") {
+						_commits (filter: {fieldName: {_eq: "age"}}) {
 							cid
 						}
 					}`,
@@ -60,7 +60,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "1") {
+						_commits (filter: {fieldName: {_eq: "1"}}) {
 							cid
 						}
 					}`,
@@ -87,7 +87,7 @@ func TestQueryCommitsWithCompositeField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(fieldName: "_C") {
+						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
 						}
 					}`,
@@ -120,7 +120,7 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionID(t *testing.
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(fieldName: "_C") {
+						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
 							schemaVersionId
 						}
@@ -153,7 +153,10 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "age", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
+						_commits (
+							filter: {fieldName: {_eq: "age"}}, 
+							cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea"
+						) {
 							cid
 						}
 					}`,
@@ -184,7 +187,10 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "name", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
+						_commits (
+							filter: {fieldName: {_eq: "name"}}, 
+							cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea"
+						) {
 							cid
 						}
 					}`,
@@ -211,7 +217,10 @@ func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "NOT_A_FIELD", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
+						_commits (
+							filter: {fieldName: {_eq: "NOT_A_FIELD"}}, 
+							cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea"
+						) {
 							cid
 						}
 					}`,

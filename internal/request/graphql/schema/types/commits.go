@@ -218,9 +218,8 @@ func QueryCommits(
 		Description: commitsQueryDescription,
 		Type:        gql.NewList(commitObject),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName:   NewArgConfig(gql.ID, commitDocIDArgDescription),
-			request.FieldNameName:  NewArgConfig(gql.String, commitFieldNameArgDescription),
-			request.FilterClause:   NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
+			request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
+			request.FilterClause: NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
 			"order":                NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
 			request.CidArgName:     NewArgConfig(gql.ID, commitCIDArgDescription),
 			"groupBy": NewArgConfig(
@@ -243,8 +242,8 @@ func QueryCommits(
 										Value:       request.DocIDArgName,
 										Description: commitDocIDFieldDescription,
 									},
-									request.FieldNameArgName: &gql.EnumValueConfig{
-										Value:       request.FieldNameArgName,
+									request.FieldNameName: &gql.EnumValueConfig{
+										Value:       request.FieldNameName,
 										Description: commitFieldNameFieldDescription,
 									},
 								},
