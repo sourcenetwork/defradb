@@ -130,16 +130,22 @@ func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	for hasNext, err := iter.Next(); hasNext && err == nil; {
-		var key keys.P2PDocumentKey
-		key, err = keys.NewP2PDocumentKeyFromString(string(iter.Key()))
+	for {
+		hasNext, err := iter.Next()
 		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+		if !hasNext {
 			break
+		}
+		key, err := keys.NewP2PDocumentKeyFromString(string(iter.Key()))
+		if err != nil {
+			return errors.Join(err, iter.Close())
 		}
 		err = p.host.AddPubSubTopic(key.DocID, true, p.pubSubMessageHandler)
 		if err != nil {
-			break
+			return errors.Join(err, iter.Close())
 		}
 	}
-	return errors.Join(err, iter.Close())
+	return iter.Close()
 }
