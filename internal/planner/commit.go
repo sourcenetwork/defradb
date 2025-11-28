@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	cid "github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
@@ -57,9 +55,6 @@ type dagScanExecInfo struct {
 }
 
 func (p *Planner) DAGScan(commitSelect *mapper.CommitSelect) *dagScanNode {
-	// fmt.Println("DAGSCAN MAPPER SELECT")
-	// spew.Dump(commitSelect)
-
 	node := &dagScanNode{
 		planner:      p,
 		visitedNodes: make(map[string]bool),
@@ -198,8 +193,6 @@ func (n *dagScanNode) Next() (bool, error) {
 
 	var currentCid *cid.Cid
 
-	fmt.Println("dagScanNode.Next()")
-	fmt.Println("queuedCids:", n.queuedCids)
 	if len(n.queuedCids) > 0 {
 		currentCid = n.queuedCids[0]
 		n.queuedCids = n.queuedCids[1:(len(n.queuedCids))]
@@ -335,7 +328,6 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		return core.Doc{}, err
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
-	fmt.Println("CID:", link.String())
 
 	schemaVersionId := block.Delta.GetSchemaVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
@@ -397,7 +389,6 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	linkedCids := make([]*cid.Cid, len(block.Links))
 	for i, c := range block.Links {
 		linkedCids[i] = &c.Cid
-		fmt.Println("links:", c.Cid.String())
 	}
 
 	err = n.addLinksFieldToDoc(request.LinksFieldName, linkedCids, &commit)

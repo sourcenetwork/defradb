@@ -12,11 +12,9 @@ package mapper
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -802,15 +800,10 @@ func getRequestables(
 	collectionName string,
 	store client.TxnStore,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
-	fmt.Println("getRequestables()")
-	spew.Dump(selectRequest)
 	for _, field := range selectRequest.Fields {
-		fmt.Println("field:", field)
 
 		switch f := field.(type) {
 		case *request.Field:
-			fmt.Println("field name:", f.Name)
-			spew.Dump(mapping)
 			// We can map all fields to the first (and only index)
 			// as they support no value modifiers (such as filters/limits/etc).
 			// All fields should have already been mapped by getTopLevelInfo
@@ -906,13 +899,10 @@ func getRenderKey(field *request.Field) string {
 }
 
 func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateRequest, error) {
-	fmt.Println("aggregateRequest()")
-	spew.Dump(aggregate)
 	aggregateTargets, err := getAggregateSources(aggregate)
 	if err != nil {
 		return aggregateRequest{}, err
 	}
-	spew.Dump(aggregateTargets)
 
 	if len(aggregateTargets) == 0 {
 		return aggregateRequest{}, ErrAggregateTargetMissing
@@ -1020,13 +1010,6 @@ func getTopLevelInfo(
 	}
 
 	switch selectRequest.Name {
-	// case request.LinksFieldName:
-	// 	for i, f := range request.LinksFields {
-	// 		// spew.Dump(selectRequest)
-	// 		// panic("hi")
-	// 		mapping.Add(i, f)
-	// 	}
-
 	// 	// Setting the type name must be done after adding the fields, as
 	// 	// the typeName index is dynamic, but the field indexes are not
 	// 	mapping.SetTypeName(request.LinksFieldName)

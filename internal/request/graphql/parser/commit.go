@@ -11,9 +11,6 @@
 package parser
 
 import (
-	"fmt"
-
-	"github.com/davecgh/go-spew/spew"
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/immutable"
@@ -114,7 +111,5 @@ func parseCommitSelect(
 		return nil, err
 	}
 
-	fmt.Println("PARSE COMMIT SELECT")
-	spew.Dump(commit)
 	return commit, err
 }
