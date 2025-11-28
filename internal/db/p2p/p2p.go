@@ -36,8 +36,9 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
@@ -77,6 +78,8 @@ type DB interface {
 	Events() event.Bus
 	// RetryIntervals returns the replicator retry configuration.
 	RetryIntervals() []time.Duration
+	// NodeACP returns the NodeACP implementation configured on the database.
+	NodeACP() acpDB.NACInfo
 	// DocumentACP returns the DocumentACP implementation configured on the database.
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	// Rootstore returns the rootstore
@@ -97,6 +100,7 @@ type P2P struct {
 	db   DB
 	lens *lens.Node
 	host client.Host
+	kms  kms.Service
 
 	// replicators is a map from collection CollectionID => peerId => list of addresses.
 	// This is a cached in-memory copy of the persisted replicators in the database.
@@ -145,6 +149,7 @@ func New(
 	lens *lens.Node,
 	host client.Host,
 	nodeIdentity immutable.Option[identity.Identity],
+	collectionRetriever kms.CollectionRetriever,
 ) (*P2P, error) {
 	p := P2P{
 		ctx:                  ctx,
@@ -181,6 +186,22 @@ func New(
 		return nil, err
 	}
 
+	if nodeIdentity.HasValue() {
+		p.kms, err = kms.NewPubSubService(
+			ctx,
+			host.ID(),
+			host,
+			datastore.EncstoreFrom(db.Rootstore()),
+			db.NodeACP(),
+			db.DocumentACP(),
+			collectionRetriever,
+			nodeIdentity.Value().DID(),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if len(db.SearchableEncryptionKey()) > 0 {
 		coord, err := se.NewCoordinator(&p, host, db, db.SearchableEncryptionKey(), nodeIdentity)
 		if err != nil {
@@ -191,6 +212,10 @@ func New(
 	}
 
 	return &p, nil
+}
+
+func (p *P2P) KMS() kms.Service {
+	return p.kms
 }
 
 func (p *P2P) SECoordinator() *se.Coordinator {
@@ -357,9 +382,10 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return immutable.Some(ident)
 	}
 
-	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
+	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
 		ctx,
 		identFunc,
+		p.db.NodeACP(),
 		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
 		acpTypes.DocumentReadPerm,
@@ -409,11 +435,12 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return true, nil
 	}
 
-	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
+	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
 		ctx,
 		func() immutable.Option[identity.Identity] {
 			return immutable.Some(identity.FromDID(ident.Value().DID))
 		},
+		p.db.NodeACP(),
 		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
 		acpTypes.DocumentReadPerm,

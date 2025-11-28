@@ -149,6 +149,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 	p := planner.New(
 		ctx,
 		identity.FromContext(ctx),
+		db.nodeACP,
 		db.documentACP,
 		db,
 		db.p2p,

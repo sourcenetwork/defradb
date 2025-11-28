@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -55,6 +56,7 @@ type Fetcher interface {
 		ctx context.Context,
 		identity immutable.Option[acpIdentity.Identity],
 		txn datastore.Txn,
+		nodeACP acpDB.NACInfo,
 		documentACP immutable.Option[dac.DocumentACP],
 		index immutable.Option[client.IndexDescription],
 		col client.Collection,

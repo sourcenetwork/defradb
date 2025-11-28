@@ -120,9 +120,6 @@ type Merge struct {
 type MergeComplete struct {
 	// Merge is the merge that was completed.
 	Merge Merge
-
-	// Decrypted specifies if the merge payload was decrypted.
-	Decrypted bool
 }
 
 // SEArtifactReceived is a notification that SE artifacts have been successfully received.

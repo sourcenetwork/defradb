@@ -129,9 +129,7 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 				DocID:             0,
 				Relation:          "reader",
 			},
-			testUtils.WaitForSync{
-				Decrypted: []int{0},
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.ClientIdentity(1),
@@ -356,9 +354,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 					}
 				`,
 			},
-			testUtils.WaitForSync{
-				Decrypted: []int{0, 2},
-			},
+			testUtils.WaitForSync{},
 			testUtils.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.NodeIdentity(1),

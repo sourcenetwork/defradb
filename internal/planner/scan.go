@@ -69,6 +69,7 @@ func (n *scanNode) Init() error {
 		n.p.ctx,
 		n.p.identity,
 		txn,
+		n.p.nodeACP,
 		n.p.documentACP,
 		n.index,
 		n.col,
