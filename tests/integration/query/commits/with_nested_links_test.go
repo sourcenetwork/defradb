@@ -41,8 +41,12 @@ func TestQueryCommits_WithSingleCreateNestedLinks_Succeed(t *testing.T) {
 							links {
 								cid
 								height
-								linkName
+								fieldName
 							}
+							heads {
+								cid
+								height
+							}	
 						}
 					}`,
 				Results: map[string]any{
@@ -52,12 +56,14 @@ func TestQueryCommits_WithSingleCreateNestedLinks_Succeed(t *testing.T) {
 							"height":    uint64(1),
 							"fieldName": "age",
 							"links":     []map[string]any{},
+							"heads":     []map[string]any{},
 						},
 						{
 							"cid":       nameCreateCid,
 							"height":    uint64(1),
 							"fieldName": "name",
 							"links":     []map[string]any{},
+							"heads":     []map[string]any{},
 						},
 						{
 							"cid":       createCompositeCid,
@@ -65,16 +71,17 @@ func TestQueryCommits_WithSingleCreateNestedLinks_Succeed(t *testing.T) {
 							"fieldName": "_C",
 							"links": []map[string]any{
 								{
-									"cid":      ageCreateCid,
-									"height":   uint64(1),
-									"linkName": "age",
+									"cid":       ageCreateCid,
+									"height":    uint64(1),
+									"fieldName": "age",
 								},
 								{
-									"cid":      nameCreateCid,
-									"height":   uint64(1),
-									"linkName": "name",
+									"cid":       nameCreateCid,
+									"height":    uint64(1),
+									"fieldName": "name",
 								},
 							},
+							"heads": []map[string]any{},
 						},
 					},
 				},
@@ -103,7 +110,7 @@ func TestQueryCommits_WithSingleCreateNestedLinksCompositeFilter_Succeed(t *test
 							fieldName
 							links {
 								height
-								linkName
+								fieldName
 							}
 						}
 					}`,
@@ -114,12 +121,12 @@ func TestQueryCommits_WithSingleCreateNestedLinksCompositeFilter_Succeed(t *test
 							"fieldName": "_C",
 							"links": []map[string]any{
 								{
-									"height":   uint64(1),
-									"linkName": "age",
+									"height":    uint64(1),
+									"fieldName": "age",
 								},
 								{
-									"height":   uint64(1),
-									"linkName": "name",
+									"height":    uint64(1),
+									"fieldName": "name",
 								},
 							},
 						},
@@ -150,7 +157,7 @@ func TestQueryCommits_WithSingleCreateNestedLinksNestedFilter_Succeed(t *testing
 							fieldName
 							links(fieldName: "age") {
 								height
-								linkName
+								fieldName
 							}
 						}
 					}`,
@@ -161,8 +168,8 @@ func TestQueryCommits_WithSingleCreateNestedLinksNestedFilter_Succeed(t *testing
 							"fieldName": "_C",
 							"links": []map[string]any{
 								{
-									"height":   uint64(1),
-									"linkName": "age",
+									"height":    uint64(1),
+									"fieldName": "age",
 								},
 							},
 						},
@@ -208,16 +215,25 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 							fieldName
 							height
 							links {
-								linkName
+								fieldName
+								cid
+								height
+								docID
+								heads {
+									fieldName
+									cid
+								}
+							}
+							heads {
 								cid
 								height
 								docID
 								links {
 									fieldName
-									linkName
 									cid
 								}
 							}
+							
 						}
 					}
 				`,
@@ -229,13 +245,13 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 							"fieldName": "age",
 							"height":    int64(2),
-							"links": []map[string]any{
+							"links":     []map[string]any{},
+							"heads": []map[string]any{
 								{
-									"linkName": "_head",
-									"cid":      ageCreateCid,
-									"height":   int64(1),
-									"docID":    "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-									"links":    []map[string]any{},
+									"cid":    ageCreateCid,
+									"height": int64(1),
+									"docID":  "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"links":  []map[string]any{},
 								},
 							},
 						},
@@ -246,6 +262,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 							"fieldName": "age",
 							"height":    int64(1),
 							"links":     []map[string]any{},
+							"heads":     []map[string]any{},
 						},
 						{
 							"cid":       gomega.And(nameCreateCid, uniqueCid),
@@ -254,6 +271,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 							"fieldName": "name",
 							"height":    int64(1),
 							"links":     []map[string]any{},
+							"heads":     []map[string]any{},
 						},
 						{
 							"cid":       gomega.And(updateCompositeCid, uniqueCid),
@@ -263,33 +281,31 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 							"height":    int64(2),
 							"links": []map[string]any{
 								{
-									"cid":      createCompositeCid,
-									"linkName": "_head",
-									"height":   int64(1),
-									"docID":    "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"cid":       ageUpdateCid,
+									"fieldName": "age",
+									"height":    int64(2),
+									"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"heads": []map[string]any{
+										{
+											"fieldName": "age",
+											"cid":       ageCreateCid,
+										},
+									},
+								},
+							},
+							"heads": []map[string]any{
+								{
+									"cid":    createCompositeCid,
+									"height": int64(1),
+									"docID":  "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 									"links": []map[string]any{
 										{
 											"fieldName": "age",
-											"linkName":  "age",
 											"cid":       ageCreateCid,
 										},
 										{
 											"fieldName": "name",
-											"linkName":  "name",
 											"cid":       nameCreateCid,
-										},
-									},
-								},
-								{
-									"cid":      ageUpdateCid,
-									"linkName": "age",
-									"height":   int64(2),
-									"docID":    "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-									"links": []map[string]any{
-										{
-											"fieldName": "age",
-											"linkName":  "_head",
-											"cid":       ageCreateCid,
 										},
 									},
 								},
@@ -303,20 +319,21 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":      ageCreateCid,
-									"linkName": "age",
-									"height":   uint64(1),
-									"docID":    "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-									"links":    []map[string]any{},
+									"cid":       ageCreateCid,
+									"fieldName": "age",
+									"height":    uint64(1),
+									"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"heads":     []map[string]any{},
 								},
 								{
-									"cid":      nameCreateCid,
-									"linkName": "name",
-									"height":   uint64(1),
-									"docID":    "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-									"links":    []map[string]any{},
+									"cid":       nameCreateCid,
+									"fieldName": "name",
+									"height":    uint64(1),
+									"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+									"heads":     []map[string]any{},
 								},
 							},
+							"heads": []map[string]any{},
 						},
 					},
 				},

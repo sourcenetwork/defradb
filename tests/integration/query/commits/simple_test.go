@@ -275,9 +275,12 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							fieldName
 							height
 							links {
+								fieldName
 								cid
-								linkName
 							}
+							heads {
+								cid
+							}	
 							signature {
 								type
 							}
@@ -292,10 +295,10 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 							"fieldName": "age",
 							"height":    int64(2),
-							"links": []map[string]any{
+							"links":     []map[string]any{},
+							"heads": []map[string]any{
 								{
-									"cid":      ageCreateCid,
-									"linkName": "_head",
+									"cid": ageCreateCid,
 								},
 							},
 							"signature": nil,
@@ -307,6 +310,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"fieldName": "age",
 							"height":    int64(1),
 							"links":     []map[string]any{},
+							"heads":     []map[string]any{},
 							"signature": nil,
 						},
 						{
@@ -316,6 +320,7 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"fieldName": "name",
 							"height":    int64(1),
 							"links":     []map[string]any{},
+							"heads":     []map[string]any{},
 							"signature": nil,
 						},
 						{
@@ -326,12 +331,13 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":    int64(2),
 							"links": []map[string]any{
 								{
-									"cid":      createCompositeCid,
-									"linkName": "_head",
+									"cid":       ageUpdateCid,
+									"fieldName": "age",
 								},
+							},
+							"heads": []map[string]any{
 								{
-									"cid":      ageUpdateCid,
-									"linkName": "age",
+									"cid": createCompositeCid,
 								},
 							},
 							"signature": nil,
@@ -344,14 +350,15 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":      ageCreateCid,
-									"linkName": "age",
+									"cid":       ageCreateCid,
+									"fieldName": "age",
 								},
 								{
-									"cid":      nameCreateCid,
-									"linkName": "name",
+									"cid":       nameCreateCid,
+									"fieldName": "name",
 								},
 							},
+							"heads":      []map[string]any{},
 							"_signature": nil,
 						},
 					},
