@@ -201,6 +201,9 @@ func (db *DB) addNACActorRelationship(
 		return client.AddActorRelationshipResult{}, err
 	}
 
+	// Clear this target actor's identity from the previous cache state.
+	permission.ClearIdentityFromBypassCache(targetActor)
+
 	return client.AddActorRelationshipResult{ExistedAlready: exists}, nil
 }
 
@@ -243,6 +246,9 @@ func (db *DB) deleteNACActorRelationship(
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
+
+	// Clear this target actor's identity from the previous cache state.
+	permission.ClearIdentityFromBypassCache(targetActor)
 
 	return client.DeleteActorRelationshipResult{RecordFound: recordFound}, nil
 }

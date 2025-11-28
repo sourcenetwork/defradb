@@ -25,6 +25,13 @@ var identityBypassState = struct {
 	cache: make(map[string]bool),
 }
 
+// ClearIdentityFromBypassCache clears the identity from the cache if it exists,
+// if it doesn't exist it is a no-op.
+//
+// Note: While this works right now for local node access control, if we were to
+// ever implement global node access control this would not work. In that case we
+// should probably either have a global cache of sorts for all nodes, or a simpler
+// solution might be to have the bypass state computed per request (without cache).
 func ClearIdentityFromBypassCache(identity string) {
 	identityBypassState.mutex.Lock()
 	defer identityBypassState.mutex.Unlock()
