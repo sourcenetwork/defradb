@@ -143,7 +143,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
 			},
 
 			// This user, can now dac-bypass when DAC and NAC are enabled (as it has dac-bypass rights).
-			// Note: This user does own the document in this case (but even if this user didn't own it
+			// Note: This user does own the document in this case (but even if this user didn't own
 			// it would still be able to access, due to bypass magic when NAC is enabled).
 			testUtils.Request{
 				Identity: testUtils.ClientIdentity(2),
