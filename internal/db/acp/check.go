@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package permission
+package acp
 
 import (
 	"context"
@@ -89,7 +89,7 @@ func CheckDocAccessWithIdentityFunc(
 	identity := identityFunc()
 	var identityValue string
 	// Note: The following must be done to handle the "*" edge case before:
-	// - calling [hasDACBypass] which calls [permission.CheckNodeOperationAccess].
+	// - calling [hasDACBypass] which calls [CheckNodeOperationAccess].
 	// - and before calling [documentACP.CheckDocAccess]
 	if !identity.HasValue() {
 		// We can't assume that there is no-access just because there is no identity even if the

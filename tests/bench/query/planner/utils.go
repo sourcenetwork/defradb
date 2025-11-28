@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/planner"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -87,7 +87,7 @@ func runMakePlanBench(
 		planner := planner.New(
 			ctx,
 			acpIdentity.None,
-			permission.NACInfo{},
+			acpDB.NACInfo{},
 			dac.NoDocumentACP,
 			d,
 			&p2pWrapper{},

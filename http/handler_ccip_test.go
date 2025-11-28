@@ -32,7 +32,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
 func TestCCIPGet_WithValidData(t *testing.T) {
@@ -199,7 +199,7 @@ func setupDatabase(t *testing.T) DB {
 	store, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
 	require.NoError(t, err)
 
-	adminInfo, err := permission.NewNACInfo(ctx, "", false)
+	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
 	require.NoError(t, err)
 
 	cdb, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP)

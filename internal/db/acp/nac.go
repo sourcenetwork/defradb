@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package permission
+package acp
 
 import (
 	"context"
@@ -33,7 +33,7 @@ type NodeACPDesc struct {
 	Policy immutable.Option[client.PolicyDescription]
 }
 
-// permission.NewNodeACPDesc returns a new [NodeACPDesc] that represents a clean node acp state.
+// NewNodeACPDesc returns a new [NodeACPDesc] that represents a clean node acp state.
 func NewNodeACPDesc() NodeACPDesc {
 	return NodeACPDesc{
 		Status: client.NACNotConfigured,

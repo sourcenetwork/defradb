@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -98,7 +98,7 @@ func (db *DB) AddDACActorRelationship(
 		return client.AddActorRelationshipResult{}, err
 	}
 
-	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
+	policyID, resourceName, hasPolicy := acpDB.IsPermissioned(collection)
 	if !hasPolicy {
 		return client.AddActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}
@@ -150,7 +150,7 @@ func (db *DB) DeleteDACActorRelationship(
 		return client.DeleteActorRelationshipResult{}, err
 	}
 
-	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
+	policyID, resourceName, hasPolicy := acpDB.IsPermissioned(collection)
 	if !hasPolicy {
 		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
 	}

@@ -36,8 +36,8 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
@@ -79,7 +79,7 @@ type DB interface {
 	// RetryIntervals returns the replicator retry configuration.
 	RetryIntervals() []time.Duration
 	// NodeACP returns the NodeACP implementation configured on the database.
-	NodeACP() permission.NACInfo
+	NodeACP() acpDB.NACInfo
 	// DocumentACP returns the DocumentACP implementation configured on the database.
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	// Rootstore returns the rootstore
@@ -382,7 +382,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return immutable.Some(ident)
 	}
 
-	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
+	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
 		ctx,
 		identFunc,
 		p.db.NodeACP(),
@@ -435,7 +435,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return true, nil
 	}
 
-	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
+	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
 		ctx,
 		func() immutable.Option[identity.Identity] {
 			return immutable.Some(identity.FromDID(ident.Value().DID))

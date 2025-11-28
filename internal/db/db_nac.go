@@ -24,11 +24,11 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func (db *DB) NodeACP() permission.NACInfo {
+func (db *DB) NodeACP() acpDB.NACInfo {
 	return db.nodeACP
 }
 
@@ -276,7 +276,7 @@ func (db *DB) checkNodeAccess(
 
 	var identityValue string
 	// Note: The following must be done to handle the "*" edge case before
-	// calling [permission.CheckNodeOperationAccess]
+	// calling [acpDB.CheckNodeOperationAccess]
 	if identity.HasValue() {
 		identityValue = identity.Value().DID()
 	} else {
@@ -287,7 +287,7 @@ func (db *DB) checkNodeAccess(
 		identityValue = ""
 	}
 
-	return permission.CheckNodeOperationAccess(
+	return acpDB.CheckNodeOperationAccess(
 		ctx,
 		identityValue,
 		db.nodeACP,
@@ -362,7 +362,7 @@ func (db *DB) fetchNodeACPDesc(ctx context.Context, txn datastore.Txn) error {
 		return err
 	}
 
-	storedNodeACPDesc := permission.NodeACPDesc{}
+	storedNodeACPDesc := acpDB.NodeACPDesc{}
 	err = json.Unmarshal(storedBytes, &storedNodeACPDesc)
 	if err != nil {
 		return err
@@ -395,7 +395,7 @@ func (db *DB) resetNodeACP(ctx context.Context) error {
 	}
 
 	// Update state, only when commit is successful.
-	db.nodeACP.NodeACPDesc = permission.NewNodeACPDesc()
+	db.nodeACP.NodeACPDesc = acpDB.NewNodeACPDesc()
 	return nil
 }
 

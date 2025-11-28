@@ -34,8 +34,8 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
@@ -86,7 +86,7 @@ type DB struct {
 	nodeIdentity immutable.Option[identity.Identity]
 
 	// Node ACP system along with it's current state information.
-	nodeACP permission.NACInfo
+	nodeACP acpDB.NACInfo
 
 	// Contains document ACP if it exists.
 	documentACP immutable.Option[dac.DocumentACP]
@@ -118,7 +118,7 @@ var _ client.TxnStore = (*DB)(nil)
 func NewDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
-	nodeACP permission.NACInfo,
+	nodeACP acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	options ...Option,
 ) (*DB, error) {
@@ -128,7 +128,7 @@ func NewDB(
 func newDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
-	nodeACP permission.NACInfo,
+	nodeACP acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	options ...Option,
 ) (*DB, error) {
