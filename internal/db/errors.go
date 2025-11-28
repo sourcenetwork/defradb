@@ -72,7 +72,7 @@ const (
 	errDocUpdate                                 string = "failed to update doc to collection"
 	errExpectedJSONObject                        string = "expected JSON object"
 	errExpectedJSONArray                         string = "expected JSON array"
-	errIndexDoesNotMatchName string = "the index used does not match the given name"
+	errIndexDoesNotMatchName                     string = "the index used does not match the given name"
 	errCanNotIndexNonUniqueFields                string = "can not index a doc's field(s) that violates unique index"
 	errInvalidViewQuery                          string = "the query provided is not valid as a View"
 	errCollectionAlreadyExists                   string = "collection already exists"
