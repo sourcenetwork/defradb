@@ -29,7 +29,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
@@ -222,64 +221,6 @@ func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 	return wrapDatastoreTxn(txn, db), nil
 }
 
-func (db *DB) DocumentACP() immutable.Option[dac.DocumentACP] {
-	return db.documentACP
-}
-
-func (db *DB) NodeACP() permission.NACInfo {
-	return db.nodeACP
-}
-
-func (db *DB) AddDACPolicy(
-	ctx context.Context,
-	policy string,
-) (client.AddPolicyResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeDACPolicyAddPerm); err != nil {
-		return client.AddPolicyResult{}, err
-	}
-
-	if !db.documentACP.HasValue() {
-		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
-	}
-
-	policyID, err := db.documentACP.Value().AddPolicy(
-		ctx,
-		identity.FromContext(ctx).Value(),
-		policy,
-	)
-	if err != nil {
-		return client.AddPolicyResult{}, err
-	}
-
-	return client.AddPolicyResult{PolicyID: policyID}, nil
-}
-
-// PurgeDACState purges all document ACP state, and calls [Close()] on the acp instance before returning.
-//
-// This will close the acp system, reset it's state (purge then restart), and finally close it.
-//
-// Note: all document ACP state will be lost, and won't be recoverable.
-func (db *DB) PurgeDACState(ctx context.Context) error {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	// Purge document acp state and keep it closed.
-	if db.documentACP.HasValue() {
-		documentACP := db.documentACP.Value()
-		err := documentACP.ResetState(ctx)
-		if err != nil {
-			// for now we will just log this error, since SourceHub ACP doesn't yet
-			// implement the ResetState.
-			log.ErrorE("Failed to reset document ACP state", err)
-		}
-	}
-
-	return nil
-}
-
 // publishDocUpdateEvent publishes an update event for a document.
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
@@ -313,104 +254,6 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 	}
 	return nil
 }
-
-func (db *DB) AddDACActorRelationship(
-	ctx context.Context,
-	collectionName string,
-	docID string,
-	relation string,
-	targetActor string,
-) (client.AddActorRelationshipResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeDACRelationAddPerm); err != nil {
-		return client.AddActorRelationshipResult{}, err
-	}
-
-	if !db.documentACP.HasValue() {
-		return client.AddActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
-	}
-
-	collection, err := db.GetCollectionByName(ctx, collectionName)
-	if err != nil {
-		return client.AddActorRelationshipResult{}, err
-	}
-
-	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
-	if !hasPolicy {
-		return client.AddActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
-	}
-
-	exists, err := db.documentACP.Value().AddDocActorRelationship(
-		ctx,
-		policyID,
-		resourceName,
-		docID,
-		relation,
-		identity.FromContext(ctx).Value(),
-		targetActor,
-	)
-
-	if err != nil {
-		return client.AddActorRelationshipResult{}, err
-	}
-
-	if !exists {
-		err = db.publishDocUpdateEvent(ctx, docID, collection)
-		if err != nil {
-			return client.AddActorRelationshipResult{}, err
-		}
-	}
-
-	return client.AddActorRelationshipResult{ExistedAlready: exists}, nil
-}
-
-func (db *DB) DeleteDACActorRelationship(
-	ctx context.Context,
-	collectionName string,
-	docID string,
-	relation string,
-	targetActor string,
-) (client.DeleteActorRelationshipResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeDACRelationDeletePerm); err != nil {
-		return client.DeleteActorRelationshipResult{}, err
-	}
-
-	if !db.documentACP.HasValue() {
-		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
-	}
-
-	collection, err := db.GetCollectionByName(ctx, collectionName)
-	if err != nil {
-		return client.DeleteActorRelationshipResult{}, err
-	}
-
-	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
-	if !hasPolicy {
-		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
-	}
-
-	recordFound, err := db.documentACP.Value().DeleteDocActorRelationship(
-		ctx,
-		policyID,
-		resourceName,
-		docID,
-		relation,
-		identity.FromContext(ctx).Value(),
-		targetActor,
-	)
-
-	if err != nil {
-		return client.DeleteActorRelationshipResult{}, err
-	}
-
-	return client.DeleteActorRelationshipResult{RecordFound: recordFound}, nil
-}
-
 func (db *DB) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	if db.nodeIdentity.HasValue() {
 		return immutable.Some(db.nodeIdentity.Value().ToPublicRawIdentity()), nil
