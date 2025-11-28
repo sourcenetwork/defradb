@@ -55,6 +55,7 @@ type pubSubService struct {
 	peerID       string
 	pubsub       PubSubServer
 	encStore     *ipldEncStorage
+	nodeACP      permission.NACInfo
 	documentACP  immutable.Option[dac.DocumentACP]
 	colRetriever CollectionRetriever
 	nodeDID      string
@@ -83,6 +84,7 @@ func NewPubSubService(
 	peerID string,
 	pubsub PubSubServer,
 	encstore datastore.Blockstore,
+	nodeACP permission.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	colRetriever CollectionRetriever,
 	nodeDID string,
@@ -92,6 +94,7 @@ func NewPubSubService(
 		peerID:       peerID,
 		pubsub:       pubsub,
 		encStore:     newIPLDEncryptionStorage(encstore),
+		nodeACP:      nodeACP,
 		documentACP:  documentACP,
 		colRetriever: colRetriever,
 		nodeDID:      nodeDID,
@@ -343,6 +346,7 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 	return permission.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		immutable.Some(identity.FromDID(actorIdentity)),
+		s.nodeACP,
 		s.documentACP.Value(),
 		collection,
 		acpTypes.DocumentReadPerm,

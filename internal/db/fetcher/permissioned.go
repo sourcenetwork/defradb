@@ -27,6 +27,7 @@ type permissionedFetcher struct {
 	ctx context.Context
 
 	identity    immutable.Option[acpIdentity.Identity]
+	nodeACP     permission.NACInfo
 	documentACP dac.DocumentACP
 	col         client.Collection
 
@@ -38,6 +39,7 @@ var _ fetcher = (*permissionedFetcher)(nil)
 func newPermissionedFetcher(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
+	nodeACP permission.NACInfo,
 	documentACP dac.DocumentACP,
 	col client.Collection,
 	fetcher fetcher,
@@ -45,6 +47,7 @@ func newPermissionedFetcher(
 	return &permissionedFetcher{
 		ctx:         ctx,
 		identity:    identity,
+		nodeACP:     nodeACP,
 		documentACP: documentACP,
 		col:         col,
 		fetcher:     fetcher,
@@ -64,6 +67,7 @@ func (f *permissionedFetcher) NextDoc() (immutable.Option[string], error) {
 	hasPermission, err := permission.CheckAccessOfDocOnCollectionWithACP(
 		f.ctx,
 		f.identity,
+		f.nodeACP,
 		f.documentACP,
 		f.col,
 		acpTypes.DocumentReadPerm,

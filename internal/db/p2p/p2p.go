@@ -78,6 +78,8 @@ type DB interface {
 	Events() event.Bus
 	// RetryIntervals returns the replicator retry configuration.
 	RetryIntervals() []time.Duration
+	// NodeACP returns the NodeACP implementation configured on the database.
+	NodeACP() permission.NACInfo
 	// DocumentACP returns the DocumentACP implementation configured on the database.
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	// Rootstore returns the rootstore
@@ -190,6 +192,7 @@ func New(
 			host.ID(),
 			host,
 			datastore.EncstoreFrom(db.Rootstore()),
+			db.NodeACP(),
 			db.DocumentACP(),
 			collectionRetriever,
 			nodeIdentity.Value().DID(),
@@ -382,6 +385,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
 		ctx,
 		identFunc,
+		p.db.NodeACP(),
 		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
 		acpTypes.DocumentReadPerm,
@@ -436,6 +440,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		func() immutable.Option[identity.Identity] {
 			return immutable.Some(identity.FromDID(ident.Value().DID))
 		},
+		p.db.NodeACP(),
 		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
 		acpTypes.DocumentReadPerm,

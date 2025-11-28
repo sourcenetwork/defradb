@@ -177,6 +177,7 @@ func (c *collection) makeSelectionPlan(
 	planner := planner.New(
 		ctx,
 		identity.FromContext(ctx),
+		c.db.nodeACP,
 		c.db.documentACP,
 		c.db,
 		c.db.p2p,

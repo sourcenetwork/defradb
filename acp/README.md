@@ -826,6 +826,14 @@ This can be done like this:
 defradb client acp node status
 ```
 
+### Bypass DAC Checks
+You can bypass DAC checks for performance if you use owner identity or any identity that has the `dac-bypass`
+permission.
+
+Note: When NAC is not enabled, `dac-bypass` permission is not automatically granted like other permissions,
+so DAC checks won't be bypassed if conditions that enable DAC are satisfied. We do plan to give users the
+ability to be able to disable DAC in the future (which would bypass DAC).
+
 
 ## _FAC DPI Rules (coming soon)_
 ## _FAC Usage: (coming soon)_

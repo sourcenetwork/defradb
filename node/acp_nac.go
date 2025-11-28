@@ -13,7 +13,7 @@ package node
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/db/permission"
 )
 
 // NodeACPOpt is a function for setting node ACP configuration values.
@@ -51,13 +51,13 @@ func WithEnableNodeACP(enable bool) NodeACPOpt {
 	}
 }
 
-func NewNodeACP(ctx context.Context, opts ...NodeACPOpt) (db.NACInfo, error) {
+func NewNodeACP(ctx context.Context, opts ...NodeACPOpt) (permission.NACInfo, error) {
 	options := DefaultNodeACPOptions()
 	for _, opt := range opts {
 		opt(options)
 	}
 
-	return db.NewNACInfo(ctx, options.path, options.isEnabled)
+	return permission.NewNACInfo(ctx, options.path, options.isEnabled)
 }
 
 func (o *NodeACPOptions) IsEnabled() bool {

@@ -77,19 +77,19 @@ type DB struct {
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
 
-	// The options used to init the database
+	// The options used to init the database.
 	options []Option
 
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
 
-	// The identity of the current node
+	// The identity of the current node.
 	nodeIdentity immutable.Option[identity.Identity]
 
 	// Node ACP system along with it's current state information.
-	nodeACP NACInfo
+	nodeACP permission.NACInfo
 
-	// Contains document ACP if it exists
+	// Contains document ACP if it exists.
 	documentACP immutable.Option[dac.DocumentACP]
 
 	// To be able to close the context passed to NewDB on DB close,
@@ -119,7 +119,7 @@ var _ client.TxnStore = (*DB)(nil)
 func NewDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
-	nodeACP NACInfo,
+	nodeACP permission.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	options ...Option,
 ) (*DB, error) {
@@ -129,7 +129,7 @@ func NewDB(
 func newDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
-	nodeACP NACInfo,
+	nodeACP permission.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	options ...Option,
 ) (*DB, error) {
@@ -224,6 +224,10 @@ func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 
 func (db *DB) DocumentACP() immutable.Option[dac.DocumentACP] {
 	return db.documentACP
+}
+
+func (db *DB) NodeACP() permission.NACInfo {
+	return db.nodeACP
 }
 
 func (db *DB) AddDACPolicy(

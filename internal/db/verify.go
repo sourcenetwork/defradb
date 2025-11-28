@@ -67,6 +67,7 @@ func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypt
 		hasPerm, err := permission.CheckAccessOfDocOnCollectionWithACP(
 			ctx,
 			identity.FromContext(ctx),
+			db.nodeACP,
 			db.documentACP.Value(),
 			collection,
 			acpTypes.DocumentReadPerm,
