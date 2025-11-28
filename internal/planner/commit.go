@@ -73,9 +73,10 @@ func (p *Planner) DAGScan(commitSelect *mapper.CommitSelect) *dagScanNode {
 			innerCommit.Depth = immutable.Some(uint64(0))
 			innerNode := p.DAGScan(innerCommit)
 
-			if innerCommit.Field.Name == request.LinksFieldName {
+			switch innerCommit.Field.Name {
+			case request.LinksFieldName:
 				node.linksScanNodes = append(node.linksScanNodes, innerNode)
-			} else if innerCommit.Field.Name == request.HeadsFieldName {
+			case request.HeadsFieldName:
 				node.headsScanNodes = append(node.headsScanNodes, innerNode)
 			}
 		}

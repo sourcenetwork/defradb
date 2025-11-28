@@ -801,7 +801,6 @@ func getRequestables(
 	store client.TxnStore,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
 	for _, field := range selectRequest.Fields {
-
 		switch f := field.(type) {
 		case *request.Field:
 			// We can map all fields to the first (and only index)
