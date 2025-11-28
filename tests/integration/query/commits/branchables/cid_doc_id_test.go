@@ -39,15 +39,15 @@ func TestQueryCommitsBranchables_WithCidAndDocIDParam(t *testing.T) {
 				// It would be very nice if this worked:
 				// https://github.com/sourcenetwork/defradb/issues/3213
 				Request: `query {
-						commits(
+						_commits(
 							docID: "bae-f895da58-3326-510a-87f3-d043ff5424ea",
-							cid: "bafyreiai57cngq2fthjmwmdnqhkugj6u5nqz5wtvpphnel6l2i6jyumevu"
+							cid: "bafyreigvb5smrzfjpunohvfsoi3czzjy4dl3cyhzkutth4lx27wnasnqxa"
 						) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 				ExpectedError: "cid either does not exist or belong to document",
 			},

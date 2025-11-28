@@ -240,6 +240,20 @@ func (n *sumNode) Next() (bool, error) {
 			var collectionSum float64
 			var err error
 			switch childCollection := child.(type) {
+			case float64, float32, int64, int:
+				switch v := childCollection.(type) {
+				case float64:
+					collectionSum += v
+				case float32:
+					collectionSum += float64(v)
+				case int64:
+					collectionSum = float64(v)
+				case int:
+					collectionSum = float64(v)
+				default:
+					collectionSum += 0
+				}
+
 			case []core.Doc:
 				collectionSum = reduceDocs(childCollection, 0, func(childItem core.Doc, value float64) float64 {
 					childProperty := childItem.Fields[source.ChildTarget.Index]
@@ -255,7 +269,6 @@ func (n *sumNode) Next() (bool, error) {
 					case float64:
 						return value + v
 					default:
-						// return nothing, cannot be summed
 						return value + 0
 					}
 				})

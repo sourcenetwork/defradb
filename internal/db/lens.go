@@ -15,20 +15,34 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
-func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
+func (db *DB) getLensStore(ctx context.Context) store.Store {
+	txn, ok := datastore.CtxTryGetTxn(ctx)
+	if ok {
+		return db.lensNode.Store.WithTxn(wrappedTxn{
+			Txn:          txn,
+			ReaderWriter: db.rootstore,
+		})
+	}
+
+	return db.lensNode.Store
+}
+
+func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	dstFound := true
 	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationSchemaVersionID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			dstFound = false
 		} else {
-			return err
+			return "", err
 		}
 	}
 
@@ -38,85 +52,102 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
 		if errors.Is(err, corekv.ErrNotFound) {
 			srcFound = false
 		} else {
-			return err
+			return "", err
 		}
 	}
 
 	if !srcFound {
-		desc := client.CollectionVersion{
+		sourceCol = client.CollectionVersion{
 			VersionID:      cfg.SourceSchemaVersionID,
 			CollectionID:   client.OrphanCollectionID,
 			IsMaterialized: true,
 			IsPlaceholder:  true,
 		}
 
-		err = description.SaveCollection(ctx, desc)
+		err = description.SaveCollection(ctx, sourceCol)
 		if err != nil {
-			return err
-		}
-
-		sourceCol = desc
-	}
-
-	isDstCollectionFound := false
-	if dstFound {
-		if len(dstCol.Sources) == 0 {
-			// If the destingation collection has no sources at all, it must have been added as an orphaned source
-			// by another migration.  This can happen if the migrations are added in an unusual order, before
-			// their schemas have been defined locally.
-			dstCol.Sources = append(dstCol.Sources, &client.CollectionSource{
-				SourceCollectionID: sourceCol.VersionID,
-			})
-		}
-
-		for _, source := range dstCol.CollectionSources() {
-			if source.SourceCollectionID == sourceCol.VersionID {
-				isDstCollectionFound = true
-				break
-			}
+			return "", err
 		}
 	}
 
-	if !isDstCollectionFound {
+	if !dstFound {
 		dstCol = client.CollectionVersion{
 			Name:           sourceCol.Name,
 			VersionID:      cfg.DestinationSchemaVersionID,
 			IsMaterialized: true,
 			IsPlaceholder:  true,
 			CollectionID:   sourceCol.CollectionID,
-			Sources: []any{
-				&client.CollectionSource{
-					SourceCollectionID: sourceCol.VersionID,
-					// The transform will be set later, when updating all destination collections
-					// whether they are newly created or not.
-				},
-			},
-		}
-
-		err = description.SaveCollection(ctx, dstCol)
-		if err != nil {
-			return err
 		}
 	}
 
-	collectionSources := dstCol.CollectionSources()
-	for _, source := range collectionSources {
-		// WARNING: Here we assume that the collection source points at a collection of the source schema version.
-		// This works currently, as collections only have a single source.  If/when this changes we need to make
-		// sure we only update the correct source.
-
-		source.Transform = immutable.Some(cfg.Lens)
-
-		err = db.LensRegistry().SetMigration(ctx, dstCol.VersionID, cfg.Lens)
-		if err != nil {
-			return err
-		}
+	if dstCol.PreviousVersion.HasValue() && dstCol.PreviousVersion.Value().SourceCollectionID != sourceCol.VersionID {
+		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceSchemaVersionID, cfg.DestinationSchemaVersionID)
 	}
+
+	id, err := db.getLensStore(ctx).Add(ctx, cfg.Lens)
+	if err != nil {
+		return "", err
+	}
+
+	dstCol.PreviousVersion = immutable.Some(client.CollectionSource{
+		SourceCollectionID: sourceCol.VersionID,
+		Transform:          immutable.Some(id.String()),
+	})
 
 	err = description.SaveCollection(ctx, dstCol)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	shouldReindex, activeCol, err := db.shouldReindexAfterMigration(ctx, dstCol)
+	if err != nil {
+		return "", err
+	}
+
+	if shouldReindex {
+		err = db.reindexNewActiveVersion(ctx, activeCol)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return id.String(), nil
+}
+
+// shouldReindexAfterMigration determines if reindexing is needed after adding a migration.
+// Reindexing is needed if:
+// 1. The destination collection is currently active, OR
+// 2. The destination collection is in the history chain of any currently active collection
+// Returns: (shouldReindex bool, activeCollection, error)
+func (db *DB) shouldReindexAfterMigration(
+	ctx context.Context,
+	dstCol client.CollectionVersion,
+) (bool, client.CollectionVersion, error) {
+	if dstCol.IsActive {
+		return true, dstCol, nil
+	}
+
+	activeCol, err := description.GetActiveCollectionByCollectionID(ctx, dstCol.CollectionID)
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			return false, client.CollectionVersion{}, nil
+		}
+		return false, client.CollectionVersion{}, err
+	}
+
+	history, err := description.GetTargetedCollectionHistory(
+		ctx,
+		activeCol.CollectionID,
+		activeCol.VersionID,
+	)
+	if err != nil {
+		return false, client.CollectionVersion{}, err
+	}
+
+	if history == nil {
+		return false, activeCol, nil
+	}
+
+	_, found := history[dstCol.VersionID]
+	return found, activeCol, nil
 }

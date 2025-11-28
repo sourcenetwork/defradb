@@ -12,50 +12,49 @@ Notes:
   - A non-DRI policy will be accepted (will be registered with acp system).
   - But only a valid DRI policyID & resource can be specified on a schema.
   - DRI validation happens when attempting to add a schema with '@policy'.
-  - Learn more about the DefraDB [ACP System](/acp/README.md)
-
-Example: add from an argument string:
-  defradb client acp policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f \
-'
-description: A Valid DefraDB Policy Interface
-
-actor:
-  name: actor
-
-resources:
-  users:
-    permissions:
-      read:
-        expr: owner + reader
-      update:
-        expr: owner
-      delete:
-        expr: owner
-
-    relations:
-      owner:
-        types:
-          - actor
-      reader:
-        types:
-          - actor
-'
-
-Example: add from file:
-  defradb client acp policy add -f policy.yml \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
-Example: add from file, verbose flags:
-  defradb client acp policy add --file policy.yml \
-  	--identity 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
-Example: add from stdin:
-  cat policy.yml | defradb client acp policy add -
-
+  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 
 
 ```
 defradb client acp document policy add [-i --identity] [policy] [flags]
+```
+
+### Examples
+
+```
+Add from an argument string:  
+  defradb client acp document policy add -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f \
+	'
+	description: A Valid DefraDB Policy Interface
+
+	actor:
+	  name: actor
+
+	resources:
+	  users:
+	    permissions:
+	      read:
+	        expr: owner + reader
+	      update:
+	        expr: owner
+	      delete:
+	        expr: owner
+
+	    relations:
+	      owner:
+	        types:
+	          - actor
+	      reader:
+	        types:
+	          - actor
+	'
+
+Add from file:  
+  defradb client acp document policy add -f policy.yml \
+  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+
+Add from stdin:  
+  cat policy.yml | defradb client acp document policy add -
 ```
 
 ### Options

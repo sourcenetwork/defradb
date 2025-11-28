@@ -34,19 +34,19 @@ func (txn *Transaction) ID() uint64 {
 	return txn.tx.ID()
 }
 
-func (txn *Transaction) Commit(ctx context.Context) error {
+func (txn *Transaction) Commit() error {
 	args := []string{"client", "tx", "commit"}
 	args = append(args, fmt.Sprintf("%d", txn.tx.ID()))
 
-	_, err := txn.cmd.execute(ctx, args)
+	_, err := txn.cmd.execute(context.Background(), args)
 	return err
 }
 
-func (txn *Transaction) Discard(ctx context.Context) {
+func (txn *Transaction) Discard() {
 	args := []string{"client", "tx", "discard"}
 	args = append(args, fmt.Sprintf("%d", txn.tx.ID()))
 
-	txn.cmd.execute(ctx, args) //nolint:errcheck
+	txn.cmd.execute(context.Background(), args) //nolint:errcheck
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
@@ -125,13 +125,9 @@ func (txn *Transaction) RefreshViews(ctx context.Context, options client.Collect
 	return txn.Wrapper.RefreshViews(ctx, options)
 }
 
-func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.SetMigration(ctx, config)
-}
-
-func (txn *Transaction) LensRegistry() client.LensRegistry {
-	return txn.Wrapper.LensRegistry()
 }
 
 func (txn *Transaction) GetCollectionByName(

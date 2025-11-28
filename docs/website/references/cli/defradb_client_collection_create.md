@@ -20,26 +20,30 @@ Options:
 		and for every field in the list it will generate a symmetric key for encryption using AES-GCM.
 		If combined with '--encrypt' flag, all the fields in the document not listed in '--encrypt-fields' 
 		will be encrypted with the same key.
-
-Example: create from string:
-  defradb client collection create --name User '{ "name": "Bob" }'
-
-Example: create from string, with identity:
-  defradb client collection create --name User '{ "name": "Bob" }' \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
-Example: create multiple from string:
-  defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
-
-Example: create from file:
-  defradb client collection create --name User -f document.json
-
-Example: create from stdin:
-  cat document.json | defradb client collection create --name User -
 		
 
 ```
 defradb client collection create [-i --identity] [-e --encrypt] [--encrypt-fields] <document> [flags]
+```
+
+### Examples
+
+```
+Create from string1:  
+  defradb client collection create --name User '{ "name": "Bob" }'
+
+Create from string, with identity:  
+  defradb client collection create --name User '{ "name": "Bob" }' \
+  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+
+Create multiple from string:  
+  defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
+
+Create from file:  
+  defradb client collection create --name User -f document.json
+
+Create from stdin:  
+  cat document.json | defradb client collection create --name User -
 ```
 
 ### Options

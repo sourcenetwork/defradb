@@ -21,22 +21,22 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 		Actions: []any{
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
-					commits {
+					_commits {
 						cid
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"commits": []map[string]any{
+						"_commits": []map[string]any{
 							{
-								"cid": "bafyreigpqtbobuikkvne7wkszl6xqgatsvhhzmwjh4uunpf5xldnjouu4a",
+								"cid": "bafyreiaxbbq4vafq22ptdverb7v22eaubqb5luxul7eooble7nqlqgg5ii",
 							},
 						},
 					},
 					{
-						"commits": []map[string]any{
+						"_commits": []map[string]any{
 							{
-								"cid": "bafyreihsducixg7n6wdbqoyjao4pecsalt4zjx2ybyncizqhq2ci46gyoa",
+								"cid": "bafyreialxrvwrz4rhgomch7kr7scx6t7m6xspbjecvzneirkgskh2tjele",
 							},
 						},
 					},
@@ -74,7 +74,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 		Actions: []any{
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
-					commits {
+					_commits {
 						cid
 						links {
 							cid
@@ -84,17 +84,17 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 				}`,
 				Results: []map[string]any{
 					{
-						"commits": []map[string]any{
+						"_commits": []map[string]any{
 							{
-								"cid":   "bafyreigpqtbobuikkvne7wkszl6xqgatsvhhzmwjh4uunpf5xldnjouu4a",
+								"cid":   "bafyreiaxbbq4vafq22ptdverb7v22eaubqb5luxul7eooble7nqlqgg5ii",
 								"links": create1Links,
 							},
 						},
 					},
 					{
-						"commits": []map[string]any{
+						"_commits": []map[string]any{
 							{
-								"cid":   "bafyreihsducixg7n6wdbqoyjao4pecsalt4zjx2ybyncizqhq2ci46gyoa",
+								"cid":   "bafyreialxrvwrz4rhgomch7kr7scx6t7m6xspbjecvzneirkgskh2tjele",
 								"links": create2Links,
 							},
 						},
@@ -160,7 +160,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *testing.T) {
 	updateCid := testUtils.NewSameValue()
 
-	docID := "bae-029c4d47-4790-5cd4-9c41-fd5991d88915"
+	docID := "bae-45e90427-d499-598b-902a-6a3c65d0b504"
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -172,14 +172,14 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 			},
 			testUtils.SubscriptionRequest{
 				Request: `subscription {
-					commits(docID: "bae-029c4d47-4790-5cd4-9c41-fd5991d88915") {
+					_commits(docID: "bae-45e90427-d499-598b-902a-6a3c65d0b504") {
 						cid		
 						docID
 					}
 				}`,
 				Results: []map[string]any{
 					{
-						"commits": []map[string]any{
+						"_commits": []map[string]any{
 							{
 								"cid":   updateCid,
 								"docID": docID,
@@ -206,7 +206,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 			// this mutation will be included in the subscription
 			testUtils.Request{
 				Request: `mutation {
-					update_User(docID: "bae-029c4d47-4790-5cd4-9c41-fd5991d88915", input: {verified: false}) {
+					update_User(docID: "bae-45e90427-d499-598b-902a-6a3c65d0b504", input: {verified: false}) {
 						_docID
 						_version {
 							cid

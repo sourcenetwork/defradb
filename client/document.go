@@ -879,6 +879,7 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 			continue
 		}
 
+		// In the case of a document, convert it to a map recursively.
 		if value.IsDocument() {
 			subDoc := value.Value().(*Document)
 			subDocMap, err := subDoc.toMap(excludeEmpty)
@@ -886,9 +887,31 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 				return nil, err
 			}
 			docMap[k] = subDocMap
+			continue
 		}
 
-		docMap[k] = value.Value()
+		normValue := value.NormalValue()
+		if normValue.IsNil() {
+			docMap[k] = nil
+			continue
+		}
+
+		// In the case of nillable arrays of nillables, we need to convert to the underlying value.
+		var innerValue any
+		if v, ok := normValue.NillableStringArray(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableIntArray(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableFloat64Array(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableFloat32Array(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableBoolArray(); ok {
+			innerValue = convertImmutable(v)
+		} else {
+			innerValue = normValue.Unwrap()
+		}
+		docMap[k] = innerValue
 	}
 
 	return docMap, nil

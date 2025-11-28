@@ -76,7 +76,7 @@ func (db *DB) newCollection(desc client.CollectionVersion) (*collection, error) 
 // If a fetcherFactory is set, it will be used to create the fetcher.
 // It's a very simple factory, but it allows us to inject a mock fetcher
 // for testing.
-func (c *collection) newFetcher() fetcher.Fetcher {
+func (c *collection) newFetcher(ctx context.Context) fetcher.Fetcher {
 	var innerFetcher fetcher.Fetcher
 	if c.fetcherFactory != nil {
 		innerFetcher = c.fetcherFactory()
@@ -84,7 +84,7 @@ func (c *collection) newFetcher() fetcher.Fetcher {
 		innerFetcher = fetcher.NewDocumentFetcher()
 	}
 
-	return lens.NewFetcher(innerFetcher, c.db.LensRegistry())
+	return lens.NewFetcher(innerFetcher, c.db.getLensStore(ctx))
 }
 
 // getCollectionByName returns an existing collection within the database.
@@ -209,6 +209,10 @@ func (c *collection) GetAllDocIDs(
 ) (<-chan client.DocIDResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
+		return nil, err
+	}
 
 	ctx, _, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
@@ -336,18 +340,22 @@ func (c *collection) Create(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = c.create(ctx, doc, opts)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // CreateMany creates a collection of documents at once.
@@ -360,11 +368,15 @@ func (c *collection) CreateMany(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	for _, doc := range docs {
 		err = c.create(ctx, doc, opts)
@@ -372,7 +384,7 @@ func (c *collection) CreateMany(
 			return err
 		}
 	}
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 func (c *collection) getDocIDAndPrimaryKeyFromDoc(
@@ -480,11 +492,15 @@ func (c *collection) Update(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
 	if err != nil {
@@ -507,7 +523,7 @@ func (c *collection) Update(
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // Contract: DB Exists check is already performed, and a doc with the given ID exists.
@@ -554,11 +570,15 @@ func (c *collection) Save(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	// Check if document already exists with primary DS key.
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
@@ -584,7 +604,7 @@ func (c *collection) Save(
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // hasPrivateKey checks if the identity is a FullIdentity and has a non-nil private key.
@@ -904,11 +924,15 @@ func (c *collection) Delete(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentDeletePerm); err != nil {
+		return false, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
 	if err != nil {
@@ -924,7 +948,7 @@ func (c *collection) Delete(
 	if err != nil {
 		return false, err
 	}
-	return true, txn.Commit(ctx)
+	return true, txn.Commit()
 }
 
 // Exists checks if a given document exists with supplied DocID.
@@ -935,11 +959,15 @@ func (c *collection) Exists(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
+		return false, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
 	if err != nil {
@@ -950,7 +978,7 @@ func (c *collection) Exists(
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return false, err
 	}
-	return exists && !isDeleted, txn.Commit(ctx)
+	return exists && !isDeleted, txn.Commit()
 }
 
 // check if a document exists with the given primary key

@@ -38,7 +38,7 @@ $(error "No git in $(PATH), version information won't be included")
 else
 VERSION_GOINFO=$(shell go version)
 VERSION_GITCOMMIT=$(shell git rev-parse HEAD)
-VERSION_GITCOMMITDATE=$(shell git show -s --format=%cs HEAD)
+VERSION_GITCOMMITDATE=$(shell git show -s --date=short --format=%cd HEAD)
 ifneq ($(shell git symbolic-ref -q --short HEAD),master)
 VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
 else
@@ -151,6 +151,10 @@ deps\:test:
 	go install gotest.tools/gotestsum@latest
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
+
+.PHONY: deps\:test\:js
+deps\:test\:js:
+	npm install graphql-introspection-json-to-sdl --prefix tests
 
 .PHONY: deps\:bench
 deps\:bench:
@@ -369,6 +373,10 @@ test\:changes:
 .PHONY: test\:js
 test\:js:
 	GOOS=js GOARCH=wasm go test $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
+
+.PHONY: test\:introspectionjs
+test\:introspectionjs:
+	go test -tags nodejs -run ^TestIntrospectionResult$$ ./internal/request/graphql/schema
 
 .PHONY: validate\:codecov
 validate\:codecov:

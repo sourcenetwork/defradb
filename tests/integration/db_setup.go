@@ -15,18 +15,19 @@ package tests
 import (
 	"fmt"
 
+	"github.com/multiformats/go-multiaddr"
+	"github.com/stretchr/testify/require"
+
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/state"
-
-	"github.com/stretchr/testify/require"
 )
 
 func createBadgerEncryptionKey() error {
@@ -56,6 +57,14 @@ func setupNode(
 ) (*state.NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
 	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
+
+	if s.EnableSearchableEncryption {
+		seKey, err := crypto.GenerateAES256()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate searchable encryption key: %w", err)
+		}
+		opts = append(opts, db.WithSearchableEncryptionKey(seKey))
+	}
 
 	err := createBadgerEncryptionKey()
 	if err != nil {
@@ -122,12 +131,7 @@ func setupNode(
 		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
 	}
 
-	netOpts := make([]netConfig.NodeOpt, 0)
-	for _, opt := range opts {
-		if opt, ok := opt.(netConfig.NodeOpt); ok {
-			netOpts = append(netOpts, opt)
-		}
-	}
+	netOpts := getP2POptions(opts)
 
 	if s.IsNetworkEnabled {
 		opts = append(opts, node.WithDisableP2P(false))
@@ -161,7 +165,38 @@ func setupNode(
 		NetOpts: netOpts,
 	}
 
-	st.CachedPeerInfo = nodeObj.DB.PeerInfo()
+	addresses, err := nodeObj.DB.PeerInfo()
+	require.NoError(s.T, err)
+	// The addresses returned by PeerInfo include the /p2p/<peerID> part, but
+	// the libp2p.ListenAddrStrings cannot include it, so we need to remove it
+	// before caching the addresses on the state.
+	addresses, err = removePeerIDFromAddr(addresses)
+	require.NoError(s.T, err)
+	st.CachedAddresses = addresses
 
 	return st, nil
+}
+
+func removePeerIDFromAddr(addr []string) ([]string, error) {
+	addrs := make([]string, len(addr))
+	for i, a := range addr {
+		justAddr, err := removePeerID(a)
+		if err != nil {
+			return nil, err
+		}
+		addrs[i] = justAddr
+	}
+	return addrs, nil
+}
+
+func removePeerID(addr string) (string, error) {
+	maddrWithID, err := multiaddr.NewMultiaddr(addr)
+	if err != nil {
+		return "", err
+	}
+	justAddr, p2ppart := multiaddr.SplitLast(maddrWithID)
+	if p2ppart == nil || p2ppart.Protocol().Code != multiaddr.P_P2P {
+		return "", errors.New("address does not contain a /p2p/ part")
+	}
+	return justAddr.String(), nil
 }

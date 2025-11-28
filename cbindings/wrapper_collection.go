@@ -15,16 +15,23 @@ package cbindings
 #include <stdint.h>
 #include "defra_structs.h"
 extern Result CollectionCreate(uintptr_t nodePtr, char* json, int isEncrypted,
-char* encryptedFields, CollectionOptions options);
-extern Result CollectionDelete(uintptr_t nodePtr, char* docIDStr, char* filterStr, CollectionOptions options);
-extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options);
-extern Result CollectionListDocIDs(uintptr_t nodePtr, CollectionOptions options);
-extern Result CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted, CollectionOptions options);
+char* encryptedFields, CollectionOptions options, uintptr_t identityPtr);
+extern Result CollectionDelete(uintptr_t nodePtr, char* docIDStr, char* filterStr,
+CollectionOptions options, uintptr_t identityPtr);
+extern Result CollectionDescribe(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result CollectionListDocIDs(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result CollectionGet(uintptr_t nodePtr, char* docIDStr, int showDeleted,
+CollectionOptions options, uintptr_t identityPtr);
 extern Result CollectionUpdate(uintptr_t nodePtr, char* docIDStr, char* filterStr,
-char* updaterStr, CollectionOptions options);
-extern Result IndexCreate(uintptr_t nodePtr, char* collectionName, char* indexName, char* fieldsStr, int isUnique);
-extern Result IndexList(uintptr_t nodePtr, char* collectionName);
-extern Result IndexDrop(uintptr_t nodePtr, char* collectionName, char* indexName);
+char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
+extern Result IndexCreate(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
+CollectionOptions options, uintptr_t identityPtr);
+extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
+extern Result IndexDrop(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
+extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
+extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern void IdentityFree(uintptr_t identityPtr);
 */
 import "C"
 
@@ -78,12 +85,12 @@ func (c *Collection) Create(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(encryptedFields))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identityPtr = cIdentity
 	copts.getInactive = 0
 
 	docJSONbytes, err := doc.MarshalJSON()
@@ -99,6 +106,7 @@ func (c *Collection) Create(
 		isEncrypted,
 		encryptedFields,
 		copts,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -125,12 +133,12 @@ func (c *Collection) CreateMany(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(encryptedFields))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identityPtr = cIdentity
 	copts.getInactive = 0
 
 	var jsonDocs []json.RawMessage
@@ -154,6 +162,7 @@ func (c *Collection) CreateMany(
 		isEncrypted,
 		encryptedFields,
 		copts,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -186,12 +195,12 @@ func (c *Collection) Update(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(updater))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identityPtr = cIdentity
 	copts.getInactive = 0
 
 	res := ConvertAndFreeCResult(C.CollectionUpdate(
@@ -200,6 +209,7 @@ func (c *Collection) Update(
 		filter,
 		updater,
 		copts,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -240,12 +250,12 @@ func (c *Collection) Delete(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identityPtr = cIdentity
 	copts.getInactive = 0
 
 	res := ConvertAndFreeCResult(C.CollectionDelete(
@@ -253,6 +263,7 @@ func (c *Collection) Delete(
 		docIDStr,
 		filter,
 		copts,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -276,12 +287,12 @@ func (c *Collection) Exists(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identityPtr = cIdentity
 	copts.getInactive = 0
 
 	res := ConvertAndFreeCResult(C.CollectionGet(
@@ -289,6 +300,7 @@ func (c *Collection) Exists(
 		docIDStr,
 		cShowDeleted,
 		copts,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -319,12 +331,12 @@ func (c *Collection) UpdateWithFilter(
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cUpdater))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identityPtr = cIdentity
 	copts.getInactive = 0
 
 	res := ConvertAndFreeCResult(C.CollectionUpdate(
@@ -333,6 +345,7 @@ func (c *Collection) UpdateWithFilter(
 		filterStr,
 		cUpdater,
 		copts,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -367,12 +380,12 @@ func (c *Collection) DeleteWithFilter(
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identityPtr = cIdentity
 	copts.getInactive = 0
 
 	res := ConvertAndFreeCResult(C.CollectionDelete(
@@ -380,6 +393,7 @@ func (c *Collection) DeleteWithFilter(
 		docID,
 		filterStr,
 		copts,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -409,17 +423,16 @@ func (c *Collection) Get(
 	cCollectionID := C.CString("")
 	cName := C.CString(c.Version().Name)
 	cIdentity := identityFromContext(ctx)
-
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identityPtr = cIdentity
 	copts.getInactive = 0
 
 	res := ConvertAndFreeCResult(C.CollectionGet(
@@ -427,6 +440,7 @@ func (c *Collection) Get(
 		docIDStr,
 		cShowDeleted,
 		copts,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -453,19 +467,18 @@ func (c *Collection) GetAllDocIDs(
 	cCollectionID := C.CString("")
 	cName := C.CString("")
 	cIdentity := identityFromContext(ctx)
-
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
+	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
 	copts.version = cVersion
 	copts.collectionID = cCollectionID
 	copts.name = cName
-	copts.identityPtr = cIdentity
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.CollectionListDocIDs(C.uintptr_t(c.w.handle), copts))
+	res := ConvertAndFreeCResult(C.CollectionListDocIDs(C.uintptr_t(c.w.handle), copts, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -508,10 +521,23 @@ func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
 ) (client.IndexDescription, error) {
-	name := C.CString(c.def.Name)
+	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
-	defer C.free(unsafe.Pointer(name))
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cIdentity := identityFromContext(ctx)
+
+	defer C.free(unsafe.Pointer(cName))
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cIndexDescName))
+	defer C.IdentityFree(cIdentity)
+
+	var copts C.CollectionOptions
+	copts.version = cVersion
+	copts.collectionID = cCollectionID
+	copts.name = cName
+	copts.getInactive = 0
 
 	orderedFields := make([]string, len(indexDesc.Fields))
 	for i, f := range indexDesc.Fields {
@@ -531,10 +557,11 @@ func (c *Collection) CreateIndex(
 
 	res := ConvertAndFreeCResult(C.IndexCreate(
 		C.uintptr_t(c.w.handle),
-		name,
 		cIndexDescName,
 		fields,
 		cUnique,
+		copts,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -549,15 +576,29 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	name := C.CString(c.def.Name)
+	cName := C.CString(c.def.Name)
 	cIndexName := C.CString(indexName)
-	defer C.free(unsafe.Pointer(name))
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cIdentity := identityFromContext(ctx)
+
+	defer C.free(unsafe.Pointer(cName))
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cIndexName))
+	defer C.IdentityFree(cIdentity)
+
+	var copts C.CollectionOptions
+	copts.version = cVersion
+	copts.collectionID = cCollectionID
+	copts.name = cName
+	copts.getInactive = 0
 
 	res := ConvertAndFreeCResult(C.IndexDrop(
 		C.uintptr_t(c.w.handle),
-		name,
 		cIndexName,
+		copts,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -567,10 +608,25 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	name := C.CString(c.def.Name)
-	defer C.free(unsafe.Pointer(name))
+	cName := C.CString(c.def.Name)
+	cIndexName := C.CString("")
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cIdentity := identityFromContext(ctx)
 
-	res := ConvertAndFreeCResult(C.IndexList(C.uintptr_t(c.w.handle), name))
+	defer C.free(unsafe.Pointer(cName))
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.free(unsafe.Pointer(cIndexName))
+	defer C.IdentityFree(cIdentity)
+
+	var copts C.CollectionOptions
+	copts.version = cVersion
+	copts.collectionID = cCollectionID
+	copts.name = cName
+	copts.getInactive = 0
+
+	res := ConvertAndFreeCResult(C.IndexList(C.uintptr_t(c.w.handle), copts, cIdentity))
 
 	if res.Status != 0 {
 		return []client.IndexDescription{}, errors.New(res.Error)
@@ -579,6 +635,67 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	retRes, err := unmarshalResult[[]client.IndexDescription](res.Value)
 	if err != nil {
 		return []client.IndexDescription{}, err
+	}
+	return retRes, nil
+}
+
+func (c *Collection) CreateEncryptedIndex(
+	ctx context.Context,
+	req client.EncryptedIndexDescription,
+) (client.EncryptedIndexDescription, error) {
+	name := C.CString(c.def.Name)
+	fieldName := C.CString(req.FieldName)
+	defer C.free(unsafe.Pointer(name))
+	defer C.free(unsafe.Pointer(fieldName))
+
+	res := ConvertAndFreeCResult(C.EncryptedIndexCreate(
+		C.uintptr_t(c.w.handle),
+		name,
+		fieldName,
+	))
+
+	if res.Status != 0 {
+		return client.EncryptedIndexDescription{}, errors.New(res.Error)
+	}
+
+	retRes, err := unmarshalResult[client.EncryptedIndexDescription](res.Value)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	return retRes, nil
+}
+
+func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+	name := C.CString(c.def.Name)
+	cFieldName := C.CString(fieldName)
+	defer C.free(unsafe.Pointer(name))
+	defer C.free(unsafe.Pointer(cFieldName))
+
+	res := ConvertAndFreeCResult(C.EncryptedIndexDelete(
+		C.uintptr_t(c.w.handle),
+		name,
+		cFieldName,
+	))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
+}
+
+func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	name := C.CString(c.def.Name)
+	defer C.free(unsafe.Pointer(name))
+
+	res := ConvertAndFreeCResult(C.EncryptedIndexList(C.uintptr_t(c.w.handle), name))
+
+	if res.Status != 0 {
+		return []client.EncryptedIndexDescription{}, errors.New(res.Error)
+	}
+
+	retRes, err := unmarshalResult[[]client.EncryptedIndexDescription](res.Value)
+	if err != nil {
+		return []client.EncryptedIndexDescription{}, err
 	}
 	return retRes, nil
 }

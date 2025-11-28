@@ -27,7 +27,8 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 	defra, close := startTestNode(t)
 	defer close()
 
-	defra.db.AddSchema(context.Background(), `
+	ctx := context.Background()
+	_, err := defra.db.AddSchema(ctx, `
 	type User { 
 		name: String 
 		devices: [Device]
@@ -36,8 +37,9 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 		model: String
 		owner: User
 	}`)
+	require.NoError(t, err)
 
-	genDocsCmd := MakeGenDocCommand()
+	genDocsCmd := MakeGenDocCommand(ctx)
 	outputBuf := bytes.NewBufferString("")
 	genDocsCmd.SetOut(outputBuf)
 
@@ -46,7 +48,7 @@ func TestGendocsCmd_IfNoErrors_ReturnGenerationOutput(t *testing.T) {
 		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
 	})
 
-	err := genDocsCmd.Execute()
+	err = genDocsCmd.Execute()
 	require.NoError(t, err)
 
 	out, err := io.ReadAll(outputBuf)
@@ -66,18 +68,20 @@ func TestGendocsCmd_IfInvalidDemandValue_ReturnError(t *testing.T) {
 	defra, close := startTestNode(t)
 	defer close()
 
-	defra.db.AddSchema(context.Background(), `
+	ctx := context.Background()
+	_, err := defra.db.AddSchema(ctx, `
         type User { 
             name: String 
         }`)
+	require.NoError(t, err)
 
-	genDocsCmd := MakeGenDocCommand()
+	genDocsCmd := MakeGenDocCommand(ctx)
 	genDocsCmd.SetArgs([]string{
 		"--demand", `{"User": invalid}`,
 		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
 	})
 
-	err := genDocsCmd.Execute()
+	err = genDocsCmd.Execute()
 	require.ErrorContains(t, err, errInvalidDemandValue)
 }
 
@@ -85,17 +89,19 @@ func TestGendocsCmd_IfInvalidConfig_ReturnError(t *testing.T) {
 	defra, close := startTestNode(t)
 	defer close()
 
-	defra.db.AddSchema(context.Background(), `
+	ctx := context.Background()
+	_, err := defra.db.AddSchema(ctx, `
         type User { 
             name: String 
         }`)
+	require.NoError(t, err)
 
-	genDocsCmd := MakeGenDocCommand()
+	genDocsCmd := MakeGenDocCommand(ctx)
 	genDocsCmd.SetArgs([]string{
 		"--demand", `{"Unknown": 3}`,
 		"--url", strings.TrimPrefix(defra.server.URL, "http://"),
 	})
 
-	err := genDocsCmd.Execute()
+	err = genDocsCmd.Execute()
 	require.Error(t, err, gen.NewErrInvalidConfiguration(""))
 }

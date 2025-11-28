@@ -13,7 +13,6 @@ package crdt
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -21,7 +20,7 @@ type CollectionSetDelta struct {
 	Priority uint64
 }
 
-var _ core.Delta = (*CollectionSetDelta)(nil)
+var _ Delta = (*CollectionSetDelta)(nil)
 
 func (d *CollectionSetDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
@@ -42,7 +41,7 @@ type CollectionSetDefinition struct {
 	headstorePrefix keys.HeadstoreCollectionSetDefinition
 }
 
-var _ core.ReplicatedData = (*Collection)(nil)
+var _ ReplicatedData = (*Collection)(nil)
 
 func NewCollectionSet(
 	firstCollectionID string,
@@ -62,6 +61,6 @@ func (c *CollectionSetDefinition) Delta() *CollectionSetDelta {
 	return &CollectionSetDelta{}
 }
 
-func (c *CollectionSetDefinition) Merge(ctx context.Context, other core.Delta) error {
+func (c *CollectionSetDefinition) Merge(ctx context.Context, other Delta) error {
 	return nil
 }

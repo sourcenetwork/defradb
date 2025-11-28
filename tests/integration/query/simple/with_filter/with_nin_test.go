@@ -64,6 +64,7 @@ func TestQuerySimpleWithNotInFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

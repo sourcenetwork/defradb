@@ -1,0 +1,195 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package tests
+
+import (
+	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
+)
+
+const (
+	// NonExistentCollectionID can be used to represent a non-existent collection ID, it will be substituted
+	// for a non-existent collection ID when used in actions that support this.
+	NonExistentCollectionID         int    = -1
+	NonExistentCollectionSchemaRoot string = "NonExistentCollectionID"
+)
+
+// SubscribeToCollection sets up a subscription on the given node to the given collection.
+//
+// Changes made to subscribed collections in peers connected to this node will be synced from
+// them to this node.
+type SubscribeToCollection struct {
+	// NodeID is the node ID (index) of the node in which to activate the subscription.
+	//
+	// Changes made to subscribed collections in peers connected to this node will be synced from
+	// them to this node.
+	NodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// CollectionIDs are the collection IDs (indexes) of the collections to subscribe to.
+	//
+	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
+	CollectionIDs []int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// UnsubscribeToCollection removes the given collections from the set of active subscriptions on
+// the given node.
+type UnsubscribeToCollection struct {
+	// NodeID is the node ID (index) of the node in which to remove the subscription.
+	NodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// CollectionIDs are the collection IDs (indexes) of the collections to unsubscribe from.
+	//
+	// A [NonExistentCollectionID] may be provided to test non-existent collection IDs.
+	CollectionIDs []int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// GetAllP2PCollections gets the active subscriptions for the given node and compares them against the
+// expected results.
+type GetAllP2PCollections struct {
+	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
+	NodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// ExpectedCollectionIDs are the collection IDs (indexes) of the collections expected.
+	ExpectedCollectionIDs []int
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// subscribeToCollection sets up a collection subscription on the given node/collection.
+//
+// Any errors generated during this process will result in a test failure.
+func subscribeToCollection(
+	s *state.State,
+	action SubscribeToCollection,
+) {
+	node := s.Nodes[action.NodeID]
+
+	collectionNames := []string{}
+	for _, collectionIndex := range action.CollectionIDs {
+		if collectionIndex == NonExistentCollectionID {
+			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
+			continue
+		}
+
+		col := s.Nodes[action.NodeID].Collections[collectionIndex]
+		collectionNames = append(collectionNames, col.Name())
+	}
+
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
+	err := node.AddP2PCollections(ctx, collectionNames...)
+	if err == nil {
+		waitForSubscribeToCollectionEvent(s, action)
+	}
+
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+
+	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
+	// for the pubsub subscription and those functions can take a bit of time to complete,
+	// we need to make sure this has finished before progressing.
+	time.Sleep(100 * time.Millisecond)
+}
+
+// unsubscribeToCollection removes the given collections from subscriptions on the given nodes.
+//
+// Any errors generated during this process will result in a test failure.
+func unsubscribeToCollection(
+	s *state.State,
+	action UnsubscribeToCollection,
+) {
+	node := s.Nodes[action.NodeID]
+
+	collectionNames := []string{}
+	for _, collectionIndex := range action.CollectionIDs {
+		if collectionIndex == NonExistentCollectionID {
+			collectionNames = append(collectionNames, NonExistentCollectionSchemaRoot)
+			continue
+		}
+
+		col := s.Nodes[action.NodeID].Collections[collectionIndex]
+		collectionNames = append(collectionNames, col.Name())
+	}
+
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
+	err := node.RemoveP2PCollections(ctx, collectionNames...)
+	if err == nil {
+		waitForUnsubscribeToCollectionEvent(s, action)
+	}
+
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+
+	// The `n.Peer.RemoveP2PCollections(colIDs)` call above is calling some asynchronous functions
+	// for the pubsub subscription and those functions can take a bit of time to complete,
+	// we need to make sure this has finished before progressing.
+	time.Sleep(100 * time.Millisecond)
+}
+
+// getAllP2PCollections gets all the active peer subscriptions and compares them against the
+// given expected results.
+//
+// Any errors generated during this process will result in a test failure.
+func getAllP2PCollections(
+	s *state.State,
+	action GetAllP2PCollections,
+) {
+	expectedCollections := []string{}
+	for _, collectionIndex := range action.ExpectedCollectionIDs {
+		col := s.Nodes[action.NodeID].Collections[collectionIndex]
+		expectedCollections = append(expectedCollections, col.Name())
+	}
+
+	node := s.Nodes[action.NodeID]
+	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
+	cols, err := node.GetAllP2PCollections(ctx)
+
+	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
+	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
+
+	if !expectedErrorRaised {
+		assert.Equal(s.T, expectedCollections, cols)
+	}
+}

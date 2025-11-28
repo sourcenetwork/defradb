@@ -19,15 +19,16 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestNewTxnFrom(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(ctx, rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	require.NoError(t, err)
 }
 
@@ -35,13 +36,13 @@ func TestOnSuccess(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(ctx, rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	text := "Source"
 	txn.OnSuccess(func() {
 		text += " Inc"
 	})
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	require.NoError(t, err)
 
 	require.Equal(t, text, "Source Inc")
@@ -51,7 +52,7 @@ func TestOnSuccessAsync(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(ctx, rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	var wg sync.WaitGroup
 	txn.OnSuccessAsync(func() {
@@ -59,7 +60,7 @@ func TestOnSuccessAsync(t *testing.T) {
 	})
 
 	wg.Add(1)
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	require.NoError(t, err)
 	wg.Wait()
 }
@@ -68,7 +69,7 @@ func TestOnError(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(ctx, rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	text := "Source"
 	txn.OnError(func() {
@@ -78,7 +79,7 @@ func TestOnError(t *testing.T) {
 	err := rootstore.Close()
 	require.NoError(t, err)
 
-	err = txn.Commit(ctx)
+	err = txn.Commit()
 	require.ErrorIs(t, err, corekv.ErrDBClosed)
 
 	require.Equal(t, text, "Source Inc")
@@ -88,7 +89,7 @@ func TestOnErrorAsync(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(ctx, rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	var wg sync.WaitGroup
 	txn.OnErrorAsync(func() {
@@ -99,7 +100,7 @@ func TestOnErrorAsync(t *testing.T) {
 	require.NoError(t, err)
 
 	wg.Add(1)
-	err = txn.Commit(ctx)
+	err = txn.Commit()
 	require.ErrorIs(t, err, corekv.ErrDBClosed)
 	wg.Wait()
 }
@@ -108,13 +109,13 @@ func TestOnDiscard(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(ctx, rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	text := "Source"
 	txn.OnDiscard(func() {
 		text += " Inc"
 	})
-	txn.Discard(ctx)
+	txn.Discard()
 
 	require.Equal(t, text, "Source Inc")
 }
@@ -123,7 +124,7 @@ func TestOnDiscardAsync(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewTxnFrom(ctx, rootstore, 0, false)
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
 	var wg sync.WaitGroup
 	txn.OnDiscardAsync(func() {
@@ -131,6 +132,6 @@ func TestOnDiscardAsync(t *testing.T) {
 	})
 
 	wg.Add(1)
-	txn.Discard(ctx)
+	txn.Discard()
 	wg.Wait()
 }

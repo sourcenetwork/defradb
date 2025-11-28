@@ -68,6 +68,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
@@ -165,6 +166,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 						// to the P2P collection.
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				NodeID: immutable.Some(1),
@@ -189,6 +191,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -256,6 +259,71 @@ func TestP2PCreate_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
 			},
 			testUtils.WaitForSync{},
 			testUtils.Request{
+				Request: `query {
+                    Users {
+                        Age
+                    }
+                }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PCreate_WithP2PCollectionOnLastNodeInNodeChain_ShouldPropagateUpdate(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+                    type Users {
+                        Name: String
+                        Age: Int
+                    }
+                `,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 2,
+				TargetNodeID: 1,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 3,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 4,
+				TargetNodeID: 3,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        4,
+				CollectionIDs: []int{0},
+			},
+			testUtils.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+                    "Name": "John",
+                    "Age": 21
+                }`,
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(4),
 				Request: `query {
                     Users {
                         Age

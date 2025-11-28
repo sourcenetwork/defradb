@@ -30,8 +30,8 @@ func TestColVersionUpdateReplaceSources_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Sources",
-							"value": [{"SourceCollectionID": "bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq"}]
+							"path": "/Users/PreviousVersion",
+							"value": {"SourceCollectionID": "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"}
 						}
 					]
 				`,
@@ -56,8 +56,8 @@ func TestColVersionUpdateReplaceSourcesWithQuerySource_Errors(t *testing.T) {
 					[
 						{
 							"op": "replace",
-							"path": "/bafyreihdbjfazsx5vq2tpzedqdktrjyn6lq22qle7el2s42b3q4zpxmwqq/Sources",
-							"value": [{"Query": {"Name": "Users"}}]
+							"path": "/Users/Query",
+							"value": {"Query": {"Name": "Users"}}
 						}
 					]
 				`,

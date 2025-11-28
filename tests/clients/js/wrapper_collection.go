@@ -266,3 +266,39 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 	}
 	return out, nil
 }
+
+func (c *Collection) CreateEncryptedIndex(
+	ctx context.Context,
+	req client.EncryptedIndexDescription,
+) (client.EncryptedIndexDescription, error) {
+	indexDescVal, err := goji.MarshalJS(req)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	res, err := execute(ctx, c.client, "createEncryptedIndex", indexDescVal)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	var indexDescOut client.EncryptedIndexDescription
+	if err := goji.UnmarshalJS(res[0], &indexDescOut); err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	return indexDescOut, nil
+}
+
+func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	res, err := execute(ctx, c.client, "listEncryptedIndexes")
+	if err != nil {
+		return nil, err
+	}
+	var out []client.EncryptedIndexDescription
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+	_, err := execute(ctx, c.client, "deleteEncryptedIndex", fieldName)
+	return err
+}

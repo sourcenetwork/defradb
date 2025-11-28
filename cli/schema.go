@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeSchemaCommand() *cobra.Command {
+func MakeSchemaCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "schema",
 		Short: "Interact with the schema system of a DefraDB node",

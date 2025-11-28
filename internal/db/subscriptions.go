@@ -63,19 +63,27 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 					continue // invalid event value
 				}
 			}
-			txn, err := db.NewTxn(ctx, false)
+			txn, err := db.NewTxn(false)
 			if err != nil {
 				log.ErrorContext(ctx, err.Error())
 				continue
 			}
 			ctx := InitContext(ctx, txn)
 
-			p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db)
+			p := planner.New(
+				ctx,
+				identity.FromContext(ctx),
+				db.nodeACP,
+				db.documentACP,
+				db,
+				db.p2p,
+				db.getLensStore(ctx),
+			)
 			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
 
 			result, err := p.RunSelection(ctx, s)
 			if err == nil && len(result) == 0 {
-				txn.Discard(ctx)
+				txn.Discard()
 				continue // Don't send anything back to the client if the request yields an empty dataset.
 			}
 
@@ -98,7 +106,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 			// now that weve filtered empty result sets, lets recheck
 			if len(result) == 0 {
-				txn.Discard(ctx)
+				txn.Discard()
 				continue
 			}
 
@@ -114,10 +122,10 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 
 			select {
 			case <-ctx.Done():
-				txn.Discard(ctx)
+				txn.Discard()
 				return // context cancelled
 			case resCh <- res:
-				txn.Discard(ctx)
+				txn.Discard()
 			}
 		}
 	}()

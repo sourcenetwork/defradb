@@ -32,7 +32,7 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.Re
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	options := &client.GQLOptions{}
 	for _, o := range opts {
@@ -44,7 +44,7 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.Re
 		return res
 	}
 
-	if err := txn.Commit(ctx); err != nil {
+	if err := txn.Commit(); err != nil {
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
@@ -57,11 +57,15 @@ func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionGetPerm); err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	return db.getCollectionByName(ctx, name)
 }
@@ -74,11 +78,15 @@ func (db *DB) GetCollections(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionGetPerm); err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	return db.getCollections(ctx, options)
 }
@@ -90,13 +98,33 @@ func (db *DB) GetAllIndexes(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeIndexListPerm); err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	return db.getAllIndexDescriptions(ctx)
+}
+
+// ListAllEncryptedIndexes gets all the encrypted indexes in the database.
+func (db *DB) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	ctx, txn, err := ensureContextTxn(ctx, db, true)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard()
+
+	return db.listAllEncryptedIndexDescriptions(ctx)
 }
 
 // AddSchema takes the provided GQL schema in SDL format, and applies it to the database,
@@ -116,14 +144,14 @@ func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.Coll
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	cols, err := db.addSchema(ctx, schemaString)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := txn.Commit(ctx); err != nil {
+	if err := txn.Commit(); err != nil {
 		return nil, err
 	}
 	return cols, nil
@@ -157,50 +185,59 @@ func (db *DB) PatchCollection(
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.patchCollection(ctx, patchString, migration)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
+		return err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.setActiveCollectionVersion(ctx, schemaVersionID)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
-func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) error {
+func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
-		return err
+		return "", err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
-	err = db.setMigration(ctx, cfg)
+	lensID, err := db.setMigration(ctx, cfg)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return txn.Commit(ctx)
+	err = txn.Commit()
+	if err != nil {
+		return "", err
+	}
+
+	return lensID, nil
 }
 
 func (db *DB) AddView(
@@ -216,14 +253,14 @@ func (db *DB) AddView(
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	defs, err := db.addView(ctx, query, sdl, transform)
 	if err != nil {
 		return nil, err
 	}
 
-	err = txn.Commit(ctx)
+	err = txn.Commit()
 	if err != nil {
 		return nil, err
 	}
@@ -239,14 +276,14 @@ func (db *DB) RefreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.refreshViews(ctx, opts)
 	if err != nil {
 		return err
 	}
 
-	err = txn.Commit(ctx)
+	err = txn.Commit()
 	if err != nil {
 		return err
 	}
@@ -264,14 +301,14 @@ func (db *DB) BasicImport(ctx context.Context, filepath string) error {
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.basicImport(ctx, filepath)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }
 
 // BasicExport exports the current data or subset of data to file in json format.
@@ -283,12 +320,12 @@ func (db *DB) BasicExport(ctx context.Context, config *client.BackupConfig) erro
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	err = db.basicExport(ctx, config)
 	if err != nil {
 		return err
 	}
 
-	return txn.Commit(ctx)
+	return txn.Commit()
 }

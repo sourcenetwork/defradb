@@ -31,7 +31,7 @@ func TestMutationCreateOneToOne_UseAliasWithInvalidField_Error(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"notName": "John Grisham",
-					"published": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
+					"published": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 				ExpectedError: "the given field does not exist. Name: notName",
 			},
@@ -49,7 +49,7 @@ func TestMutationCreateOneToOne_UseAliasWithNonExistingRelationPrimarySide_Creat
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
-					"published": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
+					"published": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			testUtils.Request{

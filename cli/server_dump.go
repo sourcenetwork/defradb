@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/node"
 )
 
@@ -35,11 +36,11 @@ func MakeServerDumpCmd() *cobra.Command {
 			storeOpts := []node.StoreOpt{
 				node.WithStorePath(badgerPath),
 			}
-			rootstore, err := node.NewStore(ctx, storeOpts...)
+			rootstore, _, err := node.NewStore(ctx, storeOpts...)
 			if err != nil {
 				return err
 			}
-			nacInfo, err := db.NewNACInfo(ctx, badgerPath, false)
+			nacInfo, err := acpDB.NewNACInfo(ctx, badgerPath, false)
 			if err != nil {
 				return err
 			}
@@ -48,7 +49,6 @@ func MakeServerDumpCmd() *cobra.Command {
 				rootstore,
 				nacInfo,
 				dac.NoDocumentACP,
-				nil,
 			)
 			if err != nil {
 				return errors.Wrap("failed to initialize database", err)

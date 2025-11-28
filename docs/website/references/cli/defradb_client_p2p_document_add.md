@@ -7,15 +7,18 @@ Add P2P documents
 Add P2P documents to the synchronized pubsub topics.
 The documents are synchronized between nodes of a pubsub network.
 
-Example: add single document
-  defradb client p2p document add bae123
-
-Example: add multiple documents
-  defradb client p2p document add bae123,bae456
-		
-
 ```
 defradb client p2p document add [docIDs] [flags]
+```
+
+### Examples
+
+```
+add single document:  
+  defradb client p2p document add bae123
+
+add multiple documents:  
+  defradb client p2p document add bae123,bae456
 ```
 
 ### Options

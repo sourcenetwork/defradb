@@ -11,6 +11,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strconv"
@@ -140,6 +141,7 @@ func fromAstDefinition(
 
 	indexes := []client.IndexCreateRequest{}
 	vectorEmbeddings := []client.VectorEmbeddingDescription{}
+	encryptedIndexes := []client.EncryptedIndexDescription{}
 	for _, field := range def.Fields {
 		tmpCollectionFieldDescriptions, err := fieldsFromAST(
 			field,
@@ -165,6 +167,12 @@ func fromAstDefinition(
 					return core.Collection{}, err
 				}
 				vectorEmbeddings = append(vectorEmbeddings, embedding)
+			case types.EncryptedIndexDirectiveLabel:
+				encryptedIndex, err := encryptedIndexFromAST(directive, field)
+				if err != nil {
+					return core.Collection{}, err
+				}
+				encryptedIndexes = append(encryptedIndexes, encryptedIndex)
 			}
 		}
 	}
@@ -244,6 +252,7 @@ func fromAstDefinition(
 			IsEmbeddedOnly:   def.IsInterface,
 			IsActive:         true,
 			VectorEmbeddings: vectorEmbeddings,
+			EncryptedIndexes: encryptedIndexes,
 		},
 		CreateIndexes: indexes,
 	}, nil
@@ -434,7 +443,20 @@ func defaultFromAST(
 	case types.DefaultDirectivePropDateTime:
 		value = gql.DateTime.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropJSON:
-		value = types.JSON.ParseLiteral(arg.Value, nil)
+		jsonValue := types.JSON.ParseLiteral(arg.Value, nil)
+		switch v := jsonValue.(type) {
+		case nil:
+			value = nil
+		case string, int32, float64, bool:
+			value = v
+		default:
+			// If the value is not a primitive type, marshal it to a JSON string for storage
+			jsonBytes, err := json.Marshal(jsonValue)
+			if err != nil {
+				return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
+			}
+			value = string(jsonBytes)
+		}
 	case types.DefaultDirectivePropBlob:
 		value = types.Blob.ParseLiteral(arg.Value, nil)
 	}
@@ -445,6 +467,37 @@ func defaultFromAST(
 		return nil, NewErrDefaultValueInvalid(field.Name.Value, propName)
 	}
 	return value, nil
+}
+
+func encryptedIndexFromAST(
+	directive *ast.Directive,
+	fieldDef *ast.FieldDefinition,
+) (client.EncryptedIndexDescription, error) {
+	encryptedIndex := client.EncryptedIndexDescription{
+		FieldName: fieldDef.Name.Value,
+		Type:      client.EncryptedIndexTypeEquality,
+	}
+
+	for _, arg := range directive.Arguments {
+		switch arg.Name.Value {
+		case types.EncryptedIndexDirectivePropType:
+			typeVal, ok := arg.Value.(*ast.StringValue)
+			if !ok {
+				return client.EncryptedIndexDescription{}, NewErrEncryptedIndexWithInvalidArg(fieldDef.Name.Value)
+			}
+
+			// Currently only equality is supported
+			if typeVal.Value != string(client.EncryptedIndexTypeEquality) {
+				return client.EncryptedIndexDescription{}, NewErrEncryptedIndexTypeNotSupported(typeVal.Value)
+			}
+			encryptedIndex.Type = client.EncryptedIndexType(typeVal.Value)
+
+		default:
+			return client.EncryptedIndexDescription{}, NewErrEncryptedIndexWithUnknownArg(arg.Name.Value)
+		}
+	}
+
+	return encryptedIndex, nil
 }
 
 func fieldsFromAST(
@@ -471,7 +524,7 @@ func fieldsFromAST(
 				return nil, err
 			}
 		case types.ConstraintsDirectiveLabel:
-			constraints, err = contraintsFromAST(kind, directive)
+			constraints, err = constraintsFromAST(kind, directive)
 			if err != nil {
 				return nil, err
 			}
@@ -594,7 +647,7 @@ type constraintDescription struct {
 	Size int
 }
 
-func contraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constraintDescription, error) {
+func constraintsFromAST(kind client.FieldKind, directive *ast.Directive) (constraintDescription, error) {
 	constraints := constraintDescription{}
 	for _, arg := range directive.Arguments {
 		switch arg.Name.Value {

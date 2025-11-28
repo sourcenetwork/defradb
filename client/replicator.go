@@ -16,7 +16,8 @@ import (
 
 // Replicator is a peer that a set of local collections are replicated to.
 type Replicator struct {
-	Info             PeerInfo
+	ID               string
+	Addresses        []string
 	CollectionIDs    []string
 	Status           ReplicatorStatus
 	LastStatusChange time.Time

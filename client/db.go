@@ -33,13 +33,13 @@ type TxnStore interface {
 	// NewTxn returns a new transaction on the root store that may be managed externally.
 	//
 	// It may be used with other functions in the client package. It is not threadsafe.
-	NewTxn(ctx context.Context, readOnly bool) (Txn, error)
+	NewTxn(readOnly bool) (Txn, error)
 
 	// NewConcurrentTxn returns a new transaction on the root store that may be managed externally.
 	//
 	// It may be used with other functions in the client package. It is threadsafe and multiple threads/Go routines
 	// can safely operate on it concurrently.
-	NewConcurrentTxn(ctx context.Context, readOnly bool) (Txn, error)
+	NewConcurrentTxn(readOnly bool) (Txn, error)
 }
 
 type Store interface {
@@ -241,23 +241,20 @@ type Store interface {
 	// when making this call.
 	RefreshViews(ctx context.Context, options CollectionFetchOptions) error
 
-	// SetMigration sets the migration for all collections using the given source-destination schema version IDs.
+	// SetMigration sets the migration for all collections using the given source-destination collection version IDs.
 	//
 	// There may only be one migration per collection version.  If another migration was registered it will be
 	// overwritten by this migration.
 	//
-	// Neither of the schema version IDs specified in the configuration need to exist at the time of calling.
-	// This is to allow the migration of documents of schema versions unknown to the local node received by the
+	// Neither of the collection version IDs specified in the configuration need to exist at the time of calling.
+	// This is to allow the migration of documents of collection versions unknown to the local node received by the
 	// P2P system.
 	//
-	// Migrations will only run if there is a complete path from the document schema version to the latest local
-	// schema version.
-	SetMigration(ctx context.Context, config LensConfig) error
-
-	// LensRegistry returns the LensRegistry in use by this database instance.
+	// Migrations will only run if there is a complete path from the document collection version to the latest local
+	// collection version.
 	//
-	// It exposes several useful thread-safe migration related functions.
-	LensRegistry() LensRegistry
+	// Returns the ID of the Lens transform.
+	SetMigration(ctx context.Context, config LensConfig) (string, error)
 
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
@@ -280,6 +277,9 @@ type Store interface {
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(ctx context.Context) (map[CollectionName][]IndexDescription, error)
 
+	// ListAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].
+	ListAllEncryptedIndexes(context.Context) (map[CollectionName][]EncryptedIndexDescription, error)
+
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(ctx context.Context, request string, opts ...RequestOption) *RequestResult
 
@@ -297,7 +297,7 @@ type Store interface {
 
 // Txn is a Store instance that has been wrapped by a transaction.
 //
-// It privides access to all the Store methods and ensures that they are
+// It provides access to all the Store methods and ensures that they are
 // executed under the transaction.
 type Txn interface {
 	Store
@@ -308,13 +308,13 @@ type Txn interface {
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an
 	// error is an indication that the data was not committed to the Datastore.
-	Commit(ctx context.Context) error
+	Commit() error
 
 	// Discard throws away changes recorded in a transaction without committing
 	// them to the underlying Datastore. Any calls made to Discard after Commit
 	// has been successfully called will have no effect on the transaction and
 	// state of the Datastore, making it safe to defer.
-	Discard(ctx context.Context)
+	Discard()
 }
 
 // GQLOptions contains optional arguments for GQL requests.

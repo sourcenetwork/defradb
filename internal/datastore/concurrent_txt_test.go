@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/corekv/badger"
 	"github.com/sourcenetwork/corekv/memory"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/stretchr/testify/require"
 )
@@ -31,12 +32,11 @@ func getBadgerTxnDB(t *testing.T) *badger.Datastore {
 }
 
 func TestNewConcurrentTxnFrom(t *testing.T) {
-	ctx := context.Background()
 	rootstore := getBadgerTxnDB(t)
 
-	txn := NewConcurrentTxnFrom(ctx, rootstore, 0, false)
+	txn := NewConcurrentTxnFrom(rootstore, 0, false, immutable.None[int]())
 
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	require.NoError(t, err)
 }
 
@@ -44,9 +44,9 @@ func TestNewConcurrentTxnFromNonIterable(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
 
-	txn := NewConcurrentTxnFrom(ctx, rootstore, 0, false)
+	txn := NewConcurrentTxnFrom(rootstore, 0, false, immutable.None[int]())
 
-	err := txn.Commit(ctx)
+	err := txn.Commit()
 	require.NoError(t, err)
 }
 

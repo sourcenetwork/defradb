@@ -385,7 +385,7 @@ func TestParseInvalidIndexOnField(t *testing.T) {
 }
 
 func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
-	schemaManager, err := NewSchemaManager()
+	schemaManager, err := NewSchemaManager(false)
 	require.NoError(t, err)
 
 	parseResult, err := schemaManager.ParseSDL(testCase.sdl)
@@ -401,7 +401,7 @@ func parseIndexAndTest(t *testing.T, testCase indexTestCase) {
 }
 
 func parseInvalidIndexAndTest(t *testing.T, testCase invalidIndexTestCase) {
-	schemaManager, err := NewSchemaManager()
+	schemaManager, err := NewSchemaManager(false)
 	require.NoError(t, err)
 
 	_, err = schemaManager.ParseSDL(testCase.sdl)

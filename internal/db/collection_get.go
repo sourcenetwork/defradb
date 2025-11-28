@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
@@ -31,12 +32,16 @@ func (c *collection) Get(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
+		return nil, err
+	}
+
 	// create txn
 	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
 	if err != nil {
 		return nil, err
@@ -59,7 +64,7 @@ func (c *collection) Get(
 		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	return doc, txn.Commit(ctx)
+	return doc, txn.Commit()
 }
 
 func (c *collection) get(
@@ -70,12 +75,13 @@ func (c *collection) get(
 ) (*client.Document, error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 	// create a new document fetcher
-	df := c.newFetcher()
+	df := c.newFetcher(ctx)
 	// initialize it with the primary index
 	err := df.Init(
 		ctx,
 		identity.FromContext(ctx),
 		txn,
+		c.db.nodeACP,
 		c.db.documentACP,
 		immutable.Option[client.IndexDescription]{},
 		c,

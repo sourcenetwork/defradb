@@ -24,7 +24,7 @@ import (
 
 // transactionDB is a db that can create transactions.
 type transactionDB interface {
-	NewTxn(context.Context, bool) (client.Txn, error)
+	NewTxn(bool) (client.Txn, error)
 }
 
 // ensureContextTxn ensures that the returned context has a transaction.
@@ -69,7 +69,7 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 			return nil, nil, NewErrUnsupportedTxnType(ctxTxn)
 		}
 	}
-	clientTxn, err := db.NewTxn(ctx, readOnly)
+	clientTxn, err := db.NewTxn(readOnly)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -93,24 +93,24 @@ func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
 	}
 }
 
-func (txn *Txn) Commit(ctx context.Context) error {
+func (txn *Txn) Commit() error {
 	if txn.explicit {
 		// If the transaction has been explicitly defined, `Commit` should
 		// only be executed by the transaction creator. As such, a call to
 		// `Commit` on an explicit transaction should result in a no-op.
 		return nil
 	}
-	return txn.BasicTxn.Commit(ctx)
+	return txn.BasicTxn.Commit()
 }
 
-func (txn *Txn) Discard(ctx context.Context) {
+func (txn *Txn) Discard() {
 	if txn.explicit {
 		// If the transaction has been explicitly defined, `Discard` should
 		// only be executed by the transaction creator. As such, a call to
 		// `Discard` on an explicit transaction should result in a no-op.
 		return
 	}
-	txn.BasicTxn.Discard(ctx)
+	txn.BasicTxn.Discard()
 }
 
 func (txn *Txn) PrintDump(ctx context.Context) error {
@@ -221,13 +221,9 @@ func (txn *Txn) RefreshViews(ctx context.Context, options client.CollectionFetch
 	return txn.db.RefreshViews(ctx, options)
 }
 
-func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.SetMigration(ctx, config)
-}
-
-func (txn *Txn) LensRegistry() client.LensRegistry {
-	return txn.db.LensRegistry()
 }
 
 func (txn *Txn) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
@@ -248,6 +244,13 @@ func (txn *Txn) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]
 	return txn.db.GetAllIndexes(ctx)
 }
 
+func (txn *Txn) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.ListAllEncryptedIndexes(ctx)
+}
+
 func (txn *Txn) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ExecRequest(ctx, request, opts...)
@@ -263,22 +266,26 @@ func (txn *Txn) BasicExport(ctx context.Context, config *client.BackupConfig) er
 	return txn.db.BasicExport(ctx, config)
 }
 
-func (txn *Txn) PeerInfo() client.PeerInfo {
+func (txn *Txn) PeerInfo() ([]string, error) {
 	return txn.db.PeerInfo()
 }
 
-func (txn *Txn) Connect(ctx context.Context, info client.PeerInfo) error {
-	return txn.db.Connect(ctx, info)
+func (txn *Txn) ActivePeers(ctx context.Context) ([]string, error) {
+	return txn.db.ActivePeers(ctx)
 }
 
-func (txn *Txn) SetReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
-	ctx = InitContext(ctx, txn)
-	return txn.db.SetReplicator(ctx, info, collectionNames...)
+func (txn *Txn) Connect(ctx context.Context, addresses []string) error {
+	return txn.db.Connect(ctx, addresses)
 }
 
-func (txn *Txn) DeleteReplicator(ctx context.Context, info client.PeerInfo, collectionNames ...string) error {
+func (txn *Txn) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.DeleteReplicator(ctx, info, collectionNames...)
+	return txn.db.SetReplicator(ctx, addresses, collectionNames...)
+}
+
+func (txn *Txn) DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.DeleteReplicator(ctx, id, collectionNames...)
 }
 
 func (txn *Txn) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
@@ -319,4 +326,9 @@ func (txn *Txn) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.SyncDocuments(ctx, collectionName, docIDs)
+}
+
+func (txn *Txn) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.SyncCollectionVersions(ctx, versionIDs...)
 }

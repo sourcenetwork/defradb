@@ -23,18 +23,22 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
 // VerifySignature verifies the signatures of a block using a public key.
 // Returns an error if any signature verification fails.
 func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeSignatureVerifyPerm); err != nil {
+		return err
+	}
+
 	parsedCid, err := cid.Parse(blockCid)
 	if err != nil {
 		return err
 	}
 
-	blockStore := &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore)}
+	blockStore := &bsadapter.Adapter{Wrapped: datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize)}
 	linkSys := cidlink.DefaultLinkSystem()
 	linkSys.SetReadStorage(blockStore)
 	linkSys.TrustedStorage = true
@@ -60,9 +64,10 @@ func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypt
 			return err
 		}
 
-		hasPerm, err := permission.CheckAccessOfDocOnCollectionWithACP(
+		hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
 			ctx,
 			identity.FromContext(ctx),
+			db.nodeACP,
 			db.documentACP.Value(),
 			collection,
 			acpTypes.DocumentReadPerm,

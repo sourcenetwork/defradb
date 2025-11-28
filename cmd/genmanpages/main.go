@@ -15,6 +15,7 @@ installation is packaging and system dependent.
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -40,7 +41,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	defraCmd := cli.NewDefraCommand()
+	defraCmd := cli.NewDefraCommand(context.Background())
 
 	if err := os.MkdirAll(dir, defaultPerm); err != nil {
 		log.Fatal("Failed to create directory", err)

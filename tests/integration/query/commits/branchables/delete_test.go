@@ -50,7 +50,7 @@ func TestQueryCommitsBranchables_WithDelete(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 							links {
 								cid
@@ -58,7 +58,7 @@ func TestQueryCommitsBranchables_WithDelete(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": gomega.And(collectionDeleteCid, uniqueCid),
 							"links": []map[string]any{

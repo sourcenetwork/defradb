@@ -157,6 +157,7 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				// Andy the User has not been synced, as the docID was removed from the subscription set.

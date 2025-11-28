@@ -16,13 +16,14 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
+	lensNode "github.com/sourcenetwork/lens/host-go/node"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/kms"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
 var log = corelog.NewLogger("node")
@@ -38,6 +39,7 @@ type DB interface {
 	MaxTxnRetries() int
 	Rootstore() corekv.TxnStore
 	Events() event.Bus
+	NodeACP() acpDB.NACInfo
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	PurgeDACState(ctx context.Context) error
 	PurgeNACState(ctx context.Context) error
@@ -53,8 +55,6 @@ type Node struct {
 	peer Peer
 	// api http server instance
 	server *http.Server
-	// kms subsystem instance
-	kmsService kms.Service
 	// config values after applying options
 	config *Config
 	// options the node was created with
@@ -77,11 +77,7 @@ func New(ctx context.Context, options ...Option) (*Node, error) {
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	rootstore, err := NewStore(ctx, filterOptions[StoreOpt](n.options)...)
-	if err != nil {
-		return err
-	}
-	lens, err := NewLens(ctx, filterOptions[LenOpt](n.options)...)
+	rootstore, isValueSizeLimited, err := NewStore(ctx, filterOptions[StoreOpt](n.options)...)
 	if err != nil {
 		return err
 	}
@@ -89,22 +85,32 @@ func (n *Node) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	nodeACP, err := NewNodeACP(ctx, filterOptions[NodeACPOpt](n.options)...)
 	if err != nil {
 		return err
 	}
 
-	err = n.startP2P(ctx, rootstore)
+	var chunkSize immutable.Option[int]
+	if isValueSizeLimited {
+		chunkSize = immutable.Some(defaultChunkSize)
+
+		n.options = append(n.options,
+			db.WithLensOpts(
+				lensNode.WithBlockstoreChunkSize(defaultChunkSize),
+			),
+		)
+		n.options = append(n.options,
+			db.WithBlockStoreChunkSize(defaultChunkSize),
+		)
+	}
+
+	err = n.startP2P(ctx, rootstore, chunkSize)
 	if err != nil {
 		return err
 	}
 
-	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, lens, filterOptions[db.Option](n.options)...)
-	if err != nil {
-		return err
-	}
-
-	err = n.startKMS(ctx)
+	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, filterOptions[db.Option](n.options)...)
 	if err != nil {
 		return err
 	}

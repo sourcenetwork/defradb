@@ -62,6 +62,7 @@ func TestQuerySimpleWithIntInFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -174,6 +175,7 @@ func TestQuerySimpleWithIntInFilterWithNullValue(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

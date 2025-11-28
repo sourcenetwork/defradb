@@ -6,20 +6,24 @@ Disable the node access control
 
 Disable the node access control
 
-Example:
-  defradb client acp node disable -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
 Note:
 - This command will disable an node acp system that is currently enabled.
 - If node acp is already disabled, then it will return an error.
 - If node acp is in a clean/non-configured state, then it will return an error.
 
-Learn more about the DefraDB [ACP System](/acp/README.md)
+Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 
 
 
 ```
 defradb client acp node disable [-i --identity] [flags]
+```
+
+### Examples
+
+```
+Disable node access control:  
+  defradb client acp node disable -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 ```
 
 ### Options

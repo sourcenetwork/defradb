@@ -78,6 +78,7 @@ func TestQueryOneToMany_WithAverageAliasFilter_ShouldMatchAll(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

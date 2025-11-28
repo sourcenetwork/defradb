@@ -32,7 +32,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 					{
 						"User": []map[string]any{
 							{
-								"_docID": "bae-374c6a78-6081-5a3c-a62e-6a3fef63f0cc",
+								"_docID": "bae-9591c619-4bca-58eb-8820-28028736ef0c",
 								"age":    int64(27),
 								"name":   "John",
 							},
@@ -41,7 +41,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 					{
 						"User": []map[string]any{
 							{
-								"_docID": "bae-7867e222-16fd-580c-9d30-aa9f5b406d69",
+								"_docID": "bae-45e90427-d499-598b-902a-6a3c65d0b504",
 								"age":    int64(31),
 								"name":   "Addo",
 							},
@@ -306,8 +306,8 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 					{
 						"User": []map[string]any{
 							{
-								"age":    int64(31),
-								"name":   "Addo",
+								"age":    int64(27),
+								"name":   "John",
 								"points": float64(55),
 							},
 						},
@@ -315,8 +315,8 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 					{
 						"User": []map[string]any{
 							{
-								"age":    int64(27),
-								"name":   "John",
+								"age":    int64(31),
+								"name":   "Addo",
 								"points": float64(55),
 							},
 						},
@@ -332,13 +332,72 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 				Results: map[string]any{
 					"update_User": []map[string]any{
 						{
-							"name": "Addo",
+							"name": "John",
 						},
 						{
-							"name": "John",
+							"name": "Addo",
 						},
 					},
 				},
+			},
+		},
+	}
+
+	execute(t, test)
+}
+
+func TestSubscription_WithDocIDFilter_ShouldOnlyGetUpdatesForThatDocID(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User(docID: "bae-a160ba13-dbf9-50da-a598-018bffa10569") {
+						name
+						age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"User": []map[string]any{
+							{
+								"age":  int64(31),
+								"name": "Addo",
+							},
+						},
+					},
+					{
+						"User": []map[string]any{
+							{
+								"age":  int64(32),
+								"name": "Addo",
+							},
+						},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  27,
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "Addo",
+					"age":  31,
+				},
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc:          `{"age": 28}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        1,
+				Doc:          `{"age": 32}`,
 			},
 		},
 	}
@@ -408,6 +467,71 @@ func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 				CollectionID: 0,
 				DocID:        0,
 				Doc:          `{"counter": 1}`,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSubscription_WithDeleteOperation_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+					}
+				`,
+			},
+			testUtils.SubscriptionRequest{
+				Request: `subscription {
+					User (showDeleted: true) { 
+						name
+						_deleted
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"User": []map[string]any{
+							{
+								"name":     "John",
+								"_deleted": false,
+							},
+						},
+					},
+					{
+						"User": []map[string]any{
+							{
+								"name":     "Johny",
+								"_deleted": false,
+							},
+						},
+					},
+					{
+						"User": []map[string]any{
+							{
+								"name":     "Johny",
+								"_deleted": true,
+							},
+						},
+					},
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John",
+				},
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc:          `{"name": "Johny"}`,
+			},
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+				DocID:        0,
 			},
 		},
 	}

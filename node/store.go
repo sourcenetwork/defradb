@@ -12,6 +12,8 @@ package node
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/sourcenetwork/corekv"
 )
@@ -46,9 +48,22 @@ type StoreOptions struct {
 	badgerInMemory      bool
 }
 
+// GetDefaultStorePath is a helper function that returns '$HOME/.defradb', but which
+// relies on Go to handle the platform-specific path resolution.
+func GetDefaultStorePath() string {
+	home, err := os.UserHomeDir()
+	// This should never error on any major platform. But if it does, as a fallback,
+	// we will leave the root directory path blank.
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".defradb")
+}
+
 // DefaultStoreOptions returns new options with default values.
 func DefaultStoreOptions() *StoreOptions {
 	return &StoreOptions{
+		path:           GetDefaultStorePath(),
 		badgerInMemory: false,
 		badgerFileSize: 1 << 30,
 	}
@@ -72,16 +87,24 @@ func WithStorePath(path string) StoreOpt {
 }
 
 // NewStore returns a new store with the given options.
-func NewStore(ctx context.Context, opts ...StoreOpt) (corekv.TxnStore, error) {
+func NewStore(ctx context.Context, opts ...StoreOpt) (corekv.TxnStore, bool, error) {
 	options := DefaultStoreOptions()
 	for _, opt := range opts {
 		opt(options)
 	}
+
+	var isValueSizeLimited bool
+	if options.badgerInMemory {
+		isValueSizeLimited = true
+	}
+
 	storeConstructor, ok := storeConstructors[options.store]
 	if ok {
-		return storeConstructor(ctx, options)
+		store, err := storeConstructor(ctx, options)
+		return store, isValueSizeLimited, err
 	}
-	return nil, NewErrStoreTypeNotSupported(options.store)
+
+	return nil, false, NewErrStoreTypeNotSupported(options.store)
 }
 
 func purgeStore(ctx context.Context, opts ...StoreOpt) error {

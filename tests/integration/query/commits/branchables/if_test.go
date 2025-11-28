@@ -45,12 +45,12 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"cid": gomega.And(collectionCid, uniqueCid),
 						},
@@ -97,12 +97,12 @@ func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						// Note: This collection is not branchable, there is no collection
 						// level commit
 						{

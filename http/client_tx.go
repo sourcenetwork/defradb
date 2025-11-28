@@ -44,10 +44,10 @@ func (txn *Transaction) ID() uint64 {
 	return txn.id
 }
 
-func (txn *Transaction) Commit(ctx context.Context) error {
+func (txn *Transaction) Commit() error {
 	methodURL := txn.http.apiURL.JoinPath("tx", fmt.Sprintf("%d", txn.id))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -55,10 +55,10 @@ func (txn *Transaction) Commit(ctx context.Context) error {
 	return err
 }
 
-func (txn *Transaction) Discard(ctx context.Context) {
+func (txn *Transaction) Discard() {
 	methodURL := txn.http.apiURL.JoinPath("tx", fmt.Sprintf("%d", txn.id))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return
 	}
@@ -141,13 +141,9 @@ func (txn *Transaction) RefreshViews(ctx context.Context, options client.Collect
 	return txn.Client.RefreshViews(ctx, options)
 }
 
-func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.SetMigration(ctx, config)
-}
-
-func (txn *Transaction) LensRegistry() client.LensRegistry {
-	return txn.Client.LensRegistry()
 }
 
 func (txn *Transaction) GetCollectionByName(
@@ -171,6 +167,13 @@ func (txn *Transaction) GetAllIndexes(
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.GetAllIndexes(ctx)
+}
+
+func (txn *Transaction) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.ListAllEncryptedIndexes(ctx)
 }
 
 func (txn *Transaction) ExecRequest(

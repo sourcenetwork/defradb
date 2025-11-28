@@ -89,6 +89,24 @@ const (
 	NodeNACRelationAddPerm
 	NodeNACRelationDeletePerm
 	NodeCollectionPatchPerm
+	NodeCollectionGetPerm
+	NodeDocumentReadPerm
+	NodeDocumentUpdatePerm
+	NodeDocumentDeletePerm
+	NodeIndexListPerm
+	NodeIndexCreatePerm
+	NodeIndexDropPerm
+	NodeP2PPeerConnectPerm
+	NodeP2PReplicatorCreatePerm
+	NodeP2PReplicatorDeletePerm
+	NodeP2PReplicatorListPerm
+	NodeP2PCollectionCreatePerm
+	NodeP2PCollectionDeletePerm
+	NodeP2PCollectionListPerm
+	NodeP2PDocumentCreatePerm
+	NodeP2PDocumentDeletePerm
+	NodeP2PDocumentListPerm
+	NodeSignatureVerifyPerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
@@ -110,6 +128,24 @@ var RequiredResourcePermissionsForNode = []string{
 	"nac-relation-add",
 	"nac-relation-delete",
 	"collection-patch",
+	"collection-get",
+	"document-read",
+	"document-update",
+	"document-delete",
+	"index-list",
+	"index-create",
+	"index-drop",
+	"p2p-peer-connect",
+	"p2p-replicator-create",
+	"p2p-replicator-delete",
+	"p2p-replicator-list",
+	"p2p-collection-create",
+	"p2p-collection-delete",
+	"p2p-collection-list",
+	"p2p-document-create",
+	"p2p-document-delete",
+	"p2p-document-list",
+	"signature-verify",
 }
 
 const NodeACPObject = "NodeObject"
@@ -155,6 +191,42 @@ resources:
       nac-relation-delete:
         expr: owner + admin
       collection-patch:
+        expr: owner + admin
+      collection-get:
+        expr: owner + admin
+      document-read:
+        expr: owner + admin
+      document-update:
+        expr: owner + admin
+      document-delete:
+        expr: owner + admin
+      index-list:
+        expr: owner + admin
+      index-create:
+        expr: owner + admin
+      index-drop:
+        expr: owner + admin
+      p2p-peer-connect:
+        expr: owner + admin
+      p2p-replicator-create:
+        expr: owner + admin
+      p2p-replicator-delete:
+        expr: owner + admin
+      p2p-replicator-list:
+        expr: owner + admin
+      p2p-collection-create:
+        expr: owner + admin
+      p2p-collection-delete:
+        expr: owner + admin
+      p2p-collection-list:
+        expr: owner + admin
+      p2p-document-create:
+        expr: owner + admin
+      p2p-document-delete:
+        expr: owner + admin
+      p2p-document-list:
+        expr: owner + admin
+      signature-verify:
         expr: owner + admin
 
     relations:

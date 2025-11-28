@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -24,7 +25,7 @@ func TestKeyringGenerate(t *testing.T) {
 	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
 	require.NoError(t, err)
 
-	cmd := NewDefraCommand()
+	cmd := NewDefraCommand(context.Background())
 	cmd.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir})
 
 	err = cmd.Execute()
@@ -39,7 +40,7 @@ func TestKeyringGenerateNoEncryptionKey(t *testing.T) {
 	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
 	require.NoError(t, err)
 
-	cmd := NewDefraCommand()
+	cmd := NewDefraCommand(context.Background())
 	cmd.SetArgs([]string{"keyring", "generate", "--no-encryption", "--rootdir", rootdir})
 
 	err = cmd.Execute()
@@ -54,7 +55,7 @@ func TestKeyringGenerateNoPeerKey(t *testing.T) {
 	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
 	require.NoError(t, err)
 
-	cmd := NewDefraCommand()
+	cmd := NewDefraCommand(context.Background())
 	cmd.SetArgs([]string{"keyring", "generate", "--no-peer-key", "--rootdir", rootdir})
 
 	err = cmd.Execute()

@@ -26,13 +26,20 @@ import (
 //export IndexCreate
 func IndexCreate(
 	nodePtr C.uintptr_t,
-	collectionName *C.char,
 	indexName *C.char,
 	fieldsStr *C.char,
 	isUnique C.int,
+	options C.CollectionOptions,
+	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	fieldsArg := splitCommaSeparatedString(C.GoString(fieldsStr))
+	collectionName := C.GoString(options.name)
 
 	// Parse the fields into an object, considering whether they are each ascending or descending
 	var fields []client.IndexedFieldDescription
@@ -68,7 +75,7 @@ func IndexCreate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName))
+	col, err := store.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -81,18 +88,23 @@ func IndexCreate(
 }
 
 //export IndexList
-func IndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
+func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	colName := C.GoString(collectionName)
+	collectionName := C.GoString(options.name)
 	switch {
 	// Get the indices associated with a given collection
-	case colName != "":
-		col, err := store.GetCollectionByName(ctx, colName)
+	case collectionName != "":
+		col, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -112,15 +124,24 @@ func IndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
 }
 
 //export IndexDrop
-func IndexDrop(nodePtr C.uintptr_t, collectionName *C.char, indexName *C.char) C.Result {
+func IndexDrop(nodePtr C.uintptr_t,
+	indexName *C.char,
+	options C.CollectionOptions,
+	identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	collectionName := C.GoString(options.name)
 
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName))
+	col, err := store.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

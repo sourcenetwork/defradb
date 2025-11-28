@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"io"
 	"os"
 
@@ -19,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeCollectionCreateCommand() *cobra.Command {
+func MakeCollectionCreateCommand(ctx context.Context) *cobra.Command {
 	var file string
 	var shouldEncryptDoc bool
 	var encryptedFields []string
@@ -42,22 +43,6 @@ Options:
 		and for every field in the list it will generate a symmetric key for encryption using AES-GCM.
 		If combined with '--encrypt' flag, all the fields in the document not listed in '--encrypt-fields' 
 		will be encrypted with the same key.
-
-Example: create from string:
-  defradb client collection create --name User '{ "name": "Bob" }'
-
-Example: create from string, with identity:
-  defradb client collection create --name User '{ "name": "Bob" }' \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
-Example: create multiple from string:
-  defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
-
-Example: create from file:
-  defradb client collection create --name User -f document.json
-
-Example: create from stdin:
-  cat document.json | defradb client collection create --name User -
 		`,
 		Args: cobra.RangeArgs(0, 1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -106,6 +91,23 @@ Example: create from stdin:
 			return col.Create(cmd.Context(), doc, createOpts...)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "Create from string1",
+		`defradb client collection create --name User '{ "name": "Bob" }'`)
+
+	EmbedCLIExample(ctx, cmd, "Create from string, with identity",
+		`defradb client collection create --name User '{ "name": "Bob" }' \
+  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f`)
+
+	EmbedCLIExample(ctx, cmd, "Create multiple from string",
+		`defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'`)
+
+	EmbedCLIExample(ctx, cmd, "Create from file",
+		`defradb client collection create --name User -f document.json`)
+
+	EmbedCLIExample(ctx, cmd, "Create from stdin",
+		`cat document.json | defradb client collection create --name User -`)
+
 	cmd.PersistentFlags().BoolVarP(&shouldEncryptDoc, "encrypt", "e", false,
 		"Flag to enable encryption of the document")
 	cmd.PersistentFlags().StringSliceVar(&encryptedFields, "encrypt-fields", nil,

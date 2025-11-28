@@ -14,9 +14,10 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/immutable"
 )
 
-func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter) error {
+func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
 	if n.config.disableP2P {
 		return nil
 	}

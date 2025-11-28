@@ -28,10 +28,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -52,15 +51,14 @@ type CollectionRetriever interface {
 }
 
 type pubSubService struct {
-	ctx             context.Context
-	peerID          string
-	pubsub          PubSubServer
-	keyRequestedSub event.Subscription
-	eventBus        event.Bus
-	encStore        *ipldEncStorage
-	documentACP     immutable.Option[dac.DocumentACP]
-	colRetriever    CollectionRetriever
-	nodeDID         string
+	ctx          context.Context
+	peerID       string
+	pubsub       PubSubServer
+	encStore     *ipldEncStorage
+	nodeACP      acpDB.NACInfo
+	documentACP  immutable.Option[dac.DocumentACP]
+	colRetriever CollectionRetriever
+	nodeDID      string
 }
 
 var _ Service = (*pubSubService)(nil)
@@ -85,8 +83,8 @@ func NewPubSubService(
 	ctx context.Context,
 	peerID string,
 	pubsub PubSubServer,
-	eventBus event.Bus,
 	encstore datastore.Blockstore,
+	nodeACP acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	colRetriever CollectionRetriever,
 	nodeDID string,
@@ -95,8 +93,8 @@ func NewPubSubService(
 		ctx:          ctx,
 		peerID:       peerID,
 		pubsub:       pubsub,
-		eventBus:     eventBus,
 		encStore:     newIPLDEncryptionStorage(encstore),
+		nodeACP:      nodeACP,
 		documentACP:  documentACP,
 		colRetriever: colRetriever,
 		nodeDID:      nodeDID,
@@ -105,49 +103,8 @@ func NewPubSubService(
 	if err != nil {
 		return nil, err
 	}
-	s.keyRequestedSub, err = eventBus.Subscribe(encryption.RequestKeysEventName)
-	if err != nil {
-		return nil, err
-	}
-	go s.handleKeyRequestedEvent()
+
 	return s, nil
-}
-
-func (s *pubSubService) handleKeyRequestedEvent() {
-	for {
-		msg, isOpen := <-s.keyRequestedSub.Message()
-		if !isOpen {
-			return
-		}
-
-		if keyReqEvent, ok := msg.Data.(encryption.RequestKeysEvent); ok {
-			go func() {
-				results, err := s.GetKeys(s.ctx, keyReqEvent.Keys...)
-				if err != nil {
-					log.ErrorContextE(s.ctx, "Failed to get encryption keys", err)
-				}
-
-				defer close(keyReqEvent.Resp)
-
-				select {
-				case <-s.ctx.Done():
-					return
-				case encResult := <-results.Get():
-					for _, encItem := range encResult.Items {
-						_, err = s.encStore.put(s.ctx, encItem.Block)
-						if err != nil {
-							log.ErrorContextE(s.ctx, "Failed to save encryption key", err)
-							return
-						}
-					}
-
-					keyReqEvent.Resp <- encResult
-				}
-			}()
-		} else {
-			log.ErrorContext(s.ctx, "Failed to cast event data to RequestKeysEvent")
-		}
-	}
 }
 
 type fetchEncryptionKeyRequest struct {
@@ -258,6 +215,13 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 
 		if err != nil {
 			log.ErrorContextE(s.ctx, "Failed to decrypt encryption key", err)
+			result <- encryption.Result{Error: err}
+			return
+		}
+
+		_, err = s.encStore.put(context.Background(), decryptedData)
+		if err != nil {
+			log.ErrorContextE(s.ctx, "Failed to store encryption key", err)
 			result <- encryption.Result{Error: err}
 			return
 		}
@@ -379,9 +343,10 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return false, err
 	}
 
-	return permission.CheckAccessOfDocOnCollectionWithACP(
+	return acpDB.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		immutable.Some(identity.FromDID(actorIdentity)),
+		s.nodeACP,
 		s.documentACP.Value(),
 		collection,
 		acpTypes.DocumentReadPerm,

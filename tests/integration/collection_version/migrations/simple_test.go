@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
@@ -51,24 +52,10 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 					{
 						VersionID:      "also does not exist",
 						IsMaterialized: true,
-						Sources: []any{
-							&client.CollectionSource{
-								SourceCollectionID: "does not exist",
-								Transform: immutable.Some(
-									model.Lens{
-										Lenses: []model.LensModule{
-											{
-												Path: lenses.SetDefaultModulePath,
-												Arguments: map[string]any{
-													"dst":   "verified",
-													"value": false,
-												},
-											},
-										},
-									},
-								),
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "does not exist",
+							Transform:          immutable.Some("{{.LensID0}}"),
+						}),
 					},
 					{
 						VersionID:      "does not exist",
@@ -105,7 +92,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
 					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
-					DestinationSchemaVersionID: "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
+					DestinationSchemaVersionID: "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -127,46 +114,18 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 					{
 						VersionID:      "also does not exist",
 						IsMaterialized: true,
-						Sources: []any{
-							&client.CollectionSource{
-								SourceCollectionID: "does not exist",
-								Transform: immutable.Some(
-									model.Lens{
-										Lenses: []model.LensModule{
-											{
-												Path: lenses.SetDefaultModulePath,
-												Arguments: map[string]any{
-													"dst":   "verified",
-													"value": false,
-												},
-											},
-										},
-									},
-								),
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "does not exist",
+							Transform:          immutable.Some("{{.LensID0}}"),
+						}),
 					},
 					{
 						IsMaterialized: true,
-						VersionID:      "bafyreig2nfxuzl3cob7txuvybcct6mmsylt57oirzsrehffkho6bdxlvwy",
-						Sources: []any{
-							&client.CollectionSource{
-								SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
-								Transform: immutable.Some(
-									model.Lens{
-										Lenses: []model.LensModule{
-											{
-												Path: lenses.SetDefaultModulePath,
-												Arguments: map[string]any{
-													"dst":   "verified",
-													"value": true,
-												},
-											},
-										},
-									},
-								),
-							},
-						},
+						VersionID:      "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+							Transform:          immutable.Some("{{.LensID1}}"),
+						}),
 					},
 					{
 						IsMaterialized: true,
@@ -234,48 +193,68 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 					{
 						VersionID:      "b",
 						IsMaterialized: true,
-						Sources: []any{
-							&client.CollectionSource{
-								SourceCollectionID: "a",
-								Transform: immutable.Some(
-									model.Lens{
-										Lenses: []model.LensModule{
-											{
-												Path: lenses.SetDefaultModulePath,
-												Arguments: map[string]any{
-													"dst":   "verified",
-													"value": false,
-												},
-											},
-										},
-									},
-								),
-							},
-						},
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "a",
+							Transform:          immutable.Some("{{.LensID0}}"),
+						}),
 					},
 					{
 						VersionID:      "c",
 						IsMaterialized: true,
-						Sources: []any{
-							&client.CollectionSource{
-								SourceCollectionID: "a",
-								Transform: immutable.Some(
-									model.Lens{
-										Lenses: []model.LensModule{
-											{
-												Path: lenses.SetDefaultModulePath,
-												Arguments: map[string]any{
-													"dst":   "age",
-													"value": float64(123),
-												},
-											},
-										},
-									},
-								),
+						PreviousVersion: immutable.Some(client.CollectionSource{
+							SourceCollectionID: "a",
+							Transform:          immutable.Some("{{.LensID1}}"),
+						}),
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+func TestSchemaMigration_ConfigureMigrationSkippingVersion_Errors(t *testing.T) {
+	version1 := "bafyreihuyovjl5ezgpud5xyqnouzsgx25x3ssrx3ncdv5p3guocc3laqna"
+	version3 := "bafyreih3uwvq6u5yqt65os3u5jdrrmy6gfi7wjq3vwvnm45jhjodbablhe"
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users { }
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "Boolean"} }
+					]
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "String"} }
+					]
+				`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      version1,
+					DestinationSchemaVersionID: version3,
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								Arguments: map[string]any{
+									"dst":   "verified",
+									"value": false,
+								},
 							},
 						},
 					},
 				},
+				ExpectedError: "cannot migrate between non-adjacent collection versions",
 			},
 		},
 	}

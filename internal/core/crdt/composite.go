@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -48,7 +47,7 @@ type DocCompositeDelta struct {
 	Status client.DocumentStatus
 }
 
-var _ core.Delta = (*DocCompositeDelta)(nil)
+var _ Delta = (*DocCompositeDelta)(nil)
 
 // IPLDSchemaBytes returns the IPLD schema representation for the type.
 //
@@ -80,7 +79,7 @@ type DocComposite struct {
 	schemaVersionID string
 }
 
-var _ core.ReplicatedData = (*DocComposite)(nil)
+var _ ReplicatedData = (*DocComposite)(nil)
 
 // NewDocComposite creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
@@ -121,7 +120,7 @@ func (m *DocComposite) Delta() *DocCompositeDelta {
 // Merge implements ReplicatedData interface.
 // It ensures that the object marker exists for the given key.
 // If it doesn't, it adds it to the store.
-func (m *DocComposite) Merge(ctx context.Context, delta core.Delta) error {
+func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 	dagDelta, ok := delta.(*DocCompositeDelta)
 	if !ok {
 		return ErrMismatchedMergeType
@@ -170,6 +169,13 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 		return err
 	}
 
+	// Since some of the underlying datastores don't support mutating state in the middle of iterating, we
+	// collect the affected key/values and apply the mutations afterwards.
+	type kv struct {
+		key   keys.DataStoreKey
+		value []byte
+	}
+	kvArray := []kv{}
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {
@@ -184,23 +190,32 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 			return errors.Join(err, iter.Close())
 		}
 
-		if dsKey.InstanceType == keys.ValueKey {
-			value, err := iter.Value()
-			if err != nil {
-				return errors.Join(err, iter.Close())
-			}
-
-			err = m.store.Set(ctx, dsKey.WithDeletedFlag().Bytes(), value)
-			if err != nil {
-				return errors.Join(err, iter.Close())
-			}
-		}
-
-		err = m.store.Delete(ctx, dsKey.Bytes())
+		value, err := iter.Value()
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}
+
+		kvArray = append(kvArray, kv{
+			key:   dsKey,
+			value: value,
+		})
 	}
 
-	return iter.Close()
+	err = iter.Close()
+	if err != nil {
+		return err
+	}
+
+	for _, item := range kvArray {
+		err = m.store.Set(ctx, item.key.WithDeletedFlag().Bytes(), item.value)
+		if err != nil {
+			return err
+		}
+		err = m.store.Delete(ctx, item.key.Bytes())
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

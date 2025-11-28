@@ -30,9 +30,18 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
+)
+
+const (
+	// 1 MB, this matches the maximum badger-in-memory value size.
+	//
+	// Nearly at least, badger panics if this is set to it's max for reasons not yet
+	// looked into.  Going one byte smaller does not have this issue.
+	chunkSize = (1 << 20) - 1
 )
 
 var (
@@ -94,6 +103,7 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
+	nodeACP     acpDB.NACInfo
 	documentACP immutable.Option[dac.DocumentACP]
 
 	col client.Collection
@@ -104,6 +114,7 @@ func (vf *VersionedFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
+	nodeACP acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
@@ -113,6 +124,7 @@ func (vf *VersionedFetcher) Init(
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
+	vf.nodeACP = nodeACP
 	vf.documentACP = documentACP
 	vf.col = col
 	vf.queuedCids = list.New()
@@ -155,11 +167,13 @@ func (vf *VersionedFetcher) Init(
 	}
 
 	vf.store = datastore.NewTxnFrom(
-		ctx,
 		vf.root,
 		// We can take the parent txn id here
 		txn.ID(),
 		false,
+		// Chunk by default, it is a pain to figure out if it is necessary or not here, so
+		// we chose to take the performance hit and chunk.
+		immutable.Some(chunkSize),
 	) // were going to discard and nuke this later
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
@@ -168,6 +182,7 @@ func (vf *VersionedFetcher) Init(
 		ctx,
 		identity,
 		vf.store,
+		nodeACP,
 		documentACP,
 		index,
 		col,
@@ -348,7 +363,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
-	var mcrdt core.ReplicatedData
+	var mcrdt crdt.ReplicatedData
 	switch {
 	case block.Delta.IsCollection():
 		mcrdt = crdt.NewCollection(

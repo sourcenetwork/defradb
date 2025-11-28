@@ -55,6 +55,7 @@ func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				OperationName: immutable.Some("UsersByAge"),
@@ -78,6 +79,7 @@ func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

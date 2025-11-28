@@ -11,21 +11,24 @@ View is refreshed as the current user, meaning the cached items will reflect tha
 permissions. Subsequent query requests to the view, regardless of user, will receive
 items from that cache.
 
-Example: refresh all views
-  defradb client view refresh
-
-Example: refresh views by name
-  defradb client view refresh --name UserView
-
-Example: refresh views by schema root id
-  defradb client view refresh --schema bae123
-
-Example: refresh views by version id. This will also return inactive views
-  defradb client view refresh --version-id bae123
-		
-
 ```
 defradb client view refresh [flags]
+```
+
+### Examples
+
+```
+refresh all views:  
+  defradb client view refresh
+
+refresh views by name:  
+  defradb client view refresh --name UserView
+
+refresh views by collection id:  
+  defradb client view refresh --collection-id bae123
+
+refresh views by version id:  
+  defradb client view refresh --version-id bae123
 ```
 
 ### Options

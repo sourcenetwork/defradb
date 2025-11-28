@@ -35,12 +35,12 @@ func (txn *Transaction) ID() uint64 {
 	return txn.txn.ID()
 }
 
-func (txn *Transaction) Commit(ctx context.Context) error {
-	return txn.txn.Commit(ctx)
+func (txn *Transaction) Commit() error {
+	return txn.txn.Commit()
 }
 
-func (txn *Transaction) Discard(ctx context.Context) {
-	txn.txn.Discard(ctx)
+func (txn *Transaction) Discard() {
+	txn.txn.Discard()
 }
 
 func (txn *Transaction) PrintDump(ctx context.Context) error {
@@ -119,13 +119,9 @@ func (txn *Transaction) RefreshViews(ctx context.Context, options client.Collect
 	return txn.Wrapper.RefreshViews(ctx, options)
 }
 
-func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.SetMigration(ctx, config)
-}
-
-func (txn *Transaction) LensRegistry() client.LensRegistry {
-	return txn.Wrapper.LensRegistry()
 }
 
 func (txn *Transaction) GetCollectionByName(

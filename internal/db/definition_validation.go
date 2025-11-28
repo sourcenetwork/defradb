@@ -125,6 +125,7 @@ var createOnlyValidators = []definitionValidator{}
 var updateOnlyValidators = []definitionValidator{
 	validateSourcesNotRedefined,
 	validateIndexesNotModified,
+	validateEncryptedIndexesNotModified,
 	validatePolicyNotModified,
 	validateIDNotEmpty,
 	validateIDUnique,
@@ -143,7 +144,6 @@ var collectionUpdateValidators = append(
 		),
 		validateCollectionNotAdded,
 		validateSchemaVersionIDNotMutated,
-		validateCollectionNotRemoved,
 		validateCollectionIsBranchableNotMutated,
 	),
 	globalValidators...,
@@ -172,6 +172,7 @@ var globalValidators = []definitionValidator{
 	validateVersionID,
 	validateCollectionID,
 	validateCollectionSourceFromSameCollection,
+	validateEncryptedIndexes,
 }
 
 var createValidators = append(
@@ -268,7 +269,7 @@ func validateSecondaryFieldsPairUp(
 ) error {
 	var errs []error
 	for _, newCollection := range newState.collections {
-		if len(newCollection.QuerySources()) > 0 {
+		if newCollection.Query.HasValue() {
 			// Views do not require both sides of the relation to be defined.
 			continue
 		}
@@ -422,7 +423,7 @@ func validateSourcesNotRedefined(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
+		oldCol, ok := oldState.activeCollectionsByName[newCol.Name]
 		if !ok {
 			continue
 		}
@@ -430,30 +431,20 @@ func validateSourcesNotRedefined(
 			continue
 		}
 
-		newColSources := newCol.CollectionSources()
-		oldColSources := oldCol.CollectionSources()
-
-		if len(newColSources) != len(oldColSources) {
-			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
-		}
-
-		for i := range newColSources {
-			if i >= len(oldColSources) {
-				continue // Avoid out-of-bounds panic
-			}
-			if newColSources[i].SourceCollectionID != oldColSources[i].SourceCollectionID {
+		if newCol.VersionID == oldCol.VersionID {
+			if newCol.PreviousVersion.HasValue() != oldCol.PreviousVersion.HasValue() {
+				errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
+			} else if newCol.PreviousVersion.HasValue() &&
+				newCol.PreviousVersion.Value().SourceCollectionID != oldCol.PreviousVersion.Value().SourceCollectionID {
 				errs = append(errs, NewErrCollectionSourceIDMutated(
 					newCol.VersionID,
-					newColSources[i].SourceCollectionID,
-					oldColSources[i].SourceCollectionID,
+					newCol.PreviousVersion.Value().SourceCollectionID,
+					oldCol.PreviousVersion.Value().SourceCollectionID,
 				))
 			}
 		}
 
-		newQuerySources := newCol.QuerySources()
-		oldQuerySources := oldCol.QuerySources()
-
-		if len(newQuerySources) != len(oldQuerySources) {
+		if newCol.Query.HasValue() != oldCol.Query.HasValue() {
 			errs = append(errs, NewErrCollectionSourcesCannotBeAddedRemoved(newCol.VersionID))
 		}
 	}
@@ -483,12 +474,43 @@ func validateIndexesNotModified(
 			// inconsistent for this property, so we have to check the length and elements
 			// manually instead of using DeepEqual.
 			errs = append(errs, NewErrCollectionIndexesCannotBeMutated(newCol.VersionID))
+		} else {
+			for i := range oldCol.Indexes {
+				// DeepEqual is temporary, as this validation is temporary
+				if !reflect.DeepEqual(oldCol.Indexes[i], newCol.Indexes[i]) {
+					errs = append(errs, NewErrCollectionIndexesCannotBeMutated(newCol.VersionID))
+				}
+			}
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateEncryptedIndexesNotModified(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+	for _, newCol := range newState.collections {
+		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
+		if !ok {
+			continue
 		}
 
-		for i := range oldCol.Indexes {
-			// DeepEqual is temporary, as this validation is temporary
-			if !reflect.DeepEqual(oldCol.Indexes[i], newCol.Indexes[i]) {
-				errs = append(errs, NewErrCollectionIndexesCannotBeMutated(newCol.VersionID))
+		if oldCol.IsPlaceholder {
+			continue
+		}
+
+		if len(oldCol.EncryptedIndexes) != len(newCol.EncryptedIndexes) {
+			errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
+		}
+
+		for i := range oldCol.EncryptedIndexes {
+			if !reflect.DeepEqual(oldCol.EncryptedIndexes[i], newCol.EncryptedIndexes[i]) {
+				errs = append(errs, NewErrCollectionEncryptedIndexesCannotBeMutated(newCol.VersionID))
 			}
 		}
 	}
@@ -620,26 +642,6 @@ func validateSchemaVersionIDNotMutated(
 
 		if newCol.VersionID != oldCol.VersionID {
 			errs = append(errs, NewErrCollectionSchemaVersionIDCannotBeMutated(newCol.VersionID))
-		}
-	}
-
-	return errors.Join(errs...)
-}
-
-func validateCollectionNotRemoved(
-	ctx context.Context,
-	db *DB,
-	newState *definitionState,
-	oldState *definitionState,
-) error {
-	var errs []error
-	for _, oldCol := range oldState.collections {
-		if oldCol.IsPlaceholder {
-			continue
-		}
-
-		if _, ok := newState.collectionsByID[oldCol.VersionID]; !ok {
-			errs = append(errs, NewErrCollectionsCannotBeDeleted(oldCol.VersionID))
 		}
 	}
 
@@ -1035,9 +1037,9 @@ func validateCollectionSourceFromSameCollection(
 			continue
 		}
 
-		for _, source := range col.CollectionSources() {
+		if col.PreviousVersion.HasValue() {
 			for _, otherCol := range newState.collections {
-				if otherCol.VersionID == source.SourceCollectionID &&
+				if otherCol.VersionID == col.PreviousVersion.Value().SourceCollectionID &&
 					otherCol.CollectionID != col.CollectionID {
 					errs = append(errs, NewErrCollectionSourceWrongCollection(col.CollectionID, otherCol.CollectionID))
 				}
@@ -1059,7 +1061,7 @@ func validateCollectionMaterialized(
 ) error {
 	var errs []error
 	for _, col := range newState.collections {
-		if len(col.QuerySources()) == 0 && !col.IsMaterialized {
+		if !col.Query.HasValue() && !col.IsMaterialized {
 			errs = append(errs, NewErrColNotMaterialized(col.Name))
 		}
 	}
@@ -1078,7 +1080,7 @@ func validateMaterializedHasNoPolicy(
 ) error {
 	var errs []error
 	for _, col := range newState.collections {
-		if col.IsMaterialized && len(col.QuerySources()) != 0 && col.Policy.HasValue() {
+		if col.IsMaterialized && col.Query.HasValue() && col.Policy.HasValue() {
 			errs = append(errs, NewErrMaterializedViewAndACPNotSupported(col.Name))
 		}
 	}
@@ -1115,7 +1117,10 @@ func validateCollectionIsBranchableNotMutated(
 ) error {
 	var errs []error
 	for _, newCol := range newState.collections {
-		oldCol := oldState.collectionsByID[newCol.VersionID]
+		oldCol, ok := oldState.collectionsByID[newCol.VersionID]
+		if !ok {
+			continue
+		}
 
 		if newCol.IsBranchable != oldCol.IsBranchable {
 			errs = append(errs, NewErrColMutatingIsBranchable(newCol.Name))
@@ -1187,6 +1192,23 @@ func validateCollectionID(
 
 		if !exists {
 			errs = append(errs, NewErrUnknownCID("CollectionID", col.CollectionID))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateEncryptedIndexes(
+	ctx context.Context,
+	db *DB,
+	newState *definitionState,
+	oldState *definitionState,
+) error {
+	var errs []error
+
+	for _, newCol := range newState.collections {
+		if err := validateEncryptedIndexesOnCollection(newCol); err != nil {
+			errs = append(errs, err)
 		}
 	}
 

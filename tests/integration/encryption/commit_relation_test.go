@@ -18,8 +18,8 @@ import (
 )
 
 func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedCommit(t *testing.T) {
-	const userDocID = "bae-73ba4fa1-e4ff-5e03-850a-c6d3b1ccd84f"
-	const deviceDocID = "bae-66b61a55-8fd4-5e9d-8d3b-d7838f356297"
+	const userDocID = "bae-32a035a1-1d5c-5a38-9637-04abfe64dd16"
+	const deviceDocID = "bae-2004b120-5f2b-5b37-bd42-2c956d11749a"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -56,7 +56,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							delta
 							docID
 							fieldName
@@ -64,7 +64,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"delta":     encrypt(testUtils.CBORValue("Sony"), deviceDocID, ""),
 							"docID":     deviceDocID,

@@ -119,6 +119,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock_ReturnAllMultiMatches(t *testi
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

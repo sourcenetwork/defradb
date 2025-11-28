@@ -86,6 +86,7 @@ func TestView_SimpleWithTransform(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -170,6 +171,7 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -320,6 +322,7 @@ func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

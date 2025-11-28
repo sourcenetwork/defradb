@@ -29,20 +29,20 @@ func TestQueryCommitsWithDocIDProperty(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits {
+						_commits {
 							docID
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"docID": "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 						},
 						{
-							"docID": "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 						},
 						{
-							"docID": "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 						},
 					},
 				},

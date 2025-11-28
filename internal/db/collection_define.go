@@ -18,15 +18,21 @@ import (
 	"unicode"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
+	"github.com/ipfs/go-cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"slices"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func (db *DB) createCollections(
@@ -45,7 +51,7 @@ func (db *DB) createCollections(
 		newCollections[i] = def.Definition
 	}
 
-	err = setCollectionIDs(ctx, newCollections, immutable.None[model.Lens]())
+	err = setCollectionIDs(ctx, newCollections)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +108,7 @@ func (db *DB) createCollections(
 	return returnDescriptions, nil
 }
 
-// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
+// patchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 // present in the database.
 //
 // It will also update the GQL types used by the query system. It will error and not apply any of the
@@ -169,6 +175,21 @@ func (db *DB) patchCollection(
 		return err
 	}
 
+	removedCollectionVersions := []client.CollectionVersion{}
+existingVersionLoop:
+	for versionID, version := range existingColsByID {
+		if _, ok := newColsByID[versionID]; !ok {
+			for _, newCol := range newColsByID {
+				if newCol.VersionID == versionID {
+					// If the missing version id is found in another location, we do not wish to delete the collection,
+					// it has essentially been moved by the JSON patch for reasons known only to the user.
+					continue existingVersionLoop
+				}
+			}
+			removedCollectionVersions = append(removedCollectionVersions, version)
+		}
+	}
+
 	for _, col := range newColsByID {
 		// Automatically add any id fields for object fields added by the patch, if the patch did not explicitly
 		// add one.
@@ -210,7 +231,7 @@ func (db *DB) patchCollection(
 		newCollections = append(newCollections, col)
 	}
 
-	err = setCollectionIDs(ctx, newCollections, migration)
+	err = setCollectionIDs(ctx, newCollections)
 	if err != nil {
 		return err
 	}
@@ -239,13 +260,20 @@ func (db *DB) patchCollection(
 		}
 	}
 
+	// Track collections that were upgraded from placeholders and may need reindexing
+	var placeholderReplacers []client.CollectionVersion
+
 	for i := 0; i < len(newCollections); i++ {
 		placeholder := newCollections[i]
 		if placeholder.IsPlaceholder {
 			isFound := false
 			for j, col := range newCollections {
 				if col.VersionID == placeholder.VersionID && !col.IsPlaceholder {
-					newCollections[j].Sources = placeholder.Sources
+					newCollections[j].PreviousVersion = placeholder.PreviousVersion
+					// Track this collection as it may have a migration that needs to be applied
+					if col.IsActive {
+						placeholderReplacers = append(placeholderReplacers, newCollections[j])
+					}
 					isFound = true
 					break
 				}
@@ -265,7 +293,29 @@ func (db *DB) patchCollection(
 		return err
 	}
 
+	err = db.deleteCollectionVersions(ctx, removedCollectionVersions)
+	if err != nil {
+		return err
+	}
+
 	for _, col := range newCollections {
+		isDeleted := false
+		for _, removedCol := range removedCollectionVersions {
+			if col.VersionID == removedCol.VersionID {
+				isDeleted = true
+				break
+			}
+		}
+		if isDeleted {
+			// We need to make sure we dont save any collections that we have just deleted.
+			// This check is needed due to the unfortunate way mutated collections have their
+			// originals re-added to `newCollections` on line 260.
+			//
+			// This re-adding, and this check, are planned to be removed post v1 in issue:
+			// https://github.com/sourcenetwork/defradb/issues/4197
+			continue
+		}
+
 		existingCol, ok := existingColsByID[col.VersionID]
 		if ok && col.Equal(existingCol) {
 			continue
@@ -286,43 +336,26 @@ func (db *DB) patchCollection(
 					return err
 				}
 			}
-
-			// Clear any existing migrations in the registry, using this semi-hacky way
-			// to avoid adding more functions to a public interface that we wish to remove.
-
-			for _, src := range existingCol.CollectionSources() {
-				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
-					if err != nil {
-						return err
-					}
-				}
-			}
-			for _, src := range existingCol.QuerySources() {
-				if src.Transform.HasValue() {
-					err = db.LensRegistry().SetMigration(ctx, existingCol.VersionID, model.Lens{})
-					if err != nil {
-						return err
-					}
-				}
-			}
 		}
 
-		for _, src := range col.CollectionSources() {
-			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
-				if err != nil {
-					return err
-				}
+		if col.PreviousVersion.HasValue() && migration.HasValue() {
+			_, err = db.setMigration(ctx, client.LensConfig{
+				SourceSchemaVersionID:      col.PreviousVersion.Value().SourceCollectionID,
+				DestinationSchemaVersionID: col.VersionID,
+				Lens:                       migration.Value(),
+			})
+			if err != nil {
+				return err
 			}
 		}
+	}
 
-		for _, src := range col.QuerySources() {
-			if src.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, col.VersionID, src.Transform.Value())
-				if err != nil {
-					return err
-				}
+	// Reindex any collections that were upgraded from placeholders with migrations
+	for _, col := range placeholderReplacers {
+		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
+			err = db.reindexNewActiveVersion(ctx, col)
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -505,6 +538,9 @@ func (db *DB) setActiveCollectionVersion(
 		return err
 	}
 
+	// The optional collection is used to track if there was a switch to another version.
+	newActiveCol := immutable.None[client.CollectionVersion]()
+
 	for _, col := range colsWithRoot {
 		if col.VersionID == versionID {
 			if col.IsActive {
@@ -516,6 +552,8 @@ func (db *DB) setActiveCollectionVersion(
 			if err != nil {
 				return err
 			}
+
+			newActiveCol = immutable.Some(col)
 
 			continue
 		}
@@ -531,6 +569,229 @@ func (db *DB) setActiveCollectionVersion(
 		}
 	}
 
+	if newActiveCol.HasValue() {
+		shouldReindex, err := db.shouldReindexForVersionSwitch(ctx, newActiveCol.Value())
+		if err != nil {
+			return err
+		}
+
+		if shouldReindex {
+			err = db.reindexNewActiveVersion(ctx, newActiveCol.Value())
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	// Load the schema into the clients (e.g. GQL)
 	return db.loadSchema(ctx)
+}
+
+// shouldReindexForVersionSwitch determines if reindexing is needed when switching
+// to a new active version by examining the full version history DAG using the lens
+// package's GetTargetedCollectionHistory function.
+//
+// This properly handles branching version histories by checking if any version
+// reachable from the new active version has a migration.
+func (db *DB) shouldReindexForVersionSwitch(
+	ctx context.Context,
+	newActiveCol client.CollectionVersion,
+) (bool, error) {
+	history, err := description.GetTargetedCollectionHistory(
+		ctx,
+		newActiveCol.CollectionID,
+		newActiveCol.VersionID,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	if history == nil {
+		return false, nil
+	}
+
+	for _, historyLink := range history {
+		if historyLink.Collection().PreviousVersion.HasValue() {
+			prevVersion := historyLink.Collection().PreviousVersion.Value()
+			if prevVersion.Transform.HasValue() {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
+func (db *DB) deleteCollectionVersions(
+	ctx context.Context,
+	versions []client.CollectionVersion,
+) error {
+	versionsByVersionID := make(map[string]client.CollectionVersion, len(versions))
+	for _, version := range versions {
+		versionsByVersionID[version.VersionID] = version
+	}
+
+	// Order the versions to delete so that parents get deleted before their children.
+	// This allows us to verify that a continuous history is always maintained.
+	orderedVersions := make([]client.CollectionVersion, 0, len(versions))
+	for len(orderedVersions) != len(versions) {
+		for _, versionToAdd := range versionsByVersionID {
+			hasParent := false
+			for _, possibleParent := range versionsByVersionID {
+				if possibleParent.PreviousVersion.HasValue() &&
+					possibleParent.PreviousVersion.Value().SourceCollectionID == versionToAdd.VersionID {
+					hasParent = true
+					break
+				}
+			}
+
+			if !hasParent {
+				orderedVersions = append(orderedVersions, versionToAdd)
+				delete(versionsByVersionID, versionToAdd.VersionID)
+			}
+		}
+	}
+
+	for _, version := range orderedVersions {
+		err := db.deleteCollectionVersion(ctx, version)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (db *DB) deleteCollectionVersion(
+	ctx context.Context,
+	version client.CollectionVersion,
+) error {
+	hasDocs, err := collectionHasDocuments(ctx, version)
+	if err != nil {
+		return err
+	}
+	if hasDocs {
+		// If the collection contains any documents, we do not allow deletion of any version in the
+		// collection - they must first delete the documents locally, and then delete the collection.
+		//
+		// This is thought to be much safer than allowing document deletion along with the collection.
+		return NewErrCannotDeleteCollectionWithDocs(version.Name, version.VersionID)
+	}
+
+	err = validateCollectionDoesNotHaveHigherVersion(ctx, version)
+	if err != nil {
+		return err
+	}
+
+	err = description.DeleteCollection(ctx, version)
+	if err != nil {
+		return err
+	}
+
+	err = deleteCollectionBlocks(ctx, version)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func collectionHasDocuments(
+	ctx context.Context,
+	version client.CollectionVersion,
+) (bool, error) {
+	if !version.IsMaterialized {
+		// Assume that if the collection *was* materialized, and is no longer materialized, that the cached
+		// state was properly disposed of (it should have been).
+		return false, nil
+	}
+
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	shortID, err := id.GetShortCollectionID(ctx, version.CollectionID)
+	if err != nil {
+		return false, err
+	}
+
+	var prefixKey keys.Key
+	if version.Query.HasValue() {
+		prefixKey = keys.NewViewCacheColPrefix(shortID)
+	} else {
+		prefixKey = keys.PrimaryDataStoreKey{
+			CollectionShortID: shortID,
+		}
+	}
+
+	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   prefixKey.ToDS().Bytes(),
+		KeysOnly: true,
+	})
+	if err != nil {
+		return false, errors.Join(err, iter.Close())
+	}
+
+	hasValue, err := iter.Next()
+	if err != nil {
+		return false, errors.Join(err, iter.Close())
+	}
+
+	return hasValue, iter.Close()
+}
+
+func validateCollectionDoesNotHaveHigherVersion(
+	ctx context.Context,
+	version client.CollectionVersion,
+) error {
+	allVersions, err := description.GetCollectionsByCollectionID(ctx, version.CollectionID)
+	if err != nil {
+		return err
+	}
+
+	for _, newVersion := range allVersions {
+		if newVersion.PreviousVersion.HasValue() &&
+			newVersion.PreviousVersion.Value().SourceCollectionID == version.VersionID {
+			// We do not allow the deletion of versions that are not the head of their branch - this would
+			// create a gap in the history, potentially causing problems that we do not wish to test for or
+			// handle right now.
+			return NewErrCannotDeleteOldVersion(version.VersionID, newVersion.VersionID)
+		}
+	}
+
+	return nil
+}
+
+func deleteCollectionBlocks(
+	ctx context.Context,
+	version client.CollectionVersion,
+) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	colCid, err := cid.Parse(version.VersionID)
+	if err != nil {
+		return err
+	}
+
+	err = txn.Blockstore().DeleteBlock(ctx, colCid)
+	if err != nil {
+		return err
+	}
+
+	for _, field := range version.Fields {
+		if field.FieldID == "" {
+			// Only fields with field IDs have backing blocks
+			continue
+		}
+
+		fieldCid, err := cid.Parse(field.FieldID)
+		if err != nil {
+			return err
+		}
+
+		err = txn.Blockstore().DeleteBlock(ctx, fieldCid)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -218,25 +218,13 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			}
 		}
 
-		expectDecrypted := make(map[string]struct{}, len(action.Decrypted))
-		for _, docIndex := range action.Decrypted {
-			if len(s.DocIDs[0]) <= docIndex {
-				require.Fail(s.T, "doc index %d out of range", docIndex)
-			}
-			docID := s.DocIDs[0][docIndex].String()
-			actual, hasActual := node.P2P.ActualDAGHeads[docID]
-			if !hasActual || !actual.Decrypted {
-				expectDecrypted[docID] = struct{}{}
-			}
-		}
-
 		// wait for all expected heads to be merged
 		//
 		// the order of merges does not matter as we only
 		// expect the latest head to eventually be merged
 		//
 		// unexpected merge events are ignored
-		for len(expect) > 0 || len(expectDecrypted) > 0 {
+		for len(expect) > 0 {
 			var evt event.MergeComplete
 			select {
 			case msg, ok := <-node.Event.Merge.Message():
@@ -249,18 +237,58 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 				require.Fail(s.T, "timeout waiting for merge complete event")
 			}
 
-			_, ok := expectDecrypted[evt.Merge.DocID]
-			if ok && evt.Decrypted {
-				delete(expectDecrypted, evt.Merge.DocID)
-			}
-
 			head, ok := expect[getMergeEventKey(evt.Merge)]
 			if ok && head.String() == evt.Merge.Cid.String() {
 				delete(expect, getMergeEventKey(evt.Merge))
 			}
 			node.P2P.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{
-				CID:       evt.Merge.Cid,
-				Decrypted: evt.Decrypted,
+				CID: evt.Merge.Cid,
+			}
+		}
+	}
+}
+
+func waitForSESync(s *state.State, action WaitForSESync) {
+	var docIDsToWait []string
+	if len(action.DocIDs) > 0 {
+		for _, docIndex := range action.DocIDs {
+			if len(s.DocIDs[0]) <= docIndex {
+				require.Fail(s.T, "doc index %d out of range", docIndex)
+			}
+			docIDsToWait = append(docIDsToWait, s.DocIDs[0][docIndex].String())
+		}
+	} else {
+		// Wait for all documents if no specific IDs provided
+		for _, docID := range s.DocIDs[0] {
+			docIDsToWait = append(docIDsToWait, docID.String())
+		}
+	}
+
+	// SE sync events are only published on replicator nodes (nodes that receive artifacts)
+	// We wait for events from any non-source node with active replicators
+	for nodeID := 1; nodeID < len(s.Nodes); nodeID++ {
+		node := s.Nodes[nodeID]
+		if node.Closed {
+			continue // node is closed
+		}
+
+		expectedSyncs := make(map[string]struct{}, len(docIDsToWait))
+		for _, docID := range docIDsToWait {
+			expectedSyncs[docID] = struct{}{}
+		}
+
+		for len(expectedSyncs) > 0 {
+			select {
+			case msg, ok := <-node.Event.SESync.Message():
+				if !ok {
+					require.Fail(s.T, "subscription closed waiting for SE sync complete event")
+				}
+				evt := msg.Data.(event.SEArtifactReceived)
+
+				delete(expectedSyncs, evt.DocID)
+
+			case <-time.After(30 * eventTimeout):
+				require.Fail(s.T, "timeout waiting for SE sync complete event on node %d. Remaining: %v", nodeID, expectedSyncs)
 			}
 		}
 	}
@@ -289,7 +317,7 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 
 	// update the actual document head on the node that updated it
 	// as the node created the document, it is already decrypted
-	node.P2P.ActualDAGHeads[getUpdateEventKey(evt)] = state.DocHeadState{CID: evt.Cid, Decrypted: true}
+	node.P2P.ActualDAGHeads[getUpdateEventKey(evt)] = state.DocHeadState{CID: evt.Cid}
 
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {

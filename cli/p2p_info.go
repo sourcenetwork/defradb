@@ -11,17 +11,23 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PInfoCommand() *cobra.Command {
+func MakeP2PInfoCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "info",
 		Short: "Get peer info from a DefraDB node",
 		Long:  `Get peer info from a DefraDB node`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			return writeJSON(cmd, cliClient.PeerInfo())
+			addresses, err := cliClient.PeerInfo()
+			if err != nil {
+				return err
+			}
+			return writeJSON(cmd, addresses)
 		},
 	}
 	return cmd

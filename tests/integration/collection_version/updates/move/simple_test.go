@@ -18,7 +18,7 @@ import (
 )
 
 func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
-	schemaVersionID := "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i"
+	schemaVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -69,12 +69,12 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 			testUtils.Request{
 				// Assert that the version ID remains the same
 				Request: `query {
-					commits (fieldName: "_C") {
+					_commits (fieldName: "_C") {
 						schemaVersionId
 					}
 				}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							// Update commit
 							"schemaVersionId": schemaVersionID,

@@ -11,26 +11,34 @@
 package crdt
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+
+	"github.com/ipfs/go-cid"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type CollectionDefinitionDelta struct {
 	Priority uint64
 
-	Name string
+	Name           *string
+	QuerySelect    []byte
+	QueryTransform *cidlink.Link
 }
 
-var _ core.Delta = (*CollectionDefinitionDelta)(nil)
+var _ Delta = (*CollectionDefinitionDelta)(nil)
 
 func (d *CollectionDefinitionDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type CollectionDefinitionDelta struct {
 		priority  		Int
-		name String
+		name optional String
+		querySelect optional Bytes
+		queryTransform optional Link
 	}`)
 }
 
@@ -46,7 +54,7 @@ type CollectionDefinition struct {
 	headstorePrefix keys.HeadstoreCollectionDefinition
 }
 
-var _ core.ReplicatedData = (*Collection)(nil)
+var _ ReplicatedData = (*Collection)(nil)
 
 func NewCollectionDefinition(
 	name string,
@@ -67,16 +75,64 @@ func (c *CollectionDefinition) HeadstorePrefix() keys.HeadstoreKey {
 func (c *CollectionDefinition) Delta(
 	new client.CollectionVersion,
 	old client.CollectionVersion,
-) (*CollectionDefinitionDelta, bool) {
-	if new.Name == old.Name {
-		return &CollectionDefinitionDelta{}, false
+) (*CollectionDefinitionDelta, bool, error) {
+	var name *string
+	if new.Name != old.Name {
+		name = &new.Name
+	}
+
+	var queryDelta []byte
+	if new.Query.HasValue() {
+		newQuery, err := json.Marshal(new.Query.Value().Query)
+		if err != nil {
+			return &CollectionDefinitionDelta{}, false, err
+		}
+
+		if old.Query.HasValue() {
+			oldQuery, err := json.Marshal(old.Query.Value().Query)
+			if err != nil {
+				return &CollectionDefinitionDelta{}, false, err
+			}
+
+			if !bytes.Equal(newQuery, oldQuery) {
+				queryDelta = newQuery
+			}
+		} else {
+			queryDelta = newQuery
+		}
+	}
+
+	var transformDelta *cidlink.Link
+	if new.Query.HasValue() && new.Query.Value().Transform.HasValue() {
+		newLensID := new.Query.Value().Transform.Value()
+		lensCID, err := cid.Parse(newLensID)
+		if err != nil {
+			return &CollectionDefinitionDelta{}, false, err
+		}
+		link := cidlink.Link{Cid: lensCID}
+
+		if old.Query.HasValue() && old.Query.Value().Transform.HasValue() {
+			if new.Query.Value().Transform.Value() != old.Query.Value().Transform.Value() {
+				transformDelta = &link
+			}
+		} else {
+			transformDelta = &link
+		}
+	} else if old.Query.HasValue() && old.Query.Value().Transform.HasValue() {
+		transformDelta = &cidlink.Link{Cid: cid.Undef}
+	}
+
+	if name == nil && queryDelta == nil && transformDelta == nil {
+		return &CollectionDefinitionDelta{}, false, nil
 	}
 
 	return &CollectionDefinitionDelta{
-		Name: new.Name,
-	}, true
+		Name:           name,
+		QuerySelect:    queryDelta,
+		QueryTransform: transformDelta,
+	}, true, nil
 }
 
-func (c *CollectionDefinition) Merge(ctx context.Context, other core.Delta) error {
+func (c *CollectionDefinition) Merge(ctx context.Context, other Delta) error {
 	return nil
 }

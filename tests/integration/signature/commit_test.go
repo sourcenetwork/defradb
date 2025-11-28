@@ -16,26 +16,24 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/onsi/gomega"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	corecrdt "github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func makeFieldBlock(fieldName string, value any) coreblock.Block {
-	const docID = "bae-f895da58-3326-510a-87f3-d043ff5424ea"
-	const schemaVersionID = "bafyreifnbhwntycylk2l6n4khiocdt3vks46tizjdaz6yx4tsmdjtdtlma"
+	const docID = "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790"
+	const schemaVersionID = "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq"
 
 	fieldVal, err := cbor.Marshal(value)
 	if err != nil {
 		panic("failed to marshal field value")
 	}
 
-	delta := &corecrdt.LWWDelta{
+	delta := &crdt.LWWDelta{
 		Data:            fieldVal,
 		DocID:           []byte(docID),
 		FieldName:       fieldName,
@@ -43,7 +41,7 @@ func makeFieldBlock(fieldName string, value any) coreblock.Block {
 		Priority:        1,
 	}
 
-	block := coreblock.New(delta, nil)
+	block := coreblock.New(crdt.NewCRDT(delta), nil)
 	return *block
 }
 
@@ -52,13 +50,6 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// C bindings do not support calling functions with non-Secp256k key yet
-			state.GoClientType,
-			state.CLIClientType,
-			state.HTTPClientType,
-			state.JSClientType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -76,7 +67,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							fieldName
 							signature {
 								type
@@ -87,7 +78,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "age",
 							"signature": map[string]any{
@@ -118,6 +109,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -131,13 +123,6 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// C bindings do not support calling functions with non-Secp256k key yet
-			state.GoClientType,
-			state.CLIClientType,
-			state.HTTPClientType,
-			state.JSClientType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -163,7 +148,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 			testUtils.Request{
 				Request: `
 					query {
-						commits(order: {height: DESC}) {
+						_commits(order: {height: DESC}) {
 							fieldName
 							height
 							signature {
@@ -175,7 +160,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "name",
 							"height":    3,
@@ -236,13 +221,6 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 
 	test := testUtils.TestCase{
 		EnableSigning: true,
-		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// C bindings do not support calling functions with non-Secp256k key yet
-			state.GoClientType,
-			state.CLIClientType,
-			state.HTTPClientType,
-			state.JSClientType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -259,7 +237,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 			testUtils.Request{
 				Request: `
 					query {
-						commits(order: {height: DESC}, fieldName: "_C") {
+						_commits(order: {height: DESC}, fieldName: "_C") {
 							fieldName
 							height
 							signature {
@@ -271,7 +249,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "_C",
 							"height":    2,
@@ -305,13 +283,6 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 		IdentityTypes: map[state.Identity]crypto.KeyType{
 			testUtils.NodeIdentity(0).Value(): crypto.KeyTypeEd25519,
 		},
-		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// C bindings do not support calling functions with non-Secp256k key yet
-			state.GoClientType,
-			state.CLIClientType,
-			state.HTTPClientType,
-			state.JSClientType,
-		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -329,7 +300,7 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							fieldName
 							signature {
 								type
@@ -340,7 +311,7 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "age",
 							"signature": map[string]any{
@@ -367,6 +338,7 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -413,7 +385,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						commits(fieldName: "_C", order: {height: DESC}) {
+						_commits(fieldName: "_C", order: {height: DESC}) {
 							height
 							signature {
 								type
@@ -423,7 +395,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"height": 3,
 							"signature": map[string]any{
@@ -447,6 +419,73 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
+	test := testUtils.TestCase{
+		EnableSigning: true,
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int 
+					}`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  21,
+				},
+			},
+			testUtils.Request{
+				Request: `
+					query {
+						_commits {
+							fieldName
+							signature {
+								type
+								identity
+								value
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+							"signature": map[string]any{
+								"type": coreblock.SignatureTypeECDSA256K,
+								// Confirm that the identity is being returned as hex-encoded string.
+								"identity": "02ae92ce7553993f04400c6976f8cd4540ae076bf0131eec8b35ae0ff9fc577a90",
+								"value":    newSignatureMatcher(makeFieldBlock("age", 21), crypto.KeyTypeSecp256k1),
+							},
+						},
+						{
+							"fieldName": "name",
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": "02ae92ce7553993f04400c6976f8cd4540ae076bf0131eec8b35ae0ff9fc577a90",
+								"value": newSignatureMatcher(
+									makeFieldBlock("name", "John"), crypto.KeyTypeSecp256k1),
+							},
+						},
+						{
+							"fieldName": "_C",
+							"signature": map[string]any{
+								"type":     coreblock.SignatureTypeECDSA256K,
+								"identity": "02ae92ce7553993f04400c6976f8cd4540ae076bf0131eec8b35ae0ff9fc577a90",
+								"value":    gomega.Not(gomega.BeEmpty()),
+							},
+						},
+					},
+				},
+				NonOrderedResults: true,
 			},
 		},
 	}

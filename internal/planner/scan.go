@@ -69,6 +69,7 @@ func (n *scanNode) Init() error {
 		n.p.ctx,
 		n.p.identity,
 		txn,
+		n.p.nodeACP,
 		n.p.documentACP,
 		n.index,
 		n.col,
@@ -166,7 +167,7 @@ func (n *scanNode) initFetcher(cid immutable.Option[string]) {
 	} else {
 		f = fetcher.NewDocumentFetcher()
 
-		f = lens.NewFetcher(f, n.p.db.LensRegistry())
+		f = lens.NewFetcher(f, n.p.lensStore)
 	}
 	n.fetcher = f
 }

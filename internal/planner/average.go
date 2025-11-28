@@ -86,11 +86,22 @@ func (n *averageNode) Next() (bool, error) {
 		n.currentValue = n.plan.Value()
 
 		countProp := n.currentValue.Fields[n.countFieldIndex]
-		typedCount, isInt := countProp.(int)
-		if !isInt {
-			return false, client.NewErrUnexpectedType[int]("count", countProp)
+		if countProp == nil {
+			n.currentValue.Fields[n.virtualFieldIndex] = float64(0)
+			return true, nil
 		}
-		count := typedCount
+
+		var count float64
+		switch v := countProp.(type) {
+		case int:
+			count = float64(v)
+		case int64:
+			count = float64(v)
+		case float64:
+			count = v
+		default:
+			return false, client.NewErrUnexpectedType[float64]("count", countProp)
+		}
 
 		if count == 0 {
 			n.currentValue.Fields[n.virtualFieldIndex] = float64(0)
@@ -98,11 +109,18 @@ func (n *averageNode) Next() (bool, error) {
 		}
 
 		sumProp := n.currentValue.Fields[n.sumFieldIndex]
+		if sumProp == nil {
+			n.currentValue.Fields[n.virtualFieldIndex] = float64(0)
+			return true, nil
+		}
+
 		switch sum := sumProp.(type) {
 		case float64:
-			n.currentValue.Fields[n.virtualFieldIndex] = sum / float64(count)
+			n.currentValue.Fields[n.virtualFieldIndex] = sum / count
 		case int64:
-			n.currentValue.Fields[n.virtualFieldIndex] = float64(sum) / float64(count)
+			n.currentValue.Fields[n.virtualFieldIndex] = float64(sum) / count
+		case int:
+			n.currentValue.Fields[n.virtualFieldIndex] = float64(sum) / count
 		default:
 			return false, client.NewErrUnhandledType("sum", sumProp)
 		}

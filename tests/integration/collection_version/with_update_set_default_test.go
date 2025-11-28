@@ -88,7 +88,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 				`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+				VersionID: "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
 			},
 			testUtils.Request{
 				Request: `query {
@@ -124,7 +124,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *
 				`,
 			},
 			testUtils.SetActiveCollectionVersion{
-				VersionID: "bafyreiav27gqgcudly2dige7m72giaaucv4fr2ko225rnvfyyauvpmho6a",
+				VersionID: "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu",
 			},
 			testUtils.Request{
 				Request: `query {

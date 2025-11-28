@@ -16,21 +16,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PDocumentSyncCommand() *cobra.Command {
+func MakeP2PDocumentSyncCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "sync [collection-name] [docID...]",
 		Short: "Synchronize specific documents from the network",
 		Long: `Synchronize specific documents from the network.
 
 This command allows you to sync documents from a specific collection across the network.
-It doesn't automatically subscribe to the collection or the documents.
-
-Example: sync single document
-  defradb client p2p document sync Users bae123
-
-Example: sync multiple documents
-  defradb client p2p document sync Users bae123 bae456
-  `,
+It doesn't automatically subscribe to the collection or the documents.`,
 		Args: cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			collectionName := args[0]
@@ -47,6 +40,12 @@ Example: sync multiple documents
 			return cliClient.SyncDocuments(ctx, collectionName, docIDs)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "sync single document",
+		`defradb client p2p document sync Users bae123`)
+
+	EmbedCLIExample(ctx, cmd, "sync multiple documents",
+		`defradb client p2p document sync Users bae123 bae456`)
 
 	cmd.Flags().Duration("timeout", 0, "Timeout for sync operations")
 	return cmd

@@ -11,13 +11,14 @@
 package cli
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestPurgeCommandWithoutForceFlagReturnsError(t *testing.T) {
-	cmd := NewDefraCommand()
+	cmd := NewDefraCommand(context.Background())
 	cmd.SetArgs([]string{"client", "purge"})
 
 	err := cmd.Execute()

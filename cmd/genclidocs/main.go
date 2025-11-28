@@ -14,6 +14,7 @@ genclidocs is a tool to generate the command line interface documentation.
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -32,7 +33,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	defraCmd := cli.NewDefraCommand()
+	defraCmd := cli.NewDefraCommand(context.Background())
 	defraCmd.DisableAutoGenTag = true
 
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {

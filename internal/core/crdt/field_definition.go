@@ -15,7 +15,6 @@ import (
 	"strconv"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -28,13 +27,12 @@ type FieldDefinitionDelta struct {
 
 	Name         *string
 	Crdt         *client.CType
-	ScalarKind   *client.ScalarKind
+	ScalarKind   *uint8
 	CollectionID *string
 	RelativeID   *int
-	IsArray      *bool
 }
 
-var _ core.Delta = (*FieldDefinitionDelta)(nil)
+var _ Delta = (*FieldDefinitionDelta)(nil)
 
 func (d *FieldDefinitionDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
@@ -45,7 +43,6 @@ func (d *FieldDefinitionDelta) IPLDSchemaBytes() []byte {
 		scalarKind optional Int
 		collectionID optional String
 		relativeID optional Int
-		isArray optional Bool
 	}`)
 }
 
@@ -61,7 +58,7 @@ type FieldDefinition struct {
 	headstorePrefix keys.HeadstoreFieldDefinition
 }
 
-var _ core.ReplicatedData = (*Collection)(nil)
+var _ ReplicatedData = (*Collection)(nil)
 
 func NewFieldDefinition(
 	collectionName string,
@@ -100,36 +97,36 @@ func (f *FieldDefinition) Delta(
 		return nil, false, nil
 	}
 
-	var scalarKind client.ScalarKind
-	var relatedCollectionID string
-	var relativeID int
+	var scalarKind *uint8
+	var relatedCollectionID *string
+	var relativeID *int
 	switch k := new.Kind.(type) {
 	case client.ScalarKind:
-		scalarKind = k
+		kind := uint8(k)
+		scalarKind = &kind
 	case client.ScalarArrayKind:
-		scalarKind = k.SubKind()
+		kind := uint8(k)
+		scalarKind = &kind
 	case *client.CollectionKind:
-		relatedCollectionID = k.CollectionID
+		relatedCollectionID = &k.CollectionID
 	case *client.SelfKind:
-		var err error
-		relativeID, err = strconv.Atoi(k.RelativeID)
+		rID, err := strconv.Atoi(k.RelativeID)
 		if err != nil {
 			return nil, false, nil
 		}
+		relativeID = &rID
 	}
-	isArray := new.Kind.IsArray()
 
 	return &FieldDefinitionDelta{
 		Name:         &new.Name,
 		Crdt:         &new.Typ,
-		ScalarKind:   &scalarKind,
-		CollectionID: &relatedCollectionID,
-		RelativeID:   &relativeID,
-		IsArray:      &isArray,
+		ScalarKind:   scalarKind,
+		CollectionID: relatedCollectionID,
+		RelativeID:   relativeID,
 	}, true, nil
 }
 
-func (f *FieldDefinition) Merge(ctx context.Context, other core.Delta) error {
+func (f *FieldDefinition) Merge(ctx context.Context, other Delta) error {
 	// WARNING: This is okay for now, as we dont (yet) support the merging of divergant heads,
 	// (this is not *really* a CRDT) however, if we do want to support that at somepoint, this function
 	// will need to be implemented.

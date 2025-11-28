@@ -40,7 +40,7 @@ func TestDefaultExplainRequestWithStringEqualFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
+							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"name": dataMap{
@@ -82,7 +82,7 @@ func TestDefaultExplainRequestWithIntegerEqualFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
+							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
@@ -124,7 +124,7 @@ func TestDefaultExplainRequestWithGreaterThanFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
+							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
@@ -166,7 +166,7 @@ func TestDefaultExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
+							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"_and": []any{
@@ -217,7 +217,7 @@ func TestDefaultExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
+							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"_or": []any{
@@ -268,7 +268,7 @@ func TestDefaultExplainRequestWithMatchInsideList(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
+							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
@@ -313,7 +313,7 @@ func TestDefaultExplainRequest_WithJSONEqualFilter_Succeeds(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreig6o7dcdhoi72geb3k2j4zjrzfjj5b6qbbjhwu6ykorohmbrve2mq",
+							"collectionID":   "bafyreihieyr3vhrxw3o2g6ekyib2gu2eawx43zdoltmqb47scnscnow7v4",
 							"collectionName": "Users",
 							"filter": dataMap{
 								"custom": dataMap{

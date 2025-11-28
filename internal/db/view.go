@@ -66,27 +66,25 @@ func (db *DB) addView(
 	}
 
 	for i := range parseResults {
+		var lensID immutable.Option[string]
+		if transform.HasValue() {
+			cid, err := db.getLensStore(ctx).Add(ctx, transform.Value())
+			if err != nil {
+				return nil, err
+			}
+			lensID = immutable.Some(cid.String())
+		}
+
 		source := client.QuerySource{
 			Query:     *baseQuery,
-			Transform: transform,
+			Transform: lensID,
 		}
-		parseResults[i].Definition.Sources = append(parseResults[i].Definition.Sources, &source)
+		parseResults[i].Definition.Query = immutable.Some(source)
 	}
 
 	returnDescriptions, err := db.createCollections(ctx, parseResults)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, definition := range returnDescriptions {
-		for _, source := range definition.QuerySources() {
-			if source.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, definition.VersionID, source.Transform.Value())
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
 	}
 
 	err = db.loadSchema(ctx)
@@ -135,7 +133,7 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 
 	var views []client.CollectionVersion
 	for _, col := range cols {
-		if querySrcs := col.Version().QuerySources(); len(querySrcs) == 0 {
+		if !col.Version().Query.HasValue() {
 			continue
 		}
 
@@ -148,7 +146,15 @@ func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) 
 func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) (err error) {
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	p := planner.New(ctx, identity.FromContext(ctx), db.documentACP, db)
+	p := planner.New(
+		ctx,
+		identity.FromContext(ctx),
+		db.nodeACP,
+		db.documentACP,
+		db,
+		db.p2p,
+		db.getLensStore(ctx),
+	)
 
 	// temporarily disable the cache in order to query without using it
 	col.IsMaterialized = false

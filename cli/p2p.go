@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCommand() *cobra.Command {
+func MakeP2PCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "p2p",
 		Short: "Interact with the DefraDB P2P system",

@@ -6,20 +6,24 @@ Check the node access control status
 
 Check the node access control status
 
-Example:
-  defradb client acp node status -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
 Note:
 - If Node ACP is in clean state (not configured) the status has [IsConfigured] == false.
 - If Node ACP is temporarily disabled, then [IsConfigured] == true and [IsEnabled] == false.
 - If Node ACP is enabled then [IsEnabled] == true.
 
-Learn more about the DefraDB [ACP System](/acp/README.md)
+Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 
 
 
 ```
 defradb client acp node status [-i --identity] [flags]
+```
+
+### Examples
+
+```
+Check Node ACP status:  
+  defradb client acp node status -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
 ```
 
 ### Options

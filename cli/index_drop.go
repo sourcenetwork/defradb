@@ -11,19 +11,18 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeIndexDropCommand() *cobra.Command {
+func MakeIndexDropCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var cmd = &cobra.Command{
-		Use:   "drop -c --collection <collection> -n --name <name>",
-		Short: "Drop a collection's secondary index",
-		Long: `Drop a collection's secondary index.
-		
-Example: drop the index 'UsersByName' for 'Users' collection:
-  defradb client index drop --collection Users --name UsersByName`,
+		Use:       "drop -c --collection <collection> -n --name <name>",
+		Short:     "Drop a collection's secondary index",
+		Long:      `Drop a collection's secondary index.`,
 		ValidArgs: []string{"collection", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -35,6 +34,10 @@ Example: drop the index 'UsersByName' for 'Users' collection:
 			return col.DropIndex(cmd.Context(), nameArg)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "drop the index 'UsersByName' for 'Users' collection",
+		`defradb client index drop --collection Users --name UsersByName`)
+
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
 

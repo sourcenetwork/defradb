@@ -304,6 +304,7 @@ const (
 	FieldKind_NILLABLE_FLOAT64_ARRAY ScalarArrayKind = 20
 	FieldKind_NILLABLE_STRING_ARRAY  ScalarArrayKind = 21
 	FieldKind_NILLABLE_FLOAT32_ARRAY ScalarArrayKind = 22
+	// TODO: Add nillable array types. See: https://github.com/sourcenetwork/defradb/issues/4060
 )
 
 // FieldKindStringToEnumMapping maps string representations of [FieldKind] values to
@@ -375,15 +376,7 @@ func parseFieldKind(bytes json.RawMessage) (FieldKind, error) {
 		if err != nil {
 			return nil, err
 		}
-		switch intKind {
-		case uint8(FieldKind_BOOL_ARRAY), uint8(FieldKind_INT_ARRAY), uint8(FieldKind_FLOAT64_ARRAY),
-			uint8(FieldKind_STRING_ARRAY), uint8(FieldKind_NILLABLE_BOOL_ARRAY), uint8(FieldKind_NILLABLE_INT_ARRAY),
-			uint8(FieldKind_NILLABLE_FLOAT64_ARRAY), uint8(FieldKind_NILLABLE_STRING_ARRAY),
-			uint8(FieldKind_FLOAT32_ARRAY), uint8(FieldKind_NILLABLE_FLOAT32_ARRAY):
-			return ScalarArrayKind(intKind), nil
-		default:
-			return ScalarKind(intKind), nil
-		}
+		return IntToFieldKind(intKind), nil
 	}
 
 	var strKind string
@@ -420,4 +413,19 @@ func IsVectorEmbeddingCompatible(kind FieldKind) bool {
 		}
 	}
 	return false
+}
+
+// IntToFieldKind converts the given integer into a FieldKind.
+//
+// If the integer is not a known array type, it will assume it is a scalar.
+func IntToFieldKind(kind uint8) FieldKind {
+	switch kind {
+	case uint8(FieldKind_BOOL_ARRAY), uint8(FieldKind_INT_ARRAY), uint8(FieldKind_FLOAT64_ARRAY),
+		uint8(FieldKind_STRING_ARRAY), uint8(FieldKind_NILLABLE_BOOL_ARRAY), uint8(FieldKind_NILLABLE_INT_ARRAY),
+		uint8(FieldKind_NILLABLE_FLOAT64_ARRAY), uint8(FieldKind_NILLABLE_STRING_ARRAY),
+		uint8(FieldKind_FLOAT32_ARRAY), uint8(FieldKind_NILLABLE_FLOAT32_ARRAY):
+		return ScalarArrayKind(kind)
+	default:
+		return ScalarKind(kind)
+	}
 }

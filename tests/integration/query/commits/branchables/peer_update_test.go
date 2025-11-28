@@ -24,17 +24,17 @@ import (
 func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t *testing.T) {
 	uniqueCid := testUtils.NewUniqueValue()
 
-	collectionNode0Update3Cid := testUtils.NewSameValue()
+	collectionNode0Update2Cid := testUtils.NewSameValue()
 	collectionNode1Update2Cid := testUtils.NewSameValue()
 	collectionNode1Update1Cid := testUtils.NewSameValue()
-	docNode0Update3Cid := testUtils.NewSameValue()
+	docNode0Update2Cid := testUtils.NewSameValue()
 	collectionCreateCid := testUtils.NewSameValue()
 	docNode1Update1Cid := testUtils.NewSameValue()
 	docCreateCid := testUtils.NewSameValue()
 	collectionNode0Update1Cid := testUtils.NewSameValue()
 	docNode1Update2Cid := testUtils.NewSameValue()
 	docNode0Update1Cid := testUtils.NewSameValue()
-	nameNode0Update3Cid := testUtils.NewSameValue()
+	nameNode0Update2Cid := testUtils.NewSameValue()
 	nameNode1Update1Cid := testUtils.NewSameValue()
 	nameNode1Update2Cid := testUtils.NewSameValue()
 	nameNode0Update1Cid := testUtils.NewSameValue()
@@ -83,7 +83,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 			testUtils.WaitForSync{},
 			testUtils.UpdateDoc{
 				// Update node 1 after the peer connection has been established, this will cause the `Shahzad` commit
-				// to be synced to node 0, as well as the related collection commits.
+				// to be synced to node 0, as well as the related collection _commits.
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name":	"Chris"
@@ -92,8 +92,8 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 			testUtils.WaitForSync{},
 			testUtils.UpdateDoc{
 				// Update node 0 after `Chris` and `Shahzad` have synced to node 0.  As this update happens after the peer
-				// connection has been established, this will cause the `Fred` and `Addo` doc commits, and their corresponding
-				// collection-level commits to sync to node 1.
+				// connection has been established, this will cause the `Fred` and `Addo` doc _commits, and their corresponding
+				// collection-level _commits to sync to node 1.
 				//
 				// Now, all nodes should have a full history, including the 'offline' changes made before establishing the
 				// peer connection.
@@ -107,7 +107,7 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 				// Strong eventual consistency must now have been established across both nodes, the result of this query
 				// *must* exactly match across both nodes.
 				Request: `query {
-						commits {
+						_commits {
 							cid
 							links {
 								cid
@@ -115,18 +115,29 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": gomega.And(collectionNode0Update3Cid, uniqueCid),
+							"cid": gomega.And(collectionNode0Update2Cid, uniqueCid),
 							"links": []map[string]any{
+								{
+									"cid": collectionNode0Update1Cid,
+								},
 								{
 									"cid": collectionNode1Update2Cid,
 								},
 								{
+									"cid": docNode0Update2Cid,
+								},
+							},
+						},
+						{
+							"cid": gomega.And(collectionNode1Update2Cid, uniqueCid),
+							"links": []map[string]any{
+								{
 									"cid": collectionNode1Update1Cid,
 								},
 								{
-									"cid": docNode0Update3Cid,
+									"cid": docNode1Update2Cid,
 								},
 							},
 						},
@@ -150,17 +161,6 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 						},
 						{
-							"cid": gomega.And(collectionNode1Update2Cid, uniqueCid),
-							"links": []map[string]any{
-								{
-									"cid": collectionNode0Update1Cid,
-								},
-								{
-									"cid": docNode1Update2Cid,
-								},
-							},
-						},
-						{
 							"cid": gomega.And(collectionNode0Update1Cid, uniqueCid),
 							"links": []map[string]any{
 								{
@@ -172,19 +172,11 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 						},
 						{
-							"cid": gomega.And(nameNode0Update3Cid, uniqueCid),
+							"cid": gomega.And(nameNode0Update2Cid, uniqueCid),
 							"links": []map[string]any{
-								{
-									"cid": nameNode1Update1Cid,
-								},
 								{
 									"cid": nameNode1Update2Cid,
 								},
-							},
-						},
-						{
-							"cid": gomega.And(nameNode1Update2Cid, uniqueCid),
-							"links": []map[string]any{
 								{
 									"cid": nameNode0Update1Cid,
 								},
@@ -203,6 +195,14 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							"links": []map[string]any{},
 						},
 						{
+							"cid": gomega.And(nameNode1Update2Cid, uniqueCid),
+							"links": []map[string]any{
+								{
+									"cid": nameNode1Update1Cid,
+								},
+							},
+						},
+						{
 							"cid": gomega.And(nameNode1Update1Cid, uniqueCid),
 							"links": []map[string]any{
 								{
@@ -211,16 +211,27 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							},
 						},
 						{
-							"cid": gomega.And(docNode0Update3Cid, uniqueCid),
+							"cid": gomega.And(docNode0Update2Cid, uniqueCid),
 							"links": []map[string]any{
+								{
+									"cid": docNode0Update1Cid,
+								},
 								{
 									"cid": docNode1Update2Cid,
 								},
 								{
+									"cid": nameNode0Update2Cid,
+								},
+							},
+						},
+						{
+							"cid": gomega.And(docNode1Update2Cid, uniqueCid),
+							"links": []map[string]any{
+								{
 									"cid": docNode1Update1Cid,
 								},
 								{
-									"cid": nameNode0Update3Cid,
+									"cid": nameNode1Update2Cid,
 								},
 							},
 						},
@@ -240,17 +251,6 @@ func TestQueryCommitsBranchables_HandlesConcurrentUpdatesAcrossPeerConnection(t 
 							"links": []map[string]any{
 								{
 									"cid": nameCreateCid,
-								},
-							},
-						},
-						{
-							"cid": gomega.And(docNode1Update2Cid, uniqueCid),
-							"links": []map[string]any{
-								{
-									"cid": docNode0Update1Cid,
-								},
-								{
-									"cid": nameNode1Update2Cid,
 								},
 							},
 						},

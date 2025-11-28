@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -18,7 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeIndexCreateCommand() *cobra.Command {
+func MakeIndexCreateCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var fieldsArg []string
@@ -27,20 +28,10 @@ func MakeIndexCreateCommand() *cobra.Command {
 		Use:   "create -c --collection <collection> --fields <fields[:ASC|:DESC]> [-n --name <name>] [--unique]",
 		Short: "Creates a secondary index on a collection's field(s)",
 		Long: `Creates a secondary index on a collection's field(s).
-		
+
 The --name flag is optional. If not provided, a name will be generated automatically.
 The --unique flag is optional. If provided, the index will be unique.
-If no order is specified for the field, the default value will be "ASC"
-
-Example: create an index for 'Users' collection on 'name' field:
-  defradb client index create --collection Users --fields name
-
-Example: create a named index for 'Users' collection on 'name' field:
-  defradb client index create --collection Users --fields name --name UsersByName
- 
-Example: create a unique index for 'Users' collection on 'name' in ascending order, and 'age' in descending order:
-  defradb client index create --collection Users --fields name:ASC,age:DESC --unique
-`,
+If no order is specified for the field, the default value will be "ASC"`,
 		ValidArgs: []string{"collection", "fields", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -86,6 +77,16 @@ Example: create a unique index for 'Users' collection on 'name' in ascending ord
 			return writeJSON(cmd, descWithID)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "create an index for 'Users' collection on 'name' field",
+		`defradb client index create --collection Users --fields name`)
+
+	EmbedCLIExample(ctx, cmd, "create a named index for 'Users' collection on 'name' field",
+		`defradb client index create --collection Users --fields name --name UsersByName`)
+
+	EmbedCLIExample(ctx, cmd, "create a unique index for 'Users' collection on 'name' and 'age'",
+		`defradb client index create --collection Users --fields name:ASC,age:DESC --unique`)
+
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
 	cmd.Flags().StringSliceVar(&fieldsArg, "fields", []string{}, "Fields to index")

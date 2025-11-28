@@ -446,18 +446,11 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 				commitSlct := &mapper.CommitSelect{
 					Select: *f,
 				}
-				// handle _version sub selection query differently
-				// if we are executing a regular Scan query
-				// or a TimeTravel query.
+
 				if selectReq.Cid.HasValue() {
-					// for a TimeTravel query, we don't need the Latest
-					// commit. Instead, _version references the CID
-					// of that Target version we are querying.
-					// So instead of a LatestCommit subquery, we need
-					// a commits query with max depth starting from the
-					// target CID version
-					commitSlct.DocID = immutable.Some(selectReq.DocIDs.Value()[0]) // @todo check length
 					commitSlct.Cid = selectReq.Cid
+
+					// We want all the commits, so set the maximum depth
 					commitSlct.Depth = immutable.Some(uint64(math.MaxUint64))
 				}
 
@@ -473,7 +466,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*s
 				n.groupSelects = append(n.groupSelects, f)
 			} else if isSpecialNoOpField(f, selectReq) {
 				// no-op
-			} else if !(n.collection != nil && len(n.collection.Version().QuerySources()) > 0) {
+			} else if !(n.collection != nil && n.collection.Version().Query.HasValue()) {
 				// Collections sourcing data from queries only contain embedded objects and don't require
 				// a traditional join here
 				err := n.addTypeIndexJoin(f)
@@ -498,7 +491,7 @@ func isSpecialNoOpField(field *mapper.Select, parentField *mapper.Select) bool {
 	if field.CollectionName != "" {
 		return false
 	}
-	isCommit := parentField.Name == request.CommitsName || parentField.Name == request.LatestCommitsName
+	isCommit := parentField.Name == request.CommitsName
 	return isCommit && (field.Name == request.LinksFieldName || field.Name == request.SignatureFieldName)
 }
 
@@ -580,8 +573,39 @@ func (p *Planner) SelectFromSource(
 	return top, nil
 }
 
+// SelectEncrypted constructs a plan for searchable encryption queries
+func (p *Planner) SelectEncrypted(selectReq *mapper.Select) (planNode, error) {
+	col, err := p.db.GetCollectionByName(p.ctx, selectReq.CollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedIndexes, err := col.ListEncryptedIndexes(p.ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(encryptedIndexes) == 0 {
+		return nil, client.NewErrUninitializeProperty("SelectEncrypted", "collection has no encrypted indexes")
+	}
+
+	seScan := &seScanNode{
+		p:                p,
+		collection:       col,
+		collectionID:     col.Version().CollectionID,
+		filter:           selectReq.Filter,
+		encryptedIndexes: encryptedIndexes,
+		docMapper:        docMapper{selectReq.DocumentMapping},
+	}
+
+	return seScan, nil
+}
+
 // Select constructs a SelectPlan
 func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
+	if selectReq.IsEncrypted {
+		return p.SelectEncrypted(selectReq)
+	}
+
 	s := &selectNode{
 		planner:   p,
 		filter:    selectReq.Filter,

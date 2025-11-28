@@ -18,11 +18,13 @@ import "C"
 
 import (
 	"context"
+	"runtime/cgo"
 	"strconv"
 	"time"
 
+	"github.com/sourcenetwork/go-p2p"
+
 	"github.com/sourcenetwork/defradb/internal/db"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 )
 
@@ -38,24 +40,14 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 
 	ctx := context.Background()
 
-	// // Create the directory if it doesn't exist, and inMemory flag is not set
-	// For now this is not done, but we leave it here because we might need it in
-	// the future, when running on mobile platforms.
-	// if !inMemoryFlag {
-	// 	if _, err = os.Stat(gocOptions.DbPath); os.IsNotExist(err) {
-	// 		err := os.MkdirAll(gocOptions.DbPath, 0755)
-	// 		if err != nil {
-	// 			return returnGoC(1, err.Error(), "")
-	// 		}
-	// 	}
-	// }
-
 	opts := []node.Option{
-		node.WithStorePath(gocOptions.DbPath),
-		node.WithLensRuntime(node.Wazero),
+		db.WithLensRuntime(db.Wazero),
+	}
+	if gocOptions.DbPath != "" {
+		opts = append(opts, node.WithStorePath(gocOptions.DbPath))
 	}
 	if len(listeningAddresses) > 0 {
-		opts = append(opts, netConfig.WithListenAddresses(listeningAddresses...))
+		opts = append(opts, p2p.WithListenAddresses(listeningAddresses...))
 	}
 	maxTxnRetries := gocOptions.MaxTransactionRetries
 	if maxTxnRetries > 0 {
@@ -74,7 +66,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	}
 	peers := splitCommaSeparatedString(gocOptions.Peers)
 	if len(peers) > 0 {
-		opts = append(opts, netConfig.WithBootstrapPeers(peers...))
+		opts = append(opts, p2p.WithBootstrapPeers(peers...))
 	}
 	if gocOptions.Identity != nil {
 		opts = append(opts, db.WithNodeIdentity(gocOptions.Identity))
@@ -123,5 +115,6 @@ func NodeClose(nodePtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(GoCResult{1, err.Error(), ""})
 	}
+	cgo.Handle(nodePtr).Delete()
 	return returnC(GoCResult{0, "", ""})
 }

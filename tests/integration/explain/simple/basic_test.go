@@ -44,7 +44,7 @@ func TestSimpleExplainRequest(t *testing.T) {
 										"filter": nil,
 										"scanNode": dataMap{
 											"filter":         nil,
-											"collectionID":   "bafyreicsk7nshxc2basy4iasux3wqadbru62uvyfp5mspiqft4bo37vhtu",
+											"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
 											"collectionName": "Author",
 											"prefixes": []string{
 												"/3",

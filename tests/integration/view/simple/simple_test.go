@@ -112,6 +112,7 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

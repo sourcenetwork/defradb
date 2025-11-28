@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeIndexCommand() *cobra.Command {
+func MakeIndexCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "index",
 		Short: "Manage collections' indexes of a running DefraDB instance",

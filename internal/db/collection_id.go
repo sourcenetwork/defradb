@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -36,7 +35,6 @@ import (
 func setCollectionIDs(
 	ctx context.Context,
 	newCollections []client.CollectionVersion,
-	migration immutable.Option[model.Lens],
 ) error {
 	// We need to group the inputs and then mutate them, so we temporarily
 	// map them to pointers.
@@ -55,7 +53,7 @@ func setCollectionIDs(
 		sortSet(collectionSet)
 
 		substituteRelationFieldKinds(collectionSet, collectionSets)
-		err := saveBlocks(ctx, collectionSet, migration)
+		err := saveBlocks(ctx, collectionSet)
 		if err != nil {
 			return err
 		}
@@ -407,7 +405,6 @@ setLoop:
 func saveBlocks(
 	ctx context.Context,
 	collectionSet []*client.CollectionVersion,
-	migration immutable.Option[model.Lens],
 ) error {
 	colIds := make([]cidlink.Link, 0, len(collectionSet))
 	hasSetUpdated := false
@@ -462,7 +459,10 @@ func saveBlocks(
 		}
 
 		colCRDT := crdt.NewCollectionDefinition(collection.Name)
-		delta, hasCollectionChanged := colCRDT.Delta(*collection, oldCol)
+		delta, hasCollectionChanged, err := colCRDT.Delta(*collection, oldCol)
+		if err != nil {
+			return err
+		}
 
 		if !hasFieldsChanged && !hasCollectionChanged {
 			// If the global collection state has not changed, there is nothing to do here and we
@@ -483,33 +483,20 @@ func saveBlocks(
 
 		colIds = append(colIds, cid)
 
-		newColSources := collection.CollectionSources()
-		oldColSources := oldCol.CollectionSources()
-		if oldCol.VersionID != "" && len(newColSources) == len(oldColSources) {
-			// The new collection source may have been copied from the old collection source,
-			// or, it may not have been added and needs to be done here.  Either way the new
-			// collection needs a collection source that references the old collection version.
-			newSource := &client.CollectionSource{
-				SourceCollectionID: oldCol.VersionID,
-				Transform:          migration,
+		if oldCol.VersionID != "" {
+			var migration immutable.Option[string]
+			if oldCol.PreviousVersion.Value().Transform.Value() != collection.PreviousVersion.Value().Transform.Value() {
+				// If the patch has updated the migration, use it, otherwise assume it was the old version migration,
+				// and ignore it.
+				migration = collection.PreviousVersion.Value().Transform
 			}
 
-			if len(newColSources) == 0 {
-				// If the new collection has no collection sources, this is easy and we can just append
-				// one that references the old collection version.
-				collection.Sources = append(collection.Sources, newSource)
-			} else if newColSources[0].SourceCollectionID == oldColSources[0].SourceCollectionID {
-				// If the new collection source references the same version as the old collection source
-				// it is incorrect and needs to be replaced by a reference to the new-old collection,
-				// using the new migration (if any) - this source was likely inherited by a patch command.
-
-				for i, source := range oldCol.Sources {
-					if _, ok := source.(*client.CollectionSource); ok {
-						collection.Sources[i] = newSource
-						break
-					}
-				}
-			}
+			collection.PreviousVersion = immutable.Some(
+				client.CollectionSource{
+					SourceCollectionID: oldCol.VersionID,
+					Transform:          migration,
+				},
+			)
 		}
 	}
 

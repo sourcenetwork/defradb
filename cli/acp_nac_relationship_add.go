@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeNodeACPRelationshipAddCommand() *cobra.Command {
+func MakeNodeACPRelationshipAddCommand(ctx context.Context) *cobra.Command {
 	var (
 		relationArg    string
 		targetActorArg string
@@ -36,12 +38,6 @@ Notes:
   - Currently the only relation supported is the 'admin' relation.
   - The Target Identity format is a public key format.
   - The Requesting Identity is a secp256k1 private key in hex format.
-
-Example: Make another actor an admin user:
-  defradb client acp node relationship add \
-	--relation admin \
-	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
-	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -58,6 +54,12 @@ Example: Make another actor an admin user:
 			return writeJSON(cmd, addNACActorRelationshipResult)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "Make another actor an admin user",
+		`defradb client acp node relationship add \
+	--relation admin \
+	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
+	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac`)
 
 	cmd.Flags().StringVarP(
 		&relationArg,

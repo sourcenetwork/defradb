@@ -29,14 +29,14 @@ func TestQueryCommitsWithField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits (fieldName: "age") {
+						_commits (fieldName: "age") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+							"cid": "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 						},
 					},
 				},
@@ -60,12 +60,12 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits (fieldName: "1") {
+						_commits (fieldName: "1") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 			},
 		},
@@ -87,14 +87,14 @@ func TestQueryCommitsWithCompositeField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(fieldName: "_C") {
+						_commits(fieldName: "_C") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 						},
 					},
 				},
@@ -120,16 +120,16 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionID(t *testing.
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(fieldName: "_C") {
+						_commits(fieldName: "_C") {
 							cid
 							schemaVersionId
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":             "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
-							"schemaVersionId": "bafyreigk2gtae2irmijtkb7z736r3lpssqv7cvmbrp3p6x6ouw7nakc4nm",
+							"cid":             "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
+							"schemaVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 					},
 				},
@@ -153,14 +153,14 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits (fieldName: "age", cid: "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu") {
+						_commits (fieldName: "age", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu",
+							"cid": "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 						},
 					},
 				},
@@ -184,12 +184,12 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits (fieldName: "name", cid: "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu") {
+						_commits (fieldName: "name", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 			},
 		},
@@ -211,12 +211,12 @@ func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits (fieldName: "NOT_A_FIELD", cid: "bafyreiae763hq5srsefplqrehpsuyieuwmbvblgzdma7srss522yciumhu") {
+						_commits (fieldName: "NOT_A_FIELD", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 			},
 		},

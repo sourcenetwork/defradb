@@ -97,6 +97,7 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -116,7 +117,7 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "Shahzad"
+					"name": "John"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -126,7 +127,7 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"name": "John"
+					"name": "Shahzad"
 				}`,
 			},
 			testUtils.Request{
@@ -148,6 +149,7 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

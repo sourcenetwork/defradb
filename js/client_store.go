@@ -115,12 +115,11 @@ func (c *Client) setMigration(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.node.DB.SetMigration(ctx, config)
-	return js.Undefined(), err
-}
-
-func (c *Client) lensRegistry(this js.Value, args []js.Value) (js.Value, error) {
-	return newLensRegistry(c.node.DB.LensRegistry(), c.txns), nil
+	lensID, err := c.node.DB.SetMigration(ctx, config)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return js.ValueOf(lensID), err
 }
 
 func (c *Client) getCollectionByName(this js.Value, args []js.Value) (js.Value, error) {
@@ -165,6 +164,18 @@ func (c *Client) getAllIndexes(this js.Value, args []js.Value) (js.Value, error)
 		return js.Undefined(), err
 	}
 	indexes, err := c.node.DB.GetAllIndexes(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(indexes)
+}
+
+func (c *Client) listAllEncryptedIndexes(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	indexes, err := c.node.DB.ListAllEncryptedIndexes(ctx)
 	if err != nil {
 		return js.Undefined(), err
 	}

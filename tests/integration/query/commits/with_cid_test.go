@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithCid(t *testing.T) {
+func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
@@ -36,16 +36,16 @@ func TestQueryCommitsWithCid(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(
-							cid: "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm"
+						_commits(
+							cid: "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm"
 						) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreidtdklweht7ainl5rrdeqscr3cwr72sr4lehzrpmmnnbvnvstavnm",
+							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 						},
 					},
 				},
@@ -56,7 +56,7 @@ func TestQueryCommitsWithCid(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
+func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.T) {
 	// cid is for a field commit, see TestQueryCommitsWithDocIDAndFieldId
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -75,16 +75,16 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(
-							cid: "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q"
+						_commits(
+							cid: "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64"
 						) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiht7yhnnrgbwgyu5toe3exvpkovzrefzr6midu5secnlr546oel3q",
+							"cid": "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 						},
 					},
 				},
@@ -108,14 +108,14 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(cid: "fhbnjfahfhfhanfhga") {
+						_commits(cid: "fhbnjfahfhfhanfhga") {
 							cid
 							height
 							delta
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 				ExpectedError: "invalid cid",
 			},
@@ -138,14 +138,14 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(cid: "bafybeidfhbnjfahfhfhanfhga") {
+						_commits(cid: "bafybeidfhbnjfahfhfhanfhga") {
 							cid
 							height
 							delta
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 				ExpectedError: "invalid cid",
 			},
@@ -168,14 +168,14 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						commits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
+						_commits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
 							cid
 							height
 							delta
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 				ExpectedError: "cid either does not exist or belong to document",
 			},

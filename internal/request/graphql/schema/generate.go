@@ -29,9 +29,10 @@ import (
 // approach
 
 const (
-	filterInputNameSuffix    = "FilterArg"
-	mutationInputNameSuffix  = "MutationInputArg"
-	mutationInputsNameSuffix = "MutationInputsArg"
+	filterInputNameSuffix          = "FilterArg"
+	encryptedFilterInputNameSuffix = "EncryptedFilterArg"
+	mutationInputNameSuffix        = "MutationInputArg"
+	mutationInputsNameSuffix       = "MutationInputsArg"
 )
 
 const (
@@ -42,18 +43,24 @@ const (
 // Generator creates all the necessary typed schema definitions from an AST Document
 // and adds them to the Schema via the SchemaManager
 type Generator struct {
-	typeDefs []*gql.Object
-	manager  *SchemaManager
+	typeDefs            []*gql.Object
+	typDefCollectionMap map[string]client.CollectionVersion
+
+	manager *SchemaManager
 
 	expandedFields map[string]bool
+
+	isSearchableEncryptionEnabled bool
 }
 
 // NewGenerator creates a new instance of the Generator
 // from a given SchemaManager
-func (s *SchemaManager) NewGenerator() *Generator {
+func (s *SchemaManager) NewGenerator(isSearchableEncryptionEnabled bool) *Generator {
 	s.Generator = &Generator{
-		manager:        s,
-		expandedFields: make(map[string]bool),
+		manager:                       s,
+		expandedFields:                make(map[string]bool),
+		typDefCollectionMap:           make(map[string]client.CollectionVersion),
+		isSearchableEncryptionEnabled: isSearchableEncryptionEnabled,
 	}
 	return s.Generator
 }
@@ -119,6 +126,14 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		}
 		generatedQueryFields = append(generatedQueryFields, f)
 
+		var encryptedField *gql.Field
+		if g.isSearchableEncryptionEnabled {
+			encryptedField, err = g.GenerateEncryptedQueryInputForGQLType(ctx, t, collections)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		var isEmbedded bool
 		for _, definition := range collections {
 			if t.Name() == definition.Name && definition.IsEmbeddedOnly {
@@ -136,6 +151,11 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 
 		queryType.AddFieldConfig(f.Name, f)
 		subscriptionType.AddFieldConfig(f.Name, f)
+
+		if encryptedField != nil {
+			queryType.AddFieldConfig(encryptedField.Name, encryptedField)
+			// Note: subscriptions are not supported for encrypted queries
+		}
 	}
 
 	// resolve types
@@ -165,6 +185,14 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 	for _, defaultType := range inlineArrayTypes() {
 		leafFilterArg := g.genLeafFilterArgInput(defaultType)
 		generatedFilterLeafArgs = append(generatedFilterLeafArgs, leafFilterArg)
+	}
+
+	if g.isSearchableEncryptionEnabled {
+		// Generate encrypted filter input types for primitive types (equality only)
+		for _, defaultType := range inlineArrayTypes() {
+			encryptedLeafFilterArg := g.genEncryptedLeafFilterArgInput(defaultType)
+			generatedFilterLeafArgs = append(generatedFilterLeafArgs, encryptedLeafFilterArg)
+		}
 	}
 
 	for _, t := range generatedFilterLeafArgs {
@@ -219,7 +247,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		var collectionFound bool
 		for _, definition := range collections {
 			if t.Name() == definition.Name {
-				isReadOnly = len(definition.QuerySources()) > 0
+				isReadOnly = definition.Query.HasValue()
 				collectionFound = true
 				break
 			}
@@ -435,7 +463,7 @@ func (g *Generator) buildTypes(
 
 	for _, collection := range collections {
 		fieldDescriptions := collection.Fields
-		isQuerySource := len(collection.QuerySources()) > 0
+		isQuerySource := collection.Query.HasValue()
 		isViewObject := collection.IsEmbeddedOnly || isQuerySource
 
 		// check if type exists
@@ -532,6 +560,7 @@ func (g *Generator) buildTypes(
 
 		g.manager.schema.TypeMap()[obj.Name()] = obj
 		g.typeDefs = append(g.typeDefs, obj)
+		g.typDefCollectionMap[obj.Name()] = collection
 	}
 
 	return objs, nil
@@ -758,7 +787,6 @@ func (g *Generator) genCountFieldConfig(obj *gql.Object) (gql.Field, error) {
 	childTypesByFieldName := map[string]gql.Type{}
 
 	for _, field := range obj.Fields() {
-		// Only lists can be counted
 		listType, isList := field.Type.(*gql.List)
 		if !isList {
 			continue
@@ -889,12 +917,15 @@ func (g *Generator) getNumericFields(obj *gql.Object) map[string]gql.Type {
 	fieldTypes := map[string]gql.Type{}
 	for _, field := range obj.Fields() {
 		listType, isList := field.Type.(*gql.List)
-		if !isList {
-			continue
-		}
-
 		var inputObjectName string
-		if isNumericArray(listType) {
+
+		col := g.typDefCollectionMap[obj.Name()]
+
+		if !isList && isNumeric(field.Type) && isUserDefinedField(field.Name, col) {
+			fieldTypes[field.Name] = g.manager.schema.TypeMap()["ScalarAggregateNumericBlock"]
+		} else if !isList {
+			continue
+		} else if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
 			inputObjectName = genNumericObjectSelectorName(listType.OfType.Name())
@@ -1118,6 +1149,46 @@ func (g *Generator) GenerateQueryInputForGQLType(
 	return queryField, nil
 }
 
+// GenerateEncryptedQueryInputForGQLType generates the encrypted query field
+// for collections that have encrypted indexes
+func (g *Generator) GenerateEncryptedQueryInputForGQLType(
+	ctx context.Context,
+	obj *gql.Object,
+	collections []client.CollectionVersion,
+) (*gql.Field, error) {
+	var collection *client.CollectionVersion
+	for _, col := range collections {
+		if col.Name == obj.Name() {
+			collection = &col
+			break
+		}
+	}
+
+	if len(collection.EncryptedIndexes) == 0 {
+		return nil, nil
+	}
+
+	filterName := obj.Name() + encryptedFilterInputNameSuffix
+	filterInput := g.genEncryptedFilterArgInput(obj, collection.EncryptedIndexes)
+	g.manager.schema.TypeMap()[filterName] = filterInput
+
+	encryptedResultType := g.manager.schema.TypeMap()[request.EncryptedSearchResultName]
+
+	field := &gql.Field{
+		Name: request.EncryptedCollectionPrefix + obj.Name(),
+		Description: "Search encrypted fields for " + obj.Name() + " and return matching document IDs." +
+			" When multiple filter conditions are specified, returns the document IDs for documents that match all conditions.",
+		Type: encryptedResultType,
+		Args: gql.FieldConfigArgument{
+			"filter":             schemaTypes.NewArgConfig(filterInput, "Filter encrypted fields"),
+			request.LimitClause:  schemaTypes.NewArgConfig(gql.Int, schemaTypes.LimitArgDescription),
+			request.OffsetClause: schemaTypes.NewArgConfig(gql.Int, schemaTypes.OffsetArgDescription),
+		},
+	}
+
+	return field, nil
+}
+
 // GenerateMutationInputForGQLType creates all the mutation types and fields
 // for the given graphQL object. It assumes that all the various
 // filterArgs for the given type already exists, and will error otherwise.
@@ -1297,8 +1368,8 @@ func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
 			Type: gql.NewList(gql.NewNonNull(selfRefType)),
 		}
 
-		fields["_and"] = compoundListType
-		fields["_or"] = compoundListType
+		fields[request.FilterOpAnd] = compoundListType
+		fields[request.FilterOpOr] = compoundListType
 
 		operatorBlockName := fmt.Sprintf("%s%s", filterTypeName, "OperatorBlock")
 		operatorType, hasOperatorType := g.manager.schema.TypeMap()[operatorBlockName]
@@ -1325,6 +1396,103 @@ func (g *Generator) genLeafFilterArgInput(obj gql.Type) *gql.InputObject {
 	inputCfg.Fields = fieldThunk
 	selfRefType = gql.NewInputObject(inputCfg)
 	return selfRefType
+}
+
+// genEncryptedFilterArgInput generates filter input that only supports _eq on encrypted fields
+func (g *Generator) genEncryptedFilterArgInput(
+	obj *gql.Object,
+	encryptedIndexes []client.EncryptedIndexDescription,
+) *gql.InputObject {
+	inputCfg := gql.InputObjectConfig{
+		Name: g.genEncryptedFilterTypeName(obj),
+	}
+
+	fieldThunk := (gql.InputObjectConfigFieldMapThunk)(
+		func() (gql.InputObjectConfigFieldMap, error) {
+			fields := gql.InputObjectConfigFieldMap{}
+
+			for _, encIdx := range encryptedIndexes {
+				var objField *gql.FieldDefinition
+				for f, field := range obj.Fields() {
+					if f == encIdx.FieldName {
+						objField = field
+						break
+					}
+				}
+				if objField == nil {
+					panic("encrypted index field not found in schema - validation should have caught this")
+				}
+
+				encryptedFilterTypeName := g.genEncryptedFilterTypeName(objField.Type)
+				encryptedFilterType, exists := g.manager.schema.TypeMap()[encryptedFilterTypeName]
+				if !exists {
+					panic("encrypted filter type not found in schema - type generation failed")
+				}
+
+				fields[encIdx.FieldName] = &gql.InputObjectFieldConfig{
+					Type: encryptedFilterType,
+				}
+			}
+
+			return fields, nil
+		},
+	)
+
+	inputCfg.Fields = fieldThunk
+	return gql.NewInputObject(inputCfg)
+}
+
+// genEncryptedLeafFilterArgInput generates encrypted filter inputs for primitive types.
+// Encrypted filters only support equality operators (_eq) for searchable encryption.
+func (g *Generator) genEncryptedLeafFilterArgInput(obj gql.Type) *gql.InputObject {
+	var selfRefType *gql.InputObject
+
+	inputCfg := gql.InputObjectConfig{
+		Name: g.genEncryptedFilterTypeName(obj),
+	}
+
+	var fieldThunk gql.InputObjectConfigFieldMapThunk = func() (gql.InputObjectConfigFieldMap, error) {
+		fields := gql.InputObjectConfigFieldMap{}
+
+		// Add compound operators for logical operations
+		compoundListType := &gql.InputObjectFieldConfig{
+			Type: gql.NewList(gql.NewNonNull(selfRefType)),
+		}
+
+		fields[request.FilterOpAnd] = compoundListType
+		fields[request.FilterOpOr] = compoundListType
+
+		// For encrypted filters, only add _eq operator
+		// Get the underlying type (remove NonNull wrapper if present)
+		underlyingType := obj
+		if notNull, isNotNull := obj.(*gql.NonNull); isNotNull {
+			underlyingType = notNull.OfType
+		}
+
+		fields["_eq"] = &gql.InputObjectFieldConfig{
+			Type: underlyingType,
+		}
+
+		return fields, nil
+	}
+
+	inputCfg.Fields = fieldThunk
+	selfRefType = gql.NewInputObject(inputCfg)
+	return selfRefType
+}
+
+// genEncryptedFilterTypeName generates the name of the encrypted filter type for a given GraphQL type
+func (g *Generator) genEncryptedFilterTypeName(obj gql.Type) string {
+	var filterTypeName string
+	if notNull, isNotNull := obj.(*gql.NonNull); isNotNull {
+		// GQL does not support '!' in type names, and so we have to manipulate the
+		// underlying name like this if it is a nullable type.
+		filterTypeName = fmt.Sprintf("NotNull%s", notNull.OfType.Name())
+	} else {
+		filterTypeName = obj.Name()
+	}
+
+	return fmt.Sprintf("%s%s", filterTypeName, encryptedFilterInputNameSuffix)
 }
 
 func (g *Generator) genTypeOrderArgInput(obj *gql.Object) *gql.InputObject {
@@ -1435,16 +1603,32 @@ func genTypeName(obj gql.Type, name string) string {
 	return fmt.Sprintf("%s%s", obj.Name(), name)
 }
 
+func isNumeric(t gql.Type) bool {
+	// We have to compare the names here, as the gql lib we use
+	// does not have an easier way to compare non-nullable types
+	return t.Name() == gql.NewNonNull(schemaTypes.Float64).Name() ||
+		t.Name() == gql.NewNonNull(schemaTypes.Float32).Name() ||
+		t.Name() == gql.NewNonNull(gql.Int).Name() ||
+		t == gql.Int ||
+		t == schemaTypes.Float64 ||
+		t == schemaTypes.Float32
+}
+
 // isNumericArray returns true if the given list is a list of numerical values.
 func isNumericArray(list *gql.List) bool {
 	// We have to compare the names here, as the gql lib we use
 	// does not have an easier way to compare non-nullable types
-	return list.OfType.Name() == gql.NewNonNull(schemaTypes.Float64).Name() ||
-		list.OfType.Name() == gql.NewNonNull(schemaTypes.Float32).Name() ||
-		list.OfType.Name() == gql.NewNonNull(gql.Int).Name() ||
-		list.OfType == gql.Int ||
-		list.OfType == schemaTypes.Float64 ||
-		list.OfType == schemaTypes.Float32
+	return isNumeric(list.OfType)
+}
+
+func isUserDefinedField(fieldName string, col client.CollectionVersion) bool {
+	for _, field := range col.Fields {
+		if field.Name == fieldName {
+			return true
+		}
+	}
+
+	return false
 }
 
 func genFilterOperatorName(fieldType gql.Type) string {

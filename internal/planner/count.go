@@ -180,8 +180,14 @@ func (n *countNode) Next() (bool, error) {
 					}
 					count += arrayCount
 				}
+
+			// Performing count on a scalar value may seem pointless, but this is neecessary because
+			// count is a dependency of average. So we need to handle this case.
+			case reflect.Int, reflect.Int64, reflect.Uint64, reflect.Float32, reflect.Float64, reflect.Bool:
+				count += 1
 			}
 		}
+
 		n.currentValue.Fields[n.virtualFieldIndex] = count
 
 		passes, err := mapper.RunFilter(n.currentValue, n.aggregateFilter)

@@ -77,7 +77,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-818aecea-02f9-5064-9e17-c8b7cc20e63f
+				// bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -90,7 +90,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
+					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			testUtils.Request{
@@ -131,7 +131,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-818aecea-02f9-5064-9e17-c8b7cc20e63f
+				// bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
@@ -144,7 +144,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"
+					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			testUtils.Request{
@@ -463,6 +463,7 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -483,6 +484,7 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -566,6 +568,7 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `query {
@@ -609,6 +612,7 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

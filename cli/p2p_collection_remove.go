@@ -11,24 +11,18 @@
 package cli
 
 import (
+	"context"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionRemoveCommand() *cobra.Command {
+func MakeP2PCollectionRemoveCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "remove [collectionNames]",
 		Short: "Remove P2P collections",
 		Long: `Remove P2P collections from the followed pubsub topics.
-The removed collections will no longer be synchronized between nodes.
-
-Example: remove single collection
-  defradb client p2p collection remove User
-
-Example: remove multiple collections
-  defradb client p2p collection remove User,Address
-		`,
+The removed collections will no longer be synchronized between nodes.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -45,5 +39,12 @@ Example: remove multiple collections
 			return cliClient.RemoveP2PCollections(cmd.Context(), collectionNames...)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "remove single collection",
+		`defradb client p2p collection remove User`)
+
+	EmbedCLIExample(ctx, cmd, "remove multiple collections",
+		`defradb client p2p collection remove User,Address`)
+
 	return cmd
 }

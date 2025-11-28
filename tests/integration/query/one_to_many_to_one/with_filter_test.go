@@ -160,6 +160,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -209,6 +210,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -281,6 +283,7 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -340,6 +343,7 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.Request{
 				Request: `query {

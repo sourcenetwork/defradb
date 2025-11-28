@@ -23,7 +23,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
-	netConfig "github.com/sourcenetwork/defradb/net/config"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
@@ -101,8 +100,6 @@ type P2PState struct {
 type DocHeadState struct {
 	// The actual document head.
 	CID cid.Cid
-	// Indicates if the document at the given head has been Decrypted.
-	Decrypted bool
 }
 
 // NewP2PState returns a new empty p2p state.
@@ -127,6 +124,9 @@ type EventState struct {
 
 	// Replicator is the `event.ReplicatorCompletedName` subscription
 	Replicator event.Subscription
+
+	// SESync is the `event.SEArtifactSyncCompleteName` subscription
+	SESync event.Subscription
 }
 
 // NewEventState returns an eventState with all required subscriptions.
@@ -143,10 +143,15 @@ func NewEventState(bus event.Bus) (*EventState, error) {
 	if err != nil {
 		return nil, err
 	}
+	seSync, err := bus.Subscribe(event.SEArtifactReceivedName)
+	if err != nil {
+		return nil, err
+	}
 	return &EventState{
 		Merge:      merge,
 		Update:     update,
 		Replicator: replicator,
+		SESync:     seSync,
 	}, nil
 }
 
@@ -159,7 +164,7 @@ type NodeState struct {
 	// P2P contains P2P states for the node.
 	P2P *P2PState
 	// The network configurations for the nodes
-	NetOpts []netConfig.NodeOpt
+	NetOpts []node.Option
 	// The path to any file-based databases active in this test.
 	DbPath string
 	// Collections by index present in the test.
@@ -167,9 +172,9 @@ type NodeState struct {
 	Collections []client.Collection
 	// indicates if the node is Closed.
 	Closed bool
-	// CachedPeerInfo holds the node's PeerInfo so that the node can be
-	// restarded with the same address configuration.
-	CachedPeerInfo client.PeerInfo
+	// CachedAddresses holds the node's addresses so that the node can be
+	// restarted with the same address configuration.
+	CachedAddresses []string
 	// Map of docIDs to their composite CIDs.
 	Composites map[string][]cid.Cid
 }
@@ -206,6 +211,9 @@ type State struct {
 	// Use it to customize the key type that is used for identity and signing.
 	IdentityTypes map[Identity]crypto.KeyType
 
+	// EnableSearchableEncryption indicates whether searchable encryption is enabled.
+	EnableSearchableEncryption bool
+
 	// Identities contains all Identities created in this test.
 	// The map key is the identity reference that uniquely identifies Identities of different
 	// types. See [identRef].
@@ -239,6 +247,12 @@ type State struct {
 	// even when they are renamed.
 	CollectionIndexesByCollectionID map[string]int
 
+	// The VersionIDs of all collection versions created so far by the test.
+	//
+	// WARNING: This does not actually include patch versions yet.  Please add that when
+	// the need arises.
+	CollectionVersions []string
+
 	// Document IDs by index, by collection index.
 	//
 	// Each index is assumed to be global, and may be expected across multiple
@@ -264,6 +278,9 @@ type State struct {
 	// nodes, e.g. within the same node Cids should be unique, but across different nodes the same block
 	// should have the same Cid.
 	CurrentNodeID int
+
+	// LenIDs of lenses added to Defra.
+	LensIDs []string
 }
 
 func (s *State) GetClientType() ClientType {
@@ -278,11 +295,16 @@ func (s *State) GetIdentity(ident Identity) acpIdentity.Identity {
 	return GetIdentity(s, immutable.Some(ident))
 }
 
+func (s *State) GetDocID(collectionIndex, docIndex int) client.DocID {
+	return s.DocIDs[collectionIndex][docIndex]
+}
+
 // NewState returns a new fresh state for the given testCase.
 func NewState(
 	ctx context.Context,
 	t testing.TB,
 	identityTypes map[Identity]crypto.KeyType,
+	enableSearchableEncryption bool,
 	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
@@ -299,6 +321,7 @@ func NewState(
 		DocumentACPOptions:              []node.DocumentACPOpt{},
 		Txns:                            []client.Txn{},
 		IdentityTypes:                   identityTypes,
+		EnableSearchableEncryption:      enableSearchableEncryption,
 		Identities:                      map[Identity]*IdentityHolder{},
 		NextIdentityGenSeed:             0,
 		AllActionsDone:                  make(chan struct{}),

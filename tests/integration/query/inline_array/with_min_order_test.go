@@ -1,0 +1,137 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package inline_array
+
+import (
+	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestQueryInlineIntegerArray_WithMinAndOrder_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"testScores": [3, 4, 5],
+					"pageRatings": [1.0, 2.0, 3.0]
+				}`, // Minimum: 1
+			},
+
+			testUtils.CreateDoc{
+				Doc: `{
+					"testScores": [30, 40, 50],
+					"pageRatings": [10.0, 20.0, 30.0]
+				}`, // Minimum: 10
+			},
+
+			// Test descending order
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {total: DESC}}) {
+						total: _min(testScores: {}, pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"total": 10,
+						},
+						{
+							"total": 1,
+						},
+					},
+				},
+			},
+
+			// Test ascending order
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {total: ASC}}) {
+						total: _min(testScores: {}, pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"total": 1,
+						},
+						{
+							"total": 10,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineIntegerArray_WithNullAndMinAndOrder_Succeeds(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"testScores": [3, 4, 5, null],
+					"pageRatings": [1.0, 2.0, 3.0, null]
+				}`, // Minimum: 1
+			},
+
+			testUtils.CreateDoc{
+				Doc: `{
+					"testScores": [30, 40, 50, null],
+					"pageRatings": [10.0, 20.0, 30.0, null]
+				}`, // Minimum: 10
+			},
+
+			// Test descending order
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {total: DESC}}) {
+						total: _min(testScores: {}, pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"total": 10,
+						},
+						{
+							"total": 1,
+						},
+					},
+				},
+			},
+
+			// Test ascending order
+			testUtils.Request{
+				Request: `query {
+					Users(order: {_alias: {total: ASC}}) {
+						total: _min(testScores: {}, pageRatings: {})
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"total": 1,
+						},
+						{
+							"total": 10,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}

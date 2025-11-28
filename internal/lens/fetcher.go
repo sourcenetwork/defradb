@@ -18,6 +18,7 @@ import (
 	"github.com/fxamacker/cbor/v2"
 
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -25,6 +26,8 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -35,9 +38,9 @@ import (
 // https://github.com/sourcenetwork/defradb/issues/1589
 
 type lensedFetcher struct {
-	source   fetcher.Fetcher
-	registry client.LensRegistry
-	lens     Lens
+	source fetcher.Fetcher
+	store  store.Store
+	lens   Lens
 
 	txn datastore.Txn
 
@@ -56,10 +59,10 @@ var _ fetcher.Fetcher = (*lensedFetcher)(nil)
 
 // NewFetcher returns a new fetcher that will migrate any documents from the given
 // source Fetcher as they are are yielded.
-func NewFetcher(source fetcher.Fetcher, registry client.LensRegistry) fetcher.Fetcher {
+func NewFetcher(source fetcher.Fetcher, store store.Store) fetcher.Fetcher {
 	return &lensedFetcher{
-		source:   source,
-		registry: registry,
+		source: source,
+		store:  store,
 	}
 }
 
@@ -67,6 +70,7 @@ func (f *lensedFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
+	nodeACP acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
@@ -89,21 +93,19 @@ func (f *lensedFetcher) Init(
 		f.fieldDescriptionsByName[defFields[i].Name] = defFields[i]
 	}
 
-	history, err := getTargetedCollectionHistory(ctx, f.col.Version().CollectionID, f.col.Version().VersionID)
+	history, err := description.GetTargetedCollectionHistory(ctx, f.col.Version().CollectionID,
+		f.col.Version().VersionID)
 	if err != nil {
 		return err
 	}
-	f.lens = new(ctx, f.registry, f.col.Version().VersionID, history)
+	f.lens = new(ctx, f.store, f.col.Version().VersionID, history)
 	f.txn = txn
 
-historyLoop:
 	for _, historyItem := range history {
-		sources := historyItem.collection.CollectionSources()
-		for _, source := range sources {
-			if source.Transform.HasValue() {
-				f.hasMigrations = true
-				break historyLoop
-			}
+		if historyItem.Collection().PreviousVersion.HasValue() &&
+			historyItem.Collection().PreviousVersion.Value().Transform.HasValue() {
+			f.hasMigrations = true
+			break
 		}
 	}
 
@@ -122,6 +124,7 @@ historyLoop:
 		ctx,
 		identity,
 		txn,
+		nodeACP,
 		documentACP,
 		index,
 		col,

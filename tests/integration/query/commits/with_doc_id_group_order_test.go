@@ -36,17 +36,17 @@ func TestQueryCommitsOrderedAndGroupedByDocID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: ` {
-					commits(groupBy: [docID], order: {docID: DESC}) {
+					_commits(groupBy: [docID], order: {docID: DESC}) {
 						docID
 					}
 				}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"docID": "bae-dfeea2ca-5e6d-5333-85e8-213a80b508f7",
+							"docID": "bae-2487fd12-227f-582b-a7ed-3dd5d4b61fce",
 						},
 						{
-							"docID": "bae-2bb3e007-c40c-5264-8656-45e024cc4776",
+							"docID": "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
 						},
 					},
 				},

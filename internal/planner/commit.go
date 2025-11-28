@@ -266,7 +266,7 @@ func (n *dagScanNode) Next() (bool, error) {
 		return false, err
 	}
 
-	// if this is a time travel query or a latestCommits
+	// if this is a time travel query or a _commits
 	// (cid + undefined depth + docId) then we need to make sure the
 	// target block actually belongs to the doc, since we are
 	// bypassing the HeadFetcher for the first cid
@@ -464,7 +464,8 @@ func (n *dagScanNode) addSignatureFieldToDoc(link cidlink.Link, commit *core.Doc
 
 	sigDoc := sigMapping.NewDoc()
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureTypeFieldName, sigBlock.Header.Type)
-	sigMapping.SetFirstOfName(&sigDoc, request.SignatureIdentityFieldName, sigBlock.Header.Identity)
+	// Converting to a string from bytes[] results in it being presented as hex instead of base64
+	sigMapping.SetFirstOfName(&sigDoc, request.SignatureIdentityFieldName, string(sigBlock.Header.Identity))
 	sigMapping.SetFirstOfName(&sigDoc, request.SignatureValueFieldName, sigBlock.Value)
 
 	n.commitSelect.DocumentMapping.SetFirstOfName(commit, request.SignatureFieldName, sigDoc)

@@ -6,7 +6,7 @@ Interact with the access control system(s) of a DefraDB node
 
 Interact with the access control system(s) of a DefraDB node
 
-Learn more about the DefraDB [ACP System](/acp/README.md)
+Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 
 		
 

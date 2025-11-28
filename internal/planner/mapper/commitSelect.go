@@ -14,7 +14,7 @@ import "github.com/sourcenetwork/immutable"
 
 // CommitSelect represents a commit request from a consumer.
 //
-// E.g. commits, or latestCommits.
+// E.g. _commits
 type CommitSelect struct {
 	// The underlying Select, defining the information requested.
 	Select

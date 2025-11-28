@@ -25,10 +25,12 @@ func defaultSchema() (gql.Schema, error) {
 	commitLinkObject := types.CommitLinkObject()
 	commitObject := types.CommitObject(commitLinkObject)
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
+
+	encryptedSearchResult := types.EncryptedSearchResultObject()
+
 	indexFieldInput := types.IndexFieldInputObject(orderEnum)
 
 	queryCommits := types.QueryCommits(commitObject, commitsOrderArg)
-	queryLatestCommits := types.QueryLatestCommits(commitObject)
 
 	sch, err := gql.NewSchema(gql.SchemaConfig{
 		Types: defaultTypes(
@@ -39,8 +41,9 @@ func defaultSchema() (gql.Schema, error) {
 			crdtEnum,
 			explainEnum,
 			indexFieldInput,
+			encryptedSearchResult,
 		),
-		Query:        defaultQueryType(queryCommits, queryLatestCommits),
+		Query:        defaultQueryType(queryCommits),
 		Mutation:     defaultMutationType(),
 		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexFieldInput),
 		Subscription: defaultSubscriptionType(queryCommits),
@@ -100,6 +103,7 @@ func defaultDirectivesType(
 		types.BranchableDirective(),
 		types.VectorEmbeddingDirective(),
 		types.ConstraintsDirective(),
+		types.EncryptedIndexDirective(),
 	}
 }
 
@@ -127,6 +131,7 @@ func defaultTypes(
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
+	encryptedSearchResult *gql.Object,
 ) []gql.Type {
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()
@@ -136,6 +141,7 @@ func defaultTypes(
 	stringOpBlock := types.StringOperatorBlock()
 	blobOpBlock := types.BlobOperatorBlock(types.Blob)
 	dateTimeOpBlock := types.DateTimeOperatorBlock()
+	scalarAggregateBlock := types.ScalarAggregateNumericBlock()
 
 	notNullIntOpBlock := types.NotNullIntOperatorBlock()
 	notNullFloat64OpBlock := types.NotNullFloat64OperatorBlock()
@@ -196,6 +202,9 @@ func defaultTypes(
 		types.NotNullBooleanListOperatorBlock(notNullBooleanOpBlock),
 		types.NotNullStringListOperatorBlock(notNullStringOpBlock),
 
+		// aggregate input args
+		scalarAggregateBlock,
+
 		commitsOrderArg,
 		commitLinkObject,
 		commitObject,
@@ -204,5 +213,6 @@ func defaultTypes(
 		explainEnum,
 
 		indexFieldInput,
+		encryptedSearchResult,
 	}
 }

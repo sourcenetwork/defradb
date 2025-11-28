@@ -18,6 +18,7 @@ import "C"
 
 import (
 	"context"
+	"runtime/cgo"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -54,4 +55,12 @@ func NodeIdentity(nodePtr C.uintptr_t) C.Result {
 		return returnC(marshalJSONToGoCResult(identity.Value()))
 	}
 	return returnC(returnGoC(0, "", "Node has no identity assigned to it."))
+}
+
+//export IdentityFree
+func IdentityFree(identityPtr C.uintptr_t) {
+	_, err := getIdentityFromPointer(identityPtr)
+	if err == nil && identityPtr != 0 {
+		cgo.Handle(identityPtr).Delete()
+	}
 }

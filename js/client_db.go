@@ -229,11 +229,7 @@ func (c *Client) newTxn(this js.Value, args []js.Value) (js.Value, error) {
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	txn, err := c.node.DB.NewTxn(ctx, readOnly)
+	txn, err := c.node.DB.NewTxn(readOnly)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -246,11 +242,7 @@ func (c *Client) newConcurrentTxn(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 1, c.txns)
-	if err != nil {
-		return js.Undefined(), err
-	}
-	txn, err := c.node.DB.NewConcurrentTxn(ctx, readOnly)
+	txn, err := c.node.DB.NewConcurrentTxn(readOnly)
 	if err != nil {
 		return js.Undefined(), err
 	}

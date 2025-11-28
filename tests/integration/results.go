@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/format"
 	"github.com/onsi/gomega/types"
 
 	"github.com/stretchr/testify/assert"
@@ -31,6 +32,15 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
+func init() {
+	format.RegisterCustomFormatter(func(value any) (string, bool) {
+		if matcher, ok := value.(*docIDAt); ok {
+			return matcher.String(), true
+		}
+		return "", false
+	})
+}
+
 // TestState is read-only interface for test state. It allows passing the state to custom matchers
 // without allowing them to modify the state.
 type TestState interface {
@@ -40,6 +50,8 @@ type TestState interface {
 	GetCurrentNodeID() int
 	// GetIdentity returns the identity for the given node index.
 	GetIdentity(state.Identity) acpIdentity.Identity
+	// GetDocID returns the document ID for the given collection index and document index.
+	GetDocID(collectionIndex, docIndex int) client.DocID
 }
 
 type testStateMatcher struct {
@@ -204,6 +216,49 @@ func (matcher *SameValue) NegatedFailureMessage(actual any) string {
 		matcher.value, actual)
 }
 
+// DocIDAt returns a matcher that checks if the actual value is a document ID
+// at the specified collection index and document index.
+func DocIDAt(collectionIndex, docIndex int) *docIDAt {
+	return &docIDAt{
+		collectionIndex: collectionIndex,
+		docIndex:        docIndex,
+	}
+}
+
+// docIDAt is a matcher that checks if the actual value is a document ID
+// at the specified collection index and document index.
+type docIDAt struct {
+	testStateMatcher
+	collectionIndex int
+	docIndex        int
+}
+
+var _ TestStateMatcher = (*docIDAt)(nil)
+
+func (matcher *docIDAt) Match(actual any) (bool, error) {
+	actualDocID, ok := actual.(string)
+	if !ok {
+		return false, fmt.Errorf("expected a document ID string, got %T", actual)
+	}
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return actualDocID == expectedDocID, nil
+}
+
+func (matcher *docIDAt) FailureMessage(actual any) string {
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return fmt.Sprintf("Expected\n\t%v\nto be a doID: %s", actual, expectedDocID)
+}
+
+func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return fmt.Sprintf("Expected\n\t%v\nnot to be a doID: %s", actual, expectedDocID)
+}
+
+func (matcher *docIDAt) String() string {
+	return fmt.Sprintf("DocIDAt(collectionIndex: %d, docIndex: %d): %s", matcher.collectionIndex,
+		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
+}
+
 // assertResultsEqual asserts that actual result is equal to the expected result.
 //
 // The comparison is relaxed when using client types other than goClientType.
@@ -215,6 +270,21 @@ func assertResultsEqual(t testing.TB, client state.ClientType, expected any, act
 		}
 	default:
 		assert.EqualValues(t, expected, actual, msgAndArgs...)
+	}
+}
+
+// isResultsEqual checks that actual result is equal to the expected result and returns true if they are.
+//
+// The comparison is relaxed when using client types other than goClientType.
+func isResultsEqual(client state.ClientType, expected any, actual any) bool {
+	switch client {
+	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
+		if !areResultsEqual(expected, actual) {
+			return assert.ObjectsAreEqualValues(expected, actual)
+		}
+		return true
+	default:
+		return assert.ObjectsAreEqualValues(expected, actual)
 	}
 }
 
@@ -371,61 +441,98 @@ func assertCollectionVersions(
 	expected []client.CollectionVersion,
 	actual []client.CollectionVersion,
 ) {
-	require.Equal(s.T, len(expected), len(actual))
+	require.Equal(s.T, len(expected), len(actual), "collection versions count mismatch")
 
 	for i, expected := range expected {
 		actual := actual[i]
-		require.Equal(s.T, expected.Name, actual.Name)
+		require.Equal(s.T, expected.Name, actual.Name, "version name mismatch")
 
 		if expected.CollectionSet.HasValue() {
-			require.Equal(s.T, expected.CollectionSet.Value().CollectionSetID, actual.CollectionSet.Value().CollectionSetID)
-			require.Equal(s.T, expected.CollectionSet.Value().RelativeID, actual.CollectionSet.Value().RelativeID)
+			require.Equal(s.T, expected.CollectionSet.Value().CollectionSetID,
+				actual.CollectionSet.Value().CollectionSetID, "collection set ID mismatch")
+			require.Equal(s.T, expected.CollectionSet.Value().RelativeID,
+				actual.CollectionSet.Value().RelativeID, "collection set relative ID mismatch")
 		}
 
 		if expected.VersionID != "" {
-			require.Equal(s.T, expected.VersionID, actual.VersionID)
+			require.Equal(s.T, expected.VersionID, actual.VersionID, "version %d: version ID mismatch", i)
 		}
 		if expected.CollectionID != "" {
-			require.Equal(s.T, expected.CollectionID, actual.CollectionID)
+			require.Equal(s.T, expected.CollectionID, actual.CollectionID, "version %d: collection ID mismatch", i)
 		}
 
-		require.Equal(s.T, expected.IsMaterialized, actual.IsMaterialized)
-		require.Equal(s.T, expected.IsBranchable, actual.IsBranchable)
-		require.Equal(s.T, expected.IsActive, actual.IsActive)
+		require.Equal(s.T, expected.IsMaterialized, actual.IsMaterialized, "version %d: is materialized mismatch", i)
+		require.Equal(s.T, expected.IsBranchable, actual.IsBranchable, "version %d: is branchable mismatch", i)
+		require.Equal(s.T, expected.IsActive, actual.IsActive, "version %d: is active mismatch", i)
 
 		if expected.Indexes != nil || len(actual.Indexes) != 0 {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
 			// This is to save each test action from having to bother declaring an empty slice (if there are no indexes)
-			require.Equal(s.T, expected.Indexes, actual.Indexes)
+			require.Equal(s.T, expected.Indexes, actual.Indexes, "version %d: indexes mismatch", i)
 		}
 
-		if expected.Sources != nil {
-			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
-			// This is to save each test action from having to bother declaring an empty slice (if there are no sources)
-			require.Equal(s.T, expected.Sources, actual.Sources)
+		require.Equal(s.T, expected.PreviousVersion.HasValue(), actual.PreviousVersion.HasValue(),
+			"version %d: previous version existence mismatch", i)
+		if expected.PreviousVersion.HasValue() {
+			require.Equal(
+				s.T,
+				expected.PreviousVersion.Value().SourceCollectionID,
+				actual.PreviousVersion.Value().SourceCollectionID,
+				"version %d: previous version source collection ID mismatch", i,
+			)
+			require.Equal(
+				s.T,
+				expected.PreviousVersion.Value().Transform.HasValue(),
+				actual.PreviousVersion.Value().Transform.HasValue(),
+				"version %d: previous version transform existence mismatch", i,
+			)
+
+			if expected.PreviousVersion.Value().Transform.HasValue() {
+				// Dont bother asserting this by default, the transform object is too complex to bother with in most cases.
+				require.Equal(
+					s.T,
+					expected.PreviousVersion.Value().Transform.Value(),
+					actual.PreviousVersion.Value().Transform.Value(),
+					"version %d: previous version transform value mismatch", i,
+				)
+			}
+		}
+
+		if expected.Query.HasValue() {
+			// Dont bother asserting this by default, the query object is to complex to bother with in most cases.
+			require.Equal(s.T, expected.Query, actual.Query, "version %d: query mismatch", i)
 		}
 
 		if expected.Fields != nil {
-			require.Equal(s.T, len(expected.Fields), len(actual.Fields))
-			for i := range expected.Fields {
-				expectedField := expected.Fields[i]
-				actualField := actual.Fields[i]
+			require.Equal(s.T, len(expected.Fields), len(actual.Fields), "version %d: fields count mismatch", i)
+			for j := range expected.Fields {
+				expectedField := expected.Fields[j]
+				actualField := actual.Fields[j]
 
-				require.Equal(s.T, expectedField.Name, actualField.Name)
+				require.Equal(s.T, expectedField.Name, actualField.Name,
+					"version %d, field %d: field name mismatch", i, j)
 				if expectedField.FieldID != "" {
-					require.Equal(s.T, expectedField.FieldID, actualField.FieldID)
+					require.Equal(s.T, expectedField.FieldID, actualField.FieldID,
+						"version %d, field %d: field ID mismatch", i, j)
 				}
-				require.Equal(s.T, expectedField.IsPrimary, actualField.IsPrimary)
-				require.Equal(s.T, expectedField.Kind, actualField.Kind)
-				require.Equal(s.T, expectedField.Typ, actualField.Typ)
-				require.Equal(s.T, expectedField.DefaultValue, actualField.DefaultValue)
-				require.Equal(s.T, expectedField.RelationName, actualField.RelationName)
-				require.Equal(s.T, expectedField.Size, actualField.Size)
+				require.Equal(s.T, expectedField.IsPrimary, actualField.IsPrimary,
+					"version %d, field %d: field is primary mismatch", i, j)
+				require.Equal(s.T, expectedField.Kind, actualField.Kind,
+					"version %d, field %d: field kind mismatch", i, j)
+				require.Equal(s.T, expectedField.Typ, actualField.Typ,
+					"version %d, field %d: field type mismatch", i, j)
+				require.Equal(s.T, expectedField.DefaultValue, actualField.DefaultValue,
+					"version %d, field %d: field default value mismatch", i, j)
+				require.Equal(s.T, expectedField.RelationName, actualField.RelationName,
+					"version %d, field %d: field relation name mismatch", i, j)
+				require.Equal(s.T, expectedField.Size, actualField.Size,
+					"version %d, field %d: field size mismatch", i, j)
 			}
 		}
 
 		if expected.VectorEmbeddings != nil {
-			require.Equal(s.T, expected.VectorEmbeddings, actual.VectorEmbeddings)
+			require.Equal(s.T, expected.VectorEmbeddings, actual.VectorEmbeddings,
+				"version %d: vector embeddings mismatch", i)
 		}
 	}
 }

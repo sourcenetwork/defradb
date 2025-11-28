@@ -21,6 +21,9 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv/blockstore"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -48,7 +51,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(datastore.BlockstoreFrom(db.rootstore).AsIPLDStorage())
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
 
 	initialDocState := map[string]any{
 		"name": "John",
@@ -93,7 +96,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(datastore.BlockstoreFrom(db.rootstore).AsIPLDStorage())
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
 
 	initialDocState := map[string]any{
 		"name": "John",
@@ -151,7 +154,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(datastore.BlockstoreFrom(db.rootstore).AsIPLDStorage())
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
 
 	initialDocState := map[string]any{
 		"name": "John",
@@ -261,12 +264,12 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 	}
 
 	compositeBlock := coreblock.New(
-		&crdt.DocCompositeDelta{
+		crdt.NewCRDT(&crdt.DocCompositeDelta{
 			DocID:           d.docID,
 			Priority:        newPriority,
 			SchemaVersionID: d.col.Version().VersionID,
 			Status:          1,
-		},
+		}),
 		links,
 		heads...,
 	)

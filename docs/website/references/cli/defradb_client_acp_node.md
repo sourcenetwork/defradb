@@ -20,7 +20,7 @@ will become the node owner identity.
 
 For quick help: 'defradb client acp node --help'
 
-Learn more about the DefraDB [ACP System](/acp/README.md)
+Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
 
 		
 

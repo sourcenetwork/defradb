@@ -11,12 +11,14 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeTxCreateCommand() *cobra.Command {
+func MakeTxCreateCommand(ctx context.Context) *cobra.Command {
 	var concurrent bool
 	var readOnly bool
 	var cmd = &cobra.Command{
@@ -28,9 +30,9 @@ func MakeTxCreateCommand() *cobra.Command {
 
 			var tx client.Txn
 			if concurrent {
-				tx, err = cliClient.NewConcurrentTxn(cmd.Context(), readOnly)
+				tx, err = cliClient.NewConcurrentTxn(readOnly)
 			} else {
-				tx, err = cliClient.NewTxn(cmd.Context(), readOnly)
+				tx, err = cliClient.NewTxn(readOnly)
 			}
 			if err != nil {
 				return err
