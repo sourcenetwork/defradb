@@ -457,6 +457,10 @@ func resolveAggregates(
 				// If a matching host is not found, we need to construct and add it.
 				index := mapping.GetNextIndex()
 
+				// if rootSelectType == CommitSelection {
+
+				// }
+				// var x request.CommitSelect
 				hostSelectRequest := &request.Select{
 					Field: request.Field{
 						Name: target.hostExternalName,
@@ -521,7 +525,9 @@ func resolveAggregates(
 				if err != nil {
 					return nil, err
 				}
-				dummyJoin := &Select{
+
+				var dummyJoin Requestable
+				dummyJoinSelect := &Select{
 					Targetable: Targetable{
 						Field: Field{
 							Index: index,
@@ -535,12 +541,27 @@ func resolveAggregates(
 					DocumentMapping: childMapping,
 					Fields:          childFields,
 				}
+				hostTarget = &dummyJoinSelect.Targetable
+
+				if rootSelectType == CommitSelection {
+					dummyJoinCommit := &CommitSelect{
+						Select: *dummyJoinSelect,
+						Depth:  immutable.Some(uint64(0)),
+					}
+					index := childMapping.FirstIndexOfName(request.CidFieldName)
+
+					dummyJoinCommit.Fields = append(dummyJoinCommit.Fields, &Field{
+						Index: index,
+						Name:  request.CidFieldName,
+					})
+					dummyJoin = dummyJoinCommit
+				} else {
+					dummyJoin = dummyJoinSelect
+				}
 
 				fields = append(fields, dummyJoin)
 				mapping.Add(index, target.hostExternalName)
-
 				host = dummyJoin
-				hostTarget = &dummyJoin.Targetable
 			} else {
 				var isTargetable bool
 				hostTarget, isTargetable = host.AsTargetable()
@@ -885,10 +906,13 @@ func getRenderKey(field *request.Field) string {
 }
 
 func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateRequest, error) {
+	fmt.Println("aggregateRequest()")
+	spew.Dump(aggregate)
 	aggregateTargets, err := getAggregateSources(aggregate)
 	if err != nil {
 		return aggregateRequest{}, err
 	}
+	spew.Dump(aggregateTargets)
 
 	if len(aggregateTargets) == 0 {
 		return aggregateRequest{}, ErrAggregateTargetMissing

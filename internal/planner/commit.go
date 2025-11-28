@@ -46,6 +46,7 @@ type dagScanNode struct {
 	commitSelect   *mapper.CommitSelect
 
 	linksScanNodes []*dagScanNode
+	headsScanNodes []*dagScanNode
 
 	execInfo dagScanExecInfo
 }
@@ -75,9 +76,13 @@ func (p *Planner) DAGScan(commitSelect *mapper.CommitSelect) *dagScanNode {
 			// links only go a max depth of one. If you want to
 			// go deeper, use recursive "links" fields
 			innerCommit.Depth = immutable.Some(uint64(0))
-
 			innerNode := p.DAGScan(innerCommit)
-			node.linksScanNodes = append(node.linksScanNodes, innerNode)
+
+			if innerCommit.Field.Name == request.LinksFieldName {
+				node.linksScanNodes = append(node.linksScanNodes, innerNode)
+			} else if innerCommit.Field.Name == request.HeadsFieldName {
+				node.headsScanNodes = append(node.headsScanNodes, innerNode)
+			}
 		}
 	}
 
@@ -330,6 +335,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 		return core.Doc{}, err
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
+	fmt.Println("CID:", link.String())
 
 	schemaVersionId := block.Delta.GetSchemaVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
@@ -391,9 +397,10 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	linkedCids := make([]*cid.Cid, len(block.Links))
 	for i, c := range block.Links {
 		linkedCids[i] = &c.Cid
+		fmt.Println("links:", c.Cid.String())
 	}
-	linksIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.LinksFieldName]
-	err = n.addLinksFieldToDoc(linkedCids, linksIndexes, &commit)
+
+	err = n.addLinksFieldToDoc(request.LinksFieldName, linkedCids, &commit)
 	if err != nil {
 		return core.Doc{}, err
 	}
@@ -403,8 +410,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	for i, c := range block.Heads {
 		blockCids[i] = &c.Cid
 	}
-	headsIndexes := n.commitSelect.DocumentMapping.IndexesByName[request.HeadsFieldName]
-	err = n.addLinksFieldToDoc(blockCids, headsIndexes, &commit)
+	err = n.addLinksFieldToDoc(request.HeadsFieldName, blockCids, &commit)
 	if err != nil {
 		return core.Doc{}, err
 	}
@@ -414,14 +420,23 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 
 // addLinksFieldToDoc is responsible for adding both "links" and "heads" to a commit doc, since the
 // only difference between the two is their link name.
-func (n *dagScanNode) addLinksFieldToDoc(links []*cid.Cid, mappingIndexes []int, commit *core.Doc) error {
+func (n *dagScanNode) addLinksFieldToDoc(linksField string, links []*cid.Cid, commit *core.Doc) error {
+	var dagScanNodes []*dagScanNode
+	switch linksField {
+	case request.LinksFieldName:
+		dagScanNodes = n.linksScanNodes
+	case request.HeadsFieldName:
+		dagScanNodes = n.headsScanNodes
+	}
+
+	mappingIndexes := n.commitSelect.DocumentMapping.IndexesByName[linksField]
 	for i, linksIndex := range mappingIndexes {
 		// reset linkScanNode
-		n.linksScanNodes[i].reset()
-		n.linksScanNodes[i].queuedCids = links
+		dagScanNodes[i].reset()
+		dagScanNodes[i].queuedCids = links
 		links := make([]core.Doc, 0)
 		for {
-			next, err := n.linksScanNodes[i].Next()
+			next, err := dagScanNodes[i].Next()
 			if err != nil {
 				return err
 			}
@@ -429,7 +444,7 @@ func (n *dagScanNode) addLinksFieldToDoc(links []*cid.Cid, mappingIndexes []int,
 				break
 			}
 
-			link := n.linksScanNodes[i].Value()
+			link := dagScanNodes[i].Value()
 			links = append(links, link)
 		}
 		commit.Fields[linksIndex] = links
