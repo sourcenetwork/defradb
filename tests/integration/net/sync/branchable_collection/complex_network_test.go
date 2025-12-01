@@ -12,7 +12,6 @@ package branchable_collection
 
 import (
 	"testing"
-	"time"
 
 	"github.com/onsi/gomega"
 
@@ -22,15 +21,13 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+const syncBranchableTopic = "sync-branchable"
+
 func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldSyncAll(t *testing.T) {
 	// Network topology:
 	// Node 0 ──── Node 1 ──── Node 2
 	//    │
 	//    └─────── Node 3 ──── Node 4
-
-	// Make sure peers have time for libp2p data exchange setup.
-	// https://github.com/sourcenetwork/defradb/issues/4208
-	var waitConnection = testUtils.Wait{Duration: 500 * time.Millisecond}
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -86,22 +83,23 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 2,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 3,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 3,
 				TargetNodeID: 4,
 			},
-			waitConnection,
+			&action.WaitForPeersConnection{
+				NodeID:      0,
+				Topic:       syncBranchableTopic,
+				PeerNodeIDs: []int{1, 2, 3, 4},
+			},
 			&action.SyncBranchableCollection{
 				NodeID: 0,
 			},
@@ -233,10 +231,6 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 	sameCid3 := testUtils.NewSameValue()
 	sameCid4 := testUtils.NewSameValue()
 
-	// Make sure peers have time for libp2p data exchange setup.
-	// https://github.com/sourcenetwork/defradb/issues/4208
-	var waitConnection = testUtils.Wait{Duration: 50 * time.Millisecond}
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -283,40 +277,54 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 3,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 2,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 3,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 2,
 				TargetNodeID: 3,
 			},
-			waitConnection,
+			&action.WaitForPeersConnection{
+				NodeID:      0,
+				Topic:       syncBranchableTopic,
+				PeerNodeIDs: []int{1, 2, 3},
+			},
 			&action.SyncBranchableCollection{
 				NodeID: 0,
+			},
+			&action.WaitForPeersConnection{
+				NodeID:      1,
+				Topic:       syncBranchableTopic,
+				PeerNodeIDs: []int{0, 2, 3},
 			},
 			&action.SyncBranchableCollection{
 				NodeID: 1,
 			},
+			&action.WaitForPeersConnection{
+				NodeID:      2,
+				Topic:       syncBranchableTopic,
+				PeerNodeIDs: []int{0, 1, 3},
+			},
 			&action.SyncBranchableCollection{
 				NodeID: 2,
+			},
+			&action.WaitForPeersConnection{
+				NodeID:      3,
+				Topic:       syncBranchableTopic,
+				PeerNodeIDs: []int{0, 1, 2},
 			},
 			&action.SyncBranchableCollection{
 				NodeID: 3,
@@ -358,10 +366,6 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 	sameCid4 := testUtils.NewSameValue()
 	sameCid5 := testUtils.NewSameValue()
 
-	// Make sure peers have time for libp2p data exchange setup.
-	// https://github.com/sourcenetwork/defradb/issues/4208
-	var waitConnection = testUtils.Wait{Duration: 50 * time.Millisecond}
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -408,10 +412,19 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 2,
 				TargetNodeID: 3,
+			},
+			&action.WaitForPeersConnection{
+				NodeID:      0,
+				Topic:       syncBranchableTopic,
+				PeerNodeIDs: []int{1},
+			},
+			&action.WaitForPeersConnection{
+				NodeID:      2,
+				Topic:       syncBranchableTopic,
+				PeerNodeIDs: []int{3},
 			},
 			// We want to sync first node 0 with node 1 and node 2 with node 3 isolated to make sure
 			// all nodes don't sync from the same source node
@@ -421,28 +434,34 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 			&action.SyncBranchableCollection{
 				NodeID: 2,
 			},
-			waitConnection,
-			// Now connect all nodes together and sync
+			testUtils.WaitForSync{},
+			// Now connect all nodes together and sync.
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 3,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 2,
 			},
-			waitConnection,
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 3,
 			},
-			waitConnection,
+			&action.WaitForPeersConnection{
+				NodeID:      0,
+				Topic:       syncBranchableTopic,
+				PeerNodeIDs: []int{2, 3},
+			},
+			&action.WaitForPeersConnection{
+				NodeID:      1,
+				Topic:       syncBranchableTopic,
+				PeerNodeIDs: []int{2, 3},
+			},
 			&action.SyncBranchableCollection{
 				NodeID: 1,
 			},
