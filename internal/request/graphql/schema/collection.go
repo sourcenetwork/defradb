@@ -38,6 +38,9 @@ const (
 	typeString   string = "String"
 	typeBlob     string = "Blob"
 	typeJSON     string = "JSON"
+
+	// Special case directives
+	directive_UTC_NOW string = "UTC_NOW"
 )
 
 // TypeToDefaultPropName mapping is used to check that the default prop value
@@ -442,8 +445,8 @@ func defaultFromAST(
 		value = gql.String.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropDateTime:
 		// Handle UTC_NOW as a special case, if that's what the default is
-		if enum, ok := arg.Value.(*ast.EnumValue); ok && enum.Value == "UTC_NOW" {
-			value = "UTC_NOW"
+		if enum, ok := arg.Value.(*ast.EnumValue); ok && enum.Value == directive_UTC_NOW {
+			value = directive_UTC_NOW
 			break
 		}
 		// Otherwise, parse the value normally as a DateTime
