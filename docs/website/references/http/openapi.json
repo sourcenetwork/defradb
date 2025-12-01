@@ -1976,6 +1976,35 @@
                 ]
             }
         },
+        "/p2p/active-peers": {
+            "get": {
+                "operationId": "active_peers",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "Connected peers"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "p2p"
+                ]
+            }
+        },
         "/p2p/collections": {
             "delete": {
                 "description": "Remove peer collections",

@@ -81,6 +81,7 @@ func (c *collection) get(
 		ctx,
 		identity.FromContext(ctx),
 		txn,
+		c.db.nodeACP,
 		c.db.documentACP,
 		immutable.Option[client.IndexDescription]{},
 		c,

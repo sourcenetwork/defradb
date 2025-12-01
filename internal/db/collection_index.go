@@ -273,6 +273,7 @@ func (c *collection) iterateAllDocs(
 		ctx,
 		identity.FromContext(ctx),
 		txn,
+		c.db.nodeACP,
 		c.db.documentACP,
 		immutable.None[client.IndexDescription](),
 		c,

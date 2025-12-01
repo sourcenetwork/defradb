@@ -12,6 +12,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -159,16 +160,16 @@ func (_c *Fetcher_FetchNext_Call) RunAndReturn(run func(ctx context.Context) (fe
 }
 
 // Init provides a mock function for the type Fetcher
-func (_mock *Fetcher) Init(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.CollectionFieldDescription, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool) error {
-	ret := _mock.Called(ctx, identity1, txn, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)
+func (_mock *Fetcher) Init(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, nodeACP acp.NACInfo, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.CollectionFieldDescription, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool) error {
+	ret := _mock.Called(ctx, identity1, txn, nodeACP, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Init")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, immutable.Option[identity.Identity], datastore.Txn, immutable.Option[dac.DocumentACP], immutable.Option[client.IndexDescription], client.Collection, []client.CollectionFieldDescription, *mapper.Filter, []mapper.OrderCondition, *core.DocumentMapping, bool) error); ok {
-		r0 = returnFunc(ctx, identity1, txn, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, immutable.Option[identity.Identity], datastore.Txn, acp.NACInfo, immutable.Option[dac.DocumentACP], immutable.Option[client.IndexDescription], client.Collection, []client.CollectionFieldDescription, *mapper.Filter, []mapper.OrderCondition, *core.DocumentMapping, bool) error); ok {
+		r0 = returnFunc(ctx, identity1, txn, nodeACP, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -184,6 +185,7 @@ type Fetcher_Init_Call struct {
 //   - ctx context.Context
 //   - identity1 immutable.Option[identity.Identity]
 //   - txn datastore.Txn
+//   - nodeACP acp.NACInfo
 //   - documentACP immutable.Option[dac.DocumentACP]
 //   - index immutable.Option[client.IndexDescription]
 //   - col client.Collection
@@ -192,11 +194,11 @@ type Fetcher_Init_Call struct {
 //   - ordering []mapper.OrderCondition
 //   - docmapper *core.DocumentMapping
 //   - showDeleted bool
-func (_e *Fetcher_Expecter) Init(ctx interface{}, identity1 interface{}, txn interface{}, documentACP interface{}, index interface{}, col interface{}, fields interface{}, filter interface{}, ordering interface{}, docmapper interface{}, showDeleted interface{}) *Fetcher_Init_Call {
-	return &Fetcher_Init_Call{Call: _e.mock.On("Init", ctx, identity1, txn, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)}
+func (_e *Fetcher_Expecter) Init(ctx interface{}, identity1 interface{}, txn interface{}, nodeACP interface{}, documentACP interface{}, index interface{}, col interface{}, fields interface{}, filter interface{}, ordering interface{}, docmapper interface{}, showDeleted interface{}) *Fetcher_Init_Call {
+	return &Fetcher_Init_Call{Call: _e.mock.On("Init", ctx, identity1, txn, nodeACP, documentACP, index, col, fields, filter, ordering, docmapper, showDeleted)}
 }
 
-func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.CollectionFieldDescription, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool)) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, nodeACP acp.NACInfo, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.CollectionFieldDescription, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool)) *Fetcher_Init_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -210,37 +212,41 @@ func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, identity1 immutab
 		if args[2] != nil {
 			arg2 = args[2].(datastore.Txn)
 		}
-		var arg3 immutable.Option[dac.DocumentACP]
+		var arg3 acp.NACInfo
 		if args[3] != nil {
-			arg3 = args[3].(immutable.Option[dac.DocumentACP])
+			arg3 = args[3].(acp.NACInfo)
 		}
-		var arg4 immutable.Option[client.IndexDescription]
+		var arg4 immutable.Option[dac.DocumentACP]
 		if args[4] != nil {
-			arg4 = args[4].(immutable.Option[client.IndexDescription])
+			arg4 = args[4].(immutable.Option[dac.DocumentACP])
 		}
-		var arg5 client.Collection
+		var arg5 immutable.Option[client.IndexDescription]
 		if args[5] != nil {
-			arg5 = args[5].(client.Collection)
+			arg5 = args[5].(immutable.Option[client.IndexDescription])
 		}
-		var arg6 []client.CollectionFieldDescription
+		var arg6 client.Collection
 		if args[6] != nil {
-			arg6 = args[6].([]client.CollectionFieldDescription)
+			arg6 = args[6].(client.Collection)
 		}
-		var arg7 *mapper.Filter
+		var arg7 []client.CollectionFieldDescription
 		if args[7] != nil {
-			arg7 = args[7].(*mapper.Filter)
+			arg7 = args[7].([]client.CollectionFieldDescription)
 		}
-		var arg8 []mapper.OrderCondition
+		var arg8 *mapper.Filter
 		if args[8] != nil {
-			arg8 = args[8].([]mapper.OrderCondition)
+			arg8 = args[8].(*mapper.Filter)
 		}
-		var arg9 *core.DocumentMapping
+		var arg9 []mapper.OrderCondition
 		if args[9] != nil {
-			arg9 = args[9].(*core.DocumentMapping)
+			arg9 = args[9].([]mapper.OrderCondition)
 		}
-		var arg10 bool
+		var arg10 *core.DocumentMapping
 		if args[10] != nil {
-			arg10 = args[10].(bool)
+			arg10 = args[10].(*core.DocumentMapping)
+		}
+		var arg11 bool
+		if args[11] != nil {
+			arg11 = args[11].(bool)
 		}
 		run(
 			arg0,
@@ -254,6 +260,7 @@ func (_c *Fetcher_Init_Call) Run(run func(ctx context.Context, identity1 immutab
 			arg8,
 			arg9,
 			arg10,
+			arg11,
 		)
 	})
 	return _c
@@ -264,7 +271,7 @@ func (_c *Fetcher_Init_Call) Return(err error) *Fetcher_Init_Call {
 	return _c
 }
 
-func (_c *Fetcher_Init_Call) RunAndReturn(run func(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.CollectionFieldDescription, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool) error) *Fetcher_Init_Call {
+func (_c *Fetcher_Init_Call) RunAndReturn(run func(ctx context.Context, identity1 immutable.Option[identity.Identity], txn datastore.Txn, nodeACP acp.NACInfo, documentACP immutable.Option[dac.DocumentACP], index immutable.Option[client.IndexDescription], col client.Collection, fields []client.CollectionFieldDescription, filter *mapper.Filter, ordering []mapper.OrderCondition, docmapper *core.DocumentMapping, showDeleted bool) error) *Fetcher_Init_Call {
 	_c.Call.Return(run)
 	return _c
 }

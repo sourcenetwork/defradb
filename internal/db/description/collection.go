@@ -459,3 +459,58 @@ func GetRelatedCollection(
 
 	return client.CollectionVersion{}, false, nil
 }
+
+func DeleteCollection(
+	ctx context.Context,
+	version client.CollectionVersion,
+) error {
+	versions, err := GetCollectionsByCollectionID(ctx, version.CollectionID)
+	if err != nil {
+		return err
+	}
+
+	cache := getCollectionCache(ctx)
+	cache.Delete(version)
+
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	key := keys.NewCollectionKey(version.VersionID)
+	err = txn.Systemstore().Delete(ctx, key.Bytes())
+	if err != nil {
+		return err
+	}
+
+	if version.IsActive {
+		nameKey := keys.NewCollectionNameKey(version.Name)
+		err = txn.Systemstore().Delete(ctx, nameKey.Bytes())
+		if err != nil {
+			return err
+		}
+	}
+
+	isNew := version.CollectionID == version.VersionID
+	if !isNew {
+		collectionVersionKey := keys.NewCollectionVersionKey(version.CollectionID, version.VersionID)
+		err = txn.Systemstore().Delete(ctx, collectionVersionKey.Bytes())
+		if err != nil {
+			return err
+		}
+	}
+
+	// WARNING - DeleteShortFieldIDs is dependent on the collection short id still existing, it should be called
+	// before deleting the collection short id.
+	err = id.DeleteShortFieldIDs(ctx, version, versions)
+	if err != nil {
+		return err
+	}
+
+	if len(versions) == 0 {
+		// Only delete the collection short ID if this was the last local version
+		err = id.DeleteShortCollectionID(ctx, version.CollectionID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

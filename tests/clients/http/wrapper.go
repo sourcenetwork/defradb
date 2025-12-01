@@ -66,6 +66,10 @@ func (w *Wrapper) PeerInfo() ([]string, error) {
 	return w.client.PeerInfo()
 }
 
+func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
+	return w.client.ActivePeers(ctx)
+}
+
 func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
 	return w.client.Connect(ctx, addresses)
 }

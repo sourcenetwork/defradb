@@ -270,6 +270,10 @@ func (txn *Txn) PeerInfo() ([]string, error) {
 	return txn.db.PeerInfo()
 }
 
+func (txn *Txn) ActivePeers(ctx context.Context) ([]string, error) {
+	return txn.db.ActivePeers(ctx)
+}
+
 func (txn *Txn) Connect(ctx context.Context, addresses []string) error {
 	return txn.db.Connect(ctx, addresses)
 }

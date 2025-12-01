@@ -60,10 +60,7 @@ type ConnectPeers struct {
 //
 // For example you will likely wish to `WaitForSync` after creating a document in node 0 before querying
 // node 1 to see if it has been replicated.
-type WaitForSync struct {
-	// Decrypted is a list of document indexes that are expected to be merged and synced decrypted.
-	Decrypted []int
-}
+type WaitForSync struct{}
 
 // WaitForSESync waits for SE artifact synchronization to complete.
 type WaitForSESync struct {

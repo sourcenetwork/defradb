@@ -218,25 +218,13 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 			}
 		}
 
-		expectDecrypted := make(map[string]struct{}, len(action.Decrypted))
-		for _, docIndex := range action.Decrypted {
-			if len(s.DocIDs[0]) <= docIndex {
-				require.Fail(s.T, "doc index %d out of range", docIndex)
-			}
-			docID := s.DocIDs[0][docIndex].String()
-			actual, hasActual := node.P2P.ActualDAGHeads[docID]
-			if !hasActual || !actual.Decrypted {
-				expectDecrypted[docID] = struct{}{}
-			}
-		}
-
 		// wait for all expected heads to be merged
 		//
 		// the order of merges does not matter as we only
 		// expect the latest head to eventually be merged
 		//
 		// unexpected merge events are ignored
-		for len(expect) > 0 || len(expectDecrypted) > 0 {
+		for len(expect) > 0 {
 			var evt event.MergeComplete
 			select {
 			case msg, ok := <-node.Event.Merge.Message():
@@ -249,18 +237,12 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 				require.Fail(s.T, "timeout waiting for merge complete event")
 			}
 
-			_, ok := expectDecrypted[evt.Merge.DocID]
-			if ok && evt.Decrypted {
-				delete(expectDecrypted, evt.Merge.DocID)
-			}
-
 			head, ok := expect[getMergeEventKey(evt.Merge)]
 			if ok && head.String() == evt.Merge.Cid.String() {
 				delete(expect, getMergeEventKey(evt.Merge))
 			}
 			node.P2P.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{
-				CID:       evt.Merge.Cid,
-				Decrypted: evt.Decrypted,
+				CID: evt.Merge.Cid,
 			}
 		}
 	}
@@ -335,7 +317,7 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 
 	// update the actual document head on the node that updated it
 	// as the node created the document, it is already decrypted
-	node.P2P.ActualDAGHeads[getUpdateEventKey(evt)] = state.DocHeadState{CID: evt.Cid, Decrypted: true}
+	node.P2P.ActualDAGHeads[getUpdateEventKey(evt)] = state.DocHeadState{CID: evt.Cid}
 
 	// update the expected document heads of replicator targets
 	for id := range node.P2P.Replicators {

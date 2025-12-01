@@ -82,6 +82,20 @@ func (w *Wrapper) PeerInfo() ([]string, error) {
 	return addresses, nil
 }
 
+func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
+	args := []string{"client", "p2p", "active-peers"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var peers []string
+	if err := json.Unmarshal(data, &peers); err != nil {
+		return nil, err
+	}
+	return peers, nil
+}
+
 func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
 	args := []string{"client", "p2p", "connect"}
 

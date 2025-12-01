@@ -34,6 +34,27 @@ func P2PInfo(nodePtr C.uintptr_t) C.Result {
 	return returnC(marshalJSONToGoCResult(addresses))
 }
 
+//export P2PActivePeers
+func P2PActivePeers(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	node, err := getNodeFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	peers, err := node.DB.ActivePeers(ctx)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	return returnC(marshalJSONToGoCResult(peers))
+}
+
 //export P2PgetAllReplicators
 func P2PgetAllReplicators(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()

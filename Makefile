@@ -152,6 +152,10 @@ deps\:test:
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
 
+.PHONY: deps\:test\:js
+deps\:test\:js:
+	npm install graphql-introspection-json-to-sdl --prefix tests
+
 .PHONY: deps\:bench
 deps\:bench:
 	go install golang.org/x/perf/cmd/benchstat@latest
@@ -369,6 +373,10 @@ test\:changes:
 .PHONY: test\:js
 test\:js:
 	GOOS=js GOARCH=wasm go test $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
+
+.PHONY: test\:introspectionjs
+test\:introspectionjs:
+	go test -tags nodejs -run ^TestIntrospectionResult$$ ./internal/request/graphql/schema
 
 .PHONY: validate\:codecov
 validate\:codecov:

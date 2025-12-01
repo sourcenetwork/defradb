@@ -111,6 +111,14 @@ func (db *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error
 	return db.p2p.GetAllReplicators(ctx)
 }
 
+func (db *DB) ActivePeers(ctx context.Context) ([]string, error) {
+	if db.p2p == nil {
+		return nil, ErrNoP2P
+	}
+
+	return db.p2p.ActivePeers(ctx)
+}
+
 // AddP2PCollections adds the given collections to the P2P system and
 // subscribes to their topics. It will error if any of the provided
 // collection names are invalid.

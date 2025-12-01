@@ -100,8 +100,6 @@ type P2PState struct {
 type DocHeadState struct {
 	// The actual document head.
 	CID cid.Cid
-	// Indicates if the document at the given head has been Decrypted.
-	Decrypted bool
 }
 
 // NewP2PState returns a new empty p2p state.
