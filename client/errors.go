@@ -19,34 +19,37 @@ import (
 )
 
 const (
-	errFieldNotExist                      string = "the given field does not exist"
-	errUnexpectedType                     string = "unexpected type"
-	errParsingFailed                      string = "failed to parse argument"
-	errUninitializeProperty               string = "invalid state, required property is uninitialized"
-	errMaxTxnRetries                      string = "reached maximum transaction reties"
-	errCollectionNotFound                 string = "collection not found"
-	errUnknownCRDT                        string = "unknown crdt"
-	errCRDTKindMismatch                   string = "CRDT type %s can't be assigned to field kind %s"
-	errInvalidCRDTType                    string = "CRDT type not supported"
-	errFailedToUnmarshalCollection        string = "failed to unmarshal collection json"
-	errInvalidJSONPayload                 string = "invalid JSON payload"
-	errCanNotNormalizeValue               string = "can not normalize value"
-	errCanNotTurnNormalValueIntoArray     string = "can not turn normal value into array"
-	errCanNotMakeNormalNilFromFieldKind   string = "can not make normal nil from field kind"
-	errFailedToParseKind                  string = "failed to parse kind"
-	errCannotSetRelationFromSecondarySide string = "cannot set relation from secondary side"
-	errArraySizeMismatch                  string = "array size mismatch"
-	errInvalidTypeForEmbedding            string = "invalid type for vector embedding"
-	errInvalidTypeForEmbeddingGeneration  string = "invalid field type for vector embedding generation"
-	errEmptyFieldNameForEmbedding         string = "embedding FieldName cannot be empty"
-	errEmptyFieldsForEmbedding            string = "embedding Fields cannot be empty"
-	errEmptyProviderForEmbedding          string = "embedding Provider cannot be empty"
-	errEmptyModelForEmbedding             string = "embedding Model cannot be empty"
-	errUnknownEmbeddingProvider           string = "unknown embedding provider"
-	errEmbeddingFieldEmbedding            string = "embedding fields cannot refer to self or another embedding field"
-	errInvalidResourcePermissionType      string = "invalid resource permission type"
-	errCanNotStartNACWithoutIdentity      string = "can not start nac without identity"
-	errCanNotDoThisNACOpWithNACIsDisabled string = "can not do this nac operation when nac is disabled"
+	errFieldNotExist                         string = "the given field does not exist"
+	errUnexpectedType                        string = "unexpected type"
+	errParsingFailed                         string = "failed to parse argument"
+	errUninitializeProperty                  string = "invalid state, required property is uninitialized"
+	errMaxTxnRetries                         string = "reached maximum transaction reties"
+	errCollectionNotFound                    string = "collection not found"
+	errUnknownCRDT                           string = "unknown crdt"
+	errCRDTKindMismatch                      string = "CRDT type %s can't be assigned to field kind %s"
+	errInvalidCRDTType                       string = "CRDT type not supported"
+	errFailedToUnmarshalCollection           string = "failed to unmarshal collection json"
+	errInvalidJSONPayload                    string = "invalid JSON payload"
+	errCanNotNormalizeValue                  string = "can not normalize value"
+	errCanNotTurnNormalValueIntoArray        string = "can not turn normal value into array"
+	errCanNotMakeNormalNilFromFieldKind      string = "can not make normal nil from field kind"
+	errFailedToParseKind                     string = "failed to parse kind"
+	errCannotSetRelationFromSecondarySide    string = "cannot set relation from secondary side"
+	errArraySizeMismatch                     string = "array size mismatch"
+	errInvalidTypeForEmbedding               string = "invalid type for vector embedding"
+	errInvalidTypeForEmbeddingGeneration     string = "invalid field type for vector embedding generation"
+	errEmptyFieldNameForEmbedding            string = "embedding FieldName cannot be empty"
+	errEmptyFieldsForEmbedding               string = "embedding Fields cannot be empty"
+	errEmptyProviderForEmbedding             string = "embedding Provider cannot be empty"
+	errEmptyModelForEmbedding                string = "embedding Model cannot be empty"
+	errUnknownEmbeddingProvider              string = "unknown embedding provider"
+	errEmbeddingFieldEmbedding               string = "embedding fields cannot refer to self or another embedding field"
+	errInvalidResourcePermissionType         string = "invalid resource permission type"
+	errCanNotStartNACWithoutIdentity         string = "can not start nac without identity"
+	errCanNotDoThisNACOpWithNACIsDisabled    string = "can not do this nac operation when nac is disabled"
+	errNACIsEnabledButInstanceIsNotAvailable string = "node acp is enabled, but the acp instance is not available"
+	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
+	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
 )
 
 var (
@@ -58,39 +61,42 @@ var (
 // This list is incomplete and undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrFieldNotExist                        = errors.New(errFieldNotExist)
-	ErrUnexpectedType                       = errors.New(errUnexpectedType)
-	ErrFailedToUnmarshalCollection          = errors.New(errFailedToUnmarshalCollection)
-	ErrFieldNotObject                       = errors.New("trying to access field on a non object type")
-	ErrValueTypeMismatch                    = errors.New("value does not match indicated type")
-	ErrDocumentNotFoundOrNotAuthorized      = errors.New("document not found or not authorized to access")
-	ErrNotAuthorizedToPerformOperation      = errors.New("not authorized to perform operation")
-	ErrACPOperationButACPNotAvailable       = errors.New("operation requires ACP, but ACP not available")
-	ErrACPOperationButCollectionHasNoPolicy = errors.New("operation requires ACP, but collection has no policy")
-	ErrInvalidUpdateTarget                  = errors.New("the target document to update is of invalid type")
-	ErrInvalidUpdater                       = errors.New("the updater of a document is of invalid type")
-	ErrInvalidDeleteTarget                  = errors.New("the target document to delete is of invalid type")
-	ErrMalformedDocID                       = errors.New("malformed document ID, missing either version or cid")
-	ErrInvalidDocIDVersion                  = errors.New("invalid document ID version")
-	ErrInvalidJSONPayload                   = errors.New(errInvalidJSONPayload)
-	ErrCanNotNormalizeValue                 = errors.New(errCanNotNormalizeValue)
-	ErrCanNotTurnNormalValueIntoArray       = errors.New(errCanNotTurnNormalValueIntoArray)
-	ErrCanNotMakeNormalNilFromFieldKind     = errors.New(errCanNotMakeNormalNilFromFieldKind)
-	ErrCollectionNotFound                   = errors.New(errCollectionNotFound)
-	ErrFailedToParseKind                    = errors.New(errFailedToParseKind)
-	ErrArraySizeMismatch                    = errors.New(errArraySizeMismatch)
-	ErrInvalidTypeForEmbedding              = errors.New(errInvalidTypeForEmbedding)
-	ErrInvalidTypeForEmbeddingGeneration    = errors.New(errInvalidTypeForEmbeddingGeneration)
-	ErrEmptyFieldNameForEmbedding           = errors.New(errEmptyFieldNameForEmbedding)
-	ErrEmptyFieldsForEmbedding              = errors.New(errEmptyFieldsForEmbedding)
-	ErrEmptyProviderForEmbedding            = errors.New(errEmptyProviderForEmbedding)
-	ErrEmptyModelForEmbedding               = errors.New(errEmptyModelForEmbedding)
-	ErrUnknownEmbeddingProvider             = errors.New(errUnknownEmbeddingProvider)
-	ErrEmbeddingFieldEmbedding              = errors.New(errEmbeddingFieldEmbedding)
-	ErrNotFound                             = errors.New(errNotFound)
-	ErrInvalidResourcePermissionType        = errors.New(errInvalidResourcePermissionType)
-	ErrCanNotStartNACWithoutIdentity        = errors.New(errCanNotStartNACWithoutIdentity)
-	ErrCanNotDoThisNACOpWithNACIsDisabled   = errors.New(errCanNotDoThisNACOpWithNACIsDisabled)
+	ErrFieldNotExist                         = errors.New(errFieldNotExist)
+	ErrUnexpectedType                        = errors.New(errUnexpectedType)
+	ErrFailedToUnmarshalCollection           = errors.New(errFailedToUnmarshalCollection)
+	ErrFieldNotObject                        = errors.New("trying to access field on a non object type")
+	ErrValueTypeMismatch                     = errors.New("value does not match indicated type")
+	ErrDocumentNotFoundOrNotAuthorized       = errors.New("document not found or not authorized to access")
+	ErrNotAuthorizedToPerformOperation       = errors.New("not authorized to perform operation")
+	ErrACPOperationButACPNotAvailable        = errors.New("operation requires ACP, but ACP not available")
+	ErrACPOperationButCollectionHasNoPolicy  = errors.New("operation requires ACP, but collection has no policy")
+	ErrInvalidUpdateTarget                   = errors.New("the target document to update is of invalid type")
+	ErrInvalidUpdater                        = errors.New("the updater of a document is of invalid type")
+	ErrInvalidDeleteTarget                   = errors.New("the target document to delete is of invalid type")
+	ErrMalformedDocID                        = errors.New("malformed document ID, missing either version or cid")
+	ErrInvalidDocIDVersion                   = errors.New("invalid document ID version")
+	ErrInvalidJSONPayload                    = errors.New(errInvalidJSONPayload)
+	ErrCanNotNormalizeValue                  = errors.New(errCanNotNormalizeValue)
+	ErrCanNotTurnNormalValueIntoArray        = errors.New(errCanNotTurnNormalValueIntoArray)
+	ErrCanNotMakeNormalNilFromFieldKind      = errors.New(errCanNotMakeNormalNilFromFieldKind)
+	ErrCollectionNotFound                    = errors.New(errCollectionNotFound)
+	ErrFailedToParseKind                     = errors.New(errFailedToParseKind)
+	ErrArraySizeMismatch                     = errors.New(errArraySizeMismatch)
+	ErrInvalidTypeForEmbedding               = errors.New(errInvalidTypeForEmbedding)
+	ErrInvalidTypeForEmbeddingGeneration     = errors.New(errInvalidTypeForEmbeddingGeneration)
+	ErrEmptyFieldNameForEmbedding            = errors.New(errEmptyFieldNameForEmbedding)
+	ErrEmptyFieldsForEmbedding               = errors.New(errEmptyFieldsForEmbedding)
+	ErrEmptyProviderForEmbedding             = errors.New(errEmptyProviderForEmbedding)
+	ErrEmptyModelForEmbedding                = errors.New(errEmptyModelForEmbedding)
+	ErrUnknownEmbeddingProvider              = errors.New(errUnknownEmbeddingProvider)
+	ErrEmbeddingFieldEmbedding               = errors.New(errEmbeddingFieldEmbedding)
+	ErrNotFound                              = errors.New(errNotFound)
+	ErrInvalidResourcePermissionType         = errors.New(errInvalidResourcePermissionType)
+	ErrCanNotStartNACWithoutIdentity         = errors.New(errCanNotStartNACWithoutIdentity)
+	ErrCanNotDoThisNACOpWithNACIsDisabled    = errors.New(errCanNotDoThisNACOpWithNACIsDisabled)
+	ErrNACIsEnabledButInstanceIsNotAvailable = errors.New(errNACIsEnabledButInstanceIsNotAvailable)
+	ErrNACIsEnabledButIsMissingPolicyInfo    = errors.New(errNACIsEnabledButIsMissingPolicyInfo)
+	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

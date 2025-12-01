@@ -30,7 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -55,6 +55,7 @@ type pubSubService struct {
 	peerID       string
 	pubsub       PubSubServer
 	encStore     *ipldEncStorage
+	nodeACP      acpDB.NACInfo
 	documentACP  immutable.Option[dac.DocumentACP]
 	colRetriever CollectionRetriever
 	nodeDID      string
@@ -83,6 +84,7 @@ func NewPubSubService(
 	peerID string,
 	pubsub PubSubServer,
 	encstore datastore.Blockstore,
+	nodeACP acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	colRetriever CollectionRetriever,
 	nodeDID string,
@@ -92,6 +94,7 @@ func NewPubSubService(
 		peerID:       peerID,
 		pubsub:       pubsub,
 		encStore:     newIPLDEncryptionStorage(encstore),
+		nodeACP:      nodeACP,
 		documentACP:  documentACP,
 		colRetriever: colRetriever,
 		nodeDID:      nodeDID,
@@ -340,9 +343,10 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return false, err
 	}
 
-	return permission.CheckAccessOfDocOnCollectionWithACP(
+	return acpDB.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		immutable.Some(identity.FromDID(actorIdentity)),
+		s.nodeACP,
 		s.documentACP.Value(),
 		collection,
 		acpTypes.DocumentReadPerm,

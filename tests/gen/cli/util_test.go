@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	httpapi "github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
 var log = corelog.NewLogger("cli")
@@ -53,7 +54,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 	if err != nil {
 		return nil, err
 	}
-	adminInfo, err := db.NewNACInfo(ctx, "", false)
+	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
 	if err != nil {
 		return nil, errors.Wrap("failed to setup node access control info", err)
 	}
