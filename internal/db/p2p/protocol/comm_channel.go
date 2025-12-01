@@ -15,6 +15,8 @@ import (
 	"io"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/message"
 )
 
@@ -96,6 +98,9 @@ func (c *commChannel[Req, Reply, ReqP, ReplyP]) SendRequest(
 
 func (c *commChannel[Req, Reply, ReqP, ReplyP]) onRequest(stream io.Reader, peerID string) {
 	ctx := context.Background()
+	ctx = id.InitCollectionShortIDCache(ctx)
+	ctx = id.InitFieldShortIDCache(ctx)
+	ctx = description.InitCollectionCache(ctx)
 
 	var req Req
 	reqPtr := ReqP(&req)

@@ -32,36 +32,36 @@ func TestDatastoreSE_ToString(t *testing.T) {
 		{
 			name: "collection only",
 			key: DatastoreSE{
-				CollectionID: "col123",
+				CollectionShortID: 1,
 			},
-			expected: "/se/col123",
+			expected: "/se/\x89",
 		},
 		{
 			name: "collection and index",
 			key: DatastoreSE{
-				CollectionID: "col123",
-				IndexID:      "idx456",
+				CollectionShortID: 1,
+				IndexID:           "idx456",
 			},
-			expected: "/se/col123/idx456",
+			expected: "/se/\x89/idx456",
 		},
 		{
 			name: "collection, index, and search tag",
 			key: DatastoreSE{
-				CollectionID: "col123",
-				IndexID:      "idx456",
-				SearchTag:    []byte{0x01, 0x02, 0x03},
+				CollectionShortID: 1,
+				IndexID:           "idx456",
+				SearchTag:         []byte{0x01, 0x02, 0x03},
 			},
-			expected: "/se/col123/idx456/010203",
+			expected: "/se/\x89/idx456/010203",
 		},
 		{
 			name: "full key with all fields",
 			key: DatastoreSE{
-				CollectionID: "col123",
-				IndexID:      "idx456",
-				SearchTag:    []byte{0x01, 0x02, 0x03},
-				DocID:        "doc789",
+				CollectionShortID: 1,
+				IndexID:           "idx456",
+				SearchTag:         []byte{0x01, 0x02, 0x03},
+				DocID:             "doc789",
 			},
-			expected: "/se/col123/idx456/010203/doc789",
+			expected: "/se/\x89/idx456/010203/doc789",
 		},
 		{
 			name: "skip index when no collection",
@@ -75,20 +75,20 @@ func TestDatastoreSE_ToString(t *testing.T) {
 		{
 			name: "skip search tag when no index",
 			key: DatastoreSE{
-				CollectionID: "col123",
-				SearchTag:    []byte{0x01, 0x02, 0x03},
-				DocID:        "doc789",
+				CollectionShortID: 1,
+				SearchTag:         []byte{0x01, 0x02, 0x03},
+				DocID:             "doc789",
 			},
-			expected: "/se/col123",
+			expected: "/se/\x89",
 		},
 		{
 			name: "skip doc id when no search tag",
 			key: DatastoreSE{
-				CollectionID: "col123",
-				IndexID:      "idx456",
-				DocID:        "doc789",
+				CollectionShortID: 1,
+				IndexID:           "idx456",
+				DocID:             "doc789",
 			},
-			expected: "/se/col123/idx456",
+			expected: "/se/\x89/idx456",
 		},
 	}
 
@@ -102,27 +102,27 @@ func TestDatastoreSE_ToString(t *testing.T) {
 
 func TestDatastoreSE_Bytes(t *testing.T) {
 	key := DatastoreSE{
-		CollectionID: "col123",
-		IndexID:      "idx456",
-		SearchTag:    []byte{0x01, 0x02, 0x03},
-		DocID:        "doc789",
+		CollectionShortID: 1,
+		IndexID:           "idx456",
+		SearchTag:         []byte{0x01, 0x02, 0x03},
+		DocID:             "doc789",
 	}
 
-	expected := []byte("/se/col123/idx456/010203/doc789")
+	expected := []byte("/se/\x89/idx456/010203/doc789")
 	result := key.Bytes()
 	assert.Equal(t, expected, result)
 }
 
 func TestDatastoreSE_ToDS(t *testing.T) {
 	key := DatastoreSE{
-		CollectionID: "col123",
-		IndexID:      "idx456",
-		SearchTag:    []byte{0x01, 0x02, 0x03},
-		DocID:        "doc789",
+		CollectionShortID: 1,
+		IndexID:           "idx456",
+		SearchTag:         []byte{0x01, 0x02, 0x03},
+		DocID:             "doc789",
 	}
 
 	dsKey := key.ToDS()
-	assert.Equal(t, "/se/col123/idx456/010203/doc789", dsKey.String())
+	assert.Equal(t, "/se/\x89/idx456/010203/doc789", dsKey.String())
 }
 
 func TestNewDatastoreSEFromString(t *testing.T) {
@@ -135,45 +135,45 @@ func TestNewDatastoreSEFromString(t *testing.T) {
 	}{
 		{
 			name:  "full valid key",
-			input: "/se/col123/idx456/010203/doc789",
+			input: "/se/\x89/idx456/010203/doc789",
 			expected: DatastoreSE{
-				CollectionID: "col123",
-				IndexID:      "idx456",
-				SearchTag:    []byte{0x01, 0x02, 0x03},
-				DocID:        "doc789",
+				CollectionShortID: 1,
+				IndexID:           "idx456",
+				SearchTag:         []byte{0x01, 0x02, 0x03},
+				DocID:             "doc789",
 			},
 			expectError: false,
 		},
 		{
 			name:  "key with only collection",
-			input: "/se/col123",
+			input: "/se/\x89",
 			expected: DatastoreSE{
-				CollectionID: "col123",
+				CollectionShortID: 1,
 			},
 			expectError: false,
 		},
 		{
 			name:  "key with collection and index",
-			input: "/se/col123/idx456",
+			input: "/se/\x89/idx456",
 			expected: DatastoreSE{
-				CollectionID: "col123",
-				IndexID:      "idx456",
+				CollectionShortID: 1,
+				IndexID:           "idx456",
 			},
 			expectError: false,
 		},
 		{
 			name:  "key with collection, index, and search tag",
-			input: "/se/col123/idx456/010203",
+			input: "/se/\x89/idx456/010203",
 			expected: DatastoreSE{
-				CollectionID: "col123",
-				IndexID:      "idx456",
-				SearchTag:    []byte{0x01, 0x02, 0x03},
+				CollectionShortID: 1,
+				IndexID:           "idx456",
+				SearchTag:         []byte{0x01, 0x02, 0x03},
 			},
 			expectError: false,
 		},
 		{
 			name:        "invalid prefix",
-			input:       "/notse/col123",
+			input:       "/notse/\x89",
 			expected:    DatastoreSE{},
 			expectError: true,
 			errorMsg:    "invalid SE key format",
@@ -194,7 +194,7 @@ func TestNewDatastoreSEFromString(t *testing.T) {
 		},
 		{
 			name:        "invalid hex in search tag",
-			input:       "/se/col123/idx456/xyz/doc789",
+			input:       "/se/\x89/idx456/xyz/doc789",
 			expected:    DatastoreSE{},
 			expectError: true,
 			errorMsg:    "failed to decode search tag",
@@ -203,20 +203,20 @@ func TestNewDatastoreSEFromString(t *testing.T) {
 			name:  "minimum valid key",
 			input: "/se",
 			expected: DatastoreSE{
-				CollectionID: "",
-				IndexID:      "",
-				SearchTag:    nil,
-				DocID:        "",
+				CollectionShortID: 0,
+				IndexID:           "",
+				SearchTag:         nil,
+				DocID:             "",
 			},
 			expectError: false,
 		},
 		{
 			name:  "complex search tag",
-			input: "/se/col123/idx456/" + hex.EncodeToString([]byte("complex search tag")),
+			input: "/se/\x89/idx456/" + hex.EncodeToString([]byte("complex search tag")),
 			expected: DatastoreSE{
-				CollectionID: "col123",
-				IndexID:      "idx456",
-				SearchTag:    []byte("complex search tag"),
+				CollectionShortID: 1,
+				IndexID:           "idx456",
+				SearchTag:         []byte("complex search tag"),
 			},
 			expectError: false,
 		},
@@ -224,20 +224,20 @@ func TestNewDatastoreSEFromString(t *testing.T) {
 			name:  "key with empty components",
 			input: "/se///",
 			expected: DatastoreSE{
-				CollectionID: "",
-				IndexID:      "",
-				SearchTag:    []byte{},
+				CollectionShortID: 0,
+				IndexID:           "",
+				SearchTag:         []byte{},
 			},
 			expectError: false,
 		},
 		{
 			name:  "key with trailing slash",
-			input: "/se/col123/idx456/010203/doc789/",
+			input: "/se/\x89/idx456/010203/doc789/",
 			expected: DatastoreSE{
-				CollectionID: "col123",
-				IndexID:      "idx456",
-				SearchTag:    []byte{0x01, 0x02, 0x03},
-				DocID:        "doc789",
+				CollectionShortID: 1,
+				IndexID:           "idx456",
+				SearchTag:         []byte{0x01, 0x02, 0x03},
+				DocID:             "doc789",
 			},
 			expectError: false,
 		},
@@ -252,7 +252,7 @@ func TestNewDatastoreSEFromString(t *testing.T) {
 				assert.Contains(t, err.Error(), tt.errorMsg)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expected.CollectionID, result.CollectionID)
+				assert.Equal(t, tt.expected.CollectionShortID, result.CollectionShortID)
 				assert.Equal(t, tt.expected.IndexID, result.IndexID)
 				assert.Equal(t, tt.expected.SearchTag, result.SearchTag)
 				assert.Equal(t, tt.expected.DocID, result.DocID)
