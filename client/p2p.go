@@ -93,6 +93,7 @@ type P2P interface {
 
 type StreamHandler = func(stream io.Reader, peerID string)
 type PubsubMessageHandler = func(from string, topic string, msg []byte) ([]byte, error)
+type PubsubPeerEventHandler = func(peerID string, topic string, joined bool)
 type BlockAccessFunc = func(ctx context.Context, peerID string, c cid.Cid) bool
 
 type PeerInfo struct {
@@ -139,7 +140,8 @@ type Host interface {
 	// handle them with the given handler.
 	SetStreamHandler(protocolID string, handler StreamHandler)
 	// AddPubSubTopic adds a pubsub topic to the host.
-	AddPubSubTopic(topicName string, subscribe bool, handler PubsubMessageHandler) error
+	// Options can be provided to configure the topic (e.g., PubsubPeerEventHandler).
+	AddPubSubTopic(topicName string, subscribe bool, handler PubsubMessageHandler, opts ...any) error
 	// RemovePubSubTopic removes the given topic from the host.
 	RemovePubSubTopic(topic string) error
 	// PublishToTopicAsync sends a new message on the given topic without waiting for a response.
