@@ -12,9 +12,12 @@ package field_kinds
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/onsi/gomega"
 )
 
 func TestMutationUpdate_WithDateTimeField(t *testing.T) {
