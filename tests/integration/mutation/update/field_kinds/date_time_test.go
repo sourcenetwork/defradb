@@ -185,7 +185,7 @@ func TestMutationUpdate_WithDateTimeField_WithUTCNow(t *testing.T) {
 					"update_Users": []map[string]any{
 						{
 							"name":       "John",
-							"created_at": testUtils.CurrentTimestamp(),
+							"created_at": gomega.BeTemporally("~", time.Now().UTC(), 5*time.Second),
 						},
 					},
 				},

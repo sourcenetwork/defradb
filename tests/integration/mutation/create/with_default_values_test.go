@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 
+	"github.com/onsi/gomega"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -101,7 +102,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsUTCNowDefaultValu
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"created": testUtils.CurrentTimestamp(),
+							"created": gomega.BeTemporally("~", time.Now().UTC(), 5*time.Second),
 						},
 					},
 				},

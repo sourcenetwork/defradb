@@ -16,6 +16,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+
+	"github.com/onsi/gomega"
 )
 
 func TestMutationCreateFieldKinds_WithDateTime(t *testing.T) {
@@ -124,7 +126,7 @@ func TestMutationCreateFieldKinds_WithDateTime_WithUTCNow(t *testing.T) {
 				Results: map[string]any{
 					"create_User": []map[string]any{
 						{
-							"time": testUtils.CurrentTimestamp(),
+							"time": gomega.BeTemporally("~", time.Now().UTC(), 5*time.Second),
 						},
 					},
 				},
