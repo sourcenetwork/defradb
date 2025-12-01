@@ -43,8 +43,10 @@ const (
 // Generator creates all the necessary typed schema definitions from an AST Document
 // and adds them to the Schema via the SchemaManager
 type Generator struct {
-	typeDefs []*gql.Object
-	manager  *SchemaManager
+	typeDefs            []*gql.Object
+	typDefCollectionMap map[string]client.CollectionVersion
+
+	manager *SchemaManager
 
 	expandedFields map[string]bool
 
@@ -57,6 +59,7 @@ func (s *SchemaManager) NewGenerator(isSearchableEncryptionEnabled bool) *Genera
 	s.Generator = &Generator{
 		manager:                       s,
 		expandedFields:                make(map[string]bool),
+		typDefCollectionMap:           make(map[string]client.CollectionVersion),
 		isSearchableEncryptionEnabled: isSearchableEncryptionEnabled,
 	}
 	return s.Generator
@@ -557,6 +560,7 @@ func (g *Generator) buildTypes(
 
 		g.manager.schema.TypeMap()[obj.Name()] = obj
 		g.typeDefs = append(g.typeDefs, obj)
+		g.typDefCollectionMap[obj.Name()] = collection
 	}
 
 	return objs, nil
@@ -914,8 +918,13 @@ func (g *Generator) getNumericFields(obj *gql.Object) map[string]gql.Type {
 	for _, field := range obj.Fields() {
 		listType, isList := field.Type.(*gql.List)
 		var inputObjectName string
-		if !isList {
-			fieldTypes[field.Name] = gql.NewInputObject(gql.InputObjectConfig{})
+
+		col := g.typDefCollectionMap[obj.Name()]
+
+		if !isList && isNumeric(field.Type) && isUserDefinedField(field.Name, col) {
+			fieldTypes[field.Name] = g.manager.schema.TypeMap()["ScalarAggregateNumericBlock"]
+		} else if !isList {
+			continue
 		} else if isNumericArray(listType) {
 			inputObjectName = genNumericInlineArraySelectorName(obj.Name(), field.Name)
 		} else {
@@ -1594,16 +1603,32 @@ func genTypeName(obj gql.Type, name string) string {
 	return fmt.Sprintf("%s%s", obj.Name(), name)
 }
 
+func isNumeric(t gql.Type) bool {
+	// We have to compare the names here, as the gql lib we use
+	// does not have an easier way to compare non-nullable types
+	return t.Name() == gql.NewNonNull(schemaTypes.Float64).Name() ||
+		t.Name() == gql.NewNonNull(schemaTypes.Float32).Name() ||
+		t.Name() == gql.NewNonNull(gql.Int).Name() ||
+		t == gql.Int ||
+		t == schemaTypes.Float64 ||
+		t == schemaTypes.Float32
+}
+
 // isNumericArray returns true if the given list is a list of numerical values.
 func isNumericArray(list *gql.List) bool {
 	// We have to compare the names here, as the gql lib we use
 	// does not have an easier way to compare non-nullable types
-	return list.OfType.Name() == gql.NewNonNull(schemaTypes.Float64).Name() ||
-		list.OfType.Name() == gql.NewNonNull(schemaTypes.Float32).Name() ||
-		list.OfType.Name() == gql.NewNonNull(gql.Int).Name() ||
-		list.OfType == gql.Int ||
-		list.OfType == schemaTypes.Float64 ||
-		list.OfType == schemaTypes.Float32
+	return isNumeric(list.OfType)
+}
+
+func isUserDefinedField(fieldName string, col client.CollectionVersion) bool {
+	for _, field := range col.Fields {
+		if field.Name == fieldName {
+			return true
+		}
+	}
+
+	return false
 }
 
 func genFilterOperatorName(fieldType gql.Type) string {
