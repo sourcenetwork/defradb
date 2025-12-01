@@ -38,7 +38,7 @@ func TestNAC_AdminRelation_CanReEnableNAC(t *testing.T) {
 
 			// Grant access to user, but for that we need to temporarily re-enable and
 			// then disable nac using the admin owner, because relationship add/delete
-			// operations require admin acp to be enabled.
+			// operations require node acp to be enabled.
 			testUtils.ReEnableNAC{Identity: testUtils.ClientIdentity(1)},
 			testUtils.AddNACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),

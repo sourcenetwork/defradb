@@ -42,6 +42,68 @@ func (_m *Txn) EXPECT() *Txn_Expecter {
 	return &Txn_Expecter{mock: &_m.Mock}
 }
 
+// ActivePeers provides a mock function for the type Txn
+func (_mock *Txn) ActivePeers(ctx context.Context) ([]string, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ActivePeers")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_ActivePeers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ActivePeers'
+type Txn_ActivePeers_Call struct {
+	*mock.Call
+}
+
+// ActivePeers is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Txn_Expecter) ActivePeers(ctx interface{}) *Txn_ActivePeers_Call {
+	return &Txn_ActivePeers_Call{Call: _e.mock.On("ActivePeers", ctx)}
+}
+
+func (_c *Txn_ActivePeers_Call) Run(run func(ctx context.Context)) *Txn_ActivePeers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_ActivePeers_Call) Return(strings []string, err error) *Txn_ActivePeers_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *Txn_ActivePeers_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_ActivePeers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddDACActorRelationship provides a mock function for the type Txn
 func (_mock *Txn) AddDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)

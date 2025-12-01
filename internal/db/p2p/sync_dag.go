@@ -18,7 +18,9 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv/blockstore"
+	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
@@ -47,11 +49,7 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 		return err
 	}
 
-	err = p.loadBlockLinks(ctx, &linkSystem, block)
-	if err != nil {
-		return err
-	}
-	return nil
+	return p.loadBlockLinks(ctx, &linkSystem, block)
 }
 
 // loadBlockLinks loads the links of a block recursively.
@@ -59,8 +57,9 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 // If it encounters errors in the concurrent loading of links, it will return
 // the first error it encountered.
 func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
-	ctxWithCancel, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
 	defer cancel()
+
 	var wg sync.WaitGroup
 	var asyncErr error
 	var asyncErrOnce sync.Once
@@ -77,6 +76,15 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 		}
 	}
 
+	var encResults *encryption.Results
+	if block.IsEncrypted() {
+		results, err := p.kms.GetKeys(ctx, *block.Encryption)
+		if err != nil {
+			return err
+		}
+		encResults = results
+	}
+
 	setAsyncErr := func(err error) {
 		asyncErr = err
 		cancel()
@@ -86,12 +94,10 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 		wg.Add(1)
 		go func(lnk cidlink.Link) {
 			defer wg.Done()
-			if ctxWithCancel.Err() != nil {
+			if ctx.Err() != nil {
 				return
 			}
-			ctxWithTimeout, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
-			defer cancel()
-			nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
+			nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, lnk, coreblock.BlockSchemaPrototype)
 			if err != nil {
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
@@ -101,7 +107,6 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
 				return
 			}
-
 			err = p.loadBlockLinks(ctx, linkSys, linkBlock)
 			if err != nil {
 				asyncErrOnce.Do(func() { setAsyncErr(err) })
@@ -111,6 +116,12 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 	}
 
 	wg.Wait()
+
+	if encResults != nil {
+		for res := range encResults.Get() {
+			asyncErr = errors.Join(asyncErr, res.Error)
+		}
+	}
 
 	return asyncErr
 }
