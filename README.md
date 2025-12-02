@@ -21,6 +21,9 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
 <!--ts-->
    * [Install](#install)
    * [Build Requirements](#build-requirements)
+      * [Prerequisites](#prerequisites)
+      * [System Resources](#system-resources)
+      * [Building on Resource-Constrained Systems](#building-on-resource-constrained-systems)
    * [Key Management](#key-management)
    * [Start](#start)
    * [Configuration](#configuration)
