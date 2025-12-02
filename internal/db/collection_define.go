@@ -46,12 +46,14 @@ func (db *DB) createCollections(
 		return nil, err
 	}
 
+	finalizeRelationsWithExistingCollections(parseResults, existingVersions)
+
 	newCollections := make([]client.CollectionVersion, len(parseResults))
 	for i, def := range parseResults {
 		newCollections[i] = def.Definition
 	}
 
-	err = setCollectionIDs(ctx, newCollections)
+	err = setCollectionIDs(ctx, newCollections, existingVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +233,7 @@ existingVersionLoop:
 		newCollections = append(newCollections, col)
 	}
 
-	err = setCollectionIDs(ctx, newCollections)
+	err = setCollectionIDs(ctx, newCollections, existingCols)
 	if err != nil {
 		return err
 	}
@@ -794,4 +796,76 @@ func deleteCollectionBlocks(
 	}
 
 	return nil
+}
+
+// finalizeRelationsWithExistingCollections handles relation fields that point to existing collections.
+// When a new collection is added with a relation field pointing to an existing collection,
+// this function sets IsPrimary=true on the relation field and on the corresponding _id field.
+// This enables one-sided relations to be defined in separate AddSchema calls.
+func finalizeRelationsWithExistingCollections(
+	newCollections []core.Collection,
+	existingCollections []client.CollectionVersion,
+) {
+	existingByName := make(map[string]client.CollectionVersion)
+	for _, col := range existingCollections {
+		existingByName[col.Name] = col
+	}
+
+	newByName := make(map[string]client.CollectionVersion)
+	for _, col := range newCollections {
+		newByName[col.Definition.Name] = col.Definition
+	}
+
+	for i, newCol := range newCollections {
+		if newCol.Definition.IsEmbeddedOnly {
+			continue
+		}
+
+		for fieldIndex, field := range newCol.Definition.Fields {
+			namedKind, ok := field.Kind.(*client.NamedKind)
+			if !ok || namedKind.IsArray() {
+				// Only process non-array object relations
+				continue
+			}
+
+			if field.IsPrimary {
+				// Already marked as primary, skip
+				continue
+			}
+
+			if _, inBatch := newByName[namedKind.Name]; inBatch {
+				// The relation is within the batch, finalizeRelations in the parser already handled this
+				continue
+			}
+
+			existingCol, exists := existingByName[namedKind.Name]
+			if !exists {
+				// The target collection doesn't exist, validation will catch this later
+				continue
+			}
+
+			_, hasCorrespondingField := existingCol.GetFieldByRelation(
+				field.RelationName.Value(),
+				newCol.Definition.Name,
+				field.Name,
+			)
+
+			if !hasCorrespondingField {
+				newCollections[i].Definition.Fields[fieldIndex].IsPrimary = true
+
+				// Also set IsPrimary=true on the corresponding _id field.
+				// The parser creates _id fields for all non-array relations, but doesn't set
+				// IsPrimary=true until finalizeRelations runs. Since finalizeRelations only
+				// sees collections in the current batch, we need to set IsPrimary on the _id
+				// field here for cross-batch relations.
+				idFieldName := field.Name + "_id"
+				for j, f := range newCollections[i].Definition.Fields {
+					if f.Name == idFieldName {
+						newCollections[i].Definition.Fields[j].IsPrimary = true
+						break
+					}
+				}
+			}
+		}
+	}
 }

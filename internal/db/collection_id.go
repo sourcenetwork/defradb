@@ -35,6 +35,7 @@ import (
 func setCollectionIDs(
 	ctx context.Context,
 	newCollections []client.CollectionVersion,
+	existingCollections []client.CollectionVersion,
 ) error {
 	// We need to group the inputs and then mutate them, so we temporarily
 	// map them to pointers.
@@ -47,12 +48,21 @@ func setCollectionIDs(
 	collectionSets := getCollectionSets(newCollectionPtrs)
 	collectionSets = sortCollectionSets(collectionSets)
 
+	// Build a list of all collection sets including existing collections for relationship resolution.
+	// This is needed to convert NamedKind to CollectionKind for relations pointing to existing collections.
+	existingCollectionPtrs := make([]*client.CollectionVersion, len(existingCollections))
+	for i := range existingCollections {
+		collection := existingCollections[i]
+		existingCollectionPtrs[i] = &collection
+	}
+	allCollectionSets := append(collectionSets, existingCollectionPtrs)
+
 	for _, collectionSet := range collectionSets {
 		// The schemas within each set must be in a deterministic order to ensure that
 		// their IDs are deterministic.
 		sortSet(collectionSet)
 
-		substituteRelationFieldKinds(collectionSet, collectionSets)
+		substituteRelationFieldKinds(collectionSet, allCollectionSets)
 		err := saveBlocks(ctx, collectionSet)
 		if err != nil {
 			return err
@@ -63,7 +73,7 @@ func setCollectionIDs(
 		// Secondary fields are not saved in the blockstore, thus they do not contribute to the collection IDs.
 		// The Kinds do however need to reference by CollectionID, which need to be substituted after the
 		// CollectionIDs have been generated.
-		substituteSecondaryRelationFieldKinds(collectionSet, collectionSets)
+		substituteSecondaryRelationFieldKinds(collectionSet, allCollectionSets)
 	}
 
 	for i := range newCollectionPtrs {
