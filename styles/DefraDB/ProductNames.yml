@@ -1,0 +1,27 @@
+extends: substitution
+message: "Use '%s' instead of '%s' for correct product branding"
+level: error
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+ignorecase: false
+swap:
+  # Product name corrections
+  defraDB: DefraDB
+  defra DB: DefraDB
+  defra: DefraDB
+  Source Hub: SourceHub
+  Sourcehub: SourceHub
+  source hub: SourceHub
+
+  # Technology name corrections
+  Mongodb: MongoDB
+  mongo: MongoDB
+  mongo db: MongoDB
+  Postgres: PostgreSQL
+  postgres: PostgreSQL
+  postgres sql: PostgreSQL
+  Graphql: GraphQL
+  graphql: GraphQL
+  Typescript: TypeScript
+  typescript: TypeScript
+  Javascript: JavaScript
+  javascript: JavaScript

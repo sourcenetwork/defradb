@@ -1,0 +1,29 @@
+extends: existence
+message: "Avoid corporate buzzword '%s' - be specific and direct instead"
+level: warning
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+ignorecase: true
+scope: text
+tokens:
+  # Corporate buzzwords from brand guidelines
+  - leverage
+  - leveraging
+  - synergy
+  - synergistic
+  - synergies
+  - cutting-edge
+  - revolutionary
+  - revolutionize
+  - unparalleled
+  - best-in-class
+  - world-class
+  - paradigm shift
+  - next-generation
+  - enterprise-grade
+  - mission-critical
+  - turnkey
+  - seamlessly
+  - holistic
+  - robust solution
+  - comprehensive solution
+  - end-to-end solution

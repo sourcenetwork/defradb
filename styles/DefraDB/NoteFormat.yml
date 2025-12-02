@@ -1,0 +1,17 @@
+extends: existence
+message: "Use standard note format: '**Note:** text' instead of '%s'"
+level: suggestion
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+ignorecase: false
+scope: text
+nonword: true
+tokens:
+  - 'Note:'
+  - 'NOTE:'
+  - '\*Note\*:'
+  - '\*NOTE\*:'
+raw:
+  - '^Note: '
+  - '^NOTE: '
+  - '^\*Note\*: '
+  - '^\*NOTE\*: '

@@ -1,0 +1,32 @@
+extends: existence
+message: "Remove hedging word '%s' - be direct and confident"
+level: suggestion
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+ignorecase: true
+scope: text
+tokens:
+  # Weak qualifiers that undermine technical writing
+  - simply
+  - just
+  - easily
+  - easy
+  - obviously
+  - clearly
+  - basically
+  - actually
+  - really
+  - very
+  - quite
+  - rather
+  - somewhat
+  - fairly
+  - kind of
+  - sort of
+exceptions:
+  # Allow "just" in time contexts
+  - just released
+  - just shipped
+  - just launched
+  # Allow "simply" in specific technical contexts
+  - simply put
+  - put simply

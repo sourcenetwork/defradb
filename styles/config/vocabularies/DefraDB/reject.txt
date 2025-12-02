@@ -1,0 +1,35 @@
+# DefraDB Vocabulary - Rejected Terms
+# These terms should be avoided and will be flagged as errors.
+# Lines starting with # are comments.
+
+# Incorrect Product Name Variations
+Defra(?!DB)
+defraDB
+defra DB
+Source Hub
+Sourcehub
+source hub
+
+# Hedging Language (flagged by separate rule, listed here for reference)
+simply
+just
+easily
+obviously
+clearly
+basically
+
+# Weak Qualifiers
+very
+really
+quite
+rather
+somewhat
+fairly
+
+# Corporate Buzzwords (flagged by separate rule)
+leverage
+synergy
+synergistic
+paradigm shift
+best-in-class
+world-class

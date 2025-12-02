@@ -1,0 +1,65 @@
+# Copyright 2025 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+# This workflow runs Vale documentation linting on pull requests.
+# Vale checks for style guide violations, branding consistency,
+# and documentation quality issues.
+
+name: Vale Documentation Linting
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'docs/**/*.md'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - '.vale.ini'
+      - 'styles/**'
+
+  push:
+    branches:
+      - master
+      - develop
+    paths:
+      - 'docs/**/*.md'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+
+jobs:
+  vale:
+    name: Vale Documentation Linter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Vale linting
+        uses: errata-ai/vale-action@reviewdog
+        with:
+          # Run on all changed markdown files
+          files: '.'
+
+          # Use github-pr-review for inline comments
+          reporter: github-pr-review
+
+          # Filter to only show issues in changed lines
+          filter_mode: diff_context
+
+          # Fail on errors, allow warnings and suggestions
+          fail_on_error: true
+
+          # Vale CLI flags
+          vale_flags: '--config=.vale.ini'
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

@@ -1,0 +1,89 @@
+# DefraDB Vocabulary - Accepted Terms
+# These terms are considered correct and will not be flagged by Vale.Terms
+# Lines starting with # are comments.
+# Regex patterns are supported for case variations.
+
+# Product Names
+DefraDB
+SourceHub
+Orbis
+LensVM
+Sourcerers
+
+# Technical Terms - Database Technologies
+MongoDB
+PostgreSQL
+GraphQL
+ArangoDB
+CouchDB
+Redis
+
+# Technical Terms - Edge Computing
+[Ee]dge-first
+[Ll]ocal-first
+[Ee]dge AI
+[Ee]dge compute
+[Ee]dge computing
+[Ee]dge environments
+[Ee]dge devices
+
+# Technical Terms - Distributed Systems
+[Dd]istributed environments
+[Pp]eer-to-[Pp]eer
+P2P
+CRDT
+CRDTs
+[Mm]erkle[- ]CRDT
+DAG
+IPFS
+IPLD
+libp2p
+
+# Technical Terms - Web3 & Decentralization
+Web3
+Dweb
+[Bb]lockchain
+[Dd]ecentralized
+[Tt]rustless
+[Pp]ermissionless
+[Ss]mart contract
+
+# Technical Terms - General
+WebAssembly
+Wasm
+GraphQL
+TypeScript
+JavaScript
+DQL
+
+# Acronyms & Abbreviations
+API
+CLI
+SDK
+HTTP
+JSON
+REST
+CRUD
+TLS
+CORS
+SQL
+IoT
+DHT
+RPC
+NAT
+AMI
+DSL
+ACP
+CID
+
+# Industry Terms
+Big Tech
+Internet of Things
+open source
+open web
+
+# Brand-Specific Terms
+cloud-last
+trust protocol
+trust layer
+data sovereignty

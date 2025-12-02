@@ -1,0 +1,23 @@
+extends: substitution
+message: "Consider using '%s' instead of '%s' for brand consistency"
+level: suggestion
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+ignorecase: true
+swap:
+  # Preferred brand terminology from guidelines
+  blockchain: trust protocol|trust layer
+  whitelist: allow list
+  blacklist: deny list
+  master: primary|main
+  slave: replica|secondary
+
+  # Database terminology
+  db: database
+  NoSQL: NoSQL database
+
+  # Simplification
+  utilize: use
+  utilizes: uses
+  utilization: use
+  facilitate: help|enable
+  facilitates: helps|enables

@@ -1,0 +1,10 @@
+extends: substitution
+message: "Use 'Source stack' instead of '%s' - Source is a stack, not a platform"
+level: warning
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+ignorecase: false
+swap:
+  Source platform: Source stack
+  the Source platform: the Source stack
+  our platform: our stack
+  the platform: the stack

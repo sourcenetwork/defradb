@@ -29,6 +29,15 @@ tests/lenses/rust_wasm32_filter/pkg
 **.DS_Store
 **.DS_Code
 
+# Vale packages (downloaded via vale sync)
+styles/packages/
+styles/Google/
+styles/write-good/
+styles/Microsoft/
+styles/proselint/
+styles/alex/
+.vale-cache/
+
 # Ignore VS Code files.
 **.vscode
 **.vcs

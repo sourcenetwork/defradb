@@ -1,0 +1,46 @@
+extends: conditional
+message: "Define acronym '%s' on first use in this document"
+level: warning
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+scope: text
+ignorecase: true
+first: '\b([A-Z]{2,})\b'
+second: '(?:[A-Z][a-z][\w\-]+ )+\(([A-Z]{2,})\)'
+exceptions:
+  # Common acronyms that don't need definition
+  - API
+  - CLI
+  - HTTP
+  - HTTPS
+  - JSON
+  - REST
+  - SQL
+  - URL
+  - UI
+  - UX
+  - ID
+  - SDK
+  - TLS
+  - SSL
+  - TCP
+  - UDP
+  - IP
+  - DNS
+  - SSH
+  - CPU
+  - RAM
+  - I/O
+  - OS
+
+  # DefraDB-specific acronyms
+  - CRUD
+  - CORS
+  - P2P
+  - IoT
+  - NAT
+  - DHT
+  - RPC
+  - AMI
+  - DSL
+  - ACP
+  - DQL

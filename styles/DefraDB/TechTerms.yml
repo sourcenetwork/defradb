@@ -1,0 +1,25 @@
+extends: substitution
+message: "Use '%s' instead of '%s' for correct technical terminology"
+level: error
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+ignorecase: false
+swap:
+  # Edge computing terms (must be lowercase)
+  Edge-first software: edge-first software
+  Edge-First Software: edge-first software
+  Local-first software: local-first software
+  Local-First Software: local-first software
+  Local-first Software: local-first software
+  Edge Compute: edge compute
+  Edge compute: edge compute
+  Open Source: open source
+  Open Web: open web
+
+  # Terms that should be capitalized
+  edge ai: Edge AI
+  internet of things: Internet of Things
+  big tech: Big Tech
+
+  # Web3 terminology
+  dweb: Dweb
+  DWeb: Dweb

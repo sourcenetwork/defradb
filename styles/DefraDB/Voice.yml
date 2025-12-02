@@ -1,0 +1,18 @@
+extends: existence
+message: "Speak TO developers (second person) not ABOUT them - use 'you' instead of '%s'"
+level: suggestion
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+ignorecase: true
+scope: paragraph
+raw:
+  - '(?:the )?developers? (?:will|can|should|must|need to|want to|think|believe|feel)'
+  - '(?:the )?users? (?:will|can|should|must|need to|want to|think|believe|feel)'
+  - 'allows? (?:the )?developers? to'
+  - 'enables? (?:the )?developers? to'
+exceptions:
+  # Allow in specific contexts
+  - "if developers"
+  - "when developers"
+  - "as developers"
+  - "help developers"
+  - "for developers"

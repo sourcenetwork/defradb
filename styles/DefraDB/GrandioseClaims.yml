@@ -1,0 +1,22 @@
+extends: existence
+message: "Avoid unsupported claim '%s' - provide specific evidence or proof instead"
+level: warning
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+ignorecase: true
+scope: text
+nonword: true
+tokens:
+  - the best
+  - the leading
+  - the most secure
+  - the fastest
+  - the only
+  - the ultimate
+  - the perfect
+  - the ideal
+  - industry-leading
+  - market-leading
+  - award-winning
+  - groundbreaking
+  - 'number one'
+  - '#1'

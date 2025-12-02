@@ -1,0 +1,49 @@
+extends: capitalization
+message: "Headings should use title case: '%s'"
+level: suggestion
+link: https://github.com/sourcenetwork/defradb/blob/develop/CONTRIBUTING.md
+scope: heading
+match: $title
+style: AP
+exceptions:
+  # Product names
+  - DefraDB
+  - SourceHub
+  - Orbis
+  - LensVM
+
+  # Technology names
+  - MongoDB
+  - PostgreSQL
+  - GraphQL
+  - IPFS
+  - libp2p
+  - WebAssembly
+
+  # Terms with specific casing
+  - edge-first
+  - local-first
+  - open source
+  - open web
+  - iOS
+  - macOS
+  - JavaScript
+  - TypeScript
+
+  # Acronyms
+  - API
+  - CLI
+  - SDK
+  - HTTP
+  - JSON
+  - REST
+  - SQL
+  - CRUD
+  - CORS
+  - P2P
+  - IoT
+  - ACP
+  - DQL
+  - CRDT
+  - DAG
+  - CID

@@ -137,6 +137,21 @@ else
 	$(info YAML linter 'yamllint' already installed.)
 endif
 
+.PHONY: deps\:lint-docs
+deps\:lint-docs:
+ifeq (, $(shell which vale))
+	$(info Vale documentation linter 'vale' not found on the system, installing...)
+ifeq ($(OS_GENERAL),Darwin)
+	brew install vale
+else ifeq ($(OS_GENERAL),Linux)
+	$(info Please install Vale: https://vale.sh/docs/vale-cli/installation/)
+else
+	$(info Please install Vale: https://vale.sh/docs/vale-cli/installation/)
+endif
+else
+	$(info Vale documentation linter 'vale' already installed.)
+endif
+
 .PHONY: deps\:vulncheck
 deps\:vulncheck:
 	go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -144,7 +159,8 @@ deps\:vulncheck:
 .PHONY: deps\:lint
 deps\:lint:
 	@$(MAKE) deps:lint-go && \
-	$(MAKE) deps:lint-yaml
+	$(MAKE) deps:lint-yaml && \
+	$(MAKE) deps:lint-docs
 
 .PHONY: deps\:test
 deps\:test:
@@ -395,6 +411,23 @@ lint\:todo:
 .PHONY: lint\:list
 lint\:list:
 	golangci-lint linters --config=tools/configs/golangci.yaml
+
+.PHONY: lint\:docs
+lint\:docs:
+	@echo "Running Vale documentation linter..."
+	@vale sync
+	@vale --minAlertLevel=suggestion docs README.md
+
+.PHONY: lint\:docs\:strict
+lint\:docs\:strict:
+	@echo "Running Vale documentation linter (errors only)..."
+	@vale sync
+	@vale --minAlertLevel=error docs README.md
+
+.PHONY: vale\:sync
+vale\:sync:
+	@echo "Syncing Vale style packages..."
+	@vale sync
 
 .PHONY: chglog
 chglog:
