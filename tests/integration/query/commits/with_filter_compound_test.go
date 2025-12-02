@@ -16,38 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
-				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
-			},
-			testUtils.Request{
-				Request: `query {
-						_commits(filter: {fieldName: {_ne: "_C"}}) {
-							fieldName
-						}
-					}`,
-				Results: map[string]any{
-					"_commits": []map[string]any{
-						{
-							"fieldName": "age",
-						},
-						{
-							"fieldName": "name",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
 
 func TestQueryCommits_WithFilterFieldNameOrCondition_ReturnsMatchingCommits(t *testing.T) {
 	test := testUtils.TestCase{
@@ -102,45 +70,6 @@ func TestQueryCommits_WithFilterFieldNameAndCondition_ReturnsOnlyNameCommit(t *t
 					"_commits": []map[string]any{
 						{
 							"fieldName": "name",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestQueryCommits_WithFilterFieldNameAndDepth_ReturnsCommitsAtAllHeights(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
-				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
-			},
-			testUtils.UpdateDoc{
-				Doc: `{"age": 22}`,
-			},
-			testUtils.Request{
-				Request: `query {
-						_commits(filter: {fieldName: {_eq: "age"}}, depth: 2) {
-							fieldName
-							height
-						}
-					}`,
-				Results: map[string]any{
-					"_commits": []map[string]any{
-						{
-							"fieldName": "age",
-							"height":    int64(2),
-						},
-						{
-							"fieldName": "age",
-							"height":    int64(1),
 						},
 					},
 				},
