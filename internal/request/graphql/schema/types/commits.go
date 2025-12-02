@@ -165,8 +165,10 @@ func CommitsFilterArg(fieldNameFilter *gql.InputObject) *gql.InputObject {
 		func() (gql.InputObjectConfigFieldMap, error) {
 			return gql.InputObjectConfigFieldMap{
 				request.FieldNameName: &gql.InputObjectFieldConfig{
-					Description: commitFieldNameFieldDescription,
-					Type:        fieldNameFilter,
+					Description: "Filter commits by field name. Use \"_C\" for document composite commits, " +
+						"the field name (e.g. \"age\") for field commits, " +
+						"or null for collection commits on branchable collections.",
+					Type: fieldNameFilter,
 				},
 				request.FilterOpAnd: &gql.InputObjectFieldConfig{
 					Description: AndOperatorDescription,
