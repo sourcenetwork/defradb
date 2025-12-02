@@ -73,17 +73,7 @@ func (n *dagScanNode) Init() error {
 	if !n.prefix.HasValue() {
 		if n.commitSelect.DocID.HasValue() {
 			key := keys.HeadstoreDocKey{}.WithDocID(n.commitSelect.DocID.Value())
-
-			if n.commitSelect.FieldName.HasValue() &&
-				n.commitSelect.FieldName.Value() == request.CompositeFieldName {
-				key = key.WithFieldID(core.COMPOSITE_NAMESPACE)
-			}
-
 			n.prefix = immutable.Some[keys.HeadstoreKey](key)
-		} else if n.commitSelect.FieldName.HasValue() && n.commitSelect.FieldName.Value() == "" {
-			// If the user has provided an explicit nil value as `FieldName`, then we are only
-			// returning collection commits.
-			n.prefix = immutable.Some[keys.HeadstoreKey](keys.HeadstoreColKey{})
 		}
 	}
 
@@ -109,13 +99,6 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 		return
 	}
 
-	var fieldID string
-	if n.commitSelect.FieldName.HasValue() && n.commitSelect.FieldName.Value() != request.CompositeFieldName {
-		// no-op, cannot use a field prefix
-	} else {
-		fieldID = core.COMPOSITE_NAMESPACE
-	}
-
 	for _, prefix := range prefixes {
 		var start keys.HeadstoreDocKey
 		switch s := prefix.(type) {
@@ -125,7 +108,7 @@ func (n *dagScanNode) Prefixes(prefixes []keys.Walkable) {
 			start = s
 		}
 
-		n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(fieldID))
+		n.prefix = immutable.Some[keys.HeadstoreKey](start.WithFieldID(core.COMPOSITE_NAMESPACE))
 		return
 	}
 }
@@ -141,13 +124,6 @@ func (n *dagScanNode) Source() planNode { return nil }
 
 func (n *dagScanNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
-
-	// Add the field attribute to the explanation if it exists.
-	if n.commitSelect.FieldName.HasValue() {
-		simpleExplainMap[request.FieldNameName] = n.commitSelect.FieldName.Value()
-	} else {
-		simpleExplainMap[request.FieldNameName] = nil
-	}
 
 	// Add the cid attribute to the explanation if it exists.
 	if n.commitSelect.Cid.HasValue() {
@@ -234,31 +210,6 @@ func (n *dagScanNode) Next() (bool, error) {
 	dagBlock, err := coreblock.GetFromBytes(block.RawData())
 	if err != nil {
 		return false, err
-	}
-
-	if n.commitSelect.FieldName.HasValue() {
-		// early catch for CID based filtering
-		// since we are only concerned about this one CID lookup
-		if n.commitSelect.Cid.HasValue() &&
-			n.commitSelect.FieldName.Value() != dagBlock.Delta.GetFieldName() {
-			return false, nil
-		}
-
-		if n.commitSelect.FieldName.Value() == request.CompositeFieldName {
-			if dagBlock.Delta.IsComposite() {
-				// no-op, block passes the filter and should continue in this func
-			} else {
-				return n.Next()
-			}
-		} else {
-			fieldName := dagBlock.Delta.GetFieldName()
-
-			if fieldName == n.commitSelect.FieldName.Value() {
-				// no-op, block passes the filter and should continue in this func
-			} else {
-				return n.Next()
-			}
-		}
 	}
 
 	currentValue, err := n.dagBlockToNodeDoc(dagBlock)
@@ -431,7 +382,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 			if l.Name != "" {
 				linksMapping.SetFirstOfName(&link, request.LinksNameFieldName, l.Name)
 			}
-			linksMapping.SetFirstOfName(&link, request.CidFieldName, l.Link.Cid.String())
+			linksMapping.SetFirstOfName(&link, request.CidFieldName, l.Cid.String())
 
 			links[i] = link
 			i++

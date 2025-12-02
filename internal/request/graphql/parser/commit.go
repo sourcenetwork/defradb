@@ -48,13 +48,6 @@ func parseCommitSelect(
 				commit.CID = immutable.Some(v)
 			}
 
-		case request.FieldNameName:
-			if value == nil {
-				commit.FieldName = immutable.Some("")
-			} else if v, ok := value.(string); ok {
-				commit.FieldName = immutable.Some(v)
-			}
-
 		case request.OrderClause:
 			v, ok := value.([]any)
 			if !ok {
@@ -95,6 +88,11 @@ func parseCommitSelect(
 			commit.GroupBy = immutable.Some(request.GroupBy{
 				Fields: fields,
 			})
+
+		case request.FilterClause:
+			if v, ok := value.(map[string]any); ok {
+				commit.Filter = immutable.Some(request.Filter{Conditions: v})
+			}
 		}
 	}
 

@@ -23,6 +23,7 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encoding"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
@@ -31,11 +32,16 @@ import (
 // storeArtifacts stores SE artifacts directly in the datastore.
 func storeArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []secore.Artifact) error {
 	for _, artifact := range artifacts {
+		colID, err := id.GetShortCollectionID(ctx, artifact.CollectionID)
+		if err != nil {
+			return err
+		}
+
 		key := keys.DatastoreSE{
-			CollectionID: artifact.CollectionID,
-			IndexID:      artifact.IndexID,
-			SearchTag:    artifact.SearchTag,
-			DocID:        artifact.DocID,
+			CollectionShortID: colID,
+			IndexID:           artifact.IndexID,
+			SearchTag:         artifact.SearchTag,
+			DocID:             artifact.DocID,
 		}
 
 		if err := ds.Set(ctx, key.Bytes(), []byte{}); err != nil {
@@ -56,12 +62,17 @@ func fetchDocIDs(
 ) ([]string, error) {
 	docIDSet := make(map[string]struct{})
 
+	colID, err := id.GetShortCollectionID(ctx, collectionID)
+	if err != nil {
+		return nil, err
+	}
+
 	isFirstPass := true
 	for _, query := range queries {
 		key := keys.DatastoreSE{
-			CollectionID: collectionID,
-			IndexID:      query.IndexID,
-			SearchTag:    query.SearchTag,
+			CollectionShortID: colID,
+			IndexID:           query.IndexID,
+			SearchTag:         query.SearchTag,
 		}
 
 		iter, err := ds.Iterator(ctx, corekv.IterOptions{

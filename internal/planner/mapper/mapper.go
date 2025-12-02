@@ -1298,11 +1298,10 @@ func toCommitSelect(
 		return nil, err
 	}
 	return &CommitSelect{
-		Select:    *underlyingSelect,
-		DocID:     selectRequest.DocID,
-		FieldName: selectRequest.FieldName,
-		Depth:     selectRequest.Depth,
-		Cid:       selectRequest.CID,
+		Select: *underlyingSelect,
+		DocID:  selectRequest.DocID,
+		Depth:  selectRequest.Depth,
+		Cid:    selectRequest.CID,
 	}, nil
 }
 

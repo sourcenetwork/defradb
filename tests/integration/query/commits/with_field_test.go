@@ -29,7 +29,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "age") {
+						_commits (filter: {fieldName: {_eq: "age"}}) {
 							cid
 						}
 					}`,
@@ -60,7 +60,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "1") {
+						_commits (filter: {fieldName: {_eq: "1"}}) {
 							cid
 						}
 					}`,
@@ -87,7 +87,7 @@ func TestQueryCommitsWithCompositeField(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(fieldName: "_C") {
+						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
 						}
 					}`,
@@ -120,7 +120,7 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionID(t *testing.
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(fieldName: "_C") {
+						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
 							schemaVersionId
 						}
@@ -130,6 +130,39 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionID(t *testing.
 						{
 							"cid":             "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 							"schemaVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(filter: {fieldName: {_ne: "_C"}}) {
+							fieldName
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+						},
+						{
+							"fieldName": "name",
 						},
 					},
 				},
@@ -153,7 +186,10 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "age", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
+						_commits (
+							filter: {fieldName: {_eq: "age"}}, 
+							cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea"
+						) {
 							cid
 						}
 					}`,
@@ -184,7 +220,10 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "name", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
+						_commits (
+							filter: {fieldName: {_eq: "name"}}, 
+							cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea"
+						) {
 							cid
 						}
 					}`,
@@ -211,7 +250,10 @@ func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits (fieldName: "NOT_A_FIELD", cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea") {
+						_commits (
+							filter: {fieldName: {_eq: "NOT_A_FIELD"}}, 
+							cid: "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea"
+						) {
 							cid
 						}
 					}`,
