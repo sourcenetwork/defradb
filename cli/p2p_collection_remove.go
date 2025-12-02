@@ -28,7 +28,7 @@ The removed collections will no longer be synchronized between nodes.`,
 			cliClient := mustGetContextCLIClient(cmd)
 
 			var collectionNames []string
-			for _, id := range strings.Split(args[0], ",") {
+			for id := range strings.SplitSeq(args[0], ",") {
 				id = strings.TrimSpace(id)
 				if id == "" {
 					continue

@@ -147,8 +147,8 @@ func (p *configParser) parseLine(line string) error {
 func (p *configParser) parse(gqlSDL string) error {
 	p.genConfigs = make(map[string]map[string]genConfig)
 
-	schemaLines := strings.Split(gqlSDL, "\n")
-	for _, line := range schemaLines {
+	schemaLines := strings.SplitSeq(gqlSDL, "\n")
+	for line := range schemaLines {
 		err := p.parseLine(line)
 		if err != nil {
 			return err
@@ -164,8 +164,8 @@ func parseGenConfig(configStr string) (genConfig, error) {
 	}
 
 	config := genConfig{props: make(map[string]any)}
-	configParts := strings.Split(configStr, ",")
-	for _, part := range configParts {
+	configParts := strings.SplitSeq(configStr, ",")
+	for part := range configParts {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue

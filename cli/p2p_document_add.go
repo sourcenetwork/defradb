@@ -28,7 +28,7 @@ The documents are synchronized between nodes of a pubsub network.`,
 			cliClient := mustGetContextCLIClient(cmd)
 
 			var collectionIDs []string
-			for _, id := range strings.Split(args[0], ",") {
+			for id := range strings.SplitSeq(args[0], ",") {
 				id = strings.TrimSpace(id)
 				if id == "" {
 					continue
