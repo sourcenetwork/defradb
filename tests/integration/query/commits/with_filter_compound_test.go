@@ -16,7 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-
 func TestQueryCommits_WithFilterFieldNameOrCondition_ReturnsMatchingCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
