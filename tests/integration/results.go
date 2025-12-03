@@ -592,3 +592,32 @@ func (matcher *CurrentTimestampMatcher) FailureMessage(actual any) string {
 func (matcher *CurrentTimestampMatcher) NegatedFailureMessage(actual any) string {
 	return fmt.Sprintf("Expected timestamp %v not to be within 5 seconds of now", actual)
 }
+
+// FirstValueEqualStateful() is a matcher that allows one value to be cached, with all
+// subsequent values being compared against it. This allows comparing dynamic values
+// such as timestamps that should be equal to one another.
+type firstValueEqualStateful struct {
+	first any
+	set   bool
+}
+
+func FirstValueEqualStateful() *firstValueEqualStateful {
+	return &firstValueEqualStateful{}
+}
+
+func (m *firstValueEqualStateful) Match(actual any) (bool, error) {
+	if !m.set {
+		m.first = actual
+		m.set = true
+		return true, nil
+	}
+	return reflect.DeepEqual(m.first, actual), nil
+}
+
+func (m *firstValueEqualStateful) FailureMessage(actual any) string {
+	return "values were not equal to the first seen value"
+}
+
+func (m *firstValueEqualStateful) NegatedFailureMessage(actual any) string {
+	return "values were equal but expected them not to be"
+}

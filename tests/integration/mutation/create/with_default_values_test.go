@@ -512,3 +512,68 @@ func TestMutationCreate_WithDefaultJSONDeepObjectValue_ShouldBeSet(t *testing.T)
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationCreate_WithDefaultValues_SetsTwoEqualUTCNowDefaultValue(t *testing.T) {
+	timestampMatcher := testUtils.FirstValueEqualStateful()
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						created: DateTime
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					bob: create_User(input: { name: "Bob", created: UTC_NOW }) {
+						created
+					}
+
+					alice: create_User(input: { name: "Alice", created: UTC_NOW }) {
+						created
+					}
+                }`,
+				Results: map[string]any{
+					"bob":   []map[string]any{{"created": timestampMatcher}},
+					"alice": []map[string]any{{"created": timestampMatcher}},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsTwoEqualUTCNowDefaultValue(t *testing.T) {
+	timestampMatcher := testUtils.FirstValueEqualStateful()
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						created: DateTime @default(dateTime: UTC_NOW)
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					bob: create_User(input: { name: "Bob" }) {
+						created
+					}
+
+					alice: create_User(input: { name: "Alice" }) {
+						created
+					}
+                }`,
+				Results: map[string]any{
+					"bob":   []map[string]any{{"created": timestampMatcher}},
+					"alice": []map[string]any{{"created": timestampMatcher}},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

@@ -276,7 +276,9 @@ func NewDocsFromJSON(obj []byte, collection CollectionVersion, opts ...NewDocOpt
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val any, field CollectionFieldDescription) (NormalValue, error) {
+// Note: The document passed in is used to propogate the timestamp in the case
+// of a DateTime field.
+func validateFieldSchema(val any, field CollectionFieldDescription, doc *Document) (NormalValue, error) {
 	if field.Kind.IsNillable() {
 		if val == nil {
 			return NewNormalNil(field.Kind)
@@ -405,7 +407,7 @@ func validateFieldSchema(val any, field CollectionFieldDescription) (NormalValue
 		return NewNormalNillableFloat32Array(v), nil
 
 	case FieldKind_NILLABLE_DATETIME:
-		v, err := getDateTime(val)
+		v, err := getDateTime(val, doc.timestamp)
 		if err != nil {
 			return nil, err
 		}
@@ -521,7 +523,7 @@ func getInt64(v any) (int64, error) {
 	}
 }
 
-func getDateTime(v any) (time.Time, error) {
+func getDateTime(v any, ts time.Time) (time.Time, error) {
 	var s string
 	switch val := v.(type) {
 	case *fastjson.Value:
@@ -535,7 +537,7 @@ func getDateTime(v any) (time.Time, error) {
 	default:
 		s = val.(string)
 		if s == UTC_NOW {
-			return time.Now().UTC(), nil
+			return ts.UTC(), nil
 		}
 	}
 	return time.Parse(time.RFC3339, s)
@@ -777,7 +779,7 @@ func (doc *Document) Set(field string, value any) error {
 			return NewErrFieldNotExist(field)
 		}
 	}
-	val, err := validateFieldSchema(value, fd)
+	val, err := validateFieldSchema(value, fd, doc)
 	if err != nil {
 		return err
 	}
