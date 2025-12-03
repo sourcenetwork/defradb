@@ -27,7 +27,7 @@ func defaultSchema() (gql.Schema, error) {
 	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
 	commitsFilterArg := types.CommitsFilterArg(commitsFilterFieldNameArg)
 
-	commitObject := types.CommitObject(commitsOrderArg, commitsEnum)
+	commitObject := types.CommitObject(commitsOrderArg, commitsFilterArg, commitsEnum)
 
 	encryptedSearchResult := types.EncryptedSearchResultObject()
 

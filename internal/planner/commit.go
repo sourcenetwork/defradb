@@ -69,7 +69,7 @@ func (p *Planner) DAGScan(commitSelect *mapper.CommitSelect) *dagScanNode {
 		switch innerCommit := f.(type) {
 		case *mapper.CommitSelect:
 			// links only go a max depth of one. If you want to
-			// go deeper, use recursive "links" fields
+			// go deeper, use nested "links" fields
 			innerCommit.Depth = immutable.Some(uint64(0))
 			innerNode := p.DAGScan(innerCommit)
 
@@ -437,6 +437,15 @@ func (n *dagScanNode) addLinksFieldToDoc(linksField string, links []*cid.Cid, co
 			}
 
 			link := dagScanNodes[i].Value()
+			pass, err := mapper.RunFilter(link, dagScanNodes[i].commitSelect.Filter)
+			if err != nil {
+				return err
+			}
+
+			if !pass {
+				continue
+			}
+
 			links = append(links, link)
 		}
 		commit.Fields[linksIndex] = links

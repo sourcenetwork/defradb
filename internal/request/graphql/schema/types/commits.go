@@ -38,8 +38,11 @@ import (
 //
 // Any self referential type needs to be initialized
 // inside the init() func
-func CommitObject(commitsOrderArg *gql.InputObject,
-	commitsEnum *gql.Enum) *gql.Object {
+func CommitObject(
+	commitsOrderArg *gql.InputObject,
+	commitsFilterArg *gql.InputObject,
+	commitsEnum *gql.Enum,
+) *gql.Object {
 	// we need the fieldThunk since we are creating a circular type reference
 	var commitObject *gql.Object
 	fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
@@ -47,10 +50,10 @@ func CommitObject(commitsOrderArg *gql.InputObject,
 			Description: commitLinksDescription,
 			Type:        gql.NewList(commitObject),
 			Args: gql.FieldConfigArgument{
-				request.DocIDArgName:  NewArgConfig(gql.ID, commitDocIDArgDescription),
-				request.FieldNameName: NewArgConfig(gql.String, commitFieldNameArgDescription),
-				"order":               NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
-				request.CidArgName:    NewArgConfig(gql.ID, commitCIDArgDescription),
+				request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
+				request.FilterClause: NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
+				"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
+				request.CidArgName:   NewArgConfig(gql.ID, commitCIDArgDescription),
 				"groupBy": NewArgConfig(
 					gql.NewList(
 						gql.NewNonNull(
