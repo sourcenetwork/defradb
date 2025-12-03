@@ -158,72 +158,72 @@ name: Node ACP Policy
 resources:
 - name: node
   permissions:
-  - expr: admin
-    name: collection-get
-  - expr: admin
-    name: collection-patch
-  - expr: admin
-    name: dac-bypass
-  - expr: admin
-    name: dac-disable
-  - expr: admin
-    name: dac-enable
-  - expr: admin
-    name: dac-policy-add
-  - expr: admin
-    name: dac-purge
-  - expr: admin
-    name: dac-relation-add
-  - expr: admin
-    name: dac-relation-delete
-  - expr: admin
-    name: dac-status
-  - expr: admin
-    name: document-delete
-  - expr: admin
-    name: document-read
-  - expr: admin
-    name: document-update
-  - expr: admin
-    name: index-create
-  - expr: admin
-    name: index-drop
-  - expr: admin
-    name: index-list
-  - expr: admin
-    name: nac-disable
-  - expr: admin
-    name: nac-purge
-  - expr: admin
-    name: nac-re-enable
-  - expr: admin
-    name: nac-relation-add
-  - expr: admin
-    name: nac-relation-delete
-  - expr: admin
-    name: nac-status
-  - expr: admin
-    name: p2p-collection-create
-  - expr: admin
-    name: p2p-collection-delete
-  - expr: admin
-    name: p2p-collection-list
-  - expr: admin
-    name: p2p-document-create
-  - expr: admin
-    name: p2p-document-delete
-  - expr: admin
-    name: p2p-document-list
-  - expr: admin
-    name: p2p-peer-connect
-  - expr: admin
-    name: p2p-replicator-create
-  - expr: admin
-    name: p2p-replicator-delete
-  - expr: admin
-    name: p2p-replicator-list
-  - expr: admin
-    name: signature-verify
+  - name: collection-get
+    expr: admin
+  - name: collection-patch
+    expr: admin
+  - name: dac-bypass
+    expr: admin
+  - name: dac-disable
+    expr: admin
+  - name: dac-enable
+    expr: admin
+  - name: dac-policy-add
+    expr: admin
+  - name: dac-purge
+    expr: admin
+  - name: dac-relation-add
+    expr: admin
+  - name: dac-relation-delete
+    expr: admin
+  - name: dac-status
+    expr: admin
+  - name: document-delete
+    expr: admin
+  - name: document-read
+    expr: admin
+  - name: document-update
+    expr: admin
+  - name: index-create
+    expr: admin
+  - name: index-drop
+    expr: admin
+  - name: index-list
+    expr: admin
+  - name: nac-disable
+    expr: admin
+  - name: nac-purge
+    expr: admin
+  - name: nac-re-enable
+    expr: admin
+  - name: nac-relation-add
+    expr: admin
+  - name: nac-relation-delete
+    expr: admin
+  - name: nac-status
+    expr: admin
+  - name: p2p-collection-create
+    expr: admin
+  - name: p2p-collection-delete
+    expr: admin
+  - name: p2p-collection-list
+    expr: admin
+  - name: p2p-document-create
+    expr: admin
+  - name: p2p-document-delete
+    expr: admin
+  - name: p2p-document-list
+    expr: admin
+  - name: p2p-peer-connect
+    expr: admin
+  - name: p2p-replicator-create
+    expr: admin
+  - name: p2p-replicator-delete
+    expr: admin
+  - name: p2p-replicator-list
+    expr: admin
+  - name: signature-verify
+    expr: admin
   relations:
   - manages:
     - admin
