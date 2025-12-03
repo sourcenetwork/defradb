@@ -454,11 +454,6 @@ func resolveAggregates(
 			if !hasHost {
 				// If a matching host is not found, we need to construct and add it.
 				index := mapping.GetNextIndex()
-
-				// if rootSelectType == CommitSelection {
-
-				// }
-				// var x request.CommitSelect
 				hostSelectRequest := &request.Select{
 					Field: request.Field{
 						Name: target.hostExternalName,
@@ -1009,9 +1004,6 @@ func getTopLevelInfo(
 	}
 
 	switch selectRequest.Name {
-	// 	// Setting the type name must be done after adding the fields, as
-	// 	// the typeName index is dynamic, but the field indexes are not
-	// 	mapping.SetTypeName(request.LinksFieldName)
 	case request.SignatureFieldName:
 		for i, f := range request.SignatureFields {
 			mapping.Add(i, f)
