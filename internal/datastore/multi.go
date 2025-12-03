@@ -83,10 +83,6 @@ func (m *Multistore) Systemstore() corekv.ReaderWriter {
 	return m.system
 }
 
-func DatastoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
-	return namespace.Wrap(rootstore, []byte{dataStoreKey})
-}
-
 // The key used to calculate keyLen is descriptive only, they are all the same length, and there
 // is nothing special about this one.
 var chunkKeyLen int = len([]byte("bafybeiet6foxcipesjurdqi4zpsgsiok5znqgw4oa5poef6qtiby5hlpzy"))
