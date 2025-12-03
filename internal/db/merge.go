@@ -118,12 +118,8 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		return err
 	}
 
-	for docID := range mp.docIDs {
-		docID, err := client.NewDocIDFromString(docID)
-		if err != nil {
-			return err
-		}
-		err = syncIndexedDoc(ctx, docID, col)
+	for docID, oldDoc := range mp.docIDs {
+		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
 		if err != nil {
 			return err
 		}
@@ -186,8 +182,10 @@ type mergeProcessor struct {
 	encBlockLS linking.LinkSystem
 	col        *collection
 
-	// docIDs contains all docIDs that have been merged so far by the mergeProcessor
-	docIDs map[string]struct{}
+	// docIDs contains all docIDs and their original values
+	// that have been merged so far by the mergeProcessor
+	// the original values are used to update indexes
+	docIDs map[client.DocID]*client.Document
 
 	// composites is a list of composites that need to be merged.
 	composites *list.List
@@ -209,7 +207,7 @@ func (db *DB) newMergeProcessor(
 		blockLS:    blockLS,
 		encBlockLS: encBlockLS,
 		col:        col,
-		docIDs:     make(map[string]struct{}),
+		docIDs:     make(map[client.DocID]*client.Document),
 		composites: list.New(),
 	}, nil
 }
@@ -420,15 +418,24 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 
 	switch {
 	case crdtUnion.IsComposite():
-		docID := string(crdtUnion.GetDocID())
-		mp.docIDs[docID] = struct{}{}
-
+		docID, err := client.NewDocIDFromString(string(crdtUnion.GetDocID()))
+		if err != nil {
+			return nil, err
+		}
+		_, exists := mp.docIDs[docID]
+		if !exists {
+			doc, err := mp.col.Get(ctx, docID, false)
+			if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+				return nil, err
+			}
+			mp.docIDs[docID] = doc
+		}
 		return crdt.NewDocComposite(
 			txn.Datastore(),
 			mp.col.Version().VersionID,
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
-				DocID:             docID,
+				DocID:             docID.String(),
 			}.WithFieldID(core.COMPOSITE_NAMESPACE),
 		), nil
 
@@ -439,8 +446,18 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		), nil
 
 	default:
-		docID := string(crdtUnion.GetDocID())
-		mp.docIDs[docID] = struct{}{}
+		docID, err := client.NewDocIDFromString(string(crdtUnion.GetDocID()))
+		if err != nil {
+			return nil, err
+		}
+		_, exists := mp.docIDs[docID]
+		if !exists {
+			doc, err := mp.col.Get(ctx, docID, false)
+			if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+				return nil, err
+			}
+			mp.docIDs[docID] = doc
+		}
 
 		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Version().GetFieldByName(field)
@@ -461,7 +478,7 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 			fd.Kind,
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
-				DocID:             docID,
+				DocID:             docID.String(),
 			}.WithFieldID(fmt.Sprint(fieldShortID)),
 			field,
 		)
@@ -548,15 +565,17 @@ func syncIndexedDoc(
 	ctx context.Context,
 	docID client.DocID,
 	col *collection,
+	oldDoc *client.Document,
 ) error {
-	doc, err := col.Get(ctx, docID, false)
-	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
-	if !isDeletedDoc && err != nil {
+	newDoc, err := col.Get(ctx, docID, false)
+	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
 	}
-	err = col.deleteIndexedDoc(ctx, doc)
-	if err != nil {
-		return err
+	if oldDoc != nil && newDoc != nil {
+		return col.updateDocIndex(ctx, oldDoc, newDoc)
+	} else if oldDoc == nil {
+		return col.indexNewDoc(ctx, newDoc)
+	} else {
+		return col.deleteIndexedDoc(ctx, oldDoc)
 	}
-	return col.indexNewDoc(ctx, doc)
 }
