@@ -97,22 +97,15 @@ func TestACP_AddPolicy_EmptyExpressionInPermission_PermissionIsAccepted(t *testi
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
+  - name: delete
   - name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

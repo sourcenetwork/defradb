@@ -30,26 +30,19 @@ func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -121,26 +114,19 @@ func TestACP_CreateWithoutIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) 
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -209,26 +195,19 @@ func TestACP_CreateWithIdentityAndDeleteWithIdentity_CanDelete(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -301,26 +280,19 @@ func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -399,26 +371,19 @@ func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testin
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader

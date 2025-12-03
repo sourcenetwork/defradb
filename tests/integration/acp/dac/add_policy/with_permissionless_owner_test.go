@@ -31,23 +31,17 @@ func TestACP_AddPolicy_PermissionlessOwnerUpdate_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
   - expr: reader
     name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor
@@ -67,8 +61,6 @@ func TestACP_AddPolicy_PermissionlessOwnerDelete_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
@@ -76,14 +68,10 @@ resources:
   permissions:
   - expr: reader
     name: delete
-  - expr: owner + reader
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor
@@ -103,23 +91,18 @@ func TestACP_AddPolicy_PermissionlessOwnerRead_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner + reader
+  - expr: reader
     name: delete
   - expr: reader
     name: read
-  - expr: owner + reader
+  - expr: reader
     name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor
@@ -139,8 +122,6 @@ func TestACP_AddPolicy_PermissionlessOwnerReadUpdateDelete_ValidID(t *testing.T)
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
@@ -153,9 +134,6 @@ resources:
   - expr: reader
     name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

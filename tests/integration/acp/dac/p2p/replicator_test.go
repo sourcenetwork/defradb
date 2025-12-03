@@ -33,26 +33,19 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_LocalACP(t *testing
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -94,26 +87,19 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader

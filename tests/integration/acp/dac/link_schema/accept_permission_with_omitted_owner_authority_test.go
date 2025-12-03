@@ -132,23 +132,16 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnUpdatePermissionExprOnDRI_ACPEn
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner
-    name: read
+  - name: delete
+  - name: read
   - expr: ownerBad
     name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: ownerBad
     types:
     - actor
@@ -310,23 +303,16 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnReadPermissionExprOnDRI_ACPEnfo
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
+  - name: delete
   - expr: ownerBad
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: ownerBad
     types:
     - actor
@@ -576,8 +562,6 @@ func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnDeletePermissionExprOnDRI_ACPEn
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
@@ -585,14 +569,9 @@ resources:
   permissions:
   - expr: ownerBad
     name: delete
-  - expr: owner
-    name: read
-  - expr: owner
-    name: update
+  - name: read
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: ownerBad
     types:
     - actor

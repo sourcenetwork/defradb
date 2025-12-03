@@ -32,26 +32,19 @@ func TestACP_CreateWithoutIdentityAndUpdateWithoutIdentity_CanUpdate(t *testing.
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -135,26 +128,19 @@ func TestACP_CreateWithoutIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) 
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -235,26 +221,19 @@ func TestACP_CreateWithIdentityAndUpdateWithIdentity_CanUpdate(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -345,26 +324,19 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -455,26 +427,19 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testin
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -568,26 +533,19 @@ func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testi
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -679,26 +637,19 @@ func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *tes
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader

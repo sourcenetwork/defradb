@@ -24,8 +24,6 @@ func TestACP_AddPolicy_OneResourceThatIsEmpty_DoesntError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: a policy
 resources:

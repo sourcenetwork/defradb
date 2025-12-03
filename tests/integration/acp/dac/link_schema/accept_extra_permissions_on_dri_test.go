@@ -210,25 +210,18 @@ func TestACP_LinkSchema_WithExtraPermsHavingNoRequiredRelation_AcceptSchema(t *t
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
+  - name: delete
   - expr: reader
     name: magic
-  - expr: owner + reader
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

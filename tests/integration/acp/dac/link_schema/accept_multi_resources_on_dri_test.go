@@ -28,35 +28,21 @@ func TestACP_LinkSchema_WithMultipleResources_AcceptSchema(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: books
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner
-    name: read
-  - expr: owner
-    name: update
-  relations:
-  - name: owner
-    types:
-    - actor
+  - name: delete
+  - name: read
+  - name: update
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor
@@ -129,35 +115,21 @@ func TestACP_LinkSchema_WithMultipleResourcesBothBeingUsed_AcceptSchema(t *testi
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: books
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner
-    name: read
-  - expr: owner
-    name: update
-  relations:
-  - name: owner
-    types:
-    - actor
+  - name: delete
+  - name: read
+  - name: update
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

@@ -28,20 +28,18 @@ func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -53,9 +51,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -202,20 +197,18 @@ func TestACP_ManagerGivesWriteAccessToAnotherActor_OtherActorCanWrite(t *testing
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -228,9 +221,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -405,20 +395,18 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAccess_ManagerCanRead(t *testi
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -430,9 +418,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -586,20 +571,18 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -613,9 +596,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -848,20 +828,18 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -873,9 +851,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -1019,20 +994,18 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -1044,9 +1017,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -1169,20 +1139,18 @@ func TestACP_CantMakeRelationshipIfNotOwnerOrManager_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -1194,9 +1162,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader

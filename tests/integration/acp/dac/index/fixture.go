@@ -11,26 +11,19 @@
 package test_acp_dac_index
 
 const userPolicy = `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -39,26 +32,19 @@ resources:
 `
 
 const bookAuthorPolicy = `
-actor:
-  name: actor
 description: a test policy which marks a collection in a database as a resource
 name: test
 resources:
 - name: author
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -66,19 +52,14 @@ resources:
     - actor
 - name: book
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - manages:
     - reader
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader

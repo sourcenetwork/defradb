@@ -26,20 +26,18 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -51,9 +49,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -160,20 +155,18 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -185,9 +178,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -330,20 +320,18 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -355,9 +343,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader

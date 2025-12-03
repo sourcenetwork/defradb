@@ -24,38 +24,26 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: books
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor
@@ -75,31 +63,22 @@ func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *tes
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: books
   permissions:
   - name: delete
-  - expr: owner + reader
+  - expr: reader
     name: read
   - name: update
-  relations:
-  - name: owner
-    types:
-    - actor
 - name: users
   permissions:
   - name: delete
-  - name: read
-    expr: reader
+  - expr: reader
+    name: read
   - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor
@@ -121,35 +100,26 @@ func TestACP_AddPolicy_SecondResourcesMissingOwner_OwnerIsAdded(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: books
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
   - name: reader
     types:
     - actor
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

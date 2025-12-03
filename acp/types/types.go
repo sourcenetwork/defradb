@@ -153,86 +153,81 @@ const NodeACPObject = "NodeObject"
 const NodeACPPolicyResourceName = "node"
 
 const NodeACPPolicy = `
-actor:
-  name: actor
 description: Node ACP Policy
 name: Node ACP Policy
 resources:
 - name: node
   permissions:
-  - expr: owner + admin
+  - expr: admin
     name: collection-get
-  - expr: owner + admin
+  - expr: admin
     name: collection-patch
-  - expr: owner + admin
+  - expr: admin
     name: dac-bypass
-  - expr: owner + admin
+  - expr: admin
     name: dac-disable
-  - expr: owner + admin
+  - expr: admin
     name: dac-enable
-  - expr: owner + admin
+  - expr: admin
     name: dac-policy-add
-  - expr: owner + admin
+  - expr: admin
     name: dac-purge
-  - expr: owner + admin
+  - expr: admin
     name: dac-relation-add
-  - expr: owner + admin
+  - expr: admin
     name: dac-relation-delete
-  - expr: owner + admin
+  - expr: admin
     name: dac-status
-  - expr: owner + admin
+  - expr: admin
     name: document-delete
-  - expr: owner + admin
+  - expr: admin
     name: document-read
-  - expr: owner + admin
+  - expr: admin
     name: document-update
-  - expr: owner + admin
+  - expr: admin
     name: index-create
-  - expr: owner + admin
+  - expr: admin
     name: index-drop
-  - expr: owner + admin
+  - expr: admin
     name: index-list
-  - expr: owner + admin
+  - expr: admin
     name: nac-disable
-  - expr: owner + admin
+  - expr: admin
     name: nac-purge
-  - expr: owner + admin
+  - expr: admin
     name: nac-re-enable
-  - expr: owner + admin
+  - expr: admin
     name: nac-relation-add
-  - expr: owner + admin
+  - expr: admin
     name: nac-relation-delete
-  - expr: owner + admin
+  - expr: admin
     name: nac-status
-  - expr: owner + admin
+  - expr: admin
     name: p2p-collection-create
-  - expr: owner + admin
+  - expr: admin
     name: p2p-collection-delete
-  - expr: owner + admin
+  - expr: admin
     name: p2p-collection-list
-  - expr: owner + admin
+  - expr: admin
     name: p2p-document-create
-  - expr: owner + admin
+  - expr: admin
     name: p2p-document-delete
-  - expr: owner + admin
+  - expr: admin
     name: p2p-document-list
-  - expr: owner + admin
+  - expr: admin
     name: p2p-peer-connect
-  - expr: owner + admin
+  - expr: admin
     name: p2p-replicator-create
-  - expr: owner + admin
+  - expr: admin
     name: p2p-replicator-delete
-  - expr: owner + admin
+  - expr: admin
     name: p2p-replicator-list
-  - expr: owner + admin
+  - expr: admin
     name: signature-verify
   relations:
   - manages:
     - admin
     name: admin
-    types:
-    - actor
-  - name: owner
     types:
     - actor
 `

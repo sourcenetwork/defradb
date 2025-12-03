@@ -26,20 +26,18 @@ func TestACP_AddDocActorRelationshipWithDummyRelationDefinedOnPolicy_NothingChan
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -51,9 +49,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -154,20 +149,18 @@ func TestACP_AddDocActorRelationshipWithDummyRelationNotDefinedOnPolicy_Error(t 
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -179,9 +172,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader

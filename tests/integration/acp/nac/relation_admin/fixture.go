@@ -11,18 +11,16 @@
 package test_acp_nac_relation_admin
 
 const examplePolicy = `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - name: deleter
@@ -33,9 +31,6 @@ resources:
     - updater
     - deleter
     name: manager
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader

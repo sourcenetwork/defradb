@@ -20,23 +20,14 @@ import (
 
 func TestACP_AddPolicy_AddDuplicatePolicyByOtherCreator_ValidPolicyIDs(t *testing.T) {
 	const policyUsedByBoth string = `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner
-    name: read
-  - expr: owner
-    name: update
-  relations:
-  - name: owner
-    types:
-    - actor
+  - name: delete
+  - name: read
+  - name: update
 `
 
 	test := testUtils.TestCase{
@@ -75,23 +66,14 @@ func TestACP_AddPolicy_AddMultipleDuplicatePolicies_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner
-    name: read
-  - expr: owner
-    name: update
-  relations:
-  - name: owner
-    types:
-    - actor
+  - name: delete
+  - name: read
+  - name: update
 `,
 
 				ExpectedPolicyID: immutable.Some(
@@ -103,23 +85,14 @@ resources:
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner
-    name: read
-  - expr: owner
-    name: update
-  relations:
-  - name: owner
-    types:
-    - actor
+  - name: delete
+  - name: read
+  - name: update
 `,
 
 				ExpectedPolicyID: immutable.Some(
@@ -140,23 +113,14 @@ func TestACP_AddPolicy_AddMultipleDuplicatePoliciesDifferentFmts_ProducesDiffere
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner
-    name: read
-  - expr: owner
-    name: update
-  relations:
-  - name: owner
-    types:
-    - actor
+  - name: delete
+  - name: read
+  - name: update
 `,
 
 				ExpectedPolicyID: immutable.Some(
@@ -168,23 +132,14 @@ resources:
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner
-    name: read
-  - expr: owner
-    name: update
-  relations:
-  - name: owner
-    types:
-    - actor
+  - name: delete
+  - name: read
+  - name: update
 `,
 
 				ExpectedPolicyID: immutable.Some(

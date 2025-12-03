@@ -28,16 +28,9 @@ name: a policy
 resources:
 - name: users
   permissions:
+  - name: delete
   - name: read
   - name: update
-  - name: delete
-  relations:
-  - name: owner
-    types:
-    - actor
-  - name: owner
-    types:
-    - actor
 `,
 
 				ExpectedError: "multiple owner relations",

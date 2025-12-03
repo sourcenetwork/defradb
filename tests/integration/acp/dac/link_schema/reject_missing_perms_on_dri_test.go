@@ -27,16 +27,11 @@ func TestACP_LinkSchema_MissingRequiredReadPermissionOnDRI_SchemaRejected(t *tes
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

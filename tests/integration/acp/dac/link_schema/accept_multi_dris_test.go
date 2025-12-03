@@ -22,23 +22,16 @@ import (
 func TestACP_LinkSchema_AddPolicyTwiceWithValidDRIByDifferentActorsAndUseBoth_AcceptSchema(t *testing.T) {
 	const validResourceNameOnPolicyUsedByBoth string = "users"
 	const policyUsedByBoth string = `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

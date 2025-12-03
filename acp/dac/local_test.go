@@ -70,23 +70,16 @@ var invalidIdentity = &mockInvalidIdentity{}
 
 var validPolicyID string = "196f584c831c596489278ed2c98ee7a42fc2cf85b2e86276165a03b53b4684fa"
 var validPolicy string = `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner + reader
+  - name: delete
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

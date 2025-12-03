@@ -27,21 +27,14 @@ func TestACP_LinkSchema_OwnerMissingRequiredUpdatePermissionLabelOnDRI_SchemaRej
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: a policy
 name: test
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: owner
-    name: read
+  - name: delete
+  - name: read
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

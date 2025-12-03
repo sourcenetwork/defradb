@@ -26,20 +26,18 @@ func TestACP_DeleteDocActorRelationshipMissingDocID_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -51,9 +49,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -118,20 +113,18 @@ func TestACP_DeleteDocActorRelationshipMissingCollection_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -143,9 +136,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -210,20 +200,18 @@ func TestACP_DeleteDocActorRelationshipMissingRelationName_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -235,9 +223,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -302,20 +287,18 @@ func TestACP_DeleteDocActorRelationshipMissingTargetActorName_Error(t *testing.T
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -327,9 +310,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
@@ -394,20 +374,18 @@ func TestACP_DeleteDocActorRelationshipMissingReqestingIdentityName_Error(t *tes
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
 description: A Policy
 name: Test Policy
 resources:
 - name: users
   permissions:
-  - expr: owner + deleter
+  - expr: deleter
     name: delete
   - expr: dummy
     name: nothing
-  - expr: owner + reader + updater + deleter
+  - expr: ((reader + updater) + deleter)
     name: read
-  - expr: owner + updater
+  - expr: updater
     name: update
   relations:
   - manages:
@@ -419,9 +397,6 @@ resources:
     types:
     - actor
   - name: dummy
-    types:
-    - actor
-  - name: owner
     types:
     - actor
   - name: reader
