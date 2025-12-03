@@ -106,7 +106,7 @@ func TestQueryCommits_WithSingleCreateNestedLinksCompositeFilter_Succeed(t *test
 			testUtils.Request{
 				Request: `
 					query {
-						_commits(fieldName: "_C") {
+						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							height
 							fieldName
 							links {
@@ -153,10 +153,10 @@ func TestQueryCommits_WithSingleCreateNestedLinksNestedFilter_Succeed(t *testing
 			testUtils.Request{
 				Request: `
 					query {
-						_commits(fieldName: "_C") {
+						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							height
 							fieldName
-							links(fieldName: "age") {
+							links(filter: {fieldName: {_eq: "age"}}) {
 								height
 								fieldName
 							}

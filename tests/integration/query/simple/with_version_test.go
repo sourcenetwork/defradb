@@ -499,12 +499,12 @@ func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
 						Age
 						_version {
 							cid
-							L1: links(fieldName: "Age") {
+							L1: links(filter: {fieldName: {_eq: "Age"}}) {
 								cid
 								fieldName
 								height
 							}
-							L2: links(fieldName: "Name") {
+							L2: links(filter: {fieldName: {_eq: "Name"}}) {
 								fieldName
 								height
 							}
