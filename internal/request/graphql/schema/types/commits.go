@@ -149,6 +149,14 @@ func CommitsFilterFieldNameArg() *gql.InputObject {
 				Description: neOperatorDescription,
 				Type:        gql.String,
 			},
+			"_in": &gql.InputObjectFieldConfig{
+				Description: inOperatorDescription,
+				Type:        gql.NewList(gql.String),
+			},
+			"_nin": &gql.InputObjectFieldConfig{
+				Description: ninOperatorDescription,
+				Type:        gql.NewList(gql.String),
+			},
 		},
 	})
 }
