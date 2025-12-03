@@ -104,3 +104,32 @@ func TestMutationCreateFieldKinds_WithDateTimesNanoSecondsAppart(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationCreateFieldKinds_WithDateTime_WithUTCNow(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						time: DateTime
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+                    create_User(input: {time: UTC_NOW}) {
+						time
+                    }
+                }`,
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"time": testUtils.CurrentTimestamp(),
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
