@@ -2314,6 +2314,8 @@ github.com/sourcenetwork/acp_core v0.7.2-0.20251125184014-b3f2dd33287c h1:oDPHIw
 github.com/sourcenetwork/acp_core v0.7.2-0.20251125184014-b3f2dd33287c/go.mod h1:vmxU/mBphMaU2NjKYEFJLSpk5lbRdWDqgsJZNd+WfZ0=
 github.com/sourcenetwork/acp_core v0.7.2-0.20251125184641-514ab148c59a h1:pMnhbyfJB1RXi5gj3uVmBBEYvMCisvFbXi/Gv/Pk9j0=
 github.com/sourcenetwork/acp_core v0.7.2-0.20251125184641-514ab148c59a/go.mod h1:vmxU/mBphMaU2NjKYEFJLSpk5lbRdWDqgsJZNd+WfZ0=
+github.com/sourcenetwork/acp_core v0.7.2-0.20251203171508-0ec0c963a8bd h1:0P5uwdFuH/eo3WfBcEZ7TnLAF0zacDt1NuXjIdnejbM=
+github.com/sourcenetwork/acp_core v0.7.2-0.20251203171508-0ec0c963a8bd/go.mod h1:vmxU/mBphMaU2NjKYEFJLSpk5lbRdWDqgsJZNd+WfZ0=
 github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e h1:sSvLVomsLBjQpojIu+e32LJlnE8M4nuIsX1mGeU8qo8=
 github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e/go.mod h1:eay5PRQr7fIVAMbTbchTnO9gG65Hg/uYGdc7mguHxoA=
 github.com/sourcenetwork/corekv v0.2.4 h1:Vaapx1HvwOyNQJsAsfv2P8w/AzJ2mYfkyReGkMeobrg=

@@ -38,7 +38,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/pkg/errors v0.9.1
-	github.com/sourcenetwork/acp_core v0.7.2-0.20251125184641-514ab148c59a
+	github.com/sourcenetwork/acp_core v0.7.2-0.20251203171508-0ec0c963a8bd
 	github.com/sourcenetwork/corekv v0.2.4
 	github.com/sourcenetwork/corekv/badger v0.2.4
 	github.com/sourcenetwork/corekv/blockstore v0.2.4
