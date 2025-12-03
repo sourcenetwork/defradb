@@ -27,7 +27,7 @@ defradb start [flags]
       --no-searchable-encryption          Skip generating a searchable encryption key. Searchable encryption will be disabled.
       --no-signing                        Disable signing of commits.
       --no-telemetry                      Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.
-      --node-acp-enable false             Enable the node access control system. Defaults to false. (default "false")
+      --node-acp-enable                   Enable the node access control system.
       --p2paddr strings                   Listen addresses for the p2p network (formatted as a libp2p MultiAddr) (default [/ip4/127.0.0.1/tcp/9171])
       --peers stringArray                 List of peers to connect to
       --privkeypath string                Path to the private key for tls

@@ -69,7 +69,6 @@ var configFlags = map[string]string{
 	"keyring-backend":            "keyring.backend",
 	"keyring-path":               "keyring.path",
 	"no-keyring":                 "keyring.disabled",
-	"node-acp-enable":            "acp.node.enable",
 	"document-acp-type":          "acp.document.type",
 	"source-hub-address":         "acp.document.sourceHub.address",
 	"development":                "development",
@@ -108,7 +107,6 @@ var configDefaults = map[string]any{
 	"datastore.nosigning":               false,
 	"datastore.nosearchableencryption":  false,
 	"datastore.defaultkeytype":          "secp256k1",
-	"acp.node.enable":                   false,
 	"acp.document.type":                 "none",
 	"replicator.retryintervals":         []int{30, 60, 120, 240, 480, 960, 1920},
 }
