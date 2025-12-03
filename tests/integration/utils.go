@@ -1038,7 +1038,7 @@ func refreshDocuments(
 				// We fetch the list of composite commits for the document so that
 				// they can be referenced later in the test if required.
 				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: ID!) {
-					_commits(docID: $docID, fieldName: "_C", order: {height: ASC}) {
+					_commits(docID: $docID, filter: {fieldName: {_eq: "_C"}}, order: {height: ASC}) {
 						cid
 					}
 				}`, client.WithVariables(map[string]any{

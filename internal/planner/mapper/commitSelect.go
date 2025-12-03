@@ -22,9 +22,6 @@ type CommitSelect struct {
 	// The key of the target document for which to get commits for.
 	DocID immutable.Option[string]
 
-	// The field for which commits have been requested.
-	FieldName immutable.Option[string]
-
 	// The maximum depth to yield results for.
 	Depth immutable.Option[uint64]
 
@@ -41,9 +38,8 @@ func (s *CommitSelect) CloneTo(index int) Requestable {
 
 func (s *CommitSelect) cloneTo(index int) *CommitSelect {
 	return &CommitSelect{
-		Select:    *s.Select.cloneTo(index),
-		DocID:     s.DocID,
-		FieldName: s.FieldName,
-		Cid:       s.Cid,
+		Select: *s.Select.cloneTo(index),
+		DocID:  s.DocID,
+		Cid:    s.Cid,
 	}
 }

@@ -49,7 +49,7 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						_commits(fieldName: "_C") {
+						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
 							fieldName
 							links {
