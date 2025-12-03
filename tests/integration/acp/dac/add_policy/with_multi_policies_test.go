@@ -39,7 +39,7 @@ resources:
 				Policy: policyUsedByBoth,
 
 				ExpectedPolicyID: immutable.Some(
-					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
+					"1239a04400966b311339f62db50044b1bde70cece2ce9897d69c1bafa5cfab81",
 				),
 			},
 
@@ -49,7 +49,7 @@ resources:
 				Policy: policyUsedByBoth,
 
 				ExpectedPolicyID: immutable.Some(
-					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
+					"166758b3b8f5edd06f46e9079b30b701aadcf3e59e64afe1c46d4242924bd850",
 				),
 			},
 		},
@@ -77,7 +77,7 @@ resources:
 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
+					"1239a04400966b311339f62db50044b1bde70cece2ce9897d69c1bafa5cfab81",
 				),
 			},
 
@@ -96,7 +96,7 @@ resources:
 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
+					"166758b3b8f5edd06f46e9079b30b701aadcf3e59e64afe1c46d4242924bd850",
 				),
 			},
 		},
@@ -124,7 +124,7 @@ resources:
 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0",
+					"1239a04400966b311339f62db50044b1bde70cece2ce9897d69c1bafa5cfab81",
 				),
 			},
 
@@ -143,7 +143,7 @@ resources:
 `,
 
 				ExpectedPolicyID: immutable.Some(
-					"4f113ea28e09992fdf6f3a8ccac8be8d8d39c932f48f54c42fff9c3513cd9a7a",
+					"166758b3b8f5edd06f46e9079b30b701aadcf3e59e64afe1c46d4242924bd850",
 				),
 			},
 		},

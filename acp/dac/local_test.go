@@ -68,7 +68,7 @@ func (m *mockInvalidIdentity) NewToken(duration time.Duration, audience immutabl
 
 var invalidIdentity = &mockInvalidIdentity{}
 
-var validPolicyID string = "196f584c831c596489278ed2c98ee7a42fc2cf85b2e86276165a03b53b4684fa"
+var validPolicyID string = "177c8aecb1656155806f79b09cfc2c922b82872ed313a0263a6040d80253bdf0"
 var validPolicy string = `
 description: a policy
 name: test

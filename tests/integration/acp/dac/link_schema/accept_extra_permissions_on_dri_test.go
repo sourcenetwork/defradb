@@ -28,25 +28,18 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelation_AcceptSchema(t *tes
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
-description: a policy
 name: test
+description: a policy
 resources:
 - name: users
   permissions:
-  - expr: owner + reader
+  - expr: reader
     name: delete
-  - expr: owner - reader
-    name: magic
-  - expr: owner + reader
+  - expr: reader
     name: read
-  - expr: owner + reader
+  - expr: reader
     name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor
@@ -119,25 +112,18 @@ func TestACP_LinkSchema_WithExtraPermsHavingRequiredRelationInTheEnd_AcceptSchem
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
-description: a policy
 name: test
+description: a policy
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: reader & owner
+  - name: delete
+  - expr: reader
     name: magic
-  - expr: owner + reader
+  - expr: reader
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

@@ -24,61 +24,16 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
-description: a policy
 name: test
+description: a policy
 resources:
 - name: users
   permissions:
-  - expr: owner
-    name: delete
-  - expr: reader ^ owner
+  - name: delete
+  - expr: reader ^ asf
     name: read
-  - expr: owner
-    name: update
+  - name: update
   relations:
-  - name: owner
-    types:
-    - actor
-  - name: reader
-    types:
-    - actor
-`,
-
-				ExpectedError: "token recognition error",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbolNoSpace_Error(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-actor:
-  name: actor
-description: a policy
-name: test
-resources:
-- name: users
-  permissions:
-  - expr: owner
-    name: delete
-  - expr: reader^owner
-    name: read
-  - expr: owner
-    name: update
-  relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor

@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testing.T) {
+func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ErrorsBecauseOwnerIsInExpr(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -24,10 +24,8 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-actor:
-  name: actor
-description: a policy
 name: test
+description: a policy
 resources:
 - name: users
   permissions:
@@ -38,13 +36,11 @@ resources:
   - expr: owner
     name: update
   relations:
-  - name: owner
-    types:
-    - actor
   - name: reader
     types:
     - actor
 `,
+				ExpectedError: "permission cannot reference `owner` relation",
 			},
 		},
 	}
@@ -53,42 +49,6 @@ resources:
 }
 
 // Note: this and above test both result in different policy ids.
-func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-actor:
-  name: actor
-description: a policy
-name: test
-resources:
-- name: users
-  permissions:
-  - expr: owner
-    name: delete
-  - expr: reader-owner
-    name: read
-  - expr: owner
-    name: update
-  relations:
-  - name: owner
-    types:
-    - actor
-  - name: reader
-    types:
-    - actor
-`,
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestACP_AddPolicy_EmptyExpressionInPermission_PermissionIsAccepted(t *testing.T) {
 	test := testUtils.TestCase{
 

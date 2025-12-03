@@ -19,7 +19,7 @@ import (
 )
 
 func TestACP_LinkSchema_WhereNoPolicyWasAdded_SchemaRejected(t *testing.T) {
-	nonExistingPolicyID := "60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0"
+	nonExistingPolicyID := "1239a04400966b311339f62db50044b1bde70cece2ce9897d69c1bafa5cfab81"
 
 	test := testUtils.TestCase{
 
@@ -67,7 +67,7 @@ func TestACP_LinkSchema_WhereNoPolicyWasAdded_SchemaRejected(t *testing.T) {
 }
 
 func TestACP_LinkSchema_WhereAPolicyWasAddedButLinkedPolicyWasNotAdded_SchemaRejected(t *testing.T) {
-	incorrectPolicyID := "60079fa5b415dfc6f6e6b70e123a8acb8de26d94d7ff9410449fb12950963ff0"
+	incorrectPolicyID := "1239a04400966b311339f62db50044b1bde70cece2ce9897d69c1bafa5cfab81"
 
 	test := testUtils.TestCase{
 
