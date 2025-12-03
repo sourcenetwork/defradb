@@ -175,11 +175,11 @@ func New(
 	err = p.host.AddPubSubTopic(syncBranchableCollectionTopic, true, p.syncBranchableCollectionMessageHandler,
 		// for sync-branchable-collection topic peer events are tracked primarily for testing purposes
 		// because tests need a reliable way to know when peers joined the topic in order to proceed with the sync
-		func(peerID string, topic string, joined bool) {
+		func(peerID string, topic string, eventType client.PeerEventType) {
 			db.Events().Publish(event.NewMessage(event.TopicPeerEventName, event.TopicPeerEvent{
-				PeerID: peerID,
-				Topic:  topic,
-				Joined: joined,
+				PeerID:    peerID,
+				Topic:     topic,
+				EventType: eventType,
 			}))
 		})
 	if err != nil {

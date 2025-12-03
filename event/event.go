@@ -180,6 +180,6 @@ type TopicPeerEvent struct {
 	PeerID string
 	// Topic is the name of the topic.
 	Topic string
-	// Joined is true if the peer joined, false if the peer left.
-	Joined bool
+	// EventType is the type of event: joined or left.
+	EventType client.PeerEventType
 }

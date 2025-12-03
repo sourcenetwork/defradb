@@ -15,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 )
 
@@ -71,7 +72,7 @@ func (a *WaitForPeersConnection) Execute() {
 			if !ok {
 				continue
 			}
-			if peerEvent.Joined && peerEvent.Topic == a.Topic {
+			if peerEvent.EventType == client.PeerJoinedTopic && peerEvent.Topic == a.Topic {
 				delete(expectedPeerIDs, peerEvent.PeerID)
 			}
 		case <-timer.C:
