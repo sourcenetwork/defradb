@@ -237,7 +237,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 			testUtils.Request{
 				Request: `
 					query {
-						_commits(order: {height: DESC}, fieldName: "_C") {
+						_commits(order: {height: DESC}, filter: {fieldName: {_eq: "_C"}}) {
 							fieldName
 							height
 							signature {
@@ -385,7 +385,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 			testUtils.Request{
 				Request: `
 					query {
-						_commits(fieldName: "_C", order: {height: DESC}) {
+						_commits(filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}) {
 							height
 							signature {
 								type

@@ -23,7 +23,6 @@ const (
 	CreateInput        = "create"
 	UpdateInput        = "update"
 	FieldArgName       = "field"
-	FieldNameArgName   = "fieldName"
 	FieldIDName        = "fieldId"
 	FieldNameName      = "fieldName"
 	CompositeFieldName = "_C"
