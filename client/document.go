@@ -99,13 +99,19 @@ type Document struct {
 	isDirty bool
 
 	collection CollectionVersion
+
+	// The timestamp of the document's creation is used to set default values
+	// for dateTime fields of the document, if they are not provided, but are set
+	// to a default value of UTC_NOW.
+	timestamp time.Time
 }
 
-func newEmptyDoc(collection CollectionVersion) (*Document, error) {
+func newEmptyDoc(collection CollectionVersion, timestamp time.Time) (*Document, error) {
 	doc := &Document{
 		fields:     make(map[string]Field),
 		values:     make(map[Field]*FieldValue),
 		collection: collection,
+		timestamp:  timestamp,
 	}
 	if err := doc.setDefaultValues(); err != nil {
 		return nil, err
@@ -114,8 +120,12 @@ func newEmptyDoc(collection CollectionVersion) (*Document, error) {
 }
 
 // NewDocWithID creates a new Document with a specified key.
-func NewDocWithID(docID DocID, collection CollectionVersion) (*Document, error) {
-	doc, err := newEmptyDoc(collection)
+func NewDocWithID(docID DocID, collection CollectionVersion, opts ...NewDocOption) (*Document, error) {
+	var o newDocOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+	doc, err := newEmptyDoc(collection, o.timestamp)
 	if err != nil {
 		return nil, err
 	}
@@ -123,12 +133,36 @@ func NewDocWithID(docID DocID, collection CollectionVersion) (*Document, error) 
 	return doc, nil
 }
 
+// newDocOptions is a struct that can be optionally passed into a NewDocFromMap, NewDocFromJSON,
+// NewDocsFromJSON, or NewDocWithID function to set the timestamp of the document. This follows a pattern
+// that we use elsewhere. Here it allows all documents created by a single transaction to resolve to
+// exactly the same timestamp.
+type newDocOptions struct {
+	timestamp time.Time
+}
+
+type NewDocOption func(*newDocOptions)
+
+func WithTimestamp(ts time.Time) NewDocOption {
+	return func(o *newDocOptions) {
+		o.timestamp = ts
+	}
+}
+
 // NewDocFromMap creates a new Document from a data map.
-func NewDocFromMap(data map[string]any, collection CollectionVersion) (*Document, error) {
-	doc, err := newEmptyDoc(collection)
+func NewDocFromMap(data map[string]any, collection CollectionVersion, opts ...NewDocOption) (*Document, error) {
+	// If a timestamp was provided, we will assign it to the document after creating it
+	var o newDocOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	doc, err := newEmptyDoc(collection, o.timestamp)
 	if err != nil {
 		return nil, err
 	}
+
+	doc.timestamp = o.timestamp
 
 	// check if document contains special _docID field
 	k, hasDocID := data[request.DocIDFieldName]
@@ -167,11 +201,21 @@ func IsJSONArray(obj []byte) bool {
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
-func NewDocFromJSON(obj []byte, collection CollectionVersion) (*Document, error) {
-	doc, err := newEmptyDoc(collection)
+func NewDocFromJSON(obj []byte, collection CollectionVersion, opts ...NewDocOption) (*Document, error) {
+
+	// If a timestamp was provided, we will assign it to the document after creating it
+	var o newDocOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	doc, err := newEmptyDoc(collection, o.timestamp)
 	if err != nil {
 		return nil, err
 	}
+
+	doc.timestamp = o.timestamp
+
 	err = doc.SetWithJSON(obj)
 	if err != nil {
 		return nil, err
@@ -185,7 +229,14 @@ func NewDocFromJSON(obj []byte, collection CollectionVersion) (*Document, error)
 
 // ManyFromJSON creates a new slice of Documents from a raw JSON array byte array.
 // It will return an error if the given byte array is not a valid JSON array.
-func NewDocsFromJSON(obj []byte, collection CollectionVersion) ([]*Document, error) {
+func NewDocsFromJSON(obj []byte, collection CollectionVersion, opts ...NewDocOption) ([]*Document, error) {
+
+	// If a timestamp was provided, we will assign it to the document after creating it
+	var newDocOpts newDocOptions
+	for _, opt := range opts {
+		opt(&newDocOpts)
+	}
+
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
 		return nil, err
@@ -201,7 +252,7 @@ func NewDocsFromJSON(obj []byte, collection CollectionVersion) ([]*Document, err
 		if err != nil {
 			return nil, err
 		}
-		doc, err := newEmptyDoc(collection)
+		doc, err := newEmptyDoc(collection, newDocOpts.timestamp)
 		if err != nil {
 			return nil, err
 		}
@@ -765,6 +816,12 @@ func (doc *Document) setDefaultValues() error {
 	for _, field := range doc.collection.Fields {
 		if field.DefaultValue == nil {
 			continue // no default value to set
+		}
+		// If we see UTC_NOW as the default value, we will instead use the
+		// document's own timestamp. That timestamp is guaranteed to be the same
+		// across all documents belonging to the same request.
+		if field.DefaultValue == "UTC_NOW" {
+			field.DefaultValue = doc.timestamp.UTC()
 		}
 		err := doc.Set(field.Name, field.DefaultValue)
 		if err != nil {

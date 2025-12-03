@@ -14,6 +14,7 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -243,7 +244,13 @@ func (c *Collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocWithID(docID, c.Version())
+
+	// Generate a timestamp for document created here
+	opts := []client.NewDocOption{
+		client.WithTimestamp(time.Now()),
+	}
+
+	doc, err := client.NewDocWithID(docID, c.Version(), opts...)
 	if err != nil {
 		return nil, err
 	}

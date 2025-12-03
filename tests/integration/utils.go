@@ -2755,19 +2755,25 @@ func CBORValue(value any) []byte {
 
 // parseCreateDocs parses and returns documents from a CreateDoc action.
 func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.Document, error) {
+
+	// Generate a timestamp to use across all documents created here
+	opts := []client.NewDocOption{
+		client.WithTimestamp(time.Now()),
+	}
+
 	switch {
 	case action.DocMap != nil:
-		val, err := client.NewDocFromMap(action.DocMap, collection.Version())
+		val, err := client.NewDocFromMap(action.DocMap, collection.Version(), opts...)
 		if err != nil {
 			return nil, err
 		}
 		return []*client.Document{val}, nil
 
 	case client.IsJSONArray([]byte(action.Doc)):
-		return client.NewDocsFromJSON([]byte(action.Doc), collection.Version())
+		return client.NewDocsFromJSON([]byte(action.Doc), collection.Version(), opts...)
 
 	default:
-		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Version())
+		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Version(), opts...)
 		if err != nil {
 			return nil, err
 		}

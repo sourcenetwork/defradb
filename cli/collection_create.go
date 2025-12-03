@@ -14,6 +14,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -76,15 +77,20 @@ Options:
 				client.CreateDocWithEncryptedFields(encryptedFields),
 			}
 
+			// Generate a timestamp to use across all documents created here
+			opts := []client.NewDocOption{
+				client.WithTimestamp(time.Now()),
+			}
+
 			if client.IsJSONArray(docData) {
-				docs, err := client.NewDocsFromJSON(docData, col.Version())
+				docs, err := client.NewDocsFromJSON(docData, col.Version(), opts...)
 				if err != nil {
 					return err
 				}
 				return col.CreateMany(cmd.Context(), docs, createOpts...)
 			}
 
-			doc, err := client.NewDocFromJSON(docData, col.Version())
+			doc, err := client.NewDocFromJSON(docData, col.Version(), opts...)
 			if err != nil {
 				return err
 			}

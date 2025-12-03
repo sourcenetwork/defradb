@@ -12,6 +12,7 @@ package fetcher
 
 import (
 	"context"
+	"time"
 
 	"github.com/bits-and-blooms/bitset"
 	"github.com/fxamacker/cbor/v2"
@@ -114,7 +115,12 @@ func Decode(encdoc EncodedDocument, collection client.CollectionVersion) (*clien
 		return nil, err
 	}
 
-	doc, err := client.NewDocWithID(docID, collection)
+	// Generate a timestamp to use for document created here
+	opts := []client.NewDocOption{
+		client.WithTimestamp(time.Now()),
+	}
+
+	doc, err := client.NewDocWithID(docID, collection, opts...)
 	if err != nil {
 		return nil, err
 	}

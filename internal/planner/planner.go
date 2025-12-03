@@ -12,6 +12,7 @@ package planner
 
 import (
 	"context"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	lensStore "github.com/sourcenetwork/lens/host-go/store"
@@ -104,6 +105,11 @@ type Planner struct {
 	p2p       P2P
 	ctx       context.Context
 	lensStore lensStore.Store
+
+	// The following will be used to ensure that a default dateTime set to
+	// the current timestamp (i.e. UTC_NOW) will always resolve to exactly the
+	// same time, across the request.
+	timestamp time.Time
 }
 
 func New(
@@ -123,6 +129,7 @@ func New(
 		p2p:         p2p,
 		lensStore:   lensStore,
 		ctx:         ctx,
+		timestamp:   time.Now(),
 	}
 }
 

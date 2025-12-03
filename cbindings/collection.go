@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -116,11 +117,16 @@ func CollectionCreate(
 	}
 	ctx = encryption.SetContextConfigFromParams(ctx, isEncrypted != 0, encryptFields)
 
+	// Generate a timestamp to use across all documents created here
+	opts := []client.NewDocOption{
+		client.WithTimestamp(time.Now()),
+	}
+
 	// Determine if JSON is array or object by looking for the first character being [
 	jsonString := strings.TrimSpace(C.GoString(json))
 	if strings.HasPrefix(jsonString, "[") {
 		// Multiple documents
-		docs, err := client.NewDocsFromJSON([]byte(jsonString), col.Version())
+		docs, err := client.NewDocsFromJSON([]byte(jsonString), col.Version(), opts...)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -130,7 +136,7 @@ func CollectionCreate(
 		}
 	} else {
 		// Single document
-		doc, err := client.NewDocFromJSON([]byte(jsonString), col.Version())
+		doc, err := client.NewDocFromJSON([]byte(jsonString), col.Version(), opts...)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}

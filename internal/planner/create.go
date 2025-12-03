@@ -82,10 +82,15 @@ func documentsToDocIDs(docs ...*client.Document) []string {
 }
 
 func (n *createNode) Start() error {
+
+	opts := []client.NewDocOption{
+		client.WithTimestamp(n.p.timestamp),
+	}
+
 	n.docs = make([]*client.Document, len(n.input))
 
 	for i, input := range n.input {
-		doc, err := client.NewDocFromMap(input, n.collection.Version())
+		doc, err := client.NewDocFromMap(input, n.collection.Version(), opts...)
 		if err != nil {
 			return err
 		}

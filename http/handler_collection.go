@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
@@ -63,9 +64,14 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		client.CreateDocWithEncryptedFields(encConf.EncryptedFields),
 	}
 
+	// Generate a timestamp to use across all documents created here
+	opts := []client.NewDocOption{
+		client.WithTimestamp(time.Now()),
+	}
+
 	switch {
 	case client.IsJSONArray(data):
-		docList, err := client.NewDocsFromJSON(data, col.Version())
+		docList, err := client.NewDocsFromJSON(data, col.Version(), opts...)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -77,7 +83,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		}
 		rw.WriteHeader(http.StatusOK)
 	default:
-		doc, err := client.NewDocFromJSON(data, col.Version())
+		doc, err := client.NewDocFromJSON(data, col.Version(), opts...)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
