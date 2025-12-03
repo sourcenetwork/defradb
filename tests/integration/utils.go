@@ -2755,7 +2755,6 @@ func CBORValue(value any) []byte {
 
 // parseCreateDocs parses and returns documents from a CreateDoc action.
 func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.Document, error) {
-
 	// Generate a timestamp to use across all documents created here
 	opts := []client.NewDocOption{
 		client.WithTimestamp(time.Now()),

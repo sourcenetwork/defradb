@@ -28,6 +28,10 @@ import (
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
+const (
+	UTC_NOW string = "UTC_NOW"
+)
+
 func init() {
 	enc, err := CborEncodingOptions().EncMode()
 	if err != nil {
@@ -202,7 +206,6 @@ func IsJSONArray(obj []byte) bool {
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
 func NewDocFromJSON(obj []byte, collection CollectionVersion, opts ...NewDocOption) (*Document, error) {
-
 	// If a timestamp was provided, we will assign it to the document after creating it
 	var o newDocOptions
 	for _, opt := range opts {
@@ -230,7 +233,6 @@ func NewDocFromJSON(obj []byte, collection CollectionVersion, opts ...NewDocOpti
 // ManyFromJSON creates a new slice of Documents from a raw JSON array byte array.
 // It will return an error if the given byte array is not a valid JSON array.
 func NewDocsFromJSON(obj []byte, collection CollectionVersion, opts ...NewDocOption) ([]*Document, error) {
-
 	// If a timestamp was provided, we will assign it to the document after creating it
 	var newDocOpts newDocOptions
 	for _, opt := range opts {
@@ -532,7 +534,7 @@ func getDateTime(v any) (time.Time, error) {
 		return val, nil
 	default:
 		s = val.(string)
-		if s == "UTC_NOW" {
+		if s == UTC_NOW {
 			return time.Now().UTC(), nil
 		}
 	}
@@ -820,7 +822,7 @@ func (doc *Document) setDefaultValues() error {
 		// If we see UTC_NOW as the default value, we will instead use the
 		// document's own timestamp. That timestamp is guaranteed to be the same
 		// across all documents belonging to the same request.
-		if field.DefaultValue == "UTC_NOW" {
+		if field.DefaultValue == UTC_NOW {
 			field.DefaultValue = doc.timestamp.UTC()
 		}
 		err := doc.Set(field.Name, field.DefaultValue)

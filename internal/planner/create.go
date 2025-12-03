@@ -82,7 +82,6 @@ func documentsToDocIDs(docs ...*client.Document) []string {
 }
 
 func (n *createNode) Start() error {
-
 	opts := []client.NewDocOption{
 		client.WithTimestamp(n.p.timestamp),
 	}
