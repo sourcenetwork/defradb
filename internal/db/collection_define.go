@@ -801,12 +801,17 @@ func deleteCollectionBlocks(
 // finalizeRelations determines which side of a relation is primary and sets IsPrimary=true
 // on both the relation field and its corresponding _id field.
 //
-// A relation field is primary if:
-// - The target collection has no corresponding field pointing back, OR
+// A relation field is marked as primary if:
+// - The target collection has no corresponding field pointing back (one-sided relation), OR
 // - The corresponding field in the target collection is an array (one-to-many relation)
 //
 // This function handles both within-batch relations (new collections referencing each other)
 // and cross-batch relations (new collections referencing existing collections).
+//
+// Note on automatic IsPrimary assignment: When a new collection defines a relation to an
+// existing collection that has no back-reference, the new collection's field MUST be primary.
+// The existing collection cannot be modified to become primary, and a relation requires exactly
+// one primary side to store the foreign key.
 func finalizeRelations(
 	newCollections []core.Collection,
 	existingCollections []client.CollectionVersion,
