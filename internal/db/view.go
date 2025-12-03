@@ -14,7 +14,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -224,7 +223,7 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) 
 		}
 
 		itemKey := keys.NewViewCacheKey(shortID, itemID)
-		err = txn.Datastore().Set(ctx, itemKey.Bytes(), serializedItem)
+		err = txn.Datastore().Set(ctx, itemKey, serializedItem)
 		if err != nil {
 			return err
 		}
@@ -246,8 +245,8 @@ func (db *DB) clearViewCache(ctx context.Context, col client.CollectionVersion) 
 		return err
 	}
 
-	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
-		Prefix:   keys.NewViewCacheColPrefix(shortID).Bytes(),
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+		Prefix:   keys.NewViewCacheColPrefix(shortID),
 		KeysOnly: true,
 	})
 	if err != nil {
@@ -263,7 +262,12 @@ func (db *DB) clearViewCache(ctx context.Context, col client.CollectionVersion) 
 			break
 		}
 
-		err = txn.Datastore().Delete(ctx, iter.Key())
+		key, err := keys.NewViewCacheKeyFromRaw(iter.Key())
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		err = txn.Datastore().Delete(ctx, key)
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}
