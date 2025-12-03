@@ -107,7 +107,7 @@ type Document struct {
 	// The timestamp of the document's creation is used to set default values
 	// for dateTime fields of the document, if they are not provided, but are set
 	// to a default value of UTC_NOW.
-	timestamp time.Time
+	Timestamp time.Time
 }
 
 func newEmptyDoc(collection CollectionVersion, timestamp time.Time) (*Document, error) {
@@ -115,7 +115,7 @@ func newEmptyDoc(collection CollectionVersion, timestamp time.Time) (*Document, 
 		fields:     make(map[string]Field),
 		values:     make(map[Field]*FieldValue),
 		collection: collection,
-		timestamp:  timestamp,
+		Timestamp:  timestamp,
 	}
 	if err := doc.setDefaultValues(); err != nil {
 		return nil, err
@@ -166,7 +166,7 @@ func NewDocFromMap(data map[string]any, collection CollectionVersion, opts ...Ne
 		return nil, err
 	}
 
-	doc.timestamp = o.timestamp
+	doc.Timestamp = o.timestamp
 
 	// check if document contains special _docID field
 	k, hasDocID := data[request.DocIDFieldName]
@@ -217,7 +217,7 @@ func NewDocFromJSON(obj []byte, collection CollectionVersion, opts ...NewDocOpti
 		return nil, err
 	}
 
-	doc.timestamp = o.timestamp
+	doc.Timestamp = o.timestamp
 
 	err = doc.SetWithJSON(obj)
 	if err != nil {
@@ -407,7 +407,7 @@ func validateFieldSchema(val any, field CollectionFieldDescription, doc *Documen
 		return NewNormalNillableFloat32Array(v), nil
 
 	case FieldKind_NILLABLE_DATETIME:
-		v, err := getDateTime(val, doc.timestamp)
+		v, err := getDateTime(val, doc.Timestamp)
 		if err != nil {
 			return nil, err
 		}
@@ -825,7 +825,7 @@ func (doc *Document) setDefaultValues() error {
 		// document's own timestamp. That timestamp is guaranteed to be the same
 		// across all documents belonging to the same request.
 		if field.DefaultValue == UTC_NOW {
-			field.DefaultValue = doc.timestamp.UTC()
+			field.DefaultValue = doc.Timestamp.UTC()
 		}
 		err := doc.Set(field.Name, field.DefaultValue)
 		if err != nil {
