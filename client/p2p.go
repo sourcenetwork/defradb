@@ -93,6 +93,10 @@ type P2P interface {
 
 type StreamHandler = func(stream io.Reader, peerID string)
 type PubsubMessageHandler = func(from string, topic string, msg []byte) ([]byte, error)
+
+// PeerEventHandler is called when a peer joins or leaves a pubsub topic.
+// The joined parameter is true when the peer joins, false when the peer leaves.
+type PeerEventHandler = func(peerID string, topic string, joined bool)
 type PubsubPeerEventHandler = func(peerID string, topic string, joined bool)
 type BlockAccessFunc = func(ctx context.Context, peerID string, c cid.Cid) bool
 
@@ -140,8 +144,10 @@ type Host interface {
 	// handle them with the given handler.
 	SetStreamHandler(protocolID string, handler StreamHandler)
 	// AddPubSubTopic adds a pubsub topic to the host.
-	// Options can be provided to configure the topic (e.g., PubsubPeerEventHandler).
-	AddPubSubTopic(topicName string, subscribe bool, handler PubsubMessageHandler, opts ...any) error
+	// If subscribe is true, the peer will subscribe to the topic and receive messages.
+	// The handler is called for each incoming message on the topic.
+	// The eventHandler, if not nil, is called when peers join or leave the topic.
+	AddPubSubTopic(topicName string, subscribe bool, handler PubsubMessageHandler, eventHandler PeerEventHandler) error
 	// RemovePubSubTopic removes the given topic from the host.
 	RemovePubSubTopic(topic string) error
 	// PublishToTopicAsync sends a new message on the given topic without waiting for a response.

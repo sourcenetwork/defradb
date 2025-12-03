@@ -167,7 +167,7 @@ func New(
 
 	host.SetBlockAccessFunc(p.hasAccess)
 
-	err := p.host.AddPubSubTopic(docSyncTopic, true, p.docSyncMessageHandler)
+	err := p.host.AddPubSubTopic(docSyncTopic, true, p.docSyncMessageHandler, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -37,7 +37,12 @@ import (
 const pubsubTopic = "encryption"
 
 type PubSubServer interface {
-	AddPubSubTopic(topicName string, subscribe bool, handler client.PubsubMessageHandler, opts ...any) error
+	AddPubSubTopic(
+		topicName string,
+		subscribe bool,
+		handler client.PubsubMessageHandler,
+		eventHandler client.PeerEventHandler,
+	) error
 	PublishToTopic(
 		ctx context.Context,
 		topic string,
@@ -99,7 +104,7 @@ func NewPubSubService(
 		colRetriever: colRetriever,
 		nodeDID:      nodeDID,
 	}
-	err := pubsub.AddPubSubTopic(pubsubTopic, true, s.handleRequestFromPeer)
+	err := pubsub.AddPubSubTopic(pubsubTopic, true, s.handleRequestFromPeer, nil)
 	if err != nil {
 		return nil, err
 	}
