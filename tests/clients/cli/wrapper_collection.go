@@ -13,7 +13,6 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
 	"time"
 
@@ -247,7 +246,6 @@ func (c *Collection) Get(
 	}
 
 	// Generate a timestamp for document created here
-	fmt.Println("Generating timestamp")
 	opts := []client.NewDocOption{
 		client.WithTimestamp(time.Now()),
 	}
