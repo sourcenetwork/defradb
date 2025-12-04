@@ -17,7 +17,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	sse "github.com/vito/go-sse/sse"
 
@@ -277,12 +276,15 @@ func (c *Collection) Get(
 		return nil, err
 	}
 
-	// Generate a timestamp to use for document created here.
-	opts := []client.NewDocOption{
-		client.WithTimestamp(time.Now()),
-	}
+	// Experimental
+	/*
+		// Generate a timestamp to use for document created here.
+		opts := []client.NewDocOption{
+			client.WithTimestamp(time.Now()),
+		}
+	*/
 
-	doc, err := client.NewDocWithID(docID, c.Version(), opts...)
+	doc, err := client.NewDocWithID(docID, c.Version())
 	if err != nil {
 		return nil, err
 	}

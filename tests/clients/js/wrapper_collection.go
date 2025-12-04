@@ -15,7 +15,6 @@ package js
 import (
 	"context"
 	"syscall/js"
-	"time"
 
 	"github.com/sourcenetwork/goji"
 
@@ -214,12 +213,15 @@ func (c *Collection) Get(
 		return nil, err
 	}
 
-	// Generate a timestamp for document created here
-	opts := []client.NewDocOption{
-		client.WithTimestamp(time.Now()),
-	}
+	// Experimental
+	/*
+		// Generate a timestamp for document created here
+		opts := []client.NewDocOption{
+			client.WithTimestamp(time.Now()),
+		}
+	*/
 
-	doc, err := client.NewDocWithID(docID, c.Version(), opts...)
+	doc, err := client.NewDocWithID(docID, c.Version())
 	if err != nil {
 		return nil, err
 	}
