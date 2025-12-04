@@ -12,7 +12,6 @@ package acp
 
 import (
 	"context"
-	"strings"
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
@@ -73,42 +72,6 @@ func ValidateResourceInterface(
 				resourceName,
 				requiredPermission,
 				policyID,
-			)
-		}
-	}
-
-	return nil
-}
-
-// validateExpressionOfRequiredPermission validates that the expression under the
-// permission is valid. Moreover, resource interface requires that for all required
-// permissions, the expression start with "owner" then a space or symbol, and then follow-up expression.
-// This is important because even if the policy has the required permissions under the
-// resource, it's still possible that those permissions are not granted to the "owner"
-// relation. This validation will help users not shoot themseleves in the foot.
-//
-// Learn more about the DefraDB [ACP System](/acp/README.md)
-func validateExpressionOfRequiredPermission(expression string, requiredPermission string) error {
-	exprNoSpace := strings.ReplaceAll(expression, " ", "")
-
-	if !strings.HasPrefix(exprNoSpace, acpTypes.RequiredRegistererRelationName) {
-		return NewErrExprOfRequiredPermissionMustStartWithRelation(
-			requiredPermission,
-			acpTypes.RequiredRegistererRelationName,
-		)
-	}
-
-	restOfTheExpr := exprNoSpace[len(acpTypes.RequiredRegistererRelationName):]
-	if len(restOfTheExpr) != 0 {
-		c := restOfTheExpr[0]
-		// First non-space character after the required relation name MUST be a `+`.
-		// The reason we are enforcing this here is because other set operations are
-		// not applied to the registerer relation anyways.
-		if c != '+' {
-			return NewErrExprOfRequiredPermissionHasInvalidChar(
-				requiredPermission,
-				acpTypes.RequiredRegistererRelationName,
-				c,
 			)
 		}
 	}
