@@ -56,6 +56,7 @@ func (n *upsertNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
+			doc.Timestamp = n.p.timestamp
 			for k, v := range n.updateInput {
 				if err := doc.Set(k, v); err != nil {
 					return false, err
@@ -66,7 +67,11 @@ func (n *upsertNode) Next() (bool, error) {
 				return false, err
 			}
 		} else {
-			doc, err := client.NewDocFromMap(n.createInput, n.collection.Version())
+			opts := []client.NewDocOption{
+				client.WithTimestamp(n.p.timestamp),
+			}
+
+			doc, err := client.NewDocFromMap(n.createInput, n.collection.Version(), opts...)
 			if err != nil {
 				return false, err
 			}

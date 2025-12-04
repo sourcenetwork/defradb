@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -51,8 +49,6 @@ type updateExecInfo struct {
 
 // Next only returns once.
 func (n *updateNode) Next() (bool, error) {
-
-	fmt.Println("Planner timestamp: ", n.p.timestamp)
 	n.execInfo.iterations++
 
 	if n.isUpdating {
