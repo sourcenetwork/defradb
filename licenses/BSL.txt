@@ -11,22 +11,28 @@ Licensed Work:              DefraDB v0.20.0
                             The Licensed Work is (c) 2025 D2 Foundation.
 
 
-Additional Use Grant:       You may only use the Licensed Work for the 
-                            following conditions
+Additional Use Grant:       You may make use of the Licensed Work, provided you 
+                            comply with any of the following conditions:
                             
-                            For an application that is connected  to the 
-                            SourceHub mainnet or another protocol connected 
-                            to the SourceHub by way of the Inter-Blockchain
-                            Communication (IBC) protocol. 
+                            (1) You do not offer the Licensed Work as a Managed 
+                            Service. 
 
-                            A non-profit project in both a production and
+                            (2) A non-profit project in both a production and
                             pre-production state.
 
-                            A for-profit project in a pre-production state
-                            only.
+                            (3) A for-profit project in a pre-production state.
 
-                            
+                            A “Service” is a commercial offering, product, hosted, 
+                            or managed service, that allows third parties (other 
+                            than your own employees and contractors acting on your 
+                            behalf) to access and/or directly use the Licensed Work 
+                            or a substantial set of the features or functionality of 
+                            the Licensed Work to third parties as a 
+                            software-as-a-service, platform-as-a-service, 
+                            infrastructure-as-a-service or other similar services.
 
+                            For additional guidance, see 
+                            https://docs.source.network/defradb/BSL-License
 
 Change Date:                2029-10-31
 
