@@ -63,8 +63,7 @@ extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, 
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result VersionGet(int flagFull, int flagJSON);
 extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr);
-extern Result ViewRefresh(uintptr_t nodePtr, char* viewNameStr,
-char* collectionIDStr, char* versionIDStr, int getInactive);
+extern Result ViewRefresh(uintptr_t nodePtr, CollectionOptions options);
 */
 import "C"
 
