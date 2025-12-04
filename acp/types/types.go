@@ -225,9 +225,9 @@ resources:
   - name: signature-verify
     expr: admin
   relations:
-  - manages:
+  - name: admin
+    manages:
     - admin
-    name: admin
     types:
     - actor
 `
