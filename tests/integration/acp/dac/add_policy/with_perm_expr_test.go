@@ -48,7 +48,6 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Note: this and above test both result in different policy ids.
 func TestACP_AddPolicy_EmptyExpressionInPermission_PermissionIsAccepted(t *testing.T) {
 	test := testUtils.TestCase{
 
