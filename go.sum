@@ -2018,6 +2018,7 @@ github.com/opencontainers/runc v1.1.2/go.mod h1:Tj1hFw6eFWp/o33uxGf5yF2BX5yz2Z6i
 github.com/opencontainers/runc v1.1.3/go.mod h1:1J5XiS+vdZ3wCyZybsuxXZWGrgSr8fFJHLXuG2PsnNg=
 github.com/opencontainers/runc v1.1.14 h1:rgSuzbmgz5DUJjeSnw337TxDbRuqjs6iqQck/2weR6w=
 github.com/opencontainers/runc v1.1.14/go.mod h1:E4C2z+7BxR7GHXp0hAY53mek+x49X1LjPNeMTfRGvOA=
+github.com/opencontainers/runc v1.2.8 h1:RnEICeDReapbZ5lZEgHvj7E9Q3Eex9toYmaGBsbvU5Q=
 github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.10.0/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuho1lHsJxIJ3gGbJI=
 github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492/go.mod h1:Ngi6UdF0k5OKD5t5wlmGhe/EDKPoUM3BXZSSfIuJbis=
@@ -2316,6 +2317,7 @@ github.com/sourcenetwork/acp_core v0.7.2-0.20251125184641-514ab148c59a h1:pMnhby
 github.com/sourcenetwork/acp_core v0.7.2-0.20251125184641-514ab148c59a/go.mod h1:vmxU/mBphMaU2NjKYEFJLSpk5lbRdWDqgsJZNd+WfZ0=
 github.com/sourcenetwork/acp_core v0.7.2-0.20251203171508-0ec0c963a8bd h1:0P5uwdFuH/eo3WfBcEZ7TnLAF0zacDt1NuXjIdnejbM=
 github.com/sourcenetwork/acp_core v0.7.2-0.20251203171508-0ec0c963a8bd/go.mod h1:vmxU/mBphMaU2NjKYEFJLSpk5lbRdWDqgsJZNd+WfZ0=
+github.com/sourcenetwork/acp_core v0.8.1/go.mod h1:vmxU/mBphMaU2NjKYEFJLSpk5lbRdWDqgsJZNd+WfZ0=
 github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e h1:sSvLVomsLBjQpojIu+e32LJlnE8M4nuIsX1mGeU8qo8=
 github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e/go.mod h1:eay5PRQr7fIVAMbTbchTnO9gG65Hg/uYGdc7mguHxoA=
 github.com/sourcenetwork/corekv v0.2.4 h1:Vaapx1HvwOyNQJsAsfv2P8w/AzJ2mYfkyReGkMeobrg=
@@ -2350,6 +2352,8 @@ github.com/sourcenetwork/raccoondb/v2 v2.0.0 h1:Gb0SjsZUbrbkHCEg7PyyNs0+2IzPxjE/
 github.com/sourcenetwork/raccoondb/v2 v2.0.0/go.mod h1:tPKAWHUgYcSoXNMt01iWJ+Y51AQYc2knY93IjmmbejY=
 github.com/sourcenetwork/sourcehub v0.3.3-0.20251124170656-bcac6add561f h1:wx/Oq7/D66x4V2zVRZ9Rs3nWPIULFhwwk187NfGY4uY=
 github.com/sourcenetwork/sourcehub v0.3.3-0.20251124170656-bcac6add561f/go.mod h1:Tn+9pS9gx4HLVL9fV/F5+8U0whSR1heaxLLNZn0D/lQ=
+github.com/sourcenetwork/sourcehub v0.3.3-0.20251204195821-6e21a42984ba h1:fyB1/gl0jLNBCyog3HF/PmLmWqDwvTrHrzrWUovtnEU=
+github.com/sourcenetwork/sourcehub v0.3.3-0.20251204195821-6e21a42984ba/go.mod h1:GUxr7ahYovbOxaPelH0cKP2osr8gyjfeGnYG3IkhujE=
 github.com/sourcenetwork/testo v0.1.0 h1:mGhNDMOu6qvBTodlfPwy9NH1X4pOSc9AQ6mbOdqbmIg=
 github.com/sourcenetwork/testo v0.1.0/go.mod h1:CwCk0OPI7XLc0ypBS2QVoCtwOxyybv5x8gJxDkNCd14=
 github.com/sourcenetwork/zanzi v0.3.1-0.20251104182341-4b1bd0f7be5a h1:TlnRmk1v4+nIKGUdzMht4qnrf8AxCUAvpxSIqJ2CX94=

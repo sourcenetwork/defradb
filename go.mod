@@ -38,7 +38,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/pkg/errors v0.9.1
-	github.com/sourcenetwork/acp_core v0.7.2-0.20251203171508-0ec0c963a8bd
+	github.com/sourcenetwork/acp_core v0.8.1
 	github.com/sourcenetwork/corekv v0.2.4
 	github.com/sourcenetwork/corekv/badger v0.2.4
 	github.com/sourcenetwork/corekv/blockstore v0.2.4
@@ -51,7 +51,7 @@ require (
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20251126162830-73185f9b1d45
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/lens/host-go v0.9.4
-	github.com/sourcenetwork/sourcehub v0.3.3-0.20251124170656-bcac6add561f
+	github.com/sourcenetwork/sourcehub v0.3.3-0.20251204195821-6e21a42984ba
 	github.com/sourcenetwork/testo v0.1.0
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
