@@ -213,14 +213,6 @@ func (c *Collection) Get(
 		return nil, err
 	}
 
-	// Experimental
-	/*
-		// Generate a timestamp for document created here
-		opts := []client.NewDocOption{
-			client.WithTimestamp(time.Now()),
-		}
-	*/
-
 	doc, err := client.NewDocWithID(docID, c.Version())
 	if err != nil {
 		return nil, err

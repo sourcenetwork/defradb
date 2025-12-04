@@ -447,14 +447,6 @@ func (c *Collection) Get(
 		return nil, errors.New(res.Error)
 	}
 
-	// Experimental
-	/*
-		// Generate a timestamp to use for document created here
-		opts := []client.NewDocOption{
-			client.WithTimestamp(time.Now()),
-		}
-	*/
-
 	jsonStr := res.Value
 	doc, err := client.NewDocWithID(docID, c.Version())
 	if err != nil {
