@@ -340,6 +340,12 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
+      # NOTE: Uncomment the below if the headless browser tests start failing.
+      # # Disable AppArmor for Ubuntu 23.10+.
+      # # https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md
+      # - name: Disable AppArmor
+      #   run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
+
       - name: Run integration tests
         run: make test:coverage-js
 
