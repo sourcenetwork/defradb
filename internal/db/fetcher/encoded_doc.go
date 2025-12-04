@@ -113,15 +113,6 @@ func Decode(encdoc EncodedDocument, collection client.CollectionVersion) (*clien
 	if err != nil {
 		return nil, err
 	}
-
-	// Experimental
-	/*
-		// Generate a timestamp to use for document created here
-		opts := []client.NewDocOption{
-			client.WithTimestamp(time.Now()),
-		}
-	*/
-
 	doc, err := client.NewDocWithID(docID, collection)
 	if err != nil {
 		return nil, err
