@@ -113,6 +113,7 @@ func Decode(encdoc EncodedDocument, collection client.CollectionVersion) (*clien
 	if err != nil {
 		return nil, err
 	}
+
 	doc, err := client.NewDocWithID(docID, collection)
 	if err != nil {
 		return nil, err
