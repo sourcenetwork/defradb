@@ -2332,8 +2332,8 @@ github.com/sourcenetwork/go-p2p v0.1.5 h1:1Erf41Z6mEYfcZg5kdsPPz8RvTdB3avD+JnVwq
 github.com/sourcenetwork/go-p2p v0.1.5/go.mod h1:gpPc76Bxm6ZzY76KE+MAH4li4FIkyES0yMdoleVdRfQ=
 github.com/sourcenetwork/goji v0.0.8 h1:6EqGFt18yJ/CxyiPUKZFbK3KFuzGJ5oLnTvFYObZj5k=
 github.com/sourcenetwork/goji v0.0.8/go.mod h1:A/dsoaCbLQ1a5PQfUVCA1zYMHnNAprVhZEmQHIlCfjE=
-github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a h1:wF7VhX0XKuNqhbbDI7RjoIBKFvdKQKucpZlNr/BGE40=
-github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
+github.com/sourcenetwork/graphql-go v0.7.10-0.20251126162830-73185f9b1d45 h1:Iu4vd9PdRNEWQ7BehiXbSEBDK8gijNk4tL/D5Lr+Iik=
+github.com/sourcenetwork/graphql-go v0.7.10-0.20251126162830-73185f9b1d45/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
 github.com/sourcenetwork/immutable v0.3.0 h1:gHPtGvLrTBTK5YpDAhMU+u+S8v1F6iYmc3nbZLryMdc=
 github.com/sourcenetwork/immutable v0.3.0/go.mod h1:GD7ceuh/HD7z6cdIwzKK2ctzgZ1qqYFJpsFp+8qYnbI=
 github.com/sourcenetwork/lens/host-go v0.9.4 h1:VPBnlRoOoAKviA2tOXKZQzUos2P+GYOVxjMGpNOwngU=
