@@ -57,18 +57,13 @@ func ViewAdd(nodePtr C.uintptr_t, query *C.char, sdl *C.char, transformStr *C.ch
 }
 
 //export ViewRefresh
-func ViewRefresh(
-	nodePtr C.uintptr_t,
-	viewNameStr *C.char,
-	collectionIDStr *C.char,
-	versionIDStr *C.char,
-	getInactive C.int,
-) C.Result {
+func ViewRefresh(nodePtr C.uintptr_t, cOptions C.CollectionOptions) C.Result {
 	ctx := context.Background()
 
-	viewName := C.GoString(viewNameStr)
-	collectionID := C.GoString(collectionIDStr)
-	versionID := C.GoString(versionIDStr)
+	viewName := C.GoString(cOptions.name)
+	collectionID := C.GoString(cOptions.collectionID)
+	versionID := C.GoString(cOptions.version)
+
 	options := client.CollectionFetchOptions{}
 	if versionID != "" {
 		options.VersionID = immutable.Some(versionID)
@@ -79,8 +74,8 @@ func ViewRefresh(
 	if viewName != "" {
 		options.Name = immutable.Some(viewName)
 	}
-	if getInactive != 0 {
-		options.IncludeInactive = immutable.Some(getInactive != 0)
+	if cOptions.getInactive != 0 {
+		options.IncludeInactive = immutable.Some(true)
 	}
 
 	store, err := getStoreFromPointer(nodePtr)

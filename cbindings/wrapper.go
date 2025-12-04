@@ -63,8 +63,7 @@ extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, 
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result VersionGet(int flagFull, int flagJSON);
 extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr);
-extern Result ViewRefresh(uintptr_t nodePtr, char* viewNameStr,
-char* collectionIDStr, char* versionIDStr, int getInactive);
+extern Result ViewRefresh(uintptr_t nodePtr, CollectionOptions options);
 */
 import "C"
 
@@ -639,8 +638,14 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetch
 	defer C.free(unsafe.Pointer(collectionID))
 	defer C.free(unsafe.Pointer(name))
 
+	var copts C.CollectionOptions
+	copts.version = versionID
+	copts.collectionID = collectionID
+	copts.name = name
+	copts.getInactive = cGetInactive
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, name, collectionID, versionID, cGetInactive))
+	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, copts))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
