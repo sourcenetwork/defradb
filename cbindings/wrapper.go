@@ -638,8 +638,14 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetch
 	defer C.free(unsafe.Pointer(collectionID))
 	defer C.free(unsafe.Pointer(name))
 
+	var copts C.CollectionOptions
+	copts.version = versionID
+	copts.collectionID = collectionID
+	copts.name = name
+	copts.getInactive = cGetInactive
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, name, collectionID, versionID, cGetInactive))
+	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, copts))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
