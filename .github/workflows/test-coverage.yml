@@ -8,10 +8,17 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-# Note: Unlike the [test.yml] workflow, the coverage jobs in this workflow are not required
-# to pass within the PR(s) and they also run on slower github runners to help us detect
-# failures that might be specific to devices that have less resources. This workflow
-# collects all generated coverage reports from each job and uploads them to code cov.
+# Note:
+# - Unlike the [test-limited-resources.yml] workflow the coverage jobs in this
+# workflow run on faster custom runners.
+# - The coverage jobs in this workflow are required to pass within the PRs.
+# - All the coverage jobs will generate their respective coverage reports and
+#  save them as artifacts.
+# - The [upload-coverage] job is responsible for gathering all the saved artifacts
+#  and then uploading them to code-cov.
+# - The [upload-coverage] job is not required on the PRs as sometimes the uploading
+#  can fail if code-cov api service is down, etc.
+
 name: Test Coverage Workflow
 
 on:
@@ -74,7 +81,8 @@ jobs:
         database-type: [file, memory]
         mutation-type: [gql, collection-named, collection-save]
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     # Overwrite the defaults based on the basic matrix
     env:
@@ -88,6 +96,11 @@ jobs:
       DEFRA_VECTOR_EMBEDDING: true
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -153,7 +166,8 @@ jobs:
         client-type: [go, http, cli, c]
         document-acp-type: [source-hub]
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_DOCUMENT_ACP_TYPE: ${{ matrix.document-acp-type }}
@@ -163,6 +177,11 @@ jobs:
       DEFRA_CLIENT_C: ${{ matrix.client-type == 'c' }}
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -200,12 +219,18 @@ jobs:
       matrix:
         lens-type: [wazero, wasmer]
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_LENS_TYPE: ${{ matrix.lens-type }}
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -223,12 +248,18 @@ jobs:
   test-coverage-view:
     name: Test coverage view job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_VIEW_TYPE: materialized
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -246,12 +277,18 @@ jobs:
   test-coverage-encryption:
     name: Test coverage encryption job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_BADGER_ENCRYPTION: true
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -268,12 +305,18 @@ jobs:
   test-coverage-telemetry:
     name: Test coverage telemetry job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       GOFLAGS: -tags=telemetry
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -290,12 +333,18 @@ jobs:
   test-coverage-js:
     name: Test coverage JS job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       CGO_ENABLED: 0
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
