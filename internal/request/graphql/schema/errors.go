@@ -43,7 +43,7 @@ const (
 	errEncryptedIndexInvalidArgument    string = "encrypted index with invalid argument"
 	errEncryptedIndexTypeNotSupported   string = "encrypted index type not supported"
 	errEncryptedIndexOnNonExistentField string = "encrypted index on non-existent field"
-	errEncryptedIndexAlreadyExists string = "encrypted index already exists on field"
+	errEncryptedIndexAlreadyExists      string = "encrypted index already exists on field"
 )
 
 var (
