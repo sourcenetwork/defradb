@@ -481,6 +481,9 @@ func getDateTime(v any) (time.Time, error) {
 		return val, nil
 	default:
 		s = val.(string)
+		if s == "UTC_NOW" {
+			return time.Now().UTC(), nil
+		}
 	}
 	return time.Parse(time.RFC3339, s)
 }

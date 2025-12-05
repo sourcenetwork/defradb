@@ -63,9 +63,8 @@ extern Result AddSchema(uintptr_t nodePtr, char* schema, uintptr_t identity);
 extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result VersionGet(int flagFull, int flagJSON);
-extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr);
-extern Result ViewRefresh(uintptr_t nodePtr, char* viewNameStr,
-char* collectionIDStr, char* versionIDStr, int getInactive);
+extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr, uintptr_t identityPtr);
+extern Result ViewRefresh(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 */
 import "C"
 
@@ -623,6 +622,7 @@ func (w *CWrapper) AddView(
 	sdl string,
 	transform immutable.Option[model.Lens],
 ) ([]client.CollectionVersion, error) {
+	cIdentity := identityFromContext(ctx)
 	transformStr, err := stringFromLensOption(transform)
 	cTransform := C.CString(transformStr)
 	cQuery := C.CString(query)
@@ -630,13 +630,14 @@ func (w *CWrapper) AddView(
 	defer C.free(unsafe.Pointer(cTransform))
 	defer C.free(unsafe.Pointer(cQuery))
 	defer C.free(unsafe.Pointer(cSDL))
+	defer C.IdentityFree(cIdentity)
 
 	if err != nil {
 		return []client.CollectionVersion{}, err
 	}
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ViewAdd(callHandle, cQuery, cSDL, cTransform))
+	res := ConvertAndFreeCResult(C.ViewAdd(callHandle, cQuery, cSDL, cTransform, cIdentity))
 
 	if res.Status != 0 {
 		return []client.CollectionVersion{}, errors.New(res.Error)
@@ -650,6 +651,7 @@ func (w *CWrapper) AddView(
 }
 
 func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+	cIdentity := identityFromContext(ctx)
 	versionID := C.CString(stringFromImmutableOptionString(opts.VersionID))
 	collectionID := C.CString(stringFromImmutableOptionString(opts.CollectionID))
 	name := C.CString(stringFromImmutableOptionString(opts.Name))
@@ -662,9 +664,16 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetch
 	defer C.free(unsafe.Pointer(versionID))
 	defer C.free(unsafe.Pointer(collectionID))
 	defer C.free(unsafe.Pointer(name))
+	defer C.IdentityFree(cIdentity)
+
+	var copts C.CollectionOptions
+	copts.version = versionID
+	copts.collectionID = collectionID
+	copts.name = name
+	copts.getInactive = cGetInactive
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, name, collectionID, versionID, cGetInactive))
+	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, copts, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

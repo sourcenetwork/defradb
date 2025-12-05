@@ -78,6 +78,40 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsUTCNowDefaultValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						created: DateTime @default(dateTime: UTC_NOW)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// left empty to test default values
+				DocMap: map[string]any{},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						created
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"created": testUtils.CurrentTimestamp(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
