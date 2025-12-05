@@ -104,6 +104,7 @@ func NewTxnFrom(rootstore corekv.TxnStore, id uint64, readonly bool, chunkSize i
 		Multistore: multistore,
 		txn:        rootTxn,
 		id:         id,
+		ts:         time.Now(),
 	}
 }
 

@@ -3,8 +3,6 @@ package clock
 import (
 	"context"
 	"time"
-
-	"github.com/sourcenetwork/defradb/errors"
 )
 
 // type Clock = quartz.Clock
@@ -15,13 +13,13 @@ type ctxKey struct{}
 
 var clockCtxKey = ctxKey{}
 
-func FromContext(ctx context.Context) (time.Time, error) {
+func TimeFromContext(ctx context.Context) time.Time {
 	t, ok := ctx.Value(clockCtxKey).(time.Time)
 	if !ok {
-		return time.Time{}, errors.New("bad clock type")
+		return time.Now()
 	}
 
-	return t, nil
+	return t
 }
 
 func WithTime(ctx context.Context, t time.Time) context.Context {

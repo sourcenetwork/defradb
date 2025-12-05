@@ -31,7 +31,9 @@ func InitContext(ctx context.Context, txn client.Txn) context.Context {
 	ctx = id.InitCollectionShortIDCache(ctx)
 	ctx = id.InitFieldShortIDCache(ctx)
 	ctx = description.InitCollectionCache(ctx)
-	ctx = clock.WithTime(ctx, txn.StartTS())
+	if txn != nil {
+		ctx = clock.WithTime(ctx, txn.StartTS())
+	}
 
 	return ctx
 }

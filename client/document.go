@@ -26,6 +26,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/clock"
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 
@@ -483,7 +484,8 @@ func getDateTime(ctx context.Context, v any) (time.Time, error) {
 	default:
 		s = val.(string)
 		if s == "UTC_NOW" {
-			return time.Now().UTC(), nil
+			t := clock.TimeFromContext(ctx)
+			return t.UTC(), nil
 		}
 	}
 	return time.Parse(time.RFC3339, s)
