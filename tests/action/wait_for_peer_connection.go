@@ -17,22 +17,24 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// WaitForPeersConnection waits for peer join events on a specific topic.
-// This is used to ensure peers have connected and are ready to communicate
-// on a pubsub topic before proceeding with tests.
+// WaitForPeersConnection waits for peer join events on pubsub topics.
 type WaitForPeersConnection struct {
 	stateful
 
-	// NodeID is the node that should receive the peer join event.
+	// NodeID is the node that should receive the peer join events.
 	NodeID int
 
-	// PeerNodeIDs are the nodes that should join the topic.
-	PeerNodeIDs []int
+	// ExpectedPeersByTopic maps named topics (like "doc-sync") to expected peer node IDs.
+	ExpectedPeersByTopic map[string][]int
 
-	// Topic is the pubsub topic on which the peer join events are expected.
-	Topic string
+	// ExpectedPeersByCollection maps collection indexes to expected peer node IDs.
+	ExpectedPeersByCollection map[int][]int
+
+	// ExpectedPeersByDocument maps document indexes to expected peer node IDs.
+	ExpectedPeersByDocument map[state.ColDocIndex][]int
 
 	// Timeout is the maximum time to wait for the peer connection.
 	// Defaults to 5 seconds if not specified.
@@ -49,39 +51,73 @@ func (a *WaitForPeersConnection) Execute() {
 	}
 
 	sourceNode := a.s.Nodes[a.NodeID]
+	expectedPeers := make(map[string]map[string]bool)
 
-	expectedPeerIDs := make(map[string]bool)
-	for _, peerNodeID := range a.PeerNodeIDs {
-		targetNode := a.s.Nodes[peerNodeID]
-		targetAddresses, err := targetNode.PeerInfo()
-		require.NoError(a.s.T, err)
-		require.NotEmpty(a.s.T, targetAddresses, "target node %d has no addresses", peerNodeID)
+	addExpectedPeers := func(topic string, peerNodeIDs []int) {
+		if _, exists := expectedPeers[topic]; !exists {
+			expectedPeers[topic] = make(map[string]bool)
+		}
+		for _, peerNodeID := range peerNodeIDs {
+			targetNode := a.s.Nodes[peerNodeID]
+			targetAddresses, err := targetNode.PeerInfo()
+			require.NoError(a.s.T, err)
+			require.NotEmpty(a.s.T, targetAddresses, "target node %d has no addresses", peerNodeID)
 
-		peerID := extractPeerID(targetAddresses[0])
-		require.NotEmpty(a.s.T, peerID, "could not extract peer ID from address for node %d", peerNodeID)
-		expectedPeerIDs[peerID] = true
+			peerID := extractPeerID(targetAddresses[0])
+			require.NotEmpty(a.s.T, peerID, "could not extract peer ID from address for node %d", peerNodeID)
+			expectedPeers[topic][peerID] = true
+		}
+	}
+
+	for topic, peerNodeIDs := range a.ExpectedPeersByTopic {
+		addExpectedPeers(topic, peerNodeIDs)
+	}
+
+	for colIndex, peerNodeIDs := range a.ExpectedPeersByCollection {
+		col := a.s.Nodes[a.NodeID].Collections[colIndex]
+		topic := col.CollectionID()
+		addExpectedPeers(topic, peerNodeIDs)
+	}
+
+	for colDocIndex, peerNodeIDs := range a.ExpectedPeersByDocument {
+		docID := a.s.DocIDs[colDocIndex.Col][colDocIndex.Doc]
+		topic := docID.String()
+		addExpectedPeers(topic, peerNodeIDs)
+	}
+
+	totalExpected := 0
+	for _, peers := range expectedPeers {
+		totalExpected += len(peers)
 	}
 
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
-	for len(expectedPeerIDs) > 0 {
+	for totalExpected > 0 {
 		select {
 		case msg := <-sourceNode.Event.TopicPeerEvent.Message():
 			peerEvent, ok := msg.Data.(event.TopicPeerEvent)
 			if !ok {
 				continue
 			}
-			if peerEvent.EventType == client.PeerEventTypeJoined && peerEvent.Topic == a.Topic {
-				delete(expectedPeerIDs, peerEvent.PeerID)
+			if peerEvent.EventType != client.PeerEventTypeJoined {
+				continue
+			}
+			if topicPeers, topicExists := expectedPeers[peerEvent.Topic]; topicExists {
+				if topicPeers[peerEvent.PeerID] {
+					delete(topicPeers, peerEvent.PeerID)
+					totalExpected--
+				}
 			}
 		case <-timer.C:
 			var remaining []string
-			for peerID := range expectedPeerIDs {
-				remaining = append(remaining, peerID)
+			for topic, peers := range expectedPeers {
+				for peerID := range peers {
+					remaining = append(remaining, topic+":"+peerID)
+				}
 			}
 			require.Fail(a.s.T, "timeout waiting for peer connections",
-				"source node %d did not receive join events from peers: %v",
+				"source node %d did not receive join events for: %v",
 				a.NodeID, remaining)
 			return
 		}
@@ -91,7 +127,6 @@ func (a *WaitForPeersConnection) Execute() {
 // extractPeerID extracts the peer ID from a multiaddr string.
 // Example: /ip4/127.0.0.1/tcp/4001/p2p/12D3KooWExample -> 12D3KooWExample
 func extractPeerID(addr string) string {
-	// Find the /p2p/ component and extract what follows
 	const p2pPrefix = "/p2p/"
 	for i := 0; i < len(addr); i++ {
 		if i+len(p2pPrefix) <= len(addr) && addr[i:i+len(p2pPrefix)] == p2pPrefix {
