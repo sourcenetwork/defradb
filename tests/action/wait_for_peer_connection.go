@@ -72,7 +72,7 @@ func (a *WaitForPeersConnection) Execute() {
 			if !ok {
 				continue
 			}
-			if peerEvent.EventType == client.PeerJoinedTopic && peerEvent.Topic == a.Topic {
+			if peerEvent.EventType == client.PeerEventTypeJoined && peerEvent.Topic == a.Topic {
 				delete(expectedPeerIDs, peerEvent.PeerID)
 			}
 		case <-timer.C:

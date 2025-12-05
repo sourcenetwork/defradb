@@ -94,18 +94,16 @@ type P2P interface {
 type StreamHandler = func(stream io.Reader, peerID string)
 type PubsubMessageHandler = func(from string, topic string, msg []byte) ([]byte, error)
 
-type PeerEventType = int
-
 const (
-	// PeerJoinedTopic indicates a peer has joined a pubsub topic.
-	PeerJoinedTopic PeerEventType = iota
-	// PeerLeftTopic indicates a peer has left a pubsub topic.
-	PeerLeftTopic
+	// PeerEventTypeJoined indicates that a peer has joined a pubsub topic.
+	PeerEventTypeJoined = "JOINED"
+	// PeerEventTypeLeft indicates that a peer has left a pubsub topic.
+	PeerEventTypeLeft = "LEFT"
 )
 
 // PeerEventHandler is called when a peer joins or leaves a pubsub topic.
 // The joined parameter is true when the peer joins, false when the peer leaves.
-type PeerEventHandler = func(peerID string, topic string, eventType PeerEventType)
+type PeerEventHandler = func(peerID string, topic string, eventType string)
 type PubsubPeerEventHandler = func(peerID string, topic string, joined bool)
 type BlockAccessFunc = func(ctx context.Context, peerID string, c cid.Cid) bool
 
