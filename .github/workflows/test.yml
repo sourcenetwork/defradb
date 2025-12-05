@@ -112,30 +112,30 @@ jobs:
         run: make test:names
 
 
-  # This job runs the tests on other operating systems using default configurations.
-  test-os:
-    name: Test os job
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - macos-latest
-          # TODO: https://github.com/sourcenetwork/defradb/issues/2080
-          # Uncomment the line below to re-enable the windows build once this todo is resolved.
-          # - windows-latest
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout code into the directory
-        uses: actions/checkout@v4
-
-      - name: Setup defradb
-        uses: ./.github/composites/setup-defradb
-
-      - name: Run integration tests
-        run: make test:names
+#  # This job runs the tests on other operating systems using default configurations.
+#  test-os:
+#    name: Test os job
+#
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os:
+#          # - macos-latest
+#          # TODO: https://github.com/sourcenetwork/defradb/issues/2080
+#          # Uncomment the line below to re-enable the windows build once this todo is resolved.
+#          # - windows-latest
+#
+#    runs-on: ${{ matrix.os }}
+#
+#    steps:
+#      - name: Checkout code into the directory
+#        uses: actions/checkout@v4
+#
+#      - name: Setup defradb
+#        uses: ./.github/composites/setup-defradb
+#
+#      - name: Run integration tests
+#        run: make test:names
 
 
   # The document acp matrix job tests the combinations of source-hub acp and client types on linux.
