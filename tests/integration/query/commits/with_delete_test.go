@@ -54,7 +54,10 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 							fieldName
 							links {
 								cid
-								name
+								fieldName
+							}
+							heads {
+								cid
 							}
 						}
 					}
@@ -64,10 +67,10 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 						{
 							"cid":       gomega.And(deleteCid, uniqueCid),
 							"fieldName": "_C",
-							"links": []map[string]any{
+							"links":     []map[string]any{},
+							"heads": []map[string]any{
 								{
-									"cid":  createCompositeCid,
-									"name": "_head",
+									"cid": createCompositeCid,
 								},
 							},
 						},
@@ -76,14 +79,15 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 							"fieldName": "_C",
 							"links": []map[string]any{
 								{
-									"cid":  createAgeCid,
-									"name": "age",
+									"cid":       createAgeCid,
+									"fieldName": "age",
 								},
 								{
-									"cid":  createNameCid,
-									"name": "name",
+									"cid":       createNameCid,
+									"fieldName": "name",
 								},
 							},
+							"heads": []map[string]any{},
 						},
 					},
 				},

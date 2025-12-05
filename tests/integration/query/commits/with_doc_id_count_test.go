@@ -57,3 +57,64 @@ func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryCommits_WithDocUpdatesAndLinkHeadCount(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
+							fieldName
+							linkCount: _count(field: links)
+							headCount: _count(field: heads)
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+							"linkCount": 0,
+							"headCount": 1,
+						},
+						{
+							"fieldName": "_C",
+							"linkCount": 1,
+							"headCount": 1,
+						},
+						{
+							"fieldName": "age",
+							"linkCount": 0,
+							"headCount": 0,
+						},
+						{
+							"fieldName": "name",
+							"linkCount": 0,
+							"headCount": 0,
+						},
+						{
+							"fieldName": "_C",
+							"linkCount": 2,
+							"headCount": 0,
+						},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

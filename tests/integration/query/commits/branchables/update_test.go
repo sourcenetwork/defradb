@@ -58,6 +58,9 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 							links {
 								cid
 							}
+							heads {
+								cid
+							}
 						}
 					}`,
 				Results: map[string]any{
@@ -66,10 +69,12 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 							"cid": gomega.And(collectionUpdateCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": collectionCreateCid,
-								},
-								{
 									"cid": updateCid,
+								},
+							},
+							"heads": []map[string]any{
+								{
+									"cid": collectionCreateCid,
 								},
 							},
 						},
@@ -80,14 +85,17 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 									"cid": createCid,
 								},
 							},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid":   gomega.And(ageCreateCid, uniqueCid),
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
-							"cid": gomega.And(nameUpdateCid, uniqueCid),
-							"links": []map[string]any{
+							"cid":   gomega.And(nameUpdateCid, uniqueCid),
+							"links": []map[string]any{},
+							"heads": []map[string]any{
 								{
 									"cid": nameCreateCid,
 								},
@@ -96,15 +104,18 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 						{
 							"cid":   gomega.And(nameCreateCid, uniqueCid),
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid": gomega.And(updateCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": createCid,
-								},
-								{
 									"cid": nameUpdateCid,
+								},
+							},
+							"heads": []map[string]any{
+								{
+									"cid": createCid,
 								},
 							},
 						},
@@ -118,6 +129,7 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 									"cid": nameCreateCid,
 								},
 							},
+							"heads": []map[string]any{},
 						},
 					},
 				},
