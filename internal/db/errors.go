@@ -126,6 +126,7 @@ const (
 	errUnknownCID                          string = "unknown CID, collection ids cannot be manually defined"
 	errMigrationBetweenNonAdjacentVersions string = "cannot migrate between non-adjacent collection versions"
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
+	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
 )
 
 var (
@@ -809,4 +810,14 @@ func NewErrMigrationBetweenNonAdjacentVersions(sourceVersion string, destination
 
 func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
 	return errors.New(errLensRuntimeNotSupported, errors.NewKV("Lens", lens))
+}
+
+// NewErrOneToOneRelationMustBeUnique returns an error indicating that a one-to-one
+// relation field cannot have a non-unique index.
+func NewErrOneToOneRelationMustBeUnique(objectName, fieldName string) error {
+	return errors.New(
+		errOneToOneMustBeUnique,
+		errors.NewKV("Object", objectName),
+		errors.NewKV("Field", fieldName),
+	)
 }

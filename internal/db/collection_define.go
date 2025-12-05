@@ -46,7 +46,10 @@ func (db *DB) createCollections(
 		return nil, err
 	}
 
-	finalizeRelations(parseResults, existingVersions)
+	err = finalizeRelations(parseResults, existingVersions)
+	if err != nil {
+		return nil, err
+	}
 
 	newCollections := make([]client.CollectionVersion, len(parseResults))
 	for i, def := range parseResults {
@@ -812,10 +815,13 @@ func deleteCollectionBlocks(
 // existing collection that has no back-reference, the new collection's field MUST be primary.
 // The existing collection cannot be modified to become primary, and a relation requires exactly
 // one primary side to store the foreign key.
+//
+// For one-to-one relations, this function also ensures a unique index exists on the primary
+// side's _id field to enforce the 1-to-1 constraint efficiently.
 func finalizeRelations(
 	newCollections []core.Collection,
 	existingCollections []client.CollectionVersion,
-) {
+) error {
 	existingByName := make(map[string]client.CollectionVersion)
 	for _, col := range existingCollections {
 		existingByName[col.Name] = col
@@ -836,10 +842,6 @@ func finalizeRelations(
 			if !ok || namedKind.IsArray() {
 				// We only need to process the primary side of a relation here.
 				// If the field is not a relation or if it is an array, we can skip it.
-				continue
-			}
-
-			if field.IsPrimary {
 				continue
 			}
 
@@ -865,7 +867,9 @@ func finalizeRelations(
 				field.Name,
 			)
 
-			if !hasCorrespondingField || correspondingField.Kind.IsArray() {
+			isOneToOne := hasCorrespondingField && !correspondingField.Kind.IsArray()
+
+			if !field.IsPrimary && (!hasCorrespondingField || correspondingField.Kind.IsArray()) {
 				newCollections[i].Definition.Fields[fieldIndex].IsPrimary = true
 
 				idFieldName := field.Name + "_id"
@@ -876,6 +880,62 @@ func finalizeRelations(
 					}
 				}
 			}
+
+			if isOneToOne && field.IsPrimary {
+				var err error
+				newCollections[i].CreateIndexes, err = ensureOneToOneUniqueIndex(
+					newCollections[i].CreateIndexes,
+					newCol.Definition.Name,
+					field.Name,
+				)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
+
+	return nil
+}
+
+// getIndexWithFirstField returns the index where the given field is the first field, if one exists.
+func getIndexWithFirstField(indexes []client.IndexCreateRequest, fieldName string) (client.IndexCreateRequest, bool) {
+	for _, index := range indexes {
+		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
+			return index, true
+		}
+	}
+	return client.IndexCreateRequest{}, false
+}
+
+// ensureOneToOneUniqueIndex ensures a unique index exists for a one-to-one relation's _id field.
+// If a user-defined index exists with the relation field as the first field, it validates that it's unique.
+// If no user-defined index exists, it creates one automatically.
+// Returns the updated indexes slice and any error encountered.
+func ensureOneToOneUniqueIndex(
+	indexes []client.IndexCreateRequest,
+	collectionName string,
+	relationFieldName string,
+) ([]client.IndexCreateRequest, error) {
+	idFieldName := relationFieldName + "_id"
+
+	// Check for user-defined index on either the _id field or the relation field name
+	// (e.g., "address_id" or "address" since @index on relation field uses field name)
+	userIndex, hasUserIndex := getIndexWithFirstField(indexes, idFieldName)
+	if !hasUserIndex {
+		userIndex, hasUserIndex = getIndexWithFirstField(indexes, relationFieldName)
+	}
+
+	if hasUserIndex {
+		if !userIndex.Unique {
+			return nil, NewErrOneToOneRelationMustBeUnique(collectionName, relationFieldName)
+		}
+		return indexes, nil
+	}
+
+	// No user-defined index exists, create one automatically
+	return append(indexes, client.IndexCreateRequest{
+		Fields: []client.IndexedFieldDescription{{Name: idFieldName}},
+		Unique: true,
+	}), nil
 }
