@@ -20,8 +20,8 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// WaitForPeersConnection waits for peer join events on pubsub topics.
-type WaitForPeersConnection struct {
+// WaitForPeersEvents waits for peer join events on pubsub topics.
+type WaitForPeersEvents struct {
 	stateful
 
 	// NodeID is the node that should receive the peer join events.
@@ -41,10 +41,10 @@ type WaitForPeersConnection struct {
 	Timeout time.Duration
 }
 
-var _ Action = (*WaitForPeersConnection)(nil)
-var _ Stateful = (*WaitForPeersConnection)(nil)
+var _ Action = (*WaitForPeersEvents)(nil)
+var _ Stateful = (*WaitForPeersEvents)(nil)
 
-func (a *WaitForPeersConnection) Execute() {
+func (a *WaitForPeersEvents) Execute() {
 	timeout := a.Timeout
 	if timeout == 0 {
 		timeout = 5 * time.Second

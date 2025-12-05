@@ -28,7 +28,7 @@ func TestPeerEvents_OnConnect_ShouldReceiveJoinEventOnDocSyncTopic(t *testing.T)
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 0,
 				ExpectedPeersByTopic: map[string][]int{
 					docSyncTopic: {1},
@@ -54,7 +54,7 @@ func TestPeerEvents_OnConnectMultiplePeers_ShouldReceiveAllJoinEvents(t *testing
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 0,
 				ExpectedPeersByTopic: map[string][]int{
 					docSyncTopic: {1, 2},
@@ -75,13 +75,13 @@ func TestPeerEvents_OnConnectBidirectional_BothNodesShouldReceiveJoinEvents(t *t
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 0,
 				ExpectedPeersByTopic: map[string][]int{
 					docSyncTopic: {1},
 				},
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 1,
 				ExpectedPeersByTopic: map[string][]int{
 					docSyncTopic: {0},

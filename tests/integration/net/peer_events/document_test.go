@@ -47,7 +47,7 @@ func TestPeerEvents_OnSubscribeToDocument_ShouldReceiveJoinEventOnDocumentTopic(
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 0,
 				ExpectedPeersByDocument: map[state.ColDocIndex][]int{
 					{Col: 0, Doc: 0}: {1},
@@ -99,7 +99,7 @@ func TestPeerEvents_OnSubscribeToMultipleDocuments_ShouldReceiveJoinEventsOnAllT
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 0,
 				ExpectedPeersByDocument: map[state.ColDocIndex][]int{
 					{Col: 0, Doc: 0}: {1},
@@ -141,7 +141,7 @@ func TestPeerEvents_DocumentAndDocSyncTopics_ShouldReceiveJoinEventsOnBoth(t *te
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 0,
 				ExpectedPeersByTopic: map[string][]int{
 					docSyncTopic: {1},
@@ -193,7 +193,7 @@ func TestPeerEvents_AllTopicTypes_ShouldReceiveJoinEventsOnAll(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 0,
 				ExpectedPeersByTopic: map[string][]int{
 					docSyncTopic: {1},

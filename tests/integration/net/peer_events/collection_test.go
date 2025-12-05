@@ -41,7 +41,7 @@ func TestPeerEvents_OnSubscribeToCollection_ShouldReceiveJoinEventOnCollectionTo
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 0,
 				ExpectedPeersByCollection: map[int][]int{
 					0: {1},
@@ -80,7 +80,7 @@ func TestPeerEvents_OnSubscribeToMultipleCollections_ShouldReceiveJoinEventsOnAl
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 0,
 				ExpectedPeersByCollection: map[int][]int{
 					0: {1},
@@ -126,7 +126,7 @@ func TestPeerEvents_MultipleNodesSubscribedToCollection_ShouldReceiveAllJoinEven
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
-			&action.WaitForPeersConnection{
+			&action.WaitForPeersEvents{
 				NodeID: 0,
 				ExpectedPeersByCollection: map[int][]int{
 					0: {1, 2},
