@@ -14,6 +14,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strings"
 	"unicode"
 
@@ -213,6 +214,11 @@ existingVersionLoop:
 		}
 	}
 
+	err = ensureOneToOneIndexesForPatch(newColsByID, existingColsByName)
+	if err != nil {
+		return err
+	}
+
 	for key, col := range newColsByID {
 		previousCol := existingColsByName[col.Name]
 
@@ -329,6 +335,25 @@ existingVersionLoop:
 		err := description.SaveCollection(ctx, col)
 		if err != nil {
 			return err
+		}
+
+		if ok {
+			existingIndexNames := make(map[string]struct{}, len(existingCol.Indexes))
+			for _, idx := range existingCol.Indexes {
+				existingIndexNames[idx.Name] = struct{}{}
+			}
+
+			for _, index := range col.Indexes {
+				if _, existed := existingIndexNames[index.Name]; !existed {
+					colObj, err := db.newCollection(col)
+					if err != nil {
+						return err
+					}
+					if _, err := colObj.addNewIndex(ctx, index); err != nil {
+						return err
+					}
+				}
+			}
 		}
 
 		if ok {
@@ -861,15 +886,9 @@ func finalizeRelations(
 				continue
 			}
 
-			correspondingField, hasCorrespondingField := targetCol.GetFieldByRelation(
-				field.RelationName.Value(),
-				newCol.Definition.Name,
-				field.Name,
-			)
+			isOneToOne := isOneToOneRelation(targetCol, field.RelationName.Value(), newCol.Definition.Name, field.Name)
 
-			isOneToOne := hasCorrespondingField && !correspondingField.Kind.IsArray()
-
-			if !field.IsPrimary && (!hasCorrespondingField || correspondingField.Kind.IsArray()) {
+			if !field.IsPrimary && !isOneToOne {
 				newCollections[i].Definition.Fields[fieldIndex].IsPrimary = true
 
 				idFieldName := field.Name + "_id"
@@ -882,14 +901,17 @@ func finalizeRelations(
 			}
 
 			if isOneToOne && field.IsPrimary {
-				var err error
-				newCollections[i].CreateIndexes, err = ensureOneToOneUniqueIndex(
+				newIndex, err := ensureOneToOneUniqueIndex(
 					newCollections[i].CreateIndexes,
+					nil,
 					newCol.Definition.Name,
 					field.Name,
 				)
 				if err != nil {
 					return err
+				}
+				if newIndex != nil {
+					newCollections[i].CreateIndexes = append(newCollections[i].CreateIndexes, *newIndex)
 				}
 			}
 		}
@@ -898,44 +920,134 @@ func finalizeRelations(
 	return nil
 }
 
-// getIndexWithFirstField returns the index where the given field is the first field, if one exists.
-func getIndexWithFirstField(indexes []client.IndexCreateRequest, fieldName string) (client.IndexCreateRequest, bool) {
-	for _, index := range indexes {
+// isOneToOneRelation checks if a relation field represents a one-to-one relationship.
+// A relation is one-to-one if the target collection has a corresponding non-array field
+// pointing back to the host collection.
+func isOneToOneRelation(
+	targetCol client.CollectionVersion,
+	relationName string,
+	hostColName string,
+	fieldName string,
+) bool {
+	correspondingField, hasCorrespondingField := targetCol.GetFieldByRelation(
+		relationName,
+		hostColName,
+		fieldName,
+	)
+	return hasCorrespondingField && !correspondingField.Kind.IsArray()
+}
+
+// findIndexWithFirstField checks if an index exists where the given field is the first field.
+func findIndexWithFirstField(
+	createIndexes []client.IndexCreateRequest,
+	existingIndexes []client.IndexDescription,
+	fieldName string,
+) (isUnique bool, found bool) {
+	for _, index := range createIndexes {
 		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
-			return index, true
+			return index.Unique, true
 		}
 	}
-	return client.IndexCreateRequest{}, false
+	for _, index := range existingIndexes {
+		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
+			return index.Unique, true
+		}
+	}
+	return false, false
 }
 
 // ensureOneToOneUniqueIndex ensures a unique index exists for a one-to-one relation's _id field.
 // If a user-defined index exists with the relation field as the first field, it validates that it's unique.
 // If no user-defined index exists, it creates one automatically.
-// Returns the updated indexes slice and any error encountered.
 func ensureOneToOneUniqueIndex(
-	indexes []client.IndexCreateRequest,
+	createIndexes []client.IndexCreateRequest,
+	existingIndexes []client.IndexDescription,
 	collectionName string,
 	relationFieldName string,
-) ([]client.IndexCreateRequest, error) {
+) (newIndex *client.IndexCreateRequest, err error) {
 	idFieldName := relationFieldName + "_id"
 
 	// Check for user-defined index on either the _id field or the relation field name
 	// (e.g., "address_id" or "address" since @index on relation field uses field name)
-	userIndex, hasUserIndex := getIndexWithFirstField(indexes, idFieldName)
-	if !hasUserIndex {
-		userIndex, hasUserIndex = getIndexWithFirstField(indexes, relationFieldName)
+	isUnique, hasIndex := findIndexWithFirstField(createIndexes, existingIndexes, idFieldName)
+	if !hasIndex {
+		isUnique, hasIndex = findIndexWithFirstField(createIndexes, existingIndexes, relationFieldName)
 	}
 
-	if hasUserIndex {
-		if !userIndex.Unique {
+	if hasIndex {
+		if !isUnique {
 			return nil, NewErrOneToOneRelationMustBeUnique(collectionName, relationFieldName)
 		}
-		return indexes, nil
+		return nil, nil
 	}
 
 	// No user-defined index exists, create one automatically
-	return append(indexes, client.IndexCreateRequest{
+	return &client.IndexCreateRequest{
 		Fields: []client.IndexedFieldDescription{{Name: idFieldName}},
 		Unique: true,
-	}), nil
+	}, nil
+}
+
+// ensureOneToOneIndexesForPatch ensures unique indexes exist for one-to-one relations
+// added via collection patch. This is needed because patches don't go through the
+// standard schema creation flow that calls finalizeRelations.
+func ensureOneToOneIndexesForPatch(
+	newColsByID map[string]client.CollectionVersion,
+	existingColsByName map[string]client.CollectionVersion,
+) error {
+	allColsByName := make(map[string]client.CollectionVersion)
+	maps.Copy(allColsByName, existingColsByName)
+
+	for _, col := range newColsByID {
+		allColsByName[col.Name] = col
+	}
+
+	for versionID, col := range newColsByID {
+		existingCol := existingColsByName[col.Name]
+		existingFieldNames := make(map[string]struct{}, len(existingCol.Fields))
+		for _, field := range existingCol.Fields {
+			existingFieldNames[field.Name] = struct{}{}
+		}
+
+		for _, field := range col.Fields {
+			if _, existed := existingFieldNames[field.Name]; existed {
+				continue
+			}
+
+			namedKind, ok := field.Kind.(*client.NamedKind)
+			if !ok || namedKind.IsArray() {
+				continue
+			}
+
+			if !field.IsPrimary {
+				continue
+			}
+
+			targetCol, found := allColsByName[namedKind.Name]
+			if !found {
+				continue
+			}
+
+			if !isOneToOneRelation(targetCol, field.RelationName.Value(), col.Name, field.Name) {
+				continue
+			}
+
+			newIndex, err := ensureOneToOneUniqueIndex(nil, col.Indexes, col.Name, field.Name)
+			if err != nil {
+				return err
+			}
+
+			if newIndex != nil {
+				idFieldName := field.Name + "_id"
+				col.Indexes = append(col.Indexes, client.IndexDescription{
+					Name:   col.Name + "_" + idFieldName + "_ASC",
+					Unique: newIndex.Unique,
+					Fields: newIndex.Fields,
+				})
+				newColsByID[versionID] = col
+			}
+		}
+	}
+
+	return nil
 }
