@@ -375,7 +375,7 @@ test\:changes:
 
 .PHONY: test\:js
 test\:js:
-	GOOS=js GOARCH=wasm go test $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
+	GOOS=js GOARCH=wasm gotestsum --format testname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
 
 .PHONY: test\:introspectionjs
 test\:introspectionjs:

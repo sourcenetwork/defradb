@@ -8,11 +8,10 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-# Note: Unlike the [test.yml] workflow, the coverage jobs in this workflow are not required
-# to pass within the PR(s) and they also run on slower github runners to help us detect
-# failures that might be specific to devices that have less resources. This workflow
-# collects all generated coverage reports from each job and uploads them to code cov.
-name: Test Coverage Workflow
+# Note: Unlike the [test-coverage.yml] workflow, the jobs in this workflow are required
+# to pass within the PR(s) and they run on faster custom runners, this workflow does not
+# generate any coverage reports nor does it upload any reports to code cov.
+name: Test Workflow
 
 on:
   pull_request:
@@ -64,8 +63,8 @@ defaults:
 jobs:
   # The basic matrix job tests the combination of client, database and mutation types using
   # the default config settings for other options, all running on linux.
-  test-coverage-basic:
-    name: Test coverage job
+  test-basic:
+    name: Test job
 
     strategy:
       fail-fast: false
@@ -74,7 +73,8 @@ jobs:
         database-type: [file, memory]
         mutation-type: [gql, collection-named, collection-save]
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     # Overwrite the defaults based on the basic matrix
     env:
@@ -88,6 +88,11 @@ jobs:
       DEFRA_VECTOR_EMBEDDING: true
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -103,20 +108,13 @@ jobs:
       - name: Pull LLM model
         run: make ollama:nomic
 
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_basic\
-            _${{ matrix.client-type }}\
-            _${{ matrix.database-type }}\
-            _${{ matrix.mutation-type }}\
-            "
-          coverage-path: coverage.txt
+      - name: Run integration tests
+        run: make test:names
 
 
   # This job runs the tests on other operating systems using default configurations.
-  test-coverage-os:
-    name: Test coverage os job
+  test-os:
+    name: Test os job
 
     strategy:
       fail-fast: false
@@ -136,16 +134,13 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_os_${{ matrix.os }}"
-          coverage-path: coverage.txt
+      - name: Run integration tests
+        run: make test:names
 
 
   # The document acp matrix job tests the combinations of source-hub acp and client types on linux.
-  test-coverage-document-acp:
-    name: Test coverage document acp job
+  test-document-acp:
+    name: Test document acp job
 
     strategy:
       fail-fast: false
@@ -153,7 +148,8 @@ jobs:
         client-type: [go, http, cli, c]
         document-acp-type: [source-hub]
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_DOCUMENT_ACP_TYPE: ${{ matrix.document-acp-type }}
@@ -163,6 +159,11 @@ jobs:
       DEFRA_CLIENT_C: ${{ matrix.client-type == 'c' }}
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
@@ -181,182 +182,140 @@ jobs:
         with:
           ref: ${{ env.SOURCEHUB_COMMIT }}
 
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_document_acp\
-            _${{ matrix.document-acp-type }}\
-            _${{ matrix.client-type }}\
-            "
-          coverage-path: coverage.txt
+      - name: Run integration tests
+        run: make test:names
 
 
   # The lens matrix job tests the wazero and wasmer lens on linux.
-  test-coverage-lens:
-    name: Test coverage lens job
+  test-lens:
+    name: Test lens job
 
     strategy:
       fail-fast: false
       matrix:
         lens-type: [wazero, wasmer]
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_LENS_TYPE: ${{ matrix.lens-type }}
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_lens_${{ matrix.lens-type }}"
-          coverage-path: coverage.txt
+      - name: Run integration tests
+        run: make test:names
 
 
   # This job runs the materialized view tests using default configuration, on linux.
-  test-coverage-view:
-    name: Test coverage view job
+  test-view:
+    name: Test view job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_VIEW_TYPE: materialized
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_view_materialized"
-          coverage-path: coverage.txt
+      - name: Run integration tests
+        run: make test:names
 
 
   # This job runs the database with encryption tests using default configuration, on linux.
-  test-coverage-encryption:
-    name: Test coverage encryption job
+  test-encryption:
+    name: Test encryption job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       DEFRA_BADGER_ENCRYPTION: true
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_encryption"
-          coverage-path: coverage.txt
+      - name: Run integration tests
+        run: make test:names
+
 
   # This job runs the database with telemetry tests using default configuration, on linux.
-  test-coverage-telemetry:
-    name: Test coverage telemetry job
+  test-telemetry:
+    name: Test telemetry job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       GOFLAGS: -tags=telemetry
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_telemetry"
-          coverage-path: coverage.txt
+      - name: Run integration tests
+        run: make test:names
+
 
   # This job runs the database js tests using default configuration, on linux.
-  test-coverage-js:
-    name: Test coverage JS job
+  test-js:
+    name: Test JS job
 
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
 
     env:
       CGO_ENABLED: 0
 
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
         uses: actions/checkout@v4
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      # NOTE: Uncomment the below if the headless browser tests start failing.
-      # # Disable AppArmor for Ubuntu 23.10+.
-      # # https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md
-      # - name: Disable AppArmor
-      #   run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
-
       - name: Run integration tests
-        run: make test:coverage-js
-
-      - name: Save coverage report in an artifact
-        uses: ./.github/composites/upload-coverage-artifact
-        with:
-          coverage-artifact-name: "coverage_js"
-          coverage-path: coverage.txt
-
-  ## This job gathers all the coverage reports and uploads them to code-cov
-  upload-coverage:
-    name: Upload test code coverage job
-
-    needs:
-      - test-coverage-basic        # 24 test(s)
-      - test-coverage-os           #  1 test(s) [excluding windows]
-      - test-coverage-document-acp #  3 test(s)
-      - test-coverage-lens         #  2 test(s)
-      - test-coverage-view         #  1 test(s)
-      - test-coverage-encryption   #  1 test(s)
-      - test-coverage-telemetry    #  1 test(s)
-      - test-coverage-js           #  1 test(s)
-
-    # Important to know:
-    # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.
-    # - `if: success()` is always implied unless `always()` or `failure()` is specified.
-    if: success() || failure()
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code into the directory
-        uses: actions/checkout@v4
-
-      - name: Download coverage reports
-        uses: actions/download-artifact@v4
-        with:
-          pattern: coverage_*
-          # Note: https://github.com/actions/download-artifact/blob/main/docs/MIGRATION.md
-          merge-multiple: false
-          path: coverage_reports
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          name: defradb-codecov
-          files: coverage_reports/**/*.txt
-          flags: all-tests
-          os: 'linux'
-          fail_ci_if_error: true
-          verbose: true
+        run: make test:js
