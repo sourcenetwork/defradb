@@ -1,0 +1,404 @@
+// Copyright 2023 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package kind
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/defradb/tests/action"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRelationToExistingCollection_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+				`,
+			},
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						name: String
+						author: Author
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John Grisham",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":   "Painted House",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":   "A Time for Mercy",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						name
+						author_id
+						author {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":      "A Time for Mercy",
+							"author_id": testUtils.NewDocIndex(0, 0),
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+						},
+						{
+							"name":      "Painted House",
+							"author_id": testUtils.NewDocIndex(0, 0),
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRelationsToMultipleExistingCollections_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+				`,
+			},
+			&action.AddSchema{
+				Schema: `
+					type Publisher {
+						name: String
+					}
+				`,
+			},
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						name: String
+						author: Author
+						publisher: Publisher
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John Grisham",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Penguin Books",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"author":    testUtils.NewDocIndex(0, 0),
+					"publisher": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						name
+						author_id
+						author {
+							name
+						}
+						publisher_id
+						publisher {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name":      "Painted House",
+							"author_id": testUtils.NewDocIndex(0, 0),
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"publisher_id": testUtils.NewDocIndex(1, 0),
+							"publisher": map[string]any{
+								"name": "Penguin Books",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelationAfterSeparateAddSchemas_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						name: String
+					}
+				`,
+			},
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author", "Kind": "Author", "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "books", "Kind": "[Book]", "RelationName": "author_book"
+						}}
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "John Grisham",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":   "Painted House",
+					"author": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":   "A Time to Kill",
+					"author": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						books {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John Grisham",
+							"books": []map[string]any{
+								{"name": "Painted House"},
+								{"name": "A Time to Kill"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesAddFieldKindForeignObject_WithMixedBatchHavingRelationToExistingAndNewCollections_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+				`,
+			},
+			&action.AddSchema{
+				Schema: `
+					type Publisher {
+						name: String
+					}
+					type Book {
+						name: String
+						author: Author
+						publisher: Publisher
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "John Grisham",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "Penguin Books",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"author":    testUtils.NewDocIndex(0, 0),
+					"publisher": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						name
+						author {
+							name
+						}
+						publisher {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+							},
+							"publisher": map[string]any{
+								"name": "Penguin Books",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesAddFieldKindForeignObject_WithChainedOneToManyRelationsAcrossSeparateSchemas_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Publisher {
+						name: String
+					}
+				`,
+			},
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+						publisher: Publisher
+					}
+				`,
+			},
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						name: String
+						author: Author
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "Penguin Books",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "John Grisham",
+					"publisher": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":   "Painted House",
+					"author": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						name
+						author {
+							name
+							publisher {
+								name
+							}
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "Painted House",
+							"author": map[string]any{
+								"name": "John Grisham",
+								"publisher": map[string]any{
+									"name": "Penguin Books",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
