@@ -42,32 +42,28 @@ resources:
       in addition to the defra required ones
     expr: dummy
 
-    relations:
-    - name: owner
-      types:
-      - actor
+  relations:
+  - name: reader
+    types:
+    - actor
 
-    - name: reader
-      types:
-      - actor
+  - name: updater
+    types:
+    - actor
 
-    - name: updater
-      types:
-      - actor
+  - name: deleter
+    types:
+    - actor
 
-    - name: deleter
-      types:
-      - actor
+  - name: admin
+    manages:
+    - reader
+    types:
+    - actor
 
-    - name: admin
-      manages:
-      - reader
-      types:
-      - actor
-
-    - name: dummy
-      types:
-      - actor
+  - name: dummy
+    types:
+    - actor
 `
 
 func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
