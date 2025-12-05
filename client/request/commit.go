@@ -29,17 +29,11 @@ type CommitSelect struct {
 	Offsetable
 	Orderable
 	Groupable
+	Filterable
 
 	// DocID is an optional filter which when provided will limit commits to those
 	// belonging to the given document.
 	DocID immutable.Option[string]
-
-	// FieldName is an optional filter which when provided will limit commits to those
-	// belonging to the given field.
-	//
-	// `_C` may be provided for document-level (composite) commits. An explicit empty
-	// value will return branchable collection commits only.
-	FieldName immutable.Option[string]
 
 	// Depth limits the returned commits to being X places in the history away from the
 	// most current.
@@ -59,6 +53,7 @@ func (c CommitSelect) ToSelect() *Select {
 		Offsetable:  c.Offsetable,
 		Orderable:   c.Orderable,
 		Groupable:   c.Groupable,
+		Filterable:  c.Filterable,
 		ChildSelect: c.ChildSelect,
 	}
 }

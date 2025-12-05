@@ -46,12 +46,14 @@ func (db *DB) createCollections(
 		return nil, err
 	}
 
+	finalizeRelations(parseResults, existingVersions)
+
 	newCollections := make([]client.CollectionVersion, len(parseResults))
 	for i, def := range parseResults {
 		newCollections[i] = def.Definition
 	}
 
-	err = setCollectionIDs(ctx, newCollections)
+	err = setCollectionIDs(ctx, newCollections, existingVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +233,7 @@ existingVersionLoop:
 		newCollections = append(newCollections, col)
 	}
 
-	err = setCollectionIDs(ctx, newCollections)
+	err = setCollectionIDs(ctx, newCollections, existingCols)
 	if err != nil {
 		return err
 	}
@@ -794,4 +796,86 @@ func deleteCollectionBlocks(
 	}
 
 	return nil
+}
+
+// finalizeRelations determines which side of a relation is primary and sets IsPrimary=true
+// on both the relation field and its corresponding _id field.
+//
+// A relation field is marked as primary if:
+// - The target collection has no corresponding field pointing back (one-sided relation), OR
+// - The corresponding field in the target collection is an array (one-to-many relation)
+//
+// This function handles both within-batch relations (new collections referencing each other)
+// and cross-batch relations (new collections referencing existing collections).
+//
+// Note on automatic IsPrimary assignment: When a new collection defines a relation to an
+// existing collection that has no back-reference, the new collection's field MUST be primary.
+// The existing collection cannot be modified to become primary, and a relation requires exactly
+// one primary side to store the foreign key.
+func finalizeRelations(
+	newCollections []core.Collection,
+	existingCollections []client.CollectionVersion,
+) {
+	existingByName := make(map[string]client.CollectionVersion)
+	for _, col := range existingCollections {
+		existingByName[col.Name] = col
+	}
+
+	newByName := make(map[string]client.CollectionVersion)
+	for _, col := range newCollections {
+		newByName[col.Definition.Name] = col.Definition
+	}
+
+	for i, newCol := range newCollections {
+		if newCol.Definition.IsEmbeddedOnly {
+			continue
+		}
+
+		for fieldIndex, field := range newCol.Definition.Fields {
+			namedKind, ok := field.Kind.(*client.NamedKind)
+			if !ok || namedKind.IsArray() {
+				// We only need to process the primary side of a relation here.
+				// If the field is not a relation or if it is an array, we can skip it.
+				continue
+			}
+
+			if field.IsPrimary {
+				continue
+			}
+
+			var targetCol client.CollectionVersion
+			var found bool
+
+			if col, inBatch := newByName[namedKind.Name]; inBatch {
+				targetCol = col
+				found = true
+			} else if col, exists := existingByName[namedKind.Name]; exists {
+				targetCol = col
+				found = true
+			}
+
+			if !found {
+				// The target collection doesn't exist. Validation will catch this later.
+				continue
+			}
+
+			correspondingField, hasCorrespondingField := targetCol.GetFieldByRelation(
+				field.RelationName.Value(),
+				newCol.Definition.Name,
+				field.Name,
+			)
+
+			if !hasCorrespondingField || correspondingField.Kind.IsArray() {
+				newCollections[i].Definition.Fields[fieldIndex].IsPrimary = true
+
+				idFieldName := field.Name + "_id"
+				for j, f := range newCollections[i].Definition.Fields {
+					if f.Name == idFieldName {
+						newCollections[i].Definition.Fields[j].IsPrimary = true
+						break
+					}
+				}
+			}
+		}
+	}
 }

@@ -91,8 +91,9 @@ func (n *valuesNode) Less(i, j int) bool {
 	return n.docValueLess(da, db)
 }
 
-// docValueLess extracts and compare field values of a document, returns true only if strictly less when ASC,
-// and true if greater than or equal when DESC, otherwise returns false.
+// docValueLess extracts and compares field values of documents for sorting.
+// Returns true if docA should come before docB based on the ordering conditions.
+// When values are equal for a condition, it continues to the next condition.
 func (n *valuesNode) docValueLess(docA, docB core.Doc) bool {
 	for _, order := range n.ordering {
 		compare := base.Compare(
@@ -100,19 +101,14 @@ func (n *valuesNode) docValueLess(docA, docB core.Doc) bool {
 			getDocProp(docB, order.FieldIndexes),
 		)
 
-		if order.Direction == mapper.DESC {
-			if compare > 0 {
-				return true
-			} else {
-				return false
-			}
-		} else { // Otherwise assume order.Direction == mapper.ASC
-			if compare < 0 {
-				return true
-			} else {
-				return false
-			}
+		if compare == 0 {
+			continue
 		}
+
+		if order.Direction == mapper.DESC {
+			return compare > 0
+		}
+		return compare < 0
 	}
 	return false
 }

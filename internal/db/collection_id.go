@@ -35,6 +35,7 @@ import (
 func setCollectionIDs(
 	ctx context.Context,
 	newCollections []client.CollectionVersion,
+	existingCollections []client.CollectionVersion,
 ) error {
 	// We need to group the inputs and then mutate them, so we temporarily
 	// map them to pointers.
@@ -52,7 +53,7 @@ func setCollectionIDs(
 		// their IDs are deterministic.
 		sortSet(collectionSet)
 
-		substituteRelationFieldKinds(collectionSet, collectionSets)
+		substituteRelationFieldKinds(collectionSet, collectionSets, existingCollections)
 		err := saveBlocks(ctx, collectionSet)
 		if err != nil {
 			return err
@@ -63,7 +64,7 @@ func setCollectionIDs(
 		// Secondary fields are not saved in the blockstore, thus they do not contribute to the collection IDs.
 		// The Kinds do however need to reference by CollectionID, which need to be substituted after the
 		// CollectionIDs have been generated.
-		substituteSecondaryRelationFieldKinds(collectionSet, collectionSets)
+		substituteSecondaryRelationFieldKinds(collectionSet, collectionSets, existingCollections)
 	}
 
 	for i := range newCollectionPtrs {
@@ -533,13 +534,17 @@ func saveBlocks(
 // Using names to reference other types is unsuitable as the names may change over time.
 func substituteRelationFieldKinds(
 	collectionSet []*client.CollectionVersion,
-	allCollectionSets [][]*client.CollectionVersion,
+	newCollectionSets [][]*client.CollectionVersion,
+	existingCollections []client.CollectionVersion,
 ) {
 	collectionsByName := map[string]client.CollectionVersion{}
-	for _, collectionSet := range allCollectionSets {
-		for _, collection := range collectionSet {
+	for _, set := range newCollectionSets {
+		for _, collection := range set {
 			collectionsByName[collection.Name] = *collection
 		}
+	}
+	for _, collection := range existingCollections {
+		collectionsByName[collection.Name] = collection
 	}
 
 	setIndexesByName := map[string]int{}
@@ -591,13 +596,17 @@ func substituteRelationFieldKinds(
 
 func substituteSecondaryRelationFieldKinds(
 	collectionSet []*client.CollectionVersion,
-	allCollectionSets [][]*client.CollectionVersion,
+	newCollectionSets [][]*client.CollectionVersion,
+	existingCollections []client.CollectionVersion,
 ) {
 	collectionsByName := map[string]client.CollectionVersion{}
-	for _, collectionSet := range allCollectionSets {
-		for _, collection := range collectionSet {
+	for _, set := range newCollectionSets {
+		for _, collection := range set {
 			collectionsByName[collection.Name] = *collection
 		}
+	}
+	for _, collection := range existingCollections {
+		collectionsByName[collection.Name] = collection
 	}
 
 	for i := range collectionSet {

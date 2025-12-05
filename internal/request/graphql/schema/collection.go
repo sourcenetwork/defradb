@@ -38,6 +38,9 @@ const (
 	typeString   string = "String"
 	typeBlob     string = "Blob"
 	typeJSON     string = "JSON"
+
+	// Special case enums
+	enum_UTC_NOW string = "UTC_NOW"
 )
 
 // TypeToDefaultPropName mapping is used to check that the default prop value
@@ -112,14 +115,6 @@ func fromAst(doc *ast.Document) (
 			// Do nothing, ignore it and continue
 			continue
 		}
-	}
-
-	// The details on the relations between objects depend on both sides
-	// of the relationship.  The relation manager handles this, and must be applied
-	// after all the collections have been processed.
-	err := finalizeRelations(results)
-	if err != nil {
-		return nil, err
 	}
 
 	return results, nil
@@ -441,6 +436,12 @@ func defaultFromAST(
 	case types.DefaultDirectivePropString:
 		value = gql.String.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropDateTime:
+		// Handle UTC_NOW as a special case, if that's what the default is
+		if enum, ok := arg.Value.(*ast.EnumValue); ok && enum.Value == enum_UTC_NOW {
+			value = enum_UTC_NOW
+			break
+		}
+		// Otherwise, parse the value normally as a DateTime
 		value = gql.DateTime.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropJSON:
 		jsonValue := types.JSON.ParseLiteral(arg.Value, nil)

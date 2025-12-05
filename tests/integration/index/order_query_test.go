@@ -585,7 +585,6 @@ func TestOrderQueryWithIndex_WithAscendingQueryOnDescendingIndexedField_ShouldRe
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
 func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(t *testing.T) {
 	req1 := `query {
 		User(order: [{name: ASC}, {age: ASC}]) {
@@ -646,40 +645,21 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						/* Expected result
-						{
-							"name": "Alice",
-							"age":  22,
-						},
-						{
-							"name": "Alice",
-							"age":  24,
-						},
-						{
-							"name": "Alice",
-							"age":  38,
-						},
 						{
 							"name": "Alan",
-							"age":  29,
-						},
-						*/
-						// Actual results
-						{
-							"name": "Alan",
-							"age":  29,
+							"age":  int64(29),
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  int64(22),
 						},
 						{
 							"name": "Alice",
-							"age":  22,
+							"age":  int64(24),
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  int64(38),
 						},
 					},
 				},
@@ -692,40 +672,21 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
-						/* Expected results
 						{
 							"name": "Alice",
-							"age":  22,
+							"age":  int64(38),
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  int64(24),
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  int64(22),
 						},
 						{
 							"name": "Alan",
-							"age":  29,
-						},
-						*/
-						// Actual results
-						{
-							"name": "Alice",
-							"age":  38,
-						},
-						{
-							"name": "Alice",
-							"age":  22,
-						},
-						{
-							"name": "Alice",
-							"age":  24,
-						},
-						{
-							"name": "Alan",
-							"age":  29,
+							"age":  int64(29),
 						},
 					},
 				},
@@ -740,7 +701,6 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
 func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(t *testing.T) {
 	req1 := `query {
 		User(order: [{name: ASC}, {age: ASC}]) {
@@ -801,40 +761,21 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						/* Expected result
-						{
-							"name": "Alice",
-							"age":  22,
-						},
-						{
-							"name": "Alice",
-							"age":  24,
-						},
-						{
-							"name": "Alice",
-							"age":  38,
-						},
 						{
 							"name": "Alan",
-							"age":  29,
-						},
-						*/
-						// Actual results
-						{
-							"name": "Alan",
-							"age":  29,
+							"age":  int64(29),
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  int64(22),
 						},
 						{
 							"name": "Alice",
-							"age":  22,
+							"age":  int64(24),
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  int64(38),
 						},
 					},
 				},
@@ -847,40 +788,21 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
-						/* Expected results
 						{
 							"name": "Alice",
-							"age":  22,
+							"age":  int64(38),
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  int64(24),
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  int64(22),
 						},
 						{
 							"name": "Alan",
-							"age":  29,
-						},
-						*/
-						// Actual results
-						{
-							"name": "Alice",
-							"age":  38,
-						},
-						{
-							"name": "Alice",
-							"age":  22,
-						},
-						{
-							"name": "Alice",
-							"age":  24,
-						},
-						{
-							"name": "Alan",
-							"age":  29,
+							"age":  int64(29),
 						},
 					},
 				},
@@ -895,7 +817,6 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
 func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t *testing.T) {
 	req1 := `query {
 		User(order: [{name: ASC}, {age: DESC}]) {
@@ -956,40 +877,21 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						/* Expected result
-						{
-							"name": "Alice",
-							"age":  22,
-						},
-						{
-							"name": "Alice",
-							"age":  24,
-						},
-						{
-							"name": "Alice",
-							"age":  38,
-						},
 						{
 							"name": "Alan",
-							"age":  29,
-						},
-						*/
-						// Actual results
-						{
-							"name": "Alan",
-							"age":  29,
+							"age":  int64(29),
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  int64(38),
 						},
 						{
 							"name": "Alice",
-							"age":  22,
+							"age":  int64(24),
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  int64(22),
 						},
 					},
 				},
@@ -1002,40 +904,21 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
-						/* Expected results
 						{
 							"name": "Alice",
-							"age":  22,
+							"age":  int64(22),
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  int64(24),
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  int64(38),
 						},
 						{
 							"name": "Alan",
-							"age":  29,
-						},
-						*/
-						// Actual results
-						{
-							"name": "Alice",
-							"age":  38,
-						},
-						{
-							"name": "Alice",
-							"age":  22,
-						},
-						{
-							"name": "Alice",
-							"age":  24,
-						},
-						{
-							"name": "Alan",
-							"age":  29,
+							"age":  int64(29),
 						},
 					},
 				},
@@ -1050,7 +933,6 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
 func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex(t *testing.T) {
 	req1 := `query {
 		User(order: [{name: ASC}, {age: DESC}]) {
@@ -1111,40 +993,21 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
-						/* Expected result
-						{
-							"name": "Alice",
-							"age":  22,
-						},
-						{
-							"name": "Alice",
-							"age":  24,
-						},
-						{
-							"name": "Alice",
-							"age":  38,
-						},
 						{
 							"name": "Alan",
-							"age":  29,
-						},
-						*/
-						// Actual results
-						{
-							"name": "Alan",
-							"age":  29,
+							"age":  int64(29),
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  int64(38),
 						},
 						{
 							"name": "Alice",
-							"age":  22,
+							"age":  int64(24),
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  int64(22),
 						},
 					},
 				},
@@ -1157,40 +1020,21 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
-						/* Expected results
 						{
 							"name": "Alice",
-							"age":  22,
+							"age":  int64(22),
 						},
 						{
 							"name": "Alice",
-							"age":  24,
+							"age":  int64(24),
 						},
 						{
 							"name": "Alice",
-							"age":  38,
+							"age":  int64(38),
 						},
 						{
 							"name": "Alan",
-							"age":  29,
-						},
-						*/
-						// Actual results
-						{
-							"name": "Alice",
-							"age":  38,
-						},
-						{
-							"name": "Alice",
-							"age":  22,
-						},
-						{
-							"name": "Alice",
-							"age":  24,
-						},
-						{
-							"name": "Alan",
-							"age":  29,
+							"age":  int64(29),
 						},
 					},
 				},
@@ -1205,7 +1049,6 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
 func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIndex(t *testing.T) {
 	req := `query {
 		User(order: [{name: ASC}, {level: ASC}, {age: ASC}]) {
@@ -1283,68 +1126,35 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIn
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						/* Expected results
 						{
 							"name":  "Alan",
-							"age":   29,
-							"level": 2,
+							"age":   int64(29),
+							"level": int64(2),
 						},
 						{
 							"name":  "Alice",
-							"age":   22,
-							"level": 1,
+							"age":   int64(22),
+							"level": int64(1),
 						},
 						{
 							"name":  "Alice",
-							"age":   24,
-							"level": 1,
+							"age":   int64(24),
+							"level": int64(1),
 						},
 						{
 							"name":  "Alice",
-							"age":   24,
-							"level": 2,
+							"age":   int64(24),
+							"level": int64(2),
 						},
 						{
 							"name":  "Alice",
-							"age":   24,
-							"level": 3,
+							"age":   int64(24),
+							"level": int64(3),
 						},
 						{
 							"name":  "Alice",
-							"age":   38,
-							"level": 3,
-						},
-						*/
-						// Actual results
-						{
-							"name":  "Alan",
-							"age":   29,
-							"level": 2,
-						},
-						{
-							"name":  "Alice",
-							"age":   24,
-							"level": 1,
-						},
-						{
-							"name":  "Alice",
-							"age":   22,
-							"level": 1,
-						},
-						{
-							"name":  "Alice",
-							"age":   38,
-							"level": 3,
-						},
-						{
-							"name":  "Alice",
-							"age":   24,
-							"level": 2,
-						},
-						{
-							"name":  "Alice",
-							"age":   24,
-							"level": 3,
+							"age":   int64(38),
+							"level": int64(3),
 						},
 					},
 				},
@@ -1359,7 +1169,6 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIn
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TODO: This test documents incorrect behaviour. https://github.com/sourcenetwork/defradb/issues/3780
 func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex(t *testing.T) {
 	req := `query {
 		User(order: [{name: ASC},  {age: ASC}, {level: ASC}]) {
@@ -1437,68 +1246,35 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						/* Expected result
 						{
 							"name":  "Alan",
-							"age":   29,
-							"level": 2,
+							"age":   int64(29),
+							"level": int64(2),
 						},
 						{
 							"name":  "Alice",
-							"age":   22,
-							"level": 1,
+							"age":   int64(22),
+							"level": int64(1),
 						},
 						{
 							"name":  "Alice",
-							"age":   24,
-							"level": 1,
+							"age":   int64(24),
+							"level": int64(1),
 						},
 						{
 							"name":  "Alice",
-							"age":   24,
-							"level": 2,
+							"age":   int64(24),
+							"level": int64(2),
 						},
 						{
 							"name":  "Alice",
-							"age":   24,
-							"level": 3,
+							"age":   int64(24),
+							"level": int64(3),
 						},
 						{
 							"name":  "Alice",
-							"age":   38,
-							"level": 3,
-						},
-						*/
-						// Actual result
-						{
-							"name":  "Alan",
-							"age":   29,
-							"level": 2,
-						},
-						{
-							"name":  "Alice",
-							"age":   24,
-							"level": 1,
-						},
-						{
-							"name":  "Alice",
-							"age":   22,
-							"level": 1,
-						},
-						{
-							"name":  "Alice",
-							"age":   38,
-							"level": 3,
-						},
-						{
-							"name":  "Alice",
-							"age":   24,
-							"level": 2,
-						},
-						{
-							"name":  "Alice",
-							"age":   24,
-							"level": 3,
+							"age":   int64(38),
+							"level": int64(3),
 						},
 					},
 				},

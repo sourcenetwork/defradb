@@ -223,3 +223,45 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryCommits_WithFilterFieldNameAndDepth_ReturnsCommitsAtAllHeights(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			testUtils.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{"age": 22}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{"age": 23}`,
+			},
+			testUtils.Request{
+				Request: `query {
+						_commits(filter: {fieldName: {_eq: "age"}}, depth: 2) {
+							fieldName
+							height
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+							"height":    int64(3),
+						},
+						{
+							"fieldName": "age",
+							"height":    int64(2),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

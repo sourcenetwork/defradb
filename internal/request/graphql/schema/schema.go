@@ -25,12 +25,14 @@ func defaultSchema() (gql.Schema, error) {
 	commitLinkObject := types.CommitLinkObject()
 	commitObject := types.CommitObject(commitLinkObject)
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
+	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
+	commitsFilterArg := types.CommitsFilterArg(commitsFilterFieldNameArg)
 
 	encryptedSearchResult := types.EncryptedSearchResultObject()
 
 	indexFieldInput := types.IndexFieldInputObject(orderEnum)
 
-	queryCommits := types.QueryCommits(commitObject, commitsOrderArg)
+	queryCommits := types.QueryCommits(commitObject, commitsOrderArg, commitsFilterArg)
 
 	sch, err := gql.NewSchema(gql.SchemaConfig{
 		Types: defaultTypes(
