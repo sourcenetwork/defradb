@@ -193,10 +193,8 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 		b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
 	}
 
-	if key.Offset != 0 {
-		for i := 0; i < int(key.Offset); i++ {
-			b = bytesPrefixEnd(b)
-		}
+	for i := 0; i < int(key.Offset); i++ {
+		b = bytesPrefixEnd(b)
 	}
 
 	return b
