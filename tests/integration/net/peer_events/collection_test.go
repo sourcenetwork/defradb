@@ -13,6 +13,7 @@ package peer_events
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -130,6 +131,105 @@ func TestPeerEvents_MultipleNodesSubscribedToCollection_ShouldReceiveAllJoinEven
 				NodeID: 0,
 				ExpectedPeersByCollection: map[int][]int{
 					0: {1, 2},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPeerEvents_OnUnsubscribeFromCollection_ShouldReceiveLeftEvent(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+					}
+				`,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        0,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByCollection: map[int][]int{
+					0: {1},
+				},
+			},
+			testUtils.UnsubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			&action.WaitForPeersEvents{
+				NodeID:    0,
+				EventType: client.PeerEventTypeLeft,
+				ExpectedPeersByCollection: map[int][]int{
+					0: {1},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPeerEvents_OnUnsubscribeFromMultipleCollections_ShouldReceiveLeftEvents(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+					}
+					type Product {
+						title: String
+					}
+				`,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        0,
+				CollectionIDs: []int{0, 1},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0, 1},
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByCollection: map[int][]int{
+					0: {1},
+					1: {1},
+				},
+			},
+			testUtils.UnsubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0, 1},
+			},
+			&action.WaitForPeersEvents{
+				NodeID:    0,
+				EventType: client.PeerEventTypeLeft,
+				ExpectedPeersByCollection: map[int][]int{
+					0: {1},
+					1: {1},
 				},
 			},
 		},

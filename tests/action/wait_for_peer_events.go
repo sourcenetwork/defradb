@@ -20,12 +20,16 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// WaitForPeersEvents waits for peer join events on pubsub topics.
+// WaitForPeersEvents waits for peer events on pubsub topics.
 type WaitForPeersEvents struct {
 	stateful
 
-	// NodeID is the node that should receive the peer join events.
+	// NodeID is the node that should receive the peer events.
 	NodeID int
+
+	// EventType is the type of event to wait for.
+	// Defaults to client.PeerEventTypeJoined if not specified.
+	EventType string
 
 	// ExpectedPeersByTopic maps named topics (like "doc-sync") to expected peer node IDs.
 	ExpectedPeersByTopic map[string][]int
@@ -48,6 +52,11 @@ func (a *WaitForPeersEvents) Execute() {
 	timeout := a.Timeout
 	if timeout == 0 {
 		timeout = 5 * time.Second
+	}
+
+	eventType := a.EventType
+	if eventType == "" {
+		eventType = client.PeerEventTypeJoined
 	}
 
 	sourceNode := a.s.Nodes[a.NodeID]
@@ -100,7 +109,7 @@ func (a *WaitForPeersEvents) Execute() {
 			if !ok {
 				continue
 			}
-			if peerEvent.EventType != client.PeerEventTypeJoined {
+			if peerEvent.EventType != eventType {
 				continue
 			}
 			if topicPeers, topicExists := expectedPeers[peerEvent.Topic]; topicExists {
@@ -116,9 +125,9 @@ func (a *WaitForPeersEvents) Execute() {
 					remaining = append(remaining, topic+":"+peerID)
 				}
 			}
-			require.Fail(a.s.T, "timeout waiting for peer connections",
-				"source node %d did not receive join events for: %v",
-				a.NodeID, remaining)
+			require.Fail(a.s.T, "timeout waiting for peer events",
+				"source node %d did not receive %s events for: %v",
+				a.NodeID, eventType, remaining)
 			return
 		}
 	}
