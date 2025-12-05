@@ -11,6 +11,7 @@
 package predefined
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,6 +22,7 @@ import (
 )
 
 func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
+	ctx := context.Background()
 	schema := `
 		type User {
 			name: String
@@ -34,25 +36,26 @@ func TestGeneratePredefinedFromSchema_Simple(t *testing.T) {
 			{"name": "Fred", "age": 25},
 		},
 	}
-	docs, err := CreateFromSDL(schema, docsList)
+	docs, err := CreateFromSDL(ctx, schema, docsList)
 	assert.NoError(t, err)
 
 	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
-	errorMsg := assertDocs(mustAddDocIDsToDocs(docsList.Docs, colDefMap["User"]), docs)
+	errorMsg := assertDocs(mustAddDocIDsToDocs(ctx, docsList.Docs, colDefMap["User"]), docs)
 	if errorMsg != "" {
 		t.Error(errorMsg)
 	}
 }
 
 func TestGeneratePredefinedFromSchema_StripExcessiveFields(t *testing.T) {
+	ctx := context.Background()
 	schema := `
 		type User {
 			name: String
 		}`
 
-	docs, err := CreateFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{"name": "John", "age": 30},
@@ -64,7 +67,7 @@ func TestGeneratePredefinedFromSchema_StripExcessiveFields(t *testing.T) {
 	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
-	errorMsg := assertDocs(mustAddDocIDsToDocs([]map[string]any{
+	errorMsg := assertDocs(mustAddDocIDsToDocs(ctx, []map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
 	}, colDefMap["User"]), docs)
@@ -74,6 +77,7 @@ func TestGeneratePredefinedFromSchema_StripExcessiveFields(t *testing.T) {
 }
 
 func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
+	ctx := context.Background()
 	schema := `
 		type User {
 			name: String
@@ -84,7 +88,7 @@ func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 			owner: User @primary
 		}`
 
-	docs, err := CreateFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -106,19 +110,19 @@ func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
-	userDocs := mustAddDocIDsToDocs([]map[string]any{
+	userDocs := mustAddDocIDsToDocs(ctx, []map[string]any{
 		{"name": "John"},
 		{"name": "Fred"},
 	}, colDefMap["User"])
 
-	deviceDocs := mustAddDocIDsToDocs([]map[string]any{
+	deviceDocs := mustAddDocIDsToDocs(ctx, []map[string]any{
 		{
 			"model":    "iPhone",
-			"owner_id": mustGetDocIDFromDocMap(map[string]any{"name": "John"}, colDefMap["User"]),
+			"owner_id": mustGetDocIDFromDocMap(ctx, map[string]any{"name": "John"}, colDefMap["User"]),
 		},
 		{
 			"model":    "MacBook",
-			"owner_id": mustGetDocIDFromDocMap(map[string]any{"name": "Fred"}, colDefMap["User"]),
+			"owner_id": mustGetDocIDFromDocMap(ctx, map[string]any{"name": "Fred"}, colDefMap["User"]),
 		},
 	}, colDefMap["Device"])
 
@@ -129,6 +133,7 @@ func TestGeneratePredefinedFromSchema_OneToOne(t *testing.T) {
 }
 
 func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
+	ctx := context.Background()
 	schema := `
 		type User {
 			name: String
@@ -139,7 +144,7 @@ func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 			owner: User
 		}`
 
-	docs, err := CreateFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -161,17 +166,17 @@ func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
-	userDocs := mustAddDocIDsToDocs([]map[string]any{
+	userDocs := mustAddDocIDsToDocs(ctx, []map[string]any{
 		{
 			"name":      "John",
-			"device_id": mustGetDocIDFromDocMap(map[string]any{"model": "iPhone"}, colDefMap["Device"]),
+			"device_id": mustGetDocIDFromDocMap(ctx, map[string]any{"model": "iPhone"}, colDefMap["Device"]),
 		},
 		{
 			"name":      "Fred",
-			"device_id": mustGetDocIDFromDocMap(map[string]any{"model": "MacBook"}, colDefMap["Device"]),
+			"device_id": mustGetDocIDFromDocMap(ctx, map[string]any{"model": "MacBook"}, colDefMap["Device"]),
 		},
 	}, colDefMap["User"])
-	deviceDocs := mustAddDocIDsToDocs([]map[string]any{
+	deviceDocs := mustAddDocIDsToDocs(ctx, []map[string]any{
 		{"model": "iPhone"},
 		{"model": "MacBook"},
 	}, colDefMap["Device"])
@@ -183,6 +188,7 @@ func TestGeneratePredefinedFromSchema_OneToOnePrimary(t *testing.T) {
 }
 
 func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
+	ctx := context.Background()
 	schema := `
 		type User {
 			name: String
@@ -198,7 +204,7 @@ func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
 			device: Device
 		}`
 
-	docs, err := CreateFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -217,12 +223,12 @@ func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
 	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
-	specsDoc := mustAddDocIDToDoc(map[string]any{"OS": "iOS"}, colDefMap["Specs"])
-	deviceDoc := mustAddDocIDToDoc(map[string]any{
+	specsDoc := mustAddDocIDToDoc(ctx, map[string]any{"OS": "iOS"}, colDefMap["Specs"])
+	deviceDoc := mustAddDocIDToDoc(ctx, map[string]any{
 		"model":    "iPhone",
 		"specs_id": specsDoc[request.DocIDFieldName],
 	}, colDefMap["Device"])
-	userDoc := mustAddDocIDToDoc(map[string]any{
+	userDoc := mustAddDocIDToDoc(ctx, map[string]any{
 		"name":      "John",
 		"device_id": deviceDoc[request.DocIDFieldName],
 	}, colDefMap["User"])
@@ -234,6 +240,7 @@ func TestGeneratePredefinedFromSchema_OneToOneToOnePrimary(t *testing.T) {
 }
 
 func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
+	ctx := context.Background()
 	schema := `
 		type User {
 			name: String
@@ -249,7 +256,7 @@ func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
 			device: Device @primary
 		}`
 
-	docs, err := CreateFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -268,12 +275,12 @@ func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
 	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
-	deviceDoc := mustAddDocIDToDoc(map[string]any{"model": "iPhone"}, colDefMap["Device"])
-	specsDoc := mustAddDocIDToDoc(map[string]any{
+	deviceDoc := mustAddDocIDToDoc(ctx, map[string]any{"model": "iPhone"}, colDefMap["Device"])
+	specsDoc := mustAddDocIDToDoc(ctx, map[string]any{
 		"OS":        "iOS",
 		"device_id": deviceDoc[request.DocIDFieldName],
 	}, colDefMap["Specs"])
-	userDoc := mustAddDocIDToDoc(map[string]any{
+	userDoc := mustAddDocIDToDoc(ctx, map[string]any{
 		"name":      "John",
 		"device_id": deviceDoc[request.DocIDFieldName],
 	}, colDefMap["User"])
@@ -285,6 +292,7 @@ func TestGeneratePredefinedFromSchema_OneToTwoPrimary(t *testing.T) {
 }
 
 func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
+	ctx := context.Background()
 	schema := `
 		type User {
 			name: String
@@ -300,7 +308,7 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 			user: User 
 		}`
 
-	docs, err := CreateFromSDL(schema, DocsList{
+	docs, err := CreateFromSDL(ctx, schema, DocsList{
 		ColName: "User",
 		Docs: []map[string]any{
 			{
@@ -319,9 +327,9 @@ func TestGeneratePredefinedFromSchema_TwoPrimaryToOneRoot(t *testing.T) {
 	colDefMap, err := gen.ParseSDL(schema)
 	require.NoError(t, err)
 
-	deviceDoc := mustAddDocIDToDoc(map[string]any{"model": "iPhone"}, colDefMap["Device"])
-	addressDoc := mustAddDocIDToDoc(map[string]any{"street": "Backer"}, colDefMap["Address"])
-	userDoc := mustAddDocIDToDoc(map[string]any{
+	deviceDoc := mustAddDocIDToDoc(ctx, map[string]any{"model": "iPhone"}, colDefMap["Device"])
+	addressDoc := mustAddDocIDToDoc(ctx, map[string]any{"street": "Backer"}, colDefMap["Address"])
+	userDoc := mustAddDocIDToDoc(ctx, map[string]any{
 		"name":       "John",
 		"device_id":  deviceDoc[request.DocIDFieldName],
 		"address_id": addressDoc[request.DocIDFieldName],
