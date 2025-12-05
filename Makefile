@@ -445,7 +445,7 @@ fix:
 	@$(MAKE) mocks
 	@$(MAKE) docs
 
-.PHONY build-c-shared-linux:	
+.PHONY build-c-shared-linux:
 build-c-shared-linux:
 	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
 
