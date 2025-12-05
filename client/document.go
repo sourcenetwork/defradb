@@ -25,8 +25,8 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/clock"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/clock"
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
 

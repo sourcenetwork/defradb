@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-// type Clock = quartz.Clock
-
-// func NewMock()
-
 type ctxKey struct{}
 
 var clockCtxKey = ctxKey{}
