@@ -605,7 +605,6 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 	if selectReq.IsEncrypted {
 		return p.SelectEncrypted(selectReq)
 	}
-
 	s := &selectNode{
 		planner:   p,
 		filter:    selectReq.Filter,
