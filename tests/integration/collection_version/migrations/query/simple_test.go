@@ -1103,9 +1103,6 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRe
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TestSchemaMigrationQuery_MigrationBetweenOldVersions_ShouldApplyMigration tests the fix for issue #4119.
-// When a migration is configured between old versions (v3→v4) and the active version is v5,
-// documents stored at v1 should have the migration applied when queried from v5.
 func TestSchemaMigrationQuery_MigrationBetweenOldVersions_ShouldApplyMigration(t *testing.T) {
 	const (
 		schemaV3 = "bafyreidmsarf4ac4eihxk3ocqfort3e3pxhb7eumatvkanjsxxkjrn3h6a"
