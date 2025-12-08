@@ -189,11 +189,11 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 	if key.IndexID != 0 {
 		b = append(b, '/')
 		b = encoding.EncodeUvarintAscending(b, uint64(key.IndexID))
-	}
 
-	for _, field := range key.Fields {
-		b = append(b, '/')
-		b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
+		for _, field := range key.Fields {
+			b = append(b, '/')
+			b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
+		}
 	}
 
 	for i := 0; i < int(key.Offset); i++ {
