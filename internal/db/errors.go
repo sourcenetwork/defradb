@@ -127,6 +127,8 @@ const (
 	errUnknownCID                          string = "unknown CID, collection ids cannot be manually defined"
 	errMigrationBetweenNonAdjacentVersions string = "cannot migrate between non-adjacent collection versions"
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
+	errCannotSetTransformAndTransformCID   string = "cannot set both transform and transformCID"
+	errLensCIDNotFound                     string = "lens CID not found"
 )
 
 var (
@@ -191,6 +193,8 @@ var (
 	ErrBadDocsResultType                         = errors.New("bad docs result type")
 	ErrMigrationBetweenNonAdjacentVersions       = errors.New(errMigrationBetweenNonAdjacentVersions)
 	ErrLensRuntimeNotSupported                   = errors.New(errLensRuntimeNotSupported)
+	ErrCannotSetTransformAndTransformCID         = errors.New(errCannotSetTransformAndTransformCID)
+	ErrLensCIDNotFound                           = errors.New(errLensCIDNotFound)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -819,4 +823,8 @@ func NewErrMigrationBetweenNonAdjacentVersions(sourceVersion string, destination
 
 func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
 	return errors.New(errLensRuntimeNotSupported, errors.NewKV("Lens", lens))
+}
+
+func NewErrLensCIDNotFound(cid string) error {
+	return errors.New(errLensCIDNotFound, errors.NewKV("CID", cid))
 }

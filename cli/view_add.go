@@ -25,6 +25,7 @@ import (
 
 func MakeViewAddCommand(ctx context.Context) *cobra.Command {
 	var lensFile string
+	var lensCID string
 	var cmd = &cobra.Command{
 		Use:   "add [query] [sdl] [transform]",
 		Short: "Add new view",
@@ -68,7 +69,12 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				transform = immutable.Some(lensCfg)
 			}
 
-			defs, err := cliClient.AddView(cmd.Context(), query, sdl, transform)
+			var transformCIDOpt immutable.Option[string]
+			if lensCID != "" {
+				transformCIDOpt = immutable.Some(lensCID)
+			}
+
+			defs, err := cliClient.AddView(cmd.Context(), query, sdl, transform, transformCIDOpt)
 			if err != nil {
 				return err
 			}
@@ -78,7 +84,10 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 
 	EmbedCLIExample(ctx, cmd, "add from an argument string",
 		`defradb client view add 'Foo { name, ...}' 'type Foo { ... }' '{"lenses": [...'`)
+	EmbedCLIExample(ctx, cmd, "add using an existing lens CID",
+		`defradb client view add 'Foo { name, ...}' 'type Foo { ... }' --lens-cid bafyreih...`)
 
 	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")
+	cmd.Flags().StringVar(&lensCID, "lens-cid", "", "CID of an existing lens transform")
 	return cmd
 }

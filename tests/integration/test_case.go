@@ -256,6 +256,10 @@ type CreateView struct {
 	// An optional Lens transform to add to the view.
 	Transform immutable.Option[model.Lens]
 
+	// An optional CID of an existing lens transform.
+	// Only one of Transform or TransformCID may be provided.
+	TransformCID immutable.Option[string]
+
 	// Any error expected from the action. Optional.
 	//
 	// String can be a partial, and the test will pass if an error is returned that

@@ -226,11 +226,15 @@ type Store interface {
 	// Optionally, a lens transform configuration may also be provided - it will execute after the query has run.
 	// The transform is not limited to just transforming the input documents, it may also yield new ones, or filter out
 	// those passed in from the underlying query.
+	//
+	// Alternatively, a transformCID may be provided referencing an already-stored lens by its CID.
+	// Only one of transform or transformCID may be provided.
 	AddView(
 		ctx context.Context,
 		gqlQuery string,
 		sdl string,
 		transform immutable.Option[model.Lens],
+		transformCID immutable.Option[string],
 	) ([]CollectionVersion, error)
 
 	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set, all views

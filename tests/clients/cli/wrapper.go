@@ -306,6 +306,7 @@ func (w *Wrapper) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	args := []string{"client", "view", "add"}
 	args = append(args, query)
@@ -317,6 +318,10 @@ func (w *Wrapper) AddView(
 			return nil, err
 		}
 		args = append(args, string(lenses))
+	}
+
+	if transformCID.HasValue() {
+		args = append(args, "--lens-cid", transformCID.Value())
 	}
 
 	data, err := w.cmd.execute(ctx, args)

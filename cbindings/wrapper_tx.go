@@ -117,8 +117,9 @@ func (txn *Transaction) AddView(
 	gqlQuery string,
 	sdl string,
 	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, transform)
+	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, transform, transformCID)
 }
 
 func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {

@@ -32,6 +32,7 @@ func ViewAdd(nodePtr C.uintptr_t,
 	query *C.char,
 	sdl *C.char,
 	transformStr *C.char,
+	transformCIDStr *C.char,
 	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
@@ -53,12 +54,18 @@ func ViewAdd(nodePtr C.uintptr_t,
 		transform = immutable.Some(lensCfg)
 	}
 
+	var transformCID immutable.Option[string]
+	transformCIDValue := C.GoString(transformCIDStr)
+	if transformCIDValue != "" {
+		transformCID = immutable.Some(transformCIDValue)
+	}
+
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), transform)
+	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), transform, transformCID)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

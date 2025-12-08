@@ -35,7 +35,11 @@ func (db *DB) addView(
 	inputQuery string,
 	sdl string,
 	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
+	if transform.HasValue() && transformCID.HasValue() {
+		return nil, ErrCannotSetTransformAndTransformCID
+	}
 	// Wrap the given query as part of the GQL query object - this simplifies the syntax for users
 	// and ensures that we can't be given mutations.  In the future this line should disappear along
 	// with the all calls to the parser appart from `ParseSDL` when we implement the DQL stuff.
@@ -73,6 +77,15 @@ func (db *DB) addView(
 				return nil, err
 			}
 			lensID = immutable.Some(cid.String())
+		} else if transformCID.HasValue() {
+			exists, err := db.lensCIDExists(ctx, transformCID.Value())
+			if err != nil {
+				return nil, err
+			}
+			if !exists {
+				return nil, NewErrLensCIDNotFound(transformCID.Value())
+			}
+			lensID = transformCID
 		}
 
 		source := client.QuerySource{
@@ -328,4 +341,19 @@ func (db *DB) generateMaximalSelectFromCollection(
 			Fields: childRequests,
 		},
 	}, nil
+}
+
+// lensCIDExists checks if a lens with the given CID exists in the lens store.
+func (db *DB) lensCIDExists(ctx context.Context, cidStr string) (bool, error) {
+	lenses, err := db.getLensStore(ctx).List(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	for storedCID := range lenses {
+		if storedCID.String() == cidStr {
+			return true, nil
+		}
+	}
+	return false, nil
 }

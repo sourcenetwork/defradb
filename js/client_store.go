@@ -82,11 +82,15 @@ func (c *Client) addView(this js.Value, args []js.Value) (js.Value, error) {
 	if err := structArg(args, 2, "transform", &transform); err != nil {
 		return js.Undefined(), err
 	}
-	ctx, err := contextArg(args, 3, c.txns)
+	var transformCID immutable.Option[string]
+	if err := structArg(args, 3, "transformCID", &transformCID); err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 4, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	cols, err := c.node.DB.AddView(ctx, gqlQuery, sdl, transform)
+	cols, err := c.node.DB.AddView(ctx, gqlQuery, sdl, transform, transformCID)
 	if err != nil {
 		return js.Undefined(), err
 	}

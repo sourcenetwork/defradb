@@ -62,7 +62,7 @@ extern Result AddSchema(uintptr_t nodePtr, char* schema, uintptr_t identity);
 extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result VersionGet(int flagFull, int flagJSON);
-extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr, uintptr_t identityPtr);
+extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr, char* transformCIDStr, uintptr_t identityPtr);
 extern Result ViewRefresh(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 */
 import "C"
@@ -597,13 +597,16 @@ func (w *CWrapper) AddView(
 	query string,
 	sdl string,
 	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	cIdentity := identityFromContext(ctx)
 	transformStr, err := stringFromLensOption(transform)
 	cTransform := C.CString(transformStr)
+	cTransformCID := C.CString(stringFromImmutableOptionString(transformCID))
 	cQuery := C.CString(query)
 	cSDL := C.CString(sdl)
 	defer C.free(unsafe.Pointer(cTransform))
+	defer C.free(unsafe.Pointer(cTransformCID))
 	defer C.free(unsafe.Pointer(cQuery))
 	defer C.free(unsafe.Pointer(cSDL))
 	defer C.IdentityFree(cIdentity)
@@ -613,7 +616,7 @@ func (w *CWrapper) AddView(
 	}
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ViewAdd(callHandle, cQuery, cSDL, cTransform, cIdentity))
+	res := ConvertAndFreeCResult(C.ViewAdd(callHandle, cQuery, cSDL, cTransform, cTransformCID, cIdentity))
 
 	if res.Status != 0 {
 		return []client.CollectionVersion{}, errors.New(res.Error)
