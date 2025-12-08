@@ -165,7 +165,10 @@ func (d *docGenerator) generatePrimary(
 
 // generateRelatedDocs generates related docs (primary and secondary) for the given doc and
 // adds foreign docID to the given doc to reference the primary docs.
-func (d *docGenerator) generateRelatedDocs(ctx context.Context, docMap map[string]any, typeName string) ([]gen.GeneratedDoc, error) {
+func (d *docGenerator) generateRelatedDocs(ctx context.Context,
+	docMap map[string]any,
+	typeName string,
+) ([]gen.GeneratedDoc, error) {
 	typeDef := d.types[typeName]
 
 	// create first primary docs and link them to the given doc so that we can define

@@ -48,7 +48,10 @@ func AutoGenerateFromSDL(ctx context.Context, gqlSDL string, options ...Option) 
 }
 
 // AutoGenerate generates random documents from collection definitions.
-func AutoGenerate(ctx context.Context, definitions []client.CollectionVersion, options ...Option) ([]GeneratedDoc, error) {
+func AutoGenerate(ctx context.Context,
+	definitions []client.CollectionVersion,
+	options ...Option,
+) ([]GeneratedDoc, error) {
 	err := validateDefinitions(definitions)
 	if err != nil {
 		return nil, err

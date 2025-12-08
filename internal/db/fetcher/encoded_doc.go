@@ -108,7 +108,10 @@ func (encdoc *encodedDocument) Reset() {
 }
 
 // Decode returns a properly decoded document object
-func Decode(ctx context.Context, encdoc EncodedDocument, collection client.CollectionVersion) (*client.Document, error) {
+func Decode(ctx context.Context,
+	encdoc EncodedDocument,
+	collection client.CollectionVersion,
+) (*client.Document, error) {
 	docID, err := client.NewDocIDFromString(string(encdoc.ID()))
 	if err != nil {
 		return nil, err
