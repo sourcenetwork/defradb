@@ -134,7 +134,7 @@ func TestMutationCreateFieldKinds_WithDateTime_WithUTCNow(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestMutationCreate_WithDateTime_SetsTwoEqualUTCNowValue(t *testing.T) {
+func TestMutationCreate_WithDateTime_SetsTwoEqualUTCNowValues(t *testing.T) {
 	timestampMatcher := testUtils.NewSameValue()
 	test := testUtils.TestCase{
 		Actions: []any{

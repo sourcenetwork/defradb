@@ -7,7 +7,6 @@ require (
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/cosmos/cosmos-sdk v0.50.14
 	github.com/cosmos/gogoproto v1.7.0
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
 	github.com/dgraph-io/badger/v4 v4.8.0
 	github.com/evanphx/json-patch/v5 v5.9.11
@@ -153,6 +152,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/cskr/pubsub v1.0.2 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/davidlazar/go-crypto v0.0.0-20200604182044-b73af7476f6c // indirect
 	github.com/desertbit/timer v1.0.1 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.3.0 // indirect
@@ -412,4 +412,4 @@ require (
 
 replace github.com/wlynxg/anet => github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e
 
-replace github.com/sourcenetwork/graphql-go => github.com/ChrisBQu/graphql-go v0.0.0-20251203190351-3d6e5872180b
+replace github.com/sourcenetwork/graphql-go => github.com/ChrisBQu/graphql-go v0.0.0-20251208162229-23edae7d3841
