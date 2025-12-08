@@ -13,6 +13,8 @@ package action
 import (
 	"time"
 
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -72,8 +74,8 @@ func (a *WaitForPeersEvents) Execute() {
 			require.NoError(a.s.T, err)
 			require.NotEmpty(a.s.T, targetAddresses, "target node %d has no addresses", peerNodeID)
 
-			peerID := extractPeerID(targetAddresses[0])
-			require.NotEmpty(a.s.T, peerID, "could not extract peer ID from address for node %d", peerNodeID)
+			peerID, err := extractPeerID(targetAddresses[0])
+			require.NoError(a.s.T, err, "could not extract peer ID from address for node %d", peerNodeID)
 			expectedPeers[topic][peerID] = true
 		}
 	}
@@ -134,13 +136,14 @@ func (a *WaitForPeersEvents) Execute() {
 }
 
 // extractPeerID extracts the peer ID from a multiaddr string.
-// Example: /ip4/127.0.0.1/tcp/4001/p2p/12D3KooWExample -> 12D3KooWExample
-func extractPeerID(addr string) string {
-	const p2pPrefix = "/p2p/"
-	for i := 0; i < len(addr); i++ {
-		if i+len(p2pPrefix) <= len(addr) && addr[i:i+len(p2pPrefix)] == p2pPrefix {
-			return addr[i+len(p2pPrefix):]
-		}
+func extractPeerID(addr string) (string, error) {
+	maddr, err := multiaddr.NewMultiaddr(addr)
+	if err != nil {
+		return "", err
 	}
-	return ""
+	id, err := peer.IDFromP2PAddr(maddr)
+	if err != nil {
+		return "", err
+	}
+	return id.String(), nil
 }
