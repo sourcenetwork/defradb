@@ -1102,3 +1102,109 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRe
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+// TestSchemaMigrationQuery_MigrationBetweenOldVersions_ShouldApplyMigration tests the fix for issue #4119.
+// When a migration is configured between old versions (v3→v4) and the active version is v5,
+// documents stored at v1 should have the migration applied when queried from v5.
+func TestSchemaMigrationQuery_MigrationBetweenOldVersions_ShouldApplyMigration(t *testing.T) {
+	const (
+		schemaV3 = "bafyreidmsarf4ac4eihxk3ocqfort3e3pxhb7eumatvkanjsxxkjrn3h6a"
+		schemaV4 = "bafyreidptieeo3tckkyi6jnomavo3noy2mxuv7dfuc76pf2vgxm6ilfazq"
+	)
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						age: Int @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"age":  20,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  30,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Fred",
+					"age":  25,
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Islam",
+					"age":  32,
+				},
+			},
+			testUtils.PatchCollection{
+				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }]`,
+			},
+			testUtils.PatchCollection{
+				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }]`,
+			},
+			testUtils.PatchCollection{
+				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "rank", "Kind": "Int"} }]`,
+			},
+			testUtils.PatchCollection{
+				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "score", "Kind": "Int"} }]`,
+			},
+			testUtils.ConfigureMigration{
+				LensConfig: client.LensConfig{
+					SourceSchemaVersionID:      schemaV3,
+					DestinationSchemaVersionID: schemaV4,
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.IncrementModulePath,
+								Arguments: map[string]any{
+									"field": "age",
+									"value": 5,
+								},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 30}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {age: {_eq: 35}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
