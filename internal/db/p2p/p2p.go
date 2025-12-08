@@ -144,7 +144,7 @@ func (proc *pushLogCommProcessor) ProcessRequest(
 
 // peerEventHandlingHost wraps a Host to add a PeerEventHandler to pubsub topics.
 // It's added so that KMS doesn't need to bother with event handling and keeps it independent
-// from e
+// from the event bus.
 type peerEventHandlingHost struct {
 	client.Host
 	eventHandler client.PeerEventHandler
