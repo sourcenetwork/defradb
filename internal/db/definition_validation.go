@@ -30,8 +30,9 @@ import (
 type definitionState struct {
 	collections []client.CollectionVersion
 
-	collectionsByID         map[string]client.CollectionVersion
-	activeCollectionsByName map[string]client.CollectionVersion
+	collectionsByID          map[string]client.CollectionVersion
+	activeCollectionsByName  map[string]client.CollectionVersion
+	activeCollectionsByColID map[string]client.CollectionVersion
 }
 
 // newDefinitionState creates a new definitionState object given the provided
@@ -41,10 +42,12 @@ func newDefinitionState(
 ) *definitionState {
 	collectionsByID := map[string]client.CollectionVersion{}
 	activeCollectionsByName := map[string]client.CollectionVersion{}
+	activeCollectionsByColID := map[string]client.CollectionVersion{}
 
 	for _, col := range collections {
 		if col.IsActive {
 			activeCollectionsByName[col.Name] = col
+			activeCollectionsByColID[col.CollectionID] = col
 		}
 
 		if col.VersionID != "" {
@@ -53,9 +56,10 @@ func newDefinitionState(
 	}
 
 	return &definitionState{
-		collections:             collections,
-		collectionsByID:         collectionsByID,
-		activeCollectionsByName: activeCollectionsByName,
+		collections:              collections,
+		collectionsByID:          collectionsByID,
+		activeCollectionsByName:  activeCollectionsByName,
+		activeCollectionsByColID: activeCollectionsByColID,
 	}
 }
 
@@ -69,6 +73,10 @@ func (s *definitionState) getCollection(
 ) (client.CollectionVersion, bool) {
 	switch typedKind := kind.(type) {
 	case *client.NamedKind:
+		if col, ok := s.activeCollectionsByName[typedKind.Name]; ok {
+			return col, true
+		}
+
 		for _, col := range s.collections {
 			if col.Name == typedKind.Name {
 				return col, true
@@ -78,6 +86,9 @@ func (s *definitionState) getCollection(
 		return client.CollectionVersion{}, false
 
 	case *client.CollectionKind:
+		if col, ok := s.activeCollectionsByColID[typedKind.CollectionID]; ok {
+			return col, true
+		}
 		def, ok := s.collectionsByID[typedKind.CollectionID]
 		return def, ok
 

@@ -793,6 +793,250 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 	executeTestCase(t, test)
 }
 
+func TestQuerySimple_WithMultipleOrderFieldsASCAndASC_ShouldOrderCorrectly(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 38
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 22
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 30
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 24
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: [{Name: ASC}, {Age: ASC}]) {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Alice",
+							"Age":  int64(22),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(24),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(38),
+						},
+						{
+							"Name": "Bob",
+							"Age":  int64(30),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithMultipleOrderFieldsACSAndDESC_ShouldOrderCorrectly(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 38
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 22
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 30
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 24
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: [{Name: ASC}, {Age: DESC}]) {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Alice",
+							"Age":  int64(38),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(24),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(22),
+						},
+						{
+							"Name": "Bob",
+							"Age":  int64(30),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithMultipleOrderFieldsDESCAndASC_ShouldOrderCorrectly(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 38
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 22
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 30
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 24
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: [{Name: DESC}, {Age: ASC}]) {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+							"Age":  int64(30),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(22),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(24),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(38),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithMultipleOrderFieldsDECSAndDESC_ShouldOrderCorrectly(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 38
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 22
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 30
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Alice",
+					"Age": 24
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(order: [{Name: DESC}, {Age: DESC}]) {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+							"Age":  int64(30),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(38),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(24),
+						},
+						{
+							"Name": "Alice",
+							"Age":  int64(22),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
 func TestQuerySimple_WithInvalidOrderEnum_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

@@ -55,6 +55,9 @@ func TestQueryCommitsBranchables_WithDelete(t *testing.T) {
 							links {
 								cid
 							}
+							heads {
+								cid
+							}
 						}
 					}`,
 				Results: map[string]any{
@@ -63,10 +66,12 @@ func TestQueryCommitsBranchables_WithDelete(t *testing.T) {
 							"cid": gomega.And(collectionDeleteCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": collectionCreateCid,
-								},
-								{
 									"cid": deleteCid,
+								},
+							},
+							"heads": []map[string]any{
+								{
+									"cid": collectionCreateCid,
 								},
 							},
 						},
@@ -77,18 +82,22 @@ func TestQueryCommitsBranchables_WithDelete(t *testing.T) {
 									"cid": createCid,
 								},
 							},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid":   gomega.And(nameCid, uniqueCid),
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid":   gomega.And(ageCid, uniqueCid),
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
-							"cid": gomega.And(deleteCid, uniqueCid),
-							"links": []map[string]any{
+							"cid":   gomega.And(deleteCid, uniqueCid),
+							"links": []map[string]any{},
+							"heads": []map[string]any{
 								{
 									"cid": createCid,
 								},
@@ -104,6 +113,7 @@ func TestQueryCommitsBranchables_WithDelete(t *testing.T) {
 									"cid": ageCid,
 								},
 							},
+							"heads": []map[string]any{},
 						},
 					},
 				},

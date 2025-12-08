@@ -102,7 +102,10 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							height
 							links {
 								cid
-								name
+								fieldName
+							}
+							heads {
+								cid
 							}
 						}
 					}`,
@@ -117,10 +120,11 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"height":          int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  compositeCid,
-									"name": nil,
+									"cid":       compositeCid,
+									"fieldName": "_C",
 								},
 							},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid":             gomega.And(ageCid, uniqueCid),
@@ -130,6 +134,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"fieldName":       "age",
 							"height":          int64(1),
 							"links":           []map[string]any{},
+							"heads":           []map[string]any{},
 						},
 						{
 							"cid":             gomega.And(nameCid, uniqueCid),
@@ -139,6 +144,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"fieldName":       "name",
 							"height":          int64(1),
 							"links":           []map[string]any{},
+							"heads":           []map[string]any{},
 						},
 						{
 							"cid":             gomega.And(compositeCid, uniqueCid),
@@ -149,14 +155,15 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"height":          int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  ageCid,
-									"name": "age",
+									"cid":       ageCid,
+									"fieldName": "age",
 								},
 								{
-									"cid":  nameCid,
-									"name": "name",
+									"cid":       nameCid,
+									"fieldName": "name",
 								},
 							},
+							"heads": []map[string]any{},
 						},
 					},
 				},
