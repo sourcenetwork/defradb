@@ -39,7 +39,7 @@ func (txn *Transaction) ID() uint64 {
 }
 
 func (txn *Transaction) StartTS() time.Time {
-	return txn.tx.StartTS()
+	return txn.txn.StartTS()
 }
 
 func (txn *Transaction) Commit() error {
