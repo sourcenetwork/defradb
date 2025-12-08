@@ -48,7 +48,7 @@ require (
 	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-p2p v0.1.5
 	github.com/sourcenetwork/goji v0.0.8
-	github.com/sourcenetwork/graphql-go v0.7.10-0.20251126162830-73185f9b1d45
+	github.com/sourcenetwork/graphql-go v0.7.4-0.20251208194504-a831d1b53d40
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/lens/host-go v0.9.4
 	github.com/sourcenetwork/sourcehub v0.2.1-0.20250310083845-94a8142548bf
@@ -411,5 +411,3 @@ require (
 )
 
 replace github.com/wlynxg/anet => github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e
-
-replace github.com/sourcenetwork/graphql-go => github.com/ChrisBQu/graphql-go v0.0.0-20251208162229-23edae7d3841
