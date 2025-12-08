@@ -34,8 +34,11 @@ type IndexDataStoreKey struct {
 	IndexID uint32
 	// Fields is the values of the fields in the index
 	Fields []IndexedField
-	// Offset can be set in order to add the given value to the end of the resultant bytes,
-	// allowing fine-grained control over key selection.
+	// Offset can be set in order to control how many times `bytesPrefixEnd` is called when this `IndexDataStoreKey`
+	// is serialized.
+	//
+	// This allows `bytesPrefixEnd` to be managed before serialization, allowing the `bytesPrefixEnd`'ed key to be
+	// passed into strongly typed interfaces, such as `Keyedstore`.
 	Offset uint64
 }
 
