@@ -1948,6 +1948,36 @@
             }
         },
         "/lens": {
+            "get": {
+                "description": "List all stored lenses",
+                "operationId": "lens_list",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "lenses": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "List of stored lenses"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "lens"
+                ]
+            },
             "post": {
                 "description": "Add a new lens migration",
                 "operationId": "lens_set_migration",
