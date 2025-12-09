@@ -129,6 +129,10 @@ func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConf
 	return txn.CWrapper.SetMigration(ctx, config)
 }
 
+func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	return txn.CWrapper.AddLens(ctx, lens)
+}
+
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,

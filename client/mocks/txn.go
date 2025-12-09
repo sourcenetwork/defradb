@@ -254,6 +254,72 @@ func (_c *Txn_AddDACPolicy_Call) RunAndReturn(run func(ctx context.Context, poli
 	return _c
 }
 
+// AddLens provides a mock function for the type Txn
+func (_mock *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	ret := _mock.Called(ctx, lens)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddLens")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens) (string, error)); ok {
+		return returnFunc(ctx, lens)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens) string); ok {
+		r0 = returnFunc(ctx, lens)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, model.Lens) error); ok {
+		r1 = returnFunc(ctx, lens)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_AddLens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddLens'
+type Txn_AddLens_Call struct {
+	*mock.Call
+}
+
+// AddLens is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lens model.Lens
+func (_e *Txn_Expecter) AddLens(ctx interface{}, lens interface{}) *Txn_AddLens_Call {
+	return &Txn_AddLens_Call{Call: _e.mock.On("AddLens", ctx, lens)}
+}
+
+func (_c *Txn_AddLens_Call) Run(run func(ctx context.Context, lens model.Lens)) *Txn_AddLens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 model.Lens
+		if args[1] != nil {
+			arg1 = args[1].(model.Lens)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_AddLens_Call) Return(s string, err error) *Txn_AddLens_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *Txn_AddLens_Call) RunAndReturn(run func(ctx context.Context, lens model.Lens) (string, error)) *Txn_AddLens_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddNACActorRelationship provides a mock function for the type Txn
 func (_mock *Txn) AddNACActorRelationship(ctx context.Context, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, relation, targetActor)

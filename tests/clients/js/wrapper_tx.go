@@ -126,6 +126,11 @@ func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConf
 	return txn.Wrapper.SetMigration(ctx, config)
 }
 
+func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddLens(ctx, lens)
+}
+
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,

@@ -285,6 +285,18 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 	return res[0].String(), err
 }
 
+func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	lensVal, err := goji.MarshalJS(lens)
+	if err != nil {
+		return "", err
+	}
+	res, err := execute(ctx, w.value, "addLens", lensVal)
+	if err != nil {
+		return "", err
+	}
+	return res[0].String(), err
+}
+
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
 	res, err := execute(ctx, w.value, "getCollectionByName", name)
 	if err != nil {

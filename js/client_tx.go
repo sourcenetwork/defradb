@@ -43,6 +43,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"addView":                    goji.Async(wrapper.addView),
 		"refreshViews":               goji.Async(wrapper.refreshViews),
 		"setMigration":               goji.Async(wrapper.setMigration),
+		"addLens":                    goji.Async(wrapper.addLens),
 		"getCollectionByName":        goji.Async(wrapper.getCollectionByName),
 		"getCollections":             goji.Async(wrapper.getCollections),
 		"getAllIndexes":              goji.Async(wrapper.getAllIndexes),
@@ -164,6 +165,22 @@ func (t *transaction) setMigration(this js.Value, args []js.Value) (js.Value, er
 		return js.Undefined(), err
 	}
 	lensID, err := t.txn.SetMigration(ctx, config)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return js.ValueOf(lensID), err
+}
+
+func (t *transaction) addLens(this js.Value, args []js.Value) (js.Value, error) {
+	var lens model.Lens
+	if err := structArg(args, 0, "lens", &lens); err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 1, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	lensID, err := t.txn.AddLens(ctx, lens)
 	if err != nil {
 		return js.Undefined(), err
 	}

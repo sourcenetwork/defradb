@@ -77,3 +77,4 @@ func configureMigration(
 	// Originally was added for [CreateIndex] to be able to index docs with migrated values.
 	refreshCollections(s)
 }
+

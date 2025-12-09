@@ -20,6 +20,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -152,6 +153,32 @@ func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	responseJSON(rw, http.StatusOK, &SetMigrationResponse{LensID: lensID})
+}
+
+type AddLensRequest struct {
+	Lens model.Lens `json:"lens"`
+}
+
+type AddLensResponse struct {
+	LensID string `json:"lensId"`
+}
+
+func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	var addLensReq AddLensRequest
+	if err := requestJSON(req, &addLensReq); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	lensID, err := db.AddLens(req.Context(), addLensReq.Lens)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, &AddLensResponse{LensID: lensID})
 }
 
 func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
@@ -642,6 +669,31 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	setMigration.AddResponse(200, setMigrationResponse)
 	setMigration.Responses.Set("400", errorResponse)
 
+	addLensRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/add_lens_request",
+	}
+	addLensRequestBody := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithJSONSchemaRef(addLensRequestSchema)
+
+	addLensResponseSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/add_lens_response",
+	}
+	addLensResponse := openapi3.NewResponse().
+		WithDescription("Lens CID").
+		WithJSONSchemaRef(addLensResponseSchema)
+
+	addLens := openapi3.NewOperation()
+	addLens.OperationID = "lens_add"
+	addLens.Description = "Add a lens to the lens store"
+	addLens.Tags = []string{"lens"}
+	addLens.RequestBody = &openapi3.RequestBodyRef{
+		Value: addLensRequestBody,
+	}
+	addLens.Responses = openapi3.NewResponses()
+	addLens.AddResponse(200, addLensResponse)
+	addLens.Responses.Set("400", errorResponse)
+
 	graphQLRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
 
@@ -747,5 +799,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
 	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
+	router.AddRoute("/lens/add", http.MethodPost, addLens, h.AddLens)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
 }
