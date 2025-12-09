@@ -32,14 +32,11 @@ type ListLenses struct {
 	// The identity of this request. Optional.
 	Identity immutable.Option[state.Identity]
 
-	// ExpectedCount is the expected number of lenses.
-	// If set, the action will verify the count matches.
-	ExpectedCount immutable.Option[int]
-
-	// ExpectedLenses is a map of lens index to expected lens configuration.
-	// The key is the index into s.LensIDs (e.g., 0 for LensID0, 1 for LensID1).
+	// ExpectedLenses is a map of lens CID to expected lens configuration.
+	// Keys can use template syntax (e.g., "{{.LensID0}}") which will be resolved
+	// to actual CIDs at execution time.
 	// If set, the action will verify the lens content matches.
-	ExpectedLenses map[int]model.Lens
+	ExpectedLenses map[string]model.Lens
 }
 
 var _ Action = (*ListLenses)(nil)
@@ -60,35 +57,36 @@ func (a *ListLenses) Execute() {
 			a.s.T.Fatalf("failed to list lenses: %v", err)
 		}
 
-		if a.ExpectedCount.HasValue() {
-			assert.Equal(a.s.T, a.ExpectedCount.Value(), len(lenses),
-				"expected %d lenses, got %d", a.ExpectedCount.Value(), len(lenses))
+		if a.ExpectedLenses == nil {
+			return
 		}
 
-		for _, lensID := range a.s.LensIDs {
-			_, exists := lenses[lensID]
-			assert.True(a.s.T, exists, "expected lens %s not found in list", lensID)
+		templateKeys := make([]string, 0, len(a.ExpectedLenses))
+		for key := range a.ExpectedLenses {
+			templateKeys = append(templateKeys, key)
 		}
+		resolvedKeys := replaceMap(a.s, nodeID, templateKeys)
+
+		assert.Equal(a.s.T, len(a.ExpectedLenses), len(lenses),
+			"expected %d lenses, got %d", len(a.ExpectedLenses), len(lenses))
 
 		// We compare module count, arguments, and inverse flag, but not the Path field
 		// because when stored, the Path changes from a file path to embedded WASM data.
-		for lensIndex, expectedLens := range a.ExpectedLenses {
-			require.Less(a.s.T, lensIndex, len(a.s.LensIDs),
-				"lens index %d out of range (only %d lenses added)", lensIndex, len(a.s.LensIDs))
+		for templateKey, expectedLens := range a.ExpectedLenses {
+			lensID := resolvedKeys[templateKey]
 
-			lensID := a.s.LensIDs[lensIndex]
 			actualLens, exists := lenses[lensID]
-			require.True(a.s.T, exists, "expected lens at index %d (ID: %s) not found", lensIndex, lensID)
+			require.True(a.s.T, exists, "expected lens %s (resolved from %s) not found", lensID, templateKey)
 
 			require.Equal(a.s.T, len(expectedLens.Lenses), len(actualLens.Lenses),
-				"lens module count mismatch for lens at index %d (ID: %s)", lensIndex, lensID)
+				"lens module count mismatch for lens %s", lensID)
 
 			for i, expectedModule := range expectedLens.Lenses {
 				actualModule := actualLens.Lenses[i]
 				assert.Equal(a.s.T, expectedModule.Inverse, actualModule.Inverse,
-					"lens module[%d] inverse mismatch for lens at index %d (ID: %s)", i, lensIndex, lensID)
+					"lens module[%d] inverse mismatch for lens %s", i, lensID)
 				assert.Equal(a.s.T, expectedModule.Arguments, actualModule.Arguments,
-					"lens module[%d] arguments mismatch for lens at index %d (ID: %s)", i, lensIndex, lensID)
+					"lens module[%d] arguments mismatch for lens %s", i, lensID)
 			}
 		}
 	}

@@ -13,7 +13,6 @@ package migrations
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -40,9 +39,8 @@ func TestAddLens_WithSimpleLens_CanBeListedBack(t *testing.T) {
 				Lens: expectedLens,
 			},
 			&action.ListLenses{
-				ExpectedCount: immutable.Some(1),
-				ExpectedLenses: map[int]model.Lens{
-					0: expectedLens,
+				ExpectedLenses: map[string]model.Lens{
+					"{{.LensID0}}": expectedLens,
 				},
 			},
 		},
@@ -85,10 +83,9 @@ func TestAddLens_WithMultipleLenses_ReturnsUniqueLensIDs(t *testing.T) {
 				Lens: lens2,
 			},
 			&action.ListLenses{
-				ExpectedCount: immutable.Some(2),
-				ExpectedLenses: map[int]model.Lens{
-					0: lens1,
-					1: lens2,
+				ExpectedLenses: map[string]model.Lens{
+					"{{.LensID0}}": lens1,
+					"{{.LensID1}}": lens2,
 				},
 			},
 		},
@@ -119,9 +116,8 @@ func TestAddLens_WithIdenticalLenses_ReturnsSameCID(t *testing.T) {
 				Lens: expectedLens,
 			},
 			&action.ListLenses{
-				ExpectedCount: immutable.Some(1),
-				ExpectedLenses: map[int]model.Lens{
-					0: expectedLens,
+				ExpectedLenses: map[string]model.Lens{
+					"{{.LensID0}}": expectedLens,
 				},
 			},
 		},
