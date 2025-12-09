@@ -231,6 +231,11 @@ func (txn *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) {
 	return txn.db.addLens(ctx, lens)
 }
 
+func (txn *Txn) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.listLenses(ctx)
+}
+
 func (txn *Txn) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetCollectionByName(ctx, name)

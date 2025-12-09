@@ -13,6 +13,7 @@ package migrations
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -20,7 +21,117 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestAddLens_WithSimpleLens_ReturnsLensID(t *testing.T) {
+func TestAddLens_WithSimpleLens_CanBeListedBack(t *testing.T) {
+	expectedLens := model.Lens{
+		Lenses: []model.LensModule{
+			{
+				Path: lenses.SetDefaultModulePath,
+				Arguments: map[string]any{
+					"dst":   "name",
+					"value": "Fred",
+				},
+			},
+		},
+	}
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddLens{
+				Lens: expectedLens,
+			},
+			&action.ListLenses{
+				ExpectedCount: immutable.Some(1),
+				ExpectedLenses: map[int]model.Lens{
+					0: expectedLens,
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestAddLens_WithMultipleLenses_ReturnsUniqueLensIDs(t *testing.T) {
+	lens1 := model.Lens{
+		Lenses: []model.LensModule{
+			{
+				Path: lenses.SetDefaultModulePath,
+				Arguments: map[string]any{
+					"dst":   "name",
+					"value": "John",
+				},
+			},
+		},
+	}
+
+	lens2 := model.Lens{
+		Lenses: []model.LensModule{
+			{
+				Path: lenses.SetDefaultModulePath,
+				Arguments: map[string]any{
+					"dst":   "name",
+					"value": "Andy",
+				},
+			},
+		},
+	}
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddLens{
+				Lens: lens1,
+			},
+			&action.AddLens{
+				Lens: lens2,
+			},
+			&action.ListLenses{
+				ExpectedCount: immutable.Some(2),
+				ExpectedLenses: map[int]model.Lens{
+					0: lens1,
+					1: lens2,
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestAddLens_WithIdenticalLenses_ReturnsSameCID(t *testing.T) {
+	expectedLens := model.Lens{
+		Lenses: []model.LensModule{
+			{
+				Path: lenses.SetDefaultModulePath,
+				Arguments: map[string]any{
+					"dst":   "name",
+					"value": "Fred",
+				},
+			},
+		},
+	}
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddLens{
+				Lens: expectedLens,
+			},
+			&action.AddLens{
+				Lens: expectedLens,
+			},
+			// Both lenses are identical, so only one should be stored
+			&action.ListLenses{
+				ExpectedCount: immutable.Some(1),
+				ExpectedLenses: map[int]model.Lens{
+					0: expectedLens,
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestAddLens_WithPatchCollection_TransformsDocuments(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddLens{
@@ -62,164 +173,6 @@ func TestAddLens_WithSimpleLens_ReturnsLensID(t *testing.T) {
 							"op": "replace",
 							"path": "/Users/PreviousVersion/Transform",
 							"value": "{{.LensID0}}"
-						}
-					]
-				`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": "Fred",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestAddLens_WithMultipleLenses_ReturnsUniqueLensIDs(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddLens{
-				Lens: model.Lens{
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.SetDefaultModulePath,
-							Arguments: map[string]any{
-								"dst":   "name",
-								"value": "John",
-							},
-						},
-					},
-				},
-			},
-			&action.AddLens{
-				Lens: model.Lens{
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.SetDefaultModulePath,
-							Arguments: map[string]any{
-								"dst":   "name",
-								"value": "Andy",
-							},
-						},
-					},
-				},
-			},
-			&action.AddSchema{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "Islam"
-				}`,
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
-					]
-				`,
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{
-							"op": "replace",
-							"path": "/Users/PreviousVersion/Transform",
-							"value": "{{.LensID1}}"
-						}
-					]
-				`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users {
-						name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": "Andy",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestAddLens_WithIdenticalLenses_ReturnsSameCID(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddLens{
-				Lens: model.Lens{
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.SetDefaultModulePath,
-							Arguments: map[string]any{
-								"dst":   "name",
-								"value": "Fred",
-							},
-						},
-					},
-				},
-			},
-			&action.AddLens{
-				Lens: model.Lens{
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.SetDefaultModulePath,
-							Arguments: map[string]any{
-								"dst":   "name",
-								"value": "Fred",
-							},
-						},
-					},
-				},
-			},
-			&action.AddSchema{
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "Shahzad"
-				}`,
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
-					]
-				`,
-			},
-			testUtils.PatchCollection{
-				Patch: `
-					[
-						{
-							"op": "replace",
-							"path": "/Users/PreviousVersion/Transform",
-							"value": "{{.LensID1}}"
 						}
 					]
 				`,

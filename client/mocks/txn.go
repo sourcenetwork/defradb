@@ -1883,6 +1883,68 @@ func (_c *Txn_ListAllEncryptedIndexes_Call) RunAndReturn(run func(context1 conte
 	return _c
 }
 
+// ListLenses provides a mock function for the type Txn
+func (_mock *Txn) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListLenses")
+	}
+
+	var r0 map[string]model.Lens
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (map[string]model.Lens, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) map[string]model.Lens); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]model.Lens)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_ListLenses_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListLenses'
+type Txn_ListLenses_Call struct {
+	*mock.Call
+}
+
+// ListLenses is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Txn_Expecter) ListLenses(ctx interface{}) *Txn_ListLenses_Call {
+	return &Txn_ListLenses_Call{Call: _e.mock.On("ListLenses", ctx)}
+}
+
+func (_c *Txn_ListLenses_Call) Run(run func(ctx context.Context)) *Txn_ListLenses_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_ListLenses_Call) Return(stringToLens map[string]model.Lens, err error) *Txn_ListLenses_Call {
+	_c.Call.Return(stringToLens, err)
+	return _c
+}
+
+func (_c *Txn_ListLenses_Call) RunAndReturn(run func(ctx context.Context) (map[string]model.Lens, error)) *Txn_ListLenses_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PatchCollection provides a mock function for the type Txn
 func (_mock *Txn) PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens]) error {
 	ret := _mock.Called(ctx, patch, migration)

@@ -44,6 +44,19 @@ func (db *DB) addLens(ctx context.Context, lens model.Lens) (string, error) {
 	return cid.String(), nil
 }
 
+func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
+	lenses, err := db.getLensStore(ctx).List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]model.Lens, len(lenses))
+	for cid, lens := range lenses {
+		result[cid.String()] = lens
+	}
+	return result, nil
+}
+
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	dstFound := true
 	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationSchemaVersionID)

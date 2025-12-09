@@ -393,6 +393,21 @@ func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) 
 	return lensID, nil
 }
 
+func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	args := []string{"client", "lens", "list"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+
+	var lenses map[string]model.Lens
+	if err := json.Unmarshal(data, &lenses); err != nil {
+		return nil, err
+	}
+	return lenses, nil
+}
+
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
 	cols, err := w.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {

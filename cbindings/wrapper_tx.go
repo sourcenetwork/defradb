@@ -133,6 +133,10 @@ func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, e
 	return txn.CWrapper.AddLens(ctx, lens)
 }
 
+func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	return txn.CWrapper.ListLenses(ctx)
+}
+
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,

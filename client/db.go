@@ -262,6 +262,9 @@ type Store interface {
 	// will return the same CID without duplicating storage.
 	AddLens(ctx context.Context, lens model.Lens) (string, error)
 
+	// ListLenses returns all stored lenses mapped by their CID.
+	ListLenses(ctx context.Context) (map[string]model.Lens, error)
+
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
 	// If no matching collection is found an error will be returned.

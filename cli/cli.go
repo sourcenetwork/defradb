@@ -70,6 +70,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 	lens.AddCommand(
 		MakeLensSetCommand(ctx),
 		MakeLensAddCommand(ctx),
+		MakeLensListCommand(ctx),
 	)
 
 	schema := MakeSchemaCommand(ctx)

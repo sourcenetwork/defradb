@@ -76,3 +76,24 @@ func LensAdd(nodePtr C.uintptr_t, cfg *C.char) C.Result {
 	}
 	return returnC(returnGoC(0, "", lensID))
 }
+
+//export LensList
+func LensList(nodePtr C.uintptr_t) C.Result {
+	ctx := context.Background()
+
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	lenses, err := store.ListLenses(ctx)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	lensesJSON, err := json.Marshal(lenses)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	return returnC(returnGoC(0, "", string(lensesJSON)))
+}

@@ -269,6 +269,22 @@ func (c *Client) AddLens(ctx context.Context, lens model.Lens) (string, error) {
 	return res.LensID, nil
 }
 
+func (c *Client) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	methodURL := c.http.apiURL.JoinPath("lens")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var res ListLensesResponse
+	if err := c.http.requestJson(req, &res); err != nil {
+		return nil, err
+	}
+
+	return res.Lenses, nil
+}
+
 func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
 	cols, err := c.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {

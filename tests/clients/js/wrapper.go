@@ -297,6 +297,18 @@ func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) 
 	return res[0].String(), err
 }
 
+func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	res, err := execute(ctx, w.value, "listLenses")
+	if err != nil {
+		return nil, err
+	}
+	var lenses map[string]model.Lens
+	if err := goji.UnmarshalJS(res[0], &lenses); err != nil {
+		return nil, err
+	}
+	return lenses, nil
+}
+
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
 	res, err := execute(ctx, w.value, "getCollectionByName", name)
 	if err != nil {

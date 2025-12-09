@@ -181,6 +181,22 @@ func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, &AddLensResponse{LensID: lensID})
 }
 
+type ListLensesResponse struct {
+	Lenses map[string]model.Lens `json:"lenses"`
+}
+
+func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	lenses, err := db.ListLenses(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, &ListLensesResponse{Lenses: lenses})
+}
+
 func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
@@ -694,6 +710,22 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	addLens.AddResponse(200, addLensResponse)
 	addLens.Responses.Set("400", errorResponse)
 
+	listLensesResponseSchema := &openapi3.SchemaRef{
+		Value: openapi3.NewObjectSchema().
+			WithProperty("lenses", openapi3.NewObjectSchema()),
+	}
+	listLensesResponse := openapi3.NewResponse().
+		WithDescription("List of stored lenses").
+		WithJSONSchemaRef(listLensesResponseSchema)
+
+	listLenses := openapi3.NewOperation()
+	listLenses.OperationID = "lens_list"
+	listLenses.Description = "List all stored lenses"
+	listLenses.Tags = []string{"lens"}
+	listLenses.Responses = openapi3.NewResponses()
+	listLenses.AddResponse(200, listLensesResponse)
+	listLenses.Responses.Set("400", errorResponse)
+
 	graphQLRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
 
@@ -799,6 +831,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
 	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
+	router.AddRoute("/lens", http.MethodGet, listLenses, h.ListLenses)
 	router.AddRoute("/lens/add", http.MethodPost, addLens, h.AddLens)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
 }

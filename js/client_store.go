@@ -138,6 +138,18 @@ func (c *Client) addLens(this js.Value, args []js.Value) (js.Value, error) {
 	return js.ValueOf(lensID), err
 }
 
+func (c *Client) listLenses(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	lenses, err := c.node.DB.ListLenses(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(lenses)
+}
+
 func (c *Client) getCollectionByName(this js.Value, args []js.Value) (js.Value, error) {
 	name, err := stringArg(args, 0, "name")
 	if err != nil {
