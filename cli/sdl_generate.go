@@ -18,15 +18,15 @@ import (
 	"io"
 	"os"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
-
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/spf13/cobra"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astprinter"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 )
 
 var (
@@ -37,23 +37,24 @@ var (
 func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 	var outputFile string
 	var yesOverwrite bool
+	var searchableEncryption bool
 	var cmd = &cobra.Command{
 		Use:   "generate --output schema.graphql <input schema files...>",
 		Short: "Generate full GraphQL formatted schema.",
-		Long: `Generates the fully formatted GraphQL schema from a given user type definition.
+		Long: `Generates the fully formatted GraphQL schema from a given user type definition(s).
 
 		Accepts multiple input files as well as "-" to use stdin.
 		`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var inputBuf io.Reader
-			fileInputBuf := bytes.NewBuffer(nil)
 
 			// Either we use stdin or we concat all the file
 			// arguments
 			if len(args) == 1 && args[0] == "-" {
 				inputBuf = os.Stdin
 			} else {
+				fileInputBuf := bytes.NewBuffer(nil)
 				for i, arg := range args {
 					if arg == "-" {
 						return ErrStdinSingleInputOnly
@@ -71,7 +72,8 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 				inputBuf = fileInputBuf
 			}
 
-			schemaManager, err := schema.NewSchemaManager(false)
+			//
+			schemaManager, err := schema.NewSchemaManager(searchableEncryption)
 			if err != nil {
 				return err
 			}
@@ -100,7 +102,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 				return errors.Join(ErrGeneratingSDL, err)
 			}
 
-			params := gql.Params{Schema: *schemaManager.Schema(), RequestString: string(introspectionQueryRequest)}
+			params := gql.Params{Schema: *schemaManager.Schema(), RequestString: introspectionQueryRequest}
 			r := gql.Do(params)
 			if len(r.Errors) != 0 {
 				// for simplicity we're just going to return the
@@ -136,11 +138,11 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 					os.Exit(1)
 				}
 
-				f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY, 0644)
+				f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 				if err != nil {
 					return err
 				}
-				defer f.Close()
+				defer f.Close() //nolint:errcheck
 				outWriter = f
 			}
 
@@ -165,8 +167,14 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&outputFile, "output", "o", defaultOutputPath,
 		"The output file to write the generated schema. Accepts '-' to write to stdout")
 
+	EmbedCLIExample(ctx, cmd, "Generate SDL with Searchable Encryption type definitions",
+		`defradb sdl generate foo.graphql -s`)
+
 	cmd.PersistentFlags().BoolVarP(&yesOverwrite, "overwrite", "y", false,
 		"Overwrite any existing matching output file paths")
+
+	cmd.PersistentFlags().BoolVarP(&searchableEncryption, "include-searchable-encryption", "s",
+		false, "Include the schema type definitions to support Searchable Encryption")
 
 	return cmd
 }
