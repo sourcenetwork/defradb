@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -52,8 +51,8 @@ func mustGetContextClientCollection(req *http.Request) client.Collection {
 // mustGetContextSyncMap returns the sync map from the http request context or panics.
 //
 // This should only be called from functions within the http package.
-func mustGetContextSyncMap(req *http.Request) *sync.Map {
-	return req.Context().Value(txsContextKey).(*sync.Map) //nolint:forcetypeassert
+func mustGetContextSyncMap(req *http.Request) *TxnTTLCache {
+	return req.Context().Value(txsContextKey).(*TxnTTLCache) //nolint:forcetypeassert
 }
 
 // mustGetContextClientDB returns the DB from the http request context or panics.
@@ -63,12 +62,12 @@ func mustGetContextClientDB(req *http.Request) DB {
 	return req.Context().Value(dbContextKey).(DB) //nolint:forcetypeassert
 }
 
-// mustGetDataStoreTxn returns the datastore transaction or panics.
-//
-// This should only be called from functions within the http package.
-func mustGetDataStoreTxn(tx any) client.Txn {
-	return tx.(client.Txn) //nolint:forcetypeassert
-}
+// // mustGetDataStoreTxn returns the datastore transaction or panics.
+// //
+// // This should only be called from functions within the http package.
+// func mustGetDataStoreTxn(tx any) client.Txn {
+// 	return tx.(client.Txn) //nolint:forcetypeassert
+// }
 
 // tryGetContexCtx returns the server context if it exists.
 //

@@ -13,6 +13,7 @@ package http
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
@@ -24,6 +25,8 @@ type CreateTxResponse struct {
 	ID uint64 `json:"id"`
 }
 
+var defaultTxnTTL = time.Second * 60
+
 func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	txs := mustGetContextSyncMap(req)
@@ -34,7 +37,7 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Store(tx.ID(), tx)
+	txs.Store(tx.ID(), tx, defaultTxnTTL)
 	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
@@ -48,7 +51,7 @@ func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Store(tx.ID(), tx)
+	txs.Store(tx.ID(), tx, defaultTxnTTL)
 	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
@@ -60,14 +63,13 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal, ok := txs.Load(txID)
+	txn, ok := txs.Load(txID)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 
-	dsTxn := mustGetDataStoreTxn(txVal)
-	err = dsTxn.Commit()
+	err = txn.Commit()
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -84,14 +86,13 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal, ok := txs.LoadAndDelete(txID)
+	txn, ok := txs.LoadAndDelete(txID)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 
-	dsTxn := mustGetDataStoreTxn(txVal)
-	dsTxn.Discard()
+	txn.Discard()
 
 	rw.WriteHeader(http.StatusOK)
 }

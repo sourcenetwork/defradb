@@ -13,13 +13,16 @@ package http
 import (
 	"context"
 	"net/http"
-	"sync"
+	"time"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/ttl"
 
 	"github.com/go-chi/chi/v5"
 )
+
+type TxnTTLCache = ttl.Cache[uint64, client.Txn]
 
 // IsDevMode is a global variable for the development mode flag
 // This is checked by the http/handler_extras.go/Purge function to determine which response to send
@@ -77,7 +80,7 @@ type DB interface {
 
 type Handler struct {
 	mux *chi.Mux
-	txs *sync.Map
+	txs *TxnTTLCache
 }
 
 func NewHandler(db DB) (*Handler, error) {
@@ -85,7 +88,10 @@ func NewHandler(db DB) (*Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	txs := &sync.Map{}
+	txs := ttl.NewTTLCache[uint64, client.Txn](time.Second, 60, func(txid uint64, txn client.Txn) {
+		txn.Discard()
+	})
+
 	mux := chi.NewMux()
 	mux.Route("/api/"+Version, func(r chi.Router) {
 		r.Use(
@@ -114,7 +120,7 @@ func (h *Handler) Transaction(id uint64) (client.Txn, error) {
 		return nil, ErrInvalidTransactionId
 	}
 
-	return mustGetDataStoreTxn(tx), nil
+	return tx, nil
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
