@@ -196,7 +196,7 @@ func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 			if keyBytes[0] != 0x04 {
 				return nil, ErrInvalidECDSAPubKey
 			}
-			pubKey, err := ecdsa.ParseUncompressedPublicKey(elliptic.P256(), keyBytes)
+			pubKey, err = ecdsa.ParseUncompressedPublicKey(elliptic.P256(), keyBytes)
 			if err != nil {
 				return nil, ErrInvalidECDSAPubKey
 			}
