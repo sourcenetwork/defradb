@@ -153,6 +153,15 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 
+	EmbedCLIExample(ctx, cmd, "Generate SDL",
+		`defradb sdl generate foo.graphql`)
+
+	EmbedCLIExample(ctx, cmd, "Generate Multiple SDLs",
+		`defradb sdl generate foo.graphql bar.graphql`)
+
+	EmbedCLIExample(ctx, cmd, "Generate SDL and overwrite output",
+		`defradb sdl generate foo.graphql bar.graphql --output schema.graphql -y`)
+
 	cmd.PersistentFlags().StringVarP(&outputFile, "output", "o", defaultOutputPath,
 		"The output file to write the generated schema. Accepts '-' to write to stdout")
 
