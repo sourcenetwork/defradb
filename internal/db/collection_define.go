@@ -20,7 +20,6 @@ import (
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/ipfs/go-cid"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -724,8 +723,8 @@ func collectionHasDocuments(
 		}
 	}
 
-	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
-		Prefix:   prefixKey.ToDS().Bytes(),
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+		Prefix:   prefixKey.ToDS(),
 		KeysOnly: true,
 	})
 	if err != nil {

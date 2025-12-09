@@ -233,8 +233,8 @@ func (c *collection) getAllDocIDsChan(
 	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionShortID: shortID,
 	}
-	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
-		Prefix:   prefix.Bytes(),
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+		Prefix:   prefix,
 		KeysOnly: true,
 	})
 	if err != nil {
@@ -450,7 +450,7 @@ func (c *collection) create(
 			InstanceType:      keys.ValueKey,
 		}
 
-		err = txn.Datastore().Set(ctx, valueKey.Bytes(), []byte{base.ObjectMarker})
+		err = txn.Datastore().Set(ctx, valueKey, []byte{base.ObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -998,7 +998,7 @@ func (c *collection) exists(
 	}
 
 	txn := datastore.CtxMustGetTxn(ctx)
-	val, err := txn.Datastore().Get(ctx, primaryKey.Bytes())
+	val, err := txn.Datastore().Get(ctx, primaryKey)
 	if err != nil && errors.Is(err, corekv.ErrNotFound) {
 		return false, false, nil
 	} else if err != nil {

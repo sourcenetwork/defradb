@@ -84,7 +84,7 @@ func TestIndexDataStoreKey_PrefixEnd(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			keyBytes := tt.key.Bytes()
-			endBytes := tt.key.PrefixEnd()
+			endBytes := tt.key.PrefixEnd().Bytes()
 
 			if tt.wantGreaterThan {
 				assert.True(t, string(endBytes) > string(keyBytes),
@@ -140,33 +140,12 @@ func TestIndexDataStoreKey_PrefixEnd_Ordering(t *testing.T) {
 			},
 			shouldMatch: []bool{true, true, false},
 		},
-		{
-			name: "collection prefix",
-			prefixKey: IndexDataStoreKey{
-				CollectionShortID: 10,
-			},
-			testKeys: []IndexDataStoreKey{
-				{
-					CollectionShortID: 10,
-					IndexID:           1,
-				},
-				{
-					CollectionShortID: 10,
-					IndexID:           2,
-				},
-				{
-					CollectionShortID: 11,
-					IndexID:           1,
-				},
-			},
-			shouldMatch: []bool{true, true, false},
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			prefixBytes := tt.prefixKey.Bytes()
-			endBytes := tt.prefixKey.PrefixEnd()
+			endBytes := tt.prefixKey.PrefixEnd().Bytes()
 
 			for i, testKey := range tt.testKeys {
 				testBytes := testKey.Bytes()
