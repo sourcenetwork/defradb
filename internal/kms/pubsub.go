@@ -41,7 +41,6 @@ type PubSubServer interface {
 		topicName string,
 		subscribe bool,
 		handler client.PubsubMessageHandler,
-		eventHandler client.PeerEventHandler,
 	) error
 	PublishToTopic(
 		ctx context.Context,
@@ -104,7 +103,7 @@ func NewPubSubService(
 		colRetriever: colRetriever,
 		nodeDID:      nodeDID,
 	}
-	err := pubsub.AddPubSubTopic(pubsubTopic, true, s.handleRequestFromPeer, nil)
+	err := pubsub.AddPubSubTopic(pubsubTopic, true, s.handleRequestFromPeer)
 	if err != nil {
 		return nil, err
 	}
