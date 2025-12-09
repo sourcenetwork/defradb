@@ -115,6 +115,42 @@
                 },
                 "type": "object"
             },
+            "add_lens_request": {
+                "properties": {
+                    "lens": {
+                        "properties": {
+                            "Lenses": {
+                                "items": {
+                                    "properties": {
+                                        "Arguments": {
+                                            "additionalProperties": {},
+                                            "type": "object"
+                                        },
+                                        "Inverse": {
+                                            "type": "boolean"
+                                        },
+                                        "Path": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "add_lens_response": {
+                "properties": {
+                    "lensId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "add_view_request": {
                 "properties": {
                     "Query": {
@@ -1935,6 +1971,43 @@
                             }
                         },
                         "description": "Lens info"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "lens"
+                ]
+            }
+        },
+        "/lens/add": {
+            "post": {
+                "description": "Add a lens to the lens store",
+                "operationId": "lens_add",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/add_lens_request"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/add_lens_response"
+                                }
+                            }
+                        },
+                        "description": "Lens CID"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"
