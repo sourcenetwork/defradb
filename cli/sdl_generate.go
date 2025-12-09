@@ -18,10 +18,11 @@ import (
 	"io"
 	"os"
 
-	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/spf13/cobra"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astprinter"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
+
+	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
