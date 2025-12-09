@@ -30,8 +30,6 @@ type AddLens struct {
 	Identity immutable.Option[state.Identity]
 
 	// The lens configuration to add.
-	//
-	// Paths to WASM Lens modules may be found in: github.com/sourcenetwork/defradb/tests/lenses
 	Lens model.Lens
 }
 

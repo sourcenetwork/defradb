@@ -118,7 +118,6 @@ func TestAddLens_WithIdenticalLenses_ReturnsSameCID(t *testing.T) {
 			&action.AddLens{
 				Lens: expectedLens,
 			},
-			// Both lenses are identical, so only one should be stored
 			&action.ListLenses{
 				ExpectedCount: immutable.Some(1),
 				ExpectedLenses: map[int]model.Lens{
