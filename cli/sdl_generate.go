@@ -73,7 +73,6 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 				inputBuf = fileInputBuf
 			}
 
-			//
 			schemaManager, err := schema.NewSchemaManager(searchableEncryption)
 			if err != nil {
 				return err
