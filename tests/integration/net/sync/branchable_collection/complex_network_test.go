@@ -95,10 +95,11 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 				SourceNodeID: 3,
 				TargetNodeID: 4,
 			},
-			&action.WaitForPeersConnection{
-				NodeID:      0,
-				Topic:       syncBranchableTopic,
-				PeerNodeIDs: []int{1, 2, 3, 4},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {1, 2, 3, 4},
+				},
 			},
 			&action.SyncBranchableCollection{
 				NodeID: 0,
@@ -297,34 +298,38 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 				SourceNodeID: 2,
 				TargetNodeID: 3,
 			},
-			&action.WaitForPeersConnection{
-				NodeID:      0,
-				Topic:       syncBranchableTopic,
-				PeerNodeIDs: []int{1, 2, 3},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {1, 2, 3},
+				},
 			},
 			&action.SyncBranchableCollection{
 				NodeID: 0,
 			},
-			&action.WaitForPeersConnection{
-				NodeID:      1,
-				Topic:       syncBranchableTopic,
-				PeerNodeIDs: []int{0, 2, 3},
+			&action.WaitForPeersEvents{
+				NodeID: 1,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {0, 2, 3},
+				},
 			},
 			&action.SyncBranchableCollection{
 				NodeID: 1,
 			},
-			&action.WaitForPeersConnection{
-				NodeID:      2,
-				Topic:       syncBranchableTopic,
-				PeerNodeIDs: []int{0, 1, 3},
+			&action.WaitForPeersEvents{
+				NodeID: 2,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {0, 1, 3},
+				},
 			},
 			&action.SyncBranchableCollection{
 				NodeID: 2,
 			},
-			&action.WaitForPeersConnection{
-				NodeID:      3,
-				Topic:       syncBranchableTopic,
-				PeerNodeIDs: []int{0, 1, 2},
+			&action.WaitForPeersEvents{
+				NodeID: 3,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {0, 1, 2},
+				},
 			},
 			&action.SyncBranchableCollection{
 				NodeID: 3,
@@ -332,7 +337,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 			testUtils.WaitForSync{},
 			testUtils.Request{
 				Request: `query {
-					_commits(fieldName: null) {
+					_commits(filter: {fieldName: {_eq: null}}) {
 						cid
 					}
 				}`,
@@ -416,15 +421,17 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 				SourceNodeID: 2,
 				TargetNodeID: 3,
 			},
-			&action.WaitForPeersConnection{
-				NodeID:      0,
-				Topic:       syncBranchableTopic,
-				PeerNodeIDs: []int{1},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {1},
+				},
 			},
-			&action.WaitForPeersConnection{
-				NodeID:      2,
-				Topic:       syncBranchableTopic,
-				PeerNodeIDs: []int{3},
+			&action.WaitForPeersEvents{
+				NodeID: 2,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {3},
+				},
 			},
 			// We want to sync first node 0 with node 1 and node 2 with node 3 isolated to make sure
 			// all nodes don't sync from the same source node
@@ -452,15 +459,17 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 				SourceNodeID: 1,
 				TargetNodeID: 3,
 			},
-			&action.WaitForPeersConnection{
-				NodeID:      0,
-				Topic:       syncBranchableTopic,
-				PeerNodeIDs: []int{2, 3},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {2, 3},
+				},
 			},
-			&action.WaitForPeersConnection{
-				NodeID:      1,
-				Topic:       syncBranchableTopic,
-				PeerNodeIDs: []int{2, 3},
+			&action.WaitForPeersEvents{
+				NodeID: 1,
+				ExpectedPeersByTopic: map[string][]int{
+					syncBranchableTopic: {2, 3},
+				},
 			},
 			&action.SyncBranchableCollection{
 				NodeID: 1,
@@ -485,7 +494,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 			},
 			testUtils.Request{
 				Request: `query {
-					_commits(fieldName: null) {
+					_commits(filter: {fieldName: {_eq: null}}) {
 						cid
 						height
 					}
@@ -518,32 +527,16 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 			// Make sure the new collection block for the new doc has all previous heads as links
 			testUtils.Request{
 				Request: `query {
-					_commits(fieldName: null, order: {height: DESC}, limit: 1) {
-						links {
-							name
+					_commits(filter: {fieldName: {_eq: null}}, order: {height: DESC}, limit: 1) {
+						heads {
+							fieldName
 						}
 					}
 				}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"links": gomega.ConsistOf(
-								map[string]any{
-									"name": "_head",
-								},
-								map[string]any{
-									"name": "_head",
-								},
-								map[string]any{
-									"name": "_head",
-								},
-								map[string]any{
-									"name": "_head",
-								},
-								map[string]any{
-									"name": nil,
-								},
-							),
+							"heads": gomega.HaveLen(4),
 						},
 					},
 				},
