@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 
@@ -35,6 +36,7 @@ var (
 
 func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 	var outputFile string
+	var yesOverwrite bool
 	var cmd = &cobra.Command{
 		Use:   "generate --output schema.graphql <input schema files...>",
 		Short: "Generate full GraphQL formatted schema.",
@@ -42,7 +44,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 
 		Accepts multiple input files as well as "-" to use stdin.
 		`,
-		Args: cobra.ArbitraryArgs,
+		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var inputBuf io.Reader
 			fileInputBuf := bytes.NewBuffer(nil)
@@ -51,10 +53,10 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 			// arguments
 			if len(args) == 1 && args[0] == "-" {
 				inputBuf = os.Stdin
-			} else if len(args) > 0 {
+			} else {
 				for i, arg := range args {
 					if arg == "-" {
-						return errors.New("stdin only allowed as single input ")
+						return ErrStdinSingleInputOnly
 					}
 					fileBuf, err := os.ReadFile(arg)
 					if err != nil {
@@ -67,8 +69,6 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 					fileInputBuf.Write(fileBuf)
 				}
 				inputBuf = fileInputBuf
-			} else {
-				return errors.New("input can't be empty")
 			}
 
 			schemaManager, err := schema.NewSchemaManager(false)
@@ -78,12 +78,12 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 
 			sdlBuf, err := io.ReadAll(inputBuf)
 			if err != nil {
-				return err
+				return errors.Join(ErrReadingInput, err)
 			}
 
 			cols, err := schemaManager.ParseSDL(string(sdlBuf))
 			if err != nil {
-				return err
+				return errors.Join(ErrParsingSDL, err)
 			}
 
 			collections := make([]client.CollectionVersion, len(cols))
@@ -97,13 +97,16 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 
 			_, err = schemaManager.Generator.Generate(ctx, collections)
 			if err != nil {
-				return err
+				return errors.Join(ErrGeneratingSDL, err)
 			}
 
 			params := gql.Params{Schema: *schemaManager.Schema(), RequestString: string(introspectionQueryRequest)}
 			r := gql.Do(params)
 			if len(r.Errors) != 0 {
-				return errors.New(r.Errors[0].Error())
+				// for simplicity we're just going to return the
+				// first error, if there are more, they'll be caught on
+				// follow up invocations.
+				return errors.Join(ErrGeneratingSDL, r.Errors[0])
 			}
 
 			respJson, err := json.Marshal(r.Data)
@@ -122,6 +125,17 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 			if outputFile == "-" {
 				outWriter = os.Stdout
 			} else {
+				// check if the file exists, if so check for the overwrite
+				// flag
+				ofinfo, err := os.Stat(outputFile)
+				if err != nil && !errors.Is(err, os.ErrNotExist) {
+					return err
+				}
+				if ofinfo != nil && !yesOverwrite {
+					fmt.Fprintln(os.Stderr, "output file path already exists. If you want to overwrite use -y")
+					os.Exit(1)
+				}
+
 				f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					return err
@@ -132,7 +146,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 
 			err = astprinter.PrintIndent(doc, []byte("    "), outWriter)
 			if err != nil {
-				return err
+				return errors.Join(ErrWritingOutput, err)
 			}
 
 			return nil
@@ -141,6 +155,9 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 
 	cmd.PersistentFlags().StringVarP(&outputFile, "output", "o", defaultOutputPath,
 		"The output file to write the generated schema. Accepts '-' to write to stdout")
+
+	cmd.PersistentFlags().BoolVarP(&yesOverwrite, "overwrite", "y", false,
+		"Overwrite any existing matching output file paths")
 
 	return cmd
 }
