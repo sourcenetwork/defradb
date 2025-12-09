@@ -675,9 +675,9 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithDescription("Lens info").
 		WithJSONSchemaRef(setMigrationSchema)
 	setMigration := openapi3.NewOperation()
-	setMigration.OperationID = "lens_set_migration"
-	setMigration.Description = "Add a new lens migration"
-	setMigration.Tags = []string{"lens"}
+	setMigration.OperationID = "collection_set_migration"
+	setMigration.Description = "Set a lens migration between collection versions"
+	setMigration.Tags = []string{"collection"}
 	setMigration.RequestBody = &openapi3.RequestBodyRef{
 		Value: setMigrationRequest,
 	}
@@ -824,14 +824,14 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/indexes", http.MethodGet, getAllIndexes, h.GetAllIndexes)
 	router.AddRoute("/encrypted-indexes", http.MethodGet, getAllEncryptedIndexes, h.ListAllEncryptedIndexes)
 	router.AddRoute("/collections/default", http.MethodPost, setActiveCollectionVersion, h.SetActiveCollectionVersion)
+	router.AddRoute("/collections/migrations", http.MethodPost, setMigration, h.SetMigration)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/view/refresh", http.MethodPost, viewRefresh, h.RefreshViews)
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
-	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
+	router.AddRoute("/lens", http.MethodPost, addLens, h.AddLens)
 	router.AddRoute("/lens", http.MethodGet, listLenses, h.ListLenses)
-	router.AddRoute("/lens/add", http.MethodPost, addLens, h.AddLens)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
 }

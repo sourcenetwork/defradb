@@ -228,7 +228,7 @@ func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetc
 }
 
 func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
-	methodURL := c.http.apiURL.JoinPath("lens")
+	methodURL := c.http.apiURL.JoinPath("collections", "migrations")
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -249,7 +249,7 @@ func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (st
 }
 
 func (c *Client) AddLens(ctx context.Context, lens model.Lens) (string, error) {
-	methodURL := c.http.apiURL.JoinPath("lens", "add")
+	methodURL := c.http.apiURL.JoinPath("lens")
 
 	body, err := json.Marshal(AddLensRequest{Lens: lens})
 	if err != nil {
