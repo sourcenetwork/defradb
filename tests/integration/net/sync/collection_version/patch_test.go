@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColFetch_WithPatchVersionOfUnknownCollection(t *testing.T) {
+func TestSyncColVersion_WithPatchVersionOfUnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -108,7 +108,7 @@ func TestColFetch_WithPatchVersionOfUnknownCollection(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColFetch_WithPatchVersionOfKnownCollection(t *testing.T) {
+func TestSyncColVersion_WithPatchVersionOfKnownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
