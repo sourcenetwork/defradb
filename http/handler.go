@@ -88,7 +88,13 @@ func NewHandler(db DB) (*Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	txs := ttl.NewTTLCache[uint64, client.Txn](time.Second, 60, func(txid uint64, txn client.Txn) {
+
+	// transaction ttl cache that will automatically discard after
+	// the ttl has expired. This is configured with 1 second
+	// resolution, with 60 "buckets" (See the ttl.Wheel type).
+	// Transactions that have already been commited/discard are a
+	// no-op.
+	txs := ttl.NewTTLCache(time.Second, 60, func(txid uint64, txn client.Txn) {
 		txn.Discard()
 	})
 

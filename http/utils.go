@@ -88,11 +88,17 @@ func requestJSON(req *http.Request, out any) error {
 // responseJSON writes a json response with the given status and data
 // to the response writer. Any errors encountered will be logged.
 func responseJSON(rw http.ResponseWriter, status int, data any) {
-	rw.Header().Add("Content-Type", "application/json")
-	rw.WriteHeader(status)
-
-	err := json.NewEncoder(rw).Encode(data)
+	err := responseJSONErr(rw, status, data)
 	if err != nil {
 		log.ErrorE("failed to write response", err)
 	}
+}
+
+// responseJSON writes a json response with the given status and data
+// to the response writer. Any errors encountered will be logged.
+func responseJSONErr(rw http.ResponseWriter, status int, data any) error {
+	rw.Header().Add("Content-Type", "application/json")
+	rw.WriteHeader(status)
+
+	return json.NewEncoder(rw).Encode(data)
 }

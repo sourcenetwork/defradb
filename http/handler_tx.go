@@ -37,8 +37,14 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	txs.Store(tx.ID(), tx, defaultTxnTTL)
-	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
+	err = responseJSONErr(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
+	if err != nil {
+		txs.Delete(tx.ID())
+		tx.Discard()
+		log.ErrorE("failed to write response", err)
+	}
 }
 
 func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) {
@@ -51,8 +57,14 @@ func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
 	txs.Store(tx.ID(), tx, defaultTxnTTL)
-	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
+	err = responseJSONErr(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
+	if err != nil {
+		txs.Delete(tx.ID())
+		tx.Discard()
+		log.ErrorE("failed to write response", err)
+	}
 }
 
 func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
