@@ -35,7 +35,7 @@ var (
 
 type Multistore struct {
 	block  Blockstore
-	data   corekv.ReaderWriter
+	data   *datastore
 	enc    Blockstore
 	head   corekv.ReaderWriter
 	peer   corekv.ReaderWriter
@@ -46,7 +46,7 @@ type Multistore struct {
 func NewMultistore(rootstore corekv.ReaderWriter, chunkSize immutable.Option[int]) *Multistore {
 	return &Multistore{
 		block:  BlockstoreFrom(rootstore, chunkSize),
-		data:   namespace.Wrap(rootstore, []byte{dataStoreKey}),
+		data:   newDatastore(rootstore),
 		enc:    newBlockstore(namespace.Wrap(rootstore, []byte{encStoreKey})),
 		head:   namespace.Wrap(rootstore, []byte{headStoreKey}),
 		peer:   namespace.Wrap(rootstore, []byte{peerStoreKey}),
@@ -59,7 +59,7 @@ func (m *Multistore) Blockstore() Blockstore {
 	return m.block
 }
 
-func (m *Multistore) Datastore() corekv.ReaderWriter {
+func (m *Multistore) Datastore() Keyedstore {
 	return m.data
 }
 
@@ -81,10 +81,6 @@ func (m *Multistore) Rootstore() corekv.ReaderWriter {
 
 func (m *Multistore) Systemstore() corekv.ReaderWriter {
 	return m.system
-}
-
-func DatastoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
-	return namespace.Wrap(rootstore, []byte{dataStoreKey})
 }
 
 // The key used to calculate keyLen is descriptive only, they are all the same length, and there

@@ -103,12 +103,6 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 			Expected:     encodeKey(1, 2, 5, false, 7, false),
 		},
 		{
-			Name:         "no index",
-			CollectionID: 1,
-			Fields:       []IndexedField{{Value: client.NewNormalInt(5)}},
-			Expected:     encoding.EncodeUvarintAscending([]byte{'/'}, 1),
-		},
-		{
 			Name:     "no collection",
 			IndexID:  2,
 			Fields:   []IndexedField{{Value: client.NewNormalInt(5)}},

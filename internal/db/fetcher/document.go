@@ -63,9 +63,9 @@ func newDocumentFetcher(
 		prefix = prefix.WithDeletedFlag()
 	}
 
-	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
-		Start: prefix.Bytes(),
-		End:   prefix.PrefixEnd().Bytes(),
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+		Start: prefix,
+		End:   prefix.PrefixEnd(),
 	})
 	if err != nil {
 		return nil, err

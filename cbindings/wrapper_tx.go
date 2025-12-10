@@ -169,7 +169,7 @@ func (txn *Transaction) Blockstore() datastore.Blockstore {
 	return txn.tx.(datastore.Txn).Blockstore() //nolint:forcetypeassert
 }
 
-func (txn *Transaction) Datastore() corekv.ReaderWriter {
+func (txn *Transaction) Datastore() datastore.Keyedstore {
 	return txn.tx.(datastore.Txn).Datastore() //nolint:forcetypeassert
 }
 

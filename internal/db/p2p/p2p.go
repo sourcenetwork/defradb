@@ -142,6 +142,22 @@ func (proc *pushLogCommProcessor) ProcessRequest(
 	return protocol.PushLogReply{}, proc.p2p.processPushlogRequest(ctx, &req, true)
 }
 
+// peerEventHandlingHost wraps a Host to add a PeerEventHandler to pubsub topics.
+// It's added so that KMS doesn't need to bother with event handling and keeps it independent
+// from the event bus.
+type peerEventHandlingHost struct {
+	client.Host
+	eventHandler client.PeerEventHandler
+}
+
+func (h *peerEventHandlingHost) AddPubSubTopic(
+	topicName string,
+	subscribe bool,
+	handler client.PubsubMessageHandler,
+) error {
+	return h.Host.AddPubSubTopic(topicName, subscribe, handler, h.eventHandler)
+}
+
 // New returns a new configured P2P instance.
 func New(
 	ctx context.Context,
@@ -167,7 +183,7 @@ func New(
 
 	host.SetBlockAccessFunc(p.hasAccess)
 
-	err := p.host.AddPubSubTopic(docSyncTopic, true, p.docSyncMessageHandler)
+	err := p.host.AddPubSubTopic(docSyncTopic, true, p.docSyncMessageHandler, p.peerEventHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +206,10 @@ func New(
 		p.kms, err = kms.NewPubSubService(
 			ctx,
 			host.ID(),
-			host,
+			&peerEventHandlingHost{
+				Host:         host,
+				eventHandler: p.peerEventHandler,
+			},
 			datastore.EncstoreFrom(db.Rootstore()),
 			db.NodeACP(),
 			db.DocumentACP(),
@@ -471,6 +490,14 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	}
 
 	return nil, nil
+}
+
+func (p *P2P) peerEventHandler(peerID string, topic string, eventType string) {
+	p.db.Events().Publish(event.NewMessage(event.TopicPeerEventName, event.TopicPeerEvent{
+		PeerID:    peerID,
+		Topic:     topic,
+		EventType: eventType,
+	}))
 }
 
 // processPushlogRequest processes a push log request

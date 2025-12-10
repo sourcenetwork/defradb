@@ -34,9 +34,15 @@ type IndexDataStoreKey struct {
 	IndexID uint32
 	// Fields is the values of the fields in the index
 	Fields []IndexedField
+	// Offset can be set in order to control how many times `bytesPrefixEnd` is called when this `IndexDataStoreKey`
+	// is serialized.
+	//
+	// This allows `bytesPrefixEnd` to be managed before serialization, allowing the `bytesPrefixEnd`'ed key to be
+	// passed into strongly typed interfaces, such as `Keyedstore`.
+	Offset uint64
 }
 
-var _ Key = (*IndexDataStoreKey)(nil)
+var _ Walkable = (*IndexDataStoreKey)(nil)
 
 // NewIndexDataStoreKey creates a new IndexDataStoreKey from a collection ID, index ID and fields.
 // It also validates values of the fields.
@@ -180,15 +186,18 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 
 	b := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(key.CollectionShortID))
 
-	if key.IndexID == 0 {
-		return b
-	}
-	b = append(b, '/')
-	b = encoding.EncodeUvarintAscending(b, uint64(key.IndexID))
-
-	for _, field := range key.Fields {
+	if key.IndexID != 0 {
 		b = append(b, '/')
-		b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
+		b = encoding.EncodeUvarintAscending(b, uint64(key.IndexID))
+
+		for _, field := range key.Fields {
+			b = append(b, '/')
+			b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
+		}
+	}
+
+	for i := 0; i < int(key.Offset); i++ {
+		b = bytesPrefixEnd(b)
 	}
 
 	return b
@@ -197,6 +206,14 @@ func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
 // PrefixEnd returns a key that would sort immediately after all keys with this prefix.
 // It returns a key such that all keys with the prefix are >= k and < k.PrefixEnd().
 // This is implemented by encoding the key to bytes and incrementing it.
-func (k IndexDataStoreKey) PrefixEnd() []byte {
-	return bytesPrefixEnd(k.Bytes())
+func (k *IndexDataStoreKey) PrefixEnd() Walkable {
+	newFields := make([]IndexedField, len(k.Fields))
+	copy(newFields, k.Fields)
+
+	return &IndexDataStoreKey{
+		CollectionShortID: k.CollectionShortID,
+		IndexID:           k.IndexID,
+		Fields:            newFields,
+		Offset:            k.Offset + 1,
+	}
 }

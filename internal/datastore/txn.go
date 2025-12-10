@@ -25,7 +25,7 @@ type Txn interface {
 	Blockstore() Blockstore
 
 	// Datastore returns the prefixed store for the datastore
-	Datastore() corekv.ReaderWriter
+	Datastore() Keyedstore
 
 	// Encstore returns the prefixed store for the encryption key store
 	Encstore() Blockstore
