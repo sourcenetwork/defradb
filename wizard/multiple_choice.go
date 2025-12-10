@@ -1,3 +1,13 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package wizard
 
 import (
@@ -19,11 +29,14 @@ type modelMultipleChoice struct {
 	// how the next choice should be branched to. nil is valid, and will be treated
 	// as the end of the chain.
 	nextSteps []step
+
+	// callback is a function that will be called when this step is done.
+	callback func(s step)
 }
 
 // initialModelMultipleChoice should be called instead of manually constructing the struct
-func initialModelMultipleChoice(id string, prompt string, choices []string) modelMultipleChoice {
-	return modelMultipleChoice{
+func initialModelMultipleChoice(id string, prompt string, choices []string) *modelMultipleChoice {
+	return &modelMultipleChoice{
 		id:      id,
 		prompt:  prompt,
 		choices: choices,
@@ -32,13 +45,13 @@ func initialModelMultipleChoice(id string, prompt string, choices []string) mode
 	}
 }
 
-// Init should not be called except by the main model
-func (m modelMultipleChoice) Init() tea.Cmd {
+// Init() should not be called except by the main model
+func (m *modelMultipleChoice) Init() tea.Cmd {
 	return nil
 }
 
-// Update should not be called except by the main model
-func (m modelMultipleChoice) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+// Update() should not be called except by the main model
+func (m *modelMultipleChoice) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -64,15 +77,14 @@ func (m modelMultipleChoice) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Enter and space select the current choice
 		case "enter", " ":
 			m.done = true
-			return m, nil
 		}
 	}
 
 	return m, nil
 }
 
-// View should not be called except by the main model
-func (m modelMultipleChoice) View() string {
+// View() should not be called except by the main model
+func (m *modelMultipleChoice) View() string {
 	s := m.prompt + "\n\n"
 
 	// Iterate over our choices
@@ -92,7 +104,7 @@ func (m modelMultipleChoice) View() string {
 }
 
 // Next() will return the next step associated with the current cursor selection.
-func (m modelMultipleChoice) Next() step {
+func (m *modelMultipleChoice) Next() step {
 	if m.nextSteps == nil || len(m.nextSteps) == 0 {
 		return nil
 	}
@@ -103,17 +115,25 @@ func (m modelMultipleChoice) Next() step {
 }
 
 // The result is the current cursor selection
-func (m modelMultipleChoice) Result() any {
+func (m *modelMultipleChoice) Result() any {
 	return m.cursor
 }
 
 // This model tracks its own done state, which should at some point be set to true
 // by the Update method.
-func (m modelMultipleChoice) Done() bool {
+func (m *modelMultipleChoice) Done() bool {
 	return m.done
 }
 
 // Returns the ID assigned during construction
-func (m modelMultipleChoice) ID() string {
+func (m *modelMultipleChoice) ID() string {
 	return m.id
+}
+
+// Callback() should not be called except by the main model
+func (m *modelMultipleChoice) Callback() {
+	if m.callback == nil {
+		return
+	}
+	m.callback(m)
 }

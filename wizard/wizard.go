@@ -1,3 +1,13 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package wizard
 
 import (
@@ -30,6 +40,10 @@ type step interface {
 	// dynamic, but what must be true, is that at the time of the Done() method
 	// resolving to true, the Result() method must be resolvable to a final value.
 	Result() any
+
+	// Callback() must return a function that will be called when the step is done.
+	// It can be nil, in which case the step will not call any callback when it is done.
+	Callback()
 }
 
 // The main model is the top-level model that runs the wizard. It will track the
@@ -42,16 +56,12 @@ type mainModel struct {
 }
 
 // Delegate responsibility of Init to the current step
-func (m mainModel) Init() tea.Cmd {
+func (m *mainModel) Init() tea.Cmd {
 	return m.currentStep.Init()
 }
 
 // Update method handles the logic of the wizard application
-func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if m.done {
-		return m, tea.Quit
-	}
-
+func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var updatedModel tea.Model
 
@@ -59,16 +69,26 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	updatedModel, cmd = m.currentStep.Update(msg)
 	m.currentStep = updatedModel.(step)
 
-	// Check if the step is done, and if so, store the result and move on to the next step
-	if m.currentStep.Done() {
-		next := m.currentStep.Next()
+	// If the step is done...
+	for m.currentStep != nil && m.currentStep.Done() {
+		// ... call its callback, store the results, and move onto the next step
+		m.currentStep.Callback()
 		m.results[m.currentStep.ID()] = append(m.results[m.currentStep.ID()], m.currentStep.Result())
-		if next != nil {
-			m.currentStep = next
-		} else {
-			// If there is no next step, the wizard is complete
-			m.done = true
+		next := m.currentStep.Next()
+
+		// Movethrough blank steps, calling their callbacks, until we reach a non-blank step
+		for next != nil && next.ID() == "_blank_" {
+			next.Callback()
+			m.results[next.ID()] = append(m.results[next.ID()], next.Result())
+			next = next.Next()
 		}
+		m.currentStep = next
+	}
+
+	// If there are no more steps, we are done, and can quit
+	if m.currentStep == nil {
+		m.done = true
+		return m, tea.Quit
 	}
 
 	return m, cmd
@@ -76,37 +96,52 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // Delegate responsibility of View to the current step, with a bit of simple logic to check if
 // we are done, and to wrap a quit message below it.
-func (m mainModel) View() string {
+func (m *mainModel) View() string {
 	if m.done {
-		s := "Wizard complete\n"
-		return s
+		return "\n"
 	}
-	return m.currentStep.View() + "\nYou can press Q at any time to exit this wizard.\n"
+	return "\n" + m.currentStep.ID() + ": " + m.currentStep.View() + "\nYou can press Q at any time to exit this wizard.\n"
 }
 
 // Main is the entry point of the wizard, and is wired into the CLI's MakeWizardCommand() function.
 func Main() {
+
+	fmt.Print("\n")
+
 	// Define the steps
 	step1 := initialModelMultipleChoice(
 		"step1",
-		"You are about to run the DefraDB setup wizard. Do you wish to continue?:",
+		"\nYou are about to run the DefraDB setup wizard. Do you wish to continue?",
 		[]string{"Yes", "No"},
 	)
 
 	step2 := initialModelMultipleChoice(
 		"step2",
-		"DefraDB protects the storage and transmission of data with a keypair that "+
+		"DefraDB protects the storage and transmission of data with a keypair that\n"+
 			" will be generated now. You have the choice of where to store these generated keys.\n\n"+
 			" Where do you want to store your keypair?",
 		[]string{"Filesystem (~/.defradb/keys)", "OS (KeyChain, etc)"},
 	)
 
+	step3 := initialModelMultipleChoice(
+		"step3",
+		"Setup is done.",
+		[]string{"Yes", "No"},
+	)
+
+	cleanupStep := initialModelBlank()
+
 	// Chain the steps together
-	step1.nextSteps = []step{step2, nil}
-	step2.nextSteps = []step{nil, nil}
+	step1.nextSteps = []step{step2, cleanupStep}
+	step2.nextSteps = []step{step3, nil}
+	step3.nextSteps = []step{nil, nil}
+
+	// Setup the callbacks
+	step2.callback = callback_SetKeyringBackend
+	cleanupStep.callback = callback_PrintSetupComplete
 
 	// Run the Bubbletea program
-	program := tea.NewProgram(mainModel{currentStep: step1, results: make(map[string][]any)})
+	program := tea.NewProgram(&mainModel{currentStep: step1, results: make(map[string][]any)})
 	if _, err := program.Run(); err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)
