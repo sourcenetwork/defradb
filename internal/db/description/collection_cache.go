@@ -30,12 +30,12 @@ func InitCollectionCache(ctx context.Context) context.Context {
 //
 // It is done to avoid an extra check to see if the cache exists or not when fetching
 // it from the context.
-func WithCollectionCache(ctx context.Context, cache *CollectionCache) context.Context {
+func ContextWithCollectionCache(ctx context.Context, cache *CollectionCache) context.Context {
 	return context.WithValue(ctx, collectionCacheKey{}, cache)
 }
 
 // getCollectionCache retrieves the collection short-id cache from the given context.
-func CollectionCacheFrom(ctx context.Context) *CollectionCache {
+func CollectionCacheFromContext(ctx context.Context) *CollectionCache {
 	return ctx.Value(collectionCacheKey{}).(*CollectionCache) //nolint:forcetypeassert
 }
 

@@ -14,9 +14,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astprinter"
@@ -32,7 +32,7 @@ import (
 
 var (
 	defaultOutputPath = "schema.gen.graphql"
-	fileLineSeperator = []byte("\n\n")
+	fileLineSeperator = "\n\n"
 )
 
 func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
@@ -48,14 +48,18 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 		`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var inputBuf io.Reader
+			var sdlBuf string
 
 			// Either we use stdin or we concat all the file
 			// arguments
 			if len(args) == 1 && args[0] == "-" {
-				inputBuf = os.Stdin
+				sdlByteBuf, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					return err
+				}
+				sdlBuf = string(sdlByteBuf)
 			} else {
-				fileInputBuf := bytes.NewBuffer(nil)
+				var fileInputBuf strings.Builder
 				for i, arg := range args {
 					if arg == "-" {
 						return ErrStdinSingleInputOnly
@@ -66,11 +70,11 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 					}
 
 					if i != 0 {
-						fileInputBuf.Write(fileLineSeperator)
+						fileInputBuf.WriteString(fileLineSeperator)
 					}
 					fileInputBuf.Write(fileBuf)
 				}
-				inputBuf = fileInputBuf
+				sdlBuf = fileInputBuf.String()
 			}
 
 			schemaManager, err := schema.NewSchemaManager(searchableEncryption)
@@ -78,12 +82,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			sdlBuf, err := io.ReadAll(inputBuf)
-			if err != nil {
-				return errors.Join(ErrReadingInput, err)
-			}
-
-			cols, err := schemaManager.ParseSDL(string(sdlBuf))
+			cols, err := schemaManager.ParseSDL(sdlBuf)
 			if err != nil {
 				return errors.Join(ErrParsingSDL, err)
 			}
@@ -95,7 +94,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 
 			cache := description.NewCollectionCache()
 			cache.AddAll(collections)
-			ctx := description.WithCollectionCache(ctx, cache)
+			ctx := description.ContextWithCollectionCache(ctx, cache)
 
 			_, err = schemaManager.Generator.Generate(ctx, collections)
 			if err != nil {
@@ -134,8 +133,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 					return err
 				}
 				if ofinfo != nil && !yesOverwrite {
-					fmt.Fprintln(os.Stderr, "output file path already exists. If you want to overwrite use -y")
-					os.Exit(1)
+					return errors.New("output file path already exists. If you want to overwrite use -y")
 				}
 
 				f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
@@ -179,112 +177,4 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-var introspectionQueryRequest = `
-
-    query IntrospectionQuery {
-      __schema {
-        
-        queryType { name }
-        mutationType { name }
-        subscriptionType { name }
-        types {
-          ...FullType
-        }
-        directives {
-          name
-          description
-          
-          locations
-          args {
-            ...InputValue
-          }
-        }
-      }
-    }
-
-    fragment FullType on __Type {
-      kind
-      name
-      description
-      
-      
-      fields(includeDeprecated: true) {
-        name
-        description
-        args {
-          ...InputValue
-        }
-        type {
-          ...TypeRef
-        }
-        isDeprecated
-        deprecationReason
-      }
-      inputFields {
-        ...InputValue
-      }
-      interfaces {
-        ...TypeRef
-      }
-      enumValues(includeDeprecated: true) {
-        name
-        description
-        isDeprecated
-        deprecationReason
-      }
-      possibleTypes {
-        ...TypeRef
-      }
-    }
-
-    fragment InputValue on __InputValue {
-      name
-      description
-      type { ...TypeRef }
-      defaultValue
-      
-      
-    }
-
-    fragment TypeRef on __Type {
-      kind
-      name
-      ofType {
-        kind
-        name
-        ofType {
-          kind
-          name
-          ofType {
-            kind
-            name
-            ofType {
-              kind
-              name
-              ofType {
-                kind
-                name
-                ofType {
-                  kind
-                  name
-                  ofType {
-                    kind
-                    name
-                    ofType {
-                      kind
-                      name
-                      ofType {
-                        kind
-                        name
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  
-`
+var introspectionQueryRequest = "query IntrospectionQuery{__schema{queryType{name}mutationType{name}subscriptionType{name}types{...FullType}directives{name description locations args{...InputValue}}}}fragment FullType on __Type{kind name description fields(includeDeprecated:true){name description args{...InputValue}type{...TypeRef}isDeprecated deprecationReason}inputFields{...InputValue}interfaces{...TypeRef}enumValues(includeDeprecated:true){name description isDeprecated deprecationReason}possibleTypes{...TypeRef}}fragment InputValue on __InputValue{name description type{...TypeRef}defaultValue}fragment TypeRef on __Type{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name}}}}}}}}}}"
