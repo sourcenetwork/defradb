@@ -78,12 +78,43 @@ type DB interface {
 	Events() event.Bus
 }
 
+type HandlerOptions struct {
+	// Resolution of the transaction TTL
+	TxnTTLTick time.Duration
+	// Number of buckets for the transaction TTL cache
+	TxnTTLBuckets int
+}
+
+// DefaultOpts returns the default options for the server.
+func DefaultHandlerOptions() *HandlerOptions {
+	return &HandlerOptions{
+		TxnTTLTick:    time.Second,
+		TxnTTLBuckets: 60,
+	}
+}
+
+// ServerOpt is a function that configures server options.
+type HandlerOpt func(*HandlerOptions)
+
+// WithHTTPTxnTTLCache
+func WithHTTPTxnTTLCache(tick time.Duration, buckets int) HandlerOpt {
+	return func(opts *HandlerOptions) {
+		opts.TxnTTLTick = tick
+		opts.TxnTTLBuckets = buckets
+	}
+}
+
 type Handler struct {
 	mux *chi.Mux
 	txs *TxnTTLCache
 }
 
-func NewHandler(db DB) (*Handler, error) {
+func NewHandler(db DB, opts ...HandlerOpt) (*Handler, error) {
+	options := DefaultHandlerOptions()
+	for _, opt := range opts {
+		opt(options)
+	}
+
 	router, err := NewApiRouter()
 	if err != nil {
 		return nil, err
@@ -94,9 +125,12 @@ func NewHandler(db DB) (*Handler, error) {
 	// resolution, with 60 "buckets" (See the ttl.Wheel type).
 	// Transactions that have already been commited/discard are a
 	// no-op.
-	txs := ttl.NewTTLCache(time.Second, 60, func(txid uint64, txn client.Txn) {
-		txn.Discard()
-	})
+	txs := ttl.NewTTLCache(
+		options.TxnTTLTick,
+		options.TxnTTLBuckets,
+		func(txid uint64, txn client.Txn) {
+			txn.Discard()
+		})
 
 	mux := chi.NewMux()
 	mux.Route("/api/"+Version, func(r chi.Router) {
