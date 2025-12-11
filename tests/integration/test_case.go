@@ -81,6 +81,9 @@ type TestCase struct {
 	// IdentityTypes is a map of identity to key type.
 	// Use it to customize the key type that is used for identity and signing.
 	IdentityTypes map[state.Identity]crypto.KeyType
+
+	// Configures the HTTP client specific transaction TTL cache
+	HTTPTxnTTLCache HTTPTxnTTLCache
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -90,6 +93,18 @@ type KMS struct {
 	// ExcludedTypes specifies the KMS types that should be excluded from the test.
 	// If none are specified all types will be used.
 	ExcludedTypes []state.KMSType
+}
+
+type HTTPTxnTTLCache struct {
+	// Tick sets the tick resolution
+	Tick time.Duration
+
+	// HTTPTxnTTLCacheBuckets sets the bucket count
+	Buckets int
+
+	// TxnTTL is the actual ttl used when creating
+	// new transactions
+	TxnTTL time.Duration
 }
 
 // SetupComplete is a flag to explicitly notify the change detector at which point
