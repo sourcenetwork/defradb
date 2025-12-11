@@ -278,7 +278,7 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 
 	request, options, err := extractGraphQLRequest(req)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusBadRequest, gqlErrorResponse{err})
 		return
 	}
 
@@ -287,7 +287,7 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	// if at this point the we get a subscription query, it isn't using
 	// the correct accept headers, and we error
 	if result.Subscription != nil {
-		responseJSON(rw, http.StatusNotAcceptable, errorResponse{ErrInvalidSubscriptionTransport})
+		responseJSON(rw, http.StatusNotAcceptable, gqlErrorResponse{ErrInvalidSubscriptionTransport})
 		return
 	}
 

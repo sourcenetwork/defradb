@@ -68,20 +68,12 @@ func (e *errorResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// gqlError represents an error that was encountered during a GQL request.
-//
-// This is only used for marshalling to keep our responses spec compliant.
-type gqlError struct {
-	// Message contains a description of the error.
-	Message string `json:"message"`
-}
-
 type gqlErrorResponse struct {
 	Error error `json:"error"`
 }
 
 func (e gqlErrorResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]any{"errors": []gqlError{
+	return json.Marshal(client.GqlResult{Errors: []client.GqlError{
 		{
 			Message: e.Error.Error(),
 		},

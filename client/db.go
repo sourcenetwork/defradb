@@ -361,7 +361,7 @@ type GQLResult struct {
 // gqlError represents an error that was encountered during a GQL request.
 //
 // This is only used for marshalling to keep our responses spec compliant.
-type gqlError struct {
+type GqlError struct {
 	// Message contains a description of the error.
 	Message string `json:"message"`
 }
@@ -369,9 +369,9 @@ type gqlError struct {
 // gqlResult is used to marshal and unmarshal GQLResults.
 //
 // The serialized data should always match the graphQL spec.
-type gqlResult struct {
+type GqlResult struct {
 	// Errors contains the formatted result errors
-	Errors []gqlError `json:"errors,omitempty"`
+	Errors []GqlError `json:"errors,omitempty"`
 	// Data contains the result data
 	Data any `json:"data"`
 }
@@ -379,7 +379,7 @@ type gqlResult struct {
 func (res *GQLResult) UnmarshalJSON(data []byte) error {
 	dec := json.NewDecoder(bytes.NewBuffer(data))
 	dec.UseNumber()
-	var out gqlResult
+	var out GqlResult
 	if err := dec.Decode(&out); err != nil {
 		return err
 	}
@@ -392,10 +392,10 @@ func (res *GQLResult) UnmarshalJSON(data []byte) error {
 }
 
 func (res GQLResult) MarshalJSON() ([]byte, error) {
-	out := gqlResult{Data: res.Data}
-	out.Errors = make([]gqlError, len(res.Errors))
+	out := GqlResult{Data: res.Data}
+	out.Errors = make([]GqlError, len(res.Errors))
 	for i, e := range res.Errors {
-		out.Errors[i] = gqlError{Message: e.Error()}
+		out.Errors[i] = GqlError{Message: e.Error()}
 	}
 	return json.Marshal(out)
 }
