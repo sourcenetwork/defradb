@@ -17,6 +17,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type WizardContext struct {
+	Results map[string][]any
+}
+
 // A "step" is a single step in the wizard, each of which is its own
 // sub-model responsible for its UI and logic.
 type step interface {
@@ -52,7 +56,7 @@ type step interface {
 type mainModel struct {
 	currentStep step
 	done        bool
-	results     map[string][]any // Map ID of the step to the result of it
+	ctx         *WizardContext
 }
 
 // Delegate responsibility of Init to the current step
@@ -73,13 +77,13 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	for m.currentStep != nil && m.currentStep.Done() {
 		// ... call its callback, store the results, and move onto the next step
 		m.currentStep.Callback()
-		m.results[m.currentStep.ID()] = append(m.results[m.currentStep.ID()], m.currentStep.Result())
+		m.ctx.Results[m.currentStep.ID()] = append(m.ctx.Results[m.currentStep.ID()], m.currentStep.Result())
 		next := m.currentStep.Next()
 
 		// Movethrough blank steps, calling their callbacks, until we reach a non-blank step
 		for next != nil && next.ID() == "_blank_" {
 			next.Callback()
-			m.results[next.ID()] = append(m.results[next.ID()], next.Result())
+			m.ctx.Results[next.ID()] = append(m.ctx.Results[next.ID()], next.Result())
 			next = next.Next()
 		}
 		m.currentStep = next
@@ -100,11 +104,13 @@ func (m *mainModel) View() string {
 	if m.done {
 		return "\n"
 	}
-	return "\n" + m.currentStep.ID() + ": " + m.currentStep.View() + "\nYou can press Q at any time to exit this wizard.\n"
+	return "\n" + m.currentStep.ID() + ": " + m.currentStep.View() + "\nYou can press Control+C at any time to exit this wizard.\n"
 }
 
 // Main is the entry point of the wizard, and is wired into the CLI's MakeWizardCommand() function.
 func Main() {
+
+	ctx := &WizardContext{Results: map[string][]any{}}
 
 	fmt.Print("\n")
 
@@ -118,9 +124,22 @@ func Main() {
 	step2 := initialModelMultipleChoice(
 		"step2",
 		"DefraDB protects the storage and transmission of data with a keypair that\n"+
-			" will be generated now. You have the choice of where to store these generated keys.\n\n"+
-			" Where do you want to store your keypair?",
+			"will be generated now. You have the choice of where to store these generated keys.\n\n"+
+			"Where do you want to store your keypair?",
 		[]string{"Filesystem (~/.defradb/keys)", "OS (KeyChain, etc)"},
+	)
+
+	step2a := initialModelTextInput(
+		"step2a",
+		"Environment variable DEFRA_KEYRING_SECRET must first be set. What would you like to set\n"+
+			"this environment variable to?",
+		"my-secret-password",
+	)
+
+	step2b := initialModelTextInput(
+		"step2b",
+		"The environment variable was set.\n",
+		"my-secret-password",
 	)
 
 	step3 := initialModelMultipleChoice(
@@ -130,18 +149,23 @@ func Main() {
 	)
 
 	cleanupStep := initialModelBlank()
+	step2brancher := initialModelBrancher()
 
 	// Chain the steps together
 	step1.nextSteps = []step{step2, cleanupStep}
-	step2.nextSteps = []step{step3, nil}
+	step2.nextSteps = []step{step2brancher, step3}
+	step2brancher.nextSteps = []step{step2a, step2b}
 	step3.nextSteps = []step{nil, nil}
 
 	// Setup the callbacks
 	step2.callback = callback_SetKeyringBackend
 	cleanupStep.callback = callback_PrintSetupComplete
 
+	// Setup the evaluators
+	step2brancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet
+
 	// Run the Bubbletea program
-	program := tea.NewProgram(&mainModel{currentStep: step1, results: make(map[string][]any)})
+	program := tea.NewProgram(&mainModel{currentStep: step1, ctx: ctx})
 	if _, err := program.Run(); err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)

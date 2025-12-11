@@ -37,11 +37,13 @@ type modelMultipleChoice struct {
 // initialModelMultipleChoice should be called instead of manually constructing the struct
 func initialModelMultipleChoice(id string, prompt string, choices []string) *modelMultipleChoice {
 	return &modelMultipleChoice{
-		id:      id,
-		prompt:  prompt,
-		choices: choices,
-		cursor:  0,
-		done:    false,
+		id:        id,
+		prompt:    prompt,
+		choices:   choices,
+		cursor:    0,
+		done:      false,
+		nextSteps: nil,
+		callback:  nil,
 	}
 }
 
@@ -59,7 +61,7 @@ func (m *modelMultipleChoice) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 
 		// Check for a quick-quit
-		case "ctrl+c", "q":
+		case "ctrl+c":
 			return m, tea.Quit
 
 		// Move the cursor up

@@ -5,6 +5,7 @@ go 1.24.6
 require (
 	github.com/bits-and-blooms/bitset v1.22.0
 	github.com/bxcodec/faker v2.0.1+incompatible
+	github.com/charmbracelet/bubbles v0.7.6
 	github.com/charmbracelet/bubbletea v0.23.2
 	github.com/cosmos/cosmos-sdk v0.50.14
 	github.com/cosmos/gogoproto v1.7.0
@@ -71,6 +72,7 @@ require (
 	golang.org/x/crypto v0.45.0
 	golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9
 	google.golang.org/grpc v1.75.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -110,6 +112,7 @@ require (
 	github.com/NathanBaulch/protoc-gen-cobra v1.2.1 // indirect
 	github.com/TBD54566975/ssi-sdk v0.0.4-alpha // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
+	github.com/atotto/clipboard v0.1.2 // indirect
 	github.com/awalterschulze/gographviz v2.0.3+incompatible // indirect
 	github.com/aws/aws-sdk-go v1.44.224 // indirect
 	github.com/aymanbagabas/go-osc52 v1.2.1 // indirect
@@ -412,7 +415,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250825161204-c5933d9347a5 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 	k8s.io/apimachinery v0.32.3 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect

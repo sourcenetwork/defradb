@@ -29,7 +29,10 @@ type modelBlank struct {
 
 // initialModelBlank should be called instead of manually constructing the struct
 func initialModelBlank() *modelBlank {
-	return &modelBlank{}
+	return &modelBlank{
+		nextStep: nil,
+		callback: nil,
+	}
 }
 
 // Init() should not be called except by the main model
@@ -44,10 +47,10 @@ func (m *modelBlank) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View() should not be called except by the main model
 func (m *modelBlank) View() string {
-	return "? (blank)"
+	return ""
 }
 
-// Next() will return nil
+// Next() will return the next step, which may be nil
 func (m *modelBlank) Next() step {
 	return m.nextStep
 }
