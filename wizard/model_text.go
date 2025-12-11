@@ -14,10 +14,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// The purpose of a blank model, is that we can have a step that does not, itself,
-// do anything, but which can still have a callback function. This can be useful to
-// chain arbitraryfunction invocations into the step chain.
-type modelBlank struct {
+type modelText struct {
+	id   string // Used to access the result of this step from the main model's results map
+	text string // The text to display to the user
+	done bool   // Whether the step is done
+
 	// nextStep can be assigned dynamically. It should be set to the next step
 	// to be executed after this step. nil is valid, and will be treated as the
 	// end of the chain.
@@ -27,51 +28,71 @@ type modelBlank struct {
 	callback func(s step, ctx *WizardContext)
 }
 
-// initialModelBlank should be called instead of manually constructing the struct
-func initialModelBlank() *modelBlank {
-	return &modelBlank{
+// initialModelText should be called instead of manually constructing the struct
+func initialModelText(id string, text string) *modelText {
+	return &modelText{
+		id:       id,
+		text:     text,
+		done:     false,
 		nextStep: nil,
 		callback: nil,
 	}
 }
 
 // Init() should not be called except by the main model
-func (m *modelBlank) Init() tea.Cmd {
+func (m *modelText) Init() tea.Cmd {
 	return nil
 }
 
 // Update() should not be called except by the main model
-func (m *modelBlank) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *modelText) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+
+	case tea.KeyMsg:
+
+		switch msg.String() {
+
+		// Check for a quick-quit
+		case "ctrl+c":
+			return m, tea.Quit
+
+		// Enter and space proceed to the next step
+		case "enter", " ":
+			m.done = true
+		}
+	}
+
 	return m, nil
 }
 
 // View() should not be called except by the main model
-func (m *modelBlank) View() string {
-	return ""
+func (m *modelText) View() string {
+	return m.text
 }
 
 // Next() will return the next step, which may be nil
-func (m *modelBlank) Next() step {
+func (m *modelText) Next() step {
 	return m.nextStep
 }
 
 // There is no result for this step
-func (m *modelBlank) Result() any {
-	return nil
+func (m *modelText) Result() any {
+	return ""
 }
 
-// Because this step does not do anything, it is always done
-func (m *modelBlank) Done() bool {
-	return true
+// This model tracks its own done state, which should at some point be set to true
+// by the Update method.
+func (m *modelText) Done() bool {
+	return m.done
 }
 
-// Returns a dummy string
-func (m *modelBlank) ID() string {
-	return "_blank_"
+// Returns the ID assigned during construction
+func (m *modelText) ID() string {
+	return m.id
 }
 
 // Callback() should not be called except by the main model
-func (m *modelBlank) Callback(ctx *WizardContext) {
+func (m *modelText) Callback(ctx *WizardContext) {
 	if m.callback == nil {
 		return
 	}

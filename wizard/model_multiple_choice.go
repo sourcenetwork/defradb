@@ -31,7 +31,7 @@ type modelMultipleChoice struct {
 	nextSteps []step
 
 	// callback is a function that will be called when this step is done.
-	callback func(s step)
+	callback func(s step, ctx *WizardContext)
 }
 
 // initialModelMultipleChoice should be called instead of manually constructing the struct
@@ -133,9 +133,9 @@ func (m *modelMultipleChoice) ID() string {
 }
 
 // Callback() should not be called except by the main model
-func (m *modelMultipleChoice) Callback() {
+func (m *modelMultipleChoice) Callback(ctx *WizardContext) {
 	if m.callback == nil {
 		return
 	}
-	m.callback(m)
+	m.callback(m, ctx)
 }

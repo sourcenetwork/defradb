@@ -11,7 +11,7 @@
 package wizard
 
 // This callback will set keyring.backend to either "file" or "system"
-func callback_SetKeyringBackend(s step) {
+func callback_SetKeyringBackend(s step, ctx *WizardContext) {
 	mm := s.(*modelMultipleChoice)
 
 	choice := "file"
@@ -26,7 +26,7 @@ func callback_SetKeyringBackend(s step) {
 	}
 }
 
-// This callback prints a message saying that the setup is complete
-func callback_PrintSetupComplete(_ step) {
-	println("Setup complete")
+// This callback will generate the keyring files
+func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) {
+	println("Generating keyring files")
 }

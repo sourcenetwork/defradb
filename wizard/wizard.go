@@ -47,7 +47,7 @@ type step interface {
 
 	// Callback() must return a function that will be called when the step is done.
 	// It can be nil, in which case the step will not call any callback when it is done.
-	Callback()
+	Callback(ctx *WizardContext)
 }
 
 // The main model is the top-level model that runs the wizard. It will track the
@@ -72,18 +72,17 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Update the current step
 	updatedModel, cmd = m.currentStep.Update(msg)
 	m.currentStep = updatedModel.(step)
-
 	// If the step is done...
 	for m.currentStep != nil && m.currentStep.Done() {
 		// ... call its callback, store the results, and move onto the next step
-		m.currentStep.Callback()
 		m.ctx.Results[m.currentStep.ID()] = append(m.ctx.Results[m.currentStep.ID()], m.currentStep.Result())
+		m.currentStep.Callback(m.ctx)
 		next := m.currentStep.Next()
 
 		// Movethrough blank steps, calling their callbacks, until we reach a non-blank step
 		for next != nil && next.ID() == "_blank_" {
-			next.Callback()
 			m.ctx.Results[next.ID()] = append(m.ctx.Results[next.ID()], next.Result())
+			next.Callback(m.ctx)
 			next = next.Next()
 		}
 		m.currentStep = next
@@ -104,7 +103,7 @@ func (m *mainModel) View() string {
 	if m.done {
 		return "\n"
 	}
-	return "\n" + m.currentStep.ID() + ": " + m.currentStep.View() + "\nYou can press Control+C at any time to exit this wizard.\n"
+	return "\n" + m.currentStep.View()
 }
 
 // Main is the entry point of the wizard, and is wired into the CLI's MakeWizardCommand() function.
@@ -112,12 +111,10 @@ func Main() {
 
 	ctx := &WizardContext{Results: map[string][]any{}}
 
-	fmt.Print("\n")
-
 	// Define the steps
 	step1 := initialModelMultipleChoice(
 		"step1",
-		"\nYou are about to run the DefraDB setup wizard. Do you wish to continue?",
+		"You are about to run the DefraDB setup wizard. Do you wish to continue?",
 		[]string{"Yes", "No"},
 	)
 
@@ -129,37 +126,30 @@ func Main() {
 		[]string{"Filesystem (~/.defradb/keys)", "OS (KeyChain, etc)"},
 	)
 
-	step2a := initialModelTextInput(
+	step2a := initialModelText(
 		"step2a",
-		"Environment variable DEFRA_KEYRING_SECRET must first be set. What would you like to set\n"+
-			"this environment variable to?",
-		"my-secret-password",
+		"Environment variable DEFRA_KEYRING_SECRET must first be set.\n\n"+
+			"Please set the environment variable first and run the wizard again.\n\n"+
+			"To set the environment variable, you can use the command: DEFRA_KEYRING_SECRET=my-secret-password\n\n"+
+			"To run the wizard again you can use the command: defradb wizard\n\n"+
+			"Press Enter or Spaceto exit.",
 	)
 
-	step2b := initialModelTextInput(
-		"step2b",
-		"The environment variable was set.\n",
-		"my-secret-password",
-	)
+	step2b := initialModelBlank()
 
-	step3 := initialModelMultipleChoice(
-		"step3",
-		"Setup is done.",
-		[]string{"Yes", "No"},
-	)
+	step3 := initialModelBlank()
 
 	cleanupStep := initialModelBlank()
 	step2brancher := initialModelBrancher()
 
 	// Chain the steps together
 	step1.nextSteps = []step{step2, cleanupStep}
-	step2.nextSteps = []step{step2brancher, step3}
+	step2.nextSteps = []step{step2brancher, nil}
 	step2brancher.nextSteps = []step{step2a, step2b}
-	step3.nextSteps = []step{nil, nil}
+	step2a.nextStep = step3
 
 	// Setup the callbacks
 	step2.callback = callback_SetKeyringBackend
-	cleanupStep.callback = callback_PrintSetupComplete
 
 	// Setup the evaluators
 	step2brancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet

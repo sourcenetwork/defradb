@@ -27,7 +27,7 @@ type modelTextInput struct {
 	nextStep step
 
 	// callback is a function that will be called when this step is done.
-	callback func(s step)
+	callback func(s step, ctx *WizardContext)
 }
 
 // initialModelTextInput should be called instead of manually constructing the struct
@@ -87,7 +87,7 @@ func (m *modelTextInput) Next() step {
 
 // The result is the text input by the user
 func (m *modelTextInput) Result() any {
-	return ""
+	return m.input.Value()
 }
 
 // This model tracks its own done state, which should at some point be set to true
@@ -102,9 +102,9 @@ func (m *modelTextInput) ID() string {
 }
 
 // Callback() should not be called except by the main model
-func (m *modelTextInput) Callback() {
+func (m *modelTextInput) Callback(ctx *WizardContext) {
 	if m.callback == nil {
 		return
 	}
-	m.callback(m)
+	m.callback(m, ctx)
 }
