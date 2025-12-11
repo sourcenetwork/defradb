@@ -11,7 +11,6 @@
 package wizard
 
 import (
-	"fmt"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -116,8 +115,8 @@ func Main(createConfigCallback func(rootdir string) error) {
 	}
 
 	// Define the steps
-	step1 := initialModelMultipleChoice(
-		"step1",
+	stepWizardStart := initialModelMultipleChoice(
+		"stepWizardStart",
 		"You are about to run the DefraDB setup wizard. Do you wish to continue?",
 		[]string{"Yes", "No"},
 	)
@@ -127,52 +126,51 @@ func Main(createConfigCallback func(rootdir string) error) {
 		"A config.yaml file will be generated.\n\nPress Enter or Space to continue.",
 	)
 
-	step2 := initialModelMultipleChoice(
-		"step2",
+	stepKeyringStorageLocation := initialModelMultipleChoice(
+		"stepKeyringStorageLocation",
 		"DefraDB protects the storage and transmission of data with a keypair that\n"+
 			"will be generated now. You have the choice of where to store these generated keys.\n\n"+
 			"Where do you want to store your keypair?",
 		[]string{"Filesystem (~/.defradb/keys)", "OS (KeyChain, etc)"},
 	)
 
-	step2brancher := initialModelBrancher()
+	stepKeyringStorageLocationBrancher := initialModelBrancher()
 
-	step3a := initialModelText(
-		"step3a",
+	stepWizardExitMissingDefraKeyringSecret := initialModelText(
+		"stepWizardExitMissingDefraKeyringSecret",
 		"Environment variable DEFRA_KEYRING_SECRET must first be set.\n\n"+
 			"Please set the environment variable first and run the wizard again.\n\n"+
 			"To set the environment variable, you can use the command: DEFRA_KEYRING_SECRET=my-secret-password\n\n"+
 			"To run the wizard again you can use the command: defradb wizard\n\n"+
-			"Press Enter or Spaceto exit.",
+			"Press Enter or Space to exit.",
 	)
 
-	step3b := initialModelBlank()
+	stepGenerateKeyringFiles := initialModelBlank()
 
-	step4 := initialModelText(
-		"step4",
+	stepConfirmKeyringFilesGenerated := initialModelText(
+		"stepConfirmKeyringFilesGenerated",
 		"Keyring files generated successfully.\n\n"+
 			"Press Enter or Space to exit.",
 	)
 
 	// Chain the steps together
-	step1.nextSteps = []step{stepConfigGenerator, nil}
-	stepConfigGenerator.nextStep = step2
-	step2.nextSteps = []step{step2brancher, nil}
-	step2brancher.nextSteps = []step{step3a, step3b}
-	step3b.nextStep = step4
+	stepWizardStart.nextSteps = []step{stepConfigGenerator, nil}
+	stepConfigGenerator.nextStep = stepKeyringStorageLocation
+	stepKeyringStorageLocation.nextSteps = []step{stepKeyringStorageLocationBrancher, nil}
+	stepKeyringStorageLocationBrancher.nextSteps = []step{stepWizardExitMissingDefraKeyringSecret, stepGenerateKeyringFiles}
+	stepGenerateKeyringFiles.nextStep = stepConfirmKeyringFilesGenerated
 
 	// Setup the callbacks
-	step2.callback = callback_SetKeyringBackend
+	stepKeyringStorageLocation.callback = callback_SetKeyringBackend
 	stepConfigGenerator.callback = callback_GenerateConfigYAMLFile
-	step3b.callback = callback_GenerateKeyringFiles
+	stepGenerateKeyringFiles.callback = callback_GenerateKeyringFiles
 
 	// Setup the evaluators
-	step2brancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet
+	stepKeyringStorageLocationBrancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet
 
 	// Run the Bubbletea program
-	program := tea.NewProgram(&mainModel{currentStep: step1, ctx: ctx})
+	program := tea.NewProgram(&mainModel{currentStep: stepWizardStart, ctx: ctx})
 	if _, err := program.Run(); err != nil {
-		fmt.Println("Error:", err)
 		os.Exit(1)
 	}
 }
