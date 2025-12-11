@@ -39,6 +39,7 @@ var (
 	ErrMigrationNotFound            = errors.New("migration not found")
 	ErrMissingRequest               = errors.New("missing request")
 	ErrInvalidTransactionId         = errors.New("invalid transaction id")
+	ErrMissingOrExpiredTransaction  = errors.New("missing or expired transaction")
 	ErrP2PDisabled                  = errors.New("p2p network is disabled")
 	ErrMethodIsNotImplemented       = errors.New(errMethodIsNotImplemented)
 	ErrMissingIdentity              = errors.New("required identity is missing")
@@ -65,6 +66,26 @@ func (e *errorResponse) UnmarshalJSON(data []byte) error {
 		e.Error = fmt.Errorf("%s", out)
 	}
 	return nil
+}
+
+// gqlError represents an error that was encountered during a GQL request.
+//
+// This is only used for marshalling to keep our responses spec compliant.
+type gqlError struct {
+	// Message contains a description of the error.
+	Message string `json:"message"`
+}
+
+type gqlErrorResponse struct {
+	Error error `json:"error"`
+}
+
+func (e gqlErrorResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{"errors": []gqlError{
+		{
+			Message: e.Error.Error(),
+		},
+	}})
 }
 
 func NewErrFailedToGetContext(contextType string) error {

@@ -19,13 +19,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type txHandler struct{}
+type txHandler struct {
+	txnTTL time.Duration
+}
 
 type CreateTxResponse struct {
 	ID uint64 `json:"id"`
 }
-
-var defaultTxnTTL = time.Second * 60
 
 func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
@@ -38,7 +38,7 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	txs.Store(tx.ID(), tx, defaultTxnTTL)
+	txs.Store(tx.ID(), tx, h.txnTTL)
 	err = responseJSONErr(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 	if err != nil {
 		txs.Delete(tx.ID())
@@ -58,7 +58,7 @@ func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	txs.Store(tx.ID(), tx, defaultTxnTTL)
+	txs.Store(tx.ID(), tx, h.txnTTL)
 	err = responseJSONErr(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 	if err != nil {
 		txs.Delete(tx.ID())

@@ -392,10 +392,12 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
+
 	if err = json.Unmarshal(data, &result.GQL); err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
+
 	return result
 }
 

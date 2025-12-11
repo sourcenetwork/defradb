@@ -23,7 +23,7 @@ func (n *Node) startAPI(ctx context.Context) error {
 	if n.config.disableAPI {
 		return nil
 	}
-	handler, err := http.NewHandler(n.DB)
+	handler, err := http.NewHandler(n.DB, filterOptions[http.HandlerOpt](n.options)...)
 	if err != nil {
 		return err
 	}

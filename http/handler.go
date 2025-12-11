@@ -34,8 +34,8 @@ var Version string = "v0"
 // playgroundHandler is set when building with the playground build tag
 var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
 
-func NewApiRouter() (*Router, error) {
-	tx_handler := &txHandler{}
+func NewApiRouter(txnTTL time.Duration) (*Router, error) {
+	tx_handler := &txHandler{txnTTL: txnTTL}
 	store_handler := &storeHandler{}
 	acp_handler := &acpHandler{}
 	collection_handler := &collectionHandler{}
@@ -80,16 +80,20 @@ type DB interface {
 
 type HandlerOptions struct {
 	// Resolution of the transaction TTL
-	TxnTTLTick time.Duration
+	TxnTTLCacheTick time.Duration
 	// Number of buckets for the transaction TTL cache
-	TxnTTLBuckets int
+	TxnTTLCacheBuckets int
+	// TxnTTL is the timeout value for the transaction expiration
+	// NOTE: The max value allowed here is CacheTick * Buckets
+	TxnTTL time.Duration
 }
 
 // DefaultOpts returns the default options for the server.
 func DefaultHandlerOptions() *HandlerOptions {
 	return &HandlerOptions{
-		TxnTTLTick:    time.Second,
-		TxnTTLBuckets: 60,
+		TxnTTLCacheTick:    time.Second,
+		TxnTTLCacheBuckets: 60,
+		TxnTTL:             60 * time.Second,
 	}
 }
 
@@ -99,8 +103,8 @@ type HandlerOpt func(*HandlerOptions)
 // WithHTTPTxnTTLCache
 func WithHTTPTxnTTLCache(tick time.Duration, buckets int) HandlerOpt {
 	return func(opts *HandlerOptions) {
-		opts.TxnTTLTick = tick
-		opts.TxnTTLBuckets = buckets
+		opts.TxnTTLCacheTick = tick
+		opts.TxnTTLCacheBuckets = buckets
 	}
 }
 
@@ -115,7 +119,7 @@ func NewHandler(db DB, opts ...HandlerOpt) (*Handler, error) {
 		opt(options)
 	}
 
-	router, err := NewApiRouter()
+	router, err := NewApiRouter(options.TxnTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +130,8 @@ func NewHandler(db DB, opts ...HandlerOpt) (*Handler, error) {
 	// Transactions that have already been commited/discard are a
 	// no-op.
 	txs := ttl.NewTTLCache(
-		options.TxnTTLTick,
-		options.TxnTTLBuckets,
+		options.TxnTTLCacheTick,
+		options.TxnTTLCacheBuckets,
 		func(txid uint64, txn client.Txn) {
 			txn.Discard()
 		})

@@ -70,13 +70,23 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 		tx, ok := txs.Load(id)
 		if !ok {
-			next.ServeHTTP(rw, req)
+			if strings.Contains(req.URL.Path, "/graphql") {
+				responseJSON(
+					rw,
+					http.StatusBadRequest,
+					gqlErrorResponse{ErrMissingOrExpiredTransaction},
+				)
+			} else {
+				responseJSON(
+					rw,
+					http.StatusBadRequest,
+					errorResponse{ErrMissingOrExpiredTransaction},
+				)
+			}
 			return
 		}
 		ctx := req.Context()
-		if val, ok := tx.(client.Txn); ok {
-			ctx = db.InitContext(ctx, val)
-		}
+		ctx = db.InitContext(ctx, tx)
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }

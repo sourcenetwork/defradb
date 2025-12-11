@@ -27,7 +27,10 @@ type Cache[K comparable, V any] struct {
 // when a new key expires, unless its been deleted before its TTL
 // expiration
 func NewTTLCache[K comparable, V any](tick time.Duration, buckets int, onExpire func(key K, value V)) *Cache[K, V] {
-	tc := &Cache[K, V]{cache: &sync.Map{}}
+	tc := &Cache[K, V]{
+		cache:    &sync.Map{},
+		onExpire: onExpire,
+	}
 
 	// on cache expiration we discard the txn
 	tc.tw = NewWheel(tick, buckets, func(k K) {

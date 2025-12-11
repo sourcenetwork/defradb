@@ -39,8 +39,8 @@ type Wrapper struct {
 	serverCancel context.CancelFunc
 }
 
-func NewWrapper(node *node.Node) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB)
+func NewWrapper(node *node.Node, opts ...http.HandlerOpt) (*Wrapper, error) {
+	handler, err := http.NewHandler(node.DB, opts...)
 	if err != nil {
 		return nil, err
 	}

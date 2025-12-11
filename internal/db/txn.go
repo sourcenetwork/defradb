@@ -38,6 +38,7 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 	// explicit transaction
 	ctxTxn, ok := datastore.CtxTryGetTxn(ctx)
 	if ok {
+		// spew.Dump(ctxTxn)
 		switch txn := ctxTxn.(type) {
 		case *Txn:
 			if txn.explicit {
