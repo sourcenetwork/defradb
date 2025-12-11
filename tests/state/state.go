@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
@@ -209,6 +210,9 @@ type State struct {
 
 	// The Document ACP options to share between each node (currently only used for sourcehub).
 	DocumentACPOptions []node.DocumentACPOpt
+
+	// Handler options for initializing the wrapped httptest Handler
+	HandlerOptions []http.HandlerOpt
 
 	// Any explicit transactions active in this test.
 	//
