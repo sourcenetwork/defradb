@@ -23,6 +23,33 @@ func getConfigFile() string {
 	return filepath.Join(home, ".defradb", "config.yaml")
 }
 
+// getYAMLValue is a helper function that gets a value from a YAML map
+func getYAMLValue(m map[string]interface{}, path []string) interface{} {
+	current := m
+
+	for i, key := range path {
+		val, exists := current[key]
+		if !exists {
+			return nil
+		}
+
+		// If this is the last element in the path, return its value directly
+		if i == len(path)-1 {
+			return val
+		}
+
+		// Otherwise we expect it to be another nested map
+		next, ok := val.(map[string]interface{})
+		if !ok {
+			return nil
+		}
+
+		current = next
+	}
+
+	return nil
+}
+
 // setYAMLValue is a helper function that sets a value in a YAML map
 func setYAMLValue(m map[string]interface{}, path []string, value interface{}) error {
 	current := m
@@ -69,4 +96,22 @@ func setYAMLValueInFile(filename string, target []string, value interface{}) err
 
 	// Write back to the same file
 	return os.WriteFile(filename, newData, 0644)
+}
+
+// getYAMLValueInFile opens a YAML file, gets a value from it, and returns the value
+func getYAMLValueInFile(filename string, target []string) interface{} {
+	// Read the file
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil
+	}
+
+	// Unmarshal into a map
+	var m map[string]interface{}
+	if err := yaml.Unmarshal(data, &m); err != nil {
+		return nil
+	}
+
+	// Get the value using the helper
+	return getYAMLValue(m, target)
 }

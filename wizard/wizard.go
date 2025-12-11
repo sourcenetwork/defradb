@@ -18,7 +18,8 @@ import (
 )
 
 type WizardContext struct {
-	Results map[string][]any
+	CreateConfigCallback func(rootdir string) error
+	Results              map[string][]any
 }
 
 // A "step" is a single step in the wizard, each of which is its own
@@ -107,15 +108,23 @@ func (m *mainModel) View() string {
 }
 
 // Main is the entry point of the wizard, and is wired into the CLI's MakeWizardCommand() function.
-func Main() {
+func Main(createConfigCallback func(rootdir string) error) {
 
-	ctx := &WizardContext{Results: map[string][]any{}}
+	ctx := &WizardContext{
+		Results:              map[string][]any{},
+		CreateConfigCallback: createConfigCallback,
+	}
 
 	// Define the steps
 	step1 := initialModelMultipleChoice(
 		"step1",
 		"You are about to run the DefraDB setup wizard. Do you wish to continue?",
 		[]string{"Yes", "No"},
+	)
+
+	stepConfigGenerator := initialModelText(
+		"stepConfigGenerator",
+		"A config.yaml file will be generated.\n\nPress Enter or Space to continue.",
 	)
 
 	step2 := initialModelMultipleChoice(
@@ -126,8 +135,10 @@ func Main() {
 		[]string{"Filesystem (~/.defradb/keys)", "OS (KeyChain, etc)"},
 	)
 
-	step2a := initialModelText(
-		"step2a",
+	step2brancher := initialModelBrancher()
+
+	step3a := initialModelText(
+		"step3a",
 		"Environment variable DEFRA_KEYRING_SECRET must first be set.\n\n"+
 			"Please set the environment variable first and run the wizard again.\n\n"+
 			"To set the environment variable, you can use the command: DEFRA_KEYRING_SECRET=my-secret-password\n\n"+
@@ -135,21 +146,25 @@ func Main() {
 			"Press Enter or Spaceto exit.",
 	)
 
-	step2b := initialModelBlank()
+	step3b := initialModelBlank()
 
-	step3 := initialModelBlank()
-
-	cleanupStep := initialModelBlank()
-	step2brancher := initialModelBrancher()
+	step4 := initialModelText(
+		"step4",
+		"Keyring files generated successfully.\n\n"+
+			"Press Enter or Space to exit.",
+	)
 
 	// Chain the steps together
-	step1.nextSteps = []step{step2, cleanupStep}
+	step1.nextSteps = []step{stepConfigGenerator, nil}
+	stepConfigGenerator.nextStep = step2
 	step2.nextSteps = []step{step2brancher, nil}
-	step2brancher.nextSteps = []step{step2a, step2b}
-	step2a.nextStep = step3
+	step2brancher.nextSteps = []step{step3a, step3b}
+	step3b.nextStep = step4
 
 	// Setup the callbacks
 	step2.callback = callback_SetKeyringBackend
+	stepConfigGenerator.callback = callback_GenerateConfigYAMLFile
+	step3b.callback = callback_GenerateKeyringFiles
 
 	// Setup the evaluators
 	step2brancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet

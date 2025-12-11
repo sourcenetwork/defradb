@@ -10,6 +10,13 @@
 
 package wizard
 
+import (
+	"os"
+
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/keyring"
+)
+
 // This callback will set keyring.backend to either "file" or "system"
 func callback_SetKeyringBackend(s step, ctx *WizardContext) {
 	mm := s.(*modelMultipleChoice)
@@ -19,14 +26,27 @@ func callback_SetKeyringBackend(s step, ctx *WizardContext) {
 		choice = "system"
 	}
 
-	err := setYAMLValueInFile(getConfigFile(), []string{"keyring", "backend"}, choice)
-	if err != nil {
-		println("error setting YAML value:", err.Error())
-		return
-	}
+	_ = setYAMLValueInFile(getConfigFile(), []string{"keyring", "backend"}, choice)
+}
+
+// This callback will generate the config.yaml file
+func callback_GenerateConfigYAMLFile(_ step, ctx *WizardContext) {
+	_ = ctx.CreateConfigCallback(os.Getenv("HOME") + "/.defradb")
 }
 
 // This callback will generate the keyring files
 func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) {
-	println("Generating keyring files")
+	cfgFile := getConfigFile()
+	keyringFilepath := getYAMLValueInFile(cfgFile, []string{"keyring", "path"})
+	passwordStr, ok := os.LookupEnv("DEFRA_KEYRING_SECRET")
+	if !ok {
+		return
+	}
+	fullKeyringFilepath := os.Getenv("HOME") + "/.defradb/keys/" + keyringFilepath.(string)
+	keyring, err := keyring.OpenFileKeyring(fullKeyringFilepath, []byte(passwordStr))
+	if err != nil {
+		return
+	}
+	encryptionKey, _ := crypto.GenerateAES256()
+	keyring.Set("encryption-key", encryptionKey)
 }
