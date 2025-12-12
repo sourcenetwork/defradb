@@ -93,7 +93,3 @@ func (c *Cache[K, V]) Delete(key K) {
 func (c *Cache[K, V]) UpdateTTL(key K, ttl time.Duration) error {
 	return c.tw.UpdateTTL(key, ttl)
 }
-
-func (c *Cache[K, V]) Wheel() *Wheel[K] {
-	return c.tw
-}

@@ -38,14 +38,7 @@ func TestOnSuccess(t *testing.T) {
 
 	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
-	text := "Source"
-	txn.OnSuccess(func() {
-		text += " Inc"
-	})
-	err := txn.Commit()
-	require.NoError(t, err)
-
-	require.Equal(t, text, "Source Inc")
+	runOnSuccessTest(t, txn)
 }
 
 func TestOnSuccessAsync(t *testing.T) {
@@ -54,6 +47,65 @@ func TestOnSuccessAsync(t *testing.T) {
 
 	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
 
+	runOnSuccessAsyncTest(t, txn)
+}
+
+func TestOnError(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
+
+	err := rootstore.Close()
+	require.NoError(t, err)
+
+	runOnErrorTest(t, txn)
+}
+
+func TestOnErrorAsync(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
+
+	err := rootstore.Close()
+	require.NoError(t, err)
+
+	runOnErrorAsyncTest(t, txn)
+}
+
+func TestOnDiscard(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
+
+	runOnDiscardTest(t, txn)
+}
+
+func TestOnDiscardAsync(t *testing.T) {
+	ctx := context.Background()
+	rootstore := memory.NewDatastore(ctx)
+
+	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
+
+	runOnDiscardAsyncTest(t, txn)
+}
+
+// Helper functions for common Txn tests
+
+func runOnSuccessTest(t *testing.T, txn Txn) {
+	text := "Source"
+	txn.OnSuccess(func() {
+		text += " Inc"
+	})
+	err := txn.Commit()
+	require.NoError(t, err)
+
+	require.Equal(t, "Source Inc", text)
+}
+
+func runOnSuccessAsyncTest(t *testing.T, txn Txn) {
 	var wg sync.WaitGroup
 	txn.OnSuccessAsync(func() {
 		wg.Done()
@@ -65,67 +117,41 @@ func TestOnSuccessAsync(t *testing.T) {
 	wg.Wait()
 }
 
-func TestOnError(t *testing.T) {
-	ctx := context.Background()
-	rootstore := memory.NewDatastore(ctx)
-
-	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
-
+func runOnErrorTest(t *testing.T, txn Txn) {
 	text := "Source"
 	txn.OnError(func() {
 		text += " Inc"
 	})
 
-	err := rootstore.Close()
-	require.NoError(t, err)
-
-	err = txn.Commit()
+	err := txn.Commit()
 	require.ErrorIs(t, err, corekv.ErrDBClosed)
 
-	require.Equal(t, text, "Source Inc")
+	require.Equal(t, "Source Inc", text)
 }
 
-func TestOnErrorAsync(t *testing.T) {
-	ctx := context.Background()
-	rootstore := memory.NewDatastore(ctx)
-
-	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
-
+func runOnErrorAsyncTest(t *testing.T, txn Txn) {
 	var wg sync.WaitGroup
 	txn.OnErrorAsync(func() {
 		wg.Done()
 	})
 
-	err := rootstore.Close()
-	require.NoError(t, err)
-
 	wg.Add(1)
-	err = txn.Commit()
+	err := txn.Commit()
 	require.ErrorIs(t, err, corekv.ErrDBClosed)
 	wg.Wait()
 }
 
-func TestOnDiscard(t *testing.T) {
-	ctx := context.Background()
-	rootstore := memory.NewDatastore(ctx)
-
-	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
-
+func runOnDiscardTest(t *testing.T, txn Txn) {
 	text := "Source"
 	txn.OnDiscard(func() {
 		text += " Inc"
 	})
 	txn.Discard()
 
-	require.Equal(t, text, "Source Inc")
+	require.Equal(t, "Source Inc", text)
 }
 
-func TestOnDiscardAsync(t *testing.T) {
-	ctx := context.Background()
-	rootstore := memory.NewDatastore(ctx)
-
-	txn := NewTxnFrom(rootstore, 0, false, immutable.None[int]())
-
+func runOnDiscardAsyncTest(t *testing.T, txn Txn) {
 	var wg sync.WaitGroup
 	txn.OnDiscardAsync(func() {
 		wg.Done()
