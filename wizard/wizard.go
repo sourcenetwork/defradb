@@ -99,6 +99,7 @@ func Main(createConfigCallback func(rootdir string) error) {
 	stepKeyringStorageLocation.callback = callback_SetKeyringBackend
 	stepConfigGenerator.callback = callback_GenerateConfigYAMLFile
 	stepGenerateKeyringFiles.callback = callback_GenerateKeyringFiles
+	stepGenerateSystemKeyringKeys.callback = callback_GenerateKeyringFilesInSystemKeyring
 
 	// Setup the evaluators
 	stepKeyringStorageLocationBrancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet
