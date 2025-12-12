@@ -47,7 +47,6 @@ func (m *modelText) Init() tea.Cmd {
 // Update() should not be called except by the main model
 func (m *modelText) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
 		switch msg.String() {
 		// Check for a quick-quit
@@ -59,7 +58,6 @@ func (m *modelText) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.done = true
 		}
 	}
-
 	return m, nil
 }
 
