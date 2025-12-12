@@ -16,7 +16,7 @@ import (
 )
 
 // For interface conformance.
-// In the future, this can be removed, when we use this model type in the main model.
+// In the future, this can be removed, as this model type will be used in the main model.
 var _ tea.Model = (*modelTextInput)(nil)
 
 type modelTextInput struct {
