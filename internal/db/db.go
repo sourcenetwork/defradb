@@ -38,6 +38,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
+	"github.com/sourcenetwork/defradb/internal/ttl"
 )
 
 var (
@@ -110,6 +111,8 @@ type DB struct {
 	retryIntervals []time.Duration
 	// timeout duration for syncing block links.
 	p2pBlockSyncTimeout time.Duration
+
+	txnTTLCache *ttl.Cache[uint64, datastore.Txn]
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -199,6 +202,11 @@ func newDB(
 		db.p2p = p
 	}
 
+	db.txnTTLCache, err = ttl.NewTTLCache(ctx, time.Second, 60, func(key uint64, txn datastore.Txn) {})
+	if err != nil {
+		return nil, err
+	}
+
 	err = db.initialize(ctx)
 	if err != nil {
 		return nil, err
@@ -216,6 +224,24 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
+	txnId := db.previousTxnID.Add(1)
+	txn := datastore.NewConcurrentTxnFrom(db.rootstore, txnId, readonly, db.blockStoreChunkSize)
+	return wrapDatastoreTxn(txn, db), nil
+}
+
+// NewTxn creates a new transaction.
+func (db *DB) NewTTLTxn(readonly bool, ttl time.Duration) (client.Txn, error) {
+	txnId := db.previousTxnID.Add(1)
+	txn, err := datastore.NewTTLTxnFrom(db.rootstore, db.txnTTLCache, txnId, readonly, ttl, db.blockStoreChunkSize)
+	if err != nil {
+		return nil, err
+	}
+	db.txnTTLCache.Store(txnId, txn, ttl)
+	return wrapDatastoreTxn(txn, db), nil
+}
+
+// NewConcurrentTxn creates a new transaction that supports concurrent API calls.
+func (db *DB) NewTTLConcurrentTxn(readonly bool, ttl time.Duration) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
 	txn := datastore.NewConcurrentTxnFrom(db.rootstore, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil

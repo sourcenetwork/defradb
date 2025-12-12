@@ -60,6 +60,33 @@ func (t *BasicTTLTxn) Discard() {
 	t.cache.Delete(t.ID())
 }
 
+// rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
+func NewTTLConcurrentTxnFrom(
+	rootstore corekv.TxnStore,
+	cache *ttl.Cache[uint64, Txn],
+	id uint64,
+	readonly bool,
+	updateTTL time.Duration,
+	chunkSize immutable.Option[int],
+) (*BasicTTLTxn, error) {
+	rootTxn := rootstore.NewTxn(readonly)
+	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
+	rootTTLTxn, err := ttlWrapStore(rootConcurentTxn, cache, id, updateTTL)
+	if err != nil {
+		return nil, err
+	}
+
+	multistore := NewMultistore(rootTTLTxn, chunkSize)
+	return &BasicTTLTxn{
+		BasicTxn: &BasicTxn{
+			Multistore: multistore,
+			txn:        rootTxn,
+			id:         id,
+		},
+		cache: cache,
+	}, nil
+}
+
 // ttlReaderWriter wraps a given corekv.ReaderWriter
 // and for each op will refresh the timingwheel with
 // the specified ttl.

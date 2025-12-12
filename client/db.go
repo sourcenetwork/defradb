@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -40,6 +41,23 @@ type TxnStore interface {
 	// It may be used with other functions in the client package. It is threadsafe and multiple threads/Go routines
 	// can safely operate on it concurrently.
 	NewConcurrentTxn(readOnly bool) (Txn, error)
+}
+
+// TxnTTLStore is an extension of the TxnStore that supports creating transactions with a Time-To-Live
+// expiration
+type TxnTTLStore interface {
+	TxnStore
+
+	// NewTxnWithTTL returns a new transaction on the root store that includes a TTL expiration.
+	// When it expires the transaction will automatically be discarded
+	NewTxnWithTTL(readoOnly bool, ttl time.Duration) (Txn, error)
+
+	// NewConcurrentTxnWithTTL returns a new transaction on the root store that includes a TTL expiration.
+	// When it expires the transaction will automatically be discarded
+	//
+	// It may be used with other functions in the client package. It is threadsafe and multiple threads/Go routines
+	// can safely operate on it concurrently.
+	NewConcurrentTxnWithTTL(readoOnly bool, ttl time.Duration) (Txn, error)
 }
 
 type Store interface {

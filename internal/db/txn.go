@@ -38,7 +38,6 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 	// explicit transaction
 	ctxTxn, ok := datastore.CtxTryGetTxn(ctx)
 	if ok {
-		// spew.Dump(ctxTxn)
 		switch txn := ctxTxn.(type) {
 		case *Txn:
 			if txn.explicit {
@@ -48,12 +47,12 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 			// If the txn has already been set on the context but it hasn't already been set as explicit,
 			// we create a copy of the txn and mark it as an explicit txn.
 			explicitTxn := &Txn{
-				txn.BasicTxn,
+				txn.Txn,
 				txn.db,
 				true,
 			}
 			return InitContext(ctx, explicitTxn), explicitTxn, nil
-		case *datastore.BasicTxn:
+		case datastore.Txn:
 			// There are scenarios where the transaction passed to the `db` methods was created
 			// from a separate package (ex: `net`). In that situation the type of transaction passed in
 			// will most likely be of type `*datastore.Txn`. We can wrap it in a `*Txn` and mark it as explicit.
@@ -79,7 +78,7 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 }
 
 type Txn struct {
-	*datastore.BasicTxn
+	datastore.Txn
 	db       *DB
 	explicit bool
 }
@@ -87,10 +86,10 @@ type Txn struct {
 var _ client.Txn = (*Txn)(nil)
 
 // wrapDatastoreTxn returns a new Txn from the rootstore.
-func wrapDatastoreTxn(txn *datastore.BasicTxn, db *DB) *Txn {
+func wrapDatastoreTxn(txn datastore.Txn, db *DB) *Txn {
 	return &Txn{
-		BasicTxn: txn,
-		db:       db,
+		Txn: txn,
+		db:  db,
 	}
 }
 
@@ -101,7 +100,7 @@ func (txn *Txn) Commit() error {
 		// `Commit` on an explicit transaction should result in a no-op.
 		return nil
 	}
-	return txn.BasicTxn.Commit()
+	return txn.Txn.Commit()
 }
 
 func (txn *Txn) Discard() {
@@ -111,7 +110,7 @@ func (txn *Txn) Discard() {
 		// `Discard` on an explicit transaction should result in a no-op.
 		return
 	}
-	txn.BasicTxn.Discard()
+	txn.Txn.Discard()
 }
 
 func (txn *Txn) PrintDump(ctx context.Context) error {

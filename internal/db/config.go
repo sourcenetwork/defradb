@@ -24,6 +24,9 @@ import (
 const (
 	defaultMaxTxnRetries  = 5
 	updateEventBufferSize = 100
+	defaultTxnTTLTick     = time.Second
+	defaultTxnTTLBuckets  = 60
+	defaultTxnTTL         = 60 * time.Second
 )
 
 type dbOptions struct {
@@ -38,6 +41,8 @@ type dbOptions struct {
 	LensRuntimeType     LensRuntimeType
 	LensOptions         []lens.Option
 	ChunkSize           immutable.Option[int]
+	txnTTLCacheTick     time.Duration
+	txnTTLCacheBuckets  int64
 }
 
 func defaultDBOptions() *dbOptions {
@@ -56,6 +61,8 @@ func defaultDBOptions() *dbOptions {
 		p2pBlockSyncTimeout: time.Second * 5,
 		LensRuntimeType:     DefaultLens,
 		LensOptions:         []lens.Option{},
+		txnTTLCacheTick:     defaultTxnTTLTick,
+		txnTTLCacheBuckets:  defaultTxnTTLBuckets,
 	}
 }
 
@@ -124,6 +131,21 @@ func WithLensOpts(opts ...lens.Option) Option {
 func WithBlockStoreChunkSize(chunkSize int) Option {
 	return func(opts *dbOptions) {
 		opts.ChunkSize = immutable.Some(chunkSize)
+	}
+}
+
+// WithTxnTTLCache sets the parameters for the internal TTL transaction cache.
+// This manages the ttl lifecycle of transactions created with NewTTLTxn and
+// NewTTLConcurrentTxn.
+//
+// Tick sets the tick rate resolution of the ttl timer.
+// Buckets sets the number of slots the timer can fit into.
+//
+// See TimingWheels for more information.
+func WithTxnTTLCache(tick time.Duration, buckets int64) Option {
+	return func(opts *dbOptions) {
+		opts.txnTTLCacheTick = tick
+		opts.txnTTLCacheBuckets = buckets
 	}
 }
 
