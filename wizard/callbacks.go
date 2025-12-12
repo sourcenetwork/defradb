@@ -37,17 +37,36 @@ func callback_GenerateConfigYAMLFile(_ step, ctx *WizardContext) error {
 
 // This callback will generate the keyring files
 func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
-	cfgFile := getConfigFile()
-	keyringFilepath := getYAMLValueInFile(cfgFile, []string{"keyring", "path"})
 	passwordStr, ok := os.LookupEnv("DEFRA_KEYRING_SECRET")
 	if !ok {
 		return errors.New(errDefraKeyringSecretNotSet)
 	}
-	fullKeyringFilepath := os.Getenv("HOME") + "/.defradb/keys/" + keyringFilepath.(string) //nolint:forcetypeassert
+	cfgFile := getConfigFile()
+	keyringFilepath := getYAMLValueInFile(cfgFile, []string{"keyring", "path"})
+	fullKeyringFilepath := os.Getenv("HOME") + "/.defradb/" + keyringFilepath.(string) //nolint:forcetypeassert
+	if err := os.MkdirAll(fullKeyringFilepath, 0755); err != nil {
+		return err
+	}
 	keyring, err := keyring.OpenFileKeyring(fullKeyringFilepath, []byte(passwordStr))
 	if err != nil {
 		return err
 	}
+	encryptionKey, err := crypto.GenerateAES256()
+	if err != nil {
+		return err
+	}
+	err = keyring.Set("encryption-key", encryptionKey)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// This callback will generate the keys in the system keyrind
+func callback_GenerateKeyringFilesInSystemKeyring(_ step, ctx *WizardContext) error {
+	cfgFile := getConfigFile()
+	keyringNamespace := getYAMLValueInFile(cfgFile, []string{"keyring", "namespace"}).(string) //nolint:forcetypeassert
+	keyring := keyring.OpenSystemKeyring(keyringNamespace)
 	encryptionKey, err := crypto.GenerateAES256()
 	if err != nil {
 		return err

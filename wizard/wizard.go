@@ -70,6 +70,7 @@ func Main(createConfigCallback func(rootdir string) error) {
 	)
 
 	stepGenerateKeyringFiles := initialModelBlank()
+	stepGenerateSystemKeyringKeys := initialModelBlank()
 
 	stepConfirmKeyringFilesGenerated := initialModelText(
 		"stepConfirmKeyringFilesGenerated",
@@ -77,15 +78,22 @@ func Main(createConfigCallback func(rootdir string) error) {
 			"Press Enter or Space to exit.",
 	)
 
+	stepConfirmSystemKeyringKeysGenerated := initialModelText(
+		"stepConfirmSystemKeyringKeysGenerated",
+		"Keys generated in system keyring successfully.\n\n"+
+			"Press Enter or Space to exit.",
+	)
+
 	// Chain the steps together
 	stepWizardStart.nextSteps = []step{stepConfigGenerator, nil}
 	stepConfigGenerator.nextStep = stepKeyringStorageLocation
-	stepKeyringStorageLocation.nextSteps = []step{stepKeyringStorageLocationBrancher, nil}
+	stepKeyringStorageLocation.nextSteps = []step{stepKeyringStorageLocationBrancher, stepGenerateSystemKeyringKeys}
 	stepKeyringStorageLocationBrancher.nextSteps = []step{
 		stepWizardExitMissingDefraKeyringSecret,
 		stepGenerateKeyringFiles,
 	}
 	stepGenerateKeyringFiles.nextStep = stepConfirmKeyringFilesGenerated
+	stepGenerateSystemKeyringKeys.nextStep = stepConfirmSystemKeyringKeysGenerated
 
 	// Setup the callbacks
 	stepKeyringStorageLocation.callback = callback_SetKeyringBackend
