@@ -35,6 +35,9 @@ type modelTextInput struct {
 }
 
 // initialModelTextInput should be called instead of manually constructing the struct
+// This will be used in the main model in the future.
+//
+//nolint:unused
 func initialModelTextInput(id string, prompt string, placeholder string) *modelTextInput {
 	ti := textinput.NewModel()
 	ti.Placeholder = placeholder

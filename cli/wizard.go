@@ -11,8 +11,9 @@
 package cli
 
 import (
-	"github.com/sourcenetwork/defradb/wizard"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/wizard"
 )
 
 // Exports the createConfig function for use by the setup wizard

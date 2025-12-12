@@ -108,7 +108,6 @@ func (m *mainModel) View() string {
 
 // Main is the entry point of the wizard, and is wired into the CLI's MakeWizardCommand() function.
 func Main(createConfigCallback func(rootdir string) error) {
-
 	ctx := &WizardContext{
 		Results:              map[string][]any{},
 		CreateConfigCallback: createConfigCallback,

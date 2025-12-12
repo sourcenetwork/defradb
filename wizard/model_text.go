@@ -49,9 +49,7 @@ func (m *modelText) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
-
 		switch msg.String() {
-
 		// Check for a quick-quit
 		case KEY_CONTROL_C:
 			return m, tea.Quit
