@@ -47,7 +47,7 @@ type step interface {
 
 	// Callback() must return a function that will be called when the step is done.
 	// It can be nil, in which case the step will not call any callback when it is done.
-	Callback(ctx *WizardContext)
+	Callback(ctx *WizardContext) error
 }
 
 // The main model is the top-level model that runs the wizard. It will track the
@@ -76,13 +76,25 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	for m.currentStep != nil && m.currentStep.Done() {
 		// ... call its callback, store the results, and move onto the next step
 		m.ctx.Results[m.currentStep.ID()] = append(m.ctx.Results[m.currentStep.ID()], m.currentStep.Result())
-		m.currentStep.Callback(m.ctx)
+		err := m.currentStep.Callback(m.ctx)
+		// If the callback returns an error, we must gracefully proceed to an error-step exit
+		if err != nil {
+			errorStep := createErrorStep(err)
+			m.currentStep = errorStep
+			return m, cmd
+		}
 		next := m.currentStep.Next()
 
 		// Movethrough blank steps, calling their callbacks, until we reach a non-blank step
 		for next != nil && next.ID() == BLANK {
 			m.ctx.Results[next.ID()] = append(m.ctx.Results[next.ID()], next.Result())
-			next.Callback(m.ctx)
+			err := next.Callback(m.ctx)
+			// If any of the callbacks return an error, we must gracefully proceed to an error-step exit
+			if err != nil {
+				errorStep := createErrorStep(err)
+				m.currentStep = errorStep
+				return m, cmd
+			}
 			next = next.Next()
 		}
 		m.currentStep = next
@@ -104,6 +116,14 @@ func (m *mainModel) View() string {
 		return "\n"
 	}
 	return "\n" + m.currentStep.View()
+}
+
+func createErrorStep(err error) step {
+	return initialModelText(
+		"errorStep",
+		"An error occurred: "+err.Error()+"\n\n"+
+			"Press Enter or Space to exit.",
+	)
 }
 
 // Main is the entry point of the wizard, and is wired into the CLI's MakeWizardCommand() function.

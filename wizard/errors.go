@@ -11,14 +11,5 @@
 package wizard
 
 const (
-	// Keyboard keys
-	KEY_CONTROL_C = "ctrl+c"
-	KEY_ENTER     = "enter"
-	KEY_SPACE     = " "
-	KEY_UP        = "up"
-	KEY_DOWN      = "down"
-	KEY_K         = "k"
-	KEY_J         = "j"
-
-	BLANK = "_blank_"
+	errDefraKeyringSecretNotSet = "DEFRA_KEYRING_SECRET environment variable is not set"
 )

@@ -29,7 +29,7 @@ type modelBrancher struct {
 	evaluator func() int
 
 	// callback is a function that will be called when this step is done.
-	callback func(s step, ctx *WizardContext)
+	callback func(s step, ctx *WizardContext) error
 }
 
 // initialModelBlank should be called instead of manually constructing the struct
@@ -85,9 +85,9 @@ func (m *modelBrancher) ID() string {
 }
 
 // Callback() should not be called except by the main model
-func (m *modelBrancher) Callback(ctx *WizardContext) {
+func (m *modelBrancher) Callback(ctx *WizardContext) error {
 	if m.callback == nil {
-		return
+		return nil
 	}
-	m.callback(m, ctx)
+	return m.callback(m, ctx)
 }

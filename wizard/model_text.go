@@ -25,7 +25,7 @@ type modelText struct {
 	nextStep step
 
 	// callback is a function that will be called when this step is done.
-	callback func(s step, ctx *WizardContext)
+	callback func(s step, ctx *WizardContext) error
 }
 
 // initialModelText should be called instead of manually constructing the struct
@@ -88,9 +88,9 @@ func (m *modelText) ID() string {
 }
 
 // Callback() should not be called except by the main model
-func (m *modelText) Callback(ctx *WizardContext) {
+func (m *modelText) Callback(ctx *WizardContext) error {
 	if m.callback == nil {
-		return
+		return nil
 	}
-	m.callback(m, ctx)
+	return m.callback(m, ctx)
 }
