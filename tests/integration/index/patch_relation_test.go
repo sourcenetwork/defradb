@@ -185,3 +185,78 @@ func TestPatchRelation_OneToMany_DoesNotCreateUniqueIndex(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *testing.T) {
+	const (
+		authorV1 = "bafyreibvcavbxqwimz5vdxe5q5href63g3skc6ytg45hm4fqh6wsx57wmq"
+		authorV2 = "bafyreih6dt5zss2dor3fyo74eplqhbmlyj2pzuw3amku5pv5inuqdnaukm"
+	)
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+					type Book {
+						title: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "published", "Kind": "Book", "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "published_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author", "Kind": "Author", "RelationName": "author_book"
+						}}
+					]
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						ID:     1,
+						Name:   "Author_published_id_ASC",
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{Name: "published_id"},
+						},
+					},
+				},
+			},
+			testUtils.SetActiveCollectionVersion{
+				VersionID: authorV1,
+			},
+			testUtils.GetIndexes{
+				CollectionID:    0,
+				ExpectedIndexes: []client.IndexDescription{},
+			},
+			testUtils.SetActiveCollectionVersion{
+				VersionID: authorV2,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						ID:     1,
+						Name:   "Author_published_id_ASC",
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{Name: "published_id"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
