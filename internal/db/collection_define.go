@@ -97,7 +97,7 @@ func (db *DB) createCollections(
 		}
 
 		for _, index := range def.Definition.Indexes {
-			if _, err := col.addNewIndex(ctx, index); err != nil {
+			if _, err := col.appendNewIndexAndIndexExistingDocs(ctx, index); err != nil {
 				return nil, err
 			}
 		}
@@ -213,7 +213,7 @@ existingVersionLoop:
 		}
 	}
 
-	err = ensureOneToOneIndexesForPatch(newColsByID, existingColsByName)
+	oneToOneIndexRequests, err := getOneToOneIndexRequestsForPatch(newColsByID, existingColsByName)
 	if err != nil {
 		return err
 	}
@@ -326,8 +326,8 @@ existingVersionLoop:
 			continue
 		}
 
-		existingCol, ok := existingColsByID[col.VersionID]
-		if ok && col.Equal(existingCol) {
+		existingCol, colExists := existingColsByID[col.VersionID]
+		if colExists && col.Equal(existingCol) {
 			continue
 		}
 
@@ -336,26 +336,22 @@ existingVersionLoop:
 			return err
 		}
 
-		if ok {
-			existingIndexNames := make(map[string]struct{}, len(existingCol.Indexes))
-			for _, idx := range existingCol.Indexes {
-				existingIndexNames[idx.Name] = struct{}{}
-			}
-
-			for _, index := range col.Indexes {
-				if _, existed := existingIndexNames[index.Name]; !existed {
-					colObj, err := db.newCollection(col)
-					if err != nil {
-						return err
-					}
-					if _, err := colObj.addNewIndex(ctx, index); err != nil {
+		if col.IsActive {
+			if indexReqs, hasReqs := oneToOneIndexRequests[col.Name]; hasReqs {
+				colObj, err := db.newCollection(col)
+				if err != nil {
+					return err
+				}
+				for _, indexReq := range indexReqs {
+					if _, err := colObj.createIndex(ctx, indexReq); err != nil {
 						return err
 					}
 				}
+				col = colObj.Version()
 			}
 		}
 
-		if ok {
+		if colExists {
 			if existingCol.IsMaterialized && !col.IsMaterialized {
 				// If the collection is being de-materialized - delete any cached values.
 				// Leaving them around will not break anything, but it would be a waste of
@@ -987,13 +983,14 @@ func ensureOneToOneUniqueIndex(
 	}, nil
 }
 
-// ensureOneToOneIndexesForPatch ensures unique indexes exist for one-to-one relations
+// getOneToOneIndexRequestsForPatch returns index create requests for one-to-one relations
 // added via collection patch. This is needed because patches don't go through the
 // standard schema creation flow that calls finalizeRelations.
-func ensureOneToOneIndexesForPatch(
+// Returns a map of collectionName -> []IndexCreateRequest for indexes that need to be created.
+func getOneToOneIndexRequestsForPatch(
 	newColsByID map[string]client.CollectionVersion,
 	existingColsByName map[string]client.CollectionVersion,
-) error {
+) (map[string][]client.IndexCreateRequest, error) {
 	allColsByName := make(map[string]client.CollectionVersion)
 	maps.Copy(allColsByName, existingColsByName)
 
@@ -1001,7 +998,9 @@ func ensureOneToOneIndexesForPatch(
 		allColsByName[col.Name] = col
 	}
 
-	for versionID, col := range newColsByID {
+	result := make(map[string][]client.IndexCreateRequest)
+
+	for _, col := range newColsByID {
 		existingCol := existingColsByName[col.Name]
 		existingFieldNames := make(map[string]struct{}, len(existingCol.Fields))
 		for _, field := range existingCol.Fields {
@@ -1031,22 +1030,16 @@ func ensureOneToOneIndexesForPatch(
 				continue
 			}
 
-			newIndex, err := ensureOneToOneUniqueIndex(nil, col.Indexes, col.Name, field.Name)
+			indexReq, err := ensureOneToOneUniqueIndex(nil, col.Indexes, col.Name, field.Name)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			if newIndex != nil {
-				idFieldName := field.Name + "_id"
-				col.Indexes = append(col.Indexes, client.IndexDescription{
-					Name:   col.Name + "_" + idFieldName + "_ASC",
-					Unique: newIndex.Unique,
-					Fields: newIndex.Fields,
-				})
-				newColsByID[versionID] = col
+			if indexReq != nil {
+				result[col.Name] = append(result[col.Name], *indexReq)
 			}
 		}
 	}
 
-	return nil
+	return result, nil
 }
