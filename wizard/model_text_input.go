@@ -60,11 +60,11 @@ func (m *modelTextInput) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 
 		// Check for a quick-quit
-		case "ctrl+c":
+		case KEY_CONTROL_C:
 			return m, tea.Quit
 
 		// Enter submits the input
-		case "enter":
+		case KEY_ENTER:
 			m.done = true
 		}
 	}

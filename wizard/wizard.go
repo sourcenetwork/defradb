@@ -71,7 +71,7 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Update the current step
 	updatedModel, cmd = m.currentStep.Update(msg)
-	m.currentStep = updatedModel.(step)
+	m.currentStep = updatedModel.(step) //nolint:forcetypeassert
 	// If the step is done...
 	for m.currentStep != nil && m.currentStep.Done() {
 		// ... call its callback, store the results, and move onto the next step
@@ -80,7 +80,7 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		next := m.currentStep.Next()
 
 		// Movethrough blank steps, calling their callbacks, until we reach a non-blank step
-		for next != nil && next.ID() == "_blank_" {
+		for next != nil && next.ID() == BLANK {
 			m.ctx.Results[next.ID()] = append(m.ctx.Results[next.ID()], next.Result())
 			next.Callback(m.ctx)
 			next = next.Next()
@@ -157,7 +157,10 @@ func Main(createConfigCallback func(rootdir string) error) {
 	stepWizardStart.nextSteps = []step{stepConfigGenerator, nil}
 	stepConfigGenerator.nextStep = stepKeyringStorageLocation
 	stepKeyringStorageLocation.nextSteps = []step{stepKeyringStorageLocationBrancher, nil}
-	stepKeyringStorageLocationBrancher.nextSteps = []step{stepWizardExitMissingDefraKeyringSecret, stepGenerateKeyringFiles}
+	stepKeyringStorageLocationBrancher.nextSteps = []step{
+		stepWizardExitMissingDefraKeyringSecret,
+		stepGenerateKeyringFiles,
+	}
 	stepGenerateKeyringFiles.nextStep = stepConfirmKeyringFilesGenerated
 
 	// Setup the callbacks

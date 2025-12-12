@@ -61,23 +61,23 @@ func (m *modelMultipleChoice) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 
 		// Check for a quick-quit
-		case "ctrl+c":
+		case KEY_CONTROL_C:
 			return m, tea.Quit
 
 		// Move the cursor up
-		case "up", "k":
+		case KEY_UP, KEY_K:
 			if m.cursor > 0 {
 				m.cursor--
 			}
 
 		// Move the cursor down
-		case "down", "j":
+		case KEY_DOWN, KEY_J:
 			if m.cursor < len(m.choices)-1 {
 				m.cursor++
 			}
 
 		// Enter and space select the current choice
-		case "enter", " ":
+		case KEY_ENTER, KEY_SPACE:
 			m.done = true
 		}
 	}

@@ -81,7 +81,7 @@ func (m *modelBrancher) Done() bool {
 
 // Returns a dummy string
 func (m *modelBrancher) ID() string {
-	return "_blank_"
+	return BLANK
 }
 
 // Callback() should not be called except by the main model

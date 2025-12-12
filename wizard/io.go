@@ -24,7 +24,7 @@ func getConfigFile() string {
 }
 
 // getYAMLValue is a helper function that gets a value from a YAML map
-func getYAMLValue(m map[string]interface{}, path []string) interface{} {
+func getYAMLValue(m map[string]interface{}, path []string) any {
 	current := m
 
 	for i, key := range path {

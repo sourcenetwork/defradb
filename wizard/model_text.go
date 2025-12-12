@@ -53,11 +53,11 @@ func (m *modelText) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 
 		// Check for a quick-quit
-		case "ctrl+c":
+		case CONTROL_C:
 			return m, tea.Quit
 
 		// Enter and space proceed to the next step
-		case "enter", " ":
+		case ENTER, SPACE:
 			m.done = true
 		}
 	}

@@ -19,7 +19,7 @@ import (
 
 // This callback will set keyring.backend to either "file" or "system"
 func callback_SetKeyringBackend(s step, ctx *WizardContext) {
-	mm := s.(*modelMultipleChoice)
+	mm := s.(*modelMultipleChoice) //nolint:forcetypeassert
 
 	choice := "file"
 	if mm.cursor == 1 {
@@ -42,11 +42,14 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) {
 	if !ok {
 		return
 	}
-	fullKeyringFilepath := os.Getenv("HOME") + "/.defradb/keys/" + keyringFilepath.(string)
+	fullKeyringFilepath := os.Getenv("HOME") + "/.defradb/keys/" + keyringFilepath.(string) //nolint:forcetypeassert
 	keyring, err := keyring.OpenFileKeyring(fullKeyringFilepath, []byte(passwordStr))
 	if err != nil {
 		return
 	}
-	encryptionKey, _ := crypto.GenerateAES256()
+	encryptionKey, err := crypto.GenerateAES256()
+	if err != nil {
+		return
+	}
 	keyring.Set("encryption-key", encryptionKey)
 }
