@@ -18,7 +18,9 @@ import (
 
 	"github.com/sourcenetwork/corekv/blockstore"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/immutable"
 )
 
 func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
@@ -57,6 +59,19 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 //
 // The function returns immediately on the first error encountered.
 func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
+	link, err := block.GenerateLink()
+	if err != nil {
+		return err
+	}
+	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+	merged, err := bstore.IsMerged(ctx, link.Cid)
+	if err != nil {
+		return err
+	}
+	if merged {
+		return nil
+	}
+
 	// TODO: this part is not tested yet because there is not easy way of doing it at the moment.
 	// https://github.com/sourcenetwork/defradb/issues/3525
 	if block.Signature != nil {
