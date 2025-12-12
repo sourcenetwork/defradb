@@ -11,6 +11,7 @@
 package ttl
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -26,58 +27,73 @@ type Cache[K comparable, V any] struct {
 // NewTTLCache returns a new cache which will call the onExpire func
 // when a new key expires, unless its been deleted before its TTL
 // expiration
-func NewTTLCache[K comparable, V any](tick time.Duration, buckets int, onExpire func(key K, value V)) *Cache[K, V] {
-	tc := &Cache[K, V]{
+func NewTTLCache[K comparable, V any](ctx context.Context, tick time.Duration, buckets int, onExpire func(key K, value V)) (*Cache[K, V], error) {
+	c := &Cache[K, V]{
 		cache:    &sync.Map{},
 		onExpire: onExpire,
 	}
 
 	// on cache expiration we discard the txn
-	tc.tw = NewWheel(tick, buckets, func(k K) {
-		vUntyped, ok := tc.cache.LoadAndDelete(k)
+	var err error
+	c.tw, err = NewWheel(ctx, tick, int64(buckets), func(k K) {
+		vUntyped, ok := c.cache.LoadAndDelete(k)
 		if !ok {
 			return
 		}
-		vTyped := vUntyped.(V)
-		tc.onExpire(k, vTyped)
+		vTyped := vUntyped.(V) //nolint:forcetypeassert
+		c.onExpire(k, vTyped)
 	})
-	tc.tw.Start()
-	return tc
+	if err != nil {
+		return nil, err
+	}
+
+	c.tw.Start()
+	return c, nil
 }
 
 // Store a (key, value) pair with the corresponding TTL
-func (tc *Cache[K, V]) Store(key K, val V, ttl time.Duration) {
-	tc.cache.Store(key, val)
-	tc.tw.Add(key, ttl)
+func (c *Cache[K, V]) Store(key K, val V, ttl time.Duration) {
+	c.cache.Store(key, val)
+	c.tw.Add(key, ttl)
 }
 
 // Load a given key from the cache if it hasn't expired.
-func (tc *Cache[K, V]) Load(key K) (V, bool) {
-	vUntyped, ok := tc.cache.Load(key)
+func (c *Cache[K, V]) Load(key K) (V, bool) {
+	vUntyped, ok := c.cache.Load(key)
 	if !ok {
 		var vZero V
 		return vZero, false
 	}
 
-	vTyped := vUntyped.(V)
+	vTyped := vUntyped.(V) //nolint:forcetypeassert
 	return vTyped, true
 }
 
 // LoadAndDelete loads a given key and deletes it from the
 // cache if it hasn't expired.
-func (tc *Cache[K, V]) LoadAndDelete(key K) (V, bool) {
-	vUntyped, ok := tc.cache.LoadAndDelete(key)
+func (c *Cache[K, V]) LoadAndDelete(key K) (V, bool) {
+	vUntyped, ok := c.cache.LoadAndDelete(key)
 	if !ok {
 		var vZero V
 		return vZero, false
 	}
 
-	vTyped := vUntyped.(V)
+	vTyped := vUntyped.(V) //nolint:forcetypeassert
 	return vTyped, true
 }
 
 // Delete deletes a given key from the cache if it hasn't
 // expired.
-func (tc *Cache[K, V]) Delete(key K) {
-	tc.cache.Delete(key)
+func (c *Cache[K, V]) Delete(key K) {
+	c.cache.Delete(key)
+}
+
+// UpdateTTL updates the TTL for a given key if it exists
+// in the cache.
+func (c *Cache[K, V]) UpdateTTL(key K, ttl time.Duration) error {
+	return c.tw.UpdateTTL(key, ttl)
+}
+
+func (c *Cache[K, V]) Wheel() *Wheel[K] {
+	return c.tw
 }
