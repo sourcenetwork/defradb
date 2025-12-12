@@ -55,11 +55,8 @@ func (m *modelMultipleChoice) Init() tea.Cmd {
 // Update() should not be called except by the main model
 func (m *modelMultipleChoice) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
-
 		switch msg.String() {
-
 		// Check for a quick-quit
 		case KEY_CONTROL_C:
 			return m, tea.Quit
@@ -91,7 +88,6 @@ func (m *modelMultipleChoice) View() string {
 
 	// Iterate over our choices
 	for i, choice := range m.choices {
-
 		// Draw the cursor in front of the selected choice
 		cursor := " "
 		if m.cursor == i {
@@ -107,7 +103,7 @@ func (m *modelMultipleChoice) View() string {
 
 // Next() will return the next step associated with the current cursor selection.
 func (m *modelMultipleChoice) Next() step {
-	if m.nextSteps == nil || len(m.nextSteps) == 0 {
+	if len(m.nextSteps) == 0 {
 		return nil
 	}
 	if m.cursor < len(m.nextSteps) {

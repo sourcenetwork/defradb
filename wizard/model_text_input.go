@@ -15,6 +15,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// For interface conformance.
+// In the future, this can be removed, when we use this model type in the main model.
+var _ tea.Model = (*modelTextInput)(nil)
+
 type modelTextInput struct {
 	id     string          // Used to access the result of this step from the main model's results map
 	prompt string          // The prompt to display to the user
@@ -54,11 +58,8 @@ func (m *modelTextInput) Init() tea.Cmd {
 func (m *modelTextInput) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
-
 		switch msg.String() {
-
 		// Check for a quick-quit
 		case KEY_CONTROL_C:
 			return m, tea.Quit

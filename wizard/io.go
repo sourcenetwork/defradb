@@ -24,7 +24,7 @@ func getConfigFile() string {
 }
 
 // getYAMLValue is a helper function that gets a value from a YAML map
-func getYAMLValue(m map[string]interface{}, path []string) any {
+func getYAMLValue(m map[string]any, path []string) any {
 	current := m
 
 	for i, key := range path {
@@ -39,7 +39,7 @@ func getYAMLValue(m map[string]interface{}, path []string) any {
 		}
 
 		// Otherwise we expect it to be another nested map
-		next, ok := val.(map[string]interface{})
+		next, ok := val.(map[string]any)
 		if !ok {
 			return nil
 		}
@@ -51,17 +51,17 @@ func getYAMLValue(m map[string]interface{}, path []string) any {
 }
 
 // setYAMLValue is a helper function that sets a value in a YAML map
-func setYAMLValue(m map[string]interface{}, path []string, value interface{}) error {
+func setYAMLValue(m map[string]any, path []string, value any) error {
 	current := m
 	for i, key := range path {
 		if i == len(path)-1 {
 			current[key] = value
 			return nil
 		}
-		if next, ok := current[key].(map[string]interface{}); ok {
+		if next, ok := current[key].(map[string]any); ok {
 			current = next
 		} else {
-			newMap := make(map[string]interface{})
+			newMap := make(map[string]any)
 			current[key] = newMap
 			current = newMap
 		}
@@ -70,7 +70,7 @@ func setYAMLValue(m map[string]interface{}, path []string, value interface{}) er
 }
 
 // setYAMLValueInFile opens a YAML file, updates a value in it, and writes it back
-func setYAMLValueInFile(filename string, target []string, value interface{}) error {
+func setYAMLValueInFile(filename string, target []string, value any) error {
 	// Read the file
 	data, err := os.ReadFile(filename)
 	if err != nil {
@@ -78,7 +78,7 @@ func setYAMLValueInFile(filename string, target []string, value interface{}) err
 	}
 
 	// Unmarshal into a map
-	var m map[string]interface{}
+	var m map[string]any
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func setYAMLValueInFile(filename string, target []string, value interface{}) err
 }
 
 // getYAMLValueInFile opens a YAML file, gets a value from it, and returns the value
-func getYAMLValueInFile(filename string, target []string) interface{} {
+func getYAMLValueInFile(filename string, target []string) any {
 	// Read the file
 	data, err := os.ReadFile(filename)
 	if err != nil {
@@ -107,7 +107,7 @@ func getYAMLValueInFile(filename string, target []string) interface{} {
 	}
 
 	// Unmarshal into a map
-	var m map[string]interface{}
+	var m map[string]any
 	if err := yaml.Unmarshal(data, &m); err != nil {
 		return nil
 	}

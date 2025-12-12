@@ -51,5 +51,8 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) {
 	if err != nil {
 		return
 	}
-	keyring.Set("encryption-key", encryptionKey)
+	err = keyring.Set("encryption-key", encryptionKey)
+	if err != nil {
+		return
+	}
 }
