@@ -1,3 +1,4 @@
 # Enforce unique index for 1:1 relationships
 
-Now all 1:1 relationships will have a unique index created on the foreign key.
+The current change enforces unique index on 1:1 relationships. In order to migrate to this version unique secondary 
+indexes must be created manually for all existing 1:1 relations.
