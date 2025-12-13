@@ -16,17 +16,12 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/sourcenetwork/defradb/http"
 )
 
-var (
-	zeroDuration time.Duration
-)
-
 func main() {
-	router, err := http.NewApiRouter(zeroDuration)
+	router, err := http.NewApiRouter()
 	if err != nil {
 		panic(err)
 	}

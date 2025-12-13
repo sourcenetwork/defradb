@@ -48,8 +48,8 @@ type Wrapper struct {
 // NewWrapper takes a Node, and a SourceHub address used to pay for SourceHub transactions.
 //
 // sourceHubAddress can (and will) be empty when testing non sourceHub ACP implementations.
-func NewWrapper(node *node.Node, sourceHubAddress string, opts ...http.HandlerOpt) (*Wrapper, error) {
-	handler, err := http.NewHandler(node.DB, opts...)
+func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
+	handler, err := http.NewHandler(node.DB)
 	if err != nil {
 		return nil, err
 	}
@@ -538,11 +538,7 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	if err := json.Unmarshal(data, &res); err != nil {
 		return nil, err
 	}
-	tx, err := w.handler.Transaction(res.ID)
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, tx}, nil
+	return &Transaction{w, res.ID}, nil
 }
 
 func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
@@ -561,11 +557,7 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	if err := json.Unmarshal(data, &res); err != nil {
 		return nil, err
 	}
-	tx, err := w.handler.Transaction(res.ID)
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, tx}, nil
+	return &Transaction{w, res.ID}, nil
 }
 
 func (w *Wrapper) Close() {

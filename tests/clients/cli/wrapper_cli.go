@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 type cliWrapper struct {
@@ -56,9 +55,9 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	stdOutRead, stdOutWrite := io.Pipe()
 	stdErrRead, stdErrWrite := io.Pipe()
 
-	tx, ok := datastore.CtxTryGetClientTxn(ctx)
+	txId, ok := ctxTryGetClientTxnId(ctx)
 	if ok {
-		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
+		args = append(args, "--tx", fmt.Sprintf("%d", txId))
 	}
 	id := identity.FromContext(ctx)
 	if id.HasValue() {
@@ -84,4 +83,20 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	}()
 
 	return stdOutRead, stdErrRead, nil
+}
+
+type txnKey struct{}
+
+// CtxTryGetClientTxn returns a client transaction and a bool indicating if the
+// txn was retrieved from the given context.
+func ctxTryGetClientTxnId(ctx context.Context) (uint64, bool) {
+	txn, ok := ctx.Value(txnKey{}).(uint64)
+	return txn, ok
+}
+
+// CtxSetFromClientTxn returns a new context with the txn value set.
+//
+// This will overwrite any previously set transaction value.
+func ctxSetFromClientTxnId(ctx context.Context, txnId uint64) context.Context {
+	return context.WithValue(ctx, txnKey{}, txnId)
 }
