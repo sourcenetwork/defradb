@@ -192,7 +192,7 @@ func (w *Wheel[K]) Start() {
 				w.tickOnce()
 			case <-w.ctx.Done():
 				return
-			case <-w.stop:
+			case <-stop:
 				return
 			}
 		}
@@ -219,11 +219,14 @@ func (w *Wheel[K]) tickOnce() {
 	w.mu.Lock()
 	bucket := w.slots[w.cur]
 	w.slots[w.cur] = nil
+	for _, e := range bucket {
+		delete(w.index, e.key)
+	}
 	w.cur = (w.cur + 1) % w.slotCount
 	w.mu.Unlock()
 
 	// process outside the lock
-	for _, k := range bucket {
-		w.expireFunc(k.key)
+	for _, e := range bucket {
+		w.expireFunc(e.key)
 	}
 }
