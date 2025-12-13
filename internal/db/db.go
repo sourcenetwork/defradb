@@ -116,6 +116,7 @@ type DB struct {
 }
 
 var _ client.TxnStore = (*DB)(nil)
+var _ client.TxnTTLStore = (*DB)(nil)
 
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(
@@ -230,7 +231,7 @@ func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 }
 
 // NewTxn creates a new transaction.
-func (db *DB) NewTTLTxn(readonly bool, ttl time.Duration) (client.Txn, error) {
+func (db *DB) NewTxnWithTTL(readonly bool, ttl time.Duration) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
 	txn, err := datastore.NewTTLTxnFrom(db.rootstore, db.txnTTLCache, txnId, readonly, ttl, db.blockStoreChunkSize)
 	if err != nil {
@@ -241,10 +242,21 @@ func (db *DB) NewTTLTxn(readonly bool, ttl time.Duration) (client.Txn, error) {
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
-func (db *DB) NewTTLConcurrentTxn(readonly bool, ttl time.Duration) (client.Txn, error) {
+func (db *DB) NewConcurrentTxnWithTTL(readonly bool, ttl time.Duration) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
 	txn := datastore.NewConcurrentTxnFrom(db.rootstore, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
+}
+
+// TTLTxnCache returns a wrapped instance of the internal
+// TTLTxnCacheReader type. Note, this is only accessible within
+// this repo due to the `TTLTxnCacheReader` type, which
+// is only locally accessible due to the `internal/` pkg
+// semantics.
+func (db *DB) TTLTxnCache() *TTLTxnCacheReader {
+	return &TTLTxnCacheReader{
+		db: db,
+	}
 }
 
 // publishDocUpdateEvent publishes an update event for a document.
@@ -457,6 +469,26 @@ func printStore(ctx context.Context, store corekv.ReaderWriter) error {
 	}
 
 	return iter.Close()
+}
+
+// var _ TTLTxnCacheReader = (*wrappedTxnTTLReadCache)(nil)
+
+// type TTLTxnCacheReader interface {
+// 	Get(key uint64) (client.Txn, bool)
+// }
+
+// implements client.TTLReadCache
+type TTLTxnCacheReader struct {
+	db *DB
+}
+
+func (w *TTLTxnCacheReader) Get(txnId uint64) (client.Txn, bool) {
+	txn, ok := w.db.txnTTLCache.Load(txnId)
+	if !ok {
+		return nil, false
+	}
+	wTxn := wrapDatastoreTxn(txn, w.db)
+	return wTxn, true
 }
 
 type txnSource struct {

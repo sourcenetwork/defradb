@@ -19,29 +19,39 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type txHandler struct {
-	txnTTL time.Duration
-}
+type txHandler struct{}
 
 type CreateTxResponse struct {
 	ID uint64 `json:"id"`
 }
 
+var defaultTxnTTL = 60 * time.Second
+
 func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
-	txs := mustGetContextSyncMap(req)
+
 	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
 
-	tx, err := db.NewTxn(readOnly)
+	var ttl time.Duration
+	if req.URL.Query().Get("ttl") == "" {
+		ttl = defaultTxnTTL
+	} else {
+		ttlRaw, err := strconv.ParseInt(req.URL.Query().Get("ttl"), 10, 64)
+		if err != nil {
+			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			return
+		}
+		ttl = time.Duration(ttlRaw) * time.Second
+	}
+
+	tx, err := db.NewTxnWithTTL(readOnly, ttl)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	txs.Store(tx.ID(), tx, h.txnTTL)
 	err = responseJSONErr(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 	if err != nil {
-		txs.Delete(tx.ID())
 		tx.Discard()
 		log.ErrorE("failed to write response", err)
 	}
@@ -49,33 +59,38 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 
 func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
-	txs := mustGetContextSyncMap(req)
-	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
 
-	tx, err := db.NewConcurrentTxn(readOnly)
+	readOnly, _ := strconv.ParseBool(req.URL.Query().Get("read_only"))
+	ttlRaw, err := strconv.ParseInt(req.URL.Query().Get("ttl"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	txs.Store(tx.ID(), tx, h.txnTTL)
+	ttl := time.Duration(ttlRaw) * time.Second
+	tx, err := db.NewConcurrentTxnWithTTL(readOnly, ttl)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
 	err = responseJSONErr(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 	if err != nil {
-		txs.Delete(tx.ID())
 		tx.Discard()
 		log.ErrorE("failed to write response", err)
 	}
 }
 
 func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
-	txs := mustGetContextSyncMap(req)
+	tdb := mustGetContextClientDB(req)
 
-	txID, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
+	txId, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txn, ok := txs.Load(txID)
+
+	txn, ok := tdb.TTLTxnCache().Get(txId)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
@@ -86,19 +101,19 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Delete(txID)
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
-	txs := mustGetContextSyncMap(req)
+	tdb := mustGetContextClientDB(req)
 
-	txID, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
+	txId, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txn, ok := txs.LoadAndDelete(txID)
+
+	txn, ok := tdb.TTLTxnCache().Get(txId)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return

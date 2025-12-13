@@ -51,15 +51,15 @@ func mustGetContextClientCollection(req *http.Request) client.Collection {
 // mustGetContextSyncMap returns the sync map from the http request context or panics.
 //
 // This should only be called from functions within the http package.
-func mustGetContextSyncMap(req *http.Request) *TxnTTLCache {
-	return req.Context().Value(txsContextKey).(*TxnTTLCache) //nolint:forcetypeassert
-}
+// func mustGetContextSyncMap(req *http.Request) *TxnTTLCache {
+// 	return req.Context().Value(txsContextKey).(*TxnTTLCache) //nolint:forcetypeassert
+// }
 
 // mustGetContextClientDB returns the DB from the http request context or panics.
 //
 // This should only be called from functions within the http package.
-func mustGetContextClientDB(req *http.Request) DB {
-	return req.Context().Value(dbContextKey).(DB) //nolint:forcetypeassert
+func mustGetContextClientDB(req *http.Request) ttlDB {
+	return req.Context().Value(dbContextKey).(ttlDB) //nolint:forcetypeassert
 }
 
 // // mustGetDataStoreTxn returns the datastore transaction or panics.

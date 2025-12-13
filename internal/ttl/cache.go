@@ -77,6 +77,12 @@ func (c *Cache[K, V]) LoadAndDelete(key K) (V, bool) {
 		var vZero V
 		return vZero, false
 	}
+	// This happens outside the lock of the
+	// sync.Map.LoadAndDelete. This is OK, since the
+	// Wheel implementation will ignore a miss Delete call
+	// if the item expired between the LoadAndDelete and
+	// this Delete() call
+	c.tw.Delete(key)
 
 	vTyped := vUntyped.(V) //nolint:forcetypeassert
 	return vTyped, true
@@ -86,6 +92,7 @@ func (c *Cache[K, V]) LoadAndDelete(key K) (V, bool) {
 // expired.
 func (c *Cache[K, V]) Delete(key K) {
 	c.cache.Delete(key)
+	c.tw.Delete(key)
 }
 
 // UpdateTTL updates the TTL for a given key if it exists

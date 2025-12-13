@@ -13,10 +13,11 @@ package http
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/ttl"
 
 	"github.com/go-chi/chi/v5"
@@ -34,8 +35,8 @@ var Version string = "v0"
 // playgroundHandler is set when building with the playground build tag
 var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
 
-func NewApiRouter(txnTTL time.Duration) (*Router, error) {
-	tx_handler := &txHandler{txnTTL: txnTTL}
+func NewApiRouter() (*Router, error) {
+	tx_handler := &txHandler{}
 	store_handler := &storeHandler{}
 	acp_handler := &acpHandler{}
 	collection_handler := &collectionHandler{}
@@ -69,8 +70,9 @@ func NewApiRouter(txnTTL time.Duration) (*Router, error) {
 }
 
 type DB interface {
-	client.TxnStore
+	client.TxnTTLStore
 	client.P2P
+
 	// Events returns the database event queue.
 	//
 	// It may be used to monitor database events - a new event will be yielded for each mutation.
@@ -78,68 +80,35 @@ type DB interface {
 	Events() event.Bus
 }
 
-type HandlerOptions struct {
-	// Resolution of the transaction TTL
-	TxnTTLCacheTick time.Duration
-	// Number of buckets for the transaction TTL cache
-	TxnTTLCacheBuckets int
-	// TxnTTL is the timeout value for the transaction expiration
-	// NOTE: The max value allowed here is CacheTick * Buckets
-	TxnTTL time.Duration
-}
-
-// DefaultOpts returns the default options for the server.
-func DefaultHandlerOptions() *HandlerOptions {
-	return &HandlerOptions{
-		TxnTTLCacheTick:    time.Second,
-		TxnTTLCacheBuckets: 60,
-		TxnTTL:             60 * time.Second,
-	}
-}
-
-// ServerOpt is a function that configures server options.
-type HandlerOpt func(*HandlerOptions)
-
-// WithHTTPTxnTTLCache
-func WithHTTPTxnTTLCache(tick time.Duration, buckets int) HandlerOpt {
-	return func(opts *HandlerOptions) {
-		opts.TxnTTLCacheTick = tick
-		opts.TxnTTLCacheBuckets = buckets
-	}
+// ttlDB is designed to prevent leaking the TTLTxnCache
+// method from the `db.DB` type into the public API of
+// the defra repo.
+//
+// Unfortuently, this means the check will need to happen
+// at runtime instead of compile time
+type ttlDB interface {
+	DB
+	TTLTxnCache() *db.TTLTxnCacheReader
 }
 
 type Handler struct {
 	mux *chi.Mux
-	txs *TxnTTLCache
 }
 
-func NewHandler(db DB, opts ...HandlerOpt) (*Handler, error) {
-	options := DefaultHandlerOptions()
-	for _, opt := range opts {
-		opt(options)
+func NewHandler(db DB) (*Handler, error) {
+	ttlDB, ok := db.(ttlDB)
+	if !ok {
+		return nil, errors.New("invalid db type, missing transaction ttl cache")
 	}
-
-	router, err := NewApiRouter(options.TxnTTL)
+	router, err := NewApiRouter()
 	if err != nil {
 		return nil, err
 	}
 
-	// transaction ttl cache that will automatically discard after
-	// the ttl has expired. This is configured with 1 second
-	// resolution, with 60 "buckets" (See the ttl.Wheel type).
-	// Transactions that have already been commited/discard are a
-	// no-op.
-	txs := ttl.NewTTLCache(
-		options.TxnTTLCacheTick,
-		options.TxnTTLCacheBuckets,
-		func(txid uint64, txn client.Txn) {
-			txn.Discard()
-		})
-
 	mux := chi.NewMux()
 	mux.Route("/api/"+Version, func(r chi.Router) {
 		r.Use(
-			ApiMiddleware(db, txs),
+			apiMiddleware(ttlDB),
 			TransactionMiddleware,
 			AuthMiddleware,
 		)
@@ -154,18 +123,17 @@ func NewHandler(db DB, opts ...HandlerOpt) (*Handler, error) {
 	mux.Handle("/*", playgroundHandler)
 	return &Handler{
 		mux: mux,
-		txs: txs,
 	}, nil
 }
 
-func (h *Handler) Transaction(id uint64) (client.Txn, error) {
-	tx, ok := h.txs.Load(id)
-	if !ok {
-		return nil, ErrInvalidTransactionId
-	}
+// func (h *Handler) Transaction(id uint64) (client.Txn, error) {
+// 	tx, ok := h.txs.Load(id)
+// 	if !ok {
+// 		return nil, ErrInvalidTransactionId
+// 	}
 
-	return tx, nil
-}
+// 	return tx, nil
+// }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h.mux.ServeHTTP(w, req)

@@ -42,12 +42,11 @@ func CorsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 }
 
 // ApiMiddleware sets the required context values for all API requests.
-func ApiMiddleware(db client.TxnStore, txs *TxnTTLCache) func(http.Handler) http.Handler {
+func apiMiddleware(db ttlDB) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			ctx := req.Context()
 			ctx = context.WithValue(ctx, dbContextKey, db)
-			ctx = context.WithValue(ctx, txsContextKey, txs)
 			next.ServeHTTP(rw, req.WithContext(ctx))
 		})
 	}
@@ -56,7 +55,7 @@ func ApiMiddleware(db client.TxnStore, txs *TxnTTLCache) func(http.Handler) http
 // TransactionMiddleware sets the transaction context for the current request.
 func TransactionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		txs := mustGetContextSyncMap(req)
+		tdb := mustGetContextClientDB(req)
 
 		txValue := req.Header.Get(txHeaderName)
 		if txValue == "" {
@@ -68,7 +67,8 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(rw, req)
 			return
 		}
-		tx, ok := txs.Load(id)
+
+		tx, ok := tdb.TTLTxnCache().Get(id)
 		if !ok {
 			if strings.Contains(req.URL.Path, "/graphql") {
 				responseJSON(
