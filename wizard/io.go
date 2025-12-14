@@ -53,14 +53,18 @@ func getYAMLValue(m map[string]any, path []string) any {
 // setYAMLValue is a helper function that sets a value in a YAML map
 func setYAMLValue(m map[string]any, path []string, value any) error {
 	current := m
+	// Iterate through the path, looking for the deepest element in it
 	for i, key := range path {
+		// If this is the last element in the path, set the value...
 		if i == len(path)-1 {
 			current[key] = value
 			return nil
 		}
+		// ...otherwise, proceed to the next element deeper in the map...
 		if next, ok := current[key].(map[string]any); ok {
 			current = next
 		} else {
+			// ...unless it doesn't exist, in which case create a new map for it
 			newMap := make(map[string]any)
 			current[key] = newMap
 			current = newMap
