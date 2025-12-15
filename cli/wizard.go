@@ -16,18 +16,12 @@ import (
 	"github.com/sourcenetwork/defradb/wizard"
 )
 
-// Exports the createConfig function for use by the setup wizard
-func createDefaultConfig(rootdir string) error {
-	defaultCmd := &cobra.Command{}
-	return createConfig(rootdir, defaultCmd.Flags())
-}
-
 func MakeWizardCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "wizard",
 		Short: "Runs the DefraDB setup wizard",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			wizard.Main(createDefaultConfig)
+			wizard.Main()
 			return nil
 		},
 	}

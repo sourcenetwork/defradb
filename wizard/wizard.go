@@ -20,22 +20,15 @@ import (
 // to the callback functions so they have access to any information they need. This can be
 // expanded as needed, but should be kept minimal.
 type WizardContext struct {
-
-	// CreateConfigCallback is a callback function that will be called to create the config.yaml file.
-	// This is passed in as a callback to avoid circular dependencies between the wizard and the
-	// CLI package. See cli/wizard.go, and how wizard.Main() is called to see where it comes from.
-	CreateConfigCallback func(rootdir string) error
-
 	// Results is a map of step IDs to the results of the step. This can be accessed to retrieve
 	// any of the results of previous steps that have occurred so far.
 	Results map[string][]any
 }
 
 // Main is the entry point of the wizard, and is wired into the CLI's MakeWizardCommand() function.
-func Main(createConfigCallback func(rootdir string) error) {
+func Main() {
 	ctx := &WizardContext{
-		Results:              map[string][]any{},
-		CreateConfigCallback: createConfigCallback,
+		Results: map[string][]any{},
 	}
 
 	// Define the steps

@@ -14,6 +14,9 @@ import (
 	"errors"
 	"os"
 
+	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/cli/config"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/keyring"
 )
@@ -30,12 +33,14 @@ func callback_SetKeyringBackend(s step, ctx *WizardContext) error {
 		choice = "system"
 	}
 
-	return setYAMLValueInFile(getConfigFile(), []string{"keyring", "backend"}, choice)
+	return setConfigValue("keyring.backend", choice)
 }
 
 // This callback will generate the config.yaml file
 func callback_GenerateConfigYAMLFile(_ step, ctx *WizardContext) error {
-	return ctx.CreateConfigCallback(os.Getenv("HOME") + "/.defradb")
+	defaultCmd := &cobra.Command{}
+	rootdir := os.Getenv("HOME") + "/.defradb"
+	return config.CreateConfig(rootdir, defaultCmd.Flags())
 }
 
 // This callback will generate the keyring files
@@ -44,8 +49,7 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 	if !ok {
 		return errors.New(errDefraKeyringSecretNotSet)
 	}
-	cfgFile := getConfigFile()
-	keyringFilepath, ok := getYAMLValueInFile(cfgFile, []string{"keyring", "path"}).(string)
+	keyringFilepath, ok := getConfigValue("keyring.path").(string)
 	if !ok {
 		return errors.New(errFailedToGetKeyringFilepath)
 	}
@@ -70,8 +74,7 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 
 // This callback will generate the keys in the system keyrind
 func callback_GenerateKeyringFilesInSystemKeyring(_ step, ctx *WizardContext) error {
-	cfgFile := getConfigFile()
-	keyringNamespace, ok := getYAMLValueInFile(cfgFile, []string{"keyring", "namespace"}).(string)
+	keyringNamespace, ok := getConfigValue("keyring.namespace").(string)
 	if !ok {
 		return errors.New(errFailedToGetKeyringNamespace)
 	}
