@@ -130,15 +130,20 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 					},
 				},
 			},
-			// Commit the transactions before querying the end result
 			testUtils.TransactionCommit{
 				TransactionID: 0,
 			},
+			// The second commit fails with a transaction conflict due to SSI semantics:
+			// - Txn0 writes index key for Website publisher, reads index key for Online publisher (via query)
+			// - Txn1 writes index key for Online publisher, reads index key for Website publisher (via query)
+			// - This creates an anti-dependency cycle that SSI detects as a conflict
 			testUtils.TransactionCommit{
 				TransactionID: 1,
+				ExpectedError: "transaction conflict",
 			},
 			testUtils.Request{
 				// Assert books -> publisher direction outside the transactions.
+				// Only Txn0's book is visible since Txn1 was rolled back due to conflict.
 				Request: `query {
 					Book {
 						_docID
@@ -151,14 +156,6 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 				}`,
 				Results: map[string]any{
 					"Book": []map[string]any{
-						{
-							"_docID": "bae-cd5d64a6-90ff-5a59-8a40-3d8ffd42752a",
-							"name":   "Book By Online",
-							"publisher": map[string]any{
-								"_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
-								"name":   "Online",
-							},
-						},
 						{
 							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
 							"name":   "Book By Website",

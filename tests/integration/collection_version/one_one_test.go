@@ -112,6 +112,16 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 								RelationName: immutable.Some("user_user"),
 							},
 						},
+						Indexes: []client.IndexDescription{
+							{
+								Name:   "User_boss_id_ASC",
+								ID:     1,
+								Unique: true,
+								Fields: []client.IndexedFieldDescription{
+									{Name: "boss_id"},
+								},
+							},
+						},
 					},
 				},
 			},

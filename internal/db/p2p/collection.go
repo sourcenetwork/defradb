@@ -61,7 +61,7 @@ func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 
 	txn.OnSuccess(func() {
 		for _, col := range storeCollections {
-			err := p.host.AddPubSubTopic(col.CollectionID(), true, p.pubSubMessageHandler)
+			err := p.host.AddPubSubTopic(col.CollectionID(), true, p.pubSubMessageHandler, p.peerEventHandler)
 			if err != nil {
 				log.ErrorE("Failed to add pubsub topic.", err)
 			}
@@ -213,7 +213,7 @@ func (p *P2P) loadAndPublishP2PCollections(ctx context.Context) error {
 		return err
 	}
 	for _, id := range collectionIDs {
-		err := p.host.AddPubSubTopic(id, true, p.pubSubMessageHandler)
+		err := p.host.AddPubSubTopic(id, true, p.pubSubMessageHandler, p.peerEventHandler)
 		if err != nil {
 			return err
 		}
