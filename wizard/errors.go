@@ -18,8 +18,8 @@ import (
 
 const (
 	errDefraKeyringSecretNotSet    = "DEFRA_KEYRING_SECRET environment variable is not set"
-	errFailedToGetKeyringFilepath  = "Failed to get keyring filepath"
-	errFailedToGetKeyringNamespace = "Failed to get keyring namespace"
+	errFailedToGetKeyringFilepath  = "failed to get keyring filepath"
+	errFailedToGetKeyringNamespace = "failed to get keyring namespace"
 )
 
 var (
@@ -28,7 +28,7 @@ var (
 
 func NewErrModelTypeMismatch(stepID, expectedType string) error {
 	return fmt.Errorf(
-		"%w: "+"A type assertion failed when trying to cast step %s to model type %s",
+		"%w: "+"a type assertion failed when trying to cast step %s to model type %s",
 		errModelTypeMismatch,
 		stepID,
 		expectedType,
