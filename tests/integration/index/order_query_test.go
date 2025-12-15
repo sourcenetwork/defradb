@@ -473,8 +473,8 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 					}
 
 					type Device {
-						model: String 
-						owner: User @primary @index
+						model: String
+						owner: User @primary @index(unique: true)
 					}
 				`,
 			},
@@ -1482,8 +1482,9 @@ func TestOrderQueryWithIndexOnRelation_OrderBySecondaryDoc_ShouldOrderWithIndex(
 				},
 			},
 			testUtils.Request{
-				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+				Request: makeExplainQuery(req),
+				// 4 indexFetches for device model index + 4 for the auto-created unique index on device_id
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(8),
 			},
 		},
 	}

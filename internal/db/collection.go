@@ -13,7 +13,6 @@ package db
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -23,7 +22,6 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -716,16 +714,6 @@ func (c *collection) save(
 			// that it's set to the same as the field description CRDT type.
 			val.SetType(fieldDescription.Typ)
 
-			err = c.validateOneToOneLinkDoesntAlreadyExist(
-				ctx,
-				doc.ID().String(),
-				fieldDescription,
-				val.Value(),
-			)
-			if err != nil {
-				return err
-			}
-
 			merkleCRDT, err := crdt.FieldLevelCRDTWithStore(
 				txn.Datastore(),
 				c.VersionID(),
@@ -807,107 +795,6 @@ func (c *collection) save(
 		txn.OnSuccess(func() {
 			c.db.sendUpdate(updateEvent)
 		})
-	}
-
-	return nil
-}
-
-func (c *collection) validateOneToOneLinkDoesntAlreadyExist(
-	ctx context.Context,
-	docID string,
-	fieldDescription client.CollectionFieldDescription,
-	value any,
-) error {
-	if fieldDescription.Kind != client.FieldKind_DocID {
-		return nil
-	}
-
-	if value == nil {
-		return nil
-	}
-
-	objFieldDescription, ok := c.Version().GetFieldByName(
-		strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID),
-	)
-	if !ok {
-		return client.NewErrFieldNotExist(strings.TrimSuffix(fieldDescription.Name, request.RelatedObjectID))
-	}
-	if !(objFieldDescription.Kind.IsObject() && !objFieldDescription.Kind.IsArray()) {
-		return nil
-	}
-
-	otherCol, _, err := description.GetRelatedCollection(ctx, c.Version(), objFieldDescription.Kind)
-	if err != nil {
-		return err
-	}
-
-	otherObjFieldDescription, otherFieldExists := otherCol.GetFieldByRelation(
-		fieldDescription.RelationName.Value(),
-		c.Name(),
-		objFieldDescription.Name,
-	)
-
-	if !otherFieldExists {
-		// This is a uni-directional field and so is effectively one-many
-		return nil
-	}
-
-	if !(otherObjFieldDescription.Kind.IsObject() &&
-		!otherObjFieldDescription.Kind.IsArray()) {
-		// If the other field is not an object field then this is not a one to one relation and we can continue
-		return nil
-	}
-
-	filter := fmt.Sprintf(
-		`%s: {_ne: "%s"}, %s: {_eq: "%s"}`,
-		request.DocIDFieldName,
-		docID,
-		fieldDescription.Name,
-		value,
-	)
-	selectionPlan, err := c.makeSelectionPlan(ctx, filter)
-	if err != nil {
-		return err
-	}
-
-	err = selectionPlan.Init()
-	if err != nil {
-		closeErr := selectionPlan.Close()
-		if closeErr != nil {
-			return errors.Wrap(err.Error(), closeErr)
-		}
-		return err
-	}
-
-	if err = selectionPlan.Start(); err != nil {
-		closeErr := selectionPlan.Close()
-		if closeErr != nil {
-			return errors.Wrap(err.Error(), closeErr)
-		}
-		return err
-	}
-
-	alreadyLinked, err := selectionPlan.Next()
-	if err != nil {
-		closeErr := selectionPlan.Close()
-		if closeErr != nil {
-			return errors.Wrap(err.Error(), closeErr)
-		}
-		return err
-	}
-
-	if alreadyLinked {
-		existingDocument := selectionPlan.Value()
-		err := selectionPlan.Close()
-		if err != nil {
-			return err
-		}
-		return NewErrOneOneAlreadyLinked(docID, existingDocument.GetID(), objFieldDescription.RelationName.Value())
-	}
-
-	err = selectionPlan.Close()
-	if err != nil {
-		return err
 	}
 
 	return nil

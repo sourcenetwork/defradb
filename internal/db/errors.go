@@ -72,7 +72,6 @@ const (
 	errDocUpdate                                 string = "failed to update doc to collection"
 	errExpectedJSONObject                        string = "expected JSON object"
 	errExpectedJSONArray                         string = "expected JSON array"
-	errOneOneAlreadyLinked                       string = "target document is already linked to another document"
 	errIndexDoesNotMatchName                     string = "the index used does not match the given name"
 	errCanNotIndexNonUniqueFields                string = "can not index a doc's field(s) that violates unique index"
 	errInvalidViewQuery                          string = "the query provided is not valid as a View"
@@ -127,6 +126,7 @@ const (
 	errUnknownCID                          string = "unknown CID, collection ids cannot be manually defined"
 	errMigrationBetweenNonAdjacentVersions string = "cannot migrate between non-adjacent collection versions"
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
+	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
 )
 
 var (
@@ -545,15 +545,6 @@ func NewErrDocUpdate(inner error) error {
 	return errors.Wrap(errDocUpdate, inner)
 }
 
-func NewErrOneOneAlreadyLinked(documentId, targetId, relationName string) error {
-	return errors.New(
-		errOneOneAlreadyLinked,
-		errors.NewKV("DocumentID", documentId),
-		errors.NewKV("TargetID", targetId),
-		errors.NewKV("RelationName", relationName),
-	)
-}
-
 func NewErrIndexDoesNotMatchName(index, name string) error {
 	return errors.New(
 		errIndexDoesNotMatchName,
@@ -819,4 +810,14 @@ func NewErrMigrationBetweenNonAdjacentVersions(sourceVersion string, destination
 
 func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
 	return errors.New(errLensRuntimeNotSupported, errors.NewKV("Lens", lens))
+}
+
+// NewErrOneToOneRelationMustBeUnique returns an error indicating that a one-to-one
+// relation field cannot have a non-unique index.
+func NewErrOneToOneRelationMustBeUnique(objectName, fieldName string) error {
+	return errors.New(
+		errOneToOneMustBeUnique,
+		errors.NewKV("Object", objectName),
+		errors.NewKV("Field", fieldName),
+	)
 }
