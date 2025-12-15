@@ -10,6 +10,27 @@
 
 package wizard
 
-const (
-	errDefraKeyringSecretNotSet = "DEFRA_KEYRING_SECRET environment variable is not set"
+import (
+	"fmt"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
+
+const (
+	errDefraKeyringSecretNotSet    = "DEFRA_KEYRING_SECRET environment variable is not set"
+	errFailedToGetKeyringFilepath  = "Failed to get keyring filepath"
+	errFailedToGetKeyringNamespace = "Failed to get keyring namespace"
+)
+
+var (
+	errModelTypeMismatch = errors.New("model type mismatch")
+)
+
+func NewErrModelTypeMismatch(stepID, expectedType string) error {
+	return fmt.Errorf(
+		"%w: "+"A type assertion failed when trying to cast step %s to model type %s",
+		errModelTypeMismatch,
+		stepID,
+		expectedType,
+	)
+}
