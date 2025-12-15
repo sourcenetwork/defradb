@@ -83,6 +83,8 @@ default:
 .PHONY: install
 install:
 	@go install $(BUILD_FLAGS) ./cmd/defradb
+
+install-wizard: install
 	@defradb wizard
 
 .PHONY: install\:manpages

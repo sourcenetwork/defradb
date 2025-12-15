@@ -20,7 +20,7 @@ import (
 
 // This callback will set keyring.backend to either "file" or "system"
 func callback_SetKeyringBackend(s step, ctx *WizardContext) error {
-	mm := s.(*modelMultipleChoice)
+	mm := s.(*modelMultipleChoice) //nolint:forcetypeassert
 
 	choice := "file"
 	if mm.cursor == 1 {
@@ -43,7 +43,7 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 	}
 	cfgFile := getConfigFile()
 	keyringFilepath := getYAMLValueInFile(cfgFile, []string{"keyring", "path"})
-	fullKeyringFilepath := os.Getenv("HOME") + "/.defradb/" + keyringFilepath.(string)
+	fullKeyringFilepath := os.Getenv("HOME") + "/.defradb/" + keyringFilepath.(string) //nolint:forcetypeassert
 	if err := os.MkdirAll(fullKeyringFilepath, 0755); err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 // This callback will generate the keys in the system keyrind
 func callback_GenerateKeyringFilesInSystemKeyring(_ step, ctx *WizardContext) error {
 	cfgFile := getConfigFile()
-	keyringNamespace := getYAMLValueInFile(cfgFile, []string{"keyring", "namespace"}).(string)
+	keyringNamespace := getYAMLValueInFile(cfgFile, []string{"keyring", "namespace"}).(string) //nolint:forcetypeassert
 	keyring := keyring.OpenSystemKeyring(keyringNamespace)
 	encryptionKey, err := crypto.GenerateAES256()
 	if err != nil {
