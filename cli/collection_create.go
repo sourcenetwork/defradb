@@ -76,15 +76,16 @@ Options:
 				client.CreateDocWithEncryptedFields(encryptedFields),
 			}
 
+			ctx := cmd.Context()
 			if client.IsJSONArray(docData) {
-				docs, err := client.NewDocsFromJSON(docData, col.Version())
+				docs, err := client.NewDocsFromJSON(ctx, docData, col.Version())
 				if err != nil {
 					return err
 				}
-				return col.CreateMany(cmd.Context(), docs, createOpts...)
+				return col.CreateMany(ctx, docs, createOpts...)
 			}
 
-			doc, err := client.NewDocFromJSON(docData, col.Version())
+			doc, err := client.NewDocFromJSON(ctx, docData, col.Version())
 			if err != nil {
 				return err
 			}

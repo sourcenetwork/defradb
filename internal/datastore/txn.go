@@ -12,6 +12,7 @@ package datastore
 
 import (
 	"context"
+	"time"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
@@ -44,6 +45,9 @@ type Txn interface {
 
 	// ID returns the unique immutable identifier for this transaction.
 	ID() uint64
+
+	// StartTS returns the start timestamp of the transaction
+	StartTS() time.Time
 
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an
@@ -79,6 +83,7 @@ type BasicTxn struct {
 
 	txn corekv.Txn
 	id  uint64
+	ts  time.Time // timestamp
 
 	successFns []func()
 	errorFns   []func()
@@ -99,11 +104,16 @@ func NewTxnFrom(rootstore corekv.TxnStore, id uint64, readonly bool, chunkSize i
 		Multistore: multistore,
 		txn:        rootTxn,
 		id:         id,
+		ts:         time.Now(),
 	}
 }
 
 func (t *BasicTxn) ID() uint64 {
 	return t.id
+}
+
+func (t *BasicTxn) StartTS() time.Time {
+	return t.ts
 }
 
 func (t *BasicTxn) Commit() error {

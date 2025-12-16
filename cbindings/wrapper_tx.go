@@ -23,6 +23,7 @@ import (
 	"context"
 	"errors"
 	"runtime/cgo"
+	"time"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
@@ -44,6 +45,10 @@ type Transaction struct {
 
 func (txn *Transaction) ID() uint64 {
 	return txn.tx.ID()
+}
+
+func (txn *Transaction) StartTS() time.Time {
+	return txn.tx.StartTS()
 }
 
 func (txn *Transaction) Commit() error {
