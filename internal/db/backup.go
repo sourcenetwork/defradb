@@ -85,7 +85,7 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 			delete(docMap, request.DocIDFieldName)
 			delete(docMap, request.NewDocIDFieldName)
 
-			doc, err := client.NewDocFromMap(docMap, col.Version())
+			doc, err := client.NewDocFromMap(ctx, docMap, col.Version())
 			if err != nil {
 				return NewErrDocFromMap(err)
 			}
@@ -97,7 +97,7 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 
 			// add back the self referencing fields and update doc.
 			for k, v := range resetMap {
-				err := doc.Set(k, v)
+				err := doc.Set(ctx, k, v)
 				if err != nil {
 					return NewErrDocUpdate(err)
 				}
@@ -212,7 +212,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
 					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
 						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
-							err := doc.Set(field.Name+request.RelatedObjectID, newKey)
+							err := doc.Set(ctx, field.Name+request.RelatedObjectID, newKey)
 							if err != nil {
 								return err
 							}
@@ -237,7 +237,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 							}
 							foreignDoc, err := foreignCol.Get(ctx, foreignDocID, false)
 							if err != nil {
-								err := doc.Set(field.Name+request.RelatedObjectID, nil)
+								err := doc.Set(ctx, field.Name+request.RelatedObjectID, nil)
 								if err != nil {
 									return err
 								}
@@ -257,13 +257,13 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 									refFieldName = field.Name + request.RelatedObjectID
 								}
 
-								newForeignDoc, err := client.NewDocFromMap(oldForeignDoc, foreignCol.Version())
+								newForeignDoc, err := client.NewDocFromMap(ctx, oldForeignDoc, foreignCol.Version())
 								if err != nil {
 									return err
 								}
 
 								if foreignDoc.ID().String() != doc.ID().String() {
-									err = doc.Set(field.Name+request.RelatedObjectID, newForeignDoc.ID().String())
+									err = doc.Set(ctx, field.Name+request.RelatedObjectID, newForeignDoc.ID().String())
 									if err != nil {
 										return err
 									}
@@ -288,7 +288,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 				delete(docM, refFieldName)
 			}
 
-			newDoc, err := client.NewDocFromMap(docM, col.Version())
+			newDoc, err := client.NewDocFromMap(ctx, docM, col.Version())
 			if err != nil {
 				return err
 			}

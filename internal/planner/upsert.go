@@ -57,7 +57,7 @@ func (n *upsertNode) Next() (bool, error) {
 				return false, err
 			}
 			for k, v := range n.updateInput {
-				if err := doc.Set(k, v); err != nil {
+				if err := doc.Set(n.p.ctx, k, v); err != nil {
 					return false, err
 				}
 			}
@@ -66,7 +66,7 @@ func (n *upsertNode) Next() (bool, error) {
 				return false, err
 			}
 		} else {
-			doc, err := client.NewDocFromMap(n.createInput, n.collection.Version())
+			doc, err := client.NewDocFromMap(n.p.ctx, n.createInput, n.collection.Version())
 			if err != nil {
 				return false, err
 			}
