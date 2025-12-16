@@ -535,7 +535,7 @@ func checkExistingFieldsAndAdjustRelFieldNames(
 			return NewErrNonExistingFieldForIndex(fields[i].Name)
 		}
 		if field.Kind.IsObject() {
-			fields[i].Name = fields[i].Name + request.RelatedObjectID
+			fields[i].Name = request.ToFieldID(fields[i].Name)
 		}
 	}
 	return nil

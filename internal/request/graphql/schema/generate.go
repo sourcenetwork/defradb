@@ -594,14 +594,13 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersi
 			fields := make(gql.InputObjectConfigFieldMap)
 
 			for _, field := range collection.Fields {
-				if strings.HasPrefix(field.Name, "_") {
-					// ignore system defined args as the
-					// user cannot override their values
-					continue
-				}
-
-				if field.Kind == client.FieldKind_DocID && strings.HasSuffix(field.Name, request.RelatedObjectID) {
-					objFieldName := strings.TrimSuffix(field.Name, request.RelatedObjectID)
+				if field.Kind == client.FieldKind_DocID {
+					objFieldName, isRelationID := request.ToRelatedObjectName(field.Name)
+					if !isRelationID {
+						// This is a system DocID field (like _docID), not a relation ID field,
+						// users cannot set its value
+						continue
+					}
 					ofd, exists := collection.GetFieldByName(objFieldName)
 					if exists && !ofd.IsPrimary {
 						// We do not allow the mutation of relations from the secondary side,
