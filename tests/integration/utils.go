@@ -541,7 +541,7 @@ func generateDocs(s *state.State, action GenerateDocs) {
 			defs = append(defs, collection.Version())
 		}
 	}
-	docs, err := gen.AutoGenerate(defs, action.Options...)
+	docs, err := gen.AutoGenerate(s.Ctx, defs, action.Options...)
 	if err != nil {
 		s.T.Fatalf("Failed to generate docs %s", err)
 	}
@@ -556,7 +556,7 @@ func generatePredefinedDocs(s *state.State, action CreatePredefinedDocs) {
 	for _, col := range collections {
 		defs = append(defs, col.Version())
 	}
-	docs, err := predefined.Create(defs, action.Docs)
+	docs, err := predefined.Create(s.Ctx, defs, action.Docs)
 	if err != nil {
 		s.T.Fatalf("Failed to generate docs %s", err)
 	}
@@ -1024,7 +1024,7 @@ func refreshDocuments(
 			if action.DocMap != nil {
 				substituteRelations(s, action)
 			}
-			docs, err := parseCreateDocs(action, collection)
+			docs, err := parseCreateDocs(s.Ctx, action, collection)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -1370,14 +1370,13 @@ func createDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
-	docs, err := parseCreateDocs(action, collection)
-	if err != nil {
-		return nil, err
-	}
-
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
 
+	docs, err := parseCreateDocs(ctx, action, collection)
+	if err != nil {
+		return nil, err
+	}
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
 		err := collection.Save(ctx, doc, makeDocCreateOptions(&action)...)
@@ -1408,13 +1407,13 @@ func createDocViaColCreate(
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
-	docs, err := parseCreateDocs(action, collection)
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
+	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
+
+	docs, err := parseCreateDocs(ctx, action, collection)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
 
 	switch {
 	case len(docs) > 1:
@@ -1615,7 +1614,7 @@ func updateDocViaColSave(
 	if err != nil {
 		return err
 	}
-	err = doc.SetWithJSON([]byte(action.Doc))
+	err = doc.SetWithJSON(ctx, []byte(action.Doc))
 	if err != nil {
 		return err
 	}
@@ -1635,7 +1634,7 @@ func updateDocViaColUpdate(
 	if err != nil {
 		return err
 	}
-	err = doc.SetWithJSON([]byte(action.Doc))
+	err = doc.SetWithJSON(ctx, []byte(action.Doc))
 	if err != nil {
 		return err
 	}
@@ -2754,20 +2753,20 @@ func CBORValue(value any) []byte {
 }
 
 // parseCreateDocs parses and returns documents from a CreateDoc action.
-func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.Document, error) {
+func parseCreateDocs(ctx context.Context, action CreateDoc, collection client.Collection) ([]*client.Document, error) {
 	switch {
 	case action.DocMap != nil:
-		val, err := client.NewDocFromMap(action.DocMap, collection.Version())
+		val, err := client.NewDocFromMap(ctx, action.DocMap, collection.Version())
 		if err != nil {
 			return nil, err
 		}
 		return []*client.Document{val}, nil
 
 	case client.IsJSONArray([]byte(action.Doc)):
-		return client.NewDocsFromJSON([]byte(action.Doc), collection.Version())
+		return client.NewDocsFromJSON(ctx, []byte(action.Doc), collection.Version())
 
 	default:
-		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Version())
+		val, err := client.NewDocFromJSON(ctx, []byte(action.Doc), collection.Version())
 		if err != nil {
 			return nil, err
 		}

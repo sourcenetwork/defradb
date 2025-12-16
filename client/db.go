@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -304,6 +305,9 @@ type Txn interface {
 
 	// ID returns the unique immutable identifier for this transaction.
 	ID() uint64
+
+	// StartTS returns the timestamp from the start of the transaction
+	StartTS() time.Time
 
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an

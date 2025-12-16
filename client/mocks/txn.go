@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"context"
+	"time"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -2417,6 +2418,50 @@ func (_c *Txn_SetReplicator_Call) Return(err error) *Txn_SetReplicator_Call {
 }
 
 func (_c *Txn_SetReplicator_Call) RunAndReturn(run func(ctx context.Context, addresses []string, collectionNames ...string) error) *Txn_SetReplicator_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// StartTS provides a mock function for the type Txn
+func (_mock *Txn) StartTS() time.Time {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for StartTS")
+	}
+
+	var r0 time.Time
+	if returnFunc, ok := ret.Get(0).(func() time.Time); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(time.Time)
+	}
+	return r0
+}
+
+// Txn_StartTS_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartTS'
+type Txn_StartTS_Call struct {
+	*mock.Call
+}
+
+// StartTS is a helper method to define mock.On call
+func (_e *Txn_Expecter) StartTS() *Txn_StartTS_Call {
+	return &Txn_StartTS_Call{Call: _e.mock.On("StartTS")}
+}
+
+func (_c *Txn_StartTS_Call) Run(run func()) *Txn_StartTS_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Txn_StartTS_Call) Return(time1 time.Time) *Txn_StartTS_Call {
+	_c.Call.Return(time1)
+	return _c
+}
+
+func (_c *Txn_StartTS_Call) RunAndReturn(run func() time.Time) *Txn_StartTS_Call {
 	_c.Call.Return(run)
 	return _c
 }

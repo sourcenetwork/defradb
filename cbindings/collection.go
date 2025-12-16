@@ -120,7 +120,7 @@ func CollectionCreate(
 	jsonString := strings.TrimSpace(C.GoString(json))
 	if strings.HasPrefix(jsonString, "[") {
 		// Multiple documents
-		docs, err := client.NewDocsFromJSON([]byte(jsonString), col.Version())
+		docs, err := client.NewDocsFromJSON(ctx, []byte(jsonString), col.Version())
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -130,7 +130,7 @@ func CollectionCreate(
 		}
 	} else {
 		// Single document
-		doc, err := client.NewDocFromJSON([]byte(jsonString), col.Version())
+		doc, err := client.NewDocFromJSON(ctx, []byte(jsonString), col.Version())
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -410,7 +410,7 @@ func CollectionUpdate(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		if err := doc.SetWithJSON([]byte(updater)); err != nil {
+		if err := doc.SetWithJSON(ctx, []byte(updater)); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		err = col.Update(ctx, doc)

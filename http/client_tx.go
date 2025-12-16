@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -42,6 +43,10 @@ func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
 
 func (txn *Transaction) ID() uint64 {
 	return txn.id
+}
+
+func (txn *Transaction) StartTS() time.Time {
+	return time.Time{} // http client returns empty time
 }
 
 func (txn *Transaction) Commit() error {

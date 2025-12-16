@@ -56,7 +56,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(col, initialDocState)
+	d, docID := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
@@ -101,7 +101,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(col, initialDocState)
+	d, docID := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
@@ -159,7 +159,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(col, initialDocState)
+	d, docID := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
@@ -211,8 +211,9 @@ type dagBuilder struct {
 	col          client.Collection
 }
 
-func newDagBuilder(col client.Collection, initalDocState map[string]any) (*dagBuilder, client.DocID) {
+func newDagBuilder(ctx context.Context, col client.Collection, initalDocState map[string]any) (*dagBuilder, client.DocID) {
 	doc, err := client.NewDocFromMap(
+		ctx,
 		initalDocState,
 		col.Version(),
 	)

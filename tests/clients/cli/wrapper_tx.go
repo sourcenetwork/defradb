@@ -13,6 +13,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -32,6 +33,10 @@ type Transaction struct {
 
 func (txn *Transaction) ID() uint64 {
 	return txn.tx.ID()
+}
+
+func (txn *Transaction) StartTS() time.Time {
+	return txn.tx.StartTS()
 }
 
 func (txn *Transaction) Commit() error {
