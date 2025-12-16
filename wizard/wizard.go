@@ -31,6 +31,8 @@ func Main() {
 		Results: map[string][]any{},
 	}
 
+	hypotheticalStep := initialModelTextInput("hypotheticalStep", "What is your name?", "Enter your name")
+
 	// Define the steps
 	stepWizardStart := initialModelMultipleChoice(
 		"stepWizardStart",
@@ -40,7 +42,12 @@ func Main() {
 
 	stepConfigGenerator := initialModelText(
 		"stepConfigGenerator",
-		"A config.yaml file will be generated.\n\nPress Enter or Space to continue.",
+		"A config.yaml file will be generated.",
+	)
+
+	stepConfigGenerated := initialModelText(
+		"stepConfigGenerated",
+		"Config.yaml file generated successfully",
 	)
 
 	stepKeyringStorageLocation := initialModelMultipleChoice(
@@ -48,7 +55,7 @@ func Main() {
 		"DefraDB protects the storage and transmission of data with a keypair that\n"+
 			"will be generated now. You have the choice of where to store these generated keys.\n\n"+
 			"Where do you want to store your keypair?",
-		[]string{"Filesystem (~/.defradb/keys)", "OS (KeyChain, etc)"},
+		[]string{"Filesystem (~/.defradb/keys)", "OS (KeyChain)"},
 	)
 
 	stepKeyringStorageLocationBrancher := initialModelBrancher()
@@ -58,8 +65,7 @@ func Main() {
 		"Environment variable DEFRA_KEYRING_SECRET must first be set.\n\n"+
 			"Please set the environment variable first and run the wizard again.\n\n"+
 			"To set the environment variable, you can use the command: DEFRA_KEYRING_SECRET=my-secret-password\n\n"+
-			"To run the wizard again you can use the command: defradb wizard\n\n"+
-			"Press Enter or Space to exit.",
+			"To run the wizard again you can use the command: defradb wizard",
 	)
 
 	stepGenerateKeyringFiles := initialModelBlank()
@@ -67,19 +73,18 @@ func Main() {
 
 	stepConfirmKeyringFilesGenerated := initialModelText(
 		"stepConfirmKeyringFilesGenerated",
-		"Keyring files generated successfully.\n\n"+
-			"Press Enter or Space to exit.",
+		"Keyring files generated successfully.",
 	)
 
 	stepConfirmSystemKeyringKeysGenerated := initialModelText(
 		"stepConfirmSystemKeyringKeysGenerated",
-		"Keys generated in system keyring successfully.\n\n"+
-			"Press Enter or Space to exit.",
+		"Keys generated in system keyring successfully.",
 	)
 
 	// Chain the steps together
 	stepWizardStart.nextSteps = []step{stepConfigGenerator, nil}
-	stepConfigGenerator.nextStep = stepKeyringStorageLocation
+	stepConfigGenerator.nextStep = stepConfigGenerated
+	stepConfigGenerated.nextStep = stepKeyringStorageLocation
 	stepKeyringStorageLocation.nextSteps = []step{stepKeyringStorageLocationBrancher, stepGenerateSystemKeyringKeys}
 	stepKeyringStorageLocationBrancher.nextSteps = []step{
 		stepWizardExitMissingDefraKeyringSecret,
@@ -98,7 +103,7 @@ func Main() {
 	stepKeyringStorageLocationBrancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet
 
 	// Run the Bubbletea program
-	program := tea.NewProgram(&mainModel{currentStep: stepWizardStart, ctx: ctx})
+	program := tea.NewProgram(&mainModel{currentStep: hypotheticalStep, ctx: ctx})
 	if _, err := program.Run(); err != nil {
 		os.Exit(1)
 	}

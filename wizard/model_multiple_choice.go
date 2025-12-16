@@ -84,20 +84,27 @@ func (m *modelMultipleChoice) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View() should not be called except by the main model
 func (m *modelMultipleChoice) View() string {
-	s := m.prompt + "\n\n"
+
+	var s string
+
+	s += promptStyle.Render(m.prompt) + "\n"
 
 	// Iterate over our choices
 	for i, choice := range m.choices {
 		// Draw the cursor in front of the selected choice
 		cursor := " "
+		style := choiceStyle
 		if m.cursor == i {
 			cursor = ">"
+			style = selectedChoiceStyle
 		}
 
 		// Render the row
-		s += fmt.Sprintf("%s %s\n", cursor, choice)
+		line := fmt.Sprintf("%s %s", cursor, choice)
+		s += style.Render(line) + "\n"
 	}
 
+	s += hintStyle.Render("↑/↓ to move cursor • Enter/Space to select • Ctrl+C to quit")
 	return s
 }
 

@@ -1,0 +1,59 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package wizard
+
+import (
+	"github.com/charmbracelet/lipgloss"
+)
+
+var (
+	promptStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("39")).
+			MarginBottom(1)
+
+	choiceStyle = lipgloss.NewStyle().
+			PaddingLeft(1)
+
+	selectedChoiceStyle = lipgloss.NewStyle().
+				PaddingLeft(1).
+				Bold(true).
+				Foreground(lipgloss.Color("48"))
+
+	bodyStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("39")).
+			PaddingLeft(1)
+
+	hintStyle = lipgloss.NewStyle().
+			Faint(true).
+			Foreground(lipgloss.Color("240")).
+			MarginTop(1)
+
+	inputStyle = lipgloss.NewStyle().
+			PaddingLeft(1).
+			Foreground(lipgloss.Color("245"))
+
+	focusedInputStyle = lipgloss.NewStyle().
+				PaddingLeft(1).
+				Foreground(lipgloss.Color("48"))
+
+	inputBorderStyle = lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color("39")).
+				Padding(0, 1)
+
+	singleLineInputBox = lipgloss.NewStyle().
+				Height(1).
+				Width(80).
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color("39")).
+				Padding(0, 1)
+)

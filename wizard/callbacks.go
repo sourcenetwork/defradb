@@ -39,7 +39,7 @@ func callback_SetKeyringBackend(s step, ctx *WizardContext) error {
 // This callback will generate the config.yaml file
 func callback_GenerateConfigYAMLFile(_ step, ctx *WizardContext) error {
 	defaultCmd := &cobra.Command{}
-	rootdir := os.Getenv("HOME") + "/.defradb"
+	rootdir := getRootDir()
 	return config.CreateConfig(rootdir, defaultCmd.Flags())
 }
 
@@ -53,7 +53,7 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 	if !ok {
 		return errors.New(errFailedToGetKeyringFilepath)
 	}
-	fullKeyringFilepath := os.Getenv("HOME") + "/.defradb/" + keyringFilepath
+	fullKeyringFilepath := getRootDir() + "/" + keyringFilepath
 	if err := os.MkdirAll(fullKeyringFilepath, 0755); err != nil {
 		return err
 	}

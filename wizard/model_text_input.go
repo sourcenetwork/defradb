@@ -11,7 +11,7 @@
 package wizard
 
 import (
-	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -20,10 +20,10 @@ import (
 var _ tea.Model = (*modelTextInput)(nil)
 
 type modelTextInput struct {
-	id     string          // Used to access the result of this step from the main model's results map
-	prompt string          // The prompt to display to the user
-	done   bool            // Whether the step is done
-	input  textinput.Model // The text input model will manage input
+	id     string         // Used to access the result of this step from the main model's results map
+	prompt string         // The prompt to display to the user
+	done   bool           // Whether the step is done
+	input  textarea.Model // The text input model will manage input
 
 	// nextStep can be assigned dynamically. It should be set to the next step
 	// to be executed after this step. nil is valid, and will be treated as the
@@ -39,9 +39,12 @@ type modelTextInput struct {
 //
 //nolint:unused
 func initialModelTextInput(id string, prompt string, placeholder string) *modelTextInput {
-	ti := textinput.NewModel()
+	ti := textarea.New()
+	ti.SetWidth(70)
+	ti.SetHeight(1)
 	ti.Placeholder = placeholder
-	ti.Width = 30
+	ti.ShowLineNumbers = false
+	ti.Cursor.Blink = true
 	ti.Focus()
 
 	return &modelTextInput{
@@ -66,7 +69,6 @@ func (m *modelTextInput) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Check for a quick-quit
 		case KEY_CONTROL_C:
 			return m, tea.Quit
-
 		// Enter submits the input
 		case KEY_ENTER:
 			m.done = true
@@ -79,8 +81,20 @@ func (m *modelTextInput) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View() should not be called except by the main model
 func (m *modelTextInput) View() string {
-	s := m.prompt + "\n\n"
-	s += m.input.View() + "\n"
+	var s string
+
+	// Prompt
+	s += promptStyle.Render(m.prompt)
+	s += "\n"
+
+	ta := m.input.View()
+	s += singleLineInputBox.Render(ta)
+
+	s += "\n"
+
+	// Hint
+	s += hintStyle.Render("Enter to continue • Ctrl+C to quit")
+
 	return s
 }
 

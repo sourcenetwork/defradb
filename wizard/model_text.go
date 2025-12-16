@@ -63,7 +63,11 @@ func (m *modelText) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View() should not be called except by the main model
 func (m *modelText) View() string {
-	return m.text
+	var s string
+	s += bodyStyle.Render(m.text)
+	s += "\n"
+	s += hintStyle.Render("Enter/Space to continue • Ctrl+C to quit")
+	return s
 }
 
 // Next() will return the next step, which may be nil
