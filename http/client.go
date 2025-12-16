@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/http/graphql"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/graphql-go/language/parser"
 	"github.com/sourcenetwork/graphql-go/language/source"
@@ -339,7 +340,7 @@ func (c *Client) ExecRequest(
 	for _, o := range opts {
 		o(gqlOptions)
 	}
-	gqlRequest := &GraphQLRequest{
+	gqlRequest := &graphql.Request{
 		Query:         query,
 		OperationName: gqlOptions.OperationName,
 		Variables:     gqlOptions.Variables,

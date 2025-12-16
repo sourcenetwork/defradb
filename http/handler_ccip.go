@@ -18,6 +18,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
+	"github.com/sourcenetwork/defradb/http/graphql"
 )
 
 type ccipHandler struct{}
@@ -52,7 +53,7 @@ func (h *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	var request GraphQLRequest
+	var request graphql.Request
 	if err := json.Unmarshal(data, &request); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

@@ -31,12 +31,6 @@ type Executor func(
 	opts ...client.RequestOption,
 ) *client.RequestResult
 
-type GraphQLRequest struct {
-	Query         string         `json:"query"`
-	OperationName string         `json:"operationName"`
-	Variables     map[string]any `json:"variables"`
-}
-
 type Transport interface {
 	Supports(r *http.Request) bool
 	Do(w http.ResponseWriter, r *http.Request, executer Executor)

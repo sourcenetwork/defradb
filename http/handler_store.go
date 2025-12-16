@@ -11,7 +11,6 @@
 package http
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -257,11 +256,11 @@ func (h *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-type GraphQLRequest struct {
-	Query         string         `json:"query"`
-	OperationName string         `json:"operationName"`
-	Variables     map[string]any `json:"variables"`
-}
+// type GraphQLRequest struct {
+// 	Query         string         `json:"query"`
+// 	OperationName string         `json:"operationName"`
+// 	Variables     map[string]any `json:"variables"`
+// }
 
 func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	// // handle different request transports
@@ -275,6 +274,15 @@ func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	// // GraphQL over HTTP request
 	// execHTTPRequest(rw, req)
 
+	transport := h.getGQLTransport(req)
+	if transport == nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrTransportNotSupported})
+		return
+	}
+
+	db := mustGetContextClientDB(req)
+
+	transport.Do(rw, req, db.ExecRequest)
 }
 
 func (h *storeHandler) getGQLTransport(r *http.Request) graphql.Transport {
@@ -286,96 +294,96 @@ func (h *storeHandler) getGQLTransport(r *http.Request) graphql.Transport {
 	return nil
 }
 
-func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
-	db := mustGetContextClientDB(req)
+// func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
+// 	db := mustGetContextClientDB(req)
 
-	request, options, err := extractGraphQLRequest(req)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
+// 	request, options, err := extractGraphQLRequest(req)
+// 	if err != nil {
+// 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+// 		return
+// 	}
 
-	result := db.ExecRequest(req.Context(), request.Query, options...)
+// 	result := db.ExecRequest(req.Context(), request.Query, options...)
 
-	// if at this point the we get a subscription query, it isn't using
-	// the correct accept headers, and we error
-	if result.Subscription != nil {
-		responseJSON(rw, http.StatusNotAcceptable, errorResponse{ErrInvalidSubscriptionTransport})
-		return
-	}
+// 	// if at this point the we get a subscription query, it isn't using
+// 	// the correct accept headers, and we error
+// 	if result.Subscription != nil {
+// 		responseJSON(rw, http.StatusNotAcceptable, errorResponse{ErrInvalidSubscriptionTransport})
+// 		return
+// 	}
 
-	responseJSON(rw, http.StatusOK, result.GQL)
-}
+// 	responseJSON(rw, http.StatusOK, result.GQL)
+// }
 
-func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
-	db := mustGetContextClientDB(req)
+// func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
+// 	db := mustGetContextClientDB(req)
 
-	request, options, err := extractGraphQLRequest(req)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
+// 	request, options, err := extractGraphQLRequest(req)
+// 	if err != nil {
+// 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+// 		return
+// 	}
 
-	// upgrade to SSE connection
-	flusher, ok := rw.(http.Flusher)
-	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
-		return
-	}
+// 	// upgrade to SSE connection
+// 	flusher, ok := rw.(http.Flusher)
+// 	if !ok {
+// 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
+// 		return
+// 	}
 
-	rw.Header().Add("Content-Type", sseAcceptHeader)
-	rw.Header().Add("Cache-Control", "no-cache")
-	rw.Header().Add("Connection", "keep-alive")
-	rw.WriteHeader(http.StatusOK)
-	flusher.Flush()
+// 	rw.Header().Add("Content-Type", sseAcceptHeader)
+// 	rw.Header().Add("Cache-Control", "no-cache")
+// 	rw.Header().Add("Connection", "keep-alive")
+// 	rw.WriteHeader(http.StatusOK)
+// 	flusher.Flush()
 
-	result := db.ExecRequest(req.Context(), request.Query, options...)
+// 	result := db.ExecRequest(req.Context(), request.Query, options...)
 
-	// if we get an error in the initial GQL request, we need to emit
-	// it as a SSE event, then we can close the connection/subscription
-	if len(result.GQL.Errors) > 0 {
-		data, err := json.Marshal(result.GQL)
-		if err != nil {
-			return
-		}
+// 	// if we get an error in the initial GQL request, we need to emit
+// 	// it as a SSE event, then we can close the connection/subscription
+// 	if len(result.GQL.Errors) > 0 {
+// 		data, err := json.Marshal(result.GQL)
+// 		if err != nil {
+// 			return
+// 		}
 
-		err = emitSSENextEvent(rw, flusher, string(data))
-		if err != nil {
-			return
-		}
+// 		err = emitSSENextEvent(rw, flusher, string(data))
+// 		if err != nil {
+// 			return
+// 		}
 
-		_ = emitSSECompleteEvent(rw, flusher)
-		return
-	}
+// 		_ = emitSSECompleteEvent(rw, flusher)
+// 		return
+// 	}
 
-	serverCtx, hasServerCtx := tryGetContexCtx(req)
-	var serverDone <-chan struct{}
-	if hasServerCtx {
-		serverDone = serverCtx.Done()
-	}
-	for {
-		select {
-		case <-req.Context().Done():
-			return
-		case <-serverDone:
-			// We need to check for closure of the server context
-			// otherwise the server won't gracefully shutdown until all
-			// connections are closed.
-			_ = emitSSECompleteEvent(rw, flusher)
-			return
-		case item, open := <-result.Subscription:
-			if !open {
-				return
-			}
-			data, err := json.Marshal(item)
-			if err != nil {
-				return
-			}
+// 	serverCtx, hasServerCtx := tryGetContexCtx(req)
+// 	var serverDone <-chan struct{}
+// 	if hasServerCtx {
+// 		serverDone = serverCtx.Done()
+// 	}
+// 	for {
+// 		select {
+// 		case <-req.Context().Done():
+// 			return
+// 		case <-serverDone:
+// 			// We need to check for closure of the server context
+// 			// otherwise the server won't gracefully shutdown until all
+// 			// connections are closed.
+// 			_ = emitSSECompleteEvent(rw, flusher)
+// 			return
+// 		case item, open := <-result.Subscription:
+// 			if !open {
+// 				return
+// 			}
+// 			data, err := json.Marshal(item)
+// 			if err != nil {
+// 				return
+// 			}
 
-			_ = emitSSENextEvent(rw, flusher, string(data))
-		}
-	}
-}
+// 			_ = emitSSENextEvent(rw, flusher, string(data))
+// 		}
+// 	}
+// }
 
 func emitSSENextEvent(rw http.ResponseWriter, flusher http.Flusher, data string) error {
 	return emitSSEEvent(rw, flusher, "next", data)
@@ -400,41 +408,41 @@ func emitSSEEvent(rw http.ResponseWriter, flusher http.Flusher, eventType string
 	return nil
 }
 
-func extractGraphQLRequest(req *http.Request) (GraphQLRequest, []client.RequestOption, error) {
-	var request GraphQLRequest
-	switch {
-	case req.URL.Query().Get("query") != "":
+// func extractGraphQLRequest(req *http.Request) (GraphQLRequest, []client.RequestOption, error) {
+// 	var request GraphQLRequest
+// 	switch {
+// 	case req.URL.Query().Get("query") != "":
 
-		request.Query = req.URL.Query().Get("query")
+// 		request.Query = req.URL.Query().Get("query")
 
-		request.OperationName = req.URL.Query().Get("operationName")
+// 		request.OperationName = req.URL.Query().Get("operationName")
 
-		variablesFromQuery := req.URL.Query().Get("variables")
-		if variablesFromQuery != "" {
-			var variables map[string]any
-			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
-				return GraphQLRequest{}, nil, err
-			}
-			request.Variables = variables
-		}
+// 		variablesFromQuery := req.URL.Query().Get("variables")
+// 		if variablesFromQuery != "" {
+// 			var variables map[string]any
+// 			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
+// 				return GraphQLRequest{}, nil, err
+// 			}
+// 			request.Variables = variables
+// 		}
 
-	case req.Body != nil:
-		if err := requestJSON(req, &request); err != nil {
-			return GraphQLRequest{}, nil, err
-		}
-	default:
-		return GraphQLRequest{}, nil, ErrMissingRequest
-	}
-	var options []client.RequestOption
-	if request.OperationName != "" {
-		options = append(options, client.WithOperationName(request.OperationName))
-	}
-	if len(request.Variables) > 0 {
-		options = append(options, client.WithVariables(request.Variables))
-	}
+// 	case req.Body != nil:
+// 		if err := requestJSON(req, &request); err != nil {
+// 			return GraphQLRequest{}, nil, err
+// 		}
+// 	default:
+// 		return GraphQLRequest{}, nil, ErrMissingRequest
+// 	}
+// 	var options []client.RequestOption
+// 	if request.OperationName != "" {
+// 		options = append(options, client.WithOperationName(request.OperationName))
+// 	}
+// 	if len(request.Variables) > 0 {
+// 		options = append(options, client.WithVariables(request.Variables))
+// 	}
 
-	return request, options, nil
-}
+// 	return request, options, nil
+// }
 
 func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)

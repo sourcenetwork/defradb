@@ -67,7 +67,7 @@ func (h POST) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 		return
 	}
 
-	var request GraphQLRequest
+	var request Request
 	bodyReader := bytes.NewReader(bodyBytes)
 	err = json.NewDecoder(bodyReader).Decode(&request)
 	if err != nil {
@@ -87,8 +87,8 @@ func (h POST) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 		options = append(options, client.WithVariables(request.Variables))
 	}
 
-	result, _, err := executer(r.Context(), request.Query, options...)
-	if err != nil {
+	result := executer(r.Context(), request.Query, options...)
+	if result.GQL.Errors != nil {
 		gqlErr := errors.Wrap("could not execute request: %w", err)
 		responseJSON(w, http.StatusBadRequest, errorResponse{gqlErr})
 		return
@@ -101,22 +101,17 @@ func (h POST) Operation() *openapi3.Operation {
 	graphQLRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/graphql_request",
 	}
-	graphQLResponseSchema := openapi3.NewObjectSchema().
-		WithProperties(map[string]*openapi3.Schema{
-			"errors": openapi3.NewArraySchema().WithItems(
-				openapi3.NewObjectSchema().WithProperties(map[string]*openapi3.Schema{
-					"message": openapi3.NewStringSchema(),
-				}),
-			),
-			"data": openapi3.NewObjectSchema().WithAnyAdditionalProperties(),
-		})
+	graphQLResponseSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/graphql_response",
+	}
 
 	graphQLRequest := openapi3.NewRequestBody().
+		WithDescription("GraphQL request").
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
 
 	graphQLResponse := openapi3.NewResponse().
 		WithDescription("GraphQL response").
-		WithContent(openapi3.NewContentWithJSONSchema(graphQLResponseSchema))
+		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLResponseSchema))
 
 	graphQLPost := openapi3.NewOperation()
 	graphQLPost.Description = "GraphQL POST endpoint"

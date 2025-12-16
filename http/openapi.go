@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/http/graphql"
 )
 
 // openApiSchemas is a mapping of types to auto generate schemas for.
@@ -25,7 +26,8 @@ var openApiSchemas = map[string]any{
 	"collection_update":                        &CollectionUpdateRequest{},
 	"collection_delete":                        &CollectionDeleteRequest{},
 	"peer_info":                                &client.PeerInfo{},
-	"graphql_request":                          &GraphQLRequest{},
+	"graphql_request":                          &graphql.Request{},
+	"graphql_response":                         &graphql.Response{},
 	"backup_config":                            &client.BackupConfig{},
 	"collection":                               &client.CollectionVersion{},
 	"index":                                    &client.IndexDescription{},

@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/corekv/badger"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
+	"github.com/sourcenetwork/defradb/http/graphql"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -38,7 +39,7 @@ import (
 func TestCCIPGet_WithValidData(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	gqlData, err := json.Marshal(&GraphQLRequest{
+	gqlData, err := json.Marshal(&graphql.Request{
 		Query: `query {
 			User {
 				name
@@ -77,7 +78,7 @@ func TestCCIPGet_WithValidData(t *testing.T) {
 func TestCCIPGet_WithSubscription(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	gqlData, err := json.Marshal(&GraphQLRequest{
+	gqlData, err := json.Marshal(&graphql.Request{
 		Query: `subscription {
 			User {
 				name
@@ -122,7 +123,7 @@ func TestCCIPGet_WithInvalidData(t *testing.T) {
 func TestCCIPPost_WithValidData(t *testing.T) {
 	cdb := setupDatabase(t)
 
-	gqlJSON, err := json.Marshal(&GraphQLRequest{
+	gqlJSON, err := json.Marshal(&graphql.Request{
 		Query: `query {
 			User {
 				name
