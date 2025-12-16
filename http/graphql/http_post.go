@@ -9,7 +9,7 @@
 // licenses/APL.txt.
 
 // primarily based on https://github.com/99designs/gqlgen/blob/master/graphql/handler/transport/http_post.go
-package transport
+package graphql
 
 import (
 	"bytes"

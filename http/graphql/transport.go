@@ -9,7 +9,7 @@
 // licenses/APL.txt.
 
 // primarily based on https://github.com/99designs/gqlgen/blob/master/graphql/handler/transport
-package transport
+package graphql
 
 import (
 	"context"
@@ -29,7 +29,7 @@ type Executor func(
 	ctx context.Context,
 	request string,
 	opts ...client.RequestOption,
-) (data client.GQLResult, stream <-chan client.GQLResult, err error)
+) *client.RequestResult
 
 type GraphQLRequest struct {
 	Query         string         `json:"query"`

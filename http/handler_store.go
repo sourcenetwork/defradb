@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/http/graphql"
 )
 
 const (
@@ -29,7 +30,9 @@ const (
 	jsonAcceptHeader = "application/json"
 )
 
-type storeHandler struct{}
+type storeHandler struct {
+	gqlTransports []graphql.Transport
+}
 
 func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
@@ -261,16 +264,26 @@ type GraphQLRequest struct {
 }
 
 func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
-	// handle different request transports
-	// specifically, SSE
-	if req.Header.Get("Accept") == sseAcceptHeader {
-		execSSESubscription(rw, req)
-		return
-	}
+	// // handle different request transports
+	// // specifically, SSE
+	// if req.Header.Get("Accept") == sseAcceptHeader {
+	// 	execSSESubscription(rw, req)
+	// 	return
+	// }
 
-	// if its not a subscription, then its just a regular
-	// GraphQL over HTTP request
-	execHTTPRequest(rw, req)
+	// // if its not a subscription, then its just a regular
+	// // GraphQL over HTTP request
+	// execHTTPRequest(rw, req)
+
+}
+
+func (h *storeHandler) getGQLTransport(r *http.Request) graphql.Transport {
+	for _, t := range h.gqlTransports {
+		if t.Supports(r) {
+			return t
+		}
+	}
+	return nil
 }
 
 func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
