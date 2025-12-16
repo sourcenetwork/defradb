@@ -20,6 +20,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -152,6 +153,48 @@ func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	responseJSON(rw, http.StatusOK, &SetMigrationResponse{LensID: lensID})
+}
+
+type AddLensRequest struct {
+	Lens model.Lens `json:"lens"`
+}
+
+type AddLensResponse struct {
+	LensID string `json:"lensId"`
+}
+
+func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	var addLensReq AddLensRequest
+	if err := requestJSON(req, &addLensReq); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	lensID, err := db.AddLens(req.Context(), addLensReq.Lens)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, &AddLensResponse{LensID: lensID})
+}
+
+type ListLensesResponse struct {
+	Lenses map[string]model.Lens `json:"lenses"`
+}
+
+func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	lenses, err := db.ListLenses(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, &ListLensesResponse{Lenses: lenses})
 }
 
 func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
@@ -632,15 +675,56 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithDescription("Lens info").
 		WithJSONSchemaRef(setMigrationSchema)
 	setMigration := openapi3.NewOperation()
-	setMigration.OperationID = "lens_set_migration"
-	setMigration.Description = "Add a new lens migration"
-	setMigration.Tags = []string{"lens"}
+	setMigration.OperationID = "collection_set_migration"
+	setMigration.Description = "Set a lens migration between collection versions"
+	setMigration.Tags = []string{"collection"}
 	setMigration.RequestBody = &openapi3.RequestBodyRef{
 		Value: setMigrationRequest,
 	}
 	setMigration.Responses = openapi3.NewResponses()
 	setMigration.AddResponse(200, setMigrationResponse)
 	setMigration.Responses.Set("400", errorResponse)
+
+	addLensRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/add_lens_request",
+	}
+	addLensRequestBody := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithJSONSchemaRef(addLensRequestSchema)
+
+	addLensResponseSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/add_lens_response",
+	}
+	addLensResponse := openapi3.NewResponse().
+		WithDescription("Lens CID").
+		WithJSONSchemaRef(addLensResponseSchema)
+
+	addLens := openapi3.NewOperation()
+	addLens.OperationID = "lens_add"
+	addLens.Description = "Add a lens to the lens store"
+	addLens.Tags = []string{"lens"}
+	addLens.RequestBody = &openapi3.RequestBodyRef{
+		Value: addLensRequestBody,
+	}
+	addLens.Responses = openapi3.NewResponses()
+	addLens.AddResponse(200, addLensResponse)
+	addLens.Responses.Set("400", errorResponse)
+
+	listLensesResponseSchema := &openapi3.SchemaRef{
+		Value: openapi3.NewObjectSchema().
+			WithProperty("lenses", openapi3.NewObjectSchema()),
+	}
+	listLensesResponse := openapi3.NewResponse().
+		WithDescription("List of stored lenses").
+		WithJSONSchemaRef(listLensesResponseSchema)
+
+	listLenses := openapi3.NewOperation()
+	listLenses.OperationID = "lens_list"
+	listLenses.Description = "List all stored lenses"
+	listLenses.Tags = []string{"lens"}
+	listLenses.Responses = openapi3.NewResponses()
+	listLenses.AddResponse(200, listLensesResponse)
+	listLenses.Responses.Set("400", errorResponse)
 
 	graphQLRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
@@ -740,12 +824,14 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/indexes", http.MethodGet, getAllIndexes, h.GetAllIndexes)
 	router.AddRoute("/encrypted-indexes", http.MethodGet, getAllEncryptedIndexes, h.ListAllEncryptedIndexes)
 	router.AddRoute("/collections/default", http.MethodPost, setActiveCollectionVersion, h.SetActiveCollectionVersion)
+	router.AddRoute("/collections/migrations", http.MethodPost, setMigration, h.SetMigration)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/view/refresh", http.MethodPost, viewRefresh, h.RefreshViews)
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
-	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
+	router.AddRoute("/lens", http.MethodPost, addLens, h.AddLens)
+	router.AddRoute("/lens", http.MethodGet, listLenses, h.ListLenses)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
 }

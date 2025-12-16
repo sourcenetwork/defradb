@@ -1,15 +1,36 @@
-## defradb client lens
+## defradb client lens add
 
-Interact with the schema migration system of a running DefraDB instance
+Add a lens to the lens store
 
 ### Synopsis
 
-Make set or look for existing schema migrations on a DefraDB node.
+Add a lens configuration to the lens store and return its CID.
+
+The lens store is content-addressed, so identical lens configurations
+will return the same CID without duplicating storage.
+
+```
+defradb client lens add [cfg] [flags]
+```
+
+### Examples
+
+```
+add from an argument string:  
+  defradb client lens add '{"lenses": [...'
+
+add from file:  
+  defradb client lens add -f lens_config.json
+
+add from stdin:  
+  cat lens_config.json | defradb client lens add -
+```
 
 ### Options
 
 ```
-  -h, --help   help for lens
+  -f, --file string   Lens configuration file
+  -h, --help          help for add
 ```
 
 ### Options inherited from parent commands
@@ -36,8 +57,5 @@ Make set or look for existing schema migrations on a DefraDB node.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client lens add](defradb_client_lens_add.md)	 - Add a lens to the lens store
-* [defradb client lens list](defradb_client_lens_list.md)	 - List all stored lenses
-* [defradb client lens set](defradb_client_lens_set.md)	 - Set a schema migration within DefraDB
+* [defradb client lens](defradb_client_lens.md)	 - Interact with the schema migration system of a running DefraDB instance
 

@@ -38,6 +38,8 @@ extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
+extern Result LensAdd(uintptr_t nodePtr, char* cfg);
+extern Result LensList(uintptr_t nodePtr);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
 extern Result P2PInfo(uintptr_t nodePtr);
@@ -676,6 +678,38 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (
 		return "", errors.New(res.Error)
 	}
 	return res.Value, nil
+}
+
+func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	lensConfig, err := json.Marshal(lens)
+	if err != nil {
+		return "", err
+	}
+	lensStr := C.CString(string(lensConfig))
+	defer C.free(unsafe.Pointer(lensStr))
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.LensAdd(callHandle, lensStr))
+
+	if res.Status != 0 {
+		return "", errors.New(res.Error)
+	}
+	return res.Value, nil
+}
+
+func (w *CWrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.LensList(callHandle))
+
+	if res.Status != 0 {
+		return nil, errors.New(res.Error)
+	}
+
+	var lenses map[string]model.Lens
+	if err := json.Unmarshal([]byte(res.Value), &lenses); err != nil {
+		return nil, err
+	}
+	return lenses, nil
 }
 
 func (w *CWrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

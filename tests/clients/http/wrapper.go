@@ -238,6 +238,14 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 	return w.client.SetMigration(ctx, config)
 }
 
+func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	return w.client.AddLens(ctx, lens)
+}
+
+func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	return w.client.ListLenses(ctx)
+}
+
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
 	return w.client.GetCollectionByName(ctx, name)
 }
