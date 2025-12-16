@@ -13,7 +13,6 @@ package one_to_many
 import (
 	"testing"
 
-	"github.com/onsi/gomega"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -79,11 +78,11 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 					"Author": []map[string]any{
 						{
 							"name":        "John Grisham",
-							"totalRating": gomega.BeNumerically("~", 13.6),
+							"totalRating": 13.600000000000001,
 						},
 						{
 							"name":        "Cornelia Funke",
-							"totalRating": gomega.BeNumerically("~", 4.8),
+							"totalRating": 4.8,
 						},
 					},
 				},

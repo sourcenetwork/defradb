@@ -595,17 +595,18 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersi
 
 			for _, field := range collection.Fields {
 				if field.Kind == client.FieldKind_DocID {
-					objFieldName, isRelationID := request.ToRelatedObjectName(field.Name)
-					if !isRelationID {
-						// This is a system DocID field (like _docID), not a relation ID field,
-						// users cannot set its value
+					if field.Name == request.DocIDFieldName {
+						// This is the system _docID field, users cannot set its value
 						continue
 					}
-					ofd, exists := collection.GetFieldByName(objFieldName)
-					if exists && !ofd.IsPrimary {
-						// We do not allow the mutation of relations from the secondary side,
-						// they must not be included in the input type(s)
-						continue
+					objFieldName, isRelationID := request.ToRelatedObjectName(field.Name)
+					if isRelationID {
+						ofd, exists := collection.GetFieldByName(objFieldName)
+						if exists && !ofd.IsPrimary {
+							// We do not allow the mutation of relations from the secondary side,
+							// they must not be included in the input type(s)
+							continue
+						}
 					}
 				} else if field.Kind.IsObject() && !field.IsPrimary {
 					// We do not allow the mutation of relations from the secondary side,

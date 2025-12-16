@@ -13,7 +13,6 @@ package one_to_many
 import (
 	"testing"
 
-	"github.com/onsi/gomega"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -115,7 +114,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 						},
 						{
 							"name": "John Grisham",
-							"_sum": gomega.BeNumerically("~", 20.8),
+							"_sum": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 						},
 						{
 							"name": "Not a Writer",
@@ -228,11 +227,11 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 						},
 						{
 							"name": "John Grisham",
-							"_sum": gomega.BeNumerically("~", 20.8),
+							"_sum": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 						},
 						{
 							"name": "Cornelia Funke",
-							"_sum": gomega.BeNumerically("~", 4.8),
+							"_sum": 4.8,
 						},
 					},
 				},
@@ -353,8 +352,8 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 						},
 						{
 							"name": "John Grisham",
-							"sum1": gomega.BeNumerically("~", 20.8),
-							"sum2": gomega.BeNumerically("~", 4.9+4.5),
+							"sum1": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
+							"sum2": 4.9 + 4.5,
 						},
 					},
 				},
@@ -475,8 +474,8 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 						},
 						{
 							"name": "John Grisham",
-							"sum1": gomega.BeNumerically("~", 20.8),
-							"sum2": gomega.BeNumerically("~", 4.0+3.2),
+							"sum1": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
+							"sum2": 4.0 + 3.2,
 						},
 					},
 				},
