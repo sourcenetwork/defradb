@@ -12,6 +12,7 @@ package wizard
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type modelText struct {
@@ -26,6 +27,10 @@ type modelText struct {
 
 	// callback is a function that will be called when this step is done.
 	callback func(s step, ctx *WizardContext) error
+
+	// color refers to the lipgloss color attached to the text. A blank value indicates
+	// no change to the default color.
+	color string
 }
 
 // initialModelText should be called instead of manually constructing the struct
@@ -36,6 +41,7 @@ func initialModelText(id string, text string) *modelText {
 		done:     false,
 		nextStep: nil,
 		callback: nil,
+		color:    "",
 	}
 }
 
@@ -64,7 +70,11 @@ func (m *modelText) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View() should not be called except by the main model
 func (m *modelText) View() string {
 	var s string
-	s += bodyStyle.Render(m.text)
+	style := bodyStyle
+	if m.color != "" {
+		style = style.Foreground(lipgloss.Color(m.color))
+	}
+	s += style.Render(m.text)
 	s += "\n"
 	s += hintStyle.Render("Enter/Space to continue • Ctrl+C to quit")
 	return s

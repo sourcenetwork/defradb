@@ -114,9 +114,10 @@ func (m *mainModel) View() string {
 // createErrorStep creates a new step that displays an error message and allows the user to exit
 // the wizard. This can be called by the main model upon encountering an error from a callback.
 func createErrorStep(err error) step {
-	return initialModelText(
+	errStep := initialModelText(
 		"errorStep",
-		"An error occurred: "+err.Error()+"\n\n"+
-			"Press Enter or Space to exit.",
+		"An error occurred: "+err.Error(),
 	)
+	errStep.color = "1" // Turn the text red
+	return errStep
 }

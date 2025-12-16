@@ -13,7 +13,7 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/wizard"
+	"github.com/sourcenetwork/defradb/cli/wizard"
 )
 
 func MakeWizardCommand() *cobra.Command {
