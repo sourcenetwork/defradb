@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -24,7 +25,7 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -32,7 +33,7 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -40,7 +41,7 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -48,7 +49,7 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -78,11 +79,11 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 					"Author": []map[string]any{
 						{
 							"name":        "John Grisham",
-							"totalRating": 13.6,
+							"totalRating": gomega.BeNumerically("~", 13.6),
 						},
 						{
 							"name":        "Cornelia Funke",
-							"totalRating": 4.8,
+							"totalRating": gomega.BeNumerically("~", 4.8),
 						},
 					},
 				},

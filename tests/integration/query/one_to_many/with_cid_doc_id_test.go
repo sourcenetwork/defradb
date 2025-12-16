@@ -38,7 +38,7 @@ import (
 // 				`{
 // 					"name": "Painted House",
 // 					"rating": 4.9,
-// 					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+// 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 // 				}`,
 // 			},
 // 			//authors
@@ -84,11 +84,11 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7
+				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -103,8 +103,8 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-							cid: "bafyreicmgsatxmz7cksel6m3kws6p6xpr4l7u7hyticxwre6febzgmcupa"
-							docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
+							cid: "bafyreihquqdxvroagzhtkot2quun4msslvubrktfhjckt65oi47yrprjyu"
+							docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 						) {
 						name
 						author {
@@ -158,7 +158,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -179,8 +179,8 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-							cid: "bafyreicmgsatxmz7cksel6m3kws6p6xpr4l7u7hyticxwre6febzgmcupa",
-							docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
+							cid: "bafyreihquqdxvroagzhtkot2quun4msslvubrktfhjckt65oi47yrprjyu",
+							docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 						) {
 						name
 						author {
@@ -232,7 +232,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -253,8 +253,8 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreicmgsatxmz7cksel6m3kws6p6xpr4l7u7hyticxwre6febzgmcupa",
-						docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
+						cid: "bafyreihquqdxvroagzhtkot2quun4msslvubrktfhjckt65oi47yrprjyu",
+						docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 					) {
 						name
 						rating
@@ -302,11 +302,11 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
-				// bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7
+				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -327,8 +327,8 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreifxvqatsma2slodnnxylgbgp75tqpbfuviwz4d2a75y7gwlozevmq",
-						docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
+						cid: "bafyreif72b7skq24ji6tztwsq4wvk7hh2vxvxhkenu5i47h377qi5wzeqm",
+						docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 					) {
 						name
 						rating

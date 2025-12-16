@@ -23,7 +23,7 @@ func create3ArticleDocuments() []testUtils.CreateDoc {
 			DocMap: map[string]any{
 				"name":      "After Guantánamo, Another Injustice",
 				"pages":     100,
-				"author_id": testUtils.NewDocIndex(2, 0),
+				"_authorID": testUtils.NewDocIndex(2, 0),
 			},
 		},
 		{
@@ -31,7 +31,7 @@ func create3ArticleDocuments() []testUtils.CreateDoc {
 			DocMap: map[string]any{
 				"name":      "To my dear readers",
 				"pages":     200,
-				"author_id": testUtils.NewDocIndex(2, 1),
+				"_authorID": testUtils.NewDocIndex(2, 1),
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func create3ArticleDocuments() []testUtils.CreateDoc {
 			DocMap: map[string]any{
 				"name":      "Twinklestar's Favourite Xmas Cookie",
 				"pages":     300,
-				"author_id": testUtils.NewDocIndex(2, 1),
+				"_authorID": testUtils.NewDocIndex(2, 1),
 			},
 		},
 	}
@@ -53,7 +53,7 @@ func create3BookDocuments() []testUtils.CreateDoc {
 				"name":         "Painted House",
 				"pages":        78,
 				"chapterPages": []int64{1, 22, 33, 44, 55, 66},
-				"author_id":    testUtils.NewDocIndex(2, 0),
+				"_authorID":    testUtils.NewDocIndex(2, 0),
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func create3BookDocuments() []testUtils.CreateDoc {
 				"name":         "A Time for Mercy",
 				"pages":        333,
 				"chapterPages": []int64{0, 22, 101, 321},
-				"author_id":    testUtils.NewDocIndex(2, 0),
+				"_authorID":    testUtils.NewDocIndex(2, 0),
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func create3BookDocuments() []testUtils.CreateDoc {
 			DocMap: map[string]any{
 				"name":      "Theif Lord",
 				"pages":     20,
-				"author_id": testUtils.NewDocIndex(2, 1),
+				"_authorID": testUtils.NewDocIndex(2, 1),
 			},
 		},
 	}
@@ -84,7 +84,7 @@ func create2AuthorDocuments() []testUtils.CreateDoc {
 				"name":       "John Grisham",
 				"age":        65,
 				"verified":   true,
-				"contact_id": testUtils.NewDocIndex(3, 0),
+				"_contactID": testUtils.NewDocIndex(3, 0),
 			},
 		},
 		{
@@ -93,7 +93,7 @@ func create2AuthorDocuments() []testUtils.CreateDoc {
 				"name":       "Cornelia Funke",
 				"age":        62,
 				"verified":   false,
-				"contact_id": testUtils.NewDocIndex(3, 1),
+				"_contactID": testUtils.NewDocIndex(3, 1),
 			},
 		},
 	}
@@ -106,7 +106,7 @@ func create2AuthorContactDocuments() []testUtils.CreateDoc {
 			DocMap: map[string]any{
 				"cell":       "5197212301",
 				"email":      "john_grisham@example.com",
-				"address_id": testUtils.NewDocIndex(4, 0),
+				"_addressID": testUtils.NewDocIndex(4, 0),
 			},
 		},
 		{
@@ -114,7 +114,7 @@ func create2AuthorContactDocuments() []testUtils.CreateDoc {
 			DocMap: map[string]any{
 				"cell":       "5197212302",
 				"email":      "cornelia_funke@example.com",
-				"address_id": testUtils.NewDocIndex(4, 1),
+				"_addressID": testUtils.NewDocIndex(4, 1),
 			},
 		},
 	}

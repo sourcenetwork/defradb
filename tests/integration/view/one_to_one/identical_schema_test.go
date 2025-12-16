@@ -63,7 +63,7 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":       "Right hand 1",
-					"holding_id": testUtils.NewDocIndex(0, 0),
+					"_holdingID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{

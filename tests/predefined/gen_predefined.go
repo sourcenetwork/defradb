@@ -11,8 +11,6 @@
 package predefined
 
 import (
-	"strings"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -114,7 +112,7 @@ func toRequestedDoc(doc map[string]any, typeDef *client.CollectionVersion) map[s
 		result[field.Name] = doc[field.Name]
 	}
 	for name, val := range doc {
-		if strings.HasSuffix(name, request.RelatedObjectID) {
+		if _, ok := request.ToRelatedObjectName(name); ok {
 			result[name] = val
 		}
 	}
@@ -145,7 +143,7 @@ func (d *docGenerator) generatePrimary(
 					return nil, nil, NewErrFailedToGenerateDoc(err)
 				}
 				docID := primDoc.ID().String()
-				requestedSecondary[secDocField.Name+request.RelatedObjectID] = docID
+				requestedSecondary[request.ToFieldID(secDocField.Name)] = docID
 				subResult = append(subResult, gen.GeneratedDoc{Col: &primType, Doc: primDoc})
 				result = append(result, subResult...)
 
@@ -230,7 +228,7 @@ func (d *docGenerator) generateSecondaryDocsForField(
 		relDocDef, _ := gen.GetCollection(d.definitionCache, relTypeDef, relDocField.Kind)
 
 		if relDocDef.Name == primaryType.Name && relDocField.IsPrimary {
-			primaryPropName = relDocField.Name + request.RelatedObjectID
+			primaryPropName = request.ToFieldID(relDocField.Name)
 			switch relVal := primaryDoc[relField.Name].(type) {
 			case []map[string]any:
 				for _, relDoc := range relVal {

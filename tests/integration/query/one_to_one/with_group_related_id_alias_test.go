@@ -49,20 +49,20 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Go Guide for Rust developers",
-					"author_id": testUtils.NewDocIndex(1, 1),
+					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 					Book(groupBy: [author]) {
-						author_id
+						_authorID
 						author {
 							name
 						}
@@ -74,7 +74,7 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad",
+							"_authorID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad",
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
@@ -85,7 +85,7 @@ func TestQueryOneToOneWithGroupRelatedIDAlias(t *testing.T) {
 							},
 						},
 						{
-							"author_id": "bae-b1a6f637-bbbb-59aa-8a54-938249e21cdd",
+							"_authorID": "bae-b1a6f637-bbbb-59aa-8a54-938249e21cdd",
 							"author": map[string]any{
 								"name": "Andrew Lone",
 							},
@@ -137,29 +137,29 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroup(t *t
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 					Book(groupBy: [author]) {
-						author_id
+						_authorID
 					}
 				}`,
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-f281e7e3-9ad5-5bbe-9e90-13e5ccbec2b5",
+							"_authorID": "bae-657bb994-d88c-56f8-817d-41804cf19280",
 						},
 						{
-							"author_id": "bae-d92e6b41-9df9-519f-b823-c3e13f4e1b0b",
+							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
 						},
 					},
 				},
@@ -202,20 +202,20 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroupWithJ
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 					Book(groupBy: [author]) {
-						author_id
+						_authorID
 						author {
 							name
 						}
@@ -224,13 +224,13 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithoutInnerGroupWithJ
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-d92e6b41-9df9-519f-b823-c3e13f4e1b0b",
+							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
 						},
 						{
-							"author_id": "bae-f281e7e3-9ad5-5bbe-9e90-13e5ccbec2b5",
+							"_authorID": "bae-657bb994-d88c-56f8-817d-41804cf19280",
 							"author": map[string]any{
 								"name": "Andrew Lone",
 							},
@@ -277,20 +277,20 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *test
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 					Book(groupBy: [author]) {
-						author_id
+						_authorID
 						_group {
 							name
 						}
@@ -299,7 +299,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *test
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-d92e6b41-9df9-519f-b823-c3e13f4e1b0b",
+							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
 							"_group": []map[string]any{
 								{
 									"name": "Painted House",
@@ -307,7 +307,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroup(t *test
 							},
 						},
 						{
-							"author_id": "bae-f281e7e3-9ad5-5bbe-9e90-13e5ccbec2b5",
+							"_authorID": "bae-657bb994-d88c-56f8-817d-41804cf19280",
 							"_group": []map[string]any{
 								{
 									"name": "Go Guide for Rust developers",
@@ -356,20 +356,20 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroupWithJoin
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 					Book(groupBy: [author]) {
-						author_id
+						_authorID
 						author {
 							name
 						}
@@ -381,7 +381,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroupWithJoin
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-d92e6b41-9df9-519f-b823-c3e13f4e1b0b",
+							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
@@ -392,7 +392,7 @@ func TestQueryOneToOneWithGroupRelatedIDAliasFromSecondaryWithInnerGroupWithJoin
 							},
 						},
 						{
-							"author_id": "bae-f281e7e3-9ad5-5bbe-9e90-13e5ccbec2b5",
+							"_authorID": "bae-657bb994-d88c-56f8-817d-41804cf19280",
 							"author": map[string]any{
 								"name": "Andrew Lone",
 							},

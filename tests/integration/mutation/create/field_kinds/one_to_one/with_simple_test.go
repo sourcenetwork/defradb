@@ -31,7 +31,7 @@ func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"notName": "John Grisham",
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 				ExpectedError: "the given field does not exist. Name: notName",
 			},
@@ -49,7 +49,7 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			testUtils.Request{
@@ -84,7 +84,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{
@@ -201,14 +201,14 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Saadi Shirazi",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
