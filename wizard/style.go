@@ -37,19 +37,6 @@ var (
 			Foreground(lipgloss.Color("240")).
 			MarginTop(1)
 
-	inputStyle = lipgloss.NewStyle().
-			PaddingLeft(1).
-			Foreground(lipgloss.Color("245"))
-
-	focusedInputStyle = lipgloss.NewStyle().
-				PaddingLeft(1).
-				Foreground(lipgloss.Color("48"))
-
-	inputBorderStyle = lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("39")).
-				Padding(0, 1)
-
 	singleLineInputBox = lipgloss.NewStyle().
 				Height(1).
 				Width(80).

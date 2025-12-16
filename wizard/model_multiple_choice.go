@@ -84,7 +84,6 @@ func (m *modelMultipleChoice) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View() should not be called except by the main model
 func (m *modelMultipleChoice) View() string {
-
 	var s string
 
 	s += promptStyle.Render(m.prompt) + "\n"

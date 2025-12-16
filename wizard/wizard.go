@@ -31,8 +31,6 @@ func Main() {
 		Results: map[string][]any{},
 	}
 
-	hypotheticalStep := initialModelTextInput("hypotheticalStep", "What is your name?", "Enter your name")
-
 	// Define the steps
 	stepWizardStart := initialModelMultipleChoice(
 		"stepWizardStart",
@@ -103,7 +101,7 @@ func Main() {
 	stepKeyringStorageLocationBrancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet
 
 	// Run the Bubbletea program
-	program := tea.NewProgram(&mainModel{currentStep: hypotheticalStep, ctx: ctx})
+	program := tea.NewProgram(&mainModel{currentStep: stepWizardStart, ctx: ctx})
 	if _, err := program.Run(); err != nil {
 		os.Exit(1)
 	}

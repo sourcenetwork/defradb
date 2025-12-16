@@ -13,8 +13,9 @@ package cli
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/cli/config"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/cli/config"
 )
 
 func MakeRootCommand(ctx context.Context) *cobra.Command {
