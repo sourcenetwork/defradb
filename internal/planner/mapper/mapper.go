@@ -1275,7 +1275,6 @@ func resolveSecondaryRelationIDs(
 		}
 
 		if !siblingFound {
-
 			// We only require the docID of the related object, so an empty join is all we need.
 			join, err := constructEmptyJoin(
 				ctx,
