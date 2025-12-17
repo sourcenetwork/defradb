@@ -257,6 +257,15 @@ type Store interface {
 	// Returns the ID of the Lens transform.
 	SetMigration(ctx context.Context, config LensConfig) (string, error)
 
+	// AddLens stores a lens configuration and returns its CID.
+	//
+	// The lens store is content-addressed, so identical lens configurations
+	// will return the same CID without duplicating storage.
+	AddLens(ctx context.Context, lens model.Lens) (string, error)
+
+	// ListLenses returns all stored lenses mapped by their CID.
+	ListLenses(ctx context.Context) (map[string]model.Lens, error)
+
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
 	// If no matching collection is found an error will be returned.

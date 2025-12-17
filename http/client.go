@@ -228,7 +228,7 @@ func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetc
 }
 
 func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
-	methodURL := c.http.apiURL.JoinPath("lens")
+	methodURL := c.http.apiURL.JoinPath("collections", "migrations")
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -246,6 +246,43 @@ func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (st
 	}
 
 	return res.LensID, nil
+}
+
+func (c *Client) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	methodURL := c.http.apiURL.JoinPath("lens")
+
+	body, err := json.Marshal(AddLensRequest{Lens: lens})
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return "", err
+	}
+
+	var res AddLensResponse
+	if err := c.http.requestJson(req, &res); err != nil {
+		return "", err
+	}
+
+	return res.LensID, nil
+}
+
+func (c *Client) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	methodURL := c.http.apiURL.JoinPath("lens")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var res ListLensesResponse
+	if err := c.http.requestJson(req, &res); err != nil {
+		return nil, err
+	}
+
+	return res.Lenses, nil
 }
 
 func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

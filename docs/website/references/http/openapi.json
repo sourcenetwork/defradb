@@ -115,6 +115,42 @@
                 },
                 "type": "object"
             },
+            "add_lens_request": {
+                "properties": {
+                    "lens": {
+                        "properties": {
+                            "Lenses": {
+                                "items": {
+                                    "properties": {
+                                        "Arguments": {
+                                            "additionalProperties": {},
+                                            "type": "object"
+                                        },
+                                        "Inverse": {
+                                            "type": "boolean"
+                                        },
+                                        "Path": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "add_lens_response": {
+                "properties": {
+                    "lensId": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "add_view_request": {
                 "properties": {
                     "Query": {
@@ -1209,6 +1245,43 @@
                 ]
             }
         },
+        "/collections/migrations": {
+            "post": {
+                "description": "Set a lens migration between collection versions",
+                "operationId": "collection_set_migration",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/lens_config"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/set_migration"
+                                }
+                            }
+                        },
+                        "description": "Lens info"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "collection"
+                ]
+            }
+        },
         "/collections/{name}": {
             "delete": {
                 "description": "Delete document(s) from a collection",
@@ -1912,14 +1985,44 @@
             }
         },
         "/lens": {
+            "get": {
+                "description": "List all stored lenses",
+                "operationId": "lens_list",
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "lenses": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "description": "List of stored lenses"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "lens"
+                ]
+            },
             "post": {
-                "description": "Add a new lens migration",
-                "operationId": "lens_set_migration",
+                "description": "Add a lens to the lens store",
+                "operationId": "lens_add",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/lens_config"
+                                "$ref": "#/components/schemas/add_lens_request"
                             }
                         }
                     },
@@ -1930,11 +2033,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/set_migration"
+                                    "$ref": "#/components/schemas/add_lens_response"
                                 }
                             }
                         },
-                        "description": "Lens info"
+                        "description": "Lens CID"
                     },
                     "400": {
                         "$ref": "#/components/responses/error"

@@ -1,15 +1,28 @@
-## defradb client lens
+## defradb client lens list
 
-Interact with the schema migration system of a running DefraDB instance
+List all stored lenses
 
 ### Synopsis
 
-Make set or look for existing schema migrations on a DefraDB node.
+List all lenses stored in the lens store.
+
+Returns a map of lens CIDs to their configurations.
+
+```
+defradb client lens list [flags]
+```
+
+### Examples
+
+```
+list all lenses:  
+  defradb client lens list
+```
 
 ### Options
 
 ```
-  -h, --help   help for lens
+  -h, --help   help for list
 ```
 
 ### Options inherited from parent commands
@@ -36,8 +49,5 @@ Make set or look for existing schema migrations on a DefraDB node.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb client lens add](defradb_client_lens_add.md)	 - Add a lens to the lens store
-* [defradb client lens list](defradb_client_lens_list.md)	 - List all stored lenses
-* [defradb client lens set](defradb_client_lens_set.md)	 - Set a schema migration within DefraDB
+* [defradb client lens](defradb_client_lens.md)	 - Interact with the schema migration system of a running DefraDB instance
 
