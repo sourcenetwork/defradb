@@ -118,6 +118,6 @@ func createErrorStep(err error) step {
 		"errorStep",
 		"An error occurred: "+err.Error(),
 	)
-	errStep.color = "1" // Turn the text red
+	errStep.color = defraRed
 	return errStep
 }

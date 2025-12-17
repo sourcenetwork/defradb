@@ -17,6 +17,7 @@ import (
 var (
 	sourceGreen = "#39E265"
 	defraBlue   = "#10CBFF"
+	defraRed    = "#E25647"
 
 	promptStyle = lipgloss.NewStyle().
 			Bold(true).
