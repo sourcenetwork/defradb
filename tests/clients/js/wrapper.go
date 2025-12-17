@@ -247,18 +247,13 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
 	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	transformVal, err := goji.MarshalJS(transform)
-	if err != nil {
-		return nil, err
-	}
 	transformCIDVal, err := goji.MarshalJS(transformCID)
 	if err != nil {
 		return nil, err
 	}
-	res, err := execute(ctx, w.value, "addView", query, sdl, transformVal, transformCIDVal)
+	res, err := execute(ctx, w.value, "addView", query, sdl, transformCIDVal)
 	if err != nil {
 		return nil, err
 	}

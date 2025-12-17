@@ -15,7 +15,6 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -33,12 +32,8 @@ func (db *DB) addView(
 	ctx context.Context,
 	inputQuery string,
 	sdl string,
-	transform immutable.Option[model.Lens],
 	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	if transform.HasValue() && transformCID.HasValue() {
-		return nil, ErrCannotSetTransformAndTransformCID
-	}
 	// Wrap the given query as part of the GQL query object - this simplifies the syntax for users
 	// and ensures that we can't be given mutations.  In the future this line should disappear along
 	// with the all calls to the parser appart from `ParseSDL` when we implement the DQL stuff.
@@ -70,13 +65,7 @@ func (db *DB) addView(
 
 	for i := range parseResults {
 		var lensID immutable.Option[string]
-		if transform.HasValue() {
-			cid, err := db.getLensStore(ctx).Add(ctx, transform.Value())
-			if err != nil {
-				return nil, err
-			}
-			lensID = immutable.Some(cid.String())
-		} else if transformCID.HasValue() {
+		if transformCID.HasValue() {
 			exists, err := db.lensCIDExists(ctx, transformCID.Value())
 			if err != nil {
 				return nil, err

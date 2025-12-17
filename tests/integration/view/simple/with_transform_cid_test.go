@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
@@ -32,18 +31,14 @@ func TestView_WithTransformCID_CanReuseExistingLens(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "source-does-not-exist",
-					DestinationSchemaVersionID: "dest-does-not-exist",
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.CopyModulePath,
-								Arguments: map[string]any{
-									"src": "name",
-									"dst": "fullName",
-								},
+			&action.AddLens{
+				Lens: model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "name",
+								"dst": "fullName",
 							},
 						},
 					},
@@ -119,60 +114,3 @@ func TestView_WithInvalidTransformCID_ReturnsError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestView_WithBothTransformAndTransformCID_ReturnsError(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddSchema{
-				Schema: `
-					type User {
-						name: String
-					}
-				`,
-			},
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "source-does-not-exist",
-					DestinationSchemaVersionID: "dest-does-not-exist",
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.CopyModulePath,
-								Arguments: map[string]any{
-									"src": "name",
-									"dst": "fullName",
-								},
-							},
-						},
-					},
-				},
-			},
-			testUtils.CreateView{
-				Query: `
-					User {
-						name
-					}
-				`,
-				SDL: `
-					type UserView @materialized(if: false) {
-						fullName: String
-					}
-				`,
-				Transform: immutable.Some(model.Lens{
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.CopyModulePath,
-							Arguments: map[string]any{
-								"src": "name",
-								"dst": "fullName",
-							},
-						},
-					},
-				}),
-				TransformCID:  immutable.Some("{{.LensID0}}"),
-				ExpectedError: "cannot set both transform and transformCID",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}

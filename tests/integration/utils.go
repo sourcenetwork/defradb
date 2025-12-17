@@ -1269,7 +1269,7 @@ func createView(
 		if transformCID.HasValue() {
 			transformCID = immutable.Some(replace(s, nodeIDs[i], transformCID.Value()))
 		}
-		results, err := node.AddView(s.Ctx, action.Query, action.SDL, action.Transform, transformCID)
+		results, err := node.AddView(s.Ctx, action.Query, action.SDL, transformCID)
 
 		for _, result := range results {
 			appendCollectionVersion(s, result.VersionID)

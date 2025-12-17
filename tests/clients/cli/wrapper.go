@@ -305,20 +305,11 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
 	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	args := []string{"client", "view", "add"}
 	args = append(args, query)
 	args = append(args, sdl)
-
-	if transform.HasValue() {
-		lenses, err := json.Marshal(transform.Value())
-		if err != nil {
-			return nil, err
-		}
-		args = append(args, string(lenses))
-	}
 
 	if transformCID.HasValue() {
 		args = append(args, "--lens-cid", transformCID.Value())

@@ -126,7 +126,6 @@ const (
 	errUnknownCID                          string = "unknown CID, collection ids cannot be manually defined"
 	errMigrationBetweenNonAdjacentVersions string = "cannot migrate between non-adjacent collection versions"
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
-	errCannotSetTransformAndTransformCID   string = "cannot set both transform and transformCID"
 	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
 )
@@ -193,7 +192,6 @@ var (
 	ErrBadDocsResultType                         = errors.New("bad docs result type")
 	ErrMigrationBetweenNonAdjacentVersions       = errors.New(errMigrationBetweenNonAdjacentVersions)
 	ErrLensRuntimeNotSupported                   = errors.New(errLensRuntimeNotSupported)
-	ErrCannotSetTransformAndTransformCID         = errors.New(errCannotSetTransformAndTransformCID)
 	ErrLensCIDNotFound                           = errors.New(errLensCIDNotFound)
 )
 

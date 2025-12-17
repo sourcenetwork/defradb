@@ -225,10 +225,9 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
 	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	return w.client.AddView(ctx, query, sdl, transform, transformCID)
+	return w.client.AddView(ctx, query, sdl, transformCID)
 }
 
 func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {

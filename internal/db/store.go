@@ -280,7 +280,6 @@ func (db *DB) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
 	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
@@ -292,7 +291,7 @@ func (db *DB) AddView(
 	}
 	defer txn.Discard()
 
-	defs, err := db.addView(ctx, query, sdl, transform, transformCID)
+	defs, err := db.addView(ctx, query, sdl, transformCID)
 	if err != nil {
 		return nil, err
 	}
