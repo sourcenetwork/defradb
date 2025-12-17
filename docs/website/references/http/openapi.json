@@ -159,7 +159,7 @@
                     "SDL": {
                         "type": "string"
                     },
-                    "Transform": {}
+                    "TransformCID": {}
                 },
                 "type": "object"
             },
