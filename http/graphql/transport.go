@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -65,7 +66,7 @@ func determineResponseContentType(
 		switch mediaType {
 		case "*/*", "application/*":
 			return acceptApplicationGraphqlResponseJson
-		case "application/json":
+		case acceptApplicationJson:
 			return acceptApplicationJson
 		case "application/graphql-response+json":
 			return acceptApplicationGraphqlResponseJson
@@ -80,7 +81,7 @@ func writeHeaders(w http.ResponseWriter, headers map[string][]string) {
 		headers = map[string][]string{
 			// Stay with application/json (not application/graphql-response+json)
 			// as it is not an actively supported protocol for now
-			"Content-Type": {"application/json"},
+			"Content-Type": {acceptApplicationJson},
 		}
 	}
 

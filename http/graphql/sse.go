@@ -21,7 +21,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	// "github.com/vektah/gqlparser/gqlerror"
@@ -69,8 +68,6 @@ func (t SSE) Methods() []string {
 }
 
 func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
-	fmt.Println("starting sse handler")
-
 	ctx := r.Context()
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -126,28 +123,24 @@ func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 	}
 
 	// responses, ctx := exec.DispatchOperation(ctx, rc)
-	fmt.Println("running sse query")
 	result := executer(r.Context(), request.Query, options...)
 	if len(result.GQL.Errors) > 0 {
 		writeResultWithSSE(w, result.GQL) // todo
 		return
 	}
 
-	fmt.Println("starting sse loop")
 	for {
 		select {
 		// unified context for client and server shutdown
 		case <-r.Context().Done():
-			fmt.Fprint(w, "event: complete\n\n")
+			fmt.Fprint(w, "event: complete\n\n") //nolint:errcheck
 			return
 		case item, open := <-result.Subscription:
 			if !open {
-				fmt.Fprint(w, "event: complete\n\n")
+				fmt.Fprint(w, "event: complete\n\n") //nolint:errcheck
 				return
 			}
 
-			log.Info("next sse event")
-			spew.Dump(item)
 			writeResultWithSSE(w, item)
 		}
 
@@ -171,7 +164,7 @@ func (c *sseConnection) keepAlive(w io.Writer) {
 			c.keepAliveTicker.Stop()
 			return
 		case <-c.keepAliveTicker.C:
-			fmt.Fprintf(w, ": ping\n\n")
+			fmt.Fprintf(w, ": ping\n\n") //nolint:errcheck
 			c.flush()
 		}
 	}
@@ -183,18 +176,18 @@ func (c *sseConnection) flush() {
 	c.mu.Unlock()
 }
 
-func writeJsonWithSSE(w io.Writer, response Response) {
-	b, err := json.Marshal(response)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Fprintf(w, "event: next\ndata: %s\n\n", b)
-}
+// func writeJsonWithSSE(w io.Writer, response Response) {
+// 	b, err := json.Marshal(response)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	fmt.Fprintf(w, "event: next\ndata: %s\n\n", b)
+// }
 
 func writeResultWithSSE(w io.Writer, result client.GQLResult) {
 	b, err := json.Marshal(result)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Fprintf(w, "event: next\ndata: %s\n\n", b)
+	fmt.Fprintf(w, "event: next\ndata: %s\n\n", b) //nolint:errcheck
 }

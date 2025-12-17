@@ -11,7 +11,6 @@
 package http
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -317,15 +316,12 @@ func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	// // GraphQL over HTTP request
 	// execHTTPRequest(rw, req)
 
-	fmt.Println(req.Header)
 	transport := h.getGQLTransport(req)
 	if transport == nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrTransportNotSupported})
 		return
 	}
 
-	fmt.Println("getting db context, running transport handler")
-	fmt.Printf("transport: %T\n", transport)
 	db := mustGetContextClientDB(req)
 	transport.Do(rw, req, db.ExecRequest)
 }
@@ -430,28 +426,28 @@ func (h *storeHandler) getGQLTransport(r *http.Request) graphql.Transport {
 // 	}
 // }
 
-func emitSSENextEvent(rw http.ResponseWriter, flusher http.Flusher, data string) error {
-	return emitSSEEvent(rw, flusher, "next", data)
-}
+// func emitSSENextEvent(rw http.ResponseWriter, flusher http.Flusher, data string) error {
+// 	return emitSSEEvent(rw, flusher, "next", data)
+// }
 
-func emitSSECompleteEvent(rw http.ResponseWriter, flusher http.Flusher) error {
-	return emitSSEEvent(rw, flusher, "complete", "{}")
-}
+// func emitSSECompleteEvent(rw http.ResponseWriter, flusher http.Flusher) error {
+// 	return emitSSEEvent(rw, flusher, "complete", "{}")
+// }
 
-func emitSSEEvent(rw http.ResponseWriter, flusher http.Flusher, eventType string, data string) error {
-	// For compatibility with SSE, the payload should have
-	// a line defining the `event`.
-	_, err := fmt.Fprintf(rw, "event: %s\n", eventType)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(rw, "data: %s\n\n", data)
-	if err != nil {
-		return err
-	}
-	flusher.Flush()
-	return nil
-}
+// func emitSSEEvent(rw http.ResponseWriter, flusher http.Flusher, eventType string, data string) error {
+// 	// For compatibility with SSE, the payload should have
+// 	// a line defining the `event`.
+// 	_, err := fmt.Fprintf(rw, "event: %s\n", eventType)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = fmt.Fprintf(rw, "data: %s\n\n", data)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	flusher.Flush()
+// 	return nil
+// }
 
 // func extractGraphQLRequest(req *http.Request) (GraphQLRequest, []client.RequestOption, error) {
 // 	var request GraphQLRequest
