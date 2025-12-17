@@ -55,7 +55,7 @@ func NewWrapper(ctx context.Context, node *node.Node, sourceHubAddress string) (
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
 	httpServer := httptest.NewUnstartedServer(handler)
 	httpServer.Config.BaseContext = func(_ net.Listener) context.Context {
 		return ctx
