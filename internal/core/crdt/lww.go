@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -63,7 +64,7 @@ func (d *LWWDelta) SetPriority(prio uint64) {
 
 // LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
 type LWW struct {
-	store           corekv.ReaderWriter
+	store           datastore.Keyedstore
 	key             keys.DataStoreKey
 	schemaVersionID string
 	fieldName       string
@@ -75,7 +76,7 @@ var _ ReplicatedData = (*LWW)(nil)
 // NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
 func NewLWW(
-	store corekv.ReaderWriter,
+	store datastore.Keyedstore,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
@@ -130,7 +131,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 	// else if the current value is lexicographically
 	// greater than the new then ignore
 	key := l.key.WithValueFlag()
-	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey().Bytes())
+	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
 	}
@@ -140,7 +141,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, err := l.store.Get(ctx, key.Bytes())
+		curValue, err := l.store.Get(ctx, key)
 		if err != nil {
 			return err
 		}
@@ -155,12 +156,12 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 		// the field datastore key to exist.  Ommiting the key saves space and is
 		// consistent with what would be found if the user omitted the property on
 		// create.
-		err = l.store.Delete(ctx, key.Bytes())
+		err = l.store.Delete(ctx, key)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = l.store.Set(ctx, key.Bytes(), val)
+		err = l.store.Set(ctx, key, val)
 		if err != nil {
 			return NewErrFailedToStoreValue(err)
 		}

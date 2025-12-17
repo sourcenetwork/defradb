@@ -127,6 +127,9 @@ type EventState struct {
 
 	// SESync is the `event.SEArtifactSyncCompleteName` subscription
 	SESync event.Subscription
+
+	// TopicPeerEvent is the `event.TopicPeerEventName` subscription for peer join/leave events
+	TopicPeerEvent event.Subscription
 }
 
 // NewEventState returns an eventState with all required subscriptions.
@@ -147,11 +150,16 @@ func NewEventState(bus event.Bus) (*EventState, error) {
 	if err != nil {
 		return nil, err
 	}
+	topicPeerEvent, err := bus.Subscribe(event.TopicPeerEventName)
+	if err != nil {
+		return nil, err
+	}
 	return &EventState{
-		Merge:      merge,
-		Update:     update,
-		Replicator: replicator,
-		SESync:     seSync,
+		Merge:          merge,
+		Update:         update,
+		Replicator:     replicator,
+		SESync:         seSync,
+		TopicPeerEvent: topicPeerEvent,
 	}, nil
 }
 

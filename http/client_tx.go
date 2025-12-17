@@ -14,6 +14,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -42,6 +43,10 @@ func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
 
 func (txn *Transaction) ID() uint64 {
 	return txn.id
+}
+
+func (txn *Transaction) StartTS() time.Time {
+	return time.Time{} // http client returns empty time
 }
 
 func (txn *Transaction) Commit() error {
@@ -145,6 +150,16 @@ func (txn *Transaction) RefreshViews(ctx context.Context, options client.Collect
 func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.SetMigration(ctx, config)
+}
+
+func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.AddLens(ctx, lens)
+}
+
+func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.ListLenses(ctx)
 }
 
 func (txn *Transaction) GetCollectionByName(

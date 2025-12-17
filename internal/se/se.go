@@ -17,12 +17,12 @@ import (
 	"context"
 	"slices"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encoding"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -30,7 +30,7 @@ import (
 )
 
 // storeArtifacts stores SE artifacts directly in the datastore.
-func storeArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []secore.Artifact) error {
+func storeArtifacts(ctx context.Context, ds datastore.Keyedstore, artifacts []secore.Artifact) error {
 	for _, artifact := range artifacts {
 		colID, err := id.GetShortCollectionID(ctx, artifact.CollectionID)
 		if err != nil {
@@ -44,7 +44,7 @@ func storeArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []sec
 			DocID:             artifact.DocID,
 		}
 
-		if err := ds.Set(ctx, key.Bytes(), []byte{}); err != nil {
+		if err := ds.Set(ctx, key, []byte{}); err != nil {
 			return err
 		}
 	}
@@ -56,7 +56,7 @@ func storeArtifacts(ctx context.Context, ds corekv.ReaderWriter, artifacts []sec
 // and returns the document IDs for documents that match all queries.
 func fetchDocIDs(
 	ctx context.Context,
-	ds corekv.ReaderWriter,
+	ds datastore.Keyedstore,
 	collectionID string,
 	queries []fieldQuery,
 ) ([]string, error) {
@@ -75,8 +75,8 @@ func fetchDocIDs(
 			SearchTag:         query.SearchTag,
 		}
 
-		iter, err := ds.Iterator(ctx, corekv.IterOptions{
-			Prefix: key.Bytes(),
+		iter, err := ds.Iterator(ctx, datastore.IterOptions{
+			Prefix: key,
 		})
 		if err != nil {
 			return nil, err

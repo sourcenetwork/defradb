@@ -448,11 +448,11 @@ func (c *Collection) Get(
 	}
 
 	jsonStr := res.Value
-	doc, err := client.NewDocWithID(docID, c.Version())
+	doc, err := client.NewDocWithID(ctx, docID, c.Version())
 	if err != nil {
 		return nil, err
 	}
-	err = doc.SetWithJSON([]byte(jsonStr))
+	err = doc.SetWithJSON(ctx, []byte(jsonStr))
 	if err != nil {
 		return nil, err
 	}
