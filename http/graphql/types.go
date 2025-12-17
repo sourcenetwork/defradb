@@ -10,15 +10,15 @@
 
 package graphql
 
-// GraphQLRequest represents a GraphQL request body.
-type GraphQLRequest struct {
+// GraphQL Request represents a GraphQL request body.
+type Request struct {
 	Query         string         `json:"query"`
 	OperationName string         `json:"operationName"`
 	Variables     map[string]any `json:"variables"`
 }
 
-// GraphQLResponse represents a GraphQL response body.
-type GraphQLResponse struct {
+// GraphQL Response represents a GraphQL response body.
+type Response struct {
 	Errors []struct {
 		Message string `json:"message"`
 	} `json:"errors"`
