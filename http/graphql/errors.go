@@ -15,6 +15,11 @@ import (
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/errors"
+)
+
+var (
+	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 )
 
 type errorResponse struct {

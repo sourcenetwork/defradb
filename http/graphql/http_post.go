@@ -88,12 +88,9 @@ func (h POST) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 	}
 
 	result := executer(r.Context(), request.Query, options...)
-	if result.GQL.Errors != nil {
-		gqlErr := errors.Wrap("could not execute request: %w", err)
-		responseJSON(w, http.StatusBadRequest, errorResponse{gqlErr})
-		return
+	if result.Subscription != nil {
+		responseJSON(w, http.StatusNotAcceptable, errorResponse{ErrInvalidSubscriptionTransport})
 	}
-
 	responseJSON(w, http.StatusOK, result.GQL)
 }
 
