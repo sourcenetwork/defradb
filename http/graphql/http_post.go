@@ -94,7 +94,7 @@ func (h POST) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 		return
 	}
 
-	responseJSON(w, http.StatusOK, result)
+	responseJSON(w, http.StatusOK, result.GQL)
 }
 
 func (h POST) Methods() []string {

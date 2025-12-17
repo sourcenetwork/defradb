@@ -83,6 +83,7 @@ func responseJSON(rw http.ResponseWriter, status int, data any) {
 
 	err := json.NewEncoder(rw).Encode(data)
 	if err != nil {
+		panic(err)
 		log.ErrorE("failed to write response", err)
 	}
 }

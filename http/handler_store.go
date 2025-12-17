@@ -274,14 +274,16 @@ func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	// // GraphQL over HTTP request
 	// execHTTPRequest(rw, req)
 
+	fmt.Println(req.Header)
 	transport := h.getGQLTransport(req)
 	if transport == nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrTransportNotSupported})
 		return
 	}
 
+	fmt.Println("getting db context, running transport handler")
+	fmt.Printf("transport: %T\n", transport)
 	db := mustGetContextClientDB(req)
-
 	transport.Do(rw, req, db.ExecRequest)
 }
 

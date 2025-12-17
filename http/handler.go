@@ -40,10 +40,11 @@ func NewApiRouter() (*Router, error) {
 	ccip_handler := &ccipHandler{}
 	extras_handler := &extrasHandler{}
 	block_handler := &blockHandler{}
+
 	store_handler := &storeHandler{
 		gqlTransports: []graphql.Transport{
-			graphql.POST{},
 			graphql.SSE{},
+			graphql.POST{},
 		},
 	}
 

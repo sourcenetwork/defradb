@@ -21,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	// "github.com/vektah/gqlparser/gqlerror"
@@ -68,6 +69,8 @@ func (t SSE) Methods() []string {
 }
 
 func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
+	fmt.Println("starting sse handler")
+
 	ctx := r.Context()
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -123,11 +126,14 @@ func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 	}
 
 	// responses, ctx := exec.DispatchOperation(ctx, rc)
+	fmt.Println("running sse query")
 	result := executer(r.Context(), request.Query, options...)
 	if len(result.GQL.Errors) > 0 {
 		writeResultWithSSE(w, result.GQL) // todo
+		return
 	}
 
+	fmt.Println("starting sse loop")
 	for {
 		select {
 		// unified context for client and server shutdown
@@ -140,6 +146,8 @@ func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 				return
 			}
 
+			log.Info("next sse event")
+			spew.Dump(item)
 			writeResultWithSSE(w, item)
 		}
 
