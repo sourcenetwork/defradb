@@ -14,6 +14,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -338,13 +340,18 @@ func (db *DB) generateMaximalSelectFromCollection(
 
 // lensCIDExists checks if a lens with the given CID exists in the lens store.
 func (db *DB) lensCIDExists(ctx context.Context, cidStr string) (bool, error) {
+	targetCID, err := cid.Decode(cidStr)
+	if err != nil {
+		return false, err
+	}
+
 	lenses, err := db.getLensStore(ctx).List(ctx)
 	if err != nil {
 		return false, err
 	}
 
 	for storedCID := range lenses {
-		if storedCID.String() == cidStr {
+		if storedCID.Equals(targetCID) {
 			return true, nil
 		}
 	}
