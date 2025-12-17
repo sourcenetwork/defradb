@@ -188,6 +188,12 @@ func New(
 		return nil, err
 	}
 
+	err = p.host.AddPubSubTopic(syncBranchableCollectionTopic, true, p.syncBranchableCollectionMessageHandler,
+		p.peerEventHandler)
+	if err != nil {
+		return nil, err
+	}
+
 	go p.handleReplicatorRetries(ctx)
 	err = p.loadAndPublishReplicators(ctx)
 	if err != nil {

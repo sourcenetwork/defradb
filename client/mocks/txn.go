@@ -2594,6 +2594,63 @@ func (_c *Txn_StartTS_Call) RunAndReturn(run func() time.Time) *Txn_StartTS_Call
 	return _c
 }
 
+// SyncBranchableCollection provides a mock function for the type Txn
+func (_mock *Txn) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	ret := _mock.Called(ctx, collectionID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SyncBranchableCollection")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, collectionID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_SyncBranchableCollection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SyncBranchableCollection'
+type Txn_SyncBranchableCollection_Call struct {
+	*mock.Call
+}
+
+// SyncBranchableCollection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - collectionID string
+func (_e *Txn_Expecter) SyncBranchableCollection(ctx interface{}, collectionID interface{}) *Txn_SyncBranchableCollection_Call {
+	return &Txn_SyncBranchableCollection_Call{Call: _e.mock.On("SyncBranchableCollection", ctx, collectionID)}
+}
+
+func (_c *Txn_SyncBranchableCollection_Call) Run(run func(ctx context.Context, collectionID string)) *Txn_SyncBranchableCollection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_SyncBranchableCollection_Call) Return(err error) *Txn_SyncBranchableCollection_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_SyncBranchableCollection_Call) RunAndReturn(run func(ctx context.Context, collectionID string) error) *Txn_SyncBranchableCollection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SyncCollectionVersions provides a mock function for the type Txn
 func (_mock *Txn) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
 	var tmpRet mock.Arguments

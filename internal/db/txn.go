@@ -342,3 +342,8 @@ func (txn *Txn) SyncCollectionVersions(ctx context.Context, versionIDs ...string
 	ctx = InitContext(ctx, txn)
 	return txn.db.SyncCollectionVersions(ctx, versionIDs...)
 }
+
+func (txn *Txn) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.SyncBranchableCollection(ctx, collectionID)
+}

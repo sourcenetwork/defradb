@@ -99,6 +99,10 @@ func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...stri
 	panic("not implemented")
 }
 
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	panic("not implemented")
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	panic("not implemented")
 }
