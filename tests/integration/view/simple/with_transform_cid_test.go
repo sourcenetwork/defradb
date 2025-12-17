@@ -113,4 +113,3 @@ func TestView_WithInvalidTransformCID_ReturnsError(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
