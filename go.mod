@@ -39,13 +39,13 @@ require (
 	github.com/philippgille/chromem-go v0.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/sourcenetwork/acp_core v0.4.1
-	github.com/sourcenetwork/corekv v0.2.5
-	github.com/sourcenetwork/corekv/badger v0.2.5
-	github.com/sourcenetwork/corekv/blockstore v0.2.5
-	github.com/sourcenetwork/corekv/chunk v0.2.5
-	github.com/sourcenetwork/corekv/leveldb v0.2.5
-	github.com/sourcenetwork/corekv/memory v0.2.5
-	github.com/sourcenetwork/corekv/namespace v0.2.5
+	github.com/sourcenetwork/corekv v0.3.0
+	github.com/sourcenetwork/corekv/badger v0.3.0
+	github.com/sourcenetwork/corekv/blockstore v0.3.0
+	github.com/sourcenetwork/corekv/chunk v0.3.0
+	github.com/sourcenetwork/corekv/leveldb v0.3.0
+	github.com/sourcenetwork/corekv/memory v0.3.0
+	github.com/sourcenetwork/corekv/namespace v0.3.0
 	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-p2p v0.1.5
 	github.com/sourcenetwork/goji v0.0.8
@@ -412,6 +412,8 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-replace github.com/sourcenetwork/corekv/leveldb => ../corekv/leveldb
+replace github.com/sourcenetwork/goleveldb => ../goleveldb
+
+replace github.com/sourcenetwork/lens/host-go => ../lens/host-go
 
 replace github.com/wlynxg/anet => github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e

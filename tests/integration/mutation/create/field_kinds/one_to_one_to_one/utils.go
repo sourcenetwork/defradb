@@ -21,6 +21,7 @@ func execute(t *testing.T, test testUtils.TestCase) {
 	testUtils.ExecuteTestCase(
 		t,
 		testUtils.TestCase{
+			SupportedDatabaseTypes: test.SupportedDatabaseTypes,
 			Actions: append(
 				[]any{
 					&action.AddSchema{
