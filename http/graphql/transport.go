@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -34,6 +35,12 @@ type Executor func(
 type Transport interface {
 	Supports(r *http.Request) bool
 	Do(w http.ResponseWriter, r *http.Request, executer Executor)
+	Methods() []string
+}
+
+type OpenAPITransport interface {
+	Transport
+	OpenAPI3Operation() *openapi3.Operation
 }
 
 const (

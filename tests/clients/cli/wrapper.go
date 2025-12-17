@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http/httptest"
 	"strconv"
 	"strings"
@@ -48,15 +49,19 @@ type Wrapper struct {
 // NewWrapper takes a Node, and a SourceHub address used to pay for SourceHub transactions.
 //
 // sourceHubAddress can (and will) be empty when testing non sourceHub ACP implementations.
-func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
+func NewWrapper(ctx context.Context, node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 	handler, err := http.NewHandler(node.DB)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	handlerWithCtx := http.InjectServerContext(ctx)(handler)
-	httpServer := httptest.NewServer(handlerWithCtx)
+	ctx, cancel := context.WithCancel(ctx)
+	httpServer := httptest.NewUnstartedServer(handler)
+	httpServer.Config.BaseContext = func(_ net.Listener) context.Context {
+		return ctx
+	}
+	httpServer.Start()
+
 	cmd := newCliWrapper(httpServer.URL, sourceHubAddress)
 
 	return &Wrapper{

@@ -12,6 +12,7 @@ package http
 
 import (
 	"context"
+	"net"
 	"net/http/httptest"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -39,14 +40,19 @@ type Wrapper struct {
 	serverCancel context.CancelFunc
 }
 
-func NewWrapper(node *node.Node) (*Wrapper, error) {
+func NewWrapper(ctx context.Context, node *node.Node) (*Wrapper, error) {
 	handler, err := http.NewHandler(node.DB)
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	handlerWithCtx := http.InjectServerContext(ctx)(handler)
-	httpServer := httptest.NewServer(handlerWithCtx)
+
+	ctx, cancel := context.WithCancel(ctx)
+	httpServer := httptest.NewUnstartedServer(handler)
+	httpServer.Config.BaseContext = func(_ net.Listener) context.Context {
+		return ctx
+	}
+	httpServer.Start()
+
 	client, err := http.NewClient(httpServer.URL)
 	if err != nil {
 		cancel()

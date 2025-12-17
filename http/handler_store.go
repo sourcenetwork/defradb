@@ -465,9 +465,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/collection",
 	}
-	graphQLRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/graphql_request",
-	}
 	backupConfigSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/backup_config",
 	}
@@ -484,15 +481,15 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		Ref: "#/components/schemas/identity",
 	}
 
-	graphQLResponseSchema := openapi3.NewObjectSchema().
-		WithProperties(map[string]*openapi3.Schema{
-			"errors": openapi3.NewArraySchema().WithItems(
-				openapi3.NewObjectSchema().WithProperties(map[string]*openapi3.Schema{
-					"message": openapi3.NewStringSchema(),
-				}),
-			),
-			"data": openapi3.NewObjectSchema().WithAnyAdditionalProperties(),
-		})
+	// graphQLResponseSchema := openapi3.NewObjectSchema().
+	// 	WithProperties(map[string]*openapi3.Schema{
+	// 		"errors": openapi3.NewArraySchema().WithItems(
+	// 			openapi3.NewObjectSchema().WithProperties(map[string]*openapi3.Schema{
+	// 				"message": openapi3.NewStringSchema(),
+	// 			}),
+	// 		),
+	// 		"data": openapi3.NewObjectSchema().WithAnyAdditionalProperties(),
+	// 	})
 
 	collectionArraySchema := openapi3.NewArraySchema()
 	collectionArraySchema.Items = collectionSchema
@@ -663,34 +660,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	setMigration.AddResponse(200, setMigrationResponse)
 	setMigration.Responses.Set("400", errorResponse)
 
-	graphQLRequest := openapi3.NewRequestBody().
-		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
-
-	graphQLResponse := openapi3.NewResponse().
-		WithDescription("GraphQL response").
-		WithContent(openapi3.NewContentWithJSONSchema(graphQLResponseSchema))
-
-	graphQLPost := openapi3.NewOperation()
-	graphQLPost.Description = "GraphQL POST endpoint"
-	graphQLPost.OperationID = "graphql_post"
-	graphQLPost.Tags = []string{"graphql"}
-	graphQLPost.RequestBody = &openapi3.RequestBodyRef{
-		Value: graphQLRequest,
-	}
-	graphQLPost.AddResponse(200, graphQLResponse)
-	graphQLPost.Responses.Set("400", errorResponse)
-
-	graphQLQueryParam := openapi3.NewQueryParameter("query").
-		WithSchema(openapi3.NewStringSchema())
-
-	graphQLGet := openapi3.NewOperation()
-	graphQLGet.Description = "GraphQL GET endpoint"
-	graphQLGet.OperationID = "graphql_get"
-	graphQLGet.Tags = []string{"graphql"}
-	graphQLGet.AddParameter(graphQLQueryParam)
-	graphQLGet.AddResponse(200, graphQLResponse)
-	graphQLGet.Responses.Set("400", errorResponse)
-
 	debugDump := openapi3.NewOperation()
 	debugDump.Description = "Dump database"
 	debugDump.OperationID = "debug_dump"
@@ -754,6 +723,17 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	getAllEncryptedIndexes.AddResponse(200, getAllEncryptedIndexesResponse)
 	getAllEncryptedIndexes.Responses.Set("400", errorResponse)
 
+	// register all transport, methods, and openapi3 types
+	// for the gql endpoint.
+	for _, gqlTransport := range h.gqlTransports {
+		for _, method := range gqlTransport.Methods() {
+			router.mux.MethodFunc(method, "/graphql", h.ExecRequest)
+			if oat, ok := gqlTransport.(graphql.OpenAPITransport); ok {
+				router.oas.AddOperation("/graphql", method, oat.OpenAPI3Operation())
+			}
+		}
+	}
+
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
@@ -763,8 +743,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/default", http.MethodPost, setActiveCollectionVersion, h.SetActiveCollectionVersion)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/view/refresh", http.MethodPost, viewRefresh, h.RefreshViews)
-	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
-	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
 	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)

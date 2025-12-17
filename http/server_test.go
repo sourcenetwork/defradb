@@ -66,7 +66,7 @@ var testHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) 
 })
 
 func TestServerServeWithNoListener(t *testing.T) {
-	srv, err := NewServer(testHandler)
+	srv, err := NewServer(t.Context(), testHandler)
 	require.NoError(t, err)
 
 	err = srv.Serve()
@@ -75,7 +75,7 @@ func TestServerServeWithNoListener(t *testing.T) {
 
 func TestServerServeWithTLSAndNoListener(t *testing.T) {
 	certPath, keyPath := writeTestCerts(t)
-	srv, err := NewServer(testHandler, WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
+	srv, err := NewServer(t.Context(), testHandler, WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
 	require.NoError(t, err)
 
 	err = srv.Serve()
@@ -83,7 +83,7 @@ func TestServerServeWithTLSAndNoListener(t *testing.T) {
 }
 
 func TestServerListenAndServeWithInvalidAddress(t *testing.T) {
-	srv, err := NewServer(testHandler, WithAddress("invalid"))
+	srv, err := NewServer(t.Context(), testHandler, WithAddress("invalid"))
 	require.NoError(t, err)
 
 	err = srv.SetListener()
@@ -92,7 +92,7 @@ func TestServerListenAndServeWithInvalidAddress(t *testing.T) {
 
 func TestServerListenAndServeWithTLSAndInvalidAddress(t *testing.T) {
 	certPath, keyPath := writeTestCerts(t)
-	srv, err := NewServer(testHandler, WithAddress("invalid"), WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
+	srv, err := NewServer(t.Context(), testHandler, WithAddress("invalid"), WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
 	require.NoError(t, err)
 
 	err = srv.SetListener()
@@ -101,6 +101,7 @@ func TestServerListenAndServeWithTLSAndInvalidAddress(t *testing.T) {
 
 func TestServerListenAndServeWithTLSAndInvalidCerts(t *testing.T) {
 	srv, err := NewServer(
+		t.Context(),
 		testHandler,
 		WithAddress("invalid"),
 		WithTLSCertPath("invalid.crt"),
@@ -118,7 +119,7 @@ func TestServerListenAndServeWithTLSAndInvalidCerts(t *testing.T) {
 }
 
 func TestServerListenAndServeWithAddress(t *testing.T) {
-	srv, err := NewServer(testHandler, WithAddress("127.0.0.1:30001"))
+	srv, err := NewServer(t.Context(), testHandler, WithAddress("127.0.0.1:30001"))
 	require.NoError(t, err)
 
 	go func() {
@@ -143,7 +144,7 @@ func TestServerListenAndServeWithAddress(t *testing.T) {
 
 func TestServerListenAndServeWithTLS(t *testing.T) {
 	certPath, keyPath := writeTestCerts(t)
-	srv, err := NewServer(testHandler, WithAddress("127.0.0.1:8443"), WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
+	srv, err := NewServer(t.Context(), testHandler, WithAddress("127.0.0.1:8443"), WithTLSCertPath(certPath), WithTLSKeyPath(keyPath))
 	require.NoError(t, err)
 
 	go func() {
@@ -167,7 +168,7 @@ func TestServerListenAndServeWithTLS(t *testing.T) {
 }
 
 func TestServerListenAndServeWithAllowedOrigins(t *testing.T) {
-	srv, err := NewServer(testHandler, WithAllowedOrigins("localhost"), WithAddress("127.0.0.1:30001"))
+	srv, err := NewServer(t.Context(), testHandler, WithAllowedOrigins("localhost"), WithAddress("127.0.0.1:30001"))
 	require.NoError(t, err)
 
 	go func() {
@@ -198,19 +199,19 @@ func TestServerListenAndServeWithAllowedOrigins(t *testing.T) {
 }
 
 func TestServerWithReadTimeout(t *testing.T) {
-	srv, err := NewServer(testHandler, WithReadTimeout(time.Second))
+	srv, err := NewServer(t.Context(), testHandler, WithReadTimeout(time.Second))
 	require.NoError(t, err)
 	assert.Equal(t, time.Second, srv.server.ReadTimeout)
 }
 
 func TestServerWithWriteTimeout(t *testing.T) {
-	srv, err := NewServer(testHandler, WithWriteTimeout(time.Second))
+	srv, err := NewServer(t.Context(), testHandler, WithWriteTimeout(time.Second))
 	require.NoError(t, err)
 	assert.Equal(t, time.Second, srv.server.WriteTimeout)
 }
 
 func TestServerWithIdleTimeout(t *testing.T) {
-	srv, err := NewServer(testHandler, WithIdleTimeout(time.Second))
+	srv, err := NewServer(t.Context(), testHandler, WithIdleTimeout(time.Second))
 	require.NoError(t, err)
 	assert.Equal(t, time.Second, srv.server.IdleTimeout)
 }

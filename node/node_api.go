@@ -27,7 +27,7 @@ func (n *Node) startAPI(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	n.server, err = http.NewServer(handler, filterOptions[http.ServerOpt](n.options)...)
+	n.server, err = http.NewServer(ctx, handler, filterOptions[http.ServerOpt](n.options)...)
 	if err != nil {
 		return err
 	}

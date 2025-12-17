@@ -28,7 +28,6 @@ import (
 
 type (
 	SSE struct {
-		ServerDone            <-chan struct{}
 		KeepAlivePingInterval time.Duration
 	}
 
@@ -62,6 +61,10 @@ func (t SSE) Supports(r *http.Request) bool {
 		return false
 	}
 	return r.Method == http.MethodPost && mediaType == "application/json"
+}
+
+func (t SSE) Methods() []string {
+	return []string{http.MethodPost}
 }
 
 func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
@@ -127,12 +130,8 @@ func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 
 	for {
 		select {
+		// unified context for client and server shutdown
 		case <-r.Context().Done():
-			return
-		case <-t.ServerDone:
-			// We need to check for closure of the server context
-			// otherwise the server won't gracefully shutdown until all
-			// connections are closed.
 			fmt.Fprint(w, "event: complete\n\n")
 			return
 		case item, open := <-result.Subscription:

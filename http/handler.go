@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/http/graphql"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -33,13 +34,18 @@ var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
 
 func NewApiRouter() (*Router, error) {
 	tx_handler := &txHandler{}
-	store_handler := &storeHandler{}
 	acp_handler := &acpHandler{}
 	collection_handler := &collectionHandler{}
 	p2p_handler := &p2pHandler{}
 	ccip_handler := &ccipHandler{}
 	extras_handler := &extrasHandler{}
 	block_handler := &blockHandler{}
+	store_handler := &storeHandler{
+		gqlTransports: []graphql.Transport{
+			graphql.POST{},
+			graphql.SSE{},
+		},
+	}
 
 	router, err := NewRouter()
 	if err != nil {

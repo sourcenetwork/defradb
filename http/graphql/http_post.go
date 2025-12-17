@@ -97,7 +97,11 @@ func (h POST) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 	responseJSON(w, http.StatusOK, result)
 }
 
-func (h POST) Operation() *openapi3.Operation {
+func (h POST) Methods() []string {
+	return []string{http.MethodGet}
+}
+
+func (h POST) OpenAPI3Operation() *openapi3.Operation {
 	graphQLRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/graphql_request",
 	}
@@ -124,3 +128,18 @@ func (h POST) Operation() *openapi3.Operation {
 	graphQLPost.AddResponse(400, graphQLResponse)
 	return graphQLPost
 }
+
+/* GET
+
+graphQLQueryParam := openapi3.NewQueryParameter("query").
+		WithSchema(openapi3.NewStringSchema())
+
+	graphQLGet := openapi3.NewOperation()
+	graphQLGet.Description = "GraphQL GET endpoint"
+	graphQLGet.OperationID = "graphql_get"
+	graphQLGet.Tags = []string{"graphql"}
+	graphQLGet.AddParameter(graphQLQueryParam)
+	graphQLGet.AddResponse(200, graphQLResponse)
+	graphQLGet.Responses.Set("400", errorResponse)
+
+*/

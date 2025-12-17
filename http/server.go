@@ -122,16 +122,16 @@ type Server struct {
 }
 
 // NewServer instantiates a new server with the given http.Handler.
-func NewServer(handler http.Handler, opts ...ServerOpt) (*Server, error) {
+func NewServer(ctx context.Context, handler http.Handler, opts ...ServerOpt) (*Server, error) {
 	options := DefaultServerOptions()
 	for _, opt := range opts {
 		opt(options)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
+
 	// setup a mux with the default middleware stack
 	mux := chi.NewMux()
 	mux.Use(
-		InjectServerContext(ctx),
 		middleware.RequestLogger(&logFormatter{}),
 		middleware.Recoverer,
 		CorsMiddleware(options.AllowedOrigins),
@@ -143,6 +143,9 @@ func NewServer(handler http.Handler, opts ...ServerOpt) (*Server, error) {
 		WriteTimeout: options.WriteTimeout,
 		IdleTimeout:  options.IdleTimeout,
 		Handler:      mux,
+		BaseContext: func(_ net.Listener) context.Context {
+			return ctx
+		},
 	}
 
 	return &Server{
@@ -207,12 +210,12 @@ func (s *Server) Address() string {
 }
 
 // InjectServerContext sets the server context on each handler calls.
-func InjectServerContext(serverCtx context.Context) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			ctx := req.Context()
-			ctx = context.WithValue(ctx, ctxContextKey, serverCtx)
-			next.ServeHTTP(rw, req.WithContext(ctx))
-		})
-	}
-}
+// func InjectServerContext(serverCtx context.Context) func(http.Handler) http.Handler {
+// 	return func(next http.Handler) http.Handler {
+// 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+// 			ctx := req.Context()
+// 			ctx = context.WithValue(ctx, ctxContextKey, serverCtx)
+// 			next.ServeHTTP(rw, req.WithContext(ctx))
+// 		})
+// 	}
+// }
