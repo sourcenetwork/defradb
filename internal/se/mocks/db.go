@@ -9,6 +9,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -197,64 +198,48 @@ func (_c *DB_MaxTxnRetries_Call) RunAndReturn(run func() int) *DB_MaxTxnRetries_
 	return _c
 }
 
-// NewTxn provides a mock function for the type DB
-func (_mock *DB) NewTxn(readOnly bool) (client.Txn, error) {
-	ret := _mock.Called(readOnly)
+// Multistore provides a mock function for the type DB
+func (_mock *DB) Multistore() *datastore.Multistore {
+	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for NewTxn")
+		panic("no return value specified for Multistore")
 	}
 
-	var r0 client.Txn
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(bool) (client.Txn, error)); ok {
-		return returnFunc(readOnly)
-	}
-	if returnFunc, ok := ret.Get(0).(func(bool) client.Txn); ok {
-		r0 = returnFunc(readOnly)
+	var r0 *datastore.Multistore
+	if returnFunc, ok := ret.Get(0).(func() *datastore.Multistore); ok {
+		r0 = returnFunc()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(client.Txn)
+			r0 = ret.Get(0).(*datastore.Multistore)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(bool) error); ok {
-		r1 = returnFunc(readOnly)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
-// DB_NewTxn_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NewTxn'
-type DB_NewTxn_Call struct {
+// DB_Multistore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Multistore'
+type DB_Multistore_Call struct {
 	*mock.Call
 }
 
-// NewTxn is a helper method to define mock.On call
-//   - readOnly bool
-func (_e *DB_Expecter) NewTxn(readOnly interface{}) *DB_NewTxn_Call {
-	return &DB_NewTxn_Call{Call: _e.mock.On("NewTxn", readOnly)}
+// Multistore is a helper method to define mock.On call
+func (_e *DB_Expecter) Multistore() *DB_Multistore_Call {
+	return &DB_Multistore_Call{Call: _e.mock.On("Multistore")}
 }
 
-func (_c *DB_NewTxn_Call) Run(run func(readOnly bool)) *DB_NewTxn_Call {
+func (_c *DB_Multistore_Call) Run(run func()) *DB_Multistore_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 bool
-		if args[0] != nil {
-			arg0 = args[0].(bool)
-		}
-		run(
-			arg0,
-		)
+		run()
 	})
 	return _c
 }
 
-func (_c *DB_NewTxn_Call) Return(txn client.Txn, err error) *DB_NewTxn_Call {
-	_c.Call.Return(txn, err)
+func (_c *DB_Multistore_Call) Return(multistore *datastore.Multistore) *DB_Multistore_Call {
+	_c.Call.Return(multistore)
 	return _c
 }
 
-func (_c *DB_NewTxn_Call) RunAndReturn(run func(readOnly bool) (client.Txn, error)) *DB_NewTxn_Call {
+func (_c *DB_Multistore_Call) RunAndReturn(run func() *datastore.Multistore) *DB_Multistore_Call {
 	_c.Call.Return(run)
 	return _c
 }
