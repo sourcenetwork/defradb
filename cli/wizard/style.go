@@ -15,9 +15,12 @@ import (
 )
 
 var (
+	sourceGreen = "#39E265"
+	defraBlue   = "#10CBFF"
+
 	promptStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("39")).
+			Foreground(lipgloss.Color(sourceGreen)).
 			MarginBottom(1)
 
 	choiceStyle = lipgloss.NewStyle().
@@ -26,10 +29,10 @@ var (
 	selectedChoiceStyle = lipgloss.NewStyle().
 				PaddingLeft(1).
 				Bold(true).
-				Foreground(lipgloss.Color("48"))
+				Foreground(lipgloss.Color(defraBlue))
 
 	bodyStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("39")).
+			Foreground(lipgloss.Color(sourceGreen)).
 			PaddingLeft(1)
 
 	hintStyle = lipgloss.NewStyle().
@@ -41,6 +44,6 @@ var (
 				Height(1).
 				Width(80).
 				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("39")).
+				BorderForeground(lipgloss.Color(sourceGreen)).
 				Padding(0, 1)
 )
