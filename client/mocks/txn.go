@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"context"
+	"time"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -250,6 +251,72 @@ func (_c *Txn_AddDACPolicy_Call) Return(addPolicyResult client.AddPolicyResult, 
 }
 
 func (_c *Txn_AddDACPolicy_Call) RunAndReturn(run func(ctx context.Context, policy string) (client.AddPolicyResult, error)) *Txn_AddDACPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AddLens provides a mock function for the type Txn
+func (_mock *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	ret := _mock.Called(ctx, lens)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddLens")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens) (string, error)); ok {
+		return returnFunc(ctx, lens)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens) string); ok {
+		r0 = returnFunc(ctx, lens)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, model.Lens) error); ok {
+		r1 = returnFunc(ctx, lens)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_AddLens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddLens'
+type Txn_AddLens_Call struct {
+	*mock.Call
+}
+
+// AddLens is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lens model.Lens
+func (_e *Txn_Expecter) AddLens(ctx interface{}, lens interface{}) *Txn_AddLens_Call {
+	return &Txn_AddLens_Call{Call: _e.mock.On("AddLens", ctx, lens)}
+}
+
+func (_c *Txn_AddLens_Call) Run(run func(ctx context.Context, lens model.Lens)) *Txn_AddLens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 model.Lens
+		if args[1] != nil {
+			arg1 = args[1].(model.Lens)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_AddLens_Call) Return(s string, err error) *Txn_AddLens_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *Txn_AddLens_Call) RunAndReturn(run func(ctx context.Context, lens model.Lens) (string, error)) *Txn_AddLens_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1817,6 +1884,68 @@ func (_c *Txn_ListAllEncryptedIndexes_Call) RunAndReturn(run func(context1 conte
 	return _c
 }
 
+// ListLenses provides a mock function for the type Txn
+func (_mock *Txn) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListLenses")
+	}
+
+	var r0 map[string]model.Lens
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (map[string]model.Lens, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) map[string]model.Lens); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]model.Lens)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_ListLenses_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListLenses'
+type Txn_ListLenses_Call struct {
+	*mock.Call
+}
+
+// ListLenses is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Txn_Expecter) ListLenses(ctx interface{}) *Txn_ListLenses_Call {
+	return &Txn_ListLenses_Call{Call: _e.mock.On("ListLenses", ctx)}
+}
+
+func (_c *Txn_ListLenses_Call) Run(run func(ctx context.Context)) *Txn_ListLenses_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_ListLenses_Call) Return(stringToLens map[string]model.Lens, err error) *Txn_ListLenses_Call {
+	_c.Call.Return(stringToLens, err)
+	return _c
+}
+
+func (_c *Txn_ListLenses_Call) RunAndReturn(run func(ctx context.Context) (map[string]model.Lens, error)) *Txn_ListLenses_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PatchCollection provides a mock function for the type Txn
 func (_mock *Txn) PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens]) error {
 	ret := _mock.Called(ctx, patch, migration)
@@ -2417,6 +2546,50 @@ func (_c *Txn_SetReplicator_Call) Return(err error) *Txn_SetReplicator_Call {
 }
 
 func (_c *Txn_SetReplicator_Call) RunAndReturn(run func(ctx context.Context, addresses []string, collectionNames ...string) error) *Txn_SetReplicator_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// StartTS provides a mock function for the type Txn
+func (_mock *Txn) StartTS() time.Time {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for StartTS")
+	}
+
+	var r0 time.Time
+	if returnFunc, ok := ret.Get(0).(func() time.Time); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(time.Time)
+	}
+	return r0
+}
+
+// Txn_StartTS_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartTS'
+type Txn_StartTS_Call struct {
+	*mock.Call
+}
+
+// StartTS is a helper method to define mock.On call
+func (_e *Txn_Expecter) StartTS() *Txn_StartTS_Call {
+	return &Txn_StartTS_Call{Call: _e.mock.On("StartTS")}
+}
+
+func (_c *Txn_StartTS_Call) Run(run func()) *Txn_StartTS_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Txn_StartTS_Call) Return(time1 time.Time) *Txn_StartTS_Call {
+	_c.Call.Return(time1)
+	return _c
+}
+
+func (_c *Txn_StartTS_Call) RunAndReturn(run func() time.Time) *Txn_StartTS_Call {
 	_c.Call.Return(run)
 	return _c
 }

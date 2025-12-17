@@ -200,8 +200,8 @@ func (n *cachedViewFetcher) Init() error {
 		return err
 	}
 	txn := datastore.CtxMustGetTxn(n.p.ctx)
-	iter, err := txn.Datastore().Iterator(n.p.ctx, corekv.IterOptions{
-		Prefix: keys.NewViewCacheColPrefix(shortID).Bytes(),
+	iter, err := txn.Datastore().Iterator(n.p.ctx, datastore.IterOptions{
+		Prefix: keys.NewViewCacheColPrefix(shortID),
 	})
 	if err != nil {
 		return err

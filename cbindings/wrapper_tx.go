@@ -23,6 +23,7 @@ import (
 	"context"
 	"errors"
 	"runtime/cgo"
+	"time"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
@@ -44,6 +45,10 @@ type Transaction struct {
 
 func (txn *Transaction) ID() uint64 {
 	return txn.tx.ID()
+}
+
+func (txn *Transaction) StartTS() time.Time {
+	return txn.tx.StartTS()
 }
 
 func (txn *Transaction) Commit() error {
@@ -129,6 +134,14 @@ func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConf
 	return txn.CWrapper.SetMigration(ctx, config)
 }
 
+func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	return txn.CWrapper.AddLens(ctx, lens)
+}
+
+func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	return txn.CWrapper.ListLenses(ctx)
+}
+
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
@@ -169,7 +182,7 @@ func (txn *Transaction) Blockstore() datastore.Blockstore {
 	return txn.tx.(datastore.Txn).Blockstore() //nolint:forcetypeassert
 }
 
-func (txn *Transaction) Datastore() corekv.ReaderWriter {
+func (txn *Transaction) Datastore() datastore.Keyedstore {
 	return txn.tx.(datastore.Txn).Datastore() //nolint:forcetypeassert
 }
 

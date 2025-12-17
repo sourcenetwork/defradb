@@ -58,7 +58,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 			for colName, numDocs := range demandMap {
 				opts = append(opts, gen.WithTypeDemand(colName, numDocs))
 			}
-			docs, err := gen.AutoGenerate(colsToVersions(collections), opts...)
+			docs, err := gen.AutoGenerate(ctx, colsToVersions(collections), opts...)
 			if err != nil {
 				return err
 			}
