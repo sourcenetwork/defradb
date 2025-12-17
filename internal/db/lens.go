@@ -91,7 +91,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 
 	dstCol.PreviousVersion = immutable.Some(client.CollectionSource{
 		SourceCollectionID: sourceCol.VersionID,
-		Transform:          immutable.Some(id.String()),
+		Transform:          immutable.Some(id),
 	})
 
 	err = description.SaveCollection(ctx, dstCol)
@@ -111,7 +111,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 		}
 	}
 
-	return id.String(), nil
+	return id, nil
 }
 
 // shouldReindexAfterMigration determines if reindexing is needed after adding a migration.

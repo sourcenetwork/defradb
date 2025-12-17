@@ -102,6 +102,10 @@ func NewTxnFrom(rootstore corekv.TxnStore, id uint64, readonly bool, chunkSize i
 	}
 }
 
+func (t *BasicTxn) Txn() corekv.Txn {
+	return t.txn
+}
+
 func (t *BasicTxn) ID() uint64 {
 	return t.id
 }

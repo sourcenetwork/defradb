@@ -72,7 +72,7 @@ func (db *DB) addView(
 			if err != nil {
 				return nil, err
 			}
-			lensID = immutable.Some(cid.String())
+			lensID = immutable.Some(cid)
 		}
 
 		source := client.QuerySource{
