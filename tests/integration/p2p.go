@@ -11,6 +11,8 @@
 package tests
 
 import (
+	"context"
+	"strings"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -90,7 +92,9 @@ func connectPeers(
 		corelog.Any("Target", targetAddresses))
 
 	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.Connect(ctx, targetAddresses)
+
+	err = connectWithRetry(ctx, sourceNode, targetAddresses)
+
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
 
@@ -125,10 +129,33 @@ func reconnectPeers(s *state.State) {
 				corelog.Any("Source", sourceAddresses),
 				corelog.Any("Target", targetAddresses))
 
-			err = sourceNode.Connect(ctx, targetAddresses)
+			err = connectWithRetry(ctx, sourceNode, targetAddresses)
 			require.NoError(s.T, err)
 		}
 	}
+}
+
+// connectWithRetry attempts to connect to target addresses with retry logic
+// to handle transient "dial backoff" errors that can occur when libp2p's host
+// is not fully ready to accept connections.
+func connectWithRetry(ctx context.Context, node *state.NodeState, targetAddresses []string) error {
+	const maxRetries = 20
+	const baseRetryDelay = 100 * time.Millisecond
+
+	var lastErr error
+	for attempt := range maxRetries {
+		lastErr = node.Connect(ctx, targetAddresses)
+		if lastErr == nil {
+			return nil
+		}
+		if strings.Contains(lastErr.Error(), "dial backoff") && attempt < maxRetries-1 {
+			delay := baseRetryDelay * time.Duration(1<<min(attempt, 4))
+			time.Sleep(delay)
+			continue
+		}
+		break
+	}
+	return lastErr
 }
 
 // syncDocs requests document sync from peers.
