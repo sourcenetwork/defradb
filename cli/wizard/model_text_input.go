@@ -15,10 +15,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// For interface conformance.
-// In the future, this can be removed, as this model type will be used in the main model.
-var _ tea.Model = (*modelTextInput)(nil)
-
 type modelTextInput struct {
 	id     string         // Used to access the result of this step from the main model's results map
 	prompt string         // The prompt to display to the user
@@ -35,9 +31,6 @@ type modelTextInput struct {
 }
 
 // initialModelTextInput should be called instead of manually constructing the struct
-// This will be used in the main model in the future.
-//
-//nolint:unused
 func initialModelTextInput(id string, prompt string, placeholder string) *modelTextInput {
 	ti := textarea.New()
 	ti.SetWidth(70)
