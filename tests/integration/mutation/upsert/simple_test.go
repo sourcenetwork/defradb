@@ -151,6 +151,76 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestMutationUpsertSimple_WithFilterMatchOnSameField_UpdatesDoc(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String 
+						age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Alice",
+					"age": 40
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Bob",
+					"age": 30
+				}`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					upsert_Users(
+						filter: {name: {_eq: "Bob"}},
+						create: {name: "Bob", age: 40},
+						update: {name: "John"}
+					) {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"upsert_Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(30),
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(30),
+						},
+						{
+							"name": "Alice",
+							"age":  int64(40),
+						},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

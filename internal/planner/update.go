@@ -13,6 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -37,6 +38,9 @@ type updateNode struct {
 	results planNode
 
 	execInfo updateExecInfo
+
+	origScanNode *scanNode
+	valuesNode   *valuesNode
 }
 
 type updateExecInfo struct {
@@ -80,14 +84,26 @@ func (n *updateNode) Next() (bool, error) {
 			if err != nil {
 				return false, err
 			}
+			coreDoc, err := core.DocFromClient(doc, n.documentMapping)
+			if err != nil {
+				return false, err
+			}
+
+			n.valuesNode.docs.AddDoc(coreDoc)
 
 			n.execInfo.updates++
 		}
 		n.isUpdating = false
 
+		// swap out the old scan node for our prefilled valuesNode
+		err := n.p.walkAndReplacePlan(n.results, n.origScanNode, n.valuesNode)
+		if err != nil {
+			return false, err
+		}
+
 		// Re-init the results node, so that they can be properly yielded with the updated
 		// values, as well as any formatting (e.g. aggregates, groupings, etc)
-		err := n.results.Init()
+		err = n.results.Init()
 		if err != nil {
 			return false, err
 		}
@@ -109,7 +125,15 @@ func (n *updateNode) Kind() string { return "updateNode" }
 
 func (n *updateNode) Prefixes(prefixes []keys.Walkable) { n.results.Prefixes(prefixes) }
 
-func (n *updateNode) Init() error { return n.results.Init() }
+func (n *updateNode) Init() error {
+	err := n.results.Init()
+	if err != nil {
+		return err
+	}
+
+	n.origScanNode = getNode[*scanNode](n.results)
+	return nil
+}
 
 func (n *updateNode) Start() error {
 	return n.results.Start()
@@ -181,6 +205,7 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 		return nil, err
 	}
 	update.results = resultsNode
+	update.valuesNode = p.newContainerValuesNode(nil)
 
 	return update, nil
 }
