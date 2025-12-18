@@ -25,6 +25,7 @@ func RandomNetworkingConfig() ConfigureNode {
 		return []node.Option{
 			p2p.WithListenAddresses("/ip4/" + getIPString() + "/tcp/0"),
 			p2p.WithEnableRelay(true),
+			p2p.WithClearBackoffOnRetry(true),
 		}
 	}
 }
