@@ -63,6 +63,12 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var updatedModel tea.Model
 
 	// Update the current step
+
+	// If the current step has become nil, we are done and must quit
+	if m.currentStep == nil {
+		return m, tea.Quit
+	}
+
 	updatedModel, cmd = m.currentStep.Update(msg)
 	m.currentStep = updatedModel.(step) //nolint:forcetypeassert
 	// If the step is done...

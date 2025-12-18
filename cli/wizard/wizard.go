@@ -58,9 +58,27 @@ func Main() {
 
 	stepKeyringStorageLocationBrancher := initialModelBrancher()
 
+	stepQueryGeneratingEnvironmentVariable := initialModelMultipleChoice(
+		"stepQueryGeneratingEnvironmentVariable",
+		"To proceed, the DEFRA_KEYRING_SECRET environment variable must first be set.\n\n"+
+			"Do you wish to generate a .env file containing it now?",
+		[]string{"Yes", "No"},
+	)
+
+	stepGetDefraKeyringSecretInput := initialModelTextInput(
+		"stepGetDefraKeyringSecretInput",
+		"Please enter the DEFRA_KEYRING_SECRET value:",
+		"my-secret-password",
+	)
+
+	stepEnvironmentVariableGenerated := initialModelText(
+		"stepEnvironmentVariableGenerated",
+		"DEFRA_KEYRING_SECRET value was set in the .env file.",
+	)
+
 	stepWizardExitMissingDefraKeyringSecret := initialModelText(
 		"stepWizardExitMissingDefraKeyringSecret",
-		"Environment variable DEFRA_KEYRING_SECRET must first be set.\n\n"+
+		"Environment variable DEFRA_KEYRING_SECRET must be set to continue.\n\n"+
 			"Please set the environment variable first and run the wizard again.\n\n"+
 			"To set the environment variable, you can use the command: DEFRA_KEYRING_SECRET=my-secret-password\n\n"+
 			"To run the wizard again you can use the command: defradb wizard",
@@ -85,17 +103,24 @@ func Main() {
 	stepConfigGenerated.nextStep = stepKeyringStorageLocation
 	stepKeyringStorageLocation.nextSteps = []step{stepKeyringStorageLocationBrancher, stepGenerateSystemKeyringKeys}
 	stepKeyringStorageLocationBrancher.nextSteps = []step{
-		stepWizardExitMissingDefraKeyringSecret,
+		stepQueryGeneratingEnvironmentVariable,
 		stepGenerateKeyringFiles,
+	}
+	stepQueryGeneratingEnvironmentVariable.nextSteps = []step{
+		stepGetDefraKeyringSecretInput,
+		stepWizardExitMissingDefraKeyringSecret,
 	}
 	stepGenerateKeyringFiles.nextStep = stepConfirmKeyringFilesGenerated
 	stepGenerateSystemKeyringKeys.nextStep = stepConfirmSystemKeyringKeysGenerated
+	stepGetDefraKeyringSecretInput.nextStep = stepEnvironmentVariableGenerated
+	stepEnvironmentVariableGenerated.nextStep = stepGenerateKeyringFiles
 
 	// Setup the callbacks
 	stepKeyringStorageLocation.callback = callback_SetKeyringBackend
 	stepConfigGenerator.callback = callback_GenerateConfigYAMLFile
 	stepGenerateKeyringFiles.callback = callback_GenerateKeyringFiles
 	stepGenerateSystemKeyringKeys.callback = callback_GenerateKeyringFilesInSystemKeyring
+	stepGetDefraKeyringSecretInput.callback = callback_SetAndReloadDefraKeyringSecretEnvironmentVariable
 
 	// Setup the evaluators
 	stepKeyringStorageLocationBrancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet

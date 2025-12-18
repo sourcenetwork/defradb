@@ -20,10 +20,12 @@ const (
 	errDefraKeyringSecretNotSet    = "DEFRA_KEYRING_SECRET environment variable is not set"
 	errFailedToGetKeyringFilepath  = "failed to get keyring filepath"
 	errFailedToGetKeyringNamespace = "failed to get keyring namespace"
+	errFailedToGetEnvFilename      = "failed to get env filename"
 )
 
 var (
-	errModelTypeMismatch = errors.New("model type mismatch")
+	errModelTypeMismatch           = errors.New("model type mismatch")
+	errFailedToRetrieveResultValue = errors.New("failed to retrieve result value from previous step")
 )
 
 func NewErrModelTypeMismatch(stepID, expectedType string) error {
@@ -32,5 +34,13 @@ func NewErrModelTypeMismatch(stepID, expectedType string) error {
 		errModelTypeMismatch,
 		stepID,
 		expectedType,
+	)
+}
+
+func NewErrFailedToRetrieveResultValue(stepID string) error {
+	return fmt.Errorf(
+		"%w: "+"failed to retrieve result value from previous step %s",
+		errFailedToRetrieveResultValue,
+		stepID,
 	)
 }

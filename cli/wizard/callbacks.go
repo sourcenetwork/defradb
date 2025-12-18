@@ -53,11 +53,10 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 	if !ok {
 		return errors.New(errFailedToGetKeyringFilepath)
 	}
-	fullKeyringFilepath := getRootDir() + "/" + keyringFilepath
-	if err := os.MkdirAll(fullKeyringFilepath, 0755); err != nil {
+	if err := os.MkdirAll(keyringFilepath, 0755); err != nil {
 		return err
 	}
-	keyring, err := keyring.OpenFileKeyring(fullKeyringFilepath, []byte(passwordStr))
+	keyring, err := keyring.OpenFileKeyring(keyringFilepath, []byte(passwordStr))
 	if err != nil {
 		return err
 	}
@@ -88,4 +87,21 @@ func callback_GenerateKeyringFilesInSystemKeyring(_ step, ctx *WizardContext) er
 		return err
 	}
 	return nil
+}
+
+// This callback loads the environment variables from the .env file
+func callback_SetAndReloadDefraKeyringSecretEnvironmentVariable(_ step, ctx *WizardContext) error {
+	secretValue := ctx.Results["stepGetDefraKeyringSecretInput"][0].(string)
+	envFilename, ok := getConfigValue("secretfile").(string)
+	if !ok {
+		return errors.New(errFailedToGetEnvFilename)
+	}
+	if envFilename == "" {
+		envFilename = ".env"
+	}
+	err := ensureEnvValue(envFilename, "DEFRA_KEYRING_SECRET", secretValue)
+	if err != nil {
+		return err
+	}
+	return loadEnvVariablesFromFile()
 }
