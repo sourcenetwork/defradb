@@ -1,16 +1,34 @@
-## defradb client p2p collection
+## defradb client p2p collection sync-branchable
 
-Configure the P2P collection system
+Synchronize a branchable collection's DAG from the network
 
 ### Synopsis
 
-Add, delete, or get the list of P2P collections.
-The selected collections synchronize their events on the pubsub network.
+Synchronize a branchable collection's DAG from the network.
+
+This command allows you to sync the collection-level history for branchable collections
+(collections marked with @branchable directive). It doesn't automatically subscribe
+to the collection for future updates.
+
+```
+defradb client p2p collection sync-branchable [collection-id] [flags]
+```
+
+### Examples
+
+```
+sync branchable collection:  
+  defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq
+
+sync branchable collection with timeout:  
+  defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq --timeout 10s
+```
 
 ### Options
 
 ```
-  -h, --help   help for collection
+  -h, --help               help for sync-branchable
+      --timeout duration   Timeout for sync operations (default: 5s if not specified)
 ```
 
 ### Options inherited from parent commands
@@ -37,10 +55,5 @@ The selected collections synchronize their events on the pubsub network.
 
 ### SEE ALSO
 
-* [defradb client p2p](defradb_client_p2p.md)	 - Interact with the DefraDB P2P system
-* [defradb client p2p collection add](defradb_client_p2p_collection_add.md)	 - Add P2P collections
-* [defradb client p2p collection getall](defradb_client_p2p_collection_getall.md)	 - Get all P2P collections
-* [defradb client p2p collection remove](defradb_client_p2p_collection_remove.md)	 - Remove P2P collections
-* [defradb client p2p collection sync-branchable](defradb_client_p2p_collection_sync-branchable.md)	 - Synchronize a branchable collection's DAG from the network
-* [defradb client p2p collection sync-versions](defradb_client_p2p_collection_sync-versions.md)	 - Synchronize specific collection versions from the network
+* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
 
