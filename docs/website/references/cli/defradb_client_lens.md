@@ -37,5 +37,7 @@ Make set or look for existing schema migrations on a DefraDB node.
 ### SEE ALSO
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
+* [defradb client lens add](defradb_client_lens_add.md)	 - Add a lens to the lens store
+* [defradb client lens list](defradb_client_lens_list.md)	 - List all stored lenses
 * [defradb client lens set](defradb_client_lens_set.md)	 - Set a schema migration within DefraDB
 

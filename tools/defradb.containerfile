@@ -7,7 +7,7 @@
 # WARNING: The build image SHOULD use the same OS version as the run image. Otherwise they may have
 # different versions of GLIBC and the dynamic linking of libraries will fail.
 # `bookworm` is Debian 12.
-FROM docker.io/golang:1.24-bookworm AS build
+FROM docker.io/golang:1.25-bookworm AS build
 WORKDIR /repo/
 COPY go.mod go.sum Makefile ./
 RUN make deps:modules

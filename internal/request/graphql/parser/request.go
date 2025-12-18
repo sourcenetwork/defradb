@@ -215,6 +215,13 @@ func parseSelectFields(
 				selection = s
 			} else if node.SelectionSet == nil { // regular field
 				selection = parseField(node)
+			} else if node.Name.Value == request.LinksFieldName ||
+				node.Name.Value == request.HeadsFieldName { // commit links field
+				s, err := parseCommitSelect(exe, parent, node)
+				if err != nil {
+					return nil, err
+				}
+				selection = s
 			} else { // sub type with extra fields
 				s, err := parseSelect(exe, parent, node)
 				if err != nil {

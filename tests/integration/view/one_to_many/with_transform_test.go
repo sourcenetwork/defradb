@@ -36,6 +36,21 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 					}
 				`,
 			},
+			&action.AddLens{
+				Lens: model.Lens{
+					// This transform will copy the value from `name` into the `fullName` field,
+					// like an overly-complicated alias
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "name",
+								"dst": "fullName",
+							},
+						},
+					},
+				},
+			},
 			testUtils.CreateView{
 				Query: `
 					Author {
@@ -54,19 +69,7 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 						name: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					// This transform will copy the value from `name` into the `fullName` field,
-					// like an overly-complicated alias
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.CopyModulePath,
-							Arguments: map[string]any{
-								"src": "name",
-								"dst": "fullName",
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -121,22 +124,8 @@ func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
-				Query: `
-					Author {
-						name
-					}
-				`,
-				SDL: `
-					type AuthorView @materialized(if: false) {
-						name: String
-						books: [BookView]
-					}
-					interface BookView {
-						name: String
-					}
-				`,
-				Transform: immutable.Some(model.Lens{
+			&action.AddLens{
+				Lens: model.Lens{
 					Lenses: []model.LensModule{
 						{
 							Path: lenses.SetDefaultModulePath,
@@ -153,7 +142,24 @@ func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 							},
 						},
 					},
-				}),
+				},
+			},
+			testUtils.CreateView{
+				Query: `
+					Author {
+						name
+					}
+				`,
+				SDL: `
+					type AuthorView @materialized(if: false) {
+						name: String
+						books: [BookView]
+					}
+					interface BookView {
+						name: String
+					}
+				`,
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,

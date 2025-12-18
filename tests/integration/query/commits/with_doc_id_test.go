@@ -98,7 +98,10 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 							cid
 							links {
 								cid
-								name
+								fieldName
+							}
+							heads {
+								cid
 							}
 						}
 					}`,
@@ -107,23 +110,26 @@ func TestQueryCommitsWithDocIDAndLinks(t *testing.T) {
 						{
 							"cid":   "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid":   "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
-									"name": "age",
+									"cid":       "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
+									"fieldName": "age",
 								},
 								{
-									"cid":  "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
-									"name": "name",
+									"cid":       "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
+									"fieldName": "name",
 								},
 							},
+							"heads": []map[string]any{},
 						},
 					},
 				},
@@ -219,39 +225,45 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 							cid
 							links {
 								cid
-								name
+								fieldName
+							}
+							heads {
+								cid
 							}
 						}
 					}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreia5jhb6ughpzd2rjszl4qbdd4w5zrdjfoseyrvnmhm2xiyrudvja4",
-							"links": []map[string]any{
+							"cid":   "bafyreia5jhb6ughpzd2rjszl4qbdd4w5zrdjfoseyrvnmhm2xiyrudvja4",
+							"links": []map[string]any{},
+							"heads": []map[string]any{
 								{
-									"cid":  "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
-									"name": "_head",
+									"cid": "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 								},
 							},
 						},
 						{
 							"cid":   "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid":   "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid": "bafyreieira5p74wdicqhelwbjsin7jtnnvvlplngrrcqfapleq2phexqga",
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
-									"name": "_head",
+									"cid":       "bafyreia5jhb6ughpzd2rjszl4qbdd4w5zrdjfoseyrvnmhm2xiyrudvja4",
+									"fieldName": "age",
 								},
+							},
+							"heads": []map[string]any{
 								{
-									"cid":  "bafyreia5jhb6ughpzd2rjszl4qbdd4w5zrdjfoseyrvnmhm2xiyrudvja4",
-									"name": "age",
+									"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 								},
 							},
 						},
@@ -259,14 +271,15 @@ func TestQueryCommitsWithDocIDAndUpdateAndLinks(t *testing.T) {
 							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
-									"name": "age",
+									"cid":       "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
+									"fieldName": "age",
 								},
 								{
-									"cid":  "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
-									"name": "name",
+									"cid":       "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
+									"fieldName": "name",
 								},
 							},
+							"heads": []map[string]any{},
 						},
 					},
 				},

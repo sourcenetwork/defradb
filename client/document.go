@@ -11,6 +11,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"regexp"
 	"strings"
@@ -24,6 +25,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/clock"
 	"github.com/sourcenetwork/defradb/errors"
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
@@ -101,21 +103,21 @@ type Document struct {
 	collection CollectionVersion
 }
 
-func newEmptyDoc(collection CollectionVersion) (*Document, error) {
+func newEmptyDoc(ctx context.Context, collection CollectionVersion) (*Document, error) {
 	doc := &Document{
 		fields:     make(map[string]Field),
 		values:     make(map[Field]*FieldValue),
 		collection: collection,
 	}
-	if err := doc.setDefaultValues(); err != nil {
+	if err := doc.setDefaultValues(ctx); err != nil {
 		return nil, err
 	}
 	return doc, nil
 }
 
 // NewDocWithID creates a new Document with a specified key.
-func NewDocWithID(docID DocID, collection CollectionVersion) (*Document, error) {
-	doc, err := newEmptyDoc(collection)
+func NewDocWithID(ctx context.Context, docID DocID, collection CollectionVersion) (*Document, error) {
+	doc, err := newEmptyDoc(ctx, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +126,8 @@ func NewDocWithID(docID DocID, collection CollectionVersion) (*Document, error) 
 }
 
 // NewDocFromMap creates a new Document from a data map.
-func NewDocFromMap(data map[string]any, collection CollectionVersion) (*Document, error) {
-	doc, err := newEmptyDoc(collection)
+func NewDocFromMap(ctx context.Context, data map[string]any, collection CollectionVersion) (*Document, error) {
+	doc, err := newEmptyDoc(ctx, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +145,7 @@ func NewDocFromMap(data map[string]any, collection CollectionVersion) (*Document
 		}
 	}
 
-	err = doc.setAndParseObjectType(data)
+	err = doc.setAndParseObjectType(ctx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -167,12 +169,12 @@ func IsJSONArray(obj []byte) bool {
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
-func NewDocFromJSON(obj []byte, collection CollectionVersion) (*Document, error) {
-	doc, err := newEmptyDoc(collection)
+func NewDocFromJSON(ctx context.Context, obj []byte, collection CollectionVersion) (*Document, error) {
+	doc, err := newEmptyDoc(ctx, collection)
 	if err != nil {
 		return nil, err
 	}
-	err = doc.SetWithJSON(obj)
+	err = doc.SetWithJSON(ctx, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +187,7 @@ func NewDocFromJSON(obj []byte, collection CollectionVersion) (*Document, error)
 
 // ManyFromJSON creates a new slice of Documents from a raw JSON array byte array.
 // It will return an error if the given byte array is not a valid JSON array.
-func NewDocsFromJSON(obj []byte, collection CollectionVersion) ([]*Document, error) {
+func NewDocsFromJSON(ctx context.Context, obj []byte, collection CollectionVersion) ([]*Document, error) {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
 		return nil, err
@@ -201,11 +203,11 @@ func NewDocsFromJSON(obj []byte, collection CollectionVersion) ([]*Document, err
 		if err != nil {
 			return nil, err
 		}
-		doc, err := newEmptyDoc(collection)
+		doc, err := newEmptyDoc(ctx, collection)
 		if err != nil {
 			return nil, err
 		}
-		err = doc.setWithFastJSONObject(o)
+		err = doc.setWithFastJSONObject(ctx, o)
 		if err != nil {
 			return nil, err
 		}
@@ -223,7 +225,7 @@ func NewDocsFromJSON(obj []byte, collection CollectionVersion) ([]*Document, err
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val any, field CollectionFieldDescription) (NormalValue, error) {
+func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDescription) (NormalValue, error) {
 	if field.Kind.IsNillable() {
 		if val == nil {
 			return NewNormalNil(field.Kind)
@@ -352,7 +354,7 @@ func validateFieldSchema(val any, field CollectionFieldDescription) (NormalValue
 		return NewNormalNillableFloat32Array(v), nil
 
 	case FieldKind_NILLABLE_DATETIME:
-		v, err := getDateTime(val)
+		v, err := getDateTime(ctx, val)
 		if err != nil {
 			return nil, err
 		}
@@ -468,7 +470,7 @@ func getInt64(v any) (int64, error) {
 	}
 }
 
-func getDateTime(v any) (time.Time, error) {
+func getDateTime(ctx context.Context, v any) (time.Time, error) {
 	var s string
 	switch val := v.(type) {
 	case *fastjson.Value:
@@ -482,7 +484,8 @@ func getDateTime(v any) (time.Time, error) {
 	default:
 		s = val.(string)
 		if s == "UTC_NOW" {
-			return time.Now().UTC(), nil
+			t := clock.TimeFromContext(ctx)
+			return t.UTC(), nil
 		}
 	}
 	return time.Parse(time.RFC3339, s)
@@ -672,7 +675,7 @@ func (doc *Document) GetValueWithField(f Field) (*FieldValue, error) {
 // JSON Merge Patch object. Note: fields indicated as nil in the Merge
 // Patch are to be deleted
 // @todo: Handle sub documents for SetWithJSON
-func (doc *Document) SetWithJSON(obj []byte) error {
+func (doc *Document) SetWithJSON(ctx context.Context, obj []byte) error {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
 		return err
@@ -682,14 +685,14 @@ func (doc *Document) SetWithJSON(obj []byte) error {
 		return err
 	}
 
-	return doc.setWithFastJSONObject(o)
+	return doc.setWithFastJSONObject(ctx, o)
 }
 
-func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
+func (doc *Document) setWithFastJSONObject(ctx context.Context, obj *fastjson.Object) error {
 	var visitErr error
 	obj.Visit(func(k []byte, v *fastjson.Value) {
 		fieldName := string(k)
-		err := doc.Set(fieldName, v)
+		err := doc.Set(ctx, fieldName, v)
 		if err != nil {
 			visitErr = err
 			return
@@ -699,7 +702,7 @@ func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
 }
 
 // Set the value of a field.
-func (doc *Document) Set(field string, value any) error {
+func (doc *Document) Set(ctx context.Context, field string, value any) error {
 	fd, exists := doc.collection.GetFieldByName(field)
 	if !exists {
 		return NewErrFieldNotExist(field)
@@ -724,7 +727,7 @@ func (doc *Document) Set(field string, value any) error {
 			return NewErrFieldNotExist(field)
 		}
 	}
-	val, err := validateFieldSchema(value, fd)
+	val, err := validateFieldSchema(ctx, value, fd)
 	if err != nil {
 		return err
 	}
@@ -751,9 +754,9 @@ func (doc *Document) setCBOR(t CType, field string, val NormalValue) error {
 	return doc.set(t, field, value)
 }
 
-func (doc *Document) setAndParseObjectType(value map[string]any) error {
+func (doc *Document) setAndParseObjectType(ctx context.Context, value map[string]any) error {
 	for k, v := range value {
-		err := doc.Set(k, v)
+		err := doc.Set(ctx, k, v)
 		if err != nil {
 			return err
 		}
@@ -761,12 +764,12 @@ func (doc *Document) setAndParseObjectType(value map[string]any) error {
 	return nil
 }
 
-func (doc *Document) setDefaultValues() error {
+func (doc *Document) setDefaultValues(ctx context.Context) error {
 	for _, field := range doc.collection.Fields {
 		if field.DefaultValue == nil {
 			continue // no default value to set
 		}
-		err := doc.Set(field.Name, field.DefaultValue)
+		err := doc.Set(ctx, field.Name, field.DefaultValue)
 		if err != nil {
 			return err
 		}

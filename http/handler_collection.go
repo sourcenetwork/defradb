@@ -65,7 +65,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 
 	switch {
 	case client.IsJSONArray(data):
-		docList, err := client.NewDocsFromJSON(data, col.Version())
+		docList, err := client.NewDocsFromJSON(ctx, data, col.Version())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -77,7 +77,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		}
 		rw.WriteHeader(http.StatusOK)
 	default:
-		doc, err := client.NewDocFromJSON(data, col.Version())
+		doc, err := client.NewDocFromJSON(ctx, data, col.Version())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -125,6 +125,7 @@ func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.R
 }
 
 func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	col := mustGetContextClientCollection(req)
 
 	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
@@ -149,7 +150,7 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	if err := doc.SetWithJSON(patch); err != nil {
+	if err := doc.SetWithJSON(ctx, patch); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
