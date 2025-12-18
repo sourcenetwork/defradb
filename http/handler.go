@@ -45,6 +45,7 @@ func NewApiRouter() (*Router, error) {
 		gqlTransports: []graphql.Transport{
 			graphql.SSE{},
 			graphql.POST{},
+			graphql.GET{},
 		},
 	}
 

@@ -20,6 +20,7 @@ import (
 
 var (
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
+	ErrBadFormattedVariables        = errors.New("variable formatting")
 )
 
 type errorResponse struct {

@@ -37,6 +37,10 @@ func TestExecRequest_WithValidQuery_OmitsErrors(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/graphql", bytes.NewBuffer(body))
+	req.Header = map[string][]string{
+		"Content-Type": {"application/json"},
+	}
+
 	rec := httptest.NewRecorder()
 
 	handler, err := NewHandler(cdb)
@@ -71,6 +75,10 @@ func TestExecRequest_WithInvalidQuery_HasSpecCompliantErrors(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodPost, "http://localhost:9181/api/v0/graphql", bytes.NewBuffer(body))
+	req.Header = map[string][]string{
+		"Content-Type": {"application/json"},
+	}
+
 	rec := httptest.NewRecorder()
 
 	handler, err := NewHandler(cdb)
@@ -86,7 +94,6 @@ func TestExecRequest_WithInvalidQuery_HasSpecCompliantErrors(t *testing.T) {
 	var gqlResponse map[string]any
 	err = json.Unmarshal(resData, &gqlResponse)
 	require.NoError(t, err)
-
 	errList, ok := gqlResponse["errors"]
 	require.True(t, ok)
 

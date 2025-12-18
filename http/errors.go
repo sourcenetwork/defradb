@@ -38,7 +38,7 @@ var (
 	ErrStreamingNotSupported        = errors.New("streaming not supported")
 	ErrMigrationNotFound            = errors.New("migration not found")
 	ErrMissingRequest               = errors.New("missing request")
-	ErrTransportNotSupported        = errors.New("transport not supported")
+	ErrTransportNotSupported        = errors.New("transport not supported, likely bad accept header")
 	ErrInvalidTransactionId         = errors.New("invalid transaction id")
 	ErrP2PDisabled                  = errors.New("p2p network is disabled")
 	ErrMethodIsNotImplemented       = errors.New(errMethodIsNotImplemented)

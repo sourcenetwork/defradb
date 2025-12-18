@@ -14,6 +14,7 @@ package graphql
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -34,6 +35,7 @@ func (h POST) Supports(r *http.Request) bool {
 		return false
 	}
 
+	fmt.Println(r.Header)
 	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
 		return false
@@ -95,7 +97,7 @@ func (h POST) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 }
 
 func (h POST) Methods() []string {
-	return []string{http.MethodGet}
+	return []string{http.MethodPost}
 }
 
 func (h POST) OpenAPI3Operation() *openapi3.Operation {
