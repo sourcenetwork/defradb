@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -74,7 +75,7 @@ func (delta *DocCompositeDelta) SetPriority(prio uint64) {
 
 // DocComposite is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type DocComposite struct {
-	store           corekv.ReaderWriter
+	store           datastore.Keyedstore
 	key             keys.DataStoreKey
 	schemaVersionID string
 }
@@ -84,7 +85,7 @@ var _ ReplicatedData = (*DocComposite)(nil)
 // NewDocComposite creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
 func NewDocComposite(
-	store corekv.ReaderWriter,
+	store datastore.Keyedstore,
 	schemaVersionID string,
 	key keys.DataStoreKey,
 ) *DocComposite {
@@ -127,7 +128,7 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 	}
 
 	if dagDelta.Status.IsDeleted() {
-		err := m.store.Set(ctx, m.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.DeletedObjectMarker})
+		err := m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.DeletedObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -138,7 +139,7 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
 	// the local representation of the document.
 	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	objectMarker, err := m.store.Get(ctx, m.key.ToPrimaryDataStoreKey().Bytes())
+	objectMarker, err := m.store.Get(ctx, m.key.ToPrimaryDataStoreKey())
 	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
 	if err != nil && hasObjectMarker {
 		return err
@@ -148,22 +149,22 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 		versionKey = versionKey.WithDeletedFlag()
 	}
 
-	err = m.store.Set(ctx, versionKey.Bytes(), []byte(dagDelta.SchemaVersionID))
+	err = m.store.Set(ctx, versionKey, []byte(dagDelta.SchemaVersionID))
 	if err != nil {
 		return err
 	}
 
 	if !hasObjectMarker {
 		// ensure object marker exists
-		return m.store.Set(ctx, m.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.ObjectMarker})
+		return m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.ObjectMarker})
 	}
 
 	return nil
 }
 
 func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKey) error {
-	iter, err := m.store.Iterator(ctx, corekv.IterOptions{
-		Prefix: key.Bytes(),
+	iter, err := m.store.Iterator(ctx, datastore.IterOptions{
+		Prefix: key,
 	})
 	if err != nil {
 		return err
@@ -207,11 +208,11 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 	}
 
 	for _, item := range kvArray {
-		err = m.store.Set(ctx, item.key.WithDeletedFlag().Bytes(), item.value)
+		err = m.store.Set(ctx, item.key.WithDeletedFlag(), item.value)
 		if err != nil {
 			return err
 		}
-		err = m.store.Delete(ctx, item.key.Bytes())
+		err = m.store.Delete(ctx, item.key)
 		if err != nil {
 			return err
 		}

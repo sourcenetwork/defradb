@@ -69,6 +69,8 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing.T) {
 	create1Links := testUtils.NewSameValue()
 	create2Links := testUtils.NewSameValue()
+	create1Heads := testUtils.NewSameValue()
+	create2Heads := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -78,7 +80,10 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 						cid
 						links {
 							cid
-							name
+							fieldName
+						}
+						heads {
+							cid
 						}
 					}
 				}`,
@@ -88,6 +93,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 							{
 								"cid":   "bafyreiaxbbq4vafq22ptdverb7v22eaubqb5luxul7eooble7nqlqgg5ii",
 								"links": create1Links,
+								"heads": create1Heads,
 							},
 						},
 					},
@@ -96,6 +102,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 							{
 								"cid":   "bafyreialxrvwrz4rhgomch7kr7scx6t7m6xspbjecvzneirkgskh2tjele",
 								"links": create2Links,
+								"heads": create2Heads,
 							},
 						},
 					},
@@ -108,7 +115,10 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 						_version {
 							links {
 								cid
-								name
+								fieldName
+							}
+							heads {
+								cid
 							}
 						}
 					}
@@ -120,6 +130,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 							"_version": []map[string]any{
 								{
 									"links": create1Links,
+									"heads": create1Heads,
 								},
 							},
 						},
@@ -133,7 +144,10 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 						_version {
 							links {
 								cid
-								name
+								fieldName
+							}
+							heads {
+								cid
 							}
 						}
 					}
@@ -145,6 +159,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 							"_version": []map[string]any{
 								{
 									"links": create2Links,
+									"heads": create2Heads,
 								},
 							},
 						},

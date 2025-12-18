@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -223,14 +224,15 @@ type Store interface {
 	// It will return the collection definitions of the types defined in the SDL if successful, otherwise an error
 	// will be returned.  This function does not execute the given query.
 	//
-	// Optionally, a lens transform configuration may also be provided - it will execute after the query has run.
-	// The transform is not limited to just transforming the input documents, it may also yield new ones, or filter out
-	// those passed in from the underlying query.
+	// Optionally, a transformCID may be provided referencing an already-stored lens by its CID.
+	// Use AddLens to store a lens and obtain its CID before calling AddView.
+	// The transform will execute after the query has run. It is not limited to just transforming
+	// the input documents - it may also yield new ones, or filter out those passed in from the underlying query.
 	AddView(
 		ctx context.Context,
 		gqlQuery string,
 		sdl string,
-		transform immutable.Option[model.Lens],
+		transformCID immutable.Option[string],
 	) ([]CollectionVersion, error)
 
 	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set, all views
@@ -255,6 +257,15 @@ type Store interface {
 	//
 	// Returns the ID of the Lens transform.
 	SetMigration(ctx context.Context, config LensConfig) (string, error)
+
+	// AddLens stores a lens configuration and returns its CID.
+	//
+	// The lens store is content-addressed, so identical lens configurations
+	// will return the same CID without duplicating storage.
+	AddLens(ctx context.Context, lens model.Lens) (string, error)
+
+	// ListLenses returns all stored lenses mapped by their CID.
+	ListLenses(ctx context.Context) (map[string]model.Lens, error)
 
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
@@ -304,6 +315,9 @@ type Txn interface {
 
 	// ID returns the unique immutable identifier for this transaction.
 	ID() uint64
+
+	// StartTS returns the timestamp from the start of the transaction
+	StartTS() time.Time
 
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an

@@ -273,3 +273,40 @@ func (c *Client) SyncCollectionVersions(ctx context.Context, versionIDs ...strin
 	_, err = c.http.request(httpReq)
 	return err
 }
+
+func (c *Client) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	methodURL := c.http.apiURL.JoinPath("p2p", "collections", "sync-branchable")
+
+	req := map[string]any{
+		"collectionID": collectionID,
+	}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		req["timeout"] = time.Until(deadline).String()
+	}
+	body, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+
+	// Use a separate context for HTTP request with extra buffer time.
+	// The server will use the timeout from the request body for the actual sync operation.
+	// We add buffer time to account for HTTP overhead and response transmission.
+	// This is necessary because the node handling this request will usually wait whole timeout
+	// duration as it might receive responses from multiple peers.
+	httpCtx := context.Background()
+	if hasDeadline {
+		var cancel context.CancelFunc
+		httpCtx, cancel = context.WithTimeout(httpCtx, time.Until(deadline)+500*time.Millisecond)
+		defer cancel()
+	}
+
+	httpReq, err := http.NewRequestWithContext(httpCtx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(httpReq)
+	return err
+}

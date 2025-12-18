@@ -11,6 +11,7 @@
 package keys
 
 import (
+	"bytes"
 	"strconv"
 
 	ds "github.com/ipfs/go-datastore"
@@ -47,6 +48,36 @@ func NewViewCacheKey(collectionShortID uint32, itemID uint) ViewCacheKey {
 		CollectionShortID: collectionShortID,
 		ItemID:            itemID,
 	}
+}
+
+func NewViewCacheKeyFromRaw(raw []byte) (ViewCacheKey, error) {
+	if len(raw) == 0 {
+		return ViewCacheKey{}, nil
+	}
+
+	components := bytes.Split(raw, []byte("/"))
+	if len(components) > 2 {
+		return ViewCacheKey{}, ErrInvalidKey
+	}
+
+	_, collectionShortID, err := encoding.DecodeUvarintAscending(components[0])
+	if err != nil {
+		return ViewCacheKey{}, err
+	}
+
+	var itemID uint
+	if len(components) == 2 {
+		_, r, err := encoding.DecodeUvarintAscending(components[1])
+		if err != nil {
+			return ViewCacheKey{}, err
+		}
+		itemID = uint(r)
+	}
+
+	return ViewCacheKey{
+		CollectionShortID: uint32(collectionShortID),
+		ItemID:            itemID,
+	}, nil
 }
 
 func (k ViewCacheKey) ToString() string {

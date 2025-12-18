@@ -52,6 +52,8 @@ var openApiSchemas = map[string]any{
 	"acp_document_relationship_delete_request": &deleteDACActorRelationshipRequest{},
 	"identity":                                 &identity.PublicRawIdentity{},
 	"set_migration":                            &SetMigrationResponse{},
+	"add_lens_request":                         &AddLensRequest{},
+	"add_lens_response":                        &AddLensResponse{},
 }
 
 func NewOpenAPISpec() (*openapi3.T, error) {

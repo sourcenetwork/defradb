@@ -178,3 +178,189 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToOneRelationInSameBatch_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+					type Book {
+						title: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "published", "Kind": "Book", "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "published_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author", "Kind": "Author", "RelationName": "author_book"
+						}}
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title": "The Great Gatsby",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "F. Scott Fitzgerald",
+					"published": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						published {
+							title
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "F. Scott Fitzgerald",
+							"published": map[string]any{
+								"title": "The Great Gatsby",
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						title
+						author {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"title": "The Great Gatsby",
+							"author": map[string]any{
+								"name": "F. Scott Fitzgerald",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelationInSameBatch_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+					type Book {
+						title: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "published", "Kind": "[Book]", "RelationName": "author_book"
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author", "Kind": "Author", "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+						}}
+					]
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name": "F. Scott Fitzgerald",
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "The Great Gatsby",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Tender Is the Night",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Author {
+						name
+						published {
+							title
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "F. Scott Fitzgerald",
+							"published": []map[string]any{
+								{"title": "The Great Gatsby"},
+								{"title": "Tender Is the Night"},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: `query {
+					Book {
+						title
+						author {
+							name
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"title": "The Great Gatsby",
+							"author": map[string]any{
+								"name": "F. Scott Fitzgerald",
+							},
+						},
+						{
+							"title": "Tender Is the Night",
+							"author": map[string]any{
+								"name": "F. Scott Fitzgerald",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

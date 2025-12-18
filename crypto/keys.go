@@ -12,7 +12,6 @@ package crypto
 
 import (
 	"bytes"
-	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rand"
@@ -197,27 +196,11 @@ func PublicKeyFromString(keyType KeyType, keyString string) (PublicKey, error) {
 			if keyBytes[0] != 0x04 {
 				return nil, ErrInvalidECDSAPubKey
 			}
-			_, err := ecdh.P256().NewPublicKey(keyBytes)
+			pubKey, err = ecdsa.ParseUncompressedPublicKey(elliptic.P256(), keyBytes)
 			if err != nil {
 				return nil, ErrInvalidECDSAPubKey
 			}
-			if len(keyBytes) != 65 {
-				return nil, ErrInvalidECDSAPubKey
-			}
-			x := new(big.Int).SetBytes(keyBytes[1:33])
-			y := new(big.Int).SetBytes(keyBytes[33:65])
-			pubKey = &ecdsa.PublicKey{
-				Curve: elliptic.P256(),
-				X:     x,
-				Y:     y,
-			}
-			compressedBytes = elliptic.MarshalCompressed(elliptic.P256(), x, y)
-			// TODO: use this approach after upgrading to Go v1.25+ (https://github.com/sourcenetwork/defradb/issues/4205)
-			// pubKey, err := ecdsa.ParseUncompressedPublicKey(elliptic.P256(), keyBytes)
-			// if err != nil {
-			// 	return nil, ErrInvalidECDSAPubKey
-			// }
-			// compressedBytes = elliptic.MarshalCompressed(elliptic.P256(), pubKey.X, pubKey.Y)
+			compressedBytes = elliptic.MarshalCompressed(elliptic.P256(), pubKey.X, pubKey.Y)
 		} else {
 			return nil, ErrInvalidECDSAPubKey
 		}
@@ -418,24 +401,10 @@ func PrivateKeyFromBytes(keyType KeyType, keyBytes []byte) (PrivateKey, error) {
 		if len(keyBytes) != 32 {
 			return nil, ErrInvalidECDSAPrivKeyBytes
 		}
-		ecdhPrivKey, err := ecdh.P256().NewPrivateKey(keyBytes)
+		privKey, err := ecdsa.ParseRawPrivateKey(elliptic.P256(), keyBytes)
 		if err != nil {
 			return nil, err
 		}
-		pubKeyBytes := ecdhPrivKey.PublicKey().Bytes()
-		privKey := &ecdsa.PrivateKey{
-			D: new(big.Int).SetBytes(keyBytes),
-			PublicKey: ecdsa.PublicKey{
-				Curve: elliptic.P256(),
-				X:     new(big.Int).SetBytes(pubKeyBytes[1:33]),
-				Y:     new(big.Int).SetBytes(pubKeyBytes[33:65]),
-			},
-		}
-		// TODO: use this approach after upgrading to Go v1.25+ (https://github.com/sourcenetwork/defradb/issues/4205)
-		// privKey, err := ecdsa.ParseRawPrivateKey(elliptic.P256(), keyBytes)
-		// if err != nil {
-		// 	return nil, err
-		// }
 		return &secp256r1PrivateKey{key: privKey}, nil
 
 	case KeyTypeEd25519:

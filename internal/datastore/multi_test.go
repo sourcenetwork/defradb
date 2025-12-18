@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
+	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -33,7 +34,7 @@ func TestMultistore_HumanReadableKeys_ShouldSucceed(t *testing.T) {
 	require.NoError(t, err)
 	err = P2PBlockstoreFrom(rootstore, immutable.None[int]()).Put(ctx, blocks.NewBlock([]byte("1234")))
 	require.NoError(t, err)
-	err = ms.Datastore().Set(ctx, []byte("/123"), []byte("123"))
+	err = ms.Datastore().Set(ctx, keys.NewViewCacheKey(1, 23), []byte("123"))
 	require.NoError(t, err)
 	err = ms.Encstore().Put(ctx, blocks.NewBlock([]byte("123")))
 	require.NoError(t, err)

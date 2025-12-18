@@ -132,7 +132,7 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 		if err != nil {
 			return err
 		}
-		err = doc.Set(embedding.FieldName, embeddingVec)
+		err = doc.Set(ctx, embedding.FieldName, embeddingVec)
 		if err != nil {
 			return err
 		}

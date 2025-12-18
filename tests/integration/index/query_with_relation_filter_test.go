@@ -175,15 +175,15 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			&action.AddSchema{
 				Schema: `
 					type User {
-						name: String 
+						name: String
 						age: Int
-						address: Address @primary @index
-					} 
+						address: Address @primary @index(unique: true)
+					}
 
 					type Address {
 						user: User
 						city: String @index
-						street: String 
+						street: String
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -271,11 +271,11 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req1),
-				// we make 1 index fetch to get the only address with city == "London"
-				// we fetch 2 fields for Address doc: "city" and "street"
-				// then we scan all 10 users to find one with matching "address_id"
-				// for each of User docs we fetch 3 fields: "name", "age" and "address_id"
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(32).WithIndexFetches(1),
+				// With the auto-created unique index on address_id:
+				// 1 index fetch to get the address with city == "London"
+				// 1 index fetch to find the user with matching address_id
+				// 5 field fetches total
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(5).WithIndexFetches(2),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -289,10 +289,10 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req2),
-				// we make 3 index fetch to get the 3 address with city == "Montreal"
-				// then we scan all 10 users to find one with matching "address_id" for each address
-				// after this we fetch the name of each user
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				// With the auto-created unique index on address_id:
+				// 3 index fetches to get the 3 addresses with city == "Montreal"
+				// 3 index fetches to find the users with matching address_id
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
 			},
 		},
 	}
@@ -314,15 +314,15 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 			&action.AddSchema{
 				Schema: `
 					type User {
-						name: String 
+						name: String
 						age: Int
-						address: Address @primary @index
-					} 
+						address: Address @primary @index(unique: true)
+					}
 
 					type Address {
 						user: User
 						city: String @index
-						street: String 
+						street: String
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{

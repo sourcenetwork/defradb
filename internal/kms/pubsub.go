@@ -37,7 +37,11 @@ import (
 const pubsubTopic = "encryption"
 
 type PubSubServer interface {
-	AddPubSubTopic(topicName string, subscribe bool, handler client.PubsubMessageHandler) error
+	AddPubSubTopic(
+		topicName string,
+		subscribe bool,
+		handler client.PubsubMessageHandler,
+	) error
 	PublishToTopic(
 		ctx context.Context,
 		topic string,
