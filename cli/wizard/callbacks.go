@@ -91,7 +91,14 @@ func callback_GenerateKeyringFilesInSystemKeyring(_ step, ctx *WizardContext) er
 
 // This callback loads the environment variables from the .env file
 func callback_SetAndReloadDefraKeyringSecretEnvironmentVariable(_ step, ctx *WizardContext) error {
-	secretValue := ctx.Results["stepGetDefraKeyringSecretInput"][0].(string)
+	stepToRetrieveResultFrom := "stepGetDefraKeyringSecretInput"
+	if len(ctx.Results[stepToRetrieveResultFrom]) == 0 {
+		return NewErrNoResultValue(stepToRetrieveResultFrom)
+	}
+	secretValue, ok := ctx.Results[stepToRetrieveResultFrom][0].(string)
+	if !ok {
+		return NewErrAssertTypeFailed(ctx.Results[stepToRetrieveResultFrom][0], "string")
+	}
 	envFilename, ok := getConfigValue("secretfile").(string)
 	if !ok {
 		return errors.New(errFailedToGetEnvFilename)

@@ -26,6 +26,8 @@ const (
 var (
 	errModelTypeMismatch           = errors.New("model type mismatch")
 	errFailedToRetrieveResultValue = errors.New("failed to retrieve result value from previous step")
+	errAssertTypeFailed            = errors.New("type assertion failed")
+	errNoResultValue               = errors.New("no result value found")
 )
 
 func NewErrModelTypeMismatch(stepID, expectedType string) error {
@@ -41,6 +43,23 @@ func NewErrFailedToRetrieveResultValue(stepID string) error {
 	return fmt.Errorf(
 		"%w: "+"failed to retrieve result value from previous step %s",
 		errFailedToRetrieveResultValue,
+		stepID,
+	)
+}
+
+func NewErrAssertTypeFailed(value any, expectedType string) error {
+	return fmt.Errorf(
+		"%w: "+"a type assertion failed when trying to cast %v to type %s",
+		errAssertTypeFailed,
+		value,
+		expectedType,
+	)
+}
+
+func NewErrNoResultValue(stepID string) error {
+	return fmt.Errorf(
+		"%w: "+"no result value found for step %s",
+		errNoResultValue,
 		stepID,
 	)
 }

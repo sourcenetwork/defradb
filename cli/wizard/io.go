@@ -74,7 +74,11 @@ func ensureEnvValue(filename, key, value string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+
+	// Defer closing the file,
+	defer func() {
+		_ = file.Close()
+	}()
 
 	var lines []string
 	found := false
