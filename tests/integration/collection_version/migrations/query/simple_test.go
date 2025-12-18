@@ -1115,9 +1115,8 @@ func TestSchemaMigrationQuery_MigrationBetweenOldVersions_ShouldApplyMigration(t
 				Schema: `
 					type Users {
 						name: String
-						age: Int @index
-					}
-				`,
+						age: Int 
+					}`,
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
