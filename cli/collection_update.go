@@ -28,6 +28,7 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 		Short: "Update documents by docID or filter.",
 		Long:  `Update documents by docID or filter.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
@@ -43,7 +44,7 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
 					return err
 				}
-				res, err := col.UpdateWithFilter(cmd.Context(), filterValue, updater)
+				res, err := col.UpdateWithFilter(ctx, filterValue, updater)
 				if err != nil {
 					return err
 				}
@@ -53,11 +54,11 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				doc, err := col.Get(cmd.Context(), docID, true)
+				doc, err := col.Get(ctx, docID, true)
 				if err != nil {
 					return err
 				}
-				if err := doc.SetWithJSON([]byte(updater)); err != nil {
+				if err := doc.SetWithJSON(ctx, []byte(updater)); err != nil {
 					return err
 				}
 				return col.Update(cmd.Context(), doc)

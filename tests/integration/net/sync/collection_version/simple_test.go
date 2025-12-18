@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColSync_WithInitialColVersion(t *testing.T) {
+func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -96,7 +96,7 @@ func TestColSync_WithInitialColVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColSync_WithInitialColVersion_CanBeActivatedAndQueried(t *testing.T) {
+func TestSyncColVersion_WithInitialColVersion_CanBeActivatedAndQueried(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),

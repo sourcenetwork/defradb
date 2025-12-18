@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -33,6 +34,27 @@ func (db *DB) getLensStore(ctx context.Context) store.Store {
 	}
 
 	return db.lensNode.Store
+}
+
+func (db *DB) addLens(ctx context.Context, lens model.Lens) (string, error) {
+	cid, err := db.getLensStore(ctx).Add(ctx, lens)
+	if err != nil {
+		return "", err
+	}
+	return cid.String(), nil
+}
+
+func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
+	lenses, err := db.getLensStore(ctx).List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]model.Lens, len(lenses))
+	for cid, lens := range lenses {
+		result[cid.String()] = lens
+	}
+	return result, nil
 }
 
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {

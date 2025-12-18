@@ -1,0 +1,262 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package index
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestPatchRelation_OneToOne_CreatesUniqueIndex(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+					type Book {
+						title: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "published", "Kind": "Book", "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "published_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author", "Kind": "Author", "RelationName": "author_book"
+						}}
+					]
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						ID:     1,
+						Name:   "Author_published_id_ASC",
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{Name: "published_id"},
+						},
+					},
+				},
+			},
+			testUtils.GetIndexes{
+				CollectionID:    1,
+				ExpectedIndexes: []client.IndexDescription{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+					type Book {
+						title: String
+					}
+					type Publisher {
+						name: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author", "Kind": "Author", "RelationName": "book_author", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author_id", "Kind": 1, "RelationName": "book_author", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "book", "Kind": "Book", "RelationName": "book_author"
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "publisher", "Kind": "Publisher", "RelationName": "book_publisher", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "publisher_id", "Kind": 1, "RelationName": "book_publisher", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Publisher/Fields/-", "value": {
+							"Name": "book", "Kind": "Book", "RelationName": "book_publisher"
+						}}
+					]
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 1,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						ID:     1,
+						Name:   "Book_author_id_ASC",
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{Name: "author_id"},
+						},
+					},
+					{
+						ID:     2,
+						Name:   "Book_publisher_id_ASC",
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{Name: "publisher_id"},
+						},
+					},
+				},
+			},
+			testUtils.GetIndexes{
+				CollectionID:    0,
+				ExpectedIndexes: []client.IndexDescription{},
+			},
+			testUtils.GetIndexes{
+				CollectionID:    2,
+				ExpectedIndexes: []client.IndexDescription{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPatchRelation_OneToMany_DoesNotCreateUniqueIndex(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+					type Book {
+						title: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "published", "Kind": "[Book]", "RelationName": "author_book"
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author", "Kind": "Author", "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+						}}
+					]
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID:    0,
+				ExpectedIndexes: []client.IndexDescription{},
+			},
+			testUtils.GetIndexes{
+				CollectionID:    1,
+				ExpectedIndexes: []client.IndexDescription{},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *testing.T) {
+	const (
+		authorV1 = "bafyreibvcavbxqwimz5vdxe5q5href63g3skc6ytg45hm4fqh6wsx57wmq"
+		authorV2 = "bafyreih6dt5zss2dor3fyo74eplqhbmlyj2pzuw3amku5pv5inuqdnaukm"
+	)
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+					}
+					type Book {
+						title: String
+					}
+				`,
+			},
+			testUtils.PatchCollection{
+				Patch: `
+					[
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "published", "Kind": "Book", "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Author/Fields/-", "value": {
+							"Name": "published_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+						}},
+						{ "op": "add", "path": "/Book/Fields/-", "value": {
+							"Name": "author", "Kind": "Author", "RelationName": "author_book"
+						}}
+					]
+				`,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						ID:     1,
+						Name:   "Author_published_id_ASC",
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{Name: "published_id"},
+						},
+					},
+				},
+			},
+			testUtils.SetActiveCollectionVersion{
+				VersionID: authorV1,
+			},
+			testUtils.GetIndexes{
+				CollectionID:    0,
+				ExpectedIndexes: []client.IndexDescription{},
+			},
+			testUtils.SetActiveCollectionVersion{
+				VersionID: authorV2,
+			},
+			testUtils.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						ID:     1,
+						Name:   "Author_published_id_ASC",
+						Unique: true,
+						Fields: []client.IndexedFieldDescription{
+							{Name: "published_id"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

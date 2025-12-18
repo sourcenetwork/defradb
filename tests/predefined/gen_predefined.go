@@ -11,6 +11,7 @@
 package predefined
 
 import (
+	"context"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -24,7 +25,7 @@ import (
 // are created with the fields parsed from the SDL.
 // This allows us to have only one large list of docs with predefined
 // fields, and create SDLs with different fields from it.
-func CreateFromSDL(gqlSDL string, docsList DocsList) ([]gen.GeneratedDoc, error) {
+func CreateFromSDL(ctx context.Context, gqlSDL string, docsList DocsList) ([]gen.GeneratedDoc, error) {
 	resultDocs := make([]gen.GeneratedDoc, 0, len(docsList.Docs))
 	typeDefsByName, err := gen.ParseSDL(gqlSDL)
 	if err != nil {
@@ -42,7 +43,7 @@ func CreateFromSDL(gqlSDL string, docsList DocsList) ([]gen.GeneratedDoc, error)
 	}
 
 	for _, doc := range docsList.Docs {
-		docs, err := generator.generateRelatedDocs(doc, docsList.ColName)
+		docs, err := generator.generateRelatedDocs(ctx, doc, docsList.ColName)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +74,7 @@ func CreateFromSDL(gqlSDL string, docsList DocsList) ([]gen.GeneratedDoc, error)
 //
 // It will generator documents for `User` collection replicating the given structure, i.e.
 // creating devices as related secondary documents.
-func Create(defs []client.CollectionVersion, docsList DocsList) ([]gen.GeneratedDoc, error) {
+func Create(ctx context.Context, defs []client.CollectionVersion, docsList DocsList) ([]gen.GeneratedDoc, error) {
 	resultDocs := make([]gen.GeneratedDoc, 0, len(docsList.Docs))
 	typeDefs := make(map[string]client.CollectionVersion)
 	for _, col := range defs {
@@ -86,7 +87,7 @@ func Create(defs []client.CollectionVersion, docsList DocsList) ([]gen.Generated
 	}
 
 	for _, doc := range docsList.Docs {
-		docs, err := generator.generateRelatedDocs(doc, docsList.ColName)
+		docs, err := generator.generateRelatedDocs(ctx, doc, docsList.ColName)
 		if err != nil {
 			return nil, err
 		}
@@ -124,6 +125,7 @@ func toRequestedDoc(doc map[string]any, typeDef *client.CollectionVersion) map[s
 // generatePrimary generates primary docs for the given secondary doc and adds foreign docID
 // to the secondary doc to reference the primary docs.
 func (d *docGenerator) generatePrimary(
+	ctx context.Context,
 	secDocMap map[string]any,
 	secType *client.CollectionVersion,
 ) (map[string]any, []gen.GeneratedDoc, error) {
@@ -136,11 +138,11 @@ func (d *docGenerator) generatePrimary(
 				primType := d.types[primaryDef.Name]
 
 				primDocMap, subResult, err := d.generatePrimary(
-					secDocMap[secDocField.Name].(map[string]any), &primType)
+					ctx, secDocMap[secDocField.Name].(map[string]any), &primType)
 				if err != nil {
 					return nil, nil, NewErrFailedToGenerateDoc(err)
 				}
-				primDoc, err := client.NewDocFromMap(primDocMap, primType)
+				primDoc, err := client.NewDocFromMap(ctx, primDocMap, primType)
 				if err != nil {
 					return nil, nil, NewErrFailedToGenerateDoc(err)
 				}
@@ -150,7 +152,7 @@ func (d *docGenerator) generatePrimary(
 				result = append(result, subResult...)
 
 				secondaryDocs, err := d.generateSecondaryDocs(
-					secDocMapField.(map[string]any), docID, &primType, secType.Name)
+					ctx, secDocMapField.(map[string]any), docID, &primType, secType.Name)
 				if err != nil {
 					return nil, nil, err
 				}
@@ -163,23 +165,26 @@ func (d *docGenerator) generatePrimary(
 
 // generateRelatedDocs generates related docs (primary and secondary) for the given doc and
 // adds foreign docID to the given doc to reference the primary docs.
-func (d *docGenerator) generateRelatedDocs(docMap map[string]any, typeName string) ([]gen.GeneratedDoc, error) {
+func (d *docGenerator) generateRelatedDocs(ctx context.Context,
+	docMap map[string]any,
+	typeName string,
+) ([]gen.GeneratedDoc, error) {
 	typeDef := d.types[typeName]
 
 	// create first primary docs and link them to the given doc so that we can define
 	// docID for the complete document.
-	requested, result, err := d.generatePrimary(docMap, &typeDef)
+	requested, result, err := d.generatePrimary(ctx, docMap, &typeDef)
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocFromMap(requested, typeDef)
+	doc, err := client.NewDocFromMap(ctx, requested, typeDef)
 	if err != nil {
 		return nil, NewErrFailedToGenerateDoc(err)
 	}
 
 	result = append(result, gen.GeneratedDoc{Col: &typeDef, Doc: doc})
 
-	secondaryDocs, err := d.generateSecondaryDocs(docMap, doc.ID().String(), &typeDef, "")
+	secondaryDocs, err := d.generateSecondaryDocs(ctx, docMap, doc.ID().String(), &typeDef, "")
 	if err != nil {
 		return nil, err
 	}
@@ -189,6 +194,7 @@ func (d *docGenerator) generateRelatedDocs(docMap map[string]any, typeName strin
 }
 
 func (d *docGenerator) generateSecondaryDocs(
+	ctx context.Context,
 	primaryDocMap map[string]any,
 	docID string,
 	primaryType *client.CollectionVersion,
@@ -201,7 +207,7 @@ func (d *docGenerator) generateSecondaryDocs(
 				otherDef, _ := gen.GetCollection(d.definitionCache, *primaryType, field.Kind)
 				if parentTypeName == "" || parentTypeName != otherDef.Name {
 					docs, err := d.generateSecondaryDocsForField(
-						primaryDocMap, *primaryType, &field, docID)
+						ctx, primaryDocMap, *primaryType, &field, docID)
 					if err != nil {
 						return nil, err
 					}
@@ -216,6 +222,7 @@ func (d *docGenerator) generateSecondaryDocs(
 
 // generateSecondaryDocsForField generates secondary docs for the given field of a primary doc.
 func (d *docGenerator) generateSecondaryDocsForField(
+	ctx context.Context,
 	primaryDoc map[string]any,
 	primaryType client.CollectionVersion,
 	relField *client.CollectionFieldDescription,
@@ -235,7 +242,7 @@ func (d *docGenerator) generateSecondaryDocsForField(
 			case []map[string]any:
 				for _, relDoc := range relVal {
 					relDoc[primaryPropName] = primaryDocID
-					actions, err := d.generateRelatedDocs(relDoc, relTypeDef.Name)
+					actions, err := d.generateRelatedDocs(ctx, relDoc, relTypeDef.Name)
 					if err != nil {
 						return nil, err
 					}
@@ -243,7 +250,7 @@ func (d *docGenerator) generateSecondaryDocsForField(
 				}
 			case map[string]any:
 				relVal[primaryPropName] = primaryDocID
-				actions, err := d.generateRelatedDocs(relVal, relTypeDef.Name)
+				actions, err := d.generateRelatedDocs(ctx, relVal, relTypeDef.Name)
 				if err != nil {
 					return nil, err
 				}

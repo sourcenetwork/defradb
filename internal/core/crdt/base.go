@@ -17,12 +17,13 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func setPriority(
 	ctx context.Context,
-	store corekv.ReaderWriter,
+	store datastore.Keyedstore,
 	key keys.DataStoreKey,
 	priority uint64,
 ) error {
@@ -33,17 +34,17 @@ func setPriority(
 		return ErrEncodingPriority
 	}
 
-	return store.Set(ctx, prioK.Bytes(), buf[0:n])
+	return store.Set(ctx, prioK, buf[0:n])
 }
 
 // get the current priority for given key
 func getPriority(
 	ctx context.Context,
-	store corekv.ReaderWriter,
+	store datastore.Keyedstore,
 	key keys.DataStoreKey,
 ) (uint64, error) {
 	pKey := key.WithPriorityFlag()
-	pbuf, err := store.Get(ctx, pKey.Bytes())
+	pbuf, err := store.Get(ctx, pKey)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			return 0, nil

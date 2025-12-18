@@ -38,6 +38,8 @@ extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
+extern Result LensAdd(uintptr_t nodePtr, char* cfg);
+extern Result LensList(uintptr_t nodePtr);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
 extern Result P2PInfo(uintptr_t nodePtr);
@@ -54,6 +56,7 @@ extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections, uintptr_t 
 extern Result P2PdocumentGetAll(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr, uintptr_t identity);
 extern Result P2PcollectionSyncVersions(uintptr_t nodePtr, char* versionIDs, char* timeoutStr, uintptr_t identity);
+extern Result P2PbranchableCollectionSync(uintptr_t nodePtr, char* collectionID, char* timeoutStr, uintptr_t identity);
 extern Result PollSubscription(char* id);
 extern Result CloseSubscription(char* id);
 extern Result ExecuteQuery(uintptr_t nodePtr, char* query, uintptr_t identity,
@@ -62,7 +65,7 @@ extern Result AddSchema(uintptr_t nodePtr, char* schema, uintptr_t identity);
 extern Result SetActiveCollection(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern NewTxnResult TransactionCreate(uintptr_t nodePtr, int isConcurrent, int isReadOnly);
 extern Result VersionGet(int flagFull, int flagJSON);
-extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformStr, uintptr_t identityPtr);
+extern Result ViewAdd(uintptr_t nodePtr, char* query, char* sdl, char* transformCIDStr, uintptr_t identityPtr);
 extern Result ViewRefresh(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 */
 import "C"
@@ -316,6 +319,29 @@ func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...str
 	defer C.free(unsafe.Pointer(cTimerStr))
 
 	res := ConvertAndFreeCResult(C.P2PcollectionSyncVersions(C.uintptr_t(w.handle), versions, cTimerStr, cIdentity))
+
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+	return nil
+}
+
+func (w *CWrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	cIdentity := identityFromContext(ctx)
+	cCollectionID := C.CString(collectionID)
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.IdentityFree(cIdentity)
+
+	deadline, hasDeadline := ctx.Deadline()
+	timerStr := ""
+	if hasDeadline {
+		timerStr = time.Until(deadline).String()
+	}
+	cTimerStr := C.CString(timerStr)
+	defer C.free(unsafe.Pointer(cTimerStr))
+
+	res := ConvertAndFreeCResult(C.P2PbranchableCollectionSync(C.uintptr_t(w.handle), cCollectionID, cTimerStr,
+		cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -596,24 +622,19 @@ func (w *CWrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	cIdentity := identityFromContext(ctx)
-	transformStr, err := stringFromLensOption(transform)
-	cTransform := C.CString(transformStr)
+	cTransformCID := C.CString(stringFromImmutableOptionString(transformCID))
 	cQuery := C.CString(query)
 	cSDL := C.CString(sdl)
-	defer C.free(unsafe.Pointer(cTransform))
+	defer C.free(unsafe.Pointer(cTransformCID))
 	defer C.free(unsafe.Pointer(cQuery))
 	defer C.free(unsafe.Pointer(cSDL))
 	defer C.IdentityFree(cIdentity)
 
-	if err != nil {
-		return []client.CollectionVersion{}, err
-	}
-
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ViewAdd(callHandle, cQuery, cSDL, cTransform, cIdentity))
+	res := ConvertAndFreeCResult(C.ViewAdd(callHandle, cQuery, cSDL, cTransformCID, cIdentity))
 
 	if res.Status != 0 {
 		return []client.CollectionVersion{}, errors.New(res.Error)
@@ -676,6 +697,38 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (
 		return "", errors.New(res.Error)
 	}
 	return res.Value, nil
+}
+
+func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	lensConfig, err := json.Marshal(lens)
+	if err != nil {
+		return "", err
+	}
+	lensStr := C.CString(string(lensConfig))
+	defer C.free(unsafe.Pointer(lensStr))
+
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.LensAdd(callHandle, lensStr))
+
+	if res.Status != 0 {
+		return "", errors.New(res.Error)
+	}
+	return res.Value, nil
+}
+
+func (w *CWrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	callHandle := getNodeOrTxnHandle(w.handle, ctx)
+	res := ConvertAndFreeCResult(C.LensList(callHandle))
+
+	if res.Status != 0 {
+		return nil, errors.New(res.Error)
+	}
+
+	var lenses map[string]model.Lens
+	if err := json.Unmarshal([]byte(res.Value), &lenses); err != nil {
+		return nil, err
+	}
+	return lenses, nil
 }
 
 func (w *CWrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
