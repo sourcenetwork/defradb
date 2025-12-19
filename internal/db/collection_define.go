@@ -361,9 +361,7 @@ existingVersionLoop:
 					return err
 				}
 			}
-		}
-
-		if col.PreviousVersion.HasValue() && migration.HasValue() {
+		} else if col.PreviousVersion.HasValue() && migration.HasValue() {
 			_, err = db.setMigration(ctx, client.LensConfig{
 				SourceSchemaVersionID:      col.PreviousVersion.Value().SourceCollectionID,
 				DestinationSchemaVersionID: col.VersionID,
