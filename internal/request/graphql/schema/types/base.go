@@ -58,6 +58,14 @@ func BooleanListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 				Description: noneOperatorDescription,
 				Type:        op,
 			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(gql.Boolean),
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(gql.Boolean),
+			},
 		},
 	})
 }
@@ -105,6 +113,14 @@ func NotNullBooleanListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 			"_none": &gql.InputObjectFieldConfig{
 				Description: noneOperatorDescription,
 				Type:        op,
+			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(gql.Boolean)),
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(gql.Boolean)),
 			},
 		},
 	})
@@ -212,6 +228,14 @@ func Float64ListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 				Description: noneOperatorDescription,
 				Type:        op,
 			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(Float64),
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(Float64),
+			},
 		},
 	})
 }
@@ -275,6 +299,14 @@ func NotNullFloat64ListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 			"_none": &gql.InputObjectFieldConfig{
 				Description: noneOperatorDescription,
 				Type:        op,
+			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(Float64)),
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(Float64)),
 			},
 		},
 	})
@@ -340,6 +372,14 @@ func Float32ListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 				Description: noneOperatorDescription,
 				Type:        op,
 			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(Float32),
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(Float32),
+			},
 		},
 	})
 }
@@ -403,6 +443,14 @@ func NotNullFloat32ListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 			"_none": &gql.InputObjectFieldConfig{
 				Description: noneOperatorDescription,
 				Type:        op,
+			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(Float32)),
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(Float32)),
 			},
 		},
 	})
@@ -468,6 +516,14 @@ func IntListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 				Description: noneOperatorDescription,
 				Type:        op,
 			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(gql.Int),
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(gql.Int),
+			},
 		},
 	})
 }
@@ -531,6 +587,14 @@ func NotNullIntListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 			"_none": &gql.InputObjectFieldConfig{
 				Description: noneOperatorDescription,
 				Type:        op,
+			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(gql.Int)),
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(gql.Int)),
 			},
 		},
 	})
@@ -596,6 +660,14 @@ func StringListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 				Description: noneOperatorDescription,
 				Type:        op,
 			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(gql.String),
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(gql.String),
+			},
 		},
 	})
 }
@@ -659,6 +731,14 @@ func NotNullStringListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 			"_none": &gql.InputObjectFieldConfig{
 				Description: noneOperatorDescription,
 				Type:        op,
+			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(gql.String)),
+			},
+			"_ne": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(gql.String)),
 			},
 		},
 	})
