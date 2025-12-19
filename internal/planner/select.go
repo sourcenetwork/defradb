@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -199,6 +200,12 @@ func (n *selectNode) Close() error {
 	return n.source.Close()
 }
 
+// checkForMigrations checks if there are any migrations registered for the given collection.
+// This is used to determine if the filter should be kept in selectNode for post-lens application.
+func (n *selectNode) checkForMigrations(col client.Collection) (bool, error) {
+	return description.HasMigrations(n.planner.ctx, col.Version().CollectionID, col.Version().VersionID)
+}
+
 func (n *selectNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
@@ -266,7 +273,16 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 		if n.selectReq.OrderBy != nil {
 			origScan.ordering = n.selectReq.OrderBy.Conditions
 		}
-		n.filter = nil
+
+		// If there are migrations, we keep the filter in selectNode so it can be applied
+		// after lens transformation. Otherwise, we nil it out as the scanNode will handle it.
+		hasMigrations, err := n.checkForMigrations(sourcePlan.collection)
+		if err != nil {
+			return nil, nil, err
+		}
+		if !hasMigrations {
+			n.filter = nil
+		}
 
 		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
 		// query, which means we need to propagate the values to the underlying VersionedFetcher
