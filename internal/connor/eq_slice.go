@@ -49,11 +49,6 @@ func equalAnyToAnySlice(a any, b []any) (bool, error) {
 		return equalOptionSlice(aTyped, b), nil
 	case []immutable.Option[time.Time]:
 		return equalOptionSlice(aTyped, b), nil
-
-	case []any:
-		// need to swap args, this can only happen
-		// at most once
-		return equalAnyToAnySlice(b, aTyped)
 	default:
 		return false, ErrSliceTypeNotFound
 	}
@@ -191,48 +186,3 @@ func equalOptionSliceNumeric[T cmp.Ordered](a []immutable.Option[T], b any) bool
 		return false
 	}
 }
-
-// func equalAnySlice(a []any, b any) (bool, error) {
-// 	switch bTyped := b.(type) {
-// 	case []any:
-// 		if len(a) != len(bTyped) {
-// 			return false, nil
-// 		}
-// 		for i, v := range a {
-// 			if v != bTyped[i] {
-// 				return false, nil
-// 			}
-// 		}
-// 		return true, nil
-// 	case []bool:
-// 		return equalSlice(bTyped, a), nil
-// 	case []int:
-// 		return equalSlice(bTyped, a), nil
-// 	case []int8:
-// 		return equalSlice(bTyped, a), nil
-// 	case []int16:
-// 		return equalSlice(bTyped, a), nil
-// 	case []int32:
-// 		return equalSlice(bTyped, a), nil
-// 	case []int64:
-// 		return equalSlice(bTyped, a), nil
-// 	case []uint:
-// 		return equalSlice(bTyped, a), nil
-// 	case []uint8:
-// 		return equalSlice(bTyped, a), nil
-// 	case []uint16:
-// 		return equalSlice(bTyped, a), nil
-// 	case []uint32:
-// 		return equalSlice(bTyped, a), nil
-// 	case []uint64:
-// 		return equalSlice(bTyped, a), nil
-// 	case []float32:
-// 		return equalSlice(bTyped, a), nil
-// 	case []float64:
-// 		return equalSlice(bTyped, a), nil
-// 	case []string:
-// 		return equalSlice(bTyped, a), nil
-// 	default:
-// 		return false, ErrSliceTypeNotFound
-// 	}
-// }
