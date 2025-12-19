@@ -1,7 +1,6 @@
 package connor
 
 import (
-	"fmt"
 	"reflect"
 	"time"
 
@@ -76,7 +75,6 @@ func eq(condition, data any, propExists bool) (bool, error) {
 
 	case []any:
 		equal, err := equalAnyToAnySlice(data, cn)
-		fmt.Println("slice match:", equal)
 		if err != nil {
 			return reflect.DeepEqual(condition, data), nil
 		}

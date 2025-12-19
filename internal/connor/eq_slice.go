@@ -2,10 +2,7 @@ package connor
 
 import (
 	"cmp"
-	"fmt"
 	"time"
-
-	"github.com/davecgh/go-spew/spew"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -18,9 +15,6 @@ var (
 )
 
 func equalAnyToAnySlice(a any, b []any) (bool, error) {
-	fmt.Println("equal slice")
-	spew.Dump(a)
-	spew.Dump(b)
 	switch aTyped := a.(type) {
 	case []bool:
 		return equalSlice(aTyped, b), nil
@@ -61,7 +55,6 @@ func equalAnyToAnySlice(a any, b []any) (bool, error) {
 		// at most once
 		return equalAnyToAnySlice(b, aTyped)
 	default:
-		fmt.Println("no slice type match, using deep equal")
 		return false, ErrSliceTypeNotFound
 	}
 }
@@ -110,9 +103,7 @@ func equalSliceNumeric[T cmp.Ordered](a []T, b any) bool {
 		}
 		return true
 	case []any:
-		fmt.Println("equalSliceNumeric")
 		if len(a) != len(bTyped) {
-			fmt.Println("equalSliceNumeric different sizes")
 			return false
 		}
 		for i, v := range a {
