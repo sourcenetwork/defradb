@@ -64,6 +64,37 @@ func (t *TargetedCollectionHistoryLink) Previous() immutable.Option[*TargetedCol
 	return t.previous
 }
 
+// HasMigrations checks if there are any migrations registered for the given collection version
+// by examining the full version history DAG.
+//
+// This properly handles branching version histories by checking if any version
+// reachable from the given version has a migration transform.
+func HasMigrations(
+	ctx context.Context,
+	collectionID string,
+	versionID string,
+) (bool, error) {
+	history, err := GetTargetedCollectionHistory(ctx, collectionID, versionID)
+	if err != nil {
+		return false, err
+	}
+
+	if history == nil {
+		return false, nil
+	}
+
+	for _, historyLink := range history {
+		if historyLink.Collection().PreviousVersion.HasValue() {
+			prevVersion := historyLink.Collection().PreviousVersion.Value()
+			if prevVersion.Transform.HasValue() {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
+}
+
 // GetTargetedCollectionHistory returns the history of the schema of the given id, relative
 // to the given target schema version id.
 //
