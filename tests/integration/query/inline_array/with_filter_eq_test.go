@@ -1,0 +1,593 @@
+// Copyright 2024 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package inline_array
+
+import (
+	"testing"
+
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+// Boolean! array tests
+
+func TestQueryInlineBooleanArray_WithEqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"likedIndexes": [true, false]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"likedIndexes": [true, true]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {likedIndexes: {_eq: [true, false]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineBooleanArray_WithNeqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"likedIndexes": [true, false]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"likedIndexes": [true, true]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {likedIndexes: {_ne: [true, false]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// Boolean (nullable) array tests
+
+func TestQueryInlineNullableBooleanArray_WithEqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"indexLikesDislikes": [true, null, false]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"indexLikesDislikes": [true, true]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {indexLikesDislikes: {_eq: [true, null, false]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineNullableBooleanArray_WithNeqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"indexLikesDislikes": [true, null, false]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"indexLikesDislikes": [true, true]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {indexLikesDislikes: {_ne: [true, null, false]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// Int! array tests
+
+func TestQueryInlineIntegerArray_WithEqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteIntegers": [1, 2, 3]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"favouriteIntegers": [4, 5, 6]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {favouriteIntegers: {_eq: [1, 2, 3]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineIntegerArray_WithNeqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteIntegers": [1, 2, 3]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"favouriteIntegers": [4, 5, 6]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {favouriteIntegers: {_ne: [1, 2, 3]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// Int (nullable) array tests
+
+func TestQueryInlineNullableIntegerArray_WithEqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"testScores": [90, null, 85]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"testScores": [100, 95]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {testScores: {_eq: [90, null, 85]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineNullableIntegerArray_WithNeqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"testScores": [90, null, 85]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"testScores": [100, 95]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {testScores: {_ne: [90, null, 85]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// Float! array tests
+
+func TestQueryInlineFloatArray_WithEqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteFloats": [3.14, 2.71, 1.41]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"favouriteFloats": [1.61, 0.57]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {favouriteFloats: {_eq: [3.14, 2.71, 1.41]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineFloatArray_WithNeqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"favouriteFloats": [3.14, 2.71, 1.41]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"favouriteFloats": [1.61, 0.57]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {favouriteFloats: {_ne: [3.14, 2.71, 1.41]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// Float (nullable) array tests
+
+func TestQueryInlineNullableFloatArray_WithEqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"pageRatings": [4.5, null, 3.2]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"pageRatings": [5.0, 4.8]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {pageRatings: {_eq: [4.5, null, 3.2]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineNullableFloatArray_WithNeqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"pageRatings": [4.5, null, 3.2]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"pageRatings": [5.0, 4.8]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {pageRatings: {_ne: [4.5, null, 3.2]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// String! array tests
+
+func TestQueryInlineStringArray_WithEqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"preferredStrings": ["apple", "banana", "cherry"]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"preferredStrings": ["dog", "elephant"]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {preferredStrings: {_eq: ["apple", "banana", "cherry"]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineStringArray_WithNeqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"preferredStrings": ["apple", "banana", "cherry"]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"preferredStrings": ["dog", "elephant"]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {preferredStrings: {_ne: ["apple", "banana", "cherry"]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+// String (nullable) array tests
+
+func TestQueryInlineNullableStringArray_WithEqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"pageHeaders": ["intro", null, "conclusion"]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"pageHeaders": ["summary", "details"]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {pageHeaders: {_eq: ["intro", null, "conclusion"]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Shahzad",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQueryInlineNullableStringArray_WithNeqFilter_ReturnsResults(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"pageHeaders": ["intro", null, "conclusion"]
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Fred",
+					"pageHeaders": ["summary", "details"]
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {pageHeaders: {_ne: ["intro", null, "conclusion"]}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
