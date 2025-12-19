@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestMutationUpdate_WithBooleanFilter_ResultFilteredOut(t *testing.T) {
+func TestMutationUpdate_WithBooleanFilter_ResultNotFilteredOut(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{

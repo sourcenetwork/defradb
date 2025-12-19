@@ -55,6 +55,7 @@ SELECT * From TableA as A JOIN TableB as B ON a.id = b.friend_id
 type selectTopNode struct {
 	docMapper
 
+	update     *updateNode
 	group      *groupNode
 	order      *orderNode
 	limit      *limitNode
@@ -605,6 +606,10 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 	if selectReq.IsEncrypted {
 		return p.SelectEncrypted(selectReq)
 	}
+	return p.SelectTopNode(selectReq)
+}
+
+func (p *Planner) SelectTopNode(selectReq *mapper.Select) (*selectTopNode, error) {
 	s := &selectNode{
 		planner:   p,
 		filter:    selectReq.Filter,

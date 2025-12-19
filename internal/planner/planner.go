@@ -225,6 +225,12 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	// wire up source to plan
 	plan.planNode = plan.selectNode
 
+	// wire up any potential update mutation plan
+	if plan.update != nil {
+		plan.update.results = plan.planNode
+		plan.planNode = plan.update
+	}
+
 	// The similarity plan need to be expanded before group, order, aggregate and limit or otherwise
 	// it wont be taken into consideration if one of them tries to targets it.
 	p.expandSimilarityPlans(plan)
