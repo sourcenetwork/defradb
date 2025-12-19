@@ -8,6 +8,12 @@
 // such as JSON can be filtered as expected.
 package connor
 
+import (
+	"fmt"
+
+	"github.com/davecgh/go-spew/spew"
+)
+
 const (
 	AliasOp = "_alias"
 	AndOp   = "_and"
@@ -49,6 +55,9 @@ func IsOpSimple(op string) bool {
 // Match is the default method used in Connor to match some data to a
 // set of conditions.
 func Match(conditions map[FilterKey]any, data any) (bool, error) {
+	fmt.Println("filter")
+	spew.Dump(conditions)
+	spew.Dump(data)
 	return eq(conditions, data, true)
 }
 
@@ -60,6 +69,8 @@ func Match(conditions map[FilterKey]any, data any) (bool, error) {
 // For example, _ne operator should return true if the property doesn't exist.
 // This can also be used in the future if we introduce operators line _has.
 func matchWith(op string, conditions, data any, propExists bool) (bool, error) {
+	fmt.Println("match with")
+	spew.Dump(conditions)
 	switch op {
 	case AndOp:
 		return and(conditions, data)
