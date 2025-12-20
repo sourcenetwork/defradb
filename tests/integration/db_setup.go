@@ -14,11 +14,8 @@ package tests
 
 import (
 	"fmt"
-	"net"
-	"time"
 
 	"github.com/multiformats/go-multiaddr"
-	manet "github.com/multiformats/go-multiaddr/net"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/immutable"
@@ -152,16 +149,6 @@ func setupNode(
 		return nil, err
 	}
 
-	if s.IsNetworkEnabled {
-		addresses, err := nodeObj.DB.PeerInfo()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get peer info: %w", err)
-		}
-		if err := waitForListenerReady(addresses); err != nil {
-			return nil, fmt.Errorf("node listener not ready: %w", err)
-		}
-	}
-
 	c, err := setupClient(s, nodeObj)
 
 	resetStateContext(s)
@@ -212,48 +199,4 @@ func removePeerID(addr string) (string, error) {
 		return "", errors.New("address does not contain a /p2p/ part")
 	}
 	return justAddr.String(), nil
-}
-
-// waitForListenerReady waits until the node's TCP listener is ready to accept connections.
-// This prevents race conditions where peer connection attempts fail because the listener
-// isn't fully ready yet, which can trigger libp2p's dial backoff mechanism.
-func waitForListenerReady(addresses []string) error {
-	const maxAttempts = 50
-	const retryDelay = 10 * time.Millisecond
-
-	for _, addr := range addresses {
-		maddr, err := multiaddr.NewMultiaddr(addr)
-		if err != nil {
-			continue
-		}
-
-		// Extract just the network address part (without /p2p/...)
-		networkAddr, _ := multiaddr.SplitFunc(maddr, func(c multiaddr.Component) bool {
-			return c.Protocol().Code == multiaddr.P_P2P
-		})
-		if networkAddr == nil {
-			networkAddr = maddr
-		}
-
-		netAddr, err := manet.ToNetAddr(networkAddr)
-		if err != nil {
-			continue
-		}
-
-		for attempt := 0; attempt < maxAttempts; attempt++ {
-			conn, err := net.DialTimeout("tcp", netAddr.String(), 100*time.Millisecond)
-			if err == nil {
-				_ = conn.Close()
-				// Add a small delay after TCP connection succeeds to allow
-				// libp2p's protocol handlers to fully initialize
-				time.Sleep(10 * time.Millisecond)
-				return nil
-			}
-			time.Sleep(retryDelay)
-		}
-
-		return fmt.Errorf("listener not ready after %d attempts: %s", maxAttempts, addr)
-	}
-
-	return nil
 }
