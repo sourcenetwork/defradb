@@ -364,8 +364,8 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 	if err != nil {
 		return "", err
 	}
-	args = append(args, config.SourceSchemaVersionID)
-	args = append(args, config.DestinationSchemaVersionID)
+	args = append(args, config.SourceCollectionVersionID)
+	args = append(args, config.DestinationCollectionVersionID)
 	args = append(args, string(lenses))
 
 	data, err := w.cmd.execute(ctx, args)

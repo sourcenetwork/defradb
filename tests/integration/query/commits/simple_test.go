@@ -114,7 +114,7 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithSchemaVersionIDField(t *testing.T) {
+func TestQueryCommitsWithCollectionVersionIDField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),

@@ -330,7 +330,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
 
-	collectionVersionId := block.Delta.GetSchemaVersionID()
+	collectionVersionId := block.Delta.GetCollectionVersionID()
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
 
 	cols, err := n.planner.db.GetCollections(

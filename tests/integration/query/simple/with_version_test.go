@@ -226,7 +226,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
+func TestQuerySimpleWithEmbeddedLatestCommitWithCollectionVersionID(t *testing.T) {
 	collectionVersionID := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{

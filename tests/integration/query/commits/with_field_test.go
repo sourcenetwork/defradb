@@ -107,7 +107,7 @@ func TestQueryCommitsWithCompositeField(t *testing.T) {
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (Users should not be specifying field ids).
-func TestQueryCommitsWithCompositeFieldIdWithReturnedSchemaVersionID(t *testing.T) {
+func TestQueryCommitsWithCompositeFieldIdWithReturnedCollectionVersionID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),

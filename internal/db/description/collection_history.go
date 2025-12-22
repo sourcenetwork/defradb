@@ -102,16 +102,16 @@ func HasMigrations(
 func GetTargetedCollectionHistory(
 	ctx context.Context,
 	schemaRoot string,
-	targetSchemaVersionID string,
+	targetCollectionVersionID string,
 ) (map[string]*TargetedCollectionHistoryLink, error) {
 	history, err := getCollectionHistory(ctx, schemaRoot)
 	if err != nil {
 		return nil, err
 	}
 
-	targetHistoryItem, ok := history[targetSchemaVersionID]
+	targetHistoryItem, ok := history[targetCollectionVersionID]
 	if !ok {
-		// If the target schema version is unknown then there are no possible migrations
+		// If the target collection version is unknown then there are no possible migrations
 		// that we can do.
 		return nil, nil
 	}

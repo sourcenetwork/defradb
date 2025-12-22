@@ -126,8 +126,8 @@ func (c CRDT) GetDocID() []byte {
 	return nil
 }
 
-// GetSchemaVersionID returns the schema version ID of the delta.
-func (c CRDT) GetSchemaVersionID() string {
+// GetCollectionVersionID returns the collection version ID of the delta.
+func (c CRDT) GetCollectionVersionID() string {
 	switch {
 	case c.LWWDelta != nil:
 		return c.LWWDelta.CollectionVersionID

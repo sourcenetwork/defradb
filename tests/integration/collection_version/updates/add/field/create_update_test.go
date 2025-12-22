@@ -18,8 +18,8 @@ import (
 )
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoin(t *testing.T) {
-	initialSchemaVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
-	updatedSchemaVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
+	initialCollectionVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
+	updatedCollectionVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -54,7 +54,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 							"name": "John",
 							"_version": []map[string]any{
 								{
-									"collectionVersionId": initialSchemaVersionID,
+									"collectionVersionId": initialCollectionVersionID,
 									"fieldName":           "_C",
 								},
 							},
@@ -94,11 +94,11 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 							"_version": []map[string]any{
 								{
 									// Update commit
-									"collectionVersionId": updatedSchemaVersionID,
+									"collectionVersionId": updatedCollectionVersionID,
 								},
 								{
 									// Create commit
-									"collectionVersionId": initialSchemaVersionID,
+									"collectionVersionId": initialCollectionVersionID,
 								},
 							},
 						},
@@ -111,8 +111,8 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 }
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuery(t *testing.T) {
-	initialSchemaVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
-	updatedSchemaVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
+	initialCollectionVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
+	updatedCollectionVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -153,11 +153,11 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 					"_commits": []map[string]any{
 						{
 							// Update commit
-							"collectionVersionId": updatedSchemaVersionID,
+							"collectionVersionId": updatedCollectionVersionID,
 						},
 						{
 							// Create commit
-							"collectionVersionId": initialSchemaVersionID,
+							"collectionVersionId": initialCollectionVersionID,
 						},
 					},
 				},
