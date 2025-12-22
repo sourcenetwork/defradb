@@ -178,30 +178,47 @@ func (l *lens) Next() (bool, error) {
 			}
 
 			if historyLocation.Next().HasValue() {
-				// Acquire a lens migration from the registry, using the junctionPipe as its source.
-				// The new pipeHead will then be connected as a source to the next migration-stage on
-				// the next loop.
-				pipeHead, err = l.store.Transform(
-					l.ctx,
-					junctionPipe,
-					historyLocation.Next().Value().Collection().PreviousVersion.Value().Transform.Value(),
-				)
-				if err != nil {
-					return false, err
+				nextHistoryLocation := historyLocation.Next().Value()
+				nextCollection := nextHistoryLocation.Collection()
+
+				// Only apply transformation if a migration exists for this step.
+				// Version links can exist without migrations (e.g., from schema patches).
+				if nextCollection.PreviousVersion.HasValue() &&
+					nextCollection.PreviousVersion.Value().Transform.HasValue() {
+					// Acquire a lens migration from the registry, using the junctionPipe as its source.
+					// The new pipeHead will then be connected as a source to the next migration-stage on
+					// the next loop.
+					pipeHead, err = l.store.Transform(
+						l.ctx,
+						junctionPipe,
+						nextCollection.PreviousVersion.Value().Transform.Value(),
+					)
+					if err != nil {
+						return false, err
+					}
+				} else {
+					pipeHead = junctionPipe
 				}
 
-				historyLocation = historyLocation.Next().Value()
+				historyLocation = nextHistoryLocation
 			} else if historyLocation.Previous().HasValue() {
-				// Acquire a lens migration from the registry, using the junctionPipe as its source.
-				// The new pipeHead will then be connected as a source to the next migration-stage on
-				// the next loop.
-				pipeHead, err = l.store.Inverse(
-					l.ctx,
-					junctionPipe,
-					historyLocation.Collection().PreviousVersion.Value().Transform.Value(),
-				)
-				if err != nil {
-					return false, err
+				// Only apply inverse transformation if a migration exists for this step.
+				// Version links can exist without migrations (e.g., from schema patches).
+				if historyLocation.Collection().PreviousVersion.HasValue() &&
+					historyLocation.Collection().PreviousVersion.Value().Transform.HasValue() {
+					// Acquire a lens migration from the registry, using the junctionPipe as its source.
+					// The new pipeHead will then be connected as a source to the next migration-stage on
+					// the next loop.
+					pipeHead, err = l.store.Inverse(
+						l.ctx,
+						junctionPipe,
+						historyLocation.Collection().PreviousVersion.Value().Transform.Value(),
+					)
+					if err != nil {
+						return false, err
+					}
+				} else {
+					pipeHead = junctionPipe
 				}
 
 				historyLocation = historyLocation.Previous().Value()

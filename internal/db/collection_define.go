@@ -361,9 +361,7 @@ existingVersionLoop:
 					return err
 				}
 			}
-		}
-
-		if col.PreviousVersion.HasValue() && migration.HasValue() {
+		} else if col.PreviousVersion.HasValue() && migration.HasValue() {
 			_, err = db.setMigration(ctx, client.LensConfig{
 				SourceSchemaVersionID:      col.PreviousVersion.Value().SourceCollectionID,
 				DestinationSchemaVersionID: col.VersionID,
@@ -613,8 +611,7 @@ func (db *DB) setActiveCollectionVersion(
 }
 
 // shouldReindexForVersionSwitch determines if reindexing is needed when switching
-// to a new active version by examining the full version history DAG using the lens
-// package's GetTargetedCollectionHistory function.
+// to a new active version by examining the full version history DAG.
 //
 // This properly handles branching version histories by checking if any version
 // reachable from the new active version has a migration.
@@ -622,29 +619,7 @@ func (db *DB) shouldReindexForVersionSwitch(
 	ctx context.Context,
 	newActiveCol client.CollectionVersion,
 ) (bool, error) {
-	history, err := description.GetTargetedCollectionHistory(
-		ctx,
-		newActiveCol.CollectionID,
-		newActiveCol.VersionID,
-	)
-	if err != nil {
-		return false, err
-	}
-
-	if history == nil {
-		return false, nil
-	}
-
-	for _, historyLink := range history {
-		if historyLink.Collection().PreviousVersion.HasValue() {
-			prevVersion := historyLink.Collection().PreviousVersion.Value()
-			if prevVersion.Transform.HasValue() {
-				return true, nil
-			}
-		}
-	}
-
-	return false, nil
+	return description.HasMigrations(ctx, newActiveCol.CollectionID, newActiveCol.VersionID)
 }
 
 func (db *DB) deleteCollectionVersions(
