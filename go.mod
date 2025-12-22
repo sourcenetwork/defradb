@@ -40,18 +40,18 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sourcenetwork/acp_core v0.4.1
 	github.com/sourcenetwork/corekv v0.3.0
-	github.com/sourcenetwork/corekv/badger v0.3.0
-	github.com/sourcenetwork/corekv/blockstore v0.3.0
-	github.com/sourcenetwork/corekv/chunk v0.3.0
-	github.com/sourcenetwork/corekv/leveldb v0.3.0
-	github.com/sourcenetwork/corekv/memory v0.3.0
-	github.com/sourcenetwork/corekv/namespace v0.3.0
+	github.com/sourcenetwork/corekv/badger v0.3.1
+	github.com/sourcenetwork/corekv/blockstore v0.3.1
+	github.com/sourcenetwork/corekv/chunk v0.3.1
+	github.com/sourcenetwork/corekv/leveldb v0.3.1
+	github.com/sourcenetwork/corekv/memory v0.3.1
+	github.com/sourcenetwork/corekv/namespace v0.3.1
 	github.com/sourcenetwork/corelog v0.0.8
 	github.com/sourcenetwork/go-p2p v0.1.5
 	github.com/sourcenetwork/goji v0.0.8
 	github.com/sourcenetwork/graphql-go v0.7.10-0.20241003221550-224346887b4a
 	github.com/sourcenetwork/immutable v0.3.0
-	github.com/sourcenetwork/lens/host-go v0.9.4
+	github.com/sourcenetwork/lens/host-go v0.10.0
 	github.com/sourcenetwork/sourcehub v0.2.1-0.20250310083845-94a8142548bf
 	github.com/sourcenetwork/testo v0.1.0
 	github.com/spf13/cobra v1.9.1
@@ -344,7 +344,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 // indirect
-	github.com/sourcenetwork/goleveldb v0.0.0-20251125214452-ff8bbf57cc6b // indirect
+	github.com/sourcenetwork/goleveldb v0.0.0-20251217012629-27249d06b81b // indirect
 	github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 // indirect
 	github.com/sourcenetwork/raccoondb/v2 v2.0.0 // indirect
 	github.com/sourcenetwork/zanzi v0.3.1-0.20250326181925-74d3e97fb950 // indirect
@@ -411,9 +411,5 @@ require (
 	pgregory.net/rapid v1.1.0 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace github.com/sourcenetwork/goleveldb => ../goleveldb
-
-replace github.com/sourcenetwork/lens/host-go => ../lens/host-go
 
 replace github.com/wlynxg/anet => github.com/sourcenetwork/anet v0.0.0-20250417190629-7c87cba7799e
