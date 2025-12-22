@@ -13,6 +13,7 @@ package wizard
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -140,6 +141,13 @@ func Test_GenerateKeyringFiles(t *testing.T) {
 // Specifically, it will test that the keys are generated and stored in the system keyring.
 // Note that this test will not work on WSL.
 func Test_GenerateKeysInSystemKeyring(t *testing.T) {
+
+	// Skip the test on Linux CI / WSL due to missing dbus-launch
+	if runtime.GOOS == "linux" {
+		t.Skip("system keyring tests are skipped on Linux CI / WSL due to missing dbus-launch")
+	}
+
+	// Set up a clean test environment, and create a context for the test
 	tmpDir := setupWorkingDirectoryForTest(t)
 	ctx := &WizardContext{
 		RootDir: tmpDir,
