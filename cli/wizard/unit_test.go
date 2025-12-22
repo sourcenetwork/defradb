@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/sourcenetwork/defradb/keyring"
 )
@@ -56,21 +57,12 @@ func Test_SetKeyringBackend(t *testing.T) {
 		RootDir: tmpDir,
 	}
 
-	// Make sure that after the test, the config.yaml file is restored to its original state
-	originalConfigValue, ok := getConfigValue(ctx, "keyring.backend").(string)
-	if !ok {
-		t.Fatal("failed to get original keyring.backend value")
-	}
-	t.Cleanup(func() {
-		setConfigValue(ctx, "keyring.backend", originalConfigValue)
-	})
-
 	// Spoof the  model steps for this test
 	stepCursor0 := &modelMultipleChoice{cursor: 0} // File
 	stepCursor1 := &modelMultipleChoice{cursor: 1} // System
 
 	// Test the callback function with choice 0 (File)
-	err := callback_SetKeyringBackend(stepCursor0, &WizardContext{})
+	err := callback_SetKeyringBackend(stepCursor0, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,9 +73,10 @@ func Test_SetKeyringBackend(t *testing.T) {
 	if checkedValue != "file" {
 		t.Fatal("keyring.backend is not set to file")
 	}
+	fmt.Println("checkedValue", checkedValue)
 
 	// Test the callback function with choice 1 (System)
-	err = callback_SetKeyringBackend(stepCursor1, &WizardContext{})
+	err = callback_SetKeyringBackend(stepCursor1, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,6 +87,7 @@ func Test_SetKeyringBackend(t *testing.T) {
 	if checkedValue != "system" {
 		t.Fatal("keyring.backend is not set to system")
 	}
+	fmt.Println("checkedValue", checkedValue)
 }
 
 // This test will test the callback_GenerateKeyringFiles function.
@@ -142,6 +136,41 @@ func Test_GenerateKeyringFiles(t *testing.T) {
 	}
 }
 
+// This will test the callback_GenerateKeysInSystemKeyring function.
+// Specifically, it will test that the keys are generated and stored in the system keyring.
+// Note that this test will not work on WSL.
+func Test_GenerateKeysInSystemKeyring(t *testing.T) {
+	tmpDir := setupWorkingDirectoryForTest(t)
+	ctx := &WizardContext{
+		RootDir: tmpDir,
+	}
+
+	// Assign a unique namespace for the test keyring so we can remove it afterwards
+	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
+	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
+
+	// Execute the callback, then the first check will be that it didn't error
+	err := callback_GenerateKeysInSystemKeyring(nil, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	openKeying := keyring.OpenSystemKeyring(keyringNamespace)
+	if err != nil {
+		t.Fatalf("failed to reopen keyring: %v", err)
+	}
+	val, err := openKeying.Get("encryption-key")
+	if err != nil {
+		t.Fatalf("expected encryption-key to exist: %v", err)
+	}
+	if len(val) != 32 {
+		t.Fatalf("expected 32-byte AES-256 key, got %d bytes", len(val))
+	}
+
+	// Finally, cleanup the entry in the keyring we made for this test
+	_ = openKeying.Delete("encryption-key")
+}
+
 // This will test the callback_SetAndReloadDefraKeyringSecretEnvironmentVariable function.
 // Specifically, it will test that the DEFRA_KEYRING_SECRET environment variable can correctly
 // be inserted into an .env file, then that .env file can be loaded into the environment variables.
@@ -162,7 +191,7 @@ func Test_SetAndReloadDefraKeyringSecretEnvironmentVariable(t *testing.T) {
 	}
 	setConfigValueForTest(t, ctx, "secretfile", tmpDir+"/.env")
 
-	// Execute the actual function, then the first check will be that it didn't error
+	// Execute the callback, then the first check will be that it didn't error
 	err := callback_SetAndReloadDefraKeyringSecretEnvironmentVariable(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
@@ -176,5 +205,26 @@ func Test_SetAndReloadDefraKeyringSecretEnvironmentVariable(t *testing.T) {
 	if secretValue != testSecretValue {
 		fmt.Println("secretValue", secretValue)
 		t.Fatal("DEFRA_KEYRING_SECRET environment variable was not set to the correct value")
+	}
+}
+
+// This will test the evaluator_IsEnvironmentVariableDefraKeyringSecretSet function.
+// Specifically, it will test that it returns 0 or 1, correctly, depending on whether or not
+// the DEFRA_KEYRING_SECRET environment variable is set.
+func Test_IsEnvironmentVariableDefraKeyringSecretSet(t *testing.T) {
+	testSecretValue := "test-secret"
+	unsetEnvForTest(t, "DEFRA_KEYRING_SECRET")
+
+	// Test that the result is 0, because the environment variable should not be set
+	result := evaluator_IsEnvironmentVariableDefraKeyringSecretSet(&WizardContext{})
+	if result != 0 {
+		t.Fatal("expected result to be 0")
+	}
+
+	// Test that the result is 1, because the environment variable should be set
+	os.Setenv("DEFRA_KEYRING_SECRET", testSecretValue)
+	result = evaluator_IsEnvironmentVariableDefraKeyringSecretSet(&WizardContext{})
+	if result != 1 {
+		t.Fatal("expected result to be 1")
 	}
 }

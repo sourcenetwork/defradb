@@ -124,7 +124,7 @@ func Main() {
 	stepKeyringStorageLocation.callback = callback_SetKeyringBackend
 	stepConfigGenerator.callback = callback_GenerateConfigYAMLFile
 	stepGenerateKeyringFiles.callback = callback_GenerateKeyringFiles
-	stepGenerateSystemKeyringKeys.callback = callback_GenerateKeyringFilesInSystemKeyring
+	stepGenerateSystemKeyringKeys.callback = callback_GenerateKeysInSystemKeyring
 	stepGetDefraKeyringSecretInput.callback = callback_SetAndReloadDefraKeyringSecretEnvironmentVariable
 
 	// Setup the evaluators

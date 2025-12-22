@@ -70,8 +70,8 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 	return nil
 }
 
-// This callback will generate the keys in the system keyrind
-func callback_GenerateKeyringFilesInSystemKeyring(_ step, ctx *WizardContext) error {
+// This callback will generate the keys in the system keyring
+func callback_GenerateKeysInSystemKeyring(_ step, ctx *WizardContext) error {
 	keyringNamespace, ok := getConfigValue(ctx, "keyring.namespace").(string)
 	if !ok {
 		return errors.New(errFailedToGetKeyringNamespace)
