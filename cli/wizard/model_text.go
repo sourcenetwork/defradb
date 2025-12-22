@@ -81,7 +81,7 @@ func (m *modelText) View() string {
 }
 
 // Next() will return the next step, which may be nil
-func (m *modelText) Next() step {
+func (m *modelText) Next(_ *WizardContext) step {
 	return m.nextStep
 }
 

@@ -26,7 +26,7 @@ type modelBrancher struct {
 
 	// The evaluator function should return an integer value, which will be used to
 	// index into the nextSteps slice and decide which step to branch to.
-	evaluator func() int
+	evaluator func(ctx *WizardContext) int
 
 	// callback is a function that will be called when this step is done.
 	callback func(s step, ctx *WizardContext) error
@@ -58,11 +58,11 @@ func (m *modelBrancher) View() string {
 
 // Next() will invoke the evaluator function to find the next step. If the
 // evaluator is not set, or returns an invalid index, then the next step will be nil.
-func (m *modelBrancher) Next() step {
+func (m *modelBrancher) Next(ctx *WizardContext) step {
 	if m.evaluator == nil {
 		return nil
 	}
-	evaluatorResult := m.evaluator()
+	evaluatorResult := m.evaluator(ctx)
 	if evaluatorResult < 0 || evaluatorResult >= len(m.nextSteps) {
 		return nil
 	}

@@ -33,14 +33,13 @@ func callback_SetKeyringBackend(s step, ctx *WizardContext) error {
 		choice = "system"
 	}
 
-	return setConfigValue("keyring.backend", choice)
+	return setConfigValue(ctx, "keyring.backend", choice)
 }
 
 // This callback will generate the config.yaml file
 func callback_GenerateConfigYAMLFile(_ step, ctx *WizardContext) error {
 	defaultCmd := &cobra.Command{}
-	rootdir := getRootDir()
-	return config.CreateConfig(rootdir, defaultCmd.Flags())
+	return config.CreateConfig(ctx.RootDir, defaultCmd.Flags())
 }
 
 // This callback will generate the keyring files
@@ -49,7 +48,7 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 	if !ok {
 		return errors.New(errDefraKeyringSecretNotSet)
 	}
-	keyringFilepath, ok := getConfigValue("keyring.path").(string)
+	keyringFilepath, ok := getConfigValue(ctx, "keyring.path").(string)
 	if !ok {
 		return errors.New(errFailedToGetKeyringFilepath)
 	}
@@ -73,7 +72,7 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 
 // This callback will generate the keys in the system keyrind
 func callback_GenerateKeyringFilesInSystemKeyring(_ step, ctx *WizardContext) error {
-	keyringNamespace, ok := getConfigValue("keyring.namespace").(string)
+	keyringNamespace, ok := getConfigValue(ctx, "keyring.namespace").(string)
 	if !ok {
 		return errors.New(errFailedToGetKeyringNamespace)
 	}
@@ -99,16 +98,16 @@ func callback_SetAndReloadDefraKeyringSecretEnvironmentVariable(_ step, ctx *Wiz
 	if !ok {
 		return NewErrAssertTypeFailed(ctx.Results[stepToRetrieveResultFrom][0], "string")
 	}
-	envFilename, ok := getConfigValue("secretfile").(string)
+	envFilename, ok := getConfigValue(ctx, "secretfile").(string)
 	if !ok {
 		return errors.New(errFailedToGetEnvFilename)
 	}
 	if envFilename == "" {
 		envFilename = ".env"
 	}
-	err := ensureEnvValue(envFilename, "DEFRA_KEYRING_SECRET", secretValue)
+	err := ensureEnvValue(ctx, "DEFRA_KEYRING_SECRET", secretValue)
 	if err != nil {
 		return err
 	}
-	return loadEnvVariablesFromFile()
+	return loadEnvVariablesFromFile(ctx)
 }

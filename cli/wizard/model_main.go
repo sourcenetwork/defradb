@@ -31,7 +31,7 @@ type step interface {
 	// internal logic of the step. But what must be true, is that at the time of
 	// the Done() method resolving to true, the Next() method must resolve to the
 	// next step in the chain, or to nil.
-	Next() step
+	Next(ctx *WizardContext) step
 
 	// Result() must return the result of the step. Like Next(), it can be
 	// dynamic, but what must be true, is that at the time of the Done() method
@@ -82,7 +82,7 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentStep = errorStep
 			return m, cmd
 		}
-		next := m.currentStep.Next()
+		next := m.currentStep.Next(m.ctx)
 
 		// Movethrough blank steps, calling their callbacks, until we reach a non-blank step
 		for next != nil && next.ID() == BLANK {
@@ -94,7 +94,7 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.currentStep = errorStep
 				return m, cmd
 			}
-			next = next.Next()
+			next = next.Next(m.ctx)
 		}
 		m.currentStep = next
 	}

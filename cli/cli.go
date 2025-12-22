@@ -163,7 +163,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 
 	block := MakeBlockCommand(ctx)
 	block.AddCommand(
-		MakeBlockVerifySignatureCommand(ctx),
+		MakeBlockVerifySignatureCommand(),
 	)
 
 	client := MakeClientCommand(ctx)

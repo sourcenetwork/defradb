@@ -108,7 +108,7 @@ func (m *modelMultipleChoice) View() string {
 }
 
 // Next() will return the next step associated with the current cursor selection.
-func (m *modelMultipleChoice) Next() step {
+func (m *modelMultipleChoice) Next(_ *WizardContext) step {
 	if len(m.nextSteps) == 0 {
 		return nil
 	}

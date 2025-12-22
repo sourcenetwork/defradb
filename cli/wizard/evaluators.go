@@ -13,8 +13,8 @@ package wizard
 import "os"
 
 // This callback will return 0 if DEFRA_KEYRING_SECRET is not set, and 1 if it is
-func evaluator_IsEnvironmentVariableDefraKeyringSecretSet() int {
-	_ = loadEnvVariablesFromFile()
+func evaluator_IsEnvironmentVariableDefraKeyringSecretSet(ctx *WizardContext) int {
+	_ = loadEnvVariablesFromFile(ctx)
 	val, ok := os.LookupEnv("DEFRA_KEYRING_SECRET")
 	if !ok || val == "" {
 		return 0
