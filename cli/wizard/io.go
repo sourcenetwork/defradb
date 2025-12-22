@@ -37,7 +37,7 @@ func getEnvFilename(ctx *WizardContext) (string, error) {
 	}
 	// If there was a problem getting the filename, use the default
 	if envFilename == "" {
-		envFilename = DefaultEnvFilename
+		envFilename = ".env"
 	}
 	return envFilename, nil
 }

@@ -98,13 +98,6 @@ func callback_SetAndReloadDefraKeyringSecretEnvironmentVariable(_ step, ctx *Wiz
 	if !ok {
 		return NewErrAssertTypeFailed(ctx.Results[stepToRetrieveResultFrom][0], "string")
 	}
-	envFilename, ok := getConfigValue(ctx, "secretfile").(string)
-	if !ok {
-		return errors.New(errFailedToGetEnvFilename)
-	}
-	if envFilename == "" {
-		envFilename = DefaultEnvFilename
-	}
 	err := ensureEnvValue(ctx, "DEFRA_KEYRING_SECRET", secretValue)
 	if err != nil {
 		return err
