@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -36,6 +37,7 @@ type wrappingFetcher struct {
 	// interface.  They can be remove from state once the [Fetcher] interface is cleaned up.
 	identity    immutable.Option[acpIdentity.Identity]
 	txn         datastore.Txn
+	nodeACP     acpDB.NACInfo
 	documentACP immutable.Option[dac.DocumentACP]
 	index       immutable.Option[client.IndexDescription]
 	col         client.Collection
@@ -56,6 +58,7 @@ func (f *wrappingFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
+	nodeACP acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
@@ -67,6 +70,7 @@ func (f *wrappingFetcher) Init(
 ) error {
 	f.identity = identity
 	f.txn = txn
+	f.nodeACP = nodeACP
 	f.documentACP = documentACP
 	f.index = index
 	f.col = col
@@ -167,7 +171,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	}
 
 	if f.documentACP.HasValue() {
-		top = newPermissionedFetcher(ctx, f.identity, f.documentACP.Value(), f.col, top)
+		top = newPermissionedFetcher(ctx, f.identity, f.nodeACP, f.documentACP.Value(), f.col, top)
 	}
 
 	if f.filter != nil {

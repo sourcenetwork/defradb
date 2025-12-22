@@ -73,6 +73,7 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 			p := planner.New(
 				ctx,
 				identity.FromContext(ctx),
+				db.nodeACP,
 				db.documentACP,
 				db,
 				db.p2p,

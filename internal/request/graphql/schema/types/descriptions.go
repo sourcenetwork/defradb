@@ -93,7 +93,7 @@ The name of the field that this commit was committed against. If this is a compo
 The CBOR encoded representation of the value that is saved as part of this commit.
 `
 	commitLinkNameFieldDescription string = `
-The Name of the field that this linked commit mutated.
+The Name of the linked CID.
 `
 	commitLinkCIDFieldDescription string = `
 The CID of this linked commit.

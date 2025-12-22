@@ -23,7 +23,6 @@ const (
 	CreateInput        = "create"
 	UpdateInput        = "update"
 	FieldArgName       = "field"
-	FieldNameArgName   = "fieldName"
 	FieldIDName        = "fieldId"
 	FieldNameName      = "fieldName"
 	CompositeFieldName = "_C"
@@ -67,6 +66,7 @@ const (
 
 	CommitTypeName           = "Commit"
 	LinksFieldName           = "links"
+	HeadsFieldName           = "heads"
 	SignatureFieldName       = "signature"
 	SignatureTypeName        = "Signature"
 	HeightFieldName          = "height"
@@ -85,7 +85,7 @@ const (
 	// will be of type [SelfTypeName].
 	SelfTypeName = "Self"
 
-	LinksNameFieldName = "name"
+	LinksNameFieldName = "linkName"
 	CidFieldName       = "cid"
 
 	SignatureTypeFieldName     = "type"
@@ -93,6 +93,8 @@ const (
 	SignatureValueFieldName    = "value"
 
 	DocIDsFieldName = "docIDs"
+
+	HeadLinkName = "_head"
 
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")
@@ -142,6 +144,7 @@ var (
 		SchemaVersionIDFieldName,
 		FieldNameName,
 		DeltaFieldName,
+		LinksNameFieldName,
 	}
 
 	LinksFields = []string{

@@ -31,10 +31,8 @@ const (
 	errCollectionIDDoesntMatch                   string = "CollectionID does not match existing"
 	errSchemaRootDoesntMatch                     string = "SchemaRoot does not match existing"
 	errCannotSetVersionID                        string = "setting the VersionID is not supported"
-	errRelationalFieldInvalidRelationType        string = "invalid RelationType"
 	errRelationalFieldMissingIDField             string = "missing id field for relation object field"
 	errRelatedFieldKindMismatch                  string = "invalid Kind of the related field"
-	errRelatedFieldRelationTypeMismatch          string = "invalid RelationType of the related field"
 	errRelationalFieldIDInvalidType              string = "relational id field of invalid kind"
 	errDuplicateField                            string = "duplicate field"
 	errCannotMutateField                         string = "mutating an existing field is not supported"
@@ -47,7 +45,6 @@ const (
 	errIndexMissingFields                        string = "index missing fields"
 	errNonZeroIndexIDProvided                    string = "non-zero index ID provided"
 	errIndexFieldMissingName                     string = "index field missing name"
-	errIndexFieldMissingDirection                string = "index field missing direction"
 	errIndexWithNameAlreadyExists                string = "index with name already exists"
 	errInvalidStoredIndex                        string = "invalid stored index"
 	errInvalidStoredIndexKey                     string = "invalid stored index key"
@@ -57,13 +54,11 @@ const (
 	errCanNotDeleteIndexedField                  string = "can not delete indexed field"
 	errCanNotAddIndexWithPatch                   string = "adding indexes via patch is not supported"
 	errCanNotDropIndexWithPatch                  string = "dropping indexes via patch is not supported"
-	errCanNotChangeIndexWithPatch                string = "changing indexes via patch is not supported"
 	errIndexWithNameDoesNotExists                string = "index with name doesn't exists"
 	errCorruptedIndex                            string = "corrupted index. Please delete and recreate the index"
 	errInvalidFieldValue                         string = "invalid field value"
 	errUnsupportedIndexFieldType                 string = "unsupported index field type"
 	errIndexDescriptionHasNoFields               string = "index description has no fields"
-	errFieldOrAliasToFieldNotExist               string = "The given field or alias to field does not exist"
 	errCreateFile                                string = "failed to create file"
 	errRemoveFile                                string = "failed to remove file"
 	errOpenFile                                  string = "failed to open file"
@@ -77,7 +72,6 @@ const (
 	errDocUpdate                                 string = "failed to update doc to collection"
 	errExpectedJSONObject                        string = "expected JSON object"
 	errExpectedJSONArray                         string = "expected JSON array"
-	errOneOneAlreadyLinked                       string = "target document is already linked to another document"
 	errIndexDoesNotMatchName                     string = "the index used does not match the given name"
 	errCanNotIndexNonUniqueFields                string = "can not index a doc's field(s) that violates unique index"
 	errInvalidViewQuery                          string = "the query provided is not valid as a View"
@@ -96,46 +90,44 @@ const (
 		"first delete the new version"
 	errCannotDeleteCollectionWithDocs string = "cannot delete a collection that has documents, first " +
 		"delete the documents and then delete the version"
-	errCanNotHavePolicyWithoutACP            string = "can not specify policy on collection, without acp"
-	errRelationMissingField                  string = "relation missing field"
-	errMultipleRelationPrimaries             string = "relation can only have a single field set as primary"
-	errP2PColHasPolicy                       string = "p2p collection specified has a policy on it"
-	errReplicatorColHasPolicy                string = "replicator collection specified has a policy on it"
-	errNoTransactionInContext                string = "no transaction in context"
-	errReplicatorExists                      string = "replicator already exists for %s with peerID %s"
-	errReplicatorDocID                       string = "failed to get docID for replicator"
-	errCanNotEncryptBuiltinField             string = "can not encrypt build-in field"
-	errFailedToHandleEncKeysReceivedEvent    string = "failed to handle encryption-keys-received event"
-	errSelfReferenceWithoutSelf              string = "must specify 'Self' kind for self referencing relations"
-	errColNotMaterialized                    string = "non-materialized collections are not supported"
-	errColMutatingIsBranchable               string = "mutating IsBranchable is not supported"
-	errMaterializedViewAndACPNotSupported    string = "materialized views do not support ACP"
-	errInvalidDefaultFieldValue              string = "default field value is invalid"
-	errDocIDNotFound                         string = "docID not found"
-	errCollectionWithSchemaRootNotFound      string = "collection with schema root not found"
-	errGetEmbeddingFunc                      string = "failed to get embedding function"
-	errGetEmbeddingField                     string = "failed getting vector embedding field"
-	errFieldNotFound                         string = "field not found"
-	errGetDocForEmbedding                    string = "failed to get previous document for embedding generation"
-	errMissingSignature                      string = "block is missing required signature"
-	errNoIdentityInContext                   string = "no identity found in context"
-	errMissingPermission                     string = "missing permission"
-	errCollectionNameMutated                 string = "collection name cannot be mutated"
-	errUnsupportedTxnType                    string = "unsupported transaction type"
-	errEncryptedIndexUnknownField            string = "encrypted index on non-existent field"
-	errEncryptedIndexAlreadyExists           string = "encrypted index already exists on this field"
-	errEncryptedIndexDoesNotExist            string = "encrypted index does not exist on this field"
-	errNACIsAlreadyDisabled                  string = "node acp is already disabled"
-	errNACIsAlreadyEnabled                   string = "node acp is already enabled"
-	errNACIsNotConfigured                    string = "node acp is not configured"
-	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
-	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
-	errNACIsEnabledButInstanceIsNotAvailable string = "node acp is enabled, but the acp instance is not available"
-	errRelationNameEmpty                     string = "relation name cannot be empty"
-	errInvalidCID                            string = "invalid CID"
-	errUnknownCID                            string = "unknown CID, collection ids cannot be manually defined"
-	errMigrationBetweenNonAdjacentVersions   string = "cannot migrate between non-adjacent collection versions"
-	errLensRuntimeNotSupported               string = "the selected lens runtime is not supported by this build"
+	errCanNotHavePolicyWithoutACP          string = "can not specify policy on collection, without acp"
+	errRelationMissingField                string = "relation missing field"
+	errMultipleRelationPrimaries           string = "relation can only have a single field set as primary"
+	errP2PColHasPolicy                     string = "p2p collection specified has a policy on it"
+	errReplicatorColHasPolicy              string = "replicator collection specified has a policy on it"
+	errNoTransactionInContext              string = "no transaction in context"
+	errReplicatorExists                    string = "replicator already exists for %s with peerID %s"
+	errReplicatorDocID                     string = "failed to get docID for replicator"
+	errCanNotEncryptBuiltinField           string = "can not encrypt build-in field"
+	errSelfReferenceWithoutSelf            string = "must specify 'Self' kind for self referencing relations"
+	errColNotMaterialized                  string = "non-materialized collections are not supported"
+	errColMutatingIsBranchable             string = "mutating IsBranchable is not supported"
+	errMaterializedViewAndACPNotSupported  string = "materialized views do not support ACP"
+	errInvalidDefaultFieldValue            string = "default field value is invalid"
+	errDocIDNotFound                       string = "docID not found"
+	errCollectionWithSchemaRootNotFound    string = "collection with schema root not found"
+	errGetEmbeddingFunc                    string = "failed to get embedding function"
+	errGetEmbeddingField                   string = "failed getting vector embedding field"
+	errFieldNotFound                       string = "field not found"
+	errGetDocForEmbedding                  string = "failed to get previous document for embedding generation"
+	errMissingSignature                    string = "block is missing required signature"
+	errNoIdentityInContext                 string = "no identity found in context"
+	errMissingPermission                   string = "missing permission"
+	errCollectionNameMutated               string = "collection name cannot be mutated"
+	errUnsupportedTxnType                  string = "unsupported transaction type"
+	errEncryptedIndexUnknownField          string = "encrypted index on non-existent field"
+	errEncryptedIndexAlreadyExists         string = "encrypted index already exists on this field"
+	errEncryptedIndexDoesNotExist          string = "encrypted index does not exist on this field"
+	errNACIsAlreadyDisabled                string = "node acp is already disabled"
+	errNACIsAlreadyEnabled                 string = "node acp is already enabled"
+	errNACIsNotConfigured                  string = "node acp is not configured"
+	errRelationNameEmpty                   string = "relation name cannot be empty"
+	errInvalidCID                          string = "invalid CID"
+	errUnknownCID                          string = "unknown CID, collection ids cannot be manually defined"
+	errMigrationBetweenNonAdjacentVersions string = "cannot migrate between non-adjacent collection versions"
+	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
+	errLensCIDNotFound                     string = "lens CID not found"
+	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
 )
 
 var (
@@ -192,9 +184,6 @@ var (
 	ErrNACIsAlreadyDisabled                      = errors.New(errNACIsAlreadyDisabled)
 	ErrNACIsAlreadyEnabled                       = errors.New(errNACIsAlreadyEnabled)
 	ErrNACIsNotConfigured                        = errors.New(errNACIsNotConfigured)
-	ErrNACIsEnabledButIsMissingPolicyInfo        = errors.New(errNACIsEnabledButIsMissingPolicyInfo)
-	ErrNACNodeObjectToGateIsNotRegistered        = errors.New(errNACNodeObjectToGateIsNotRegistered)
-	ErrNACIsEnabledButInstanceIsNotAvailable     = errors.New(errNACIsEnabledButInstanceIsNotAvailable)
 	ErrNACRelationshipOperationRequiresIdentity  = errors.New("node acp relationship operation requires identity")
 	ErrRelationNameEmpty                         = errors.New(errRelationNameEmpty)
 	ErrInvalidCID                                = errors.New(errInvalidCID)
@@ -203,6 +192,7 @@ var (
 	ErrBadDocsResultType                         = errors.New("bad docs result type")
 	ErrMigrationBetweenNonAdjacentVersions       = errors.New(errMigrationBetweenNonAdjacentVersions)
 	ErrLensRuntimeNotSupported                   = errors.New(errLensRuntimeNotSupported)
+	ErrLensCIDNotFound                           = errors.New(errLensCIDNotFound)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -557,15 +547,6 @@ func NewErrDocUpdate(inner error) error {
 	return errors.Wrap(errDocUpdate, inner)
 }
 
-func NewErrOneOneAlreadyLinked(documentId, targetId, relationName string) error {
-	return errors.New(
-		errOneOneAlreadyLinked,
-		errors.NewKV("DocumentID", documentId),
-		errors.NewKV("TargetID", targetId),
-		errors.NewKV("RelationName", relationName),
-	)
-}
-
 func NewErrIndexDoesNotMatchName(index, name string) error {
 	return errors.New(
 		errIndexDoesNotMatchName,
@@ -831,4 +812,18 @@ func NewErrMigrationBetweenNonAdjacentVersions(sourceVersion string, destination
 
 func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
 	return errors.New(errLensRuntimeNotSupported, errors.NewKV("Lens", lens))
+}
+
+func NewErrLensCIDNotFound(cid string) error {
+	return errors.New(errLensCIDNotFound, errors.NewKV("CID", cid))
+}
+
+// NewErrOneToOneRelationMustBeUnique returns an error indicating that a one-to-one
+// relation field cannot have a non-unique index.
+func NewErrOneToOneRelationMustBeUnique(objectName, fieldName string) error {
+	return errors.New(
+		errOneToOneMustBeUnique,
+		errors.NewKV("Object", objectName),
+		errors.NewKV("Field", fieldName),
+	)
 }

@@ -14,13 +14,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strings"
 	"unicode"
 
 	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/ipfs/go-cid"
 
-	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -46,12 +46,17 @@ func (db *DB) createCollections(
 		return nil, err
 	}
 
+	err = finalizeRelations(parseResults, existingVersions)
+	if err != nil {
+		return nil, err
+	}
+
 	newCollections := make([]client.CollectionVersion, len(parseResults))
 	for i, def := range parseResults {
 		newCollections[i] = def.Definition
 	}
 
-	err = setCollectionIDs(ctx, newCollections)
+	err = setCollectionIDs(ctx, newCollections, existingVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +97,7 @@ func (db *DB) createCollections(
 		}
 
 		for _, index := range def.Definition.Indexes {
-			if _, err := col.addNewIndex(ctx, index); err != nil {
+			if _, err := col.appendNewIndexAndIndexExistingDocs(ctx, index); err != nil {
 				return nil, err
 			}
 		}
@@ -208,6 +213,11 @@ existingVersionLoop:
 		}
 	}
 
+	oneToOneIndexRequests, err := getOneToOneIndexRequestsForPatch(newColsByID, existingColsByName)
+	if err != nil {
+		return err
+	}
+
 	for key, col := range newColsByID {
 		previousCol := existingColsByName[col.Name]
 
@@ -231,7 +241,7 @@ existingVersionLoop:
 		newCollections = append(newCollections, col)
 	}
 
-	err = setCollectionIDs(ctx, newCollections)
+	err = setCollectionIDs(ctx, newCollections, existingCols)
 	if err != nil {
 		return err
 	}
@@ -316,8 +326,8 @@ existingVersionLoop:
 			continue
 		}
 
-		existingCol, ok := existingColsByID[col.VersionID]
-		if ok && col.Equal(existingCol) {
+		existingCol, colExists := existingColsByID[col.VersionID]
+		if colExists && col.Equal(existingCol) {
 			continue
 		}
 
@@ -326,7 +336,22 @@ existingVersionLoop:
 			return err
 		}
 
-		if ok {
+		if col.IsActive {
+			if indexReqs, hasReqs := oneToOneIndexRequests[col.Name]; hasReqs {
+				colObj, err := db.newCollection(col)
+				if err != nil {
+					return err
+				}
+				for _, indexReq := range indexReqs {
+					if _, err := colObj.createIndex(ctx, indexReq); err != nil {
+						return err
+					}
+				}
+				col = colObj.Version()
+			}
+		}
+
+		if colExists {
 			if existingCol.IsMaterialized && !col.IsMaterialized {
 				// If the collection is being de-materialized - delete any cached values.
 				// Leaving them around will not break anything, but it would be a waste of
@@ -336,9 +361,7 @@ existingVersionLoop:
 					return err
 				}
 			}
-		}
-
-		if col.PreviousVersion.HasValue() && migration.HasValue() {
+		} else if col.PreviousVersion.HasValue() && migration.HasValue() {
 			_, err = db.setMigration(ctx, client.LensConfig{
 				SourceSchemaVersionID:      col.PreviousVersion.Value().SourceCollectionID,
 				DestinationSchemaVersionID: col.VersionID,
@@ -588,8 +611,7 @@ func (db *DB) setActiveCollectionVersion(
 }
 
 // shouldReindexForVersionSwitch determines if reindexing is needed when switching
-// to a new active version by examining the full version history DAG using the lens
-// package's GetTargetedCollectionHistory function.
+// to a new active version by examining the full version history DAG.
 //
 // This properly handles branching version histories by checking if any version
 // reachable from the new active version has a migration.
@@ -597,29 +619,7 @@ func (db *DB) shouldReindexForVersionSwitch(
 	ctx context.Context,
 	newActiveCol client.CollectionVersion,
 ) (bool, error) {
-	history, err := description.GetTargetedCollectionHistory(
-		ctx,
-		newActiveCol.CollectionID,
-		newActiveCol.VersionID,
-	)
-	if err != nil {
-		return false, err
-	}
-
-	if history == nil {
-		return false, nil
-	}
-
-	for _, historyLink := range history {
-		if historyLink.Collection().PreviousVersion.HasValue() {
-			prevVersion := historyLink.Collection().PreviousVersion.Value()
-			if prevVersion.Transform.HasValue() {
-				return true, nil
-			}
-		}
-	}
-
-	return false, nil
+	return description.HasMigrations(ctx, newActiveCol.CollectionID, newActiveCol.VersionID)
 }
 
 func (db *DB) deleteCollectionVersions(
@@ -722,8 +722,8 @@ func collectionHasDocuments(
 		}
 	}
 
-	iter, err := txn.Datastore().Iterator(ctx, corekv.IterOptions{
-		Prefix:   prefixKey.ToDS().Bytes(),
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+		Prefix:   prefixKey.ToDS(),
 		KeysOnly: true,
 	})
 	if err != nil {
@@ -794,4 +794,227 @@ func deleteCollectionBlocks(
 	}
 
 	return nil
+}
+
+// finalizeRelations determines which side of a relation is primary and sets IsPrimary=true
+// on both the relation field and its corresponding _id field.
+//
+// A relation field is marked as primary if:
+// - The target collection has no corresponding field pointing back (one-sided relation), OR
+// - The corresponding field in the target collection is an array (one-to-many relation)
+//
+// This function handles both within-batch relations (new collections referencing each other)
+// and cross-batch relations (new collections referencing existing collections).
+//
+// Note on automatic IsPrimary assignment: When a new collection defines a relation to an
+// existing collection that has no back-reference, the new collection's field MUST be primary.
+// The existing collection cannot be modified to become primary, and a relation requires exactly
+// one primary side to store the foreign key.
+//
+// For one-to-one relations, this function also ensures a unique index exists on the primary
+// side's _id field to enforce the 1-to-1 constraint efficiently.
+func finalizeRelations(
+	newCollections []core.Collection,
+	existingCollections []client.CollectionVersion,
+) error {
+	existingByName := make(map[string]client.CollectionVersion)
+	for _, col := range existingCollections {
+		existingByName[col.Name] = col
+	}
+
+	newByName := make(map[string]client.CollectionVersion)
+	for _, col := range newCollections {
+		newByName[col.Definition.Name] = col.Definition
+	}
+
+	for i, newCol := range newCollections {
+		if newCol.Definition.IsEmbeddedOnly {
+			continue
+		}
+
+		for fieldIndex, field := range newCol.Definition.Fields {
+			namedKind, ok := field.Kind.(*client.NamedKind)
+			if !ok || namedKind.IsArray() {
+				// We only need to process the primary side of a relation here.
+				// If the field is not a relation or if it is an array, we can skip it.
+				continue
+			}
+
+			var targetCol client.CollectionVersion
+			var found bool
+
+			if col, inBatch := newByName[namedKind.Name]; inBatch {
+				targetCol = col
+				found = true
+			} else if col, exists := existingByName[namedKind.Name]; exists {
+				targetCol = col
+				found = true
+			}
+
+			if !found {
+				// The target collection doesn't exist. Validation will catch this later.
+				continue
+			}
+
+			isOneToOne := isOneToOneRelation(targetCol, field.RelationName.Value(), newCol.Definition.Name, field.Name)
+
+			if !field.IsPrimary && !isOneToOne {
+				newCollections[i].Definition.Fields[fieldIndex].IsPrimary = true
+
+				idFieldName := field.Name + "_id"
+				for j, f := range newCollections[i].Definition.Fields {
+					if f.Name == idFieldName {
+						newCollections[i].Definition.Fields[j].IsPrimary = true
+						break
+					}
+				}
+			}
+
+			if isOneToOne && field.IsPrimary {
+				newIndex, err := ensureOneToOneUniqueIndex(
+					newCollections[i].CreateIndexes,
+					nil,
+					newCol.Definition.Name,
+					field.Name,
+				)
+				if err != nil {
+					return err
+				}
+				if newIndex != nil {
+					newCollections[i].CreateIndexes = append(newCollections[i].CreateIndexes, *newIndex)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// isOneToOneRelation checks if a relation field represents a one-to-one relationship.
+// A relation is one-to-one if the target collection has a corresponding non-array field
+// pointing back to the host collection.
+func isOneToOneRelation(
+	targetCol client.CollectionVersion,
+	relationName string,
+	hostColName string,
+	fieldName string,
+) bool {
+	correspondingField, hasCorrespondingField := targetCol.GetFieldByRelation(
+		relationName,
+		hostColName,
+		fieldName,
+	)
+	return hasCorrespondingField && !correspondingField.Kind.IsArray()
+}
+
+// findIndexWithFirstField checks if an index exists where the given field is the first field.
+func findIndexWithFirstField(
+	createIndexes []client.IndexCreateRequest,
+	existingIndexes []client.IndexDescription,
+	fieldName string,
+) (isUnique bool, found bool) {
+	for _, index := range createIndexes {
+		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
+			return index.Unique, true
+		}
+	}
+	for _, index := range existingIndexes {
+		if len(index.Fields) > 0 && index.Fields[0].Name == fieldName {
+			return index.Unique, true
+		}
+	}
+	return false, false
+}
+
+// ensureOneToOneUniqueIndex ensures a unique index exists for a one-to-one relation's _id field.
+// If a user-defined index exists with the relation field as the first field, it validates that it's unique.
+// If no user-defined index exists, it creates one automatically.
+func ensureOneToOneUniqueIndex(
+	createIndexes []client.IndexCreateRequest,
+	existingIndexes []client.IndexDescription,
+	collectionName string,
+	relationFieldName string,
+) (newIndex *client.IndexCreateRequest, err error) {
+	idFieldName := relationFieldName + "_id"
+
+	// Check for user-defined index on either the _id field or the relation field name
+	// (e.g., "address_id" or "address" since @index on relation field uses field name)
+	isUnique, hasIndex := findIndexWithFirstField(createIndexes, existingIndexes, idFieldName)
+	if !hasIndex {
+		isUnique, hasIndex = findIndexWithFirstField(createIndexes, existingIndexes, relationFieldName)
+	}
+
+	if hasIndex {
+		if !isUnique {
+			return nil, NewErrOneToOneRelationMustBeUnique(collectionName, relationFieldName)
+		}
+		return nil, nil
+	}
+
+	// No user-defined index exists, create one automatically
+	return &client.IndexCreateRequest{
+		Fields: []client.IndexedFieldDescription{{Name: idFieldName}},
+		Unique: true,
+	}, nil
+}
+
+// getOneToOneIndexRequestsForPatch returns index create requests for one-to-one relations
+// added via collection patch. This is needed because patches don't go through the
+// standard schema creation flow that calls finalizeRelations.
+// Returns a map of collectionName -> []IndexCreateRequest for indexes that need to be created.
+func getOneToOneIndexRequestsForPatch(
+	newColsByID map[string]client.CollectionVersion,
+	existingColsByName map[string]client.CollectionVersion,
+) (map[string][]client.IndexCreateRequest, error) {
+	allColsByName := make(map[string]client.CollectionVersion)
+	maps.Copy(allColsByName, existingColsByName)
+
+	for _, col := range newColsByID {
+		allColsByName[col.Name] = col
+	}
+
+	result := make(map[string][]client.IndexCreateRequest)
+
+	for _, col := range newColsByID {
+		existingCol := existingColsByName[col.Name]
+		existingFieldNames := make(map[string]struct{}, len(existingCol.Fields))
+		for _, field := range existingCol.Fields {
+			existingFieldNames[field.Name] = struct{}{}
+		}
+
+		for _, field := range col.Fields {
+			if _, existed := existingFieldNames[field.Name]; existed {
+				continue
+			}
+
+			namedKind, ok := field.Kind.(*client.NamedKind)
+			if !ok || namedKind.IsArray() {
+				continue
+			}
+
+			if !field.IsPrimary {
+				continue
+			}
+
+			targetCol, found := allColsByName[namedKind.Name]
+			if !found {
+				continue
+			}
+
+			if !isOneToOneRelation(targetCol, field.RelationName.Value(), col.Name, field.Name) {
+				continue
+			}
+
+			indexReq, err := ensureOneToOneUniqueIndex(nil, col.Indexes, col.Name, field.Name)
+			if err != nil {
+				return nil, err
+			}
+
+			if indexReq != nil {
+				result[col.Name] = append(result[col.Name], *indexReq)
+			}
+		}
+	}
+
+	return result, nil
 }

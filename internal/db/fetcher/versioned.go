@@ -30,6 +30,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -102,6 +103,7 @@ type VersionedFetcher struct {
 
 	queuedCids *list.List
 
+	nodeACP     acpDB.NACInfo
 	documentACP immutable.Option[dac.DocumentACP]
 
 	col client.Collection
@@ -112,6 +114,7 @@ func (vf *VersionedFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
+	nodeACP acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
@@ -121,6 +124,7 @@ func (vf *VersionedFetcher) Init(
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
+	vf.nodeACP = nodeACP
 	vf.documentACP = documentACP
 	vf.col = col
 	vf.queuedCids = list.New()
@@ -178,6 +182,7 @@ func (vf *VersionedFetcher) Init(
 		ctx,
 		identity,
 		vf.store,
+		nodeACP,
 		documentACP,
 		index,
 		col,

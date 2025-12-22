@@ -107,8 +107,8 @@ func (s *testSetup) createCoordinator() {
 
 // expectSEArtifactPush sets up expectation for SE artifact push to peer
 // Returns a channel that will receive the request when it's made (for thread-safe validation)
-func (s *testSetup) expectSEArtifactPush() <-chan PushSEArtifactsRequest {
-	mockCollection := s.createMockCollectionWithDocument()
+func (s *testSetup) expectSEArtifactPush(ctx context.Context) <-chan PushSEArtifactsRequest {
+	mockCollection := s.createMockCollectionWithDocument(ctx)
 
 	s.mockDB.EXPECT().GetCollections(mock.Anything, mock.Anything).Return([]client.Collection{mockCollection}, nil)
 
@@ -199,11 +199,11 @@ func (s *testSetup) createMockCollection() *clientmocks.Collection {
 }
 
 // createMockCollectionWithDocument creates a mock collection that returns a successful Get
-func (s *testSetup) createMockCollectionWithDocument() *clientmocks.Collection {
+func (s *testSetup) createMockCollectionWithDocument(ctx context.Context) *clientmocks.Collection {
 	mockCollection := s.createMockCollection()
 
 	// Setup Get method with default return
-	doc, err := client.NewDocFromMap(map[string]any{"age": 21}, mockCollection.Version())
+	doc, err := client.NewDocFromMap(ctx, map[string]any{"age": 21}, mockCollection.Version())
 	mockCollection.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(doc, err).Maybe()
 
 	return mockCollection

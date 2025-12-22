@@ -108,13 +108,16 @@ func (encdoc *encodedDocument) Reset() {
 }
 
 // Decode returns a properly decoded document object
-func Decode(encdoc EncodedDocument, collection client.CollectionVersion) (*client.Document, error) {
+func Decode(ctx context.Context,
+	encdoc EncodedDocument,
+	collection client.CollectionVersion,
+) (*client.Document, error) {
 	docID, err := client.NewDocIDFromString(string(encdoc.ID()))
 	if err != nil {
 		return nil, err
 	}
 
-	doc, err := client.NewDocWithID(docID, collection)
+	doc, err := client.NewDocWithID(ctx, docID, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +127,7 @@ func Decode(encdoc EncodedDocument, collection client.CollectionVersion) (*clien
 	}
 
 	for desc, val := range properties {
-		err = doc.Set(desc.Name, val)
+		err = doc.Set(ctx, desc.Name, val)
 		if err != nil {
 			return nil, err
 		}

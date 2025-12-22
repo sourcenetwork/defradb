@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
 var log = corelog.NewLogger("node")
@@ -38,6 +39,7 @@ type DB interface {
 	MaxTxnRetries() int
 	Rootstore() corekv.TxnStore
 	Events() event.Bus
+	NodeACP() acpDB.NACInfo
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	PurgeDACState(ctx context.Context) error
 	PurgeNACState(ctx context.Context) error

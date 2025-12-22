@@ -55,6 +55,7 @@ const developmentDescription = `Enables a set of features that make development 
 
 func MakeStartCommand(ctx context.Context) *cobra.Command {
 	var identity string
+	var enableNAC bool
 	var cmd = &cobra.Command{
 		Use:   "start",
 		Short: "Start a DefraDB node",
@@ -89,8 +90,8 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			}
 
 			opts := []node.Option{
+				node.WithEnableNodeACP(enableNAC),
 				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
-				node.WithEnableNodeACP(cfg.GetBool("acp.node.enable")),
 				node.WithSourceHubChainID(cfg.GetString("acp.document.sourceHub.ChainID")),
 				node.WithSourceHubGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")),
 				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.document.sourceHub.CometRPCAddress")),
@@ -124,7 +125,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				opts = append(opts, node.WithNodeACPPath(rootDir))
 			}
 
-			if cfg.GetBool("acp.node.enable") && identity == "" {
+			if enableNAC && identity == "" {
 				return client.ErrCanNotStartNACWithoutIdentity
 			}
 
@@ -330,12 +331,19 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		"no-searchable-encryption",
 		cfg.GetBool(configFlags["no-searchable-encryption"]),
 		"Skip generating a searchable encryption key. Searchable encryption will be disabled.")
-	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
-		"Hex formatted private key used to authenticate with ACP")
-	cmd.PersistentFlags().String(
+	cmd.PersistentFlags().StringVarP(
+		&identity,
+		"identity",
+		"i",
+		"",
+		"Hex formatted private key used to authenticate with ACP",
+	)
+	cmd.PersistentFlags().BoolVar(
+		&enableNAC,
 		"node-acp-enable",
-		cfg.GetString(configFlags["node-acp-enable"]),
-		"Enable the node access control system. Defaults to `false`.")
+		false,
+		"Enable the node access control system.",
+	)
 	cmd.PersistentFlags().String(
 		"document-acp-type",
 		cfg.GetString(configFlags["document-acp-type"]),

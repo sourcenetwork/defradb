@@ -12,63 +12,35 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
-	"io"
-	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
 func MakeViewAddCommand(ctx context.Context) *cobra.Command {
-	var lensFile string
+	var lensCID string
 	var cmd = &cobra.Command{
-		Use:   "add [query] [sdl] [transform]",
+		Use:   "add [query] [sdl]",
 		Short: "Add new view",
 		Long: `Add new database view.
 
+Use --lens-cid to specify a lens transform. Store a lens first using 'defradb client lens add'.
+
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
-		Args: cobra.RangeArgs(2, 4),
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
 			query := args[0]
 			sdl := args[1]
 
-			var lensCfgJson string
-			switch {
-			case lensFile != "":
-				data, err := os.ReadFile(lensFile)
-				if err != nil {
-					return err
-				}
-				lensCfgJson = string(data)
-			case len(args) == 3 && args[2] == "-":
-				data, err := io.ReadAll(cmd.InOrStdin())
-				if err != nil {
-					return err
-				}
-				lensCfgJson = string(data)
-			case len(args) == 3:
-				lensCfgJson = args[2]
+			var transformCIDOpt immutable.Option[string]
+			if lensCID != "" {
+				transformCIDOpt = immutable.Some(lensCID)
 			}
 
-			var transform immutable.Option[model.Lens]
-			if lensCfgJson != "" {
-				decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
-				decoder.DisallowUnknownFields()
-
-				var lensCfg model.Lens
-				if err := decoder.Decode(&lensCfg); err != nil {
-					return NewErrInvalidLensConfig(err)
-				}
-				transform = immutable.Some(lensCfg)
-			}
-
-			defs, err := cliClient.AddView(cmd.Context(), query, sdl, transform)
+			defs, err := cliClient.AddView(cmd.Context(), query, sdl, transformCIDOpt)
 			if err != nil {
 				return err
 			}
@@ -76,9 +48,11 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "add from an argument string",
-		`defradb client view add 'Foo { name, ...}' 'type Foo { ... }' '{"lenses": [...'`)
+	EmbedCLIExample(ctx, cmd, "add a simple view",
+		`defradb client view add 'Foo { name, ...}' 'type Foo { ... }'`)
+	EmbedCLIExample(ctx, cmd, "add using an existing lens CID",
+		`defradb client view add 'Foo { name, ...}' 'type Foo { ... }' --lens-cid bafyreih...`)
 
-	cmd.Flags().StringVarP(&lensFile, "file", "f", "", "Lens configuration file")
+	cmd.Flags().StringVar(&lensCID, "lens-cid", "", "CID of an existing lens transform (use 'lens add' first)")
 	return cmd
 }

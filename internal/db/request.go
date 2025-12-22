@@ -50,6 +50,7 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 	planner := planner.New(
 		ctx,
 		identity.FromContext(ctx),
+		db.nodeACP,
 		db.documentACP,
 		db,
 		db.p2p,

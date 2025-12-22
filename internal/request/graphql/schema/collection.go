@@ -38,6 +38,9 @@ const (
 	typeString   string = "String"
 	typeBlob     string = "Blob"
 	typeJSON     string = "JSON"
+
+	// Special case enums
+	enum_UTC_NOW string = "UTC_NOW"
 )
 
 // TypeToDefaultPropName mapping is used to check that the default prop value
@@ -112,14 +115,6 @@ func fromAst(doc *ast.Document) (
 			// Do nothing, ignore it and continue
 			continue
 		}
-	}
-
-	// The details on the relations between objects depend on both sides
-	// of the relationship.  The relation manager handles this, and must be applied
-	// after all the collections have been processed.
-	err := finalizeRelations(results)
-	if err != nil {
-		return nil, err
 	}
 
 	return results, nil
@@ -441,6 +436,12 @@ func defaultFromAST(
 	case types.DefaultDirectivePropString:
 		value = gql.String.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropDateTime:
+		// Handle UTC_NOW as a special case, if that's what the default is
+		if enum, ok := arg.Value.(*ast.EnumValue); ok && enum.Value == enum_UTC_NOW {
+			value = enum_UTC_NOW
+			break
+		}
+		// Otherwise, parse the value normally as a DateTime
 		value = gql.DateTime.ParseLiteral(arg.Value, nil)
 	case types.DefaultDirectivePropJSON:
 		jsonValue := types.JSON.ParseLiteral(arg.Value, nil)
@@ -814,86 +815,4 @@ func genRelationName(t1, t2 string) (string, error) {
 		return fmt.Sprintf("%s_%s", t1, t2), nil
 	}
 	return fmt.Sprintf("%s_%s", t2, t1), nil
-}
-
-func finalizeRelations(
-	results []core.Collection,
-) error {
-	for i, result := range results {
-		if result.Definition.IsEmbeddedOnly {
-			// Embedded objects are simpler and require no addition work
-			continue
-		}
-
-		for fieldIndex, field := range result.Definition.Fields {
-			namedKind, ok := field.Kind.(*client.NamedKind)
-			if !ok || namedKind.IsArray() {
-				// We only need to process the primary side of a relation here, if the field is not a relation
-				// or if it is an array, we can skip it.
-				continue
-			}
-
-			var otherColDefinition immutable.Option[client.CollectionVersion]
-			for _, otherDef := range results {
-				// Check the 'other' schema name, there can only be a one-one mapping in an SDL.
-				if otherDef.Definition.Name == namedKind.Name {
-					otherColDefinition = immutable.Some(otherDef.Definition)
-					break
-				}
-			}
-
-			if !otherColDefinition.HasValue() {
-				// If the other collection is not found here we skip this field.  Whilst this almost certainly means the SDL
-				// is invalid, validating anything beyond SDL syntax is not the responsibility of this package.
-				continue
-			}
-
-			otherColFieldDescription, hasOtherColFieldDescription := otherColDefinition.Value().GetFieldByRelation(
-				field.RelationName.Value(),
-				result.Definition.Name,
-				field.Name,
-			)
-
-			if !hasOtherColFieldDescription || otherColFieldDescription.Kind.IsArray() {
-				field.IsPrimary = true
-				result.Definition.Fields[fieldIndex] = field
-
-				idFieldName := fmt.Sprintf("%s_id", field.Name)
-
-				idField, idFieldExists := result.Definition.GetFieldByName(idFieldName)
-				if !idFieldExists {
-					existingFields := result.Definition.Fields
-					result.Definition.Fields = make(
-						[]client.CollectionFieldDescription,
-						len(result.Definition.Fields)+1,
-					)
-					copy(result.Definition.Fields, existingFields[:fieldIndex+1])
-					copy(result.Definition.Fields[fieldIndex+2:], existingFields[fieldIndex+1:])
-
-					// An _id field is added for every 1-1 or 1-N relationship from this object if the relation
-					// does not point to an embedded object.
-					//
-					// It is inserted immediately after the object field to make things nicer for the user.
-					result.Definition.Fields[fieldIndex+1] = client.CollectionFieldDescription{
-						Name:      idFieldName,
-						Kind:      client.FieldKind_DocID,
-						Typ:       defaultCRDTForFieldKind[client.FieldKind_DocID],
-						IsPrimary: true,
-					}
-				} else {
-					for i, field := range result.Definition.Fields {
-						if field.Name != idField.Name {
-							continue
-						}
-
-						result.Definition.Fields[i].IsPrimary = true
-					}
-				}
-			}
-
-			results[i] = result
-		}
-	}
-
-	return nil
 }

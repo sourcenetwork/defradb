@@ -15,7 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
 // registerDocWithACP handles the registration of the document with acp.
@@ -37,7 +37,7 @@ func (c *collection) registerDocWithACP(
 	if !c.db.documentACP.HasValue() {
 		return nil
 	}
-	return permission.RegisterDocOnCollectionWithDocumentACP(
+	return acpDB.RegisterDocOnCollectionWithDocumentACP(
 		ctx,
 		identity.FromContext(ctx),
 		c.db.documentACP.Value(),
@@ -59,9 +59,10 @@ func (c *collection) checkAccessOfDocWithACP(
 	if ident.HasValue() && c.db.nodeIdentity.HasValue() && ident.Value().DID() == c.db.nodeIdentity.Value().DID() {
 		return true, nil
 	}
-	return permission.CheckAccessOfDocOnCollectionWithACP(
+	return acpDB.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
 		ident,
+		c.db.nodeACP,
 		c.db.documentACP.Value(),
 		c,
 		resourcePermission,

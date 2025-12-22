@@ -253,8 +253,9 @@ type CreateView struct {
 	// The SDL containing all types used by the view output.
 	SDL string
 
-	// An optional Lens transform to add to the view.
-	Transform immutable.Option[model.Lens]
+	// An optional CID of an existing lens transform.
+	// Use AddLens action first to store the lens and get its CID.
+	TransformCID immutable.Option[string]
 
 	// Any error expected from the action. Optional.
 	//

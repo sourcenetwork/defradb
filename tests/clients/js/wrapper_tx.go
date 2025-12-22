@@ -14,6 +14,7 @@ package js
 
 import (
 	"context"
+	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -35,6 +36,10 @@ type Transaction struct {
 
 func (txn *Transaction) ID() uint64 {
 	return txn.txn.ID()
+}
+
+func (txn *Transaction) StartTS() time.Time {
+	return txn.txn.StartTS()
 }
 
 func (txn *Transaction) Commit() error {
@@ -110,10 +115,10 @@ func (txn *Transaction) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Wrapper.AddView(ctx, gqlQuery, sdl, transform)
+	return txn.Wrapper.AddView(ctx, gqlQuery, sdl, transformCID)
 }
 
 func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
@@ -124,6 +129,16 @@ func (txn *Transaction) RefreshViews(ctx context.Context, options client.Collect
 func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.SetMigration(ctx, config)
+}
+
+func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddLens(ctx, lens)
+}
+
+func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.ListLenses(ctx)
 }
 
 func (txn *Transaction) GetCollectionByName(

@@ -45,7 +45,7 @@ func (p *P2P) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 
 	txn.OnSuccess(func() {
 		for _, docID := range docIDs {
-			err := p.host.AddPubSubTopic(docID, true, p.pubSubMessageHandler)
+			err := p.host.AddPubSubTopic(docID, true, p.pubSubMessageHandler, p.peerEventHandler)
 			if err != nil {
 				log.ErrorE("Failed to add pubsub topic.", err)
 			}
@@ -142,7 +142,7 @@ func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}
-		err = p.host.AddPubSubTopic(key.DocID, true, p.pubSubMessageHandler)
+		err = p.host.AddPubSubTopic(key.DocID, true, p.pubSubMessageHandler, p.peerEventHandler)
 		if err != nil {
 			return errors.Join(err, iter.Close())
 		}

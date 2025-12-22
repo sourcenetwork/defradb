@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/connor"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -57,13 +58,13 @@ func isArrayCondition(op string) bool {
 // It is used to iterate over the index keys that match a specific condition.
 // For example, iteration over condition _eq and _gt will have completely different logic.
 type indexIterator interface {
-	Init(context.Context, corekv.ReaderWriter) error
+	Init(context.Context, datastore.Keyedstore) error
 	Next() (indexIterResult, error)
 	Close() error
 }
 
 type indexIterResult struct {
-	key      keys.IndexDataStoreKey
+	key      *keys.IndexDataStoreKey
 	foundKey bool
 	value    []byte
 }
@@ -79,21 +80,21 @@ type indexMatchIterator struct {
 	// Iterator state
 	resultIter corekv.Iterator
 	ctx        context.Context
-	store      corekv.ReaderWriter
+	store      datastore.Keyedstore
 	reverse    bool
 
 	matchers []valueMatcher
 
 	// For prefix mode
-	prefixKey []byte
+	prefixKey keys.Key
 	// For range mode
-	startKey []byte
-	endKey   []byte
+	startKey keys.Key
+	endKey   keys.Key
 }
 
 var _ indexIterator = (*indexMatchIterator)(nil)
 
-func (iter *indexMatchIterator) Init(ctx context.Context, store corekv.ReaderWriter) error {
+func (iter *indexMatchIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
 	iter.ctx = ctx
 	iter.store = store
 	if iter.resultIter != nil {
@@ -103,15 +104,15 @@ func (iter *indexMatchIterator) Init(ctx context.Context, store corekv.ReaderWri
 	}
 	iter.resultIter = nil
 
-	var iterOpts corekv.IterOptions
+	var iterOpts datastore.IterOptions
 	if iter.prefixKey == nil {
-		iterOpts = corekv.IterOptions{
+		iterOpts = datastore.IterOptions{
 			Start:   iter.startKey,
 			End:     iter.endKey,
 			Reverse: iter.reverse,
 		}
 	} else {
-		iterOpts = corekv.IterOptions{
+		iterOpts = datastore.IterOptions{
 			Prefix:  iter.prefixKey,
 			Reverse: iter.reverse,
 		}
@@ -163,7 +164,7 @@ func (iter *indexMatchIterator) nextRawResult() (indexIterResult, error) {
 	}
 
 	iter.execInfo.IndexesFetched++
-	return indexIterResult{key: key, value: value, foundKey: true}, nil
+	return indexIterResult{key: &key, value: value, foundKey: true}, nil
 }
 
 func (iter *indexMatchIterator) Close() error {
@@ -182,7 +183,7 @@ func (f *indexFetcher) newPrefixBaseMatchIterator(
 		indexDesc:     f.indexDesc,
 		indexedFields: f.indexedFields,
 		execInfo:      execInfo,
-		prefixKey:     indexKey.Bytes(),
+		prefixKey:     &indexKey,
 		matchers:      matchers,
 	}
 }
@@ -193,16 +194,16 @@ func (iter *indexMatchIterator) Reverse(reverse bool) *indexMatchIterator {
 }
 
 type eqSingleIndexIterator struct {
-	indexKey keys.IndexDataStoreKey
+	indexKey *keys.IndexDataStoreKey
 	execInfo *ExecInfo
 
 	ctx   context.Context
-	store corekv.ReaderWriter
+	store datastore.Keyedstore
 }
 
 var _ indexIterator = (*eqSingleIndexIterator)(nil)
 
-func (iter *eqSingleIndexIterator) Init(ctx context.Context, store corekv.ReaderWriter) error {
+func (iter *eqSingleIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
 	iter.ctx = ctx
 	iter.store = store
 	return nil
@@ -212,7 +213,7 @@ func (iter *eqSingleIndexIterator) Next() (indexIterResult, error) {
 	if iter.store == nil {
 		return indexIterResult{}, nil
 	}
-	val, err := iter.store.Get(iter.ctx, iter.indexKey.Bytes())
+	val, err := iter.store.Get(iter.ctx, iter.indexKey)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			return indexIterResult{key: iter.indexKey}, nil
@@ -233,7 +234,7 @@ type inIndexIterator struct {
 	inValues        []client.NormalValue
 	nextValIndex    int
 	ctx             context.Context
-	store           corekv.ReaderWriter
+	store           datastore.Keyedstore
 	hasIterator     bool
 	fetcher         *indexFetcher
 	fieldConditions []fieldFilterCond
@@ -293,7 +294,7 @@ func (iter *inIndexIterator) createIteratorForNextValue() error {
 	return nil
 }
 
-func (iter *inIndexIterator) Init(ctx context.Context, store corekv.ReaderWriter) error {
+func (iter *inIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
 	iter.ctx = ctx
 	iter.store = store
 	var err error
@@ -340,7 +341,7 @@ func (f *indexFetcher) newEqSingleIndexIterator(
 	if err != nil {
 		return nil, err
 	}
-	return &eqSingleIndexIterator{indexKey: key, execInfo: f.execInfo}, nil
+	return &eqSingleIndexIterator{indexKey: &key, execInfo: f.execInfo}, nil
 }
 
 // memorizingIndexIterator is an iterator for set of indexes that belong to the same document
@@ -351,12 +352,12 @@ type memorizingIndexIterator struct {
 	fetchedDocs map[string]struct{}
 
 	ctx   context.Context
-	store corekv.ReaderWriter
+	store datastore.Keyedstore
 }
 
 var _ indexIterator = (*memorizingIndexIterator)(nil)
 
-func (iter *memorizingIndexIterator) Init(ctx context.Context, store corekv.ReaderWriter) error {
+func (iter *memorizingIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
 	iter.ctx = ctx
 	iter.store = store
 	iter.fetchedDocs = make(map[string]struct{})
@@ -510,8 +511,8 @@ func (f *indexFetcher) createKeyWithValue(key keys.IndexDataStoreKey, val client
 
 // createRangeBoundaries creates start and end keys for range queries based on the filter condition.
 func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bool) (
-	startKey []byte,
-	endKey []byte,
+	startKey keys.Key,
+	endKey keys.Key,
 	err error,
 ) {
 	var baseKey keys.IndexDataStoreKey
@@ -535,13 +536,13 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 			// For descending index, we want values > X
 			// Since larger values come first, we start from the beginning
 			// and go until just before X
-			startKey = baseKey.Bytes()
+			startKey = &baseKey
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
-			endKey = valueKey.Bytes() // Exclusive, so this works
+			endKey = &valueKey // Exclusive, so this works
 		case opGe:
 			// For descending index, we want values >= X
 			// Start from beginning and go until just after X
-			startKey = baseKey.Bytes()
+			startKey = &baseKey
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
 			endKey = valueKey.PrefixEnd()
 		case opLt:
@@ -554,7 +555,7 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 			// For descending index, we want values <= X
 			// Start from X and go to the end
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
-			startKey = valueKey.Bytes()
+			startKey = &valueKey
 			endKey = baseKey.PrefixEnd()
 		}
 	} else {
@@ -567,16 +568,16 @@ func (f *indexFetcher) createRangeBoundaries(cond fieldFilterCond, descending bo
 		case opGe:
 			// Start >= value: Use value as-is
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
-			startKey = valueKey.Bytes()
+			startKey = &valueKey
 			endKey = baseKey.PrefixEnd()
 		case opLt:
 			// End < value: Use value as-is (End is exclusive)
-			startKey = baseKey.Bytes()
+			startKey = &baseKey
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
-			endKey = valueKey.Bytes()
+			endKey = &valueKey
 		case opLe:
 			// End <= value: Need to include value, so increment it
-			startKey = baseKey.Bytes()
+			startKey = &baseKey
 			valueKey := f.createKeyWithValue(baseKey, cond.val)
 			endKey = valueKey.PrefixEnd()
 		}

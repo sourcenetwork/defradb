@@ -81,6 +81,7 @@ func (c *collection) get(
 		ctx,
 		identity.FromContext(ctx),
 		txn,
+		c.db.nodeACP,
 		c.db.documentACP,
 		immutable.Option[client.IndexDescription]{},
 		c,
@@ -128,7 +129,7 @@ func (c *collection) get(
 		return nil, nil
 	}
 
-	doc, err := fetcher.Decode(encodedDoc, c.Version())
+	doc, err := fetcher.Decode(ctx, encodedDoc, c.Version())
 	if err != nil {
 		return nil, err
 	}

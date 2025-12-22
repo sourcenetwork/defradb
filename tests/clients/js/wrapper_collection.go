@@ -212,12 +212,12 @@ func (c *Collection) Get(
 	if err := goji.UnmarshalJS(res[0], &docMap); err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocWithID(docID, c.Version())
+	doc, err := client.NewDocWithID(ctx, docID, c.Version())
 	if err != nil {
 		return nil, err
 	}
 	for f, v := range docMap {
-		if err := doc.Set(f, v); err != nil {
+		if err := doc.Set(ctx, f, v); err != nil {
 			return nil, err
 		}
 	}

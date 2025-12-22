@@ -36,8 +36,8 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/internal/se"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
@@ -80,6 +80,8 @@ type DB interface {
 	Events() event.Bus
 	// RetryIntervals returns the replicator retry configuration.
 	RetryIntervals() []time.Duration
+	// NodeACP returns the NodeACP implementation configured on the database.
+	NodeACP() acpDB.NACInfo
 	// DocumentACP returns the DocumentACP implementation configured on the database.
 	DocumentACP() immutable.Option[dac.DocumentACP]
 	// Rootstore returns the rootstore
@@ -144,6 +146,22 @@ func (proc *pushLogCommProcessor) ProcessRequest(
 	return protocol.PushLogReply{}, proc.p2p.processPushlogRequest(ctx, &req, true)
 }
 
+// peerEventHandlingHost wraps a Host to add a PeerEventHandler to pubsub topics.
+// It's added so that KMS doesn't need to bother with event handling and keeps it independent
+// from the event bus.
+type peerEventHandlingHost struct {
+	client.Host
+	eventHandler client.PeerEventHandler
+}
+
+func (h *peerEventHandlingHost) AddPubSubTopic(
+	topicName string,
+	subscribe bool,
+	handler client.PubsubMessageHandler,
+) error {
+	return h.Host.AddPubSubTopic(topicName, subscribe, handler, h.eventHandler)
+}
+
 // New returns a new configured P2P instance.
 func New(
 	ctx context.Context,
@@ -169,7 +187,13 @@ func New(
 
 	host.SetBlockAccessFunc(p.hasAccess)
 
-	err := p.host.AddPubSubTopic(docSyncTopic, true, p.docSyncMessageHandler)
+	err := p.host.AddPubSubTopic(docSyncTopic, true, p.docSyncMessageHandler, p.peerEventHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.host.AddPubSubTopic(syncBranchableCollectionTopic, true, p.syncBranchableCollectionMessageHandler,
+		p.peerEventHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -192,8 +216,12 @@ func New(
 		p.kms, err = kms.NewPubSubService(
 			ctx,
 			host.ID(),
-			host,
+			&peerEventHandlingHost{
+				Host:         host,
+				eventHandler: p.peerEventHandler,
+			},
 			datastore.EncstoreFrom(db.Rootstore()),
+			db.NodeACP(),
 			db.DocumentACP(),
 			collectionRetriever,
 			nodeIdentity.Value().DID(),
@@ -375,9 +403,10 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return immutable.Some(ident)
 	}
 
-	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
+	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
 		ctx,
 		identFunc,
+		p.db.NodeACP(),
 		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
 		acpTypes.DocumentReadPerm,
@@ -421,11 +450,12 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return true, nil
 	}
 
-	peerHasAccess, err := permission.CheckDocAccessWithIdentityFunc(
+	peerHasAccess, err := acpDB.CheckDocAccessWithIdentityFunc(
 		ctx,
 		func() immutable.Option[identity.Identity] {
 			return immutable.Some(identity.FromDID(ident.Value().DID))
 		},
+		p.db.NodeACP(),
 		p.db.DocumentACP().Value(),
 		cols[0], // For now we assume there is only one collection.
 		acpTypes.DocumentReadPerm,
@@ -456,6 +486,14 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	}
 
 	return nil, nil
+}
+
+func (p *P2P) peerEventHandler(peerID string, topic string, eventType string) {
+	p.db.Events().Publish(event.NewMessage(event.TopicPeerEventName, event.TopicPeerEvent{
+		PeerID:    peerID,
+		Topic:     topic,
+		EventType: eventType,
+	}))
 }
 
 // processPushlogRequest processes a push log request
