@@ -227,7 +227,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 }
 
 func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
-	schemaVersionID := testUtils.NewUniqueValue()
+	collectionVersionID := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -241,7 +241,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
 					Users {
 						Name
 						_version {
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -251,7 +251,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
 							"Name": "John",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": schemaVersionID,
+									"collectionVersionId": collectionVersionID,
 								},
 							},
 						},
@@ -546,7 +546,7 @@ func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
 
 func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 	docID := testUtils.NewSameValue()
-	schemaVersionID := testUtils.NewUniqueValue()
+	collectionVersionID := testUtils.NewUniqueValue()
 	docCreateCompositeCid := testUtils.NewUniqueValue()
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()
@@ -578,7 +578,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 								cid
 								fieldName
 							}
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -604,7 +604,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 											"fieldName": "Age",
 										},
 									},
-									"schemaVersionId": schemaVersionID,
+									"collectionVersionId": collectionVersionID,
 								},
 							},
 						},
@@ -619,7 +619,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 
 func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 	docID := testUtils.NewSameValue()
-	schemaVersionID := testUtils.NewSameValue()
+	collectionVersionID := testUtils.NewSameValue()
 	docUpdateCompositeCid := testUtils.NewUniqueValue()
 	docCreateCompositeCid := testUtils.NewSameValue()
 	ageUpdateCid := testUtils.NewUniqueValue()
@@ -662,7 +662,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 							heads {
 								cid
 							}
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -690,7 +690,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 											"cid": docCreateCompositeCid,
 										},
 									},
-									"schemaVersionId": schemaVersionID,
+									"collectionVersionId": collectionVersionID,
 								},
 								{
 									"cid":       docCreateCompositeCid,
@@ -708,8 +708,8 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 											"fieldName": "Age",
 										},
 									},
-									"heads":           []map[string]any{},
-									"schemaVersionId": schemaVersionID,
+									"heads":               []map[string]any{},
+									"collectionVersionId": collectionVersionID,
 								},
 							},
 						},

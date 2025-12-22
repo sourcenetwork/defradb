@@ -246,11 +246,11 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 		fieldBlock := coreblock.Block{
 			Delta: crdt.CRDT{
 				LWWDelta: &crdt.LWWDelta{
-					DocID:           d.docID,
-					FieldName:       field,
-					Priority:        d.fieldsHeight[field],
-					SchemaVersionID: d.col.Version().VersionID,
-					Data:            encodeValue(val),
+					DocID:               d.docID,
+					FieldName:           field,
+					Priority:            d.fieldsHeight[field],
+					CollectionVersionID: d.col.Version().VersionID,
+					Data:                encodeValue(val),
 				},
 			},
 		}
@@ -266,10 +266,10 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 
 	compositeBlock := coreblock.New(
 		crdt.NewCRDT(&crdt.DocCompositeDelta{
-			DocID:           d.docID,
-			Priority:        newPriority,
-			SchemaVersionID: d.col.Version().VersionID,
-			Status:          1,
+			DocID:               d.docID,
+			Priority:            newPriority,
+			CollectionVersionID: d.col.Version().VersionID,
+			Status:              1,
 		}),
 		links,
 		heads...,

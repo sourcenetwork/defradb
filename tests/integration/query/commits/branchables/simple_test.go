@@ -95,7 +95,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 				Request: `query {
 						_commits {
 							cid
-							schemaVersionId
+							collectionVersionId
 							delta
 							docID
 							fieldName
@@ -112,12 +112,12 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":             gomega.And(collectionCid, uniqueCid),
-							"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
-							"delta":           nil,
-							"docID":           nil,
-							"fieldName":       nil,
-							"height":          int64(1),
+							"cid":                 gomega.And(collectionCid, uniqueCid),
+							"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
+							"delta":               nil,
+							"docID":               nil,
+							"fieldName":           nil,
+							"height":              int64(1),
 							"links": []map[string]any{
 								{
 									"cid":       compositeCid,
@@ -127,32 +127,32 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 							"heads": []map[string]any{},
 						},
 						{
-							"cid":             gomega.And(ageCid, uniqueCid),
-							"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
-							"delta":           testUtils.CBORValue(21),
-							"docID":           "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
-							"fieldName":       "age",
-							"height":          int64(1),
-							"links":           []map[string]any{},
-							"heads":           []map[string]any{},
+							"cid":                 gomega.And(ageCid, uniqueCid),
+							"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
+							"delta":               testUtils.CBORValue(21),
+							"docID":               "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
+							"fieldName":           "age",
+							"height":              int64(1),
+							"links":               []map[string]any{},
+							"heads":               []map[string]any{},
 						},
 						{
-							"cid":             gomega.And(nameCid, uniqueCid),
-							"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
-							"delta":           testUtils.CBORValue("John"),
-							"docID":           "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
-							"fieldName":       "name",
-							"height":          int64(1),
-							"links":           []map[string]any{},
-							"heads":           []map[string]any{},
+							"cid":                 gomega.And(nameCid, uniqueCid),
+							"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
+							"delta":               testUtils.CBORValue("John"),
+							"docID":               "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
+							"fieldName":           "name",
+							"height":              int64(1),
+							"links":               []map[string]any{},
+							"heads":               []map[string]any{},
 						},
 						{
-							"cid":             gomega.And(compositeCid, uniqueCid),
-							"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
-							"delta":           nil,
-							"docID":           "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
-							"fieldName":       "_C",
-							"height":          int64(1),
+							"cid":                 gomega.And(compositeCid, uniqueCid),
+							"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
+							"delta":               nil,
+							"docID":               "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
+							"fieldName":           "_C",
+							"height":              int64(1),
 							"links": []map[string]any{
 								{
 									"cid":       ageCid,

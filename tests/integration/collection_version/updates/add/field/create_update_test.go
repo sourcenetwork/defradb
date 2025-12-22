@@ -43,7 +43,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 					Users {
 						name
 						_version {
-							schemaVersionId
+							collectionVersionId
 							fieldName
 						}
 					}
@@ -54,8 +54,8 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 							"name": "John",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": initialSchemaVersionID,
-									"fieldName":       "_C",
+									"collectionVersionId": initialSchemaVersionID,
+									"fieldName":           "_C",
 								},
 							},
 						},
@@ -82,7 +82,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 						name
 						email
 						_version {
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -94,11 +94,11 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 							"_version": []map[string]any{
 								{
 									// Update commit
-									"schemaVersionId": updatedSchemaVersionID,
+									"collectionVersionId": updatedSchemaVersionID,
 								},
 								{
 									// Create commit
-									"schemaVersionId": initialSchemaVersionID,
+									"collectionVersionId": initialSchemaVersionID,
 								},
 							},
 						},
@@ -146,18 +146,18 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 			testUtils.Request{
 				Request: `query {
 					_commits (filter: {fieldName: {_eq: "_C"}}) {
-						schemaVersionId
+						collectionVersionId
 					}
 				}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
 							// Update commit
-							"schemaVersionId": updatedSchemaVersionID,
+							"collectionVersionId": updatedSchemaVersionID,
 						},
 						{
 							// Create commit
-							"schemaVersionId": initialSchemaVersionID,
+							"collectionVersionId": initialSchemaVersionID,
 						},
 					},
 				},

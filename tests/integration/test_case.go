@@ -183,7 +183,7 @@ type PatchCollection struct {
 
 // GetCollections is an action that fetches collections using the provided options.
 //
-// ID, RootID and SchemaVersionID will only be asserted on if an expected value is provided.
+// ID, RootID and CollectionVersionID will only be asserted on if an expected value is provided.
 type GetCollections struct {
 	// NodeID may hold the ID (index) of a node to get collections from.
 	//
