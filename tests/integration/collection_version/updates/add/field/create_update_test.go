@@ -145,7 +145,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 			},
 			testUtils.Request{
 				Request: `query {
-					_commits (fieldName: "_C") {
+					_commits (filter: {fieldName: {_eq: "_C"}}) {
 						schemaVersionId
 					}
 				}`,

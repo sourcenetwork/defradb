@@ -39,7 +39,7 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							height
 							links {
 								cid
-								name
+								fieldName
 							}
 						}
 					}
@@ -70,12 +70,12 @@ func TestDocEncryption_WithEncryptionOnLWWCRDT_ShouldStoreCommitsDeltaEncrypted(
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  "bafyreiaatouuapteh55x7o7mo2nes3bmj3u4d2wmi4i2zepfmmdmd74sjy",
-									"name": "name",
+									"cid":       "bafyreiaatouuapteh55x7o7mo2nes3bmj3u4d2wmi4i2zepfmmdmd74sjy",
+									"fieldName": "name",
 								},
 								{
-									"cid":  "bafyreidxqtu7lxotzahlnu5lxqewy4kvwskiqx7lgfcrlv66kbgbcdbyue",
-									"name": "age",
+									"cid":       "bafyreidxqtu7lxotzahlnu5lxqewy4kvwskiqx7lgfcrlv66kbgbcdbyue",
+									"fieldName": "age",
 								},
 							},
 						},
@@ -105,7 +105,7 @@ func TestDocEncryption_UponUpdateOnLWWCRDT_ShouldEncryptCommitDelta(t *testing.T
 			testUtils.Request{
 				Request: `
 					query {
-						_commits(fieldName: "age") {
+						_commits(filter: {fieldName: {_eq: "age"}}) {
 							delta
 						}
 					}
@@ -154,7 +154,7 @@ func TestDocEncryption_WithMultipleDocsUponUpdate_ShouldEncryptOnlyRelevantDocs(
 			testUtils.Request{
 				Request: `
 					query {
-						_commits(fieldName: "age") {
+						_commits(filter: {fieldName: {_eq: "age"}}) {
 							delta
 							docID
 						}
@@ -254,7 +254,7 @@ func TestDocEncryption_UponUpdateOnCounterCRDT_ShouldEncryptedCommitDelta(t *tes
 			testUtils.Request{
 				Request: `
 					query {
-						_commits(fieldName: "points") {
+						_commits(filter: {fieldName: {_eq: "points"}}) {
 							delta
 						}
 					}
@@ -350,7 +350,7 @@ func TestDocEncryption_IfTwoDocsHaveSameFieldValue_CipherTextShouldBeDifferent(t
 			testUtils.Request{
 				Request: `
 					query {
-						_commits(fieldName: "age") {
+						_commits(filter: {fieldName: {_eq: "age"}}) {
 							delta
 							fieldName
 						}

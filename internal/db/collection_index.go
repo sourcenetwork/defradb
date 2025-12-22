@@ -236,7 +236,7 @@ func (c *collection) createIndex(
 		return nil, err
 	}
 
-	index, err := c.addNewIndex(ctx, desc)
+	index, err := c.appendNewIndexAndIndexExistingDocs(ctx, desc)
 	if err != nil {
 		c.def.Indexes = c.def.Indexes[:len(c.def.Indexes)-1]
 		return nil, err
@@ -245,7 +245,10 @@ func (c *collection) createIndex(
 	return index, nil
 }
 
-func (c *collection) addNewIndex(ctx context.Context, desc client.IndexDescription) (CollectionIndex, error) {
+func (c *collection) appendNewIndexAndIndexExistingDocs(
+	ctx context.Context,
+	desc client.IndexDescription,
+) (CollectionIndex, error) {
 	colIndex, err := NewCollectionIndex(c, desc)
 	if err != nil {
 		return nil, err
@@ -273,6 +276,7 @@ func (c *collection) iterateAllDocs(
 		ctx,
 		identity.FromContext(ctx),
 		txn,
+		c.db.nodeACP,
 		c.db.documentACP,
 		immutable.None[client.IndexDescription](),
 		c,
@@ -308,7 +312,7 @@ func (c *collection) iterateAllDocs(
 			break
 		}
 
-		doc, err := fetcher.Decode(encodedDoc, c.Version())
+		doc, err := fetcher.Decode(ctx, encodedDoc, c.Version())
 		if err != nil {
 			return errors.Join(err, df.Close())
 		}

@@ -53,3 +53,47 @@ func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Resul
 	}
 	return returnC(returnGoC(0, "", lensID))
 }
+
+//export LensAdd
+func LensAdd(nodePtr C.uintptr_t, cfg *C.char) C.Result {
+	ctx := context.Background()
+
+	decoder := json.NewDecoder(strings.NewReader(C.GoString(cfg)))
+	decoder.DisallowUnknownFields()
+	var lensCfg model.Lens
+	if err := decoder.Decode(&lensCfg); err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	lensID, err := store.AddLens(ctx, lensCfg)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	return returnC(returnGoC(0, "", lensID))
+}
+
+//export LensList
+func LensList(nodePtr C.uintptr_t) C.Result {
+	ctx := context.Background()
+
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	lenses, err := store.ListLenses(ctx)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	lensesJSON, err := json.Marshal(lenses)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+	return returnC(returnGoC(0, "", string(lensesJSON)))
+}

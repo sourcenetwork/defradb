@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/node"
 )
 
@@ -39,7 +40,7 @@ func MakeServerDumpCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			nacInfo, err := db.NewNACInfo(ctx, badgerPath, false)
+			nacInfo, err := acpDB.NewNACInfo(ctx, badgerPath, false)
 			if err != nil {
 				return err
 			}

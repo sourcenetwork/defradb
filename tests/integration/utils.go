@@ -544,7 +544,7 @@ func generateDocs(s *state.State, action GenerateDocs) {
 			defs = append(defs, collection.Version())
 		}
 	}
-	docs, err := gen.AutoGenerate(defs, action.Options...)
+	docs, err := gen.AutoGenerate(s.Ctx, defs, action.Options...)
 	if err != nil {
 		s.T.Fatalf("Failed to generate docs %s", err)
 	}
@@ -559,7 +559,7 @@ func generatePredefinedDocs(s *state.State, action CreatePredefinedDocs) {
 	for _, col := range collections {
 		defs = append(defs, col.Version())
 	}
-	docs, err := predefined.Create(defs, action.Docs)
+	docs, err := predefined.Create(s.Ctx, defs, action.Docs)
 	if err != nil {
 		s.T.Fatalf("Failed to generate docs %s", err)
 	}
@@ -1030,7 +1030,7 @@ func refreshDocuments(
 			if action.DocMap != nil {
 				substituteRelations(s, action)
 			}
-			docs, err := parseCreateDocs(action, collection)
+			docs, err := parseCreateDocs(s.Ctx, action, collection)
 			if err != nil {
 				// If an err has been returned, ignore it - it may be expected and if not
 				// the test will fail later anyway
@@ -1044,7 +1044,7 @@ func refreshDocuments(
 				// We fetch the list of composite commits for the document so that
 				// they can be referenced later in the test if required.
 				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: ID!) {
-					_commits(docID: $docID, fieldName: "_C", order: {height: ASC}) {
+					_commits(docID: $docID, filter: {fieldName: {_eq: "_C"}}, order: {height: ASC}) {
 						cid
 					}
 				}`, client.WithVariables(map[string]any{
@@ -1269,9 +1269,13 @@ func createView(
 		}, "")
 	}
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		results, err := node.AddView(s.Ctx, action.Query, action.SDL, action.Transform)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for i, node := range nodes {
+		transformCID := action.TransformCID
+		if transformCID.HasValue() {
+			transformCID = immutable.Some(replace(s, nodeIDs[i], transformCID.Value()))
+		}
+		results, err := node.AddView(s.Ctx, action.Query, action.SDL, transformCID)
 
 		for _, result := range results {
 			appendCollectionVersion(s, result.VersionID)
@@ -1284,10 +1288,8 @@ func createView(
 }
 
 func appendCollectionVersion(s *state.State, versionID string) {
-	for _, existingVersion := range s.CollectionVersions {
-		if existingVersion == versionID {
-			return
-		}
+	if slices.Contains(s.CollectionVersions, versionID) {
+		return
 	}
 
 	s.CollectionVersions = append(s.CollectionVersions, versionID)
@@ -1376,14 +1378,13 @@ func createDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
-	docs, err := parseCreateDocs(action, collection)
-	if err != nil {
-		return nil, err
-	}
-
 	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
 	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
 
+	docs, err := parseCreateDocs(ctx, action, collection)
+	if err != nil {
+		return nil, err
+	}
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
 		err := collection.Save(ctx, doc, makeDocCreateOptions(&action)...)
@@ -1414,13 +1415,13 @@ func createDocViaColCreate(
 	nodeIndex int,
 	collection client.Collection,
 ) ([]client.DocID, error) {
-	docs, err := parseCreateDocs(action, collection)
+	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
+	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
+
+	docs, err := parseCreateDocs(ctx, action, collection)
 	if err != nil {
 		return nil, err
 	}
-
-	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
 
 	switch {
 	case len(docs) > 1:
@@ -1621,7 +1622,7 @@ func updateDocViaColSave(
 	if err != nil {
 		return err
 	}
-	err = doc.SetWithJSON([]byte(action.Doc))
+	err = doc.SetWithJSON(ctx, []byte(action.Doc))
 	if err != nil {
 		return err
 	}
@@ -1641,7 +1642,7 @@ func updateDocViaColUpdate(
 	if err != nil {
 		return err
 	}
-	err = doc.SetWithJSON([]byte(action.Doc))
+	err = doc.SetWithJSON(ctx, []byte(action.Doc))
 	if err != nil {
 		return err
 	}
@@ -2760,20 +2761,20 @@ func CBORValue(value any) []byte {
 }
 
 // parseCreateDocs parses and returns documents from a CreateDoc action.
-func parseCreateDocs(action CreateDoc, collection client.Collection) ([]*client.Document, error) {
+func parseCreateDocs(ctx context.Context, action CreateDoc, collection client.Collection) ([]*client.Document, error) {
 	switch {
 	case action.DocMap != nil:
-		val, err := client.NewDocFromMap(action.DocMap, collection.Version())
+		val, err := client.NewDocFromMap(ctx, action.DocMap, collection.Version())
 		if err != nil {
 			return nil, err
 		}
 		return []*client.Document{val}, nil
 
 	case client.IsJSONArray([]byte(action.Doc)):
-		return client.NewDocsFromJSON([]byte(action.Doc), collection.Version())
+		return client.NewDocsFromJSON(ctx, []byte(action.Doc), collection.Version())
 
 	default:
-		val, err := client.NewDocFromJSON([]byte(action.Doc), collection.Version())
+		val, err := client.NewDocFromJSON(ctx, []byte(action.Doc), collection.Version())
 		if err != nil {
 			return nil, err
 		}

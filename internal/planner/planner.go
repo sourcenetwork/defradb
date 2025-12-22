@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -96,6 +97,7 @@ type P2P interface {
 // produce a request plan, which is run by the execution context.
 type Planner struct {
 	identity    immutable.Option[acpIdentity.Identity]
+	nodeACP     acpDB.NACInfo
 	documentACP immutable.Option[dac.DocumentACP]
 	db          client.TxnStore
 
@@ -107,6 +109,7 @@ type Planner struct {
 func New(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
+	nodeACP acpDB.NACInfo,
 	documentACP immutable.Option[dac.DocumentACP],
 	db client.TxnStore,
 	p2p P2P,
@@ -114,6 +117,7 @@ func New(
 ) *Planner {
 	return &Planner{
 		identity:    identity,
+		nodeACP:     nodeACP,
 		documentACP: documentACP,
 		db:          db,
 		p2p:         p2p,

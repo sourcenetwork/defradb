@@ -210,7 +210,7 @@ func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(
 					"name":         "Saadi Shirazi",
 					"published_id": testUtils.NewDocIndex(0, 0),
 				},
-				ExpectedError: "target document is already linked to another document.",
+				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
 		},
 	}

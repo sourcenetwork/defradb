@@ -68,7 +68,9 @@ func (coordinator *Coordinator) processPushSEArtifactsRequest(
 		}
 	}
 
-	if err := storeArtifacts(ctx, coordinator.db.Multistore().Datastore(), artifacts); err != nil {
+	ds := coordinator.db.Multistore().Datastore()
+	ss := coordinator.db.Multistore().Systemstore()
+	if err := storeArtifacts(ctx, ds, ss, artifacts); err != nil {
 		return err
 	}
 
@@ -129,6 +131,7 @@ func (coordinator *Coordinator) querySEArtifactsFromDatastore(
 	for i, q := range req.Queries {
 		queries[i] = fieldQuery(q)
 	}
-
-	return fetchDocIDs(ctx, coordinator.db.Multistore().Datastore(), req.CollectionID, queries)
+	ds := coordinator.db.Multistore().Datastore()
+	ss := coordinator.db.Multistore().Systemstore()
+	return fetchDocIDs(ctx, ds, ss, req.CollectionID, queries)
 }

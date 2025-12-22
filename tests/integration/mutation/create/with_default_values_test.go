@@ -78,6 +78,40 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsUTCNowDefaultValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						created: DateTime @default(dateTime: UTC_NOW)
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				// left empty to test default values
+				DocMap: map[string]any{},
+			},
+			testUtils.Request{
+				Request: `query {
+					Users {
+						created
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"created": testUtils.CurrentTimestamp(),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -471,6 +505,40 @@ func TestMutationCreate_WithDefaultJSONDeepObjectValue_ShouldBeSet(t *testing.T)
 							"metadata": "{\"one\":{\"two\":{\"b\":true,\"f\":1.2,\"i\":3,\"n\":null,\"s\":\"three\"}}}",
 						},
 					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsTwoEqualUTCNowDefaultValue(t *testing.T) {
+	timestampMatcher := testUtils.NewSameValue()
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						created: DateTime @default(dateTime: UTC_NOW)
+					}
+				`,
+			},
+			testUtils.Request{
+				Request: `mutation {
+					bob: create_User(input: { name: "Bob" }) {
+						created
+					}
+
+					alice: create_User(input: { name: "Alice" }) {
+						created
+					}
+                }`,
+				Results: map[string]any{
+					"bob":   []map[string]any{{"created": timestampMatcher}},
+					"alice": []map[string]any{{"created": timestampMatcher}},
 				},
 			},
 		},

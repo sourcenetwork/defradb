@@ -114,7 +114,7 @@ func (c *collection) updateWithFilter(
 
 		// Get the document, and apply the patch
 		docAsMap := docMap.ToMap(selectionPlan.Value())
-		doc, err := client.NewDocFromMap(docAsMap, c.Version())
+		doc, err := client.NewDocFromMap(ctx, docAsMap, c.Version())
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +122,7 @@ func (c *collection) updateWithFilter(
 		if isPatch {
 			// todo
 		} else if isMerge { // else is fine here
-			err := doc.SetWithJSON([]byte(updater))
+			err := doc.SetWithJSON(ctx, []byte(updater))
 			if err != nil {
 				return nil, err
 			}
@@ -177,6 +177,7 @@ func (c *collection) makeSelectionPlan(
 	planner := planner.New(
 		ctx,
 		identity.FromContext(ctx),
+		c.db.nodeACP,
 		c.db.documentACP,
 		c.db,
 		c.db.p2p,
