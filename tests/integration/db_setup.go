@@ -113,8 +113,11 @@ func setupNode(
 	}
 
 	switch s.DbType {
+	case BadgerFileType:
+		opts = append(opts, node.WithStoreType(node.BadgerStore))
+
 	case BadgerIMType:
-		opts = append(opts, node.WithBadgerInMemory(true))
+		opts = append(opts, node.WithStoreType(node.BadgerStore), node.WithBadgerInMemory(true))
 
 	case DefraIMType:
 		opts = append(opts, node.WithStoreType(node.MemoryStore))

@@ -89,7 +89,7 @@ func defaultNodeOpts() []node.Option {
 		node.WithDisableP2P(true),
 		// The default is 5 and that is never going to be needed in a testing scenario where all the
 		// nodes are on the same machine with no network latency.
-		db.WithP2PBlockSyncTimeout(10 * time.Second),
+		db.WithP2PBlockSyncTimeout(1 * time.Second),
 	}
 }
 

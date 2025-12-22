@@ -31,7 +31,12 @@ import (
 )
 
 // storeArtifacts stores SE artifacts directly in the datastore.
-func storeArtifacts(ctx context.Context, ds datastore.Keyedstore, ss corekv.ReaderWriter, artifacts []secore.Artifact) error {
+func storeArtifacts(
+	ctx context.Context,
+	ds datastore.Keyedstore,
+	ss corekv.ReaderWriter,
+	artifacts []secore.Artifact,
+) error {
 	for _, artifact := range artifacts {
 		colID, err := id.NewShortCollectionID(ctx, artifact.CollectionID, ss)
 		if err != nil {
