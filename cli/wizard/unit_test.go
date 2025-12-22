@@ -74,7 +74,6 @@ func Test_SetKeyringBackend(t *testing.T) {
 	if checkedValue != "file" {
 		t.Fatal("keyring.backend is not set to file")
 	}
-	fmt.Println("checkedValue", checkedValue)
 
 	// Test the callback function with choice 1 (System)
 	err = callback_SetKeyringBackend(stepCursor1, ctx)
@@ -88,7 +87,6 @@ func Test_SetKeyringBackend(t *testing.T) {
 	if checkedValue != "system" {
 		t.Fatal("keyring.backend is not set to system")
 	}
-	fmt.Println("checkedValue", checkedValue)
 }
 
 // This test will test the callback_GenerateKeyringFiles function.
@@ -141,7 +139,6 @@ func Test_GenerateKeyringFiles(t *testing.T) {
 // Specifically, it will test that the keys are generated and stored in the system keyring.
 // Note that this test will not work on WSL.
 func Test_GenerateKeysInSystemKeyring(t *testing.T) {
-
 	// Skip the test on Linux CI / WSL due to missing dbus-launch
 	if runtime.GOOS == "linux" {
 		t.Skip("system keyring tests are skipped on Linux CI / WSL due to missing dbus-launch")
@@ -211,7 +208,6 @@ func Test_SetAndReloadDefraKeyringSecretEnvironmentVariable(t *testing.T) {
 		t.Fatal("DEFRA_KEYRING_SECRET environment variable was not set")
 	}
 	if secretValue != testSecretValue {
-		fmt.Println("secretValue", secretValue)
 		t.Fatal("DEFRA_KEYRING_SECRET environment variable was not set to the correct value")
 	}
 }

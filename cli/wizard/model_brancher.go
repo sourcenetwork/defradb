@@ -81,7 +81,7 @@ func (m *modelBrancher) Done() bool {
 
 // Returns a dummy string
 func (m *modelBrancher) ID() string {
-	return BLANK
+	return BlankStepID
 }
 
 // Callback() should not be called except by the main model

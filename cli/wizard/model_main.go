@@ -85,7 +85,7 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		next := m.currentStep.Next(m.ctx)
 
 		// Movethrough blank steps, calling their callbacks, until we reach a non-blank step
-		for next != nil && next.ID() == BLANK {
+		for next != nil && next.ID() == BlankStepID {
 			m.ctx.Results[next.ID()] = append(m.ctx.Results[next.ID()], next.Result())
 			err := next.Callback(m.ctx)
 			// If any of the callbacks return an error, we must gracefully proceed to an error-step exit

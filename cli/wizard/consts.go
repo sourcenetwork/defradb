@@ -20,5 +20,7 @@ const (
 	KEY_K         = "k"
 	KEY_J         = "j"
 
-	BLANK = "_blank_"
+	BlankStepID = "_blank_"
+
+	DefaultEnvFilename = ".env"
 )

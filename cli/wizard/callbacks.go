@@ -103,7 +103,7 @@ func callback_SetAndReloadDefraKeyringSecretEnvironmentVariable(_ step, ctx *Wiz
 		return errors.New(errFailedToGetEnvFilename)
 	}
 	if envFilename == "" {
-		envFilename = ".env"
+		envFilename = DefaultEnvFilename
 	}
 	err := ensureEnvValue(ctx, "DEFRA_KEYRING_SECRET", secretValue)
 	if err != nil {

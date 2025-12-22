@@ -38,9 +38,9 @@ func setConfigValueForTest(t *testing.T, ctx *WizardContext, key string, value a
 		t.Fatal("failed to get original value")
 	}
 	t.Cleanup(func() {
-		setConfigValue(ctx, key, originalValue)
+		_ = setConfigValue(ctx, key, originalValue)
 	})
-	setConfigValue(ctx, key, value)
+	_ = setConfigValue(ctx, key, value)
 }
 
 // setupWorkingDirectoryForTest is a helper that temporarily changes the working directory to a
