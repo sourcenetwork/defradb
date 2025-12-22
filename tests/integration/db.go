@@ -68,11 +68,10 @@ func init() {
 		levelStore = false
 	} else if !badgerInMemory && !badgerFile && !inMemoryStore && !levelStore {
 		// Default is to test all but filesystem db types.
-		// badgerFile = false
-		// badgerInMemory = true
-		// inMemoryStore = false
-		// levelStore = false
-		levelStore = true
+		badgerFile = false
+		badgerInMemory = true
+		inMemoryStore = false
+		levelStore = false
 	}
 }
 
