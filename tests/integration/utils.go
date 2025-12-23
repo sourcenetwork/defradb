@@ -1263,9 +1263,13 @@ func createView(
 		}, "")
 	}
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		results, err := node.AddView(s.Ctx, action.Query, action.SDL, action.Transform)
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for i, node := range nodes {
+		transformCID := action.TransformCID
+		if transformCID.HasValue() {
+			transformCID = immutable.Some(replace(s, nodeIDs[i], transformCID.Value()))
+		}
+		results, err := node.AddView(s.Ctx, action.Query, action.SDL, transformCID)
 
 		for _, result := range results {
 			appendCollectionVersion(s, result.VersionID)
@@ -1278,10 +1282,8 @@ func createView(
 }
 
 func appendCollectionVersion(s *state.State, versionID string) {
-	for _, existingVersion := range s.CollectionVersions {
-		if existingVersion == versionID {
-			return
-		}
+	if slices.Contains(s.CollectionVersions, versionID) {
+		return
 	}
 
 	s.CollectionVersions = append(s.CollectionVersions, versionID)

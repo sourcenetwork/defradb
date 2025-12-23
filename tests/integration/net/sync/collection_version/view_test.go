@@ -22,7 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
 
-func TestColSync_WithView(t *testing.T) {
+func TestSyncColVersion_WithView(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -34,6 +34,22 @@ func TestColSync_WithView(t *testing.T) {
 						name: String
 					}
 				`,
+			},
+			&action.AddLens{
+				NodeID: immutable.Some(0),
+				Lens: model.Lens{
+					// This transform will copy the value from `name` into the `fullName` field,
+					// like an overly-complicated alias
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "name",
+								"dst": "fullName",
+							},
+						},
+					},
+				},
 			},
 			testUtils.CreateView{
 				NodeID: immutable.Some(0),
@@ -47,19 +63,7 @@ func TestColSync_WithView(t *testing.T) {
 						fullName: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					// This transform will copy the value from `name` into the `fullName` field,
-					// like an overly-complicated alias
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.CopyModulePath,
-							Arguments: map[string]any{
-								"src": "name",
-								"dst": "fullName",
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
@@ -94,7 +98,7 @@ func TestColSync_WithView(t *testing.T) {
 							},
 						},
 						/* There is no good way to dynamically get the transform id at the moment, so unfortunately
-						   we need to disable this assertion for now.  TestColSync_WithView_CanBeActivatedAndQueried
+						   we need to disable this assertion for now.  TestSyncColVersion_WithView_CanBeActivatedAndQueried
 						   does prove that the transform is synced however.
 							Query: immutable.Some(client.QuerySource{
 								Query: request.Select{
@@ -121,7 +125,7 @@ func TestColSync_WithView(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColSync_WithView_CanBeActivatedAndQueried(t *testing.T) {
+func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -132,6 +136,22 @@ func TestColSync_WithView_CanBeActivatedAndQueried(t *testing.T) {
 						name: String
 					}
 				`,
+			},
+			&action.AddLens{
+				NodeID: immutable.Some(0),
+				Lens: model.Lens{
+					// This transform will copy the value from `name` into the `fullName` field,
+					// like an overly-complicated alias
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "name",
+								"dst": "fullName",
+							},
+						},
+					},
+				},
 			},
 			testUtils.CreateView{
 				NodeID: immutable.Some(0),
@@ -145,19 +165,7 @@ func TestColSync_WithView_CanBeActivatedAndQueried(t *testing.T) {
 						fullName: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					// This transform will copy the value from `name` into the `fullName` field,
-					// like an overly-complicated alias
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.CopyModulePath,
-							Arguments: map[string]any{
-								"src": "name",
-								"dst": "fullName",
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,

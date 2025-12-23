@@ -232,6 +232,18 @@ func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...stri
 	return err
 }
 
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	args := []string{"client", "p2p", "collection", "sync-branchable", collectionID}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		args = append(args, "--timeout", time.Until(deadline).String())
+	}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	args := []string{"client", "backup", "import"}
 	args = append(args, filepath)
@@ -305,18 +317,14 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	args := []string{"client", "view", "add"}
 	args = append(args, query)
 	args = append(args, sdl)
 
-	if transform.HasValue() {
-		lenses, err := json.Marshal(transform.Value())
-		if err != nil {
-			return nil, err
-		}
-		args = append(args, string(lenses))
+	if transformCID.HasValue() {
+		args = append(args, "--lens-cid", transformCID.Value())
 	}
 
 	data, err := w.cmd.execute(ctx, args)

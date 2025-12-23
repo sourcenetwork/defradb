@@ -1,34 +1,34 @@
-## defradb client view add
+## defradb client p2p collection sync-branchable
 
-Add new view
+Synchronize a branchable collection's DAG from the network
 
 ### Synopsis
 
-Add new database view.
+Synchronize a branchable collection's DAG from the network.
 
-Use --lens-cid to specify a lens transform. Store a lens first using 'defradb client lens add'.
-
-Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
+This command allows you to sync the collection-level history for branchable collections
+(collections marked with @branchable directive). It doesn't automatically subscribe
+to the collection for future updates.
 
 ```
-defradb client view add [query] [sdl] [flags]
+defradb client p2p collection sync-branchable [collection-id] [flags]
 ```
 
 ### Examples
 
 ```
-add a simple view:  
-  defradb client view add 'Foo { name, ...}' 'type Foo { ... }'
+sync branchable collection:  
+  defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq
 
-add using an existing lens CID:  
-  defradb client view add 'Foo { name, ...}' 'type Foo { ... }' --lens-cid bafyreih...
+sync branchable collection with timeout:  
+  defradb client p2p collection sync-branchable bafkreig27seqzxvr7isblvj77wvqnmkzoyv3u4nwytyethkbcpxlrx3iqq --timeout 10s
 ```
 
 ### Options
 
 ```
-  -h, --help              help for add
-      --lens-cid string   CID of an existing lens transform (use 'lens add' first)
+  -h, --help               help for sync-branchable
+      --timeout duration   Timeout for sync operations (default: 5s if not specified)
 ```
 
 ### Options inherited from parent commands
@@ -55,5 +55,5 @@ add using an existing lens CID:
 
 ### SEE ALSO
 
-* [defradb client view](defradb_client_view.md)	 - Manage views within a running DefraDB instance
+* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
 

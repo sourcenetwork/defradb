@@ -18,11 +18,8 @@ import "C"
 
 import (
 	"context"
-	"encoding/json"
-	"strings"
 
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -31,7 +28,7 @@ import (
 func ViewAdd(nodePtr C.uintptr_t,
 	query *C.char,
 	sdl *C.char,
-	transformStr *C.char,
+	transformCIDStr *C.char,
 	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
@@ -41,16 +38,10 @@ func ViewAdd(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	var transform immutable.Option[model.Lens]
-	lensCfgJson := C.GoString(transformStr)
-	if lensCfgJson != "" {
-		decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
-		decoder.DisallowUnknownFields()
-		var lensCfg model.Lens
-		if err := decoder.Decode(&lensCfg); err != nil {
-			return returnC(returnGoC(1, err.Error(), ""))
-		}
-		transform = immutable.Some(lensCfg)
+	var transformCID immutable.Option[string]
+	transformCIDValue := C.GoString(transformCIDStr)
+	if transformCIDValue != "" {
+		transformCID = immutable.Some(transformCIDValue)
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -58,7 +49,7 @@ func ViewAdd(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), transform)
+	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), transformCID)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

@@ -14,8 +14,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -33,7 +34,7 @@ func (db *DB) addView(
 	ctx context.Context,
 	inputQuery string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	// Wrap the given query as part of the GQL query object - this simplifies the syntax for users
 	// and ensures that we can't be given mutations.  In the future this line should disappear along
@@ -66,12 +67,15 @@ func (db *DB) addView(
 
 	for i := range parseResults {
 		var lensID immutable.Option[string]
-		if transform.HasValue() {
-			cid, err := db.getLensStore(ctx).Add(ctx, transform.Value())
+		if transformCID.HasValue() {
+			exists, err := db.lensCIDExists(ctx, transformCID.Value())
 			if err != nil {
 				return nil, err
 			}
-			lensID = immutable.Some(cid.String())
+			if !exists {
+				return nil, NewErrLensCIDNotFound(transformCID.Value())
+			}
+			lensID = transformCID
 		}
 
 		source := client.QuerySource{
@@ -332,4 +336,24 @@ func (db *DB) generateMaximalSelectFromCollection(
 			Fields: childRequests,
 		},
 	}, nil
+}
+
+// lensCIDExists checks if a lens with the given CID exists in the lens store.
+func (db *DB) lensCIDExists(ctx context.Context, cidStr string) (bool, error) {
+	targetCID, err := cid.Decode(cidStr)
+	if err != nil {
+		return false, err
+	}
+
+	lenses, err := db.getLensStore(ctx).List(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	for storedCID := range lenses {
+		if storedCID.Equals(targetCID) {
+			return true, nil
+		}
+	}
+	return false, nil
 }

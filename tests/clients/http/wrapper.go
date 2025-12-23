@@ -122,6 +122,10 @@ func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...stri
 	return w.client.SyncCollectionVersions(ctx, versionIDs...)
 }
 
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	return w.client.SyncBranchableCollection(ctx, collectionID)
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	return w.client.BasicImport(ctx, filepath)
 }
@@ -225,9 +229,9 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	return w.client.AddView(ctx, query, sdl, transform)
+	return w.client.AddView(ctx, query, sdl, transformCID)
 }
 
 func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {

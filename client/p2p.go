@@ -82,6 +82,13 @@ type P2P interface {
 	// It will not complete until a version is found, so it is strongly recommended
 	// to set a timeout using `context.WithTimeout`.
 	SyncCollectionVersions(ctx context.Context, versionIDs ...string) error
+
+	// SyncBranchableCollection requests the latest version of the branchable collection's DAG
+	// from the network and synchronizes it locally. This syncs the collection-level history
+	// for branchable collections (collections marked with @branchable directive).
+	// It doesn't automatically subscribe to the collection for future updates.
+	// context.WithTimeout can be used to set a timeout for the operation.
+	SyncBranchableCollection(ctx context.Context, collectionID string) error
 }
 
 type StreamHandler = func(stream io.Reader, peerID string)
