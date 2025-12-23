@@ -320,7 +320,6 @@ func Test_GenerateKeysInSystemKeyring_AllKeys(t *testing.T) {
 	_ = openKeyring.Delete("peer-key")
 	_ = openKeyring.Delete("encryption-key")
 	_ = openKeyring.Delete("searchable-encryption-key")
-
 }
 
 // This will test the callback_SetAndReloadDefraKeyringSecretEnvironmentVariable function.
