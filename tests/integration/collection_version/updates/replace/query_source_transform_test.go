@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
@@ -33,6 +32,32 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					}
 				`,
 			},
+			&action.AddLens{
+				Lens: model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "firstName",
+								"dst": "fullName",
+							},
+						},
+					},
+				},
+			},
+			&action.AddLens{
+				Lens: model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "lastName",
+								"dst": "fullName",
+							},
+						},
+					},
+				},
+			},
 			testUtils.CreateView{
 				Query: `
 					User {
@@ -45,39 +70,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 						fullName: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					// This transform will copy the value from `firstName` into the `fullName` field,
-					// like an overly-complicated alias
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.CopyModulePath,
-							Arguments: map[string]any{
-								"src": "firstName",
-								"dst": "fullName",
-							},
-						},
-					},
-				}),
-			},
-			// This ConfigureMigration action is a temporary work around as we have not yet exposed a
-			// means to add lenses into Defra.  The collection ids are made up and have no impact on
-			// the test.  The ID is passed into the next PatchCollection action.
-			testUtils.ConfigureMigration{
-				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreigbatez5rnojqa4ccfqsbguh4ckquxr76elgqij7ckftbxpwqniv4",
-					DestinationSchemaVersionID: "bafyreihiiez4vcgh4rys2zfs74macgwyybchutjslyw2oin747enuywn54",
-					Lens: model.Lens{
-						Lenses: []model.LensModule{
-							{
-								Path: lenses.CopyModulePath,
-								Arguments: map[string]any{
-									"src": "lastName",
-									"dst": "fullName",
-								},
-							},
-						},
-					},
-				},
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.PatchCollection{
 				Patch: `
@@ -85,7 +78,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 						{
 							"op": "replace",
 							"path": "/UserView/Query/Transform",
-							"value": "{{.LensID0}}"
+							"value": "{{.LensID1}}"
 						}
 					]
 				`,

@@ -43,6 +43,8 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"addView":                    goji.Async(wrapper.addView),
 		"refreshViews":               goji.Async(wrapper.refreshViews),
 		"setMigration":               goji.Async(wrapper.setMigration),
+		"addLens":                    goji.Async(wrapper.addLens),
+		"listLenses":                 goji.Async(wrapper.listLenses),
 		"getCollectionByName":        goji.Async(wrapper.getCollectionByName),
 		"getCollections":             goji.Async(wrapper.getCollections),
 		"getAllIndexes":              goji.Async(wrapper.getAllIndexes),
@@ -126,15 +128,15 @@ func (t *transaction) addView(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	var transform immutable.Option[model.Lens]
-	if err := structArg(args, 2, "transform", &transform); err != nil {
+	var transformCID immutable.Option[string]
+	if err := structArg(args, 2, "transformCID", &transformCID); err != nil {
 		return js.Undefined(), err
 	}
 	ctx, err := contextArg(args, 3, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	cols, err := t.txn.AddView(ctx, gqlQuery, sdl, transform)
+	cols, err := t.txn.AddView(ctx, gqlQuery, sdl, transformCID)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -168,6 +170,34 @@ func (t *transaction) setMigration(this js.Value, args []js.Value) (js.Value, er
 		return js.Undefined(), err
 	}
 	return js.ValueOf(lensID), err
+}
+
+func (t *transaction) addLens(this js.Value, args []js.Value) (js.Value, error) {
+	var lens model.Lens
+	if err := structArg(args, 0, "lens", &lens); err != nil {
+		return js.Undefined(), err
+	}
+	ctx, err := contextArg(args, 1, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	lensID, err := t.txn.AddLens(ctx, lens)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return js.ValueOf(lensID), err
+}
+
+func (t *transaction) listLenses(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, t.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	lenses, err := t.txn.ListLenses(ctx)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	return goji.MarshalJS(lenses)
 }
 
 func (t *transaction) getCollectionByName(this js.Value, args []js.Value) (js.Value, error) {

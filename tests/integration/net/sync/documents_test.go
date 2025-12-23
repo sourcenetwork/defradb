@@ -222,6 +222,113 @@ func TestDocSync_WithSingleDocAvailableOnMultipleNode_ShouldSync(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+const docSyncTopic = "doc-sync"
+
+func TestDocSync_WithDifferentVersionsOnPeers_ShouldSyncLatest(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"Age": 22
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(2),
+				Doc: `{
+					"Age": 23
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(3),
+				Doc: `{
+					"Age": 24
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"Age": 25
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(3),
+				Doc: `{
+					"Age": 26
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(3),
+				Doc: `{
+					"Age": 27
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 2,
+				TargetNodeID: 3,
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					docSyncTopic: {1, 2, 3},
+				},
+			},
+			testUtils.SyncDocs{
+				NodeID:       0,
+				CollectionID: 0,
+				DocIDs:       []int{0},
+				SourceNodes:  []int{1, 2, 3},
+			},
+			testUtils.WaitForSync{},
+			testUtils.Request{
+				NodeID: immutable.Some(0),
+				Request: `query {
+					Users {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(27),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestDocSync_AfterSync_ShouldNotSubscribeToDocUpdates(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
