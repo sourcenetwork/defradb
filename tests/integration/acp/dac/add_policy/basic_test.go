@@ -39,27 +39,3 @@ resources:
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
-func TestACP_AddPolicy_BasicJSON_ValidPolicyID(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-description: a basic policy that satisfies minimum DRI requirements
-name: test
-resources:
-- name: users
-  permissions:
-  - name: delete
-  - name: read
-  - name: update
-`,
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}

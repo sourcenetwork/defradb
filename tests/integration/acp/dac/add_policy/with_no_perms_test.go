@@ -60,6 +60,8 @@ resources:
   - name: reader
     types:
     - actor
+  - name: foo
+  permissions:
 `,
 			},
 		},
@@ -68,7 +70,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddPolicy_NoPermissionsLabelOnlyOwner_ValidID(t *testing.T) {
+func TestACP_AddPolicy_NoPermissionsLabelSingeRelation_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -80,6 +82,8 @@ description: a policy
 name: test
 resources:
 - name: users
+  relations:
+  - name: foo
 `,
 			},
 		},

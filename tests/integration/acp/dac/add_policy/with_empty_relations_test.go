@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_NoRelations_Error(t *testing.T) {
+func TestACP_AddPolicy_NoRelationsLabel_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -30,12 +30,7 @@ resources:
 - name: users
   permissions:
   - name: delete
-  - expr: reader
-    name: read
-  - name: update
 `,
-
-				ExpectedError: "BAD_INPUT",
 			},
 		},
 	}
@@ -43,7 +38,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddPolicy_NoRelationsLabel_Error(t *testing.T) {
+func TestACP_AddPolicy_EmptyRelations_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -57,12 +52,8 @@ resources:
 - name: users
   permissions:
   - name: delete
-  - expr: reader
-    name: read
-  - name: update
+  relations:
 `,
-
-				ExpectedError: "BAD_INPUT",
 			},
 		},
 	}

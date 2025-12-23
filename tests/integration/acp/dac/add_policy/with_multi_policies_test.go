@@ -151,3 +151,52 @@ resources:
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestACP_AddPolicy_AddMultipleDifferentPolicies_ValidPolicyIDs(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+                    name: a policy
+                    description: a policy
+                    resources:
+                    - name: users
+                      permissions:
+                      - name: read
+                      - name: update
+                      - name: delete
+                `,
+			},
+
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+                    name: a policy
+                    description: another policy
+                    resources:
+                    - name: users
+                      permissions:
+                      - name: read
+                        expr: reader
+                      - name: update
+                      - name: delete
+                      relations:
+                      - name: reader
+                        types:
+                        - actor
+                      - name: admin
+                        manages:
+                        - reader
+                        types:
+                        - actor
+                `,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

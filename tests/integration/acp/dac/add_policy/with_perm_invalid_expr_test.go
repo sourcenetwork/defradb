@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error(t *testing.T) {
+func TestACP_AddPolicy_PermissionExprWithInocorrectSymbol_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -40,6 +40,63 @@ resources:
 `,
 
 				ExpectedError: "token recognition error",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_AddPolicy_PermissionExprReferencingOwner_Error(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+name: test
+description: a policy
+resources:
+- name: users
+  permissions:
+  - expr: reader + owner
+    name: read
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
+
+				ExpectedError: "permission cannot reference `owner`",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestACP_AddPolicy_ExpressionReferencesUndeclaredRelation_Error(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+description: a policy
+name: a policy
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+`,
+
+				ExpectedError: "BAD_INPUT",
 			},
 		},
 	}
