@@ -240,7 +240,19 @@ func (c *Client) SyncDocuments(
 		return err
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	// Use a separate context for HTTP request with extra buffer time.
+	// The server will use the timeout from the request body for the actual sync operation.
+	// We add buffer time to account for HTTP overhead and response transmission.
+	// This is necessary because the node handling this request will usually wait whole timeout
+	// duration as it might receive responses from multiple peers.
+	httpCtx := context.Background()
+	if hasDeadline {
+		var cancel context.CancelFunc
+		httpCtx, cancel = context.WithTimeout(httpCtx, time.Until(deadline)+500*time.Millisecond)
+		defer cancel()
+	}
+
+	httpReq, err := http.NewRequestWithContext(httpCtx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
