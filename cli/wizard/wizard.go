@@ -23,6 +23,7 @@ type WizardContext struct {
 	// Results is a map of step IDs to the results of the step. This can be accessed to retrieve
 	// any of the results of previous steps that have occurred so far.
 	Results map[string][]any
+
 	// RootDir is the root directory of the defradb installation. This is part of the context
 	// to allow easier integration with the unit tests, so that they can set a different, temporary
 	// root directory for the test if needed.
@@ -89,8 +90,17 @@ func Main() {
 			"To run the wizard again you can use the command: defradb wizard",
 	)
 
+	stepSelectKeyTypes := initialModelToggleChoice(
+		"stepSelectKeyTypes",
+		"An identity key will be generated. Additionally, you may have this wizard generate the following"+
+			"additional key types:",
+		[]string{"Peer Key", "Encryption Key", "Searchable Encryption Key"},
+	)
+
 	stepGenerateKeyringFiles := initialModelBlank()
 	stepGenerateSystemKeyringKeys := initialModelBlank()
+
+	stepKeyringGenerationBrancher := initialModelBrancher()
 
 	stepConfirmKeyringFilesGenerated := initialModelText(
 		"stepConfirmKeyringFilesGenerated",
@@ -106,10 +116,10 @@ func Main() {
 	stepWizardStart.nextSteps = []step{stepConfigGenerator, nil}
 	stepConfigGenerator.nextStep = stepConfigGenerated
 	stepConfigGenerated.nextStep = stepKeyringStorageLocation
-	stepKeyringStorageLocation.nextSteps = []step{stepKeyringStorageLocationBrancher, stepGenerateSystemKeyringKeys}
+	stepKeyringStorageLocation.nextSteps = []step{stepKeyringStorageLocationBrancher, stepSelectKeyTypes}
 	stepKeyringStorageLocationBrancher.nextSteps = []step{
 		stepQueryGeneratingEnvironmentVariable,
-		stepGenerateKeyringFiles,
+		stepSelectKeyTypes,
 	}
 	stepQueryGeneratingEnvironmentVariable.nextSteps = []step{
 		stepGetDefraKeyringSecretInput,
@@ -118,7 +128,9 @@ func Main() {
 	stepGenerateKeyringFiles.nextStep = stepConfirmKeyringFilesGenerated
 	stepGenerateSystemKeyringKeys.nextStep = stepConfirmSystemKeyringKeysGenerated
 	stepGetDefraKeyringSecretInput.nextStep = stepEnvironmentVariableGenerated
-	stepEnvironmentVariableGenerated.nextStep = stepGenerateKeyringFiles
+	stepEnvironmentVariableGenerated.nextStep = stepKeyringStorageLocationBrancher
+	stepSelectKeyTypes.nextStep = stepKeyringGenerationBrancher
+	stepKeyringGenerationBrancher.nextSteps = []step{stepGenerateKeyringFiles, stepGenerateSystemKeyringKeys}
 
 	// Setup the callbacks
 	stepKeyringStorageLocation.callback = callback_SetKeyringBackend
@@ -129,6 +141,7 @@ func Main() {
 
 	// Setup the evaluators
 	stepKeyringStorageLocationBrancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet
+	stepKeyringGenerationBrancher.evaluator = evaluator_ResultOfStepKeyringStorageLocation
 
 	// Run the Bubbletea program
 	program := tea.NewProgram(&mainModel{currentStep: stepWizardStart, ctx: ctx})

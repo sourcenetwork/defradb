@@ -16,6 +16,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// The purpose of a multiple choice model, is that we can have a step that allows the user to
+// select one out of a list of choices. The next step will be determined by the choice made,
+// and the result will be available for retrieval later.
 type modelMultipleChoice struct {
 	id      string   // Used to access the result of this step from the main model's results map
 	prompt  string   // The prompt to display to the user
@@ -108,14 +111,14 @@ func (m *modelMultipleChoice) View() string {
 }
 
 // Next() will return the next step associated with the current cursor selection.
-func (m *modelMultipleChoice) Next(_ *WizardContext) step {
+func (m *modelMultipleChoice) Next(_ *WizardContext) (step, error) {
 	if len(m.nextSteps) == 0 {
-		return nil
+		return nil, nil
 	}
 	if m.cursor < len(m.nextSteps) {
-		return m.nextSteps[m.cursor]
+		return m.nextSteps[m.cursor], nil
 	}
-	return nil
+	return nil, nil
 }
 
 // The result is the current cursor selection

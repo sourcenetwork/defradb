@@ -10,14 +10,30 @@
 
 package wizard
 
-import "os"
+import (
+	"os"
+)
 
 // This callback will return 0 if DEFRA_KEYRING_SECRET is not set, and 1 if it is
-func evaluator_IsEnvironmentVariableDefraKeyringSecretSet(ctx *WizardContext) int {
+func evaluator_IsEnvironmentVariableDefraKeyringSecretSet(ctx *WizardContext) (int, error) {
 	_ = loadEnvVariablesFromFile(ctx)
 	val, ok := os.LookupEnv("DEFRA_KEYRING_SECRET")
 	if !ok || val == "" {
-		return 0
+		return 0, nil
 	}
-	return 1
+	return 1, nil
+}
+
+// This callback will return 0 if the user previously selected to store the keyring
+// in the filesystem, and 1 if they selected the OS keychain
+func evaluator_ResultOfStepKeyringStorageLocation(ctx *WizardContext) (int, error) {
+	valRaw, ok := ctx.Results["stepKeyringStorageLocation"]
+	if !ok {
+		return -1, NewErrFailedToRetrieveResultValue("stepKeyringStorageLocation")
+	}
+	val, ok := valRaw[0].(int)
+	if !ok {
+		return -1, NewErrAssertTypeFailed(valRaw[0], "int")
+	}
+	return val, nil
 }

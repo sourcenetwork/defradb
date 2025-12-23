@@ -27,11 +27,11 @@ type step interface {
 	// by the main model to determine when to move to the next step.
 	Done() bool
 
-	// Next() must return which step to move to. It can be dynaamic, reflecting
+	// Next() must return which step to move to. It can be dynamic, reflecting
 	// internal logic of the step. But what must be true, is that at the time of
 	// the Done() method resolving to true, the Next() method must resolve to the
 	// next step in the chain, or to nil.
-	Next(ctx *WizardContext) step
+	Next(ctx *WizardContext) (step, error)
 
 	// Result() must return the result of the step. Like Next(), it can be
 	// dynamic, but what must be true, is that at the time of the Done() method
@@ -82,7 +82,13 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.currentStep = errorStep
 			return m, cmd
 		}
-		next := m.currentStep.Next(m.ctx)
+		// If getting the next step fails, generate an error step
+		next, err := m.currentStep.Next(m.ctx)
+		if err != nil {
+			errorStep := createErrorStep(err)
+			m.currentStep = errorStep
+			return m, cmd
+		}
 
 		// Movethrough blank steps, calling their callbacks, until we reach a non-blank step
 		for next != nil && next.ID() == BlankStepID {
@@ -94,7 +100,13 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.currentStep = errorStep
 				return m, cmd
 			}
-			next = next.Next(m.ctx)
+			// Get the next step, erroring out if it fails
+			next, err = next.Next(m.ctx)
+			if err != nil {
+				errorStep := createErrorStep(err)
+				m.currentStep = errorStep
+				return m, cmd
+			}
 		}
 		m.currentStep = next
 	}

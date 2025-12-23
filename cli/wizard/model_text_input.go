@@ -92,8 +92,8 @@ func (m *modelTextInput) View() string {
 }
 
 // Next() will return the next step associated with the current cursor selection.
-func (m *modelTextInput) Next(_ *WizardContext) step {
-	return m.nextStep
+func (m *modelTextInput) Next(_ *WizardContext) (step, error) {
+	return m.nextStep, nil
 }
 
 // The result is the text input by the user

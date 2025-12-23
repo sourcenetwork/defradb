@@ -90,9 +90,9 @@ func Test_SetKeyringBackend(t *testing.T) {
 }
 
 // This test will test the callback_GenerateKeyringFiles function.
-// Specifically, it will test that the keyring files are created in the correct directory,
-// and that the encryption key is generated and stored in the keyring.
-func Test_GenerateKeyringFiles(t *testing.T) {
+// Specifically, it will test that the keyring file is created in the correct directory for
+// the node identity key, but none of the other keys.
+func Test_GenerateKeyringFiles_OnlyIdentityKey(t *testing.T) {
 	testSecretValue := "test-secret"
 
 	// Set up a clean test environment
@@ -102,12 +102,15 @@ func Test_GenerateKeyringFiles(t *testing.T) {
 	keyringDir := tmpDir + "/keys"
 
 	ctx := &WizardContext{
+		Results: map[string][]any{
+			"stepSelectKeyTypes": {[]bool{false, false, false}},
+		},
 		RootDir: tmpDir,
 	}
 	setConfigValueForTest(t, ctx, "keyring.path", keyringDir)
 
 	// Execute the actual function, then the first check will be that it didn't error
-	err := callback_GenerateKeyringFiles(nil, &WizardContext{})
+	err := callback_GenerateKeyringFiles(nil, ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,24 +124,102 @@ func Test_GenerateKeyringFiles(t *testing.T) {
 		t.Fatalf("expected %s to be a directory", keyringDir)
 	}
 
-	// Then, check that the encryption key was generated and stored in the keyring
+	// Then, check that the node identity key was generated and stored in the keyring
 	kr, err := keyring.OpenFileKeyring(keyringDir, []byte(testSecretValue))
 	if err != nil {
 		t.Fatalf("failed to reopen keyring: %v", err)
 	}
-	val, err := kr.Get("encryption-key")
+	val, err := kr.Get("node-identity-key")
 	if err != nil {
 		t.Fatalf("expected encryption-key to exist: %v", err)
 	}
 	if len(val) != 32 {
 		t.Fatalf("expected 32-byte AES-256 key, got %d bytes", len(val))
 	}
+
+	// Then, check that none of the other keys were generated
+	for _, keyname := range []string{"peer-key", "encryption-key", "searchable-encryption-key"} {
+		_, err := kr.Get(keyname)
+		if err == nil {
+			t.Fatalf("expected %s to not exist, but it does", keyname)
+		}
+	}
+
+	// Finally, cleanup the entry in the keyring we made for this test
+	_ = kr.Delete("node-identity-key")
+}
+
+// This test will test the callback_GenerateKeyringFiles function.
+// Specifically, it will test that the keyring files are created in the correct
+// directory for all of the key types.
+func Test_GenerateKeyringFiles_AllKeys(t *testing.T) {
+	testSecretValue := "test-secret"
+
+	// Set up a clean test environment
+	unsetEnvForTest(t, "DEFRA_KEYRING_SECRET")
+	os.Setenv("DEFRA_KEYRING_SECRET", testSecretValue)
+	tmpDir := setupWorkingDirectoryForTest(t)
+	keyringDir := tmpDir + "/keys"
+
+	ctx := &WizardContext{
+		Results: map[string][]any{
+			"stepSelectKeyTypes": {[]bool{true, true, true}},
+		},
+		RootDir: tmpDir,
+	}
+	setConfigValueForTest(t, ctx, "keyring.path", keyringDir)
+
+	// Execute the actual function, then the first check will be that it didn't error
+	err := callback_GenerateKeyringFiles(nil, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Next, check that the keyring directory was created by the callback
+	info, err := os.Stat(keyringDir)
+	if err != nil {
+		t.Fatalf("expected keyring directory to exist: %v", err)
+	}
+	if !info.IsDir() {
+		t.Fatalf("expected %s to be a directory", keyringDir)
+	}
+
+	// Open the keyring
+	kr, err := keyring.OpenFileKeyring(keyringDir, []byte(testSecretValue))
+	if err != nil {
+		t.Fatalf("failed to reopen keyring: %v", err)
+	}
+
+	// Then, check that all of the keys were generated and stored in the keyring
+	keysToCheck := []string{
+		"node-identity-key",
+		"peer-key",
+		"encryption-key",
+		"searchable-encryption-key",
+	}
+
+	for _, keyname := range keysToCheck {
+		val, err := kr.Get(keyname)
+		if err != nil {
+			t.Fatalf("expected %s to exist: %v", keyname, err)
+		}
+		if len(val) != 32 {
+			t.Fatalf("expected %s to be 32-byte AES-256 key, got %d bytes", keyname, len(val))
+		}
+	}
+
+	// Finally, cleanup the entries in the keyring we made for this test
+	_ = kr.Delete("node-identity-key")
+	_ = kr.Delete("peer-key")
+	_ = kr.Delete("encryption-key")
+	_ = kr.Delete("searchable-encryption-key")
 }
 
 // This will test the callback_GenerateKeysInSystemKeyring function.
-// Specifically, it will test that the keys are generated and stored in the system keyring.
+// Specifically, it will test that the node identity key generated and stored in the system
+// keyring, and that none of the other keys are generated.
 // Note that this test will not work on WSL.
-func Test_GenerateKeysInSystemKeyring(t *testing.T) {
+func Test_GenerateKeysInSystemKeyring_OnlyIdentityKey(t *testing.T) {
 	// Skip the test on Linux CI / WSL due to missing dbus-launch
 	if runtime.GOOS == "linux" {
 		t.Skip("system keyring tests are skipped on Linux CI / WSL due to missing dbus-launch")
@@ -147,6 +228,9 @@ func Test_GenerateKeysInSystemKeyring(t *testing.T) {
 	// Set up a clean test environment, and create a context for the test
 	tmpDir := setupWorkingDirectoryForTest(t)
 	ctx := &WizardContext{
+		Results: map[string][]any{
+			"stepSelectKeyTypes": {[]bool{false, false, false}},
+		},
 		RootDir: tmpDir,
 	}
 
@@ -160,11 +244,9 @@ func Test_GenerateKeysInSystemKeyring(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	openKeying := keyring.OpenSystemKeyring(keyringNamespace)
-	if err != nil {
-		t.Fatalf("failed to reopen keyring: %v", err)
-	}
-	val, err := openKeying.Get("encryption-key")
+	// Open the keyring and check that the node identity key was generated and stored
+	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
+	val, err := openKeyring.Get("node-identity-key")
 	if err != nil {
 		t.Fatalf("expected encryption-key to exist: %v", err)
 	}
@@ -172,8 +254,73 @@ func Test_GenerateKeysInSystemKeyring(t *testing.T) {
 		t.Fatalf("expected 32-byte AES-256 key, got %d bytes", len(val))
 	}
 
+	// Then, check that none of the other keys were generated
+	for _, keyname := range []string{"peer-key", "encryption-key", "searchable-encryption-key"} {
+		_, err := openKeyring.Get(keyname)
+		if err == nil {
+			t.Fatalf("expected %s to not exist, but it does", keyname)
+		}
+	}
+
 	// Finally, cleanup the entry in the keyring we made for this test
-	_ = openKeying.Delete("encryption-key")
+	_ = openKeyring.Delete("node-identity-key")
+}
+
+// This will test the callback_GenerateKeysInSystemKeyring function.
+// Specifically, it will test that all of the keys are generated and stored.
+// Note that this test will not work on WSL.
+func Test_GenerateKeysInSystemKeyring_AllKeys(t *testing.T) {
+	// Skip the test on Linux CI / WSL due to missing dbus-launch
+	if runtime.GOOS == "linux" {
+		t.Skip("system keyring tests are skipped on Linux CI / WSL due to missing dbus-launch")
+	}
+
+	// Set up a clean test environment, and create a context for the test
+	tmpDir := setupWorkingDirectoryForTest(t)
+	ctx := &WizardContext{
+		Results: map[string][]any{
+			"stepSelectKeyTypes": {[]bool{true, true, true}},
+		},
+		RootDir: tmpDir,
+	}
+
+	// Assign a unique namespace for the test keyring so we can remove it afterwards
+	keyringNamespace := fmt.Sprintf("test-system-keyring-%d", time.Now().UnixNano())
+	setConfigValueForTest(t, ctx, "keyring.namespace", keyringNamespace)
+
+	// Execute the callback, then the first check will be that it didn't error
+	err := callback_GenerateKeysInSystemKeyring(nil, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Open the keyring
+	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
+
+	// Then, check that all of the keys were generated and stored in the keyring
+	keysToCheck := []string{
+		"node-identity-key",
+		"peer-key",
+		"encryption-key",
+		"searchable-encryption-key",
+	}
+
+	for _, keyname := range keysToCheck {
+		val, err := openKeyring.Get(keyname)
+		if err != nil {
+			t.Fatalf("expected %s to exist: %v", keyname, err)
+		}
+		if len(val) != 32 {
+			t.Fatalf("expected %s to be 32-byte AES-256 key, got %d bytes", keyname, len(val))
+		}
+	}
+
+	// Finally, cleanup the entries in the keyring we made for this test
+	_ = openKeyring.Delete("node-identity-key")
+	_ = openKeyring.Delete("peer-key")
+	_ = openKeyring.Delete("encryption-key")
+	_ = openKeyring.Delete("searchable-encryption-key")
+
 }
 
 // This will test the callback_SetAndReloadDefraKeyringSecretEnvironmentVariable function.
@@ -220,14 +367,20 @@ func Test_IsEnvironmentVariableDefraKeyringSecretSet(t *testing.T) {
 	unsetEnvForTest(t, "DEFRA_KEYRING_SECRET")
 
 	// Test that the result is 0, because the environment variable should not be set
-	result := evaluator_IsEnvironmentVariableDefraKeyringSecretSet(&WizardContext{})
+	result, err := evaluator_IsEnvironmentVariableDefraKeyringSecretSet(&WizardContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if result != 0 {
 		t.Fatal("expected result to be 0")
 	}
 
 	// Test that the result is 1, because the environment variable should be set
 	os.Setenv("DEFRA_KEYRING_SECRET", testSecretValue)
-	result = evaluator_IsEnvironmentVariableDefraKeyringSecretSet(&WizardContext{})
+	result, err = evaluator_IsEnvironmentVariableDefraKeyringSecretSet(&WizardContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if result != 1 {
 		t.Fatal("expected result to be 1")
 	}

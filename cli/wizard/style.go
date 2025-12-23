@@ -19,6 +19,11 @@ var (
 	defraBlue   = "#10CBFF"
 	defraRed    = "#E25647"
 
+	defaultStyle = lipgloss.NewStyle()
+
+	defraBlueStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color(defraBlue))
+
 	promptStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color(sourceGreen)).
@@ -47,4 +52,7 @@ var (
 				Border(lipgloss.RoundedBorder()).
 				BorderForeground(lipgloss.Color(sourceGreen)).
 				Padding(0, 1)
+
+	toggleSelectionMarker = lipgloss.NewStyle().
+				Foreground(lipgloss.Color(sourceGreen))
 )

@@ -44,6 +44,7 @@ func callback_GenerateConfigYAMLFile(_ step, ctx *WizardContext) error {
 
 // This callback will generate the keyring files
 func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
+	// Get the DEFRA_KEYRING_SECRET and keyring.path, and open the keyring
 	passwordStr, ok := os.LookupEnv("DEFRA_KEYRING_SECRET")
 	if !ok {
 		return errors.New(errDefraKeyringSecretNotSet)
@@ -59,15 +60,7 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 	if err != nil {
 		return err
 	}
-	encryptionKey, err := crypto.GenerateAES256()
-	if err != nil {
-		return err
-	}
-	err = keyring.Set("encryption-key", encryptionKey)
-	if err != nil {
-		return err
-	}
-	return nil
+	return generateKeysInKeyringFromStep(ctx, keyring, "stepSelectKeyTypes")
 }
 
 // This callback will generate the keys in the system keyring
@@ -77,15 +70,7 @@ func callback_GenerateKeysInSystemKeyring(_ step, ctx *WizardContext) error {
 		return errors.New(errFailedToGetKeyringNamespace)
 	}
 	keyring := keyring.OpenSystemKeyring(keyringNamespace)
-	encryptionKey, err := crypto.GenerateAES256()
-	if err != nil {
-		return err
-	}
-	err = keyring.Set("encryption-key", encryptionKey)
-	if err != nil {
-		return err
-	}
-	return nil
+	return generateKeysInKeyringFromStep(ctx, keyring, "stepSelectKeyTypes")
 }
 
 // This callback loads the environment variables from the .env file
@@ -103,4 +88,47 @@ func callback_SetAndReloadDefraKeyringSecretEnvironmentVariable(_ step, ctx *Wiz
 		return err
 	}
 	return loadEnvVariablesFromFile(ctx)
+}
+
+// generateKeysInKeyringFromStep is a helper function to generate the keys in the keyring from the results of a step
+// It contains behavior that is common to both callback_GenerateKeyringFiles and callback_GenerateKeysInSystemKeyring
+func generateKeysInKeyringFromStep(ctx *WizardContext, kr keyring.Keyring, stepname string) error {
+	// Get and cast the results of the step to a []bool
+	resultsRaw, ok := ctx.Results[stepname]
+	if !ok {
+		return NewErrFailedToRetrieveResultValue(stepname)
+	}
+	results, ok := resultsRaw[0].([]bool)
+	if !ok {
+		return NewErrAssertTypeFailed(resultsRaw[0], "[]bool")
+	}
+
+	// Create an anonymous function to generate a key of a specific name
+	generateKeyFunction := func(keyName string) error {
+		key, err := crypto.GenerateAES256()
+		if err != nil {
+			return err
+		}
+		if err := kr.Set(keyName, key); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	// Always generate the identity key
+	if err := generateKeyFunction("node-identity-key"); err != nil {
+		return err
+	}
+
+	// Generate the other keys if the user has selected to do so
+	for i, keyname := range []string{"peer-key", "encryption-key", "searchable-encryption-key"} {
+		if results[i] {
+			if err := generateKeyFunction(keyname); err != nil {
+				return err
+			}
+		}
+	}
+
+	// If we made it this far, we successfully generated all of the keys
+	return nil
 }
