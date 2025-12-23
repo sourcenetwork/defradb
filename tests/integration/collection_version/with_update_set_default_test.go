@@ -36,7 +36,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T)
 			},
 			testUtils.SetActiveCollectionVersion{
 				VersionID:     "",
-				ExpectedError: "schema version ID can't be empty",
+				ExpectedError: "collection version ID can't be empty",
 			},
 		},
 	}
