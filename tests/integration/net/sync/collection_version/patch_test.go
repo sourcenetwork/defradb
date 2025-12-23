@@ -108,6 +108,61 @@ func TestSyncColVersion_WithPatchVersionOfUnknownCollection(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestSyncColVersion_WithPatchIsActiveOnInactiveCollection_ShouldPatch(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				NodeID: immutable.Some(0),
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			&action.SyncCollectionVersions{
+				NodeID:     1,
+				VersionIDs: []string{"{{.CollectionVersionID0}}"},
+			},
+			testUtils.WaitForSync{},
+			testUtils.GetCollections{
+				FilterOptions: client.CollectionFetchOptions{
+					IncludeInactive: immutable.Some(true),
+				},
+				NodeID: immutable.Some(1),
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       false,
+					},
+				},
+			},
+			testUtils.PatchCollection{
+				NodeID: immutable.Some(1),
+				Patch:  `[{"op": "replace", "path": "/Users/IsActive", "value": true}]`,
+			},
+			testUtils.GetCollections{
+				NodeID: immutable.Some(1),
+				ExpectedResults: []client.CollectionVersion{
+					{
+						Name:           "Users",
+						IsMaterialized: true,
+						IsActive:       true,
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestSyncColVersion_WithPatchVersionOfKnownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{

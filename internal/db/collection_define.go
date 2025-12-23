@@ -152,6 +152,8 @@ func (db *DB) patchCollection(
 	for _, col := range existingCols {
 		if col.IsActive {
 			existingColsByName[col.Name] = col
+		} else if _, exists := existingColsByName[col.Name]; !exists {
+			existingColsByName[col.Name] = col
 		}
 		existingColsByID[col.VersionID] = col
 	}
