@@ -44,7 +44,6 @@ func callback_GenerateConfigYAMLFile(_ step, ctx *WizardContext) error {
 
 // This callback will generate the keyring files
 func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
-	// Get the DEFRA_KEYRING_SECRET and keyring.path, and open the keyring
 	passwordStr, ok := os.LookupEnv("DEFRA_KEYRING_SECRET")
 	if !ok {
 		return errors.New(errDefraKeyringSecretNotSet)
@@ -103,29 +102,44 @@ func generateKeysInKeyringFromStep(ctx *WizardContext, kr keyring.Keyring, stepn
 		return NewErrAssertTypeFailed(resultsRaw[0], "[]bool")
 	}
 
-	// Create an anonymous function to generate a key of a specific name
-	generateKeyFunction := func(keyName string) error {
-		key, err := crypto.GenerateAES256()
-		if err != nil {
-			return err
-		}
-		if err := kr.Set(keyName, key); err != nil {
-			return err
-		}
-		return nil
-	}
-
 	// Always generate the identity key
-	if err := generateKeyFunction("node-identity-key"); err != nil {
+	key, err := crypto.GenerateAES256()
+	if err != nil {
+		return err
+	}
+	if err := kr.Set("node-identity-key", key); err != nil {
 		return err
 	}
 
 	// Generate the other keys if the user has selected to do so
-	for i, keyname := range []string{"peer-key", "encryption-key", "searchable-encryption-key"} {
-		if results[i] {
-			if err := generateKeyFunction(keyname); err != nil {
-				return err
-			}
+	// Peer key
+	if results[0] {
+		key, err := crypto.GenerateEd25519()
+		if err != nil {
+			return err
+		}
+		if err := kr.Set("peer-key", key); err != nil {
+			return err
+		}
+	}
+	// Encryption key
+	if results[1] {
+		key, err := crypto.GenerateAES256()
+		if err != nil {
+			return err
+		}
+		if err := kr.Set("encryption-key", key); err != nil {
+			return err
+		}
+	}
+	// Searchable encryption key
+	if results[2] {
+		key, err := crypto.GenerateAES256()
+		if err != nil {
+			return err
+		}
+		if err := kr.Set("searchable-encryption-key", key); err != nil {
+			return err
 		}
 	}
 

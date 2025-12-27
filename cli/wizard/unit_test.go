@@ -185,34 +185,49 @@ func Test_GenerateKeyringFiles_AllKeys(t *testing.T) {
 	}
 
 	// Open the keyring
-	kr, err := keyring.OpenFileKeyring(keyringDir, []byte(testSecretValue))
+	openKeyring, err := keyring.OpenFileKeyring(keyringDir, []byte(testSecretValue))
 	if err != nil {
 		t.Fatalf("failed to reopen keyring: %v", err)
 	}
 
-	// Then, check that all of the keys were generated and stored in the keyring
-	keysToCheck := []string{
-		"node-identity-key",
-		"peer-key",
-		"encryption-key",
-		"searchable-encryption-key",
+	// Check that each key was generated and stored in the keyring
+	val, err := openKeyring.Get("node-identity-key")
+	if err != nil {
+		t.Fatalf("expected node-identity-key to exist: %v", err)
+	}
+	if len(val) != 32 {
+		t.Fatalf("expected node-identity-key to be 32-byte AES-256 key, got %d bytes", len(val))
 	}
 
-	for _, keyname := range keysToCheck {
-		val, err := kr.Get(keyname)
-		if err != nil {
-			t.Fatalf("expected %s to exist: %v", keyname, err)
-		}
-		if len(val) != 32 {
-			t.Fatalf("expected %s to be 32-byte AES-256 key, got %d bytes", keyname, len(val))
-		}
+	val, err = openKeyring.Get("peer-key")
+	if err != nil {
+		t.Fatalf("expected peer-key to exist: %v", err)
+	}
+	if len(val) != 64 {
+		t.Fatalf("expected peer-key to be 64-byte Ed25519 key, got %d bytes", len(val))
+	}
+
+	val, err = openKeyring.Get("encryption-key")
+	if err != nil {
+		t.Fatalf("expected encryption-key to exist: %v", err)
+	}
+	if len(val) != 32 {
+		t.Fatalf("expected encryption-key to be 32-byte AES-256 key, got %d bytes", len(val))
+	}
+
+	val, err = openKeyring.Get("searchable-encryption-key")
+	if err != nil {
+		t.Fatalf("expected searchable-encryption-key to exist: %v", err)
+	}
+	if len(val) != 32 {
+		t.Fatalf("expected searchable-encryption-key to be 32-byte AES-256 key, got %d bytes", len(val))
 	}
 
 	// Finally, cleanup the entries in the keyring we made for this test
-	_ = kr.Delete("node-identity-key")
-	_ = kr.Delete("peer-key")
-	_ = kr.Delete("encryption-key")
-	_ = kr.Delete("searchable-encryption-key")
+	_ = openKeyring.Delete("node-identity-key")
+	_ = openKeyring.Delete("peer-key")
+	_ = openKeyring.Delete("encryption-key")
+	_ = openKeyring.Delete("searchable-encryption-key")
 }
 
 // This will test the callback_GenerateKeysInSystemKeyring function.
@@ -297,22 +312,37 @@ func Test_GenerateKeysInSystemKeyring_AllKeys(t *testing.T) {
 	// Open the keyring
 	openKeyring := keyring.OpenSystemKeyring(keyringNamespace)
 
-	// Then, check that all of the keys were generated and stored in the keyring
-	keysToCheck := []string{
-		"node-identity-key",
-		"peer-key",
-		"encryption-key",
-		"searchable-encryption-key",
+	// Check each key separately
+	val, err := openKeyring.Get("node-identity-key")
+	if err != nil {
+		t.Fatalf("expected node-identity-key to exist: %v", err)
+	}
+	if len(val) != 32 {
+		t.Fatalf("expected node-identity-key to be 32-byte AES-256 key, got %d bytes", len(val))
 	}
 
-	for _, keyname := range keysToCheck {
-		val, err := openKeyring.Get(keyname)
-		if err != nil {
-			t.Fatalf("expected %s to exist: %v", keyname, err)
-		}
-		if len(val) != 32 {
-			t.Fatalf("expected %s to be 32-byte AES-256 key, got %d bytes", keyname, len(val))
-		}
+	val, err = openKeyring.Get("peer-key")
+	if err != nil {
+		t.Fatalf("expected peer-key to exist: %v", err)
+	}
+	if len(val) != 64 {
+		t.Fatalf("expected peer-key to be 64-byte Ed25519 key, got %d bytes", len(val))
+	}
+
+	val, err = openKeyring.Get("encryption-key")
+	if err != nil {
+		t.Fatalf("expected encryption-key to exist: %v", err)
+	}
+	if len(val) != 32 {
+		t.Fatalf("expected encryption-key to be 32-byte AES-256 key, got %d bytes", len(val))
+	}
+
+	val, err = openKeyring.Get("searchable-encryption-key")
+	if err != nil {
+		t.Fatalf("expected searchable-encryption-key to exist: %v", err)
+	}
+	if len(val) != 32 {
+		t.Fatalf("expected searchable-encryption-key to be 32-byte AES-256 key, got %d bytes", len(val))
 	}
 
 	// Finally, cleanup the entries in the keyring we made for this test
