@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
@@ -1469,7 +1470,7 @@ func (g *Generator) genEncryptedLeafFilterArgInput(obj gql.Type) *gql.InputObjec
 			underlyingType = notNull.OfType
 		}
 
-		fields["_eq"] = &gql.InputObjectFieldConfig{
+		fields[connor.EqualOp] = &gql.InputObjectFieldConfig{
 			Type: underlyingType,
 		}
 
