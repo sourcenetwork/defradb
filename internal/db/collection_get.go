@@ -129,7 +129,7 @@ func (c *collection) get(
 		return nil, nil
 	}
 
-	doc, err := fetcher.Decode(encodedDoc, c.Version())
+	doc, err := fetcher.Decode(ctx, encodedDoc, c.Version())
 	if err != nil {
 		return nil, err
 	}

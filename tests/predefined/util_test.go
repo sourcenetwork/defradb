@@ -11,6 +11,7 @@
 package predefined
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -68,22 +69,22 @@ outer:
 	return ""
 }
 
-func mustGetDocIDFromDocMap(docMap map[string]any, collection client.CollectionVersion) string {
-	doc, err := client.NewDocFromMap(docMap, collection)
+func mustGetDocIDFromDocMap(ctx context.Context, docMap map[string]any, collection client.CollectionVersion) string {
+	doc, err := client.NewDocFromMap(ctx, docMap, collection)
 	if err != nil {
 		panic("can not get doc from map" + err.Error())
 	}
 	return doc.ID().String()
 }
 
-func mustAddDocIDToDoc(doc map[string]any, collection client.CollectionVersion) map[string]any {
-	doc[request.DocIDFieldName] = mustGetDocIDFromDocMap(doc, collection)
+func mustAddDocIDToDoc(ctx context.Context, doc map[string]any, collection client.CollectionVersion) map[string]any {
+	doc[request.DocIDFieldName] = mustGetDocIDFromDocMap(ctx, doc, collection)
 	return doc
 }
 
-func mustAddDocIDsToDocs(docs []map[string]any, collection client.CollectionVersion) []map[string]any {
+func mustAddDocIDsToDocs(ctx context.Context, docs []map[string]any, collection client.CollectionVersion) []map[string]any {
 	for i := range docs {
-		mustAddDocIDToDoc(docs[i], collection)
+		mustAddDocIDToDoc(ctx, docs[i], collection)
 	}
 	return docs
 }

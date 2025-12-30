@@ -30,6 +30,19 @@ func TestView_SimpleWithTransformAggregate(t *testing.T) {
 					}
 				`,
 			},
+			&action.AddLens{
+				Lens: model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.StandardDeviationModulePath,
+							Arguments: map[string]any{
+								"src": "age",
+								"dst": "stddev",
+							},
+						},
+					},
+				},
+			},
 			testUtils.CreateView{
 				Query: `
 					User {
@@ -41,17 +54,7 @@ func TestView_SimpleWithTransformAggregate(t *testing.T) {
 						stddev: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.StandardDeviationModulePath,
-							Arguments: map[string]any{
-								"src": "age",
-								"dst": "stddev",
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
