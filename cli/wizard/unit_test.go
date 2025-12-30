@@ -481,7 +481,7 @@ func Test_ImportIdentityKey_Secp256k1_FileKeyring(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to reopen keyring: %v", err)
 	}
-	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256r1", 32, dummyKey_secp256k1)
+	requireKeyInKeyring(t, openKeyring, "node-identity-key", "secp256k1", 32, dummyKey_secp256k1)
 }
 
 // This will test the callback_ImportIdentityKey function using the system keyring, and a secp256k1 key.
