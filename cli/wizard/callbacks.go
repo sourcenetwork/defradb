@@ -12,7 +12,6 @@ package wizard
 
 import (
 	"encoding/hex"
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -101,7 +100,7 @@ func callback_GenerateIdentityKey(_ step, ctx *WizardContext) error {
 	}
 
 	// Generate the identity key
-	privateKey, err := crypto.GenerateKey(crypto.KeyType(crypto.KeyTypeSecp256k1))
+	privateKey, err := crypto.GenerateKey(crypto.KeyTypeSecp256k1)
 	if err != nil {
 		return err
 	}
@@ -194,7 +193,7 @@ func callback_ImportPeerKey(_ step, ctx *WizardContext) error {
 
 	// Sanity check length: ed25519 private keys are 64 bytes (or sometimes 96)
 	if len(keyBytes) != 64 && len(keyBytes) != 96 {
-		return fmt.Errorf("invalid ed25519 key length: %d bytes", len(keyBytes))
+		return NewErrInvalidEd25519KeyLength(len(keyBytes))
 	}
 
 	// Import the key into the keyring

@@ -66,8 +66,8 @@ func setupWorkingDirectoryForTest(t *testing.T) string {
 }
 
 // requireKeyInKeyring is a helper that will check that a key exists in the keyring with a given prefix and length.
-// It will fail the test if the key does not exist, or is in the incorrect format. If the expected key value is provided,
-// it will also check that the key value is correct.
+// It will fail the test if the key does not exist, or is in the incorrect format. If the expected key
+// value is provided. It will also check that the key value is correct.
 func requireKeyInKeyring(
 	t *testing.T,
 	kr keyring.Keyring,

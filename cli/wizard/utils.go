@@ -34,7 +34,7 @@ func generateKeysInKeyringFromStep(ctx *WizardContext, kr keyring.Keyring, stepn
 	}
 
 	// Always generate the identity key
-	privateKey, err := crypto.GenerateKey(crypto.KeyType(crypto.KeyTypeSecp256k1))
+	privateKey, err := crypto.GenerateKey(crypto.KeyTypeSecp256k1)
 	if err != nil {
 		return err
 	}
