@@ -28,6 +28,9 @@ var (
 	errFailedToRetrieveResultValue = errors.New("failed to retrieve result value from previous step")
 	errAssertTypeFailed            = errors.New("type assertion failed")
 	errNoResultValue               = errors.New("no result value found")
+	errInvalidHexKey               = errors.New("invalid hex key")
+	errInvalidAES256KeyLength      = errors.New("invalid AES-256 key length")
+	errInvalidEd25519KeyLength     = errors.New("invalid Ed25519 key length")
 )
 
 func NewErrModelTypeMismatch(stepID, expectedType string) error {
@@ -61,5 +64,29 @@ func NewErrNoResultValue(stepID string) error {
 		"%w: "+"no result value found for step %s",
 		errNoResultValue,
 		stepID,
+	)
+}
+
+func NewErrInvalidHexKey(err error) error {
+	return fmt.Errorf(
+		"%w: "+"invalid hex key: %w",
+		errInvalidHexKey,
+		err,
+	)
+}
+
+func NewErrInvalidAES256KeyLength(length int) error {
+	return fmt.Errorf(
+		"%w: "+"invalid AES-256 key length: %d bytes, expected 32",
+		errInvalidAES256KeyLength,
+		length,
+	)
+}
+
+func NewErrInvalidEd25519KeyLength(length int) error {
+	return fmt.Errorf(
+		"%w: "+"invalid Ed25519 key length: %d bytes, expected 64 or 96",
+		errInvalidEd25519KeyLength,
+		length,
 	)
 }

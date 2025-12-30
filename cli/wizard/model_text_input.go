@@ -11,15 +11,15 @@
 package wizard
 
 import (
-	"github.com/charmbracelet/bubbles/textarea"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type modelTextInput struct {
-	id     string         // Used to access the result of this step from the main model's results map
-	prompt string         // The prompt to display to the user
-	done   bool           // Whether the step is done
-	input  textarea.Model // The text input model will manage input
+	id     string          // Used to access the result of this step from the main model's results map
+	prompt string          // The prompt to display to the user
+	done   bool            // Whether the step is done
+	input  textinput.Model // The text input model will manage input
 
 	// nextStep can be assigned dynamically. It should be set to the next step
 	// to be executed after this step. nil is valid, and will be treated as the
@@ -32,11 +32,8 @@ type modelTextInput struct {
 
 // initialModelTextInput should be called instead of manually constructing the struct
 func initialModelTextInput(id string, prompt string, placeholder string) *modelTextInput {
-	ti := textarea.New()
-	ti.SetWidth(70)
-	ti.SetHeight(1)
+	ti := textinput.New()
 	ti.Placeholder = placeholder
-	ti.ShowLineNumbers = false
 	ti.Cursor.Blink = true
 	ti.Focus()
 
@@ -56,6 +53,7 @@ func (m *modelTextInput) Init() tea.Cmd {
 // Update() should not be called except by the main model
 func (m *modelTextInput) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	before := len(m.input.Value())
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -67,7 +65,10 @@ func (m *modelTextInput) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.done = true
 		}
 	}
-
+	after := len(m.input.Value())
+	if (after - before) > 1 {
+		m.input.SetCursor(before)
+	}
 	m.input, cmd = m.input.Update(msg)
 	return m, cmd
 }
