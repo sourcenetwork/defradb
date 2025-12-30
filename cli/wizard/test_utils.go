@@ -11,8 +11,12 @@
 package wizard
 
 import (
+	"bytes"
+	"encoding/hex"
 	"os"
 	"testing"
+
+	"github.com/sourcenetwork/defradb/keyring"
 )
 
 // unsetEnvForTest is a helper function that unsets an environment variable for the
@@ -59,4 +63,38 @@ func setupWorkingDirectoryForTest(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return tmpDir
+}
+
+// requireKeyInKeyring is a helper that will check that a key exists in the keyring with a given prefix and length.
+// It will fail the test if the key does not exist, or is in the incorrect format. If the expected key value is provided,
+// it will also check that the key value is correct.
+func requireKeyInKeyring(
+	t *testing.T,
+	kr keyring.Keyring,
+	keyName string,
+	expectedKeyType string,
+	expectedLength int,
+	expectedKeyValue string,
+) {
+	t.Helper()
+	val, err := kr.Get(keyName)
+	if err != nil {
+		t.Fatalf("expected key %q to exist: %v", keyName, err)
+	}
+	prefix := ""
+	if expectedKeyType != "" {
+		prefix = expectedKeyType + ":"
+	}
+	if !bytes.HasPrefix(val, []byte(prefix)) {
+		t.Fatalf("expected key prefix %q, got %q", prefix, val)
+	}
+	raw := val[len(prefix):]
+	if len(raw) != expectedLength {
+		t.Fatalf("expected %d-byte %s private key, got %d bytes", expectedLength, expectedKeyType, len(raw))
+	}
+	if expectedKeyValue != "" {
+		if hex.EncodeToString(raw) != expectedKeyValue {
+			t.Fatalf("expected key value %q, got %q", expectedKeyValue, hex.EncodeToString(raw))
+		}
+	}
 }
