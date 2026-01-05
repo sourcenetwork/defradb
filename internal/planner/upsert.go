@@ -96,6 +96,10 @@ func (n *upsertNode) Next() (bool, error) {
 		}
 
 		if updater {
+			// we have cached the document result set from the original Select
+			// in the valuesNode, now we can replace the original scanNode with
+			// our valuesNode, and avoid any additional fetches/kv ops.
+			// This is cheaper than building two seperate plans.
 			err := n.p.walkAndReplacePlan(n.source, n.origScanNode, n.valuesNode)
 			if err != nil {
 				return false, err
