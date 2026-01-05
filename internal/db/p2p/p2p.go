@@ -482,8 +482,6 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	req.SenderID = from
 
 	if err := p.processPushlogRequest(p.ctx, req, false); err != nil {
-
-
 		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 			log.Info("Context done during pushlog request processing", corelog.Any("Error", err))
 			return nil, nil
