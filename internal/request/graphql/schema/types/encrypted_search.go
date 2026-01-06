@@ -33,7 +33,7 @@ func EncryptedSearchResultObject() *gql.Object {
 		Fields: gql.Fields{
 			request.DocIDsFieldName: &gql.Field{
 				Description: docIDsFieldDescription,
-				Type:        gql.NewNonNull(gql.NewList(gql.NewNonNull(gql.String))),
+				Type:        gql.NewNonNull(gql.NewList(gql.NewNonNull(gql.ID))),
 			},
 		},
 	})

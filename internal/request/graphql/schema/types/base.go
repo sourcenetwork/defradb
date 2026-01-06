@@ -12,6 +12,8 @@ package types
 
 import (
 	gql "github.com/sourcenetwork/graphql-go"
+
+	"github.com/sourcenetwork/defradb/internal/connor"
 )
 
 // BooleanOperatorBlock filter block for boolean types.
@@ -20,11 +22,11 @@ func BooleanOperatorBlock() *gql.InputObject {
 		Name:        "BooleanOperatorBlock",
 		Description: booleanOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.Boolean,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.Boolean,
 			},
@@ -68,11 +70,11 @@ func NotNullBooleanOperatorBlock() *gql.InputObject {
 		Name:        "NotNullBooleanOperatorBlock",
 		Description: notNullBooleanOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.Boolean,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.Boolean,
 			},
@@ -116,11 +118,11 @@ func DateTimeOperatorBlock() *gql.InputObject {
 		Name:        "DateTimeOperatorBlock",
 		Description: dateTimeOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.DateTime,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.DateTime,
 			},
@@ -158,11 +160,11 @@ func Float64OperatorBlock() *gql.InputObject {
 		Name:        "Float64OperatorBlock",
 		Description: float64OperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        Float64,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        Float64,
 			},
@@ -222,11 +224,11 @@ func NotNullFloat64OperatorBlock() *gql.InputObject {
 		Name:        "NotNullFloat64OperatorBlock",
 		Description: notNullFloat64OperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        Float64,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        Float64,
 			},
@@ -286,11 +288,11 @@ func Float32OperatorBlock() *gql.InputObject {
 		Name:        "Float32OperatorBlock",
 		Description: float32OperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        Float32,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        Float32,
 			},
@@ -350,11 +352,11 @@ func NotNullFloat32OperatorBlock() *gql.InputObject {
 		Name:        "NotNullFloat32OperatorBlock",
 		Description: notNullFloat32OperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        Float32,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        Float32,
 			},
@@ -414,11 +416,11 @@ func IntOperatorBlock() *gql.InputObject {
 		Name:        "IntOperatorBlock",
 		Description: intOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.Int,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.Int,
 			},
@@ -478,11 +480,11 @@ func NotNullIntOperatorBlock() *gql.InputObject {
 		Name:        "NotNullIntOperatorBlock",
 		Description: notNullIntOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.Int,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.Int,
 			},
@@ -542,11 +544,11 @@ func StringOperatorBlock() *gql.InputObject {
 		Name:        "StringOperatorBlock",
 		Description: stringOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.String,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.String,
 			},
@@ -606,11 +608,11 @@ func NotNullStringOperatorBlock() *gql.InputObject {
 		Name:        "NotNullStringOperatorBlock",
 		Description: notNullStringOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.String,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.String,
 			},
@@ -669,11 +671,11 @@ func BlobOperatorBlock(blobScalarType *gql.Scalar) *gql.InputObject {
 		Name:        "BlobOperatorBlock",
 		Description: stringOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        blobScalarType,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        blobScalarType,
 			},
@@ -711,11 +713,11 @@ func NotNullBlobOperatorBlock(blobScalarType *gql.Scalar) *gql.InputObject {
 		Name:        "NotNullBlobOperatorBlock",
 		Description: notNullStringOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        blobScalarType,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        blobScalarType,
 			},
@@ -753,11 +755,11 @@ func IDOperatorBlock() *gql.InputObject {
 		Name:        "IDOperatorBlock",
 		Description: idOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.ID,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.ID,
 			},

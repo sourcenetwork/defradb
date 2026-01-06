@@ -123,22 +123,29 @@ func (p *P2P) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 }
 
 func (p *P2P) loadAndPublishP2PDocuments(ctx context.Context) error {
-	clientTxn, err := p.db.NewTxn(false)
+	iter, err := p.db.Multistore().Systemstore().Iterator(ctx, corekv.IterOptions{
+		Prefix:   keys.NewP2PDocumentKey("").Bytes(),
+		KeysOnly: true,
+	})
 	if err != nil {
 		return err
 	}
-	defer clientTxn.Discard()
-	ctx = datastore.CtxSetFromClientTxn(ctx, clientTxn)
-
-	docIDs, err := p.GetAllP2PDocuments(ctx)
-	if err != nil {
-		return err
-	}
-	for _, docID := range docIDs {
-		err := p.host.AddPubSubTopic(docID, true, p.pubSubMessageHandler, p.peerEventHandler)
+	for {
+		hasNext, err := iter.Next()
 		if err != nil {
-			return err
+			return errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+		key, err := keys.NewP2PDocumentKeyFromString(string(iter.Key()))
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+		err = p.host.AddPubSubTopic(key.DocID, true, p.pubSubMessageHandler, p.peerEventHandler)
+		if err != nil {
+			return errors.Join(err, iter.Close())
 		}
 	}
-	return nil
+	return iter.Close()
 }

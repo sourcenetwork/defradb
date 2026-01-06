@@ -64,3 +64,39 @@ func TestKeyringGenerateNoPeerKey(t *testing.T) {
 	assert.FileExists(t, filepath.Join(rootdir, "keys", encryptionKeyName))
 	assert.NoFileExists(t, filepath.Join(rootdir, "keys", peerKeyName))
 }
+
+func TestKeyringGenerateOverwrite(t *testing.T) {
+	rootdir := t.TempDir()
+	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
+	require.NoError(t, err)
+
+	cmd := NewDefraCommand(context.Background())
+	cmd.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir})
+
+	err = cmd.Execute()
+	require.NoError(t, err)
+
+	cmd2 := NewDefraCommand(context.Background())
+	cmd2.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir})
+	err = cmd2.Execute()
+
+	require.Error(t, err)
+}
+
+func TestKeyringGenerateOverwriteForce(t *testing.T) {
+	rootdir := t.TempDir()
+	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
+	require.NoError(t, err)
+
+	cmd := NewDefraCommand(context.Background())
+	cmd.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir})
+
+	err = cmd.Execute()
+	require.NoError(t, err)
+
+	cmd2 := NewDefraCommand(context.Background())
+	cmd2.SetArgs([]string{"keyring", "generate", "--rootdir", rootdir, "--force"})
+	err = cmd2.Execute()
+
+	require.NoError(t, err)
+}
