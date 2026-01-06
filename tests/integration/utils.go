@@ -751,7 +751,7 @@ func flattenActions(testCase *TestCase) {
 // will be split.
 //
 // If a SetupComplete action is provided, the actions will be split there, if not
-// they will be split at the first non SchemaUpdate/CreateDoc/UpdateDoc action.
+// they will be split at the first non SchemaUpdate/Restart action.
 func getActionRange(t testing.TB, testCase TestCase) (int, int) {
 	startIndex := 0
 	endIndex := len(testCase.Actions) - 1
@@ -771,7 +771,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddSchema, CreateDoc, UpdateDoc, Restart:
+		case *action.AddSchema, Restart:
 			continue
 
 		default:
