@@ -25,6 +25,9 @@ const (
 var (
 	// ErrHashMismatch is an error returned when the hash of a block is different than expected.
 	ErrHashMismatch = errors.New("block in storage has different hash than requested")
+	// ErrTxnHasActiveOps is returned when trying to commit or discard a transaction that has
+	// operations still in progress.
+	ErrTxnHasActiveOps = errors.New("cannot commit or discard transaction while operations are in progress")
 )
 
 // NewErrInvalidStoredValue returns a new error indicating that the stored

@@ -46,6 +46,8 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 			}
 			// If the txn has already been set on the context but it hasn't already been set as explicit,
 			// we create a copy of the txn and mark it as an explicit txn.
+			// Start an operation to prevent concurrent commit/discard.
+			txn.BasicTxn.StartOp()
 			explicitTxn := &Txn{
 				txn.BasicTxn,
 				txn.db,
@@ -59,6 +61,8 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 			//
 			// WARNING: This scenario creates a transaction where `*DB` is nil. Calling any method that requires this
 			// will result in a panic.
+			// Start an operation to prevent concurrent commit/discard.
+			txn.StartOp()
 			explicitTxn := &Txn{
 				txn,
 				nil,
@@ -98,6 +102,8 @@ func (txn *Txn) Commit() error {
 		// If the transaction has been explicitly defined, `Commit` should
 		// only be executed by the transaction creator. As such, a call to
 		// `Commit` on an explicit transaction should result in a no-op.
+		// End the operation to allow the creator to commit/discard.
+		txn.BasicTxn.EndOp()
 		return nil
 	}
 	return txn.BasicTxn.Commit()
@@ -108,6 +114,8 @@ func (txn *Txn) Discard() {
 		// If the transaction has been explicitly defined, `Discard` should
 		// only be executed by the transaction creator. As such, a call to
 		// `Discard` on an explicit transaction should result in a no-op.
+		// End the operation to allow the creator to commit/discard.
+		txn.BasicTxn.EndOp()
 		return
 	}
 	txn.BasicTxn.Discard()

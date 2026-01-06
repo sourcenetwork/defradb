@@ -12,13 +12,17 @@ package datastore
 
 import (
 	"context"
+	"sync/atomic"
 	"time"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 )
+
+var log = corelog.NewLogger("datastore")
 
 // Txn is a common interface to the BasicTxn struct.
 type Txn interface {
@@ -76,6 +80,14 @@ type Txn interface {
 
 	// OnDiscardAsync registers a function to be called asynchronously when the transaction is discarded.
 	OnDiscardAsync(fn func())
+
+	// StartOp marks the beginning of an operation on this transaction.
+	// Must be paired with EndOp. Used to prevent concurrent commit/discard while operations are in progress.
+	StartOp()
+
+	// EndOp marks the end of an operation on this transaction.
+	// Must be paired with StartOp.
+	EndOp()
 }
 
 type BasicTxn struct {
@@ -84,6 +96,10 @@ type BasicTxn struct {
 	txn corekv.Txn
 	id  uint64
 	ts  time.Time // timestamp
+
+	// activeOps tracks the number of operations currently in progress on this transaction.
+	// Used to prevent commit/discard while operations are executing.
+	activeOps atomic.Int64
 
 	successFns []func()
 	errorFns   []func()
@@ -117,6 +133,10 @@ func (t *BasicTxn) StartTS() time.Time {
 }
 
 func (t *BasicTxn) Commit() error {
+	if t.activeOps.Load() > 0 {
+		return ErrTxnHasActiveOps
+	}
+
 	var fns []func()
 	var asyncFns []func()
 
@@ -139,6 +159,11 @@ func (t *BasicTxn) Commit() error {
 }
 
 func (t *BasicTxn) Discard() {
+	if t.activeOps.Load() > 0 {
+		log.Error("Attempted to discard transaction while operations are in progress; ignoring discard")
+		return
+	}
+
 	t.txn.Discard()
 
 	for _, fn := range t.discardAsyncFns {
@@ -171,6 +196,14 @@ func (t *BasicTxn) OnErrorAsync(fn func()) {
 
 func (t *BasicTxn) OnDiscardAsync(fn func()) {
 	t.discardAsyncFns = append(t.discardAsyncFns, fn)
+}
+
+func (t *BasicTxn) StartOp() {
+	t.activeOps.Add(1)
+}
+
+func (t *BasicTxn) EndOp() {
+	t.activeOps.Add(-1)
 }
 
 type txnKey struct{}
