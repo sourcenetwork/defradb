@@ -12,7 +12,6 @@ package wizard
 
 import (
 	"os"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/errors"
 
@@ -124,33 +123,6 @@ func getFileOrSystemKeyring(ctx *WizardContext) (keyring.Keyring, error) {
 		kr = keyring.OpenSystemKeyring(keyringNamespace)
 		return kr, nil
 	}
-}
-
-// extractMeaningfulError is a helper function to extract the most meaningful
-// error from the output of a CLI command process
-func extractMeaningfulError(output string) string {
-	lines := strings.Split(strings.TrimSpace(output), "\n")
-
-	// Walk backwards to find the most relevant error
-	for i := len(lines) - 1; i >= 0; i-- {
-		line := strings.TrimSpace(lines[i])
-
-		if line == "" {
-			continue
-		}
-
-		// Common CLI error patterns
-		if strings.HasPrefix(line, "Error:") {
-			return strings.TrimPrefix(line, "Error:")
-		}
-
-		if strings.Contains(strings.ToLower(line), "error") {
-			return line
-		}
-	}
-
-	// As a fallback, return the entire outputa
-	return output
 }
 
 // printToTerminal is a helper function to print text to the terminal
