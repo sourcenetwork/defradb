@@ -2353,8 +2353,8 @@ github.com/sourcenetwork/corekv/badger v0.2.4 h1:Q5Ys8mMAiHHM7Z9SALXVPos4kAJO8P8
 github.com/sourcenetwork/corekv/badger v0.2.4/go.mod h1:VuWiomQoBBe6aW7CwbvUYMS7OHGal/Do+a32Zwig5Ho=
 github.com/sourcenetwork/corekv/blockstore v0.2.4 h1:D1O6eJUZ83mmHr2EztcbXXLR7GYTbwZVMFkTorLDo2M=
 github.com/sourcenetwork/corekv/blockstore v0.2.4/go.mod h1:xBNbUMGpDrnvbs39Q+SQTs3MEpUo5jfuc0SH44O0qTs=
-github.com/sourcenetwork/corekv/chunk v0.2.4 h1:E/YXWb8AcpDRX0I1WPUEs0G4kh3ZsxuHHgwdbZrv4aw=
-github.com/sourcenetwork/corekv/chunk v0.2.4/go.mod h1:8oLb1RQ27FUQSrpHx0OTx9r2Kme3WOB2d8JkeCx5veY=
+github.com/sourcenetwork/corekv/chunk v0.3.1 h1:XYsrE1DKJgnY+l4JP/ti7xHD+GsUlU09VOnRsDzFosw=
+github.com/sourcenetwork/corekv/chunk v0.3.1/go.mod h1:8oLb1RQ27FUQSrpHx0OTx9r2Kme3WOB2d8JkeCx5veY=
 github.com/sourcenetwork/corekv/memory v0.2.4 h1:hWwdXzbY2+8AqMU3Gx0s+SSF/7xCd+gzCbbWdqOV5uc=
 github.com/sourcenetwork/corekv/memory v0.2.4/go.mod h1:2vIJDWlvhwyO41tynkCkFFYTYrIsf1QGvAxBqVFV0bI=
 github.com/sourcenetwork/corekv/namespace v0.2.4 h1:hOQQwbupvy5QxR8J0m9VUWD+78p5b2CUbiCnP4SmZmA=

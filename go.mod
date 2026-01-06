@@ -45,7 +45,7 @@ require (
 	github.com/sourcenetwork/corekv v0.2.4
 	github.com/sourcenetwork/corekv/badger v0.2.4
 	github.com/sourcenetwork/corekv/blockstore v0.2.4
-	github.com/sourcenetwork/corekv/chunk v0.2.4
+	github.com/sourcenetwork/corekv/chunk v0.3.1
 	github.com/sourcenetwork/corekv/memory v0.2.4
 	github.com/sourcenetwork/corekv/namespace v0.2.4
 	github.com/sourcenetwork/corelog v0.0.8
