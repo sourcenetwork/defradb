@@ -27,9 +27,9 @@ func evaluator_IsEnvironmentVariableDefraKeyringSecretSet(ctx *WizardContext) (i
 // This callback will return 0 if the user previously selected to store the keyring
 // in the filesystem, and 1 if they selected the OS keychain
 func evaluator_ResultOfStepKeyringStorageLocation(ctx *WizardContext) (int, error) {
-	valRaw, ok := ctx.Results["stepKeyringStorageLocation"]
+	valRaw, ok := ctx.Results[stepKeyringStorageLocationID]
 	if !ok {
-		return -1, NewErrFailedToRetrieveResultValue("stepKeyringStorageLocation")
+		return -1, NewErrFailedToRetrieveResultValue(stepKeyringStorageLocationID)
 	}
 	val, ok := valRaw[0].(int)
 	if !ok {

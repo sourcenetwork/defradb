@@ -39,23 +39,23 @@ func Main() {
 
 	// Define the steps
 	stepWizardStart := initialModelMultipleChoice(
-		"stepWizardStart",
+		stepWizardStartID,
 		"You are about to run the DefraDB setup wizard. Do you wish to continue?",
 		[]string{"Yes", "No"},
 	)
 
 	stepConfigGenerator := initialModelText(
-		"stepConfigGenerator",
+		stepConfigGeneratorID,
 		"A config.yaml file will be generated.",
 	)
 
 	stepConfigGenerated := initialModelText(
-		"stepConfigGenerated",
+		stepConfigGeneratedID,
 		"Config.yaml file generated successfully",
 	)
 
 	stepKeyringStorageLocation := initialModelMultipleChoice(
-		"stepKeyringStorageLocation",
+		stepKeyringStorageLocationID,
 		"DefraDB protects the storage and transmission of data with a keypair that\n"+
 			"will be generated now. You have the choice of where to store these generated keys.\n\n"+
 			"Where do you want to store your keypair?",
@@ -65,25 +65,25 @@ func Main() {
 	stepKeyringStorageLocationBrancher := initialModelBrancher()
 
 	stepQueryGeneratingEnvironmentVariable := initialModelMultipleChoice(
-		"stepQueryGeneratingEnvironmentVariable",
+		stepQueryGeneratingEnvironmentVariableID,
 		"To proceed, the DEFRA_KEYRING_SECRET environment variable must first be set.\n\n"+
 			"Do you wish to generate a .env file containing it now?",
 		[]string{"Yes", "No"},
 	)
 
 	stepGetDefraKeyringSecretInput := initialModelTextInput(
-		"stepGetDefraKeyringSecretInput",
+		stepGetDefraKeyringSecretInputID,
 		"Please enter the DEFRA_KEYRING_SECRET value:",
 		"my-secret-password",
 	)
 
 	stepEnvironmentVariableGenerated := initialModelText(
-		"stepEnvironmentVariableGenerated",
+		stepEnvironmentVariableGeneratedID,
 		"DEFRA_KEYRING_SECRET value was set in the .env file.",
 	)
 
 	stepWizardExitMissingDefraKeyringSecret := initialModelText(
-		"stepWizardExitMissingDefraKeyringSecret",
+		stepWizardExitMissingDefraKeyringSecretID,
 		"Environment variable DEFRA_KEYRING_SECRET must be set to continue.\n\n"+
 			"Please set the environment variable first and run the wizard again.\n\n"+
 			"To set the environment variable, you can use the command: DEFRA_KEYRING_SECRET=my-secret-password\n\n"+
@@ -91,26 +91,26 @@ func Main() {
 	)
 
 	stepQueryImportingKeys := initialModelMultipleChoice(
-		"stepQueryImportingKeys",
+		stepQueryImportingKeysID,
 		"Do you want to import any existing keys into the keyring?",
 		[]string{"Yes", "No"},
 	)
 
 	stepQueryImportingIdentityKey := initialModelMultipleChoice(
-		"stepQueryImportingIdentityKey",
+		stepQueryImportingIdentityKeyID,
 		"An identity key is required to be imported or generated.\n"+
 			"Do you want to import an existing identity key into the keyring?",
 		[]string{"Yes, import an existing identity key", "No, generate a new identity key"},
 	)
 
 	stepQueryImportingIdentityKeyType := initialModelMultipleChoice(
-		"stepQueryImportingIdentityKeyType",
+		stepQueryImportingIdentityKeyTypeID,
 		"What type of identity key do you want to import?",
 		[]string{"Ed25519", "Secp256k1", "Secp256r1"},
 	)
 
 	stepGettingIdentityKeyForImport := initialModelTextInput(
-		"stepGettingIdentityKeyForImport",
+		stepGettingIdentityKeyForImportID,
 		"Please enter the identity key you want to import:",
 		"",
 	)
@@ -118,25 +118,25 @@ func Main() {
 	stepImportingIdentityKey := initialModelBlank()
 
 	stepImportedIdentityKey := initialModelText(
-		"stepImportedIdentityKey",
+		stepImportedIdentityKeyID,
 		"Identity key imported.",
 	)
 
 	stepGeneratingIdentityKey := initialModelBlank()
 
 	stepGeneratedIdentityKey := initialModelText(
-		"stepGeneratedIdentityKey",
+		stepGeneratedIdentityKeyID,
 		"Identity key generated successfully.",
 	)
 
 	stepQueryImportingPeerKey := initialModelMultipleChoice(
-		"stepQueryImportingPeerKey",
+		stepQueryImportingPeerKeyID,
 		"Do you want to import an existing peer key into the keyring?",
 		[]string{"Yes", "No"},
 	)
 
 	stepGettingPeerKeyForImport := initialModelTextInput(
-		"stepGettingPeerKeyForImport",
+		stepGettingPeerKeyForImportID,
 		"Please enter the peer key you want to import:",
 		"",
 	)
@@ -144,25 +144,25 @@ func Main() {
 	stepImportingPeerKey := initialModelBlank()
 
 	stepImportedPeerKey := initialModelText(
-		"stepImportedPeerKey",
+		stepImportedPeerKeyID,
 		"Peer key imported.",
 	)
 
 	stepGeneratingPeerKey := initialModelBlank()
 
 	stepGeneratedPeerKey := initialModelText(
-		"stepGeneratedPeerKey",
+		stepGeneratedPeerKeyID,
 		"Peer key generated successfully.",
 	)
 
 	stepQueryImportingEncryptionKey := initialModelMultipleChoice(
-		"stepQueryImportingEncryptionKey",
+		stepQueryImportingEncryptionKeyID,
 		"Do you want to import an existing encryption key into the keyring?",
 		[]string{"Yes", "No"},
 	)
 
 	stepGettingEncryptionKeyForImport := initialModelTextInput(
-		"stepGettingEncryptionKeyForImport",
+		stepGettingEncryptionKeyForImportID,
 		"Please enter the encryption key you want to import:",
 		"",
 	)
@@ -170,25 +170,25 @@ func Main() {
 	stepImportingEncryptionKey := initialModelBlank()
 
 	stepImportedEncryptionKey := initialModelText(
-		"stepImportedEncryptionKey",
+		stepImportedEncryptionKeyID,
 		"Encryption key imported.",
 	)
 
 	stepGeneratingEncryptionKey := initialModelBlank()
 
 	stepGeneratedEncryptionKey := initialModelText(
-		"stepGeneratedEncryptionKey",
+		stepGeneratedEncryptionKeyID,
 		"Encryption key generated successfully.",
 	)
 
 	stepQueryImportingSearchableEncryptionKey := initialModelMultipleChoice(
-		"stepQueryImportingSearchableEncryptionKey",
+		stepQueryImportingSearchableEncryptionKeyID,
 		"Do you want to import an existing searchable encryption key into the keyring?",
 		[]string{"Yes", "No"},
 	)
 
 	stepGettingSearchableEncryptionKeyForImport := initialModelTextInput(
-		"stepGettingSearchableEncryptionKeyForImport",
+		stepGettingSearchableEncryptionKeyForImportID,
 		"Please enter the searchable encryption key you want to import:",
 		"",
 	)
@@ -196,19 +196,19 @@ func Main() {
 	stepImportingSearchableEncryptionKey := initialModelBlank()
 
 	stepImportedSearchableEncryptionKey := initialModelText(
-		"stepImportedSearchableEncryptionKey",
+		stepImportedSearchableEncryptionKeyID,
 		"Searchable encryption key imported.",
 	)
 
 	stepGeneratingSearchableEncryptionKey := initialModelBlank()
 
 	stepGeneratedSearchableEncryptionKey := initialModelText(
-		"stepGeneratedSearchableEncryptionKey",
+		stepGeneratedSearchableEncryptionKeyID,
 		"Searchable encryption key generated successfully.",
 	)
 
 	stepSelectKeyTypes := initialModelToggleChoice(
-		"stepSelectKeyTypes",
+		stepSelectKeyTypesID,
 		"An identity key will be generated. Additionally, you may have this wizard generate the following"+
 			" additional key types:",
 		[]string{"Peer Key", "Encryption Key", "Searchable Encryption Key"},

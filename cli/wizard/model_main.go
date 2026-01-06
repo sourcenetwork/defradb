@@ -62,6 +62,15 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var updatedModel tea.Model
 
+	// In the case of the window size changing, clear the terminal to
+	// prevent visual artifacts, or garbled text.
+	switch msg.(type) {
+	case tea.WindowSizeMsg:
+		// Clear the terminal by sending ANSI escape code
+		print(TerminalClearANSICode)
+		return m, nil
+	}
+
 	// Update the current step
 
 	// If the current step has become nil, we are done and must quit

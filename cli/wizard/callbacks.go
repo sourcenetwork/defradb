@@ -61,7 +61,7 @@ func callback_GenerateKeyringFiles(_ step, ctx *WizardContext) error {
 	if err != nil {
 		return err
 	}
-	return generateKeysInKeyringFromStep(ctx, keyring, "stepSelectKeyTypes")
+	return generateKeysInKeyringFromStep(ctx, keyring, stepSelectKeyTypesID)
 }
 
 // This callback will generate the keys in the system keyring
@@ -71,18 +71,17 @@ func callback_GenerateKeysInSystemKeyring(_ step, ctx *WizardContext) error {
 		return errors.New(errFailedToGetKeyringNamespace)
 	}
 	keyring := keyring.OpenSystemKeyring(keyringNamespace)
-	return generateKeysInKeyringFromStep(ctx, keyring, "stepSelectKeyTypes")
+	return generateKeysInKeyringFromStep(ctx, keyring, stepSelectKeyTypesID)
 }
 
 // This callback loads the environment variables from the .env file
 func callback_SetAndReloadDefraKeyringSecretEnvironmentVariable(_ step, ctx *WizardContext) error {
-	stepToRetrieveResultFrom := "stepGetDefraKeyringSecretInput"
-	if len(ctx.Results[stepToRetrieveResultFrom]) == 0 {
-		return NewErrNoResultValue(stepToRetrieveResultFrom)
+	if len(ctx.Results[stepGetDefraKeyringSecretInputID]) == 0 {
+		return NewErrNoResultValue(stepGetDefraKeyringSecretInputID)
 	}
-	secretValue, ok := ctx.Results[stepToRetrieveResultFrom][0].(string)
+	secretValue, ok := ctx.Results[stepGetDefraKeyringSecretInputID][0].(string)
 	if !ok {
-		return NewErrAssertTypeFailed(ctx.Results[stepToRetrieveResultFrom][0], "string")
+		return NewErrAssertTypeFailed(ctx.Results[stepGetDefraKeyringSecretInputID][0], "string")
 	}
 	err := ensureEnvValue(ctx, "DEFRA_KEYRING_SECRET", secretValue)
 	if err != nil {
@@ -125,13 +124,12 @@ func callback_ImportIdentityKey(_ step, ctx *WizardContext) error {
 	}
 
 	// Retrieve the key value from the previous step
-	keyStep := "stepGettingIdentityKeyForImport"
-	if len(ctx.Results[keyStep]) == 0 {
-		return NewErrNoResultValue(keyStep)
+	if len(ctx.Results[stepGettingIdentityKeyForImportID]) == 0 {
+		return NewErrNoResultValue(stepGettingIdentityKeyForImportID)
 	}
-	keyStr, ok := ctx.Results[keyStep][0].(string)
+	keyStr, ok := ctx.Results[stepGettingIdentityKeyForImportID][0].(string)
 	if !ok {
-		return NewErrAssertTypeFailed(ctx.Results[keyStep][0], "string")
+		return NewErrAssertTypeFailed(ctx.Results[stepGettingIdentityKeyForImportID][0], "string")
 	}
 
 	// Decode the pasted hex string into raw bytes
@@ -141,7 +139,7 @@ func callback_ImportIdentityKey(_ step, ctx *WizardContext) error {
 	}
 
 	// Determine the key type from a previous step
-	keyTypeStep := "stepQueryImportingIdentityKeyType"
+	keyTypeStep := stepQueryImportingIdentityKeyTypeID
 	if len(ctx.Results[keyTypeStep]) == 0 {
 		return NewErrNoResultValue(keyTypeStep)
 	}
@@ -176,13 +174,12 @@ func callback_ImportPeerKey(_ step, ctx *WizardContext) error {
 	}
 
 	// Try to retrieve the key value from a previous step
-	keyValueStepName := "stepGettingPeerKeyForImport"
-	if len(ctx.Results[keyValueStepName]) == 0 {
-		return NewErrNoResultValue(keyValueStepName)
+	if len(ctx.Results[stepGettingPeerKeyForImportID]) == 0 {
+		return NewErrNoResultValue(stepGettingPeerKeyForImportID)
 	}
-	keyValue, ok := ctx.Results[keyValueStepName][0].(string)
+	keyValue, ok := ctx.Results[stepGettingPeerKeyForImportID][0].(string)
 	if !ok {
-		return NewErrAssertTypeFailed(ctx.Results[keyValueStepName][0], "string")
+		return NewErrAssertTypeFailed(ctx.Results[stepGettingPeerKeyForImportID][0], "string")
 	}
 
 	// Decode the hex string into raw bytes
@@ -251,13 +248,12 @@ func callback_ImportSearchableEncryptionKey(_ step, ctx *WizardContext) error {
 	}
 
 	// Retrieve the key value from the previous step
-	keyStep := "stepGettingSearchableEncryptionKeyForImport"
-	if len(ctx.Results[keyStep]) == 0 {
-		return NewErrNoResultValue(keyStep)
+	if len(ctx.Results[stepGettingSearchableEncryptionKeyForImportID]) == 0 {
+		return NewErrNoResultValue(stepGettingSearchableEncryptionKeyForImportID)
 	}
-	keyStr, ok := ctx.Results[keyStep][0].(string)
+	keyStr, ok := ctx.Results[stepGettingSearchableEncryptionKeyForImportID][0].(string)
 	if !ok {
-		return NewErrAssertTypeFailed(ctx.Results[keyStep][0], "string")
+		return NewErrAssertTypeFailed(ctx.Results[stepGettingSearchableEncryptionKeyForImportID][0], "string")
 	}
 
 	// Decode the hex string into raw bytes
