@@ -11,8 +11,6 @@
 package wizard
 
 import (
-	"os"
-
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -69,7 +67,7 @@ func (m *mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case tea.WindowSizeMsg:
 		// Clear the terminal by sending ANSI escape code
-		os.Stdout.WriteString(TerminalClearANSICode)
+		printToTerminal(TerminalClearANSICode)
 		return m, nil
 	}
 
