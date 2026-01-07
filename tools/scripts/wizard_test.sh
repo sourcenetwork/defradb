@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-#!/usr/bin/env bash
-set -euo pipefail
-
 export HOME="$(mktemp -d)"
 
 # Run the wizard using expect
