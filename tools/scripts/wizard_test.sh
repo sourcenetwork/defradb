@@ -11,7 +11,7 @@ expect <<'EOF'
 set timeout 15
 
 # Force a TTY via script
-spawn script -q -c "../../build/defradb wizard" /dev/null
+spawn script -q -c "./build/defradb wizard" /dev/null
 
 # --- Step 1: Opting in to wizard ---
 expect {
