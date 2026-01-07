@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -339,8 +338,9 @@ func callback_GenerateSearchableEncryptionKey(_ step, ctx *WizardContext) error 
 
 // This callback will start a DefraDB instance and perform a health check on it
 func callback_PerformHealthcheck(_ step, ctx *WizardContext) error {
-	os.Stdout.WriteString("Performing health check...")
-	defer os.Stdout.WriteString(TerminalClearANSICode)
+	printToTerminal(TerminalClearANSICode)
+	printToTerminal("Performing health check...")
+	defer printToTerminal(TerminalClearANSICode)
 
 	// Entire health check must finish within a finite amount of time
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -384,10 +384,7 @@ func callback_PerformHealthcheck(_ step, ctx *WizardContext) error {
 	for {
 		select {
 		case <-ctxWithTimeout.Done():
-			return fmt.Errorf(
-				"There was an error starting DefraDB instance:\n%s",
-				extractMeaningfulError(output.String()),
-			)
+			return NewErrFailedToStartDefraDB(errors.New(extractMeaningfulError(output.String())))
 
 		case <-ticker.C:
 			resp, err := http.Get(healthURL)
