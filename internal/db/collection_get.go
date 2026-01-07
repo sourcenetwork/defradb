@@ -34,11 +34,12 @@ func (c *collection) Get(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	var ident immutable.Option[identity.Identity]
 	if len(opts) > 0 && opts[0] != nil {
-		ctx = setContextIdentity(ctx, opts[0].Identity)
+		ident = opts[0].Identity
 	}
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
 

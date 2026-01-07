@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 )
@@ -57,7 +58,7 @@ func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Coll
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionGetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +79,7 @@ func (db *DB) GetCollections(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionGetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
 	}
 
@@ -98,7 +99,7 @@ func (db *DB) GetAllIndexes(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeIndexListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
 	}
 
@@ -136,7 +137,7 @@ func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.Coll
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeCollectionPatchPerm); err != nil {
 		return nil, err
 	}
 
@@ -177,7 +178,7 @@ func (db *DB) PatchCollection(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
 	}
 
@@ -199,7 +200,7 @@ func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID st
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
 	}
 

@@ -13,6 +13,9 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
@@ -38,7 +41,7 @@ func (db *DB) PeerInfo() ([]string, error) {
 
 // Connect tries to connect to the peer with the given [PeerInfo].
 func (db *DB) Connect(ctx context.Context, addresses []string) error {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PPeerConnectPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeP2PPeerConnectPerm); err != nil {
 		return err
 	}
 
@@ -48,7 +51,7 @@ func (db *DB) Connect(ctx context.Context, addresses []string) error {
 // SetReplicator adds a replicator to the persisted list or adds
 // schemas if the replicator already exists.
 func (db *DB) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PReplicatorCreatePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeP2PReplicatorCreatePerm); err != nil {
 		return err
 	}
 
@@ -72,7 +75,7 @@ func (db *DB) SetReplicator(ctx context.Context, addresses []string, collectionN
 // DeleteReplicator deletes a replicator from the persisted list
 // or specific schemas if they are specified.
 func (db *DB) DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PReplicatorDeletePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeP2PReplicatorDeletePerm); err != nil {
 		return err
 	}
 
@@ -96,7 +99,7 @@ func (db *DB) DeleteReplicator(ctx context.Context, id string, collectionNames .
 // GetAllReplicators returns the full list of replicators with their
 // subscribed schemas.
 func (db *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PReplicatorListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeP2PReplicatorListPerm); err != nil {
 		return nil, err
 	}
 
@@ -123,7 +126,7 @@ func (db *DB) ActivePeers(ctx context.Context) ([]string, error) {
 // subscribes to their topics. It will error if any of the provided
 // collection names are invalid.
 func (db *DB) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PCollectionCreatePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeP2PCollectionCreatePerm); err != nil {
 		return err
 	}
 
@@ -148,7 +151,7 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 // unsubscribes from their topics. It will error if the provided
 // collection names are invalid.
 func (db *DB) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PCollectionDeletePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeP2PCollectionDeletePerm); err != nil {
 		return err
 	}
 
@@ -172,7 +175,7 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 // GetAllP2PCollections returns the list of persisted collection names that
 // the P2P system subscribes to.
 func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PCollectionListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeP2PCollectionListPerm); err != nil {
 		return nil, err
 	}
 
@@ -192,7 +195,7 @@ func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 // subscribes to their topics. It will error if any of the provided
 // docIDs are invalid.
 func (db *DB) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PDocumentCreatePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeP2PDocumentCreatePerm); err != nil {
 		return err
 	}
 
@@ -217,7 +220,7 @@ func (db *DB) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 // unsubscribes from their topics. It will error if the provided
 // docIDs are invalid.
 func (db *DB) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PDocumentDeletePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeP2PDocumentDeletePerm); err != nil {
 		return err
 	}
 
@@ -241,7 +244,7 @@ func (db *DB) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 // GetAllP2PDocuments returns the list of persisted docIDs that
 // the P2P system subscribes to.
 func (db *DB) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PDocumentListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeP2PDocumentListPerm); err != nil {
 		return nil, err
 	}
 

@@ -209,7 +209,7 @@ func (c *collection) GetAllDocIDs(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
 
@@ -339,11 +339,12 @@ func (c *collection) Create(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	var ident immutable.Option[identity.Identity]
 	if len(opts) > 0 && opts[0] != nil {
-		ctx = setContextIdentity(ctx, opts[0].Identity)
+		ident = opts[0].Identity
 	}
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
 
@@ -371,11 +372,12 @@ func (c *collection) CreateMany(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	var ident immutable.Option[identity.Identity]
 	if len(opts) > 0 && opts[0] != nil {
-		ctx = setContextIdentity(ctx, opts[0].Identity)
+		ident = opts[0].Identity
 	}
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
 
@@ -491,15 +493,6 @@ func setContextDocEncryption(ctx context.Context, opts []*options.CollectionCrea
 	return ctx
 }
 
-// setContextIdentity sets identity from options into context if provided.
-// If identity is not set in options, context is returned unchanged.
-func setContextIdentity(ctx context.Context, ident immutable.Option[identity.Identity]) context.Context {
-	if ident.HasValue() {
-		return identity.WithContext(ctx, ident)
-	}
-	return ctx
-}
-
 // Update an existing document with the new values.
 // Any field that needs to be removed or cleared should call doc.Clear(field) before.
 // Any field that is nil/empty that hasn't called Clear will be ignored.
@@ -511,11 +504,12 @@ func (c *collection) Update(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	var ident immutable.Option[identity.Identity]
 	if len(opts) > 0 && opts[0] != nil {
-		ctx = setContextIdentity(ctx, opts[0].Identity)
+		ident = opts[0].Identity
 	}
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
 
@@ -593,11 +587,12 @@ func (c *collection) Save(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	var ident immutable.Option[identity.Identity]
 	if len(opts) > 0 && opts[0] != nil {
-		ctx = setContextIdentity(ctx, opts[0].Identity)
+		ident = opts[0].Identity
 	}
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
 
@@ -849,11 +844,12 @@ func (c *collection) Delete(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	var ident immutable.Option[identity.Identity]
 	if len(opts) > 0 && opts[0] != nil {
-		ctx = setContextIdentity(ctx, opts[0].Identity)
+		ident = opts[0].Identity
 	}
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentDeletePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentDeletePerm); err != nil {
 		return false, err
 	}
 
@@ -888,7 +884,7 @@ func (c *collection) Exists(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeDocumentReadPerm); err != nil {
 		return false, err
 	}
 

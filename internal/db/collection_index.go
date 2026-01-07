@@ -164,11 +164,12 @@ func (c *collection) CreateIndex(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	var ident immutable.Option[identity.Identity]
 	if len(opts) > 0 && opts[0] != nil {
-		ctx = setContextIdentity(ctx, opts[0].Identity)
+		ident = opts[0].Identity
 	}
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeIndexCreatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexCreatePerm); err != nil {
 		return client.IndexDescription{}, err
 	}
 
@@ -357,7 +358,7 @@ func (c *collection) DropIndex(ctx context.Context, indexName string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeIndexDropPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeIndexDropPerm); err != nil {
 		return err
 	}
 
@@ -411,7 +412,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 
 // GetIndexes returns all indexes for the collection.
 func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeIndexListPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
 	}
 

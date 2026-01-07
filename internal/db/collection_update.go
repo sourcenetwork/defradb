@@ -37,11 +37,12 @@ func (c *collection) UpdateWithFilter(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	var ident immutable.Option[identity.Identity]
 	if len(opts) > 0 && opts[0] != nil {
-		ctx = setContextIdentity(ctx, opts[0].Identity)
+		ident = opts[0].Identity
 	}
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return nil, err
 	}
 

@@ -18,6 +18,8 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -29,7 +31,7 @@ import (
 // VerifySignature verifies the signatures of a block using a public key.
 // Returns an error if any signature verification fails.
 func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeSignatureVerifyPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeSignatureVerifyPerm); err != nil {
 		return err
 	}
 
