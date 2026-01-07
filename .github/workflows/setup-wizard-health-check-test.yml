@@ -8,7 +8,7 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: Validate Title Workflow
+name: Validate Wizard Workflow
 
 on:
   pull_request:
