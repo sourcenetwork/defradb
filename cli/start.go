@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/cli/config"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
@@ -66,7 +67,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				return err
 			}
 			rootdir := mustGetContextRootDir(cmd)
-			if err := createConfig(rootdir, cmd.Flags()); err != nil {
+			if err := config.CreateConfig(rootdir, cmd.Flags()); err != nil {
 				return err
 			}
 			if err := setContextConfig(cmd); err != nil {
@@ -98,7 +99,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				node.WithEnableDevelopment(cfg.GetBool("development")),
 				// store options
 				node.WithStorePath(cfg.GetString("datastore.badger.path")),
-				node.WithBadgerInMemory(cfg.GetString("datastore.store") == configStoreMemory),
+				node.WithBadgerInMemory(cfg.GetString("datastore.store") == config.ConfigStoreMemory),
 				// db options
 				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
 				db.WithRetryInterval(replicatorRetryIntervals),
@@ -116,7 +117,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				http.WithTLSKeyPath(cfg.GetString("api.privKeyPath")),
 			}
 
-			if cfg.GetString("datastore.store") != configStoreMemory {
+			if cfg.GetString("datastore.store") != config.ConfigStoreMemory {
 				rootDir := mustGetContextRootDir(cmd)
 				// TODO-ACP: Infuture when we add support for the --no-acp flag when node acp is implemented,
 				// we can allow starting of db without acp. Currently that can only be done programmatically.
@@ -257,79 +258,79 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 		},
 	}
 	// set default flag values from config
-	cfg := defaultConfig()
+	cfg := config.DefaultConfig()
 	cmd.PersistentFlags().StringArray(
 		"peers",
-		cfg.GetStringSlice(configFlags["peers"]),
+		cfg.GetStringSlice(config.ConfigFlags["peers"]),
 		"List of peers to connect to",
 	)
 	cmd.PersistentFlags().Int(
 		"max-txn-retries",
-		cfg.GetInt(configFlags["max-txn-retries"]),
+		cfg.GetInt(config.ConfigFlags["max-txn-retries"]),
 		"Specify the maximum number of retries per transaction",
 	)
 	cmd.PersistentFlags().String(
 		"store",
-		cfg.GetString(configFlags["store"]),
+		cfg.GetString(config.ConfigFlags["store"]),
 		"Specify the datastore to use (supported: badger, memory)",
 	)
 	cmd.PersistentFlags().Int(
 		"valuelogfilesize",
-		cfg.GetInt(configFlags["valuelogfilesize"]),
+		cfg.GetInt(config.ConfigFlags["valuelogfilesize"]),
 		"Specify the datastore value log file size (in bytes). In memory size will be 2*valuelogfilesize",
 	)
 	cmd.PersistentFlags().StringSlice(
 		"p2paddr",
-		cfg.GetStringSlice(configFlags["p2paddr"]),
+		cfg.GetStringSlice(config.ConfigFlags["p2paddr"]),
 		"Listen addresses for the p2p network (formatted as a libp2p MultiAddr)",
 	)
 	cmd.PersistentFlags().Bool(
 		"no-p2p",
-		cfg.GetBool(configFlags["no-p2p"]),
+		cfg.GetBool(config.ConfigFlags["no-p2p"]),
 		"Disable the peer-to-peer network synchronization system",
 	)
 	cmd.PersistentFlags().StringArray(
 		"allowed-origins",
-		cfg.GetStringSlice(configFlags["allowed-origins"]),
+		cfg.GetStringSlice(config.ConfigFlags["allowed-origins"]),
 		"List of origins to allow for CORS requests",
 	)
 	cmd.PersistentFlags().String(
 		"pubkeypath",
-		cfg.GetString(configFlags["pubkeypath"]),
+		cfg.GetString(config.ConfigFlags["pubkeypath"]),
 		"Path to the public key for tls",
 	)
 	cmd.PersistentFlags().String(
 		"privkeypath",
-		cfg.GetString(configFlags["privkeypath"]),
+		cfg.GetString(config.ConfigFlags["privkeypath"]),
 		"Path to the private key for tls",
 	)
 	cmd.PersistentFlags().Bool(
 		"development",
-		cfg.GetBool(configFlags["development"]),
+		cfg.GetBool(config.ConfigFlags["development"]),
 		developmentDescription,
 	)
 	cmd.Flags().Bool(
 		"no-encryption",
-		cfg.GetBool(configFlags["no-encryption"]),
+		cfg.GetBool(config.ConfigFlags["no-encryption"]),
 		"Skip generating an encryption key. Encryption at rest will be disabled. WARNING: This cannot be undone.")
 	cmd.PersistentFlags().Bool(
 		"no-telemetry",
-		cfg.GetBool(configFlags["no-telemetry"]),
+		cfg.GetBool(config.ConfigFlags["no-telemetry"]),
 		"Disables telemetry reporting. Telemetry is only enabled in builds that use the telemetry flag.",
 	)
 	cmd.Flags().Bool(
 		"no-signing",
-		cfg.GetBool(configFlags["no-signing"]),
+		cfg.GetBool(config.ConfigFlags["no-signing"]),
 		"Disable signing of commits.")
 	cmd.Flags().String(
 		"default-key-type",
-		cfg.GetString(configFlags["default-key-type"]),
+		cfg.GetString(config.ConfigFlags["default-key-type"]),
 		"Default key type to generate new node identity if one doesn't exist in the keyring. "+
 			"Valid values are 'secp256k1' and 'ed25519'. "+
 			"If not specified, the default key type will be 'secp256k1'.")
 	cmd.Flags().Bool(
 		"no-searchable-encryption",
-		cfg.GetBool(configFlags["no-searchable-encryption"]),
+		cfg.GetBool(config.ConfigFlags["no-searchable-encryption"]),
 		"Skip generating a searchable encryption key. Searchable encryption will be disabled.")
 	cmd.PersistentFlags().StringVarP(
 		&identity,
@@ -346,11 +347,11 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 	)
 	cmd.PersistentFlags().String(
 		"document-acp-type",
-		cfg.GetString(configFlags["document-acp-type"]),
+		cfg.GetString(config.ConfigFlags["document-acp-type"]),
 		"Specify the document acp engine to use (supported: none (default), local, source-hub)")
 	cmd.PersistentFlags().IntSlice(
 		"replicator-retry-intervals",
-		cfg.GetIntSlice(configFlags["replicator-retry-intervals"]),
+		cfg.GetIntSlice(config.ConfigFlags["replicator-retry-intervals"]),
 		"Retry intervals for the replicator. Format is a comma-separated list of whole number seconds. "+
 			"Example: 10,20,40,80,160,320",
 	)

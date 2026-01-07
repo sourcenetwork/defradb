@@ -90,7 +90,7 @@ func TestGenerateEncryptedQueryField(t *testing.T) {
 		if nonNull, ok := elementType.(*gql.NonNull); ok {
 			elementType = nonNull.OfType
 		}
-		assert.Equal(t, "String", elementType.Name())
+		assert.Equal(t, "ID", elementType.Name())
 	}
 }
 

@@ -84,6 +84,9 @@ default:
 install:
 	@go install $(BUILD_FLAGS) ./cmd/defradb
 
+install-wizard: install
+	@defradb wizard
+
 .PHONY: install\:manpages
 install\:manpages:
 ifeq ($(OS_GENERAL),Linux)
