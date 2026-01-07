@@ -441,15 +441,3 @@ type CollectionFetchOptions struct {
 	// If IncludeInactive is true, then inactive collections will also be returned.
 	IncludeInactive immutable.Option[bool]
 }
-
-// SchemaFetchOptions represents a set of options used for fetching schemas.
-type SchemaFetchOptions struct {
-	// If provided, only schemas of this root will be returned.
-	Root immutable.Option[string]
-
-	// If provided, only schemas with this name will be returned.
-	Name immutable.Option[string]
-
-	// If provided, only the schema with this id will be returned.
-	ID immutable.Option[string]
-}
