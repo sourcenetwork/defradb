@@ -11,8 +11,14 @@
 package wizard
 
 import (
+	"bytes"
+	"context"
 	"encoding/hex"
+	"fmt"
+	"net/http"
 	"os"
+	"os/exec"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -329,4 +335,72 @@ func callback_GenerateSearchableEncryptionKey(_ step, ctx *WizardContext) error 
 		return err
 	}
 	return nil
+}
+
+// This callback will start a DefraDB instance and perform a health check on it
+func callback_PerformHealthcheck(_ step, ctx *WizardContext) error {
+	os.Stdout.WriteString("Performing health check...")
+	defer os.Stdout.WriteString(TerminalClearANSICode)
+
+	// Entire health check must finish within a finite amount of time
+	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Use the same binary that launched the wizard to start DefraDB
+	binPath, err := os.Executable()
+	if err != nil {
+		return NewErrFailedToResolveDefraBinary(err)
+	}
+
+	cmd := exec.CommandContext(
+		ctxWithTimeout,
+		binPath,
+		"start",
+	)
+
+	// Capture the output of the command
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+
+	// Start DefraDB, checking that it started successfully
+	if err := cmd.Start(); err != nil {
+		return NewErrFailedToStartDefraDB(err)
+	}
+
+	// Defer shutting down defra after the health check
+	defer func() {
+		if cmd.Process != nil {
+			_ = cmd.Process.Signal(os.Interrupt)
+			_, _ = cmd.Process.Wait()
+		}
+	}()
+
+	// Poll the health endpoint
+	healthURL := "http://localhost:9181/health-check"
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctxWithTimeout.Done():
+			return fmt.Errorf(
+				"There was an error starting DefraDB instance:\n%s",
+				extractMeaningfulError(output.String()),
+			)
+
+		case <-ticker.C:
+			resp, err := http.Get(healthURL)
+			if err != nil {
+				continue // server not up yet
+			}
+
+			resp.Body.Close()
+
+			// The health check is successful
+			if resp.StatusCode == http.StatusOK {
+				return nil
+			}
+		}
+	}
 }

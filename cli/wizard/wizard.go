@@ -220,13 +220,37 @@ func Main() {
 	stepKeyringGenerationBrancher := initialModelBrancher()
 
 	stepConfirmKeyringFilesGenerated := initialModelText(
-		"stepConfirmKeyringFilesGenerated",
+		stepConfirmKeyringFilesGeneratedID,
 		"Keyring file(s) generated successfully.",
 	)
 
 	stepConfirmSystemKeyringKeysGenerated := initialModelText(
-		"stepConfirmSystemKeyringKeysGenerated",
+		stepConfirmSystemKeyringKeysGeneratedID,
 		"Key(s) generated in system keyring successfully.",
+	)
+
+	stepQueryPerformingHealthCheck := initialModelMultipleChoice(
+		stepQueryPerformingHealthCheckID,
+		"Do you want to test that DefraDB is configured correctly by"+
+			"performing a health check?",
+		[]string{"Yes", "No"},
+	)
+
+	stepWillRunHealthcheck := initialModelText(
+		stepWillRunHealthcheckID,
+		"A health check will be performed. This may take up to 10 seconds to complete.",
+	)
+
+	stepPerformHealthcheck := initialModelBlank()
+
+	stepHealthcheckGood := initialModelText(
+		stepHealthcheckGoodID,
+		"DefraDB is set up successfully.",
+	)
+
+	stepSetupComplete := initialModelText(
+		stepSetupCompleteID,
+		"Setup is complete.",
 	)
 
 	// Chain the steps together
@@ -284,6 +308,12 @@ func Main() {
 	stepEnvironmentVariableGenerated.nextStep = stepKeyringStorageLocationBrancher
 	stepSelectKeyTypes.nextStep = stepKeyringGenerationBrancher
 	stepKeyringGenerationBrancher.nextSteps = []step{stepGenerateKeyringFiles, stepGenerateSystemKeyringKeys}
+	stepConfirmKeyringFilesGenerated.nextStep = stepQueryPerformingHealthCheck
+	stepConfirmSystemKeyringKeysGenerated.nextStep = stepQueryPerformingHealthCheck
+	stepQueryPerformingHealthCheck.nextSteps = []step{stepWillRunHealthcheck, stepSetupComplete}
+	stepWillRunHealthcheck.nextStep = stepPerformHealthcheck
+	stepPerformHealthcheck.nextStep = stepHealthcheckGood
+	stepHealthcheckGood.nextStep = stepSetupComplete
 
 	// Setup the callbacks
 	stepKeyringStorageLocation.callback = callback_SetKeyringBackend
@@ -299,6 +329,7 @@ func Main() {
 	stepImportingEncryptionKey.callback = callback_ImportEncryptionKey
 	stepGeneratingSearchableEncryptionKey.callback = callback_GenerateSearchableEncryptionKey
 	stepImportingSearchableEncryptionKey.callback = callback_ImportSearchableEncryptionKey
+	stepPerformHealthcheck.callback = callback_PerformHealthcheck
 
 	// Setup the evaluators
 	stepKeyringStorageLocationBrancher.evaluator = evaluator_IsEnvironmentVariableDefraKeyringSecretSet

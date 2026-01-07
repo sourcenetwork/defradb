@@ -55,4 +55,9 @@ const (
 	stepSelectKeyTypesID                          = "stepSelectKeyTypes"
 	stepConfirmKeyringFilesGeneratedID            = "stepConfirmKeyringFilesGenerated"
 	stepConfirmSystemKeyringKeysGeneratedID       = "stepConfirmSystemKeyringKeysGenerated"
+	stepQueryPerformingHealthCheckID              = "stepQueryPerformingHealthCheck"
+	stepWillRunHealthcheckID                      = "stepWillRunHealthcheck"
+	stepPerformHealthcheckID                      = "stepPerformHealthcheck"
+	stepHealthcheckGoodID                         = "stepHealthcheckGood"
+	stepSetupCompleteID                           = "stepSetupComplete"
 )
