@@ -346,10 +346,10 @@ func callback_PerformHealthcheck(_ step, ctx *WizardContext) error {
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Use the same binary that launched the wizard to start DefraDB
+	// Resolve the binary path to the one that launched the wizard
 	binPath, err := os.Executable()
 	if err != nil {
-		return NewErrFailedToResolveDefraBinary(err)
+		return NewErrFailedToResolveBinary(err)
 	}
 
 	cmd := exec.CommandContext(
@@ -384,6 +384,7 @@ func callback_PerformHealthcheck(_ step, ctx *WizardContext) error {
 	for {
 		select {
 		case <-ctxWithTimeout.Done():
+			ctx.ReturnCode = returnCode_HealthcheckFailed
 			return NewErrFailedToStartDefraDB(errors.New(extractMeaningfulError(output.String())))
 
 		case <-ticker.C:
@@ -396,6 +397,7 @@ func callback_PerformHealthcheck(_ step, ctx *WizardContext) error {
 
 			// The health check is successful
 			if resp.StatusCode == http.StatusOK {
+				ctx.ReturnCode = returnCode_Success
 				return nil
 			}
 		}

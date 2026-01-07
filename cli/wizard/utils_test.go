@@ -13,6 +13,7 @@ package wizard
 import (
 	"bytes"
 	"encoding/hex"
+	"io"
 	"os"
 	"testing"
 
@@ -97,4 +98,24 @@ func requireKeyInKeyring(
 			t.Fatalf("expected key value %q, got %q", expectedKeyValue, hex.EncodeToString(raw))
 		}
 	}
+}
+
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	os.Stdout = w
+
+	fn()
+
+	_ = w.Close()
+	os.Stdout = old
+
+	out, _ := io.ReadAll(r)
+	return string(out)
 }

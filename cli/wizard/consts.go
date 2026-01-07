@@ -60,4 +60,9 @@ const (
 	stepPerformHealthcheckID                      = "stepPerformHealthcheck"
 	stepHealthcheckGoodID                         = "stepHealthcheckGood"
 	stepSetupCompleteID                           = "stepSetupComplete"
+
+	// Return codes
+	returnCode_Success           = 0
+	returnCode_EarlyExit         = 1
+	returnCode_HealthcheckFailed = 2
 )

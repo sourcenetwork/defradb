@@ -28,13 +28,19 @@ type WizardContext struct {
 	// to allow easier integration with the unit tests, so that they can set a different, temporary
 	// root directory for the test if needed.
 	RootDir string
+
+	// ReturnCode is the exit code of the wizard. This can be adjusted dynamically by the
+	// callbacks if needed. Specifically, it exists for the health check to communicate success or failure.
+	ReturnCode int
 }
 
 // Main is the entry point of the wizard, and is wired into the CLI's MakeWizardCommand() function.
-func Main() {
+func Main() error {
 	ctx := &WizardContext{
 		Results: map[string][]any{},
 		RootDir: getRootDir(),
+		// If nothing ever defines the return code, it can be assumed that the wizard was exited early.
+		ReturnCode: returnCode_EarlyExit,
 	}
 
 	// Define the steps
@@ -51,7 +57,7 @@ func Main() {
 
 	stepConfigGenerated := initialModelText(
 		stepConfigGeneratedID,
-		"Config.yaml file generated successfully",
+		"The config.yaml file was generated successfully.",
 	)
 
 	stepKeyringStorageLocation := initialModelMultipleChoice(
@@ -231,7 +237,7 @@ func Main() {
 
 	stepQueryPerformingHealthCheck := initialModelMultipleChoice(
 		stepQueryPerformingHealthCheckID,
-		"Do you want to test that DefraDB is configured correctly by"+
+		"Do you want to test that DefraDB is configured correctly by "+
 			"performing a health check?",
 		[]string{"Yes", "No"},
 	)
@@ -338,6 +344,8 @@ func Main() {
 	// Run the Bubbletea program
 	program := tea.NewProgram(&mainModel{currentStep: stepWizardStart, ctx: ctx})
 	if _, err := program.Run(); err != nil {
-		os.Exit(1)
+		os.Exit(ctx.ReturnCode)
 	}
+
+	return nil
 }
