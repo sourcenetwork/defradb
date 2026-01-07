@@ -11,6 +11,9 @@
 package planner
 
 import (
+	"fmt"
+
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -62,6 +65,9 @@ func (n *updateNode) Next() (bool, error) {
 
 	n.currentValue = n.results.Value()
 
+	fmt.Println("pre update")
+	spew.Dump(n.currentValue)
+
 	docID, err := client.NewDocIDFromString(n.currentValue.GetID())
 	if err != nil {
 		return false, err
@@ -79,10 +85,16 @@ func (n *updateNode) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
+	n.execInfo.updates++
+
 	coreDoc, err := core.DocFromClient(doc, n.documentMapping)
 	if err != nil {
 		return false, err
 	}
+
+	fmt.Println("post update1")
+	spew.Dump(coreDoc)
 
 	n.currentValue = coreDoc
 	return true, nil
