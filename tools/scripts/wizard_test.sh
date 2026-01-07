@@ -67,7 +67,6 @@ expect {
     -re ".*import.*" {}
     timeout { puts "Timeout waiting for import keys prompt"; exit 1 }
 }
-# Accept default "No"
 send "j\r"
 
 # --- Step 9: Identity key generation prompt ---
