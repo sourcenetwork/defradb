@@ -35,6 +35,10 @@ func (c *collection) DeleteWithFilter(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = setContextIdentity(ctx, opts[0].Identity)
+	}
+
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentDeletePerm); err != nil {
 		return nil, err
 	}

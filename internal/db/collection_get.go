@@ -34,6 +34,10 @@ func (c *collection) Get(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = setContextIdentity(ctx, opts[0].Identity)
+	}
+
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
