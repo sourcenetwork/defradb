@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	FilterEqOp = &Operator{Operation: "_eq"}
+	FilterEqOp = &Operator{Operation: connor.EqualOp}
 )
 
 // SelectionType is the type of selection.
@@ -1906,5 +1906,5 @@ func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
 	}
 
 	typedChildBlock := childBlock.(map[string]any)
-	typedChildBlock["_ne"] = nil
+	typedChildBlock[connor.NotEqualOp] = nil
 }

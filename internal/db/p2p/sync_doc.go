@@ -29,7 +29,6 @@ import (
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -293,19 +292,12 @@ func (p *P2P) docSyncMessageHandler(from string, topic string, msg []byte) ([]by
 
 // processDocSyncItem processes a single document sync request and returns the result.
 func (p *P2P) processDocSyncItem(docID string) (docSyncItem, error) {
-	clientTxn, err := p.db.NewTxn(true)
-	if err != nil {
-		return docSyncItem{}, err
-	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-
 	key := keys.HeadstoreDocKey{
 		DocID:   docID,
 		FieldID: core.COMPOSITE_NAMESPACE,
 	}
 
-	headset := coreblock.NewHeadSet(txn.Headstore(), key)
+	headset := coreblock.NewHeadSet(p.db.Multistore().Headstore(), key)
 
 	cids, _, err := headset.List(p.ctx)
 	if err != nil {

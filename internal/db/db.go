@@ -334,6 +334,10 @@ func (db *DB) Rootstore() corekv.TxnStore {
 	return db.rootstore
 }
 
+func (db *DB) Multistore() *datastore.Multistore {
+	return datastore.NewMultistore(db.rootstore, db.blockStoreChunkSize)
+}
+
 // Events returns the events Channel.
 func (db *DB) Events() event.Bus {
 	return db.events

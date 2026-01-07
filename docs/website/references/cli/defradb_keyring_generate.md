@@ -37,6 +37,7 @@ with system keyring:
 ### Options
 
 ```
+      --force           Overwrite existing keys without confirmation
   -h, --help            help for generate
       --no-encryption   Skip generating an encryption key. Encryption at rest will be disabled
       --no-peer-key     Skip generating a peer key.
