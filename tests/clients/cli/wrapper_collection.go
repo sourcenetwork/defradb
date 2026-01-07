@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 )
@@ -46,7 +47,7 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionCreateOptions,
 ) error {
 	args := makeDocCreateArgs(c, opts)
 
@@ -67,7 +68,7 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionCreateOptions,
 ) error {
 	args := makeDocCreateArgs(c, opts)
 
@@ -93,19 +94,19 @@ func (c *Collection) CreateMany(
 
 func makeDocCreateArgs(
 	c *Collection,
-	opts []client.DocCreateOption,
+	opts []*options.CollectionCreateOptions,
 ) []string {
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Version().Name)
 
-	createDocOpts := client.DocCreateOptions{}
-	createDocOpts.Apply(opts)
-
-	if createDocOpts.EncryptDoc {
-		args = append(args, "--encrypt")
-	}
-	if len(createDocOpts.EncryptedFields) > 0 {
-		args = append(args, "--encrypt-fields", strings.Join(createDocOpts.EncryptedFields, ","))
+	if len(opts) > 0 && opts[0] != nil {
+		opt := opts[0]
+		if opt.EncryptDoc {
+			args = append(args, "--encrypt")
+		}
+		if len(opt.EncryptedFields) > 0 {
+			args = append(args, "--encrypt-fields", strings.Join(opt.EncryptedFields, ","))
+		}
 	}
 
 	return args
@@ -114,6 +115,7 @@ func makeDocCreateArgs(
 func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...*options.CollectionUpdateOptions,
 ) error {
 	document, err := doc.ToJSONPatch()
 	if err != nil {
@@ -136,14 +138,22 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionSaveOptions,
 ) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.Create(ctx, doc, opts...)
+		var createOpts []*options.CollectionCreateOptions
+		if len(opts) > 0 && opts[0] != nil {
+			createOpts = []*options.CollectionCreateOptions{
+				options.CollectionCreate().
+					SetEncryptDoc(opts[0].EncryptDoc).
+					SetEncryptedFields(opts[0].EncryptedFields),
+			}
+		}
+		return c.Create(ctx, doc, createOpts...)
 	}
 	return err
 }
@@ -151,6 +161,7 @@ func (c *Collection) Save(
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...*options.CollectionDeleteOptions,
 ) (bool, error) {
 	args := []string{"client", "collection", "delete"}
 	args = append(args, "--name", c.Version().Name)
@@ -178,6 +189,7 @@ func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
+	opts ...*options.CollectionUpdateWithFilterOptions,
 ) (*client.UpdateResult, error) {
 	args := []string{"client", "collection", "update"}
 	args = append(args, "--name", c.Version().Name)
@@ -204,6 +216,7 @@ func (c *Collection) UpdateWithFilter(
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
+	opts ...*options.CollectionDeleteWithFilterOptions,
 ) (*client.DeleteResult, error) {
 	args := []string{"client", "collection", "delete"}
 	args = append(args, "--name", c.Version().Name)
@@ -230,6 +243,7 @@ func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
 	showDeleted bool,
+	opts ...*options.CollectionGetOptions,
 ) (*client.Document, error) {
 	args := []string{"client", "collection", "get"}
 	args = append(args, "--name", c.Version().Name)
@@ -297,6 +311,7 @@ func (c *Collection) GetAllDocIDs(
 func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
+	opts ...*options.CollectionCreateIndexOptions,
 ) (index client.IndexDescription, err error) {
 	args := []string{"client", "index", "create"}
 	args = append(args, "--collection", c.Version().Name)

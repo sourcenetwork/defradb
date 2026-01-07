@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -333,7 +334,7 @@ func (c *collection) CollectionID() string {
 func (c *collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionCreateOptions,
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -361,7 +362,7 @@ func (c *collection) Create(
 func (c *collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionCreateOptions,
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -409,7 +410,7 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 func (c *collection) create(
 	ctx context.Context,
 	doc *client.Document,
-	opts []client.DocCreateOption,
+	opts []*options.CollectionCreateOptions,
 ) error {
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
@@ -470,13 +471,15 @@ func (c *collection) create(
 	return c.registerDocWithACP(ctx, doc.ID().String())
 }
 
-func setContextDocEncryption(ctx context.Context, opts []client.DocCreateOption) context.Context {
-	createOptions := client.DocCreateOptions{}
-	createOptions.Apply(opts)
-	if !createOptions.EncryptDoc && len(createOptions.EncryptedFields) == 0 {
+func setContextDocEncryption(ctx context.Context, opts []*options.CollectionCreateOptions) context.Context {
+	if len(opts) == 0 || opts[0] == nil {
 		return ctx
 	}
-	ctx = encryption.SetContextConfigFromParams(ctx, createOptions.EncryptDoc, createOptions.EncryptedFields)
+	opt := opts[0]
+	if !opt.EncryptDoc && len(opt.EncryptedFields) == 0 {
+		return ctx
+	}
+	ctx = encryption.SetContextConfigFromParams(ctx, opt.EncryptDoc, opt.EncryptedFields)
 	return ctx
 }
 
@@ -486,6 +489,7 @@ func setContextDocEncryption(ctx context.Context, opts []client.DocCreateOption)
 func (c *collection) Update(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...*options.CollectionUpdateOptions,
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -563,7 +567,7 @@ func (c *collection) update(
 func (c *collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionSaveOptions,
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -596,7 +600,15 @@ func (c *collection) Save(
 	if exists {
 		err = c.update(ctx, doc)
 	} else {
-		err = c.create(ctx, doc, opts)
+		var createOpts []*options.CollectionCreateOptions
+		if len(opts) > 0 && opts[0] != nil {
+			createOpts = []*options.CollectionCreateOptions{
+				options.CollectionCreate().
+					SetEncryptDoc(opts[0].EncryptDoc).
+					SetEncryptedFields(opts[0].EncryptedFields),
+			}
+		}
+		err = c.create(ctx, doc, createOpts)
 	}
 	if err != nil {
 		return err
@@ -807,6 +819,7 @@ func (c *collection) save(
 func (c *collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...*options.CollectionDeleteOptions,
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

@@ -20,9 +20,9 @@ import (
 
 	sse "github.com/vito/go-sse/sse"
 
-	"github.com/sourcenetwork/defradb/errors"
-
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -52,7 +52,7 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionCreateOptions,
 ) error {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
@@ -79,7 +79,7 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionCreateOptions,
 ) error {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
@@ -115,16 +115,18 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func setDocEncryptionFlagIfNeeded(req *http.Request, opts []client.DocCreateOption) {
-	createDocsOptions := client.DocCreateOptions{}
-	createDocsOptions.Apply(opts)
+func setDocEncryptionFlagIfNeeded(req *http.Request, opts []*options.CollectionCreateOptions) {
+	if len(opts) == 0 || opts[0] == nil {
+		return
+	}
+	opt := opts[0]
 
 	q := req.URL.Query()
-	if createDocsOptions.EncryptDoc {
+	if opt.EncryptDoc {
 		q.Set(docEncryptParam, "true")
 	}
-	if len(createDocsOptions.EncryptedFields) > 0 {
-		q.Set(docEncryptFieldsParam, strings.Join(createDocsOptions.EncryptedFields, ","))
+	if len(opt.EncryptedFields) > 0 {
+		q.Set(docEncryptFieldsParam, strings.Join(opt.EncryptedFields, ","))
 	}
 	if len(q) > 0 {
 		req.URL.RawQuery = q.Encode()
@@ -134,6 +136,7 @@ func setDocEncryptionFlagIfNeeded(req *http.Request, opts []client.DocCreateOpti
 func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...*options.CollectionUpdateOptions,
 ) error {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, doc.ID().String())
 
@@ -157,14 +160,22 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionSaveOptions,
 ) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.Create(ctx, doc, opts...)
+		var createOpts []*options.CollectionCreateOptions
+		if len(opts) > 0 && opts[0] != nil {
+			createOpts = []*options.CollectionCreateOptions{
+				options.CollectionCreate().
+					SetEncryptDoc(opts[0].EncryptDoc).
+					SetEncryptedFields(opts[0].EncryptedFields),
+			}
+		}
+		return c.Create(ctx, doc, createOpts...)
 	}
 	return err
 }
@@ -172,6 +183,7 @@ func (c *Collection) Save(
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...*options.CollectionDeleteOptions,
 ) (bool, error) {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, docID.String())
 
@@ -202,6 +214,7 @@ func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
+	opts ...*options.CollectionUpdateWithFilterOptions,
 ) (*client.UpdateResult, error) {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
@@ -229,6 +242,7 @@ func (c *Collection) UpdateWithFilter(
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
+	opts ...*options.CollectionDeleteWithFilterOptions,
 ) (*client.DeleteResult, error) {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
@@ -257,6 +271,7 @@ func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
 	showDeleted bool,
+	opts ...*options.CollectionGetOptions,
 ) (*client.Document, error) {
 	query := url.Values{}
 	if showDeleted {
@@ -345,6 +360,7 @@ func (c *Collection) GetAllDocIDs(
 func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
+	opts ...*options.CollectionCreateIndexOptions,
 ) (client.IndexDescription, error) {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes")
 

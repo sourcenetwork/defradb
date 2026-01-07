@@ -31,6 +31,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
@@ -56,25 +57,26 @@ func identityFromContext(ctx context.Context) C.uintptr_t {
 	return C.uintptr_t(handle)
 }
 
-// isEncryptedFromDocCreateOption is a helper function that extracts as a C.int
-func isEncryptedFromDocCreateOption(opts []client.DocCreateOption) C.int {
-	createDocOpts := client.DocCreateOptions{}
-	createDocOpts.Apply(opts)
-	var val C.int = 0
-	if createDocOpts.EncryptDoc {
-		val = 1
+// isEncryptedFromCollectionCreateOptions is a helper function that extracts as a C.int
+func isEncryptedFromCollectionCreateOptions(opts []*options.CollectionCreateOptions) C.int {
+	if len(opts) == 0 || opts[0] == nil {
+		return 0
 	}
-	return val
+	if opts[0].EncryptDoc {
+		return 1
+	}
+	return 0
 }
 
-// encryptedFieldsFromDocCreateOptions is a helper function that returns a comma separated
+// encryptedFieldsFromCollectionCreateOptions is a helper function that returns a comma separated
 // C-string, or a blank string, representing the fields that should be encrypted
 // After calling this, the caller is responsible for freeing the string returned
-func encryptedFieldsFromDocCreateOptions(opts []client.DocCreateOption) *C.char {
-	createDocOpts := client.DocCreateOptions{}
-	createDocOpts.Apply(opts)
-	if len(createDocOpts.EncryptedFields) > 0 {
-		return C.CString(strings.Join(createDocOpts.EncryptedFields, ","))
+func encryptedFieldsFromCollectionCreateOptions(opts []*options.CollectionCreateOptions) *C.char {
+	if len(opts) == 0 || opts[0] == nil {
+		return C.CString("")
+	}
+	if len(opts[0].EncryptedFields) > 0 {
+		return C.CString(strings.Join(opts[0].EncryptedFields, ","))
 	}
 	return C.CString("")
 }

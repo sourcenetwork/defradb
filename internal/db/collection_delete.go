@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -29,6 +30,7 @@ import (
 func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
+	opts ...*options.CollectionDeleteWithFilterOptions,
 ) (*client.DeleteResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

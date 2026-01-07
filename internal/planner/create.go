@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -45,7 +46,7 @@ type createNode struct {
 
 	execInfo createExecInfo
 
-	createOptions []client.DocCreateOption
+	createOptions []*options.CollectionCreateOptions
 }
 
 type createExecInfo struct {
@@ -167,9 +168,10 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		input:     parsed.CreateInput,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
-		createOptions: []client.DocCreateOption{
-			client.CreateDocEncrypted(parsed.Encrypt),
-			client.CreateDocWithEncryptedFields(parsed.EncryptFields),
+		createOptions: []*options.CollectionCreateOptions{
+			options.CollectionCreate().
+				SetEncryptDoc(parsed.Encrypt).
+				SetEncryptedFields(parsed.EncryptFields),
 		},
 	}
 

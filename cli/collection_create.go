@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeCollectionCreateCommand(ctx context.Context) *cobra.Command {
@@ -71,9 +72,10 @@ Options:
 				return cmd.Usage()
 			}
 
-			createOpts := []client.DocCreateOption{
-				client.CreateDocEncrypted(shouldEncryptDoc),
-				client.CreateDocWithEncryptedFields(encryptedFields),
+			createOpts := []*options.CollectionCreateOptions{
+				options.CollectionCreate().
+					SetEncryptDoc(shouldEncryptDoc).
+					SetEncryptedFields(encryptedFields),
 			}
 
 			ctx := cmd.Context()

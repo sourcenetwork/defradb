@@ -12,37 +12,9 @@ package client
 
 import (
 	"context"
+
+	"github.com/sourcenetwork/defradb/client/options"
 )
-
-// DocCreateOption is a functional option for creating a document.
-type DocCreateOption func(*DocCreateOptions)
-
-// DocCreateOptions contains options for creating a document.
-type DocCreateOptions struct {
-	EncryptDoc      bool
-	EncryptedFields []string
-}
-
-// Apply applies the given DocCreateOptions to the DocCreateOptions receiver.
-func (o *DocCreateOptions) Apply(opts []DocCreateOption) {
-	for _, opt := range opts {
-		opt(o)
-	}
-}
-
-// CreateDocEncrypted enables or disables document encryption when creating a document.
-func CreateDocEncrypted(encryptDoc bool) DocCreateOption {
-	return func(opts *DocCreateOptions) {
-		opts.EncryptDoc = encryptDoc
-	}
-}
-
-// CreateDocWithEncryptedFields specifies a list of fields to be encrypted when creating a document.
-func CreateDocWithEncryptedFields(encryptedFields []string) DocCreateOption {
-	return func(opts *DocCreateOptions) {
-		opts.EncryptedFields = encryptedFields
-	}
-}
 
 // Collection represents a defradb collection.
 //
@@ -66,12 +38,12 @@ type Collection interface {
 	// Create a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(ctx context.Context, doc *Document, opts ...DocCreateOption) error
+	Create(ctx context.Context, doc *Document, opts ...*options.CollectionCreateOptions) error
 
 	// CreateMany new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	CreateMany(ctx context.Context, docs []*Document, opts ...DocCreateOption) error
+	CreateMany(ctx context.Context, docs []*Document, opts ...*options.CollectionCreateOptions) error
 
 	// Update an existing document with the new values.
 	//
@@ -79,13 +51,13 @@ type Collection interface {
 	// Any field that is nil/empty that hasn't called Clear will be ignored.
 	//
 	// Will return a ErrDocumentNotFound error if the given document is not found.
-	Update(ctx context.Context, docs *Document) error
+	Update(ctx context.Context, docs *Document, opts ...*options.CollectionUpdateOptions) error
 
 	// Save the given document in the database.
 	//
 	// If a document exists with the given DocID it will update it. Otherwise a new document
 	// will be created.
-	Save(ctx context.Context, doc *Document, opts ...DocCreateOption) error
+	Save(ctx context.Context, doc *Document, opts ...*options.CollectionSaveOptions) error
 
 	// Delete will attempt to delete a document by DocID.
 	//
@@ -93,7 +65,7 @@ type Collection interface {
 	// if it cannot. If the document doesn't exist, then it will return false and a ErrDocumentNotFound error.
 	// This operation will hard-delete all state relating to the given DocID.
 	// This includes data, block, and head storage.
-	Delete(ctx context.Context, docID DocID) (bool, error)
+	Delete(ctx context.Context, docID DocID, opts ...*options.CollectionDeleteOptions) (bool, error)
 
 	// Exists checks if a given document exists with supplied DocID.
 	//
@@ -108,6 +80,7 @@ type Collection interface {
 		ctx context.Context,
 		filter any,
 		updater string,
+		opts ...*options.CollectionUpdateWithFilterOptions,
 	) (*UpdateResult, error)
 
 	// DeleteWithFilter deletes documents matching the given filter.
@@ -117,6 +90,7 @@ type Collection interface {
 	DeleteWithFilter(
 		ctx context.Context,
 		filter any,
+		opts ...*options.CollectionDeleteWithFilterOptions,
 	) (*DeleteResult, error)
 
 	// Get returns the document with the given DocID.
@@ -126,6 +100,7 @@ type Collection interface {
 		ctx context.Context,
 		docID DocID,
 		showDeleted bool,
+		opts ...*options.CollectionGetOptions,
 	) (*Document, error)
 
 	// GetAllDocIDs returns all the document IDs that exist in the collection.
@@ -137,7 +112,7 @@ type Collection interface {
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
 	// WARNING: This method can not create index for a collection that has a policy.
-	CreateIndex(context.Context, IndexCreateRequest) (IndexDescription, error)
+	CreateIndex(context.Context, IndexCreateRequest, ...*options.CollectionCreateIndexOptions) (IndexDescription, error)
 
 	// DropIndex drops an index from the collection.
 	DropIndex(ctx context.Context, indexName string) error

@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
@@ -28,6 +29,7 @@ func (c *collection) Get(
 	ctx context.Context,
 	docID client.DocID,
 	showDeleted bool,
+	opts ...*options.CollectionGetOptions,
 ) (*client.Document, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

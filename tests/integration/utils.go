@@ -36,6 +36,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
@@ -1381,7 +1382,7 @@ func createDocViaColSave(
 	}
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
-		err := collection.Save(ctx, doc, makeDocCreateOptions(&action)...)
+		err := collection.Save(ctx, doc, makeDocSaveOptions(&action)...)
 		if err != nil {
 			return nil, err
 		}
@@ -1395,10 +1396,19 @@ func makeContextForDocCreate(s *state.State, ctx context.Context, nodeIndex int,
 	return ctx
 }
 
-func makeDocCreateOptions(action *CreateDoc) []client.DocCreateOption {
-	return []client.DocCreateOption{
-		client.CreateDocEncrypted(action.IsDocEncrypted),
-		client.CreateDocWithEncryptedFields(action.EncryptedFields),
+func makeDocCreateOptions(action *CreateDoc) []*options.CollectionCreateOptions {
+	return []*options.CollectionCreateOptions{
+		options.CollectionCreate().
+			SetEncryptDoc(action.IsDocEncrypted).
+			SetEncryptedFields(action.EncryptedFields),
+	}
+}
+
+func makeDocSaveOptions(action *CreateDoc) []*options.CollectionSaveOptions {
+	return []*options.CollectionSaveOptions{
+		options.CollectionSave().
+			SetEncryptDoc(action.IsDocEncrypted).
+			SetEncryptedFields(action.EncryptedFields),
 	}
 }
 

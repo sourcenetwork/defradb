@@ -44,6 +44,7 @@ import (
 	"unsafe"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -72,10 +73,10 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionCreateOptions,
 ) error {
-	isEncrypted := isEncryptedFromDocCreateOption(opts)
-	encryptedFields := encryptedFieldsFromDocCreateOptions(opts)
+	isEncrypted := isEncryptedFromCollectionCreateOptions(opts)
+	encryptedFields := encryptedFieldsFromCollectionCreateOptions(opts)
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -120,10 +121,10 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionCreateOptions,
 ) error {
-	isEncrypted := isEncryptedFromDocCreateOption(opts)
-	encryptedFields := encryptedFieldsFromDocCreateOptions(opts)
+	isEncrypted := isEncryptedFromCollectionCreateOptions(opts)
+	encryptedFields := encryptedFieldsFromCollectionCreateOptions(opts)
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -177,6 +178,7 @@ func (c *Collection) CreateMany(
 func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...*options.CollectionUpdateOptions,
 ) error {
 	docID := C.CString(doc.ID().String())
 	filter := C.CString("")
@@ -222,14 +224,22 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionSaveOptions,
 ) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
 	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
-		return c.Create(ctx, doc, opts...)
+		var createOpts []*options.CollectionCreateOptions
+		if len(opts) > 0 && opts[0] != nil {
+			createOpts = []*options.CollectionCreateOptions{
+				options.CollectionCreate().
+					SetEncryptDoc(opts[0].EncryptDoc).
+					SetEncryptedFields(opts[0].EncryptedFields),
+			}
+		}
+		return c.Create(ctx, doc, createOpts...)
 	}
 	return err
 }
@@ -237,6 +247,7 @@ func (c *Collection) Save(
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...*options.CollectionDeleteOptions,
 ) (bool, error) {
 	docIDStr := C.CString(docID.String())
 	filter := C.CString("")
@@ -313,6 +324,7 @@ func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
+	opts ...*options.CollectionUpdateWithFilterOptions,
 ) (*client.UpdateResult, error) {
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
@@ -363,6 +375,7 @@ func (c *Collection) UpdateWithFilter(
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
+	opts ...*options.CollectionDeleteWithFilterOptions,
 ) (*client.DeleteResult, error) {
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
@@ -412,6 +425,7 @@ func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
 	showDeleted bool,
+	opts ...*options.CollectionGetOptions,
 ) (*client.Document, error) {
 	var cShowDeleted C.int = 0
 	if showDeleted {
@@ -520,6 +534,7 @@ func (c *Collection) GetAllDocIDs(
 func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
+	opts ...*options.CollectionCreateIndexOptions,
 ) (client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)

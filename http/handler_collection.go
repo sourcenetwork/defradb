@@ -22,6 +22,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -58,9 +59,10 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
 	}
 
-	createOpts := []client.DocCreateOption{
-		client.CreateDocEncrypted(encConf.IsDocEncrypted),
-		client.CreateDocWithEncryptedFields(encConf.EncryptedFields),
+	createOpts := []*options.CollectionCreateOptions{
+		options.CollectionCreate().
+			SetEncryptDoc(encConf.IsDocEncrypted).
+			SetEncryptedFields(encConf.EncryptedFields),
 	}
 
 	switch {
