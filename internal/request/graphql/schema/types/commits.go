@@ -14,6 +14,7 @@ import (
 	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/connor"
 )
 
 // Commit represents an individual commit to a MerkleCRDT
@@ -155,11 +156,11 @@ func CommitsFilterFieldNameArg() *gql.InputObject {
 		Name:        "CommitsFieldNameFilterArg",
 		Description: "Filter operators for commit fieldName.",
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.String,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.String,
 			},

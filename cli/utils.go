@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/cli/config"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/http"
@@ -105,7 +106,7 @@ func setContextClient(cmd *cobra.Command) error {
 // setContextConfig sets the config for the current command context.
 func setContextConfig(cmd *cobra.Command) error {
 	rootdir := mustGetContextRootDir(cmd)
-	cfg, err := loadConfig(rootdir, cmd.Flags())
+	cfg, err := config.LoadConfig(rootdir, cmd.Flags())
 	if err != nil {
 		return err
 	}
