@@ -298,15 +298,8 @@ func (l *lockSet[TKey]) rUnlockAll(txn txn) {
 	l.txnRLockLock.Unlock()
 
 	if ok {
-		for key, lock := range locks {
+		for _, lock := range locks {
 			lock.RUnlock()
-
-			// Because the implementation of `*lockSet[TKey].RLock` only actually locks the mutex if it isn't
-			// already held, we can safely delete it from `l.heldRLocksByTxnID` here.
-			//
-			// Because this `rUnlockAll` function is locked per transaction, we do not need to worry about the
-			// same transaction concurrently mutating (or reading) from `locks`.
-			delete(locks, key)
 		}
 	}
 }
@@ -323,15 +316,8 @@ func (l *lockSet[TKey]) unlockAll(txn txn) {
 	l.txnLockLock.Unlock()
 
 	if ok {
-		for key, lock := range locks {
+		for _, lock := range locks {
 			lock.Unlock()
-
-			// Because the implementation of `*lockSet[TKey].Lock` only actually locks the mutex if it isn't
-			// already held, we can safely delete it from `l.heldLocksByTxnID` here.
-			//
-			// Because this `unlockAll` function is locked per transaction, we do not need to worry about the
-			// same transaction concurrently mutating (or reading) from `locks`.
-			delete(locks, key)
 		}
 	}
 }
