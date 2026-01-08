@@ -126,10 +126,7 @@ func (w *CWrapper) PeerInfo() ([]string, error) {
 }
 
 func (w *CWrapper) ActivePeers(ctx context.Context) ([]string, error) {
-	cIdentity := identityFromContext(ctx)
-	defer C.IdentityFree(cIdentity)
-
-	res := ConvertAndFreeCResult(C.P2PActivePeers(C.uintptr_t(w.handle), cIdentity))
+	res := ConvertAndFreeCResult(C.P2PActivePeers(C.uintptr_t(w.handle), C.uintptr_t(0)))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -317,10 +314,8 @@ func (w *CWrapper) SyncDocuments(
 	collectionName string,
 	docIDs []string,
 ) error {
-	cIdentity := identityFromContext(ctx)
 	docs := C.CString(strings.Join(docIDs, ","))
 	defer C.free(unsafe.Pointer(docs))
-	defer C.IdentityFree(cIdentity)
 
 	deadline, hasDeadline := ctx.Deadline()
 	timerStr := ""
@@ -332,7 +327,8 @@ func (w *CWrapper) SyncDocuments(
 	defer C.free(unsafe.Pointer(cTimerStr))
 	defer C.free(unsafe.Pointer(cCollectionName))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentSync(C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PdocumentSync(
+		C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr, C.uintptr_t(0)))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -341,10 +337,8 @@ func (w *CWrapper) SyncDocuments(
 }
 
 func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
-	cIdentity := identityFromContext(ctx)
 	versions := C.CString(strings.Join(versionIDs, ","))
 	defer C.free(unsafe.Pointer(versions))
-	defer C.IdentityFree(cIdentity)
 
 	deadline, hasDeadline := ctx.Deadline()
 	timerStr := ""
@@ -354,7 +348,8 @@ func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...str
 	cTimerStr := C.CString(timerStr)
 	defer C.free(unsafe.Pointer(cTimerStr))
 
-	res := ConvertAndFreeCResult(C.P2PcollectionSyncVersions(C.uintptr_t(w.handle), versions, cTimerStr, cIdentity))
+	res := ConvertAndFreeCResult(
+		C.P2PcollectionSyncVersions(C.uintptr_t(w.handle), versions, cTimerStr, C.uintptr_t(0)))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -363,10 +358,8 @@ func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...str
 }
 
 func (w *CWrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
-	cIdentity := identityFromContext(ctx)
 	cCollectionID := C.CString(collectionID)
 	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.IdentityFree(cIdentity)
 
 	deadline, hasDeadline := ctx.Deadline()
 	timerStr := ""
@@ -376,8 +369,8 @@ func (w *CWrapper) SyncBranchableCollection(ctx context.Context, collectionID st
 	cTimerStr := C.CString(timerStr)
 	defer C.free(unsafe.Pointer(cTimerStr))
 
-	res := ConvertAndFreeCResult(C.P2PbranchableCollectionSync(C.uintptr_t(w.handle), cCollectionID, cTimerStr,
-		cIdentity))
+	res := ConvertAndFreeCResult(
+		C.P2PbranchableCollectionSync(C.uintptr_t(w.handle), cCollectionID, cTimerStr, C.uintptr_t(0)))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -674,17 +667,15 @@ func (w *CWrapper) AddView(
 	sdl string,
 	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	cIdentity := identityFromContext(ctx)
 	cTransformCID := C.CString(stringFromImmutableOptionString(transformCID))
 	cQuery := C.CString(query)
 	cSDL := C.CString(sdl)
 	defer C.free(unsafe.Pointer(cTransformCID))
 	defer C.free(unsafe.Pointer(cQuery))
 	defer C.free(unsafe.Pointer(cSDL))
-	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ViewAdd(callHandle, cQuery, cSDL, cTransformCID, cIdentity))
+	res := ConvertAndFreeCResult(C.ViewAdd(callHandle, cQuery, cSDL, cTransformCID, C.uintptr_t(0)))
 
 	if res.Status != 0 {
 		return []client.CollectionVersion{}, errors.New(res.Error)
@@ -698,9 +689,6 @@ func (w *CWrapper) AddView(
 }
 
 func (w *CWrapper) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
-	cIdentity := identityFromContext(ctx)
-	defer C.IdentityFree(cIdentity)
-
 	var getCollOpts *options.GetCollectionsOptions
 	if len(opts) > 0 && opts[0] != nil {
 		getCollOpts = opts[0].ToGetCollectionsOptions()
@@ -714,7 +702,7 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts ...*options.RefreshVie
 	defer C.free(unsafe.Pointer(copts.name))
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, copts, cIdentity))
+	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, copts, C.uintptr_t(0)))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -836,7 +824,7 @@ func (w *CWrapper) GetCollections(
 	defer C.free(unsafe.Pointer(copts.collectionID))
 	defer C.free(unsafe.Pointer(copts.name))
 
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
@@ -928,7 +916,7 @@ func (w *CWrapper) ExecRequest(
 	}
 
 	cQuery := C.CString(query)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	cOperation := C.CString(operation)
 	cVariables := C.CString(variables)
 	defer C.free(unsafe.Pointer(cQuery))

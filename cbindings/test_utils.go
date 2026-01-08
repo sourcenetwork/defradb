@@ -29,7 +29,6 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -44,17 +43,6 @@ func unmarshalResult[T any](value string) (T, error) {
 		return zero, fmt.Errorf("failed to unmarshal JSON into %T: %w", result, err)
 	}
 	return result, nil
-}
-
-// identityFromContext creates a cgo handle, wrapped as a pointer, from a context
-func identityFromContext(ctx context.Context) C.uintptr_t {
-	idf := identity.FullFromContext(ctx)
-	if !idf.HasValue() {
-		return C.uintptr_t(0)
-	}
-	val := idf.Value()
-	handle := cgo.NewHandle(val)
-	return C.uintptr_t(handle)
 }
 
 // identityFromOptions creates a cgo handle, wrapped as a pointer, from options that implement OptionWithIdentity.
