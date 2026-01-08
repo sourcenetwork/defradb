@@ -34,7 +34,7 @@ import (
 // see the documentation for the `txnLocks` member of this type.
 //
 // Only public functions on this type should be called from outside of this type.  Calling private members
-// from anywhere else, internal or otherwise, removes any guarentees over its state's correctness.
+// from anywhere else, internal or otherwise, removes any guarantees over its state's correctness.
 type lockSet[TKey comparable] struct {
 	// locksByKey contains the core mutexes managed by `lockSet`, indexed by the consumer provided keys.
 	//
