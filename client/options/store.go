@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -15,13 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
-
-// OptionWithIdentity is an interface for options that provide and can set an identity.
-// T is the concrete options type (for fluent API support).
-type OptionWithIdentity[T any] interface {
-	GetIdentity() immutable.Option[identity.Identity]
-	SetIdentity(id identity.Identity) T
-}
 
 // AddDACPolicyOptions contains options for AddDACPolicy operation.
 type AddDACPolicyOptions struct {

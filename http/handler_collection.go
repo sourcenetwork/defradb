@@ -60,13 +60,12 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
 	}
 
-	createOpt := options.CollectionCreate().
-		SetEncryptDoc(encConf.IsDocEncrypted).
-		SetEncryptedFields(encConf.EncryptedFields)
-
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		createOpt.SetIdentity(ident.Value())
-	}
+	createOpt := options.WithIdentity(
+		options.CollectionCreate().
+			SetEncryptDoc(encConf.IsDocEncrypted).
+			SetEncryptedFields(encConf.EncryptedFields),
+		identity.FromContext(ctx),
+	)
 
 	switch {
 	case client.IsJSONArray(data):
@@ -105,10 +104,7 @@ func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 		return
 	}
 
-	deleteOpt := options.CollectionDeleteWithFilter()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		deleteOpt.SetIdentity(ident.Value())
-	}
+	deleteOpt := options.WithIdentity(options.CollectionDeleteWithFilter(), identity.FromContext(ctx))
 
 	result, err := col.DeleteWithFilter(ctx, request.Filter, deleteOpt)
 	if err != nil {
@@ -128,10 +124,7 @@ func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.R
 		return
 	}
 
-	updateOpt := options.CollectionUpdateWithFilter()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		updateOpt.SetIdentity(ident.Value())
-	}
+	updateOpt := options.WithIdentity(options.CollectionUpdateWithFilter(), identity.FromContext(ctx))
 
 	result, err := col.UpdateWithFilter(ctx, request.Filter, request.Updater, updateOpt)
 	if err != nil {
@@ -151,10 +144,7 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	getOpt := options.CollectionGet()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		getOpt.SetIdentity(ident.Value())
-	}
+	getOpt := options.WithIdentity(options.CollectionGet(), identity.FromContext(ctx))
 
 	doc, err := col.Get(ctx, docID, true, getOpt)
 	if err != nil {
@@ -177,10 +167,7 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	updateOpt := options.CollectionUpdate()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		updateOpt.SetIdentity(ident.Value())
-	}
+	updateOpt := options.WithIdentity(options.CollectionUpdate(), identity.FromContext(ctx))
 
 	err = col.Update(ctx, doc, updateOpt)
 	if err != nil {
@@ -200,10 +187,7 @@ func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	deleteOpt := options.CollectionDelete()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		deleteOpt.SetIdentity(ident.Value())
-	}
+	deleteOpt := options.WithIdentity(options.CollectionDelete(), identity.FromContext(ctx))
 
 	_, err = col.Delete(ctx, docID, deleteOpt)
 	if err != nil {
@@ -224,10 +208,7 @@ func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	getOpt := options.CollectionGet()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		getOpt.SetIdentity(ident.Value())
-	}
+	getOpt := options.WithIdentity(options.CollectionGet(), identity.FromContext(ctx))
 
 	doc, err := col.Get(ctx, docID, showDeleted, getOpt)
 	if err != nil {
@@ -263,10 +244,7 @@ func (h *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	getAllOpt := options.CollectionGetAllDocIDs()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		getAllOpt.SetIdentity(ident.Value())
-	}
+	getAllOpt := options.WithIdentity(options.CollectionGetAllDocIDs(), identity.FromContext(ctx))
 
 	docIDsResult, err := col.GetAllDocIDs(ctx, getAllOpt)
 	if err != nil {
@@ -315,10 +293,7 @@ func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 		Unique: indexDesc.Unique,
 	}
 
-	createIndexOpt := options.CollectionCreateIndex()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		createIndexOpt.SetIdentity(ident.Value())
-	}
+	createIndexOpt := options.WithIdentity(options.CollectionCreateIndex(), identity.FromContext(ctx))
 
 	index, err := col.CreateIndex(ctx, descWithoutID, createIndexOpt)
 	if err != nil {
@@ -338,10 +313,7 @@ func (h *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	getIndexesOpt := options.CollectionGetIndexes()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		getIndexesOpt.SetIdentity(ident.Value())
-	}
+	getIndexesOpt := options.WithIdentity(options.CollectionGetIndexes(), identity.FromContext(ctx))
 
 	indexes, err := col.GetIndexes(ctx, getIndexesOpt)
 	if err != nil {
@@ -355,10 +327,7 @@ func (h *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request)
 	col := mustGetContextClientCollection(req)
 	ctx := req.Context()
 
-	dropIndexOpt := options.CollectionDropIndex()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		dropIndexOpt.SetIdentity(ident.Value())
-	}
+	dropIndexOpt := options.WithIdentity(options.CollectionDropIndex(), identity.FromContext(ctx))
 
 	err := col.DropIndex(ctx, chi.URLParam(req, "index"), dropIndexOpt)
 	if err != nil {

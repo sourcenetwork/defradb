@@ -53,10 +53,7 @@ func (h *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	opt := options.Connect()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		opt.SetIdentity(ident.Value())
-	}
+	opt := options.WithIdentity(options.Connect(), identity.FromContext(ctx))
 
 	err := db.Connect(ctx, resp, opt)
 	if err != nil {
@@ -76,10 +73,7 @@ func (h *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	opt := options.SetReplicator()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		opt.SetIdentity(ident.Value())
-	}
+	opt := options.WithIdentity(options.SetReplicator(), identity.FromContext(ctx))
 
 	err := db.SetReplicator(ctx, rep.Addresses, rep.Collections, opt)
 	if err != nil {
@@ -99,10 +93,7 @@ func (h *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	opt := options.DeleteReplicator()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		opt.SetIdentity(ident.Value())
-	}
+	opt := options.WithIdentity(options.DeleteReplicator(), identity.FromContext(ctx))
 
 	err := db.DeleteReplicator(ctx, rep.ID, rep.Collections, opt)
 	if err != nil {
@@ -116,10 +107,7 @@ func (h *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
-	opt := options.GetAllReplicators()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		opt.SetIdentity(ident.Value())
-	}
+	opt := options.WithIdentity(options.GetAllReplicators(), identity.FromContext(ctx))
 
 	reps, err := db.GetAllReplicators(ctx, opt)
 	if err != nil {
@@ -139,10 +127,7 @@ func (h *p2pHandler) AddP2PCollections(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	opt := options.AddP2PCollections()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		opt.SetIdentity(ident.Value())
-	}
+	opt := options.WithIdentity(options.AddP2PCollections(), identity.FromContext(ctx))
 
 	err := db.AddP2PCollections(ctx, collectionIDs, opt)
 	if err != nil {
@@ -162,10 +147,7 @@ func (h *p2pHandler) RemoveP2PCollections(rw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	opt := options.RemoveP2PCollections()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		opt.SetIdentity(ident.Value())
-	}
+	opt := options.WithIdentity(options.RemoveP2PCollections(), identity.FromContext(ctx))
 
 	err := db.RemoveP2PCollections(ctx, collectionIDs, opt)
 	if err != nil {
@@ -179,10 +161,7 @@ func (h *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Requ
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
-	opt := options.GetAllP2PCollections()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		opt.SetIdentity(ident.Value())
-	}
+	opt := options.WithIdentity(options.GetAllP2PCollections(), identity.FromContext(ctx))
 
 	cols, err := db.GetAllP2PCollections(ctx, opt)
 	if err != nil {
@@ -202,10 +181,7 @@ func (h *p2pHandler) AddP2PDocuments(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	opt := options.AddP2PDocuments()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		opt.SetIdentity(ident.Value())
-	}
+	opt := options.WithIdentity(options.AddP2PDocuments(), identity.FromContext(ctx))
 
 	err := db.AddP2PDocuments(ctx, docIDs, opt)
 	if err != nil {
@@ -225,10 +201,7 @@ func (h *p2pHandler) RemoveP2PDocuments(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	opt := options.RemoveP2PDocuments()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		opt.SetIdentity(ident.Value())
-	}
+	opt := options.WithIdentity(options.RemoveP2PDocuments(), identity.FromContext(ctx))
 
 	err := db.RemoveP2PDocuments(ctx, docIDs, opt)
 	if err != nil {
@@ -242,10 +215,7 @@ func (h *p2pHandler) GetAllP2PDocuments(rw http.ResponseWriter, req *http.Reques
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
-	opt := options.GetAllP2PDocuments()
-	if ident := identity.FromContext(ctx); ident.HasValue() {
-		opt.SetIdentity(ident.Value())
-	}
+	opt := options.WithIdentity(options.GetAllP2PDocuments(), identity.FromContext(ctx))
 
 	docIDs, err := db.GetAllP2PDocuments(ctx, opt)
 	if err != nil {
