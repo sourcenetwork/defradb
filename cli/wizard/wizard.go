@@ -340,6 +340,4 @@ func Main() {
 	if _, err := program.Run(); err != nil {
 		os.Exit(1)
 	}
-
-	return nil
 }

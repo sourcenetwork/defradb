@@ -100,11 +100,3 @@ func NewErrFailedToStartDefraDB(err error) error {
 		err,
 	)
 }
-
-func NewErrFailedToResolveBinary(err error) error {
-	return fmt.Errorf(
-		"%w: "+"failed to resolve binary: %w",
-		errFailedToResolveBinary,
-		err,
-	)
-}
