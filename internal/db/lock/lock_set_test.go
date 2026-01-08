@@ -302,9 +302,9 @@ func (t *dummyTxn) OnSuccess(fn func()) {
 }
 
 func (t *dummyTxn) OnError(fn func()) {
-	t.onError = append(t.onSuccess, fn)
+	t.onError = append(t.onError, fn)
 }
 
 func (t *dummyTxn) OnDiscard(fn func()) {
-	t.onDiscard = append(t.onSuccess, fn)
+	t.onDiscard = append(t.onDiscard, fn)
 }
