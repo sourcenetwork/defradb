@@ -31,7 +31,7 @@ var (
 	errInvalidHexKey               = errors.New("invalid hex key")
 	errInvalidAES256KeyLength      = errors.New("invalid AES-256 key length")
 	errInvalidEd25519KeyLength     = errors.New("invalid Ed25519 key length")
-	errFailedToResolveDefraBinary  = errors.New("failed to resolve defradb binary")
+	errFailedToResolveBinary       = errors.New("failed to resolve binary")
 	errFailedToStartDefraDB        = errors.New("failed to start defradb")
 )
 
@@ -97,6 +97,14 @@ func NewErrFailedToStartDefraDB(err error) error {
 	return fmt.Errorf(
 		"%w: "+"failed to start defradb: %w",
 		errFailedToStartDefraDB,
+		err,
+	)
+}
+
+func NewErrFailedToResolveBinary(err error) error {
+	return fmt.Errorf(
+		"%w: "+"failed to resolve binary: %w",
+		errFailedToResolveBinary,
 		err,
 	)
 }
