@@ -18,14 +18,14 @@ import (
 	"github.com/sourcenetwork/lens/host-go/store"
 )
 
-type schemaVersionID = string
+type collectionVersionID = string
 
 // LensDoc represents a document that will be sent to/from a Lens.
 type LensDoc = map[string]any
 
 type lensInput struct {
-	SchemaVersionID schemaVersionID
-	Doc             LensDoc
+	CollectionVersionID collectionVersionID
+	Doc                 LensDoc
 }
 
 // Lens migrate items fed in to the target schema version.
@@ -38,7 +38,7 @@ type Lens interface {
 	enumerable.Enumerable[LensDoc]
 
 	// Put feeds the given document into the Lens, so that its transformed output may be yielded.
-	Put(schemaVersionID schemaVersionID, value LensDoc) error
+	Put(collectionVersionID collectionVersionID, value LensDoc) error
 }
 
 type lens struct {
@@ -47,16 +47,16 @@ type lens struct {
 	ctx context.Context
 
 	// The primary access points to the lens pipes through which all things flow.
-	lensPipesBySchemaVersionIDs map[schemaVersionID]enumerable.Concatenation[LensDoc]
+	lensPipesByCollectionVersionIDs map[collectionVersionID]enumerable.Concatenation[LensDoc]
 
 	// The input pipes, into which items are added to the pipe system.
-	lensInputPipesBySchemaVersionIDs map[schemaVersionID]enumerable.Queue[LensDoc]
+	lensInputPipesByCollectionVersionIDs map[collectionVersionID]enumerable.Queue[LensDoc]
 
 	// The output pipe, through which all outputs must exit.
 	outputPipe         enumerable.Concatenation[LensDoc]
 	unknownVersionPipe enumerable.Queue[LensDoc]
 
-	collectionHistory map[schemaVersionID]*description.TargetedCollectionHistoryLink
+	collectionHistory map[collectionVersionID]*description.TargetedCollectionHistoryLink
 
 	source enumerable.Queue[lensInput]
 }
@@ -66,8 +66,8 @@ var _ Lens = (*lens)(nil)
 func new(
 	ctx context.Context,
 	store store.Store,
-	targetSchemaVersionID schemaVersionID,
-	collectionHistory map[schemaVersionID]*description.TargetedCollectionHistoryLink,
+	targetCollectionVersionID collectionVersionID,
+	collectionHistory map[collectionVersionID]*description.TargetedCollectionHistoryLink,
 ) Lens {
 	targetSource := enumerable.NewQueue[LensDoc]()
 	outputPipe := enumerable.Concat(targetSource)
@@ -79,11 +79,11 @@ func new(
 		outputPipe:         outputPipe,
 		unknownVersionPipe: targetSource,
 		collectionHistory:  collectionHistory,
-		lensInputPipesBySchemaVersionIDs: map[schemaVersionID]enumerable.Queue[LensDoc]{
-			targetSchemaVersionID: targetSource,
+		lensInputPipesByCollectionVersionIDs: map[collectionVersionID]enumerable.Queue[LensDoc]{
+			targetCollectionVersionID: targetSource,
 		},
-		lensPipesBySchemaVersionIDs: map[schemaVersionID]enumerable.Concatenation[LensDoc]{
-			targetSchemaVersionID: outputPipe,
+		lensPipesByCollectionVersionIDs: map[collectionVersionID]enumerable.Concatenation[LensDoc]{
+			targetCollectionVersionID: outputPipe,
 		},
 	}
 }
@@ -91,10 +91,10 @@ func new(
 // todo - instead of this and a lens-fetcher, we could instead make lens-fetcher (and other fetchers) enumerables
 // instead and use those as the `source` directly.
 // https://github.com/sourcenetwork/defradb/issues/1589
-func (l *lens) Put(schemaVersionID schemaVersionID, value LensDoc) error {
+func (l *lens) Put(collectionVersionID collectionVersionID, value LensDoc) error {
 	return l.source.Put(lensInput{
-		SchemaVersionID: schemaVersionID,
-		Doc:             value,
+		CollectionVersionID: collectionVersionID,
+		Doc:                 value,
 	})
 }
 
@@ -131,12 +131,12 @@ func (l *lens) Next() (bool, error) {
 	}
 
 	var inputPipe enumerable.Queue[LensDoc]
-	if p, ok := l.lensInputPipesBySchemaVersionIDs[doc.SchemaVersionID]; ok {
+	if p, ok := l.lensInputPipesByCollectionVersionIDs[doc.CollectionVersionID]; ok {
 		// If the input pipe exists we can safely assume that it has been correctly connected
 		// up to the output via any intermediary pipes.
 		inputPipe = p
 	} else {
-		historyLocation, ok := l.collectionHistory[doc.SchemaVersionID]
+		historyLocation, ok := l.collectionHistory[doc.CollectionVersionID]
 		if !ok {
 			// We may receive documents of unknown schema versions, they should
 			// still be fed through the pipe system in order to preserve order.
@@ -151,10 +151,11 @@ func (l *lens) Next() (bool, error) {
 		var pipeHead enumerable.Enumerable[LensDoc]
 
 		for {
-			junctionPipe, junctionPreviouslyExisted := l.lensPipesBySchemaVersionIDs[historyLocation.Collection().VersionID]
+			verID := historyLocation.Collection().VersionID
+			junctionPipe, junctionPreviouslyExisted := l.lensPipesByCollectionVersionIDs[verID]
 			if !junctionPreviouslyExisted {
 				versionInputPipe := enumerable.NewQueue[LensDoc]()
-				l.lensInputPipesBySchemaVersionIDs[historyLocation.Collection().VersionID] = versionInputPipe
+				l.lensInputPipesByCollectionVersionIDs[verID] = versionInputPipe
 				if inputPipe == nil {
 					// The input pipe will be fed documents which are currently at this schema version
 					inputPipe = versionInputPipe
@@ -162,7 +163,7 @@ func (l *lens) Next() (bool, error) {
 				// It is a source of the schemaVersion junction pipe, other schema versions
 				// may also join as sources to this junction pipe
 				junctionPipe = enumerable.Concat(versionInputPipe)
-				l.lensPipesBySchemaVersionIDs[historyLocation.Collection().VersionID] = junctionPipe
+				l.lensPipesByCollectionVersionIDs[verID] = junctionPipe
 			}
 
 			// If we have previously laid pipe, we need to connect it to the current junction.

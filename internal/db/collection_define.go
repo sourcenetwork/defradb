@@ -363,9 +363,9 @@ existingVersionLoop:
 			}
 		} else if col.PreviousVersion.HasValue() && migration.HasValue() {
 			_, err = db.setMigration(ctx, client.LensConfig{
-				SourceSchemaVersionID:      col.PreviousVersion.Value().SourceCollectionID,
-				DestinationSchemaVersionID: col.VersionID,
-				Lens:                       migration.Value(),
+				SourceCollectionVersionID:      col.PreviousVersion.Value().SourceCollectionID,
+				DestinationCollectionVersionID: col.VersionID,
+				Lens:                           migration.Value(),
 			})
 			if err != nil {
 				return err
@@ -549,7 +549,7 @@ func (db *DB) setActiveCollectionVersion(
 	versionID string,
 ) error {
 	if versionID == "" {
-		return ErrSchemaVersionIDEmpty
+		return ErrCollectionVersionIDEmpty
 	}
 	col, err := description.GetCollectionByID(ctx, versionID)
 	if err != nil {

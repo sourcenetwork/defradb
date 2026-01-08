@@ -37,9 +37,9 @@ func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Resul
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	migrationCfg := client.LensConfig{
-		SourceSchemaVersionID:      C.GoString(src),
-		DestinationSchemaVersionID: C.GoString(dst),
-		Lens:                       lensCfg,
+		SourceCollectionVersionID:      C.GoString(src),
+		DestinationCollectionVersionID: C.GoString(dst),
+		Lens:                           lensCfg,
 	}
 
 	store, err := getStoreFromPointer(nodePtr)

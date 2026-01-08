@@ -508,7 +508,7 @@
             },
             "lens_config": {
                 "properties": {
-                    "DestinationSchemaVersionID": {
+                    "DestinationCollectionVersionID": {
                         "type": "string"
                     },
                     "Lenses": {
@@ -529,7 +529,7 @@
                         },
                         "type": "array"
                     },
-                    "SourceSchemaVersionID": {
+                    "SourceCollectionVersionID": {
                         "type": "string"
                     }
                 },
