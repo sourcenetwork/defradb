@@ -336,6 +336,10 @@ func (c *Client) GetCollections(
 	ctx context.Context,
 	opts ...*options.GetCollectionsOptions,
 ) ([]client.Collection, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
 	if len(opts) > 0 && opts[0] != nil {

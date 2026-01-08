@@ -182,15 +182,15 @@ func ExecuteTestCase(
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
 	var clients []state.ClientType
-	if httpClient {
+	//if httpClient {
 		clients = append(clients, state.HTTPClientType)
-	}
-	if goClient {
+	//}
+	//if goClient {
 		clients = append(clients, state.GoClientType)
-	}
-	if cliClient {
+	//}
+	//if cliClient {
 		clients = append(clients, state.CLIClientType)
-	}
+	//}
 	if jsClient {
 		clients = append(clients, state.JSClientType)
 	}
@@ -927,12 +927,17 @@ func refreshCollections(
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		// Inject node's identity into the context while refreshing so the [GetCollections] call
+		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
 		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
-		allCollections, err := node.GetCollections(ctx)
+		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
+		opts := options.GetCollections()
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		allCollections, err := node.GetCollections(ctx, opts)
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {
@@ -1212,7 +1217,16 @@ func getCollections(
 		txn := getTransaction(s, node, action.TransactionID, "")
 		ctx := db.InitContext(s.Ctx, txn)
 		ctx = getContextWithIdentity(ctx, s, action.Identity, nodeID)
-		results, err := node.GetCollections(ctx, action.FilterOptions)
+
+		opts := action.FilterOptions
+		if opts == nil {
+			opts = options.GetCollections()
+		}
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		results, err := node.GetCollections(ctx, opts)
 		resultDescriptions := make([]client.CollectionVersion, len(results))
 		for i, col := range results {
 			resultDescriptions[i] = col.Version()

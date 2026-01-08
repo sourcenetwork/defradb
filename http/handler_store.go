@@ -20,6 +20,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 )
@@ -198,8 +199,9 @@ func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 
 func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
-	opt := options.GetCollections()
+	opt := options.WithIdentity(options.GetCollections(), identity.FromContext(ctx))
 	if req.URL.Query().Has("name") {
 		opt.SetName(req.URL.Query().Get("name"))
 	}
@@ -220,7 +222,7 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		opt.SetIncludeInactive(getInactive)
 	}
 
-	cols, err := db.GetCollections(req.Context(), opt)
+	cols, err := db.GetCollections(ctx, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
