@@ -58,7 +58,7 @@ type (
 const (
 	networkRequestTimeout = 10 * time.Second
 	// syncWorkerCount is the number of workers processing sync requests.
-	syncWorkerCount = 500
+	syncWorkerCount = 200
 	// syncQueueSize is the maximum number of pending sync requests.
 	syncQueueSize = 50000
 )
