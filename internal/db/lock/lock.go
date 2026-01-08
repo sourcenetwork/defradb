@@ -36,7 +36,7 @@ func (l *LockSet) CollectionLock(txn txn, collectionShortID uint32) {
 	l.collectionLockSet.Lock(txn, collectionShortID)
 }
 
-// CollectionLock acquires a read lock for the given collection short id.
+// CollectionRLock acquires a read lock for the given collection short id.
 //
 // This will prevent all other transactions from acquiring a write lock
 // to the given collection until the lock is released.  The lock will be released
