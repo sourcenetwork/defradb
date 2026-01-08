@@ -13,9 +13,8 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
@@ -30,11 +29,8 @@ func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
 
 			// This user, can not perform this gated operation yet.
 			testUtils.GetCollections{
-				Identity: testUtils.ClientIdentity(2),
-				FilterOptions: client.CollectionFetchOptions{
-					VersionID:       immutable.Some("does not exist"),
-					IncludeInactive: immutable.Some(false),
-				},
+				Identity:      testUtils.ClientIdentity(2),
+				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
 				ExpectedError: "not authorized to perform operation",
 			},
 
@@ -48,11 +44,8 @@ func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
 
 			// This user, can now perform this gated operation.
 			testUtils.GetCollections{
-				Identity: testUtils.ClientIdentity(2),
-				FilterOptions: client.CollectionFetchOptions{
-					VersionID:       immutable.Some("does not exist"),
-					IncludeInactive: immutable.Some(false),
-				},
+				Identity:      testUtils.ClientIdentity(2),
+				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
 				ExpectedError: "key not found", // Note: it is authorized, just key not found.
 			},
 		},

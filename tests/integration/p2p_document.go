@@ -119,7 +119,7 @@ func subscribeToDocument(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.AddP2PDocuments(ctx, docIDs...)
+	err := node.AddP2PDocuments(ctx, docIDs)
 	if err == nil {
 		waitForSubscribeToDocumentEvent(s, action)
 	}
@@ -154,7 +154,7 @@ func unsubscribeToDocument(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.RemoveP2PDocuments(ctx, docIDs...)
+	err := node.RemoveP2PDocuments(ctx, docIDs)
 	if err == nil {
 		waitForUnsubscribeToDocumentEvent(s, action)
 	}

@@ -14,9 +14,9 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -36,9 +36,7 @@ func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			client.CollectionFetchOptions{
-				Name: immutable.Some(col),
-			},
+			options.GetCollections().SetName(col),
 		)
 		if err != nil {
 			return err
@@ -83,9 +81,7 @@ func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			client.CollectionFetchOptions{
-				Name: immutable.Some(col),
-			},
+			options.GetCollections().SetName(col),
 		)
 		if err != nil {
 			return err
@@ -150,9 +146,7 @@ func (p *P2P) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			client.CollectionFetchOptions{
-				CollectionID: immutable.Some(key.CollectionID),
-			},
+			options.GetCollections().SetCollectionID(key.CollectionID),
 		)
 		if err != nil {
 			return nil, err

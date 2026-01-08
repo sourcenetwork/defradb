@@ -119,7 +119,7 @@ func subscribeToCollection(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.AddP2PCollections(ctx, collectionNames...)
+	err := node.AddP2PCollections(ctx, collectionNames)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
 	}
@@ -154,7 +154,7 @@ func unsubscribeToCollection(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.RemoveP2PCollections(ctx, collectionNames...)
+	err := node.RemoveP2PCollections(ctx, collectionNames)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}

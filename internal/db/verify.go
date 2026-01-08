@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -30,8 +31,18 @@ import (
 
 // VerifySignature verifies the signatures of a block using a public key.
 // Returns an error if any signature verification fails.
-func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeSignatureVerifyPerm); err != nil {
+func (db *DB) VerifySignature(
+	ctx context.Context,
+	blockCid string,
+	pubKey crypto.PublicKey,
+	opts ...*options.VerifySignatureOptions,
+) error {
+	var ident immutable.Option[identity.Identity]
+	if len(opts) > 0 && opts[0] != nil {
+		ident = opts[0].Identity
+	}
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeSignatureVerifyPerm); err != nil {
 		return err
 	}
 

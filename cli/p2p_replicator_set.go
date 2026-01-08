@@ -25,7 +25,7 @@ func MakeP2PReplicatorSetCommand(ctx context.Context) *cobra.Command {
 A replicator synchronizes one or all collection(s) from this instance to another.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.SetReplicator(cmd.Context(), args, collections...)
+			return cliClient.SetReplicator(cmd.Context(), args, collections)
 		},
 	}
 

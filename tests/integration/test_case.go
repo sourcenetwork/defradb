@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/gen"
@@ -208,7 +209,7 @@ type GetCollections struct {
 	ExpectedResults []client.CollectionVersion
 
 	// An optional set of fetch options for the collections.
-	FilterOptions client.CollectionFetchOptions
+	FilterOptions *options.GetCollectionsOptions
 
 	// Any error expected from the action. Optional.
 	//
@@ -271,8 +272,8 @@ type RefreshViews struct {
 	// If a value is not provided the view will be created on all nodes.
 	NodeID immutable.Option[int]
 
-	// The set of fetch options for the views.
-	FilterOptions client.CollectionFetchOptions
+	// The set of options for refreshing views.
+	FilterOptions *options.RefreshViewsOptions
 
 	// Any error expected from the action. Optional.
 	//

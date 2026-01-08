@@ -204,17 +204,20 @@ func (c *Client) AddView(
 func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
 	methodURL := c.http.apiURL.JoinPath("view", "refresh")
 	params := url.Values{}
-	if options.Name.HasValue() {
-		params.Add("name", options.Name.Value())
+	if len(opts) > 0 && opts[0] != nil {
+		opt := opts[0]
+		if opt.Name.HasValue() {
+			params.Add("name", opt.Name.Value())
 	}
-	if options.VersionID.HasValue() {
-		params.Add("version_id", options.VersionID.Value())
+		if opt.VersionID.HasValue() {
+			params.Add("version_id", opt.VersionID.Value())
 	}
-	if options.CollectionID.HasValue() {
-		params.Add("collection_id", options.CollectionID.Value())
+		if opt.CollectionID.HasValue() {
+			params.Add("collection_id", opt.CollectionID.Value())
 	}
-	if options.IncludeInactive.HasValue() {
-		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+		if opt.IncludeInactive.HasValue() {
+			params.Add("get_inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
+		}
 	}
 	methodURL.RawQuery = params.Encode()
 
@@ -305,17 +308,20 @@ func (c *Client) GetCollections(
 ) ([]client.Collection, error) {
 	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
-	if options.Name.HasValue() {
-		params.Add("name", options.Name.Value())
+	if len(opts) > 0 && opts[0] != nil {
+		opt := opts[0]
+		if opt.Name.HasValue() {
+			params.Add("name", opt.Name.Value())
 	}
-	if options.VersionID.HasValue() {
-		params.Add("version_id", options.VersionID.Value())
+		if opt.VersionID.HasValue() {
+			params.Add("version_id", opt.VersionID.Value())
 	}
-	if options.CollectionID.HasValue() {
-		params.Add("collection_id", options.CollectionID.Value())
+		if opt.CollectionID.HasValue() {
+			params.Add("collection_id", opt.CollectionID.Value())
 	}
-	if options.IncludeInactive.HasValue() {
-		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+		if opt.IncludeInactive.HasValue() {
+			params.Add("get_inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
+		}
 	}
 	methodURL.RawQuery = params.Encode()
 

@@ -57,6 +57,21 @@ func identityFromContext(ctx context.Context) C.uintptr_t {
 	return C.uintptr_t(handle)
 }
 
+// identityFromOptions creates a cgo handle, wrapped as a pointer, from options that implement IdentityProvider.
+// If the options slice is empty or nil, returns 0.
+func identityFromOptions[T options.IdentityProvider](opts []T) C.uintptr_t {
+	if len(opts) == 0 {
+		return C.uintptr_t(0)
+	}
+	idf := opts[0].GetIdentity()
+	if !idf.HasValue() {
+		return C.uintptr_t(0)
+	}
+	val := idf.Value()
+	handle := cgo.NewHandle(val)
+	return C.uintptr_t(handle)
+}
+
 // isEncryptedFromCollectionCreateOptions is a helper function that extracts as a C.int
 func isEncryptedFromCollectionCreateOptions(opts []*options.CollectionCreateOptions) C.int {
 	if len(opts) == 0 || opts[0] == nil {
@@ -83,20 +98,20 @@ func encryptedFieldsFromCollectionCreateOptions(opts []*options.CollectionCreate
 
 // extractStringsFromRequestOptions is a helper function that extracts operation name and variables
 // as strings from the request option object. They will be blank strings if not present.
-func extractStringsFromRequestOptions(opts []client.RequestOption) (string, string, error) {
-	config := &client.GQLOptions{}
-	for _, opt := range opts {
-		opt(config)
+func extractStringsFromRequestOptions(opts []*options.ExecRequestOptions) (string, string, error) {
+	if len(opts) == 0 || opts[0] == nil {
+		return "", "", nil
 	}
+	opt := opts[0]
 
 	opName := ""
-	if config.OperationName != "" {
-		opName = config.OperationName
+	if opt.OperationName.HasValue() {
+		opName = opt.OperationName.Value()
 	}
 
 	varsJSON := ""
-	if config.Variables != nil {
-		data, err := json.Marshal(config.Variables)
+	if opt.Variables != nil {
+		data, err := json.Marshal(opt.Variables)
 		if err != nil {
 			return "", "", err
 		}

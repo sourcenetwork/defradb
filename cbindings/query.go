@@ -104,7 +104,7 @@ func ExecuteQuery(
 	variables *C.char,
 ) C.Result {
 	ctx := context.Background()
-	opts, err := buildRequestOptions(C.GoString(operationName), C.GoString(variables))
+	opt, err := buildRequestOptions(C.GoString(operationName), C.GoString(variables))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -121,7 +121,7 @@ func ExecuteQuery(
 
 	ctx, cancelFunc := context.WithCancel(ctx)
 
-	res := store.ExecRequest(ctx, C.GoString(query), opts...)
+	res := store.ExecRequest(ctx, C.GoString(query), opt)
 	sub := &Subscription{
 		ctxCancel:  cancelFunc,
 		resultChan: res.Subscription,

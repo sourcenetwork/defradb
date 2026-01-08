@@ -36,7 +36,7 @@ The documents are synchronized between nodes of a pubsub network.`,
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return cliClient.AddP2PDocuments(cmd.Context(), collectionIDs...)
+			return cliClient.AddP2PDocuments(cmd.Context(), collectionIDs)
 		},
 	}
 

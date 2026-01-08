@@ -14,8 +14,8 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestNAC_AdminRelation_CanCollectionGetByID(t *testing.T) {
@@ -30,10 +30,8 @@ func TestNAC_AdminRelation_CanCollectionGetByID(t *testing.T) {
 
 			// This user, can not perform this gated operation yet.
 			testUtils.GetCollections{
-				Identity: testUtils.ClientIdentity(2),
-				FilterOptions: client.CollectionFetchOptions{
-					CollectionID: immutable.Some("does not exist"),
-				},
+				Identity:      testUtils.ClientIdentity(2),
+				FilterOptions: options.GetCollections().SetCollectionID("does not exist"),
 				ExpectedError: "not authorized to perform operation",
 			},
 
@@ -47,10 +45,8 @@ func TestNAC_AdminRelation_CanCollectionGetByID(t *testing.T) {
 
 			// This user, can now perform this gated operation.
 			testUtils.GetCollections{
-				Identity: testUtils.ClientIdentity(2),
-				FilterOptions: client.CollectionFetchOptions{
-					CollectionID: immutable.Some("does not exist"),
-				},
+				Identity:        testUtils.ClientIdentity(2),
+				FilterOptions:   options.GetCollections().SetCollectionID("does not exist"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},

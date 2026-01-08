@@ -932,7 +932,7 @@ func refreshCollections(
 		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
 		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
-		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})
+		allCollections, err := node.GetCollections(ctx)
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {
@@ -1042,7 +1042,7 @@ func refreshDocuments(
 					_commits(docID: $docID, filter: {fieldName: {_eq: "_C"}}, order: {height: ASC}) {
 						cid
 					}
-				}`, client.WithVariables(map[string]any{
+				}`, options.ExecRequest().SetVariables(map[string]any{
 					"docID": doc.ID().String(),
 				}))
 				if data, ok := result.GQL.Data.(map[string]any); ok {
@@ -2062,12 +2062,15 @@ nodeLoop:
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 		ctx := getContextWithIdentity(db.InitContext(s.Ctx, txn), s, action.Identity, nodeID)
 
-		var options []client.RequestOption
-		if action.OperationName.HasValue() {
-			options = append(options, client.WithOperationName(action.OperationName.Value()))
-		}
-		if action.Variables.HasValue() {
-			options = append(options, client.WithVariables(action.Variables.Value()))
+		var reqOption *options.ExecRequestOptions
+		if action.OperationName.HasValue() || action.Variables.HasValue() {
+			reqOption = options.ExecRequest()
+			if action.OperationName.HasValue() {
+				reqOption.SetOperationName(action.OperationName.Value())
+			}
+			if action.Variables.HasValue() {
+				reqOption.SetVariables(action.Variables.Value())
+			}
 		}
 
 		if !expectedErrorRaised && viewType == MaterializedViewType {
@@ -2077,9 +2080,7 @@ nodeLoop:
 				// an intuitive order.
 				err := node.RefreshViews(
 					s.Ctx,
-					client.CollectionFetchOptions{
-						Name: immutable.Some(colName),
-					},
+					options.RefreshViews().SetName(colName),
 				)
 				expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 				if expectedErrorRaised {
@@ -2089,7 +2090,7 @@ nodeLoop:
 		}
 		// Replace any template placeholders with the appropriate data.
 		request := replace(s, nodeID, action.Request)
-		result := node.ExecRequest(ctx, request, options...)
+		result := node.ExecRequest(ctx, request, reqOption)
 
 		expectedErrorRaised = assertRequestResults(
 			s,

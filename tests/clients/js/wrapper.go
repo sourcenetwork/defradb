@@ -55,39 +55,49 @@ func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
 	panic("not implemented")
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (w *Wrapper) SetReplicator(
+	ctx context.Context,
+	addresses []string,
+	collectionNames []string,
+	opts ...*options.SetReplicatorOptions,
+) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(
+	ctx context.Context,
+	id string,
+	collectionNames []string,
+	opts ...*options.DeleteReplicatorOptions,
+) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (w *Wrapper) GetAllReplicators(ctx context.Context, opts ...*options.GetAllReplicatorsOptions) ([]client.Replicator, error) {
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionNames []string, opts ...*options.AddP2PCollectionsOptions) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionNames []string, opts ...*options.RemoveP2PCollectionsOptions) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (w *Wrapper) GetAllP2PCollections(ctx context.Context, opts ...*options.GetAllP2PCollectionsOptions) ([]string, error) {
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.AddP2PDocumentsOptions) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.RemoveP2PDocumentsOptions) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (w *Wrapper) GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions) ([]string, error) {
 	panic("not implemented")
 }
 

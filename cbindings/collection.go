@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -33,27 +34,27 @@ type docIDResult struct {
 	Error string `json:"error"`
 }
 
-// parseCollectionOptions is a helper function that converts a C.CollectionOptions
-// struct into a client.CollectionFetchOptions struct disregarding the identity
-func parseCollectionOptions(opts C.CollectionOptions) client.CollectionFetchOptions {
+// parseCollectionOptionsToGetCollectionsOptions is a helper function that converts
+// a C.CollectionOptions struct into a *options.GetCollectionsOptions struct
+func parseCollectionOptionsToGetCollectionsOptions(opts C.CollectionOptions) *options.GetCollectionsOptions {
 	versionID := C.GoString(opts.version)
 	collectionID := C.GoString(opts.collectionID)
 	name := C.GoString(opts.name)
 	getInactive := opts.getInactive != 0
-	options := client.CollectionFetchOptions{}
+	opt := options.GetCollections()
 	if versionID != "" {
-		options.VersionID = immutable.Some(versionID)
+		opt.SetVersionID(versionID)
 	}
 	if collectionID != "" {
-		options.CollectionID = immutable.Some(collectionID)
+		opt.SetCollectionID(collectionID)
 	}
 	if name != "" {
-		options.Name = immutable.Some(name)
+		opt.SetName(name)
 	}
 	if getInactive {
-		options.IncludeInactive = immutable.Some(getInactive)
+		opt.SetIncludeInactive(getInactive)
 	}
-	return options
+	return opt
 }
 
 // getCollection is a helper function wrapping DB.GetCollections, and ensuring
@@ -61,9 +62,9 @@ func parseCollectionOptions(opts C.CollectionOptions) client.CollectionFetchOpti
 func getCollection(
 	store client.Store,
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts *options.GetCollectionsOptions,
 ) (client.Collection, error) {
-	cols, err := store.GetCollections(ctx, options)
+	cols, err := store.GetCollections(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +94,7 @@ func CollectionCreate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	colOptions := parseCollectionOptions(options)
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(options)
 
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
@@ -150,7 +151,7 @@ func CollectionDelete(nodePtr C.uintptr_t,
 	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptions(options)
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(options)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -201,7 +202,7 @@ func CollectionDelete(nodePtr C.uintptr_t,
 //export CollectionDescribe
 func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptions(options)
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(options)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -229,7 +230,7 @@ func CollectionDescribe(nodePtr C.uintptr_t, options C.CollectionOptions, identi
 //export CollectionListDocIDs
 func CollectionListDocIDs(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptions(options)
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(options)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -280,7 +281,7 @@ func CollectionGet(nodePtr C.uintptr_t,
 	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptions(options)
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(options)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -363,7 +364,7 @@ func CollectionUpdate(
 	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptions(options)
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(options)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {

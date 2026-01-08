@@ -81,7 +81,7 @@ func (c *Collection) Create(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
@@ -129,7 +129,7 @@ func (c *Collection) CreateMany(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
@@ -191,7 +191,7 @@ func (c *Collection) Update(
 	cVersion := C.CString("")
 	cCollectionID := C.CString(c.CollectionID())
 	cName := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
@@ -255,7 +255,7 @@ func (c *Collection) Delete(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(filter))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -286,6 +286,7 @@ func (c *Collection) Delete(
 func (c *Collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...*options.CollectionExistsOptions,
 ) (bool, error) {
 	docIDStr := C.CString(docID.String())
 	cShowDeleted := C.int(0)
@@ -293,7 +294,7 @@ func (c *Collection) Exists(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
@@ -336,7 +337,7 @@ func (c *Collection) UpdateWithFilter(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filterStr))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -387,7 +388,7 @@ func (c *Collection) DeleteWithFilter(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filterStr))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -436,7 +437,7 @@ func (c *Collection) Get(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.Version().Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
@@ -476,11 +477,12 @@ func (c *Collection) Get(
 
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
+	opts ...*options.CollectionGetAllDocIDsOptions,
 ) (<-chan client.DocIDResult, error) {
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
@@ -540,7 +542,7 @@ func (c *Collection) CreateIndex(
 	cIndexDescName := C.CString(indexDesc.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -590,12 +592,16 @@ func (c *Collection) CreateIndex(
 	return retRes, nil
 }
 
-func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
+func (c *Collection) DropIndex(
+	ctx context.Context,
+	indexName string,
+	opts ...*options.CollectionDropIndexOptions,
+) error {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString(indexName)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -622,12 +628,15 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 	return nil
 }
 
-func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+func (c *Collection) GetIndexes(
+	ctx context.Context,
+	opts ...*options.CollectionGetIndexesOptions,
+) ([]client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString("")
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))

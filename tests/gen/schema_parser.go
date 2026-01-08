@@ -46,7 +46,7 @@ func ParseSDL(gqlSDL string) (map[string]client.CollectionVersion, error) {
 		return nil, err
 	}
 
-	cols, err := node.DB.GetCollections(ctx, client.CollectionFetchOptions{})
+	cols, err := node.DB.GetCollections(ctx)
 	if err != nil {
 		return nil, err
 	}

@@ -19,7 +19,6 @@ import (
 // CollectionCreateOptions contains options for Create and CreateMany operations.
 type CollectionCreateOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 	// EncryptDoc enables document encryption when creating a document.
 	EncryptDoc bool
@@ -38,6 +37,11 @@ func (o *CollectionCreateOptions) SetIdentity(id identity.Identity) *CollectionC
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *CollectionCreateOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // SetEncryptDoc enables or disables document encryption.
 func (o *CollectionCreateOptions) SetEncryptDoc(encrypt bool) *CollectionCreateOptions {
 	o.EncryptDoc = encrypt
@@ -53,7 +57,6 @@ func (o *CollectionCreateOptions) SetEncryptedFields(fields []string) *Collectio
 // CollectionUpdateOptions contains options for Update operation.
 type CollectionUpdateOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -68,10 +71,14 @@ func (o *CollectionUpdateOptions) SetIdentity(id identity.Identity) *CollectionU
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *CollectionUpdateOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // CollectionSaveOptions contains options for Save operation.
 type CollectionSaveOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 	// EncryptDoc enables document encryption when creating a document.
 	EncryptDoc bool
@@ -90,6 +97,11 @@ func (o *CollectionSaveOptions) SetIdentity(id identity.Identity) *CollectionSav
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *CollectionSaveOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // SetEncryptDoc enables or disables document encryption.
 func (o *CollectionSaveOptions) SetEncryptDoc(encrypt bool) *CollectionSaveOptions {
 	o.EncryptDoc = encrypt
@@ -105,7 +117,6 @@ func (o *CollectionSaveOptions) SetEncryptedFields(fields []string) *CollectionS
 // CollectionDeleteOptions contains options for Delete operation.
 type CollectionDeleteOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -120,10 +131,14 @@ func (o *CollectionDeleteOptions) SetIdentity(id identity.Identity) *CollectionD
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *CollectionDeleteOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // CollectionGetOptions contains options for Get operation.
 type CollectionGetOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -138,10 +153,14 @@ func (o *CollectionGetOptions) SetIdentity(id identity.Identity) *CollectionGetO
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *CollectionGetOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // CollectionUpdateWithFilterOptions contains options for UpdateWithFilter operation.
 type CollectionUpdateWithFilterOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -156,10 +175,14 @@ func (o *CollectionUpdateWithFilterOptions) SetIdentity(id identity.Identity) *C
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *CollectionUpdateWithFilterOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // CollectionDeleteWithFilterOptions contains options for DeleteWithFilter operation.
 type CollectionDeleteWithFilterOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -174,10 +197,14 @@ func (o *CollectionDeleteWithFilterOptions) SetIdentity(id identity.Identity) *C
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *CollectionDeleteWithFilterOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // CollectionCreateIndexOptions contains options for CreateIndex operation.
 type CollectionCreateIndexOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -190,4 +217,97 @@ func CollectionCreateIndex() *CollectionCreateIndexOptions {
 func (o *CollectionCreateIndexOptions) SetIdentity(id identity.Identity) *CollectionCreateIndexOptions {
 	o.Identity = immutable.Some(id)
 	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *CollectionCreateIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// CollectionDropIndexOptions contains options for DropIndex operation.
+type CollectionDropIndexOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// CollectionDropIndex creates a new CollectionDropIndexOptions instance.
+func CollectionDropIndex() *CollectionDropIndexOptions {
+	return &CollectionDropIndexOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *CollectionDropIndexOptions) SetIdentity(id identity.Identity) *CollectionDropIndexOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *CollectionDropIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// CollectionGetIndexesOptions contains options for GetIndexes operation.
+type CollectionGetIndexesOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// CollectionGetIndexes creates a new CollectionGetIndexesOptions instance.
+func CollectionGetIndexes() *CollectionGetIndexesOptions {
+	return &CollectionGetIndexesOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *CollectionGetIndexesOptions) SetIdentity(id identity.Identity) *CollectionGetIndexesOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *CollectionGetIndexesOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// CollectionGetAllDocIDsOptions contains options for GetAllDocIDs operation.
+type CollectionGetAllDocIDsOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// CollectionGetAllDocIDs creates a new CollectionGetAllDocIDsOptions instance.
+func CollectionGetAllDocIDs() *CollectionGetAllDocIDsOptions {
+	return &CollectionGetAllDocIDsOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *CollectionGetAllDocIDsOptions) SetIdentity(id identity.Identity) *CollectionGetAllDocIDsOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *CollectionGetAllDocIDsOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// CollectionExistsOptions contains options for Exists operation.
+type CollectionExistsOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// CollectionExists creates a new CollectionExistsOptions instance.
+func CollectionExists() *CollectionExistsOptions {
+	return &CollectionExistsOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *CollectionExistsOptions) SetIdentity(id identity.Identity) *CollectionExistsOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *CollectionExistsOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
 }

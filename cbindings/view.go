@@ -21,7 +21,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 //export ViewAdd
@@ -73,18 +73,18 @@ func ViewRefresh(nodePtr C.uintptr_t,
 	collectionID := C.GoString(cOptions.collectionID)
 	versionID := C.GoString(cOptions.version)
 
-	options := client.CollectionFetchOptions{}
+	opt := options.RefreshViews()
 	if versionID != "" {
-		options.VersionID = immutable.Some(versionID)
+		opt.SetVersionID(versionID)
 	}
 	if collectionID != "" {
-		options.CollectionID = immutable.Some(collectionID)
+		opt.SetCollectionID(collectionID)
 	}
 	if viewName != "" {
-		options.Name = immutable.Some(viewName)
+		opt.SetName(viewName)
 	}
 	if cOptions.getInactive != 0 {
-		options.IncludeInactive = immutable.Some(true)
+		opt.SetIncludeInactive(true)
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -92,7 +92,7 @@ func ViewRefresh(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	err = store.RefreshViews(ctx, options)
+	err = store.RefreshViews(ctx, opt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

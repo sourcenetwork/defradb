@@ -354,11 +354,20 @@ func (c *collection) indexExistingDocs(
 // The index will be removed from the system store.
 //
 // All index artifacts for existing documents related the index will be removed.
-func (c *collection) DropIndex(ctx context.Context, indexName string) error {
+func (c *collection) DropIndex(
+	ctx context.Context,
+	indexName string,
+	opts ...*options.CollectionDropIndexOptions,
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeIndexDropPerm); err != nil {
+	var ident immutable.Option[identity.Identity]
+	if len(opts) > 0 && opts[0] != nil {
+		ident = opts[0].Identity
+	}
+
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexDropPerm); err != nil {
 		return err
 	}
 
@@ -411,8 +420,16 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 }
 
 // GetIndexes returns all indexes for the collection.
-func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	if err := c.db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeIndexListPerm); err != nil {
+func (c *collection) GetIndexes(
+	ctx context.Context,
+	opts ...*options.CollectionGetIndexesOptions,
+) ([]client.IndexDescription, error) {
+	var ident immutable.Option[identity.Identity]
+	if len(opts) > 0 && opts[0] != nil {
+		ident = opts[0].Identity
+	}
+
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
 	}
 

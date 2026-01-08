@@ -36,7 +36,7 @@ The removed collections will no longer be synchronized between nodes.`,
 				collectionNames = append(collectionNames, id)
 			}
 
-			return cliClient.RemoveP2PCollections(cmd.Context(), collectionNames...)
+			return cliClient.RemoveP2PCollections(cmd.Context(), collectionNames)
 		},
 	}
 

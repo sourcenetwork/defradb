@@ -17,6 +17,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 )
@@ -72,26 +73,29 @@ Options:
 				return cmd.Usage()
 			}
 
-			createOpts := []*options.CollectionCreateOptions{
-				options.CollectionCreate().
-					SetEncryptDoc(shouldEncryptDoc).
-					SetEncryptedFields(encryptedFields),
+			ctx := cmd.Context()
+
+			createOpt := options.CollectionCreate().
+				SetEncryptDoc(shouldEncryptDoc).
+				SetEncryptedFields(encryptedFields)
+
+			if ident := identity.FromContext(ctx); ident.HasValue() {
+				createOpt.SetIdentity(ident.Value())
 			}
 
-			ctx := cmd.Context()
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(ctx, docData, col.Version())
 				if err != nil {
 					return err
 				}
-				return col.CreateMany(ctx, docs, createOpts...)
+				return col.CreateMany(ctx, docs, createOpt)
 			}
 
 			doc, err := client.NewDocFromJSON(ctx, docData, col.Version())
 			if err != nil {
 				return err
 			}
-			return col.Create(cmd.Context(), doc, createOpts...)
+			return col.Create(cmd.Context(), doc, createOpt)
 		},
 	}
 

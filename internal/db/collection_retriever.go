@@ -13,9 +13,8 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 // collectionRetriever is a helper struct that retrieves a collection from a document ID.
@@ -56,9 +55,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	}
 	cols, err := r.db.GetCollections(
 		ctx,
-		client.CollectionFetchOptions{
-			VersionID: immutable.Some(headIterator.CurrentBlock().Delta.GetSchemaVersionID()),
-		},
+		options.GetCollections().SetVersionID(headIterator.CurrentBlock().Delta.GetSchemaVersionID()),
 	)
 
 	if err != nil {

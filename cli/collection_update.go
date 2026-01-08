@@ -16,7 +16,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
@@ -44,7 +46,13 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
 					return err
 				}
-				res, err := col.UpdateWithFilter(ctx, filterValue, updater)
+
+				updateWithFilterOpt := options.CollectionUpdateWithFilter()
+				if ident := identity.FromContext(ctx); ident.HasValue() {
+					updateWithFilterOpt.SetIdentity(ident.Value())
+				}
+
+				res, err := col.UpdateWithFilter(ctx, filterValue, updater, updateWithFilterOpt)
 				if err != nil {
 					return err
 				}
@@ -54,14 +62,26 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				doc, err := col.Get(ctx, docID, true)
+
+				getOpt := options.CollectionGet()
+				if ident := identity.FromContext(ctx); ident.HasValue() {
+					getOpt.SetIdentity(ident.Value())
+				}
+
+				doc, err := col.Get(ctx, docID, true, getOpt)
 				if err != nil {
 					return err
 				}
 				if err := doc.SetWithJSON(ctx, []byte(updater)); err != nil {
 					return err
 				}
-				return col.Update(cmd.Context(), doc)
+
+				updateOpt := options.CollectionUpdate()
+				if ident := identity.FromContext(ctx); ident.HasValue() {
+					updateOpt.SetIdentity(ident.Value())
+				}
+
+				return col.Update(ctx, doc, updateOpt)
 			default:
 				return ErrNoDocIDOrFilter
 			}

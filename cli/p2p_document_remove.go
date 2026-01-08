@@ -36,7 +36,7 @@ The removed documents will no longer be synchronized between nodes.`,
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return cliClient.RemoveP2PDocuments(cmd.Context(), collectionIDs...)
+			return cliClient.RemoveP2PDocuments(cmd.Context(), collectionIDs)
 		},
 	}
 

@@ -15,11 +15,13 @@ import (
 	"encoding/json"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
+	opts ...*options.AddDACPolicyOptions,
 ) (client.AddPolicyResult, error) {
 	args := []string{"client", "acp", "document", "policy", "add"}
 	args = append(args, policy)
@@ -43,6 +45,7 @@ func (w *Wrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...*options.AddDACActorRelationshipOptions,
 ) (client.AddActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "document", "relationship", "add",
@@ -71,6 +74,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...*options.DeleteDACActorRelationshipOptions,
 ) (client.DeleteActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "document", "relationship", "delete",
@@ -93,7 +97,10 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	return exists, err
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+func (w *Wrapper) GetNACStatus(
+	ctx context.Context,
+	opts ...*options.NACOptions,
+) (client.NACStatusResult, error) {
 	args := []string{"client", "acp", "node", "status"}
 
 	data, err := w.cmd.execute(ctx, args)
@@ -109,7 +116,10 @@ func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, err
 	return status, nil
 }
 
-func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
+func (w *Wrapper) ReEnableNAC(
+	ctx context.Context,
+	opts ...*options.NACOptions,
+) error {
 	args := []string{"client", "acp", "node", "re-enable"}
 	if _, err := w.cmd.execute(ctx, args); err != nil {
 		return err
@@ -117,7 +127,10 @@ func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
 	return nil
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context) error {
+func (w *Wrapper) DisableNAC(
+	ctx context.Context,
+	opts ...*options.NACOptions,
+) error {
 	args := []string{"client", "acp", "node", "disable"}
 	if _, err := w.cmd.execute(ctx, args); err != nil {
 		return err
@@ -129,6 +142,7 @@ func (w *Wrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...*options.AddNACActorRelationshipOptions,
 ) (client.AddActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "node", "relationship", "add",
@@ -153,6 +167,7 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...*options.DeleteNACActorRelationshipOptions,
 ) (client.DeleteActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "node", "relationship", "delete",

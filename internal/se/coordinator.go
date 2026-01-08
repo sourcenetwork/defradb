@@ -21,6 +21,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -36,7 +37,7 @@ var log = corelog.NewLogger("se")
 type DB interface {
 	NewTxn(readOnly bool) (client.Txn, error)
 	MaxTxnRetries() int
-	GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)
+	GetCollections(context.Context, ...*options.GetCollectionsOptions) ([]client.Collection, error)
 	Events() event.Bus
 }
 
@@ -329,9 +330,7 @@ func (coordinator *Coordinator) generateSEArtifacts(
 	docID, collectionID string,
 	fieldNames []string,
 ) ([]secore.Artifact, error) {
-	cols, err := coordinator.db.GetCollections(ctx, client.CollectionFetchOptions{
-		CollectionID: immutable.Some(collectionID),
-	})
+	cols, err := coordinator.db.GetCollections(ctx, options.GetCollections().SetCollectionID(collectionID))
 	if err != nil {
 		return nil, err
 	}

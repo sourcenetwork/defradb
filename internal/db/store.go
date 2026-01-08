@@ -20,10 +20,11 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 // ExecRequest executes a request against the database.
-func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
+func (db *DB) ExecRequest(ctx context.Context, request string, opts ...*options.ExecRequestOptions) *client.RequestResult {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -35,12 +36,16 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.Re
 	}
 	defer txn.Discard()
 
-	options := &client.GQLOptions{}
-	for _, o := range opts {
-		o(options)
+	gqlOpts := &client.GQLOptions{}
+	if len(opts) > 0 && opts[0] != nil {
+		opt := opts[0]
+		if opt.OperationName.HasValue() {
+			gqlOpts.OperationName = opt.OperationName.Value()
+		}
+		gqlOpts.Variables = opt.Variables
 	}
 
-	res := db.execRequest(ctx, request, options)
+	res := db.execRequest(ctx, request, gqlOpts)
 	if len(res.GQL.Errors) > 0 {
 		return res
 	}
@@ -54,11 +59,20 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.Re
 }
 
 // GetCollectionByName returns an existing collection within the database.
-func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
+func (db *DB) GetCollectionByName(
+	ctx context.Context,
+	name string,
+	opts ...*options.GetCollectionByNameOptions,
+) (client.Collection, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeCollectionGetPerm); err != nil {
+	var ident immutable.Option[identity.Identity]
+	if len(opts) > 0 && opts[0] != nil {
+		ident = opts[0].Identity
+	}
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
 	}
 
@@ -74,12 +88,22 @@ func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Coll
 // GetCollections gets all the currently defined collections.
 func (db *DB) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...*options.GetCollectionsOptions,
 ) ([]client.Collection, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeCollectionGetPerm); err != nil {
+	var opt *options.GetCollectionsOptions
+	if len(opts) > 0 && opts[0] != nil {
+		opt = opts[0]
+	}
+
+	var ident immutable.Option[identity.Identity]
+	if opt != nil {
+		ident = opt.Identity
+	}
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
 	}
 
@@ -89,17 +113,23 @@ func (db *DB) GetCollections(
 	}
 	defer txn.Discard()
 
-	return db.getCollections(ctx, options)
+	return db.getCollections(ctx, opt)
 }
 
 // GetAllIndexes gets all the indexes in the database.
 func (db *DB) GetAllIndexes(
 	ctx context.Context,
+	opts ...*options.GetAllIndexesOptions,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeIndexListPerm); err != nil {
+	var ident immutable.Option[identity.Identity]
+	if len(opts) > 0 && opts[0] != nil {
+		ident = opts[0].Identity
+	}
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
 	}
 
@@ -133,11 +163,20 @@ func (db *DB) ListAllEncryptedIndexes(
 //
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
-func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionVersion, error) {
+func (db *DB) AddSchema(
+	ctx context.Context,
+	schemaString string,
+	opts ...*options.AddSchemaOptions,
+) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeCollectionPatchPerm); err != nil {
+	var ident immutable.Option[identity.Identity]
+	if len(opts) > 0 && opts[0] != nil {
+		ident = opts[0].Identity
+	}
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return nil, err
 	}
 
@@ -174,11 +213,17 @@ func (db *DB) PatchCollection(
 	ctx context.Context,
 	patchString string,
 	migration immutable.Option[model.Lens],
+	opts ...*options.PatchCollectionOptions,
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeCollectionPatchPerm); err != nil {
+	var ident immutable.Option[identity.Identity]
+	if len(opts) > 0 && opts[0] != nil {
+		ident = opts[0].Identity
+	}
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
 	}
 
@@ -196,11 +241,20 @@ func (db *DB) PatchCollection(
 	return txn.Commit()
 }
 
-func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+func (db *DB) SetActiveCollectionVersion(
+	ctx context.Context,
+	schemaVersionID string,
+	opts ...*options.SetActiveCollectionVersionOptions,
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeCollectionPatchPerm); err != nil {
+	var ident immutable.Option[identity.Identity]
+	if len(opts) > 0 && opts[0] != nil {
+		ident = opts[0].Identity
+	}
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
 	}
 
@@ -305,7 +359,7 @@ func (db *DB) AddView(
 	return defs, nil
 }
 
-func (db *DB) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+func (db *DB) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -315,7 +369,14 @@ func (db *DB) RefreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	}
 	defer txn.Discard()
 
-	err = db.refreshViews(ctx, opts)
+	var getCollOpts *options.GetCollectionsOptions
+	if len(opts) > 0 && opts[0] != nil {
+		getCollOpts = opts[0].ToGetCollectionsOptions()
+	} else {
+		getCollOpts = options.GetCollections()
+	}
+
+	err = db.refreshViews(ctx, getCollOpts)
 	if err != nil {
 		return err
 	}

@@ -46,7 +46,7 @@ func refreshCollections(
 		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
 		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
-		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})
+		allCollections, err := node.GetCollections(ctx)
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {

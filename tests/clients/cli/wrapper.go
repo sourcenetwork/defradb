@@ -338,19 +338,22 @@ func (w *Wrapper) AddView(
 	return defs, nil
 }
 
-func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+func (w *Wrapper) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
 	args := []string{"client", "view", "refresh"}
-	if options.Name.HasValue() {
-		args = append(args, "--name", options.Name.Value())
+	if len(opts) > 0 && opts[0] != nil {
+		opt := opts[0]
+		if opt.Name.HasValue() {
+			args = append(args, "--name", opt.Name.Value())
 	}
-	if options.VersionID.HasValue() {
-		args = append(args, "--version-id", options.VersionID.Value())
+		if opt.VersionID.HasValue() {
+			args = append(args, "--version-id", opt.VersionID.Value())
 	}
-	if options.CollectionID.HasValue() {
-		args = append(args, "--collection-id", options.CollectionID.Value())
+		if opt.CollectionID.HasValue() {
+			args = append(args, "--collection-id", opt.CollectionID.Value())
 	}
-	if options.IncludeInactive.HasValue() {
-		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+		if opt.IncludeInactive.HasValue() {
+			args = append(args, "--get-inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
+		}
 	}
 
 	_, err := w.cmd.execute(ctx, args)
@@ -431,17 +434,20 @@ func (w *Wrapper) GetCollections(
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
-	if options.Name.HasValue() {
-		args = append(args, "--name", options.Name.Value())
+	if len(opts) > 0 && opts[0] != nil {
+		opt := opts[0]
+		if opt.Name.HasValue() {
+			args = append(args, "--name", opt.Name.Value())
 	}
-	if options.VersionID.HasValue() {
-		args = append(args, "--version-id", options.VersionID.Value())
+		if opt.VersionID.HasValue() {
+			args = append(args, "--version-id", opt.VersionID.Value())
 	}
-	if options.CollectionID.HasValue() {
-		args = append(args, "--collection-id", options.CollectionID.Value())
+		if opt.CollectionID.HasValue() {
+			args = append(args, "--collection-id", opt.CollectionID.Value())
 	}
-	if options.IncludeInactive.HasValue() {
-		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
+		if opt.IncludeInactive.HasValue() {
+			args = append(args, "--get-inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
+		}
 	}
 
 	data, err := w.cmd.execute(ctx, args)

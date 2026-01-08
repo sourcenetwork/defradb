@@ -16,10 +16,14 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
+// IdentityProvider is an interface for options that provide an identity.
+type IdentityProvider interface {
+	GetIdentity() immutable.Option[identity.Identity]
+}
+
 // AddDACPolicyOptions contains options for AddDACPolicy operation.
 type AddDACPolicyOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -34,10 +38,14 @@ func (o *AddDACPolicyOptions) SetIdentity(id identity.Identity) *AddDACPolicyOpt
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *AddDACPolicyOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // AddDACActorRelationshipOptions contains options for AddDACActorRelationship operation.
 type AddDACActorRelationshipOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -52,10 +60,14 @@ func (o *AddDACActorRelationshipOptions) SetIdentity(id identity.Identity) *AddD
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *AddDACActorRelationshipOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // DeleteDACActorRelationshipOptions contains options for DeleteDACActorRelationship operation.
 type DeleteDACActorRelationshipOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -70,10 +82,14 @@ func (o *DeleteDACActorRelationshipOptions) SetIdentity(id identity.Identity) *D
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *DeleteDACActorRelationshipOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // AddNACActorRelationshipOptions contains options for AddNACActorRelationship operation.
 type AddNACActorRelationshipOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -88,10 +104,14 @@ func (o *AddNACActorRelationshipOptions) SetIdentity(id identity.Identity) *AddN
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *AddNACActorRelationshipOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // DeleteNACActorRelationshipOptions contains options for DeleteNACActorRelationship operation.
 type DeleteNACActorRelationshipOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -106,10 +126,14 @@ func (o *DeleteNACActorRelationshipOptions) SetIdentity(id identity.Identity) *D
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *DeleteNACActorRelationshipOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // NACOptions contains options for NAC operations (ReEnableNAC, DisableNAC, GetNACStatus).
 type NACOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -124,10 +148,14 @@ func (o *NACOptions) SetIdentity(id identity.Identity) *NACOptions {
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *NACOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // VerifySignatureOptions contains options for VerifySignature operation.
 type VerifySignatureOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -142,10 +170,14 @@ func (o *VerifySignatureOptions) SetIdentity(id identity.Identity) *VerifySignat
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *VerifySignatureOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // AddViewOptions contains options for AddView operation.
 type AddViewOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
 }
 
@@ -160,11 +192,25 @@ func (o *AddViewOptions) SetIdentity(id identity.Identity) *AddViewOptions {
 	return o
 }
 
+// GetIdentity returns the identity for the operation.
+func (o *AddViewOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // RefreshViewsOptions contains options for RefreshViews operation.
 type RefreshViewsOptions struct {
 	// Identity is the identity of the actor performing the operation.
-	// If not set, identity will be retrieved from context.
 	Identity immutable.Option[identity.Identity]
+	// VersionID is the version ID of the collection to refresh.
+	VersionID immutable.Option[string]
+	// CollectionID is the collection ID to filter by.
+	CollectionID immutable.Option[string]
+	// CollectionSetID is the collection set ID to filter by.
+	CollectionSetID immutable.Option[string]
+	// Name is the name of the collection to filter by.
+	Name immutable.Option[string]
+	// IncludeInactive indicates whether to include inactive collections.
+	IncludeInactive immutable.Option[bool]
 }
 
 // RefreshViews creates a new RefreshViewsOptions instance.
@@ -175,5 +221,274 @@ func RefreshViews() *RefreshViewsOptions {
 // SetIdentity sets the identity for the operation.
 func (o *RefreshViewsOptions) SetIdentity(id identity.Identity) *RefreshViewsOptions {
 	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *RefreshViewsOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// SetVersionID sets the version ID filter.
+func (o *RefreshViewsOptions) SetVersionID(versionID string) *RefreshViewsOptions {
+	o.VersionID = immutable.Some(versionID)
+	return o
+}
+
+// SetCollectionID sets the collection ID filter.
+func (o *RefreshViewsOptions) SetCollectionID(collectionID string) *RefreshViewsOptions {
+	o.CollectionID = immutable.Some(collectionID)
+	return o
+}
+
+// SetCollectionSetID sets the collection set ID filter.
+func (o *RefreshViewsOptions) SetCollectionSetID(collectionSetID string) *RefreshViewsOptions {
+	o.CollectionSetID = immutable.Some(collectionSetID)
+	return o
+}
+
+// SetName sets the name filter.
+func (o *RefreshViewsOptions) SetName(name string) *RefreshViewsOptions {
+	o.Name = immutable.Some(name)
+	return o
+}
+
+// SetIncludeInactive sets whether to include inactive collections.
+func (o *RefreshViewsOptions) SetIncludeInactive(includeInactive bool) *RefreshViewsOptions {
+	o.IncludeInactive = immutable.Some(includeInactive)
+	return o
+}
+
+// ToGetCollectionsOptions converts RefreshViewsOptions to GetCollectionsOptions.
+func (o *RefreshViewsOptions) ToGetCollectionsOptions() *GetCollectionsOptions {
+	opts := GetCollections()
+	if o.Identity.HasValue() {
+		opts.SetIdentity(o.Identity.Value())
+	}
+	if o.VersionID.HasValue() {
+		opts.SetVersionID(o.VersionID.Value())
+	}
+	if o.CollectionID.HasValue() {
+		opts.SetCollectionID(o.CollectionID.Value())
+	}
+	if o.CollectionSetID.HasValue() {
+		opts.SetCollectionSetID(o.CollectionSetID.Value())
+	}
+	if o.Name.HasValue() {
+		opts.SetName(o.Name.Value())
+	}
+	if o.IncludeInactive.HasValue() {
+		opts.SetIncludeInactive(o.IncludeInactive.Value())
+	}
+	return opts
+}
+
+// GetCollectionByNameOptions contains options for GetCollectionByName operation.
+type GetCollectionByNameOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetCollectionByName creates a new GetCollectionByNameOptions instance.
+func GetCollectionByName() *GetCollectionByNameOptions {
+	return &GetCollectionByNameOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *GetCollectionByNameOptions) SetIdentity(id identity.Identity) *GetCollectionByNameOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *GetCollectionByNameOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// GetCollectionsOptions contains options for GetCollections operation.
+type GetCollectionsOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+	// If provided, only collections with this version id will be returned.
+	VersionID immutable.Option[string]
+	// If provided, only collections with this CollectionID will be returned.
+	CollectionID immutable.Option[string]
+	// If provided, only collections with this CollectionSetID will be returned.
+	CollectionSetID immutable.Option[string]
+	// If provided, only collections with this name will be returned.
+	Name immutable.Option[string]
+	// If IncludeInactive is true, then inactive collections will also be returned.
+	IncludeInactive immutable.Option[bool]
+}
+
+// GetCollections creates a new GetCollectionsOptions instance.
+func GetCollections() *GetCollectionsOptions {
+	return &GetCollectionsOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *GetCollectionsOptions) SetIdentity(id identity.Identity) *GetCollectionsOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *GetCollectionsOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// SetVersionID sets the version ID filter.
+func (o *GetCollectionsOptions) SetVersionID(versionID string) *GetCollectionsOptions {
+	o.VersionID = immutable.Some(versionID)
+	return o
+}
+
+// SetCollectionID sets the collection ID filter.
+func (o *GetCollectionsOptions) SetCollectionID(collectionID string) *GetCollectionsOptions {
+	o.CollectionID = immutable.Some(collectionID)
+	return o
+}
+
+// SetCollectionSetID sets the collection set ID filter.
+func (o *GetCollectionsOptions) SetCollectionSetID(collectionSetID string) *GetCollectionsOptions {
+	o.CollectionSetID = immutable.Some(collectionSetID)
+	return o
+}
+
+// SetName sets the name filter.
+func (o *GetCollectionsOptions) SetName(name string) *GetCollectionsOptions {
+	o.Name = immutable.Some(name)
+	return o
+}
+
+// SetIncludeInactive sets whether to include inactive collections.
+func (o *GetCollectionsOptions) SetIncludeInactive(includeInactive bool) *GetCollectionsOptions {
+	o.IncludeInactive = immutable.Some(includeInactive)
+	return o
+}
+
+// GetAllIndexesOptions contains options for GetAllIndexes operation.
+type GetAllIndexesOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetAllIndexes creates a new GetAllIndexesOptions instance.
+func GetAllIndexes() *GetAllIndexesOptions {
+	return &GetAllIndexesOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *GetAllIndexesOptions) SetIdentity(id identity.Identity) *GetAllIndexesOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *GetAllIndexesOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// AddSchemaOptions contains options for AddSchema operation.
+type AddSchemaOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// AddSchema creates a new AddSchemaOptions instance.
+func AddSchema() *AddSchemaOptions {
+	return &AddSchemaOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *AddSchemaOptions) SetIdentity(id identity.Identity) *AddSchemaOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *AddSchemaOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// PatchCollectionOptions contains options for PatchCollection operation.
+type PatchCollectionOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// PatchCollection creates a new PatchCollectionOptions instance.
+func PatchCollection() *PatchCollectionOptions {
+	return &PatchCollectionOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *PatchCollectionOptions) SetIdentity(id identity.Identity) *PatchCollectionOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *PatchCollectionOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// SetActiveCollectionVersionOptions contains options for SetActiveCollectionVersion operation.
+type SetActiveCollectionVersionOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// SetActiveCollectionVersion creates a new SetActiveCollectionVersionOptions instance.
+func SetActiveCollectionVersion() *SetActiveCollectionVersionOptions {
+	return &SetActiveCollectionVersionOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *SetActiveCollectionVersionOptions) SetIdentity(id identity.Identity) *SetActiveCollectionVersionOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *SetActiveCollectionVersionOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// ExecRequestOptions contains options for ExecRequest operation.
+type ExecRequestOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+	// OperationName is the name of the operation to exec.
+	OperationName immutable.Option[string]
+	// Variables is a map of names to variable values.
+	Variables map[string]any
+}
+
+// ExecRequest creates a new ExecRequestOptions instance.
+func ExecRequest() *ExecRequestOptions {
+	return &ExecRequestOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *ExecRequestOptions) SetIdentity(id identity.Identity) *ExecRequestOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *ExecRequestOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// SetOperationName sets the operation name for a GQL request.
+func (o *ExecRequestOptions) SetOperationName(operationName string) *ExecRequestOptions {
+	o.OperationName = immutable.Some(operationName)
+	return o
+}
+
+// SetVariables sets the variables for a GQL request.
+func (o *ExecRequestOptions) SetVariables(variables map[string]any) *ExecRequestOptions {
+	o.Variables = variables
 	return o
 }

@@ -36,7 +36,7 @@ The collections are synchronized between nodes of a pubsub network.`,
 				collectionNames = append(collectionNames, id)
 			}
 
-			return cliClient.AddP2PCollections(cmd.Context(), collectionNames...)
+			return cliClient.AddP2PCollections(cmd.Context(), collectionNames)
 		},
 	}
 

@@ -24,9 +24,9 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -77,7 +77,7 @@ func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionN
 	case len(collectionNames) > 0:
 		// if specific collections are chosen get them by name
 		for _, name := range collectionNames {
-			cols, err := clientTxn.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+			cols, err := clientTxn.GetCollections(ctx, options.GetCollections().SetName(name))
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
@@ -89,7 +89,7 @@ func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionN
 		}
 
 	default:
-		fetchedCollections, err = clientTxn.GetCollections(ctx, client.CollectionFetchOptions{})
+		fetchedCollections, err = clientTxn.GetCollections(ctx, options.GetCollections())
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
@@ -257,7 +257,7 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 	if len(collectionNames) > 0 {
 		// if specific collections are chosen get them by name
 		for _, name := range collectionNames {
-			cols, err := clientTxn.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+			cols, err := clientTxn.GetCollections(ctx, options.GetCollections().SetName(name))
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}

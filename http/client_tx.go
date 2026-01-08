@@ -21,6 +21,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
@@ -75,9 +76,13 @@ func (txn *Transaction) PrintDump(ctx context.Context) error {
 	return txn.Client.PrintDump(ctx)
 }
 
-func (txn *Transaction) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+func (txn *Transaction) AddDACPolicy(
+	ctx context.Context,
+	policy string,
+	opts ...*options.AddDACPolicyOptions,
+) (client.AddPolicyResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddDACPolicy(ctx, policy)
+	return txn.Client.AddDACPolicy(ctx, policy, opts...)
 }
 
 func (txn *Transaction) AddDACActorRelationship(
@@ -86,9 +91,10 @@ func (txn *Transaction) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...*options.AddDACActorRelationshipOptions,
 ) (client.AddActorRelationshipResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	return txn.Client.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (txn *Transaction) DeleteDACActorRelationship(
@@ -97,9 +103,10 @@ func (txn *Transaction) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...*options.DeleteDACActorRelationshipOptions,
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	return txn.Client.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
@@ -107,28 +114,42 @@ func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[i
 	return txn.Client.GetNodeIdentity(ctx)
 }
 
-func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+func (txn *Transaction) VerifySignature(
+	ctx context.Context,
+	blockCid string,
+	pubKey crypto.PublicKey,
+	opts ...*options.VerifySignatureOptions,
+) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.VerifySignature(ctx, blockCid, pubKey)
+	return txn.Client.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
-func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
+func (txn *Transaction) AddSchema(
+	ctx context.Context,
+	sdl string,
+	opts ...*options.AddSchemaOptions,
+) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddSchema(ctx, sdl)
+	return txn.Client.AddSchema(ctx, sdl, opts...)
 }
 
 func (txn *Transaction) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
+	opts ...*options.PatchCollectionOptions,
 ) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.PatchCollection(ctx, patch, migration)
+	return txn.Client.PatchCollection(ctx, patch, migration, opts...)
 }
 
-func (txn *Transaction) SetActiveCollectionVersion(ctx context.Context, version string) error {
+func (txn *Transaction) SetActiveCollectionVersion(
+	ctx context.Context,
+	version string,
+	opts ...*options.SetActiveCollectionVersionOptions,
+) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.SetActiveCollectionVersion(ctx, version)
+	return txn.Client.SetActiveCollectionVersion(ctx, version, opts...)
 }
 
 func (txn *Transaction) AddView(
@@ -141,9 +162,9 @@ func (txn *Transaction) AddView(
 	return txn.Client.AddView(ctx, gqlQuery, sdl, transformCID)
 }
 
-func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+func (txn *Transaction) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.RefreshViews(ctx, options)
+	return txn.Client.RefreshViews(ctx, opts...)
 }
 
 func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
@@ -164,24 +185,26 @@ func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, 
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
+	opts ...*options.GetCollectionByNameOptions,
 ) (client.Collection, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.GetCollectionByName(ctx, name)
+	return txn.Client.GetCollectionByName(ctx, name, opts...)
 }
 
 func (txn *Transaction) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...*options.GetCollectionsOptions,
 ) ([]client.Collection, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.GetCollections(ctx, options)
+	return txn.Client.GetCollections(ctx, opts...)
 }
 
 func (txn *Transaction) GetAllIndexes(
 	ctx context.Context,
+	opts ...*options.GetAllIndexesOptions,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.GetAllIndexes(ctx)
+	return txn.Client.GetAllIndexes(ctx, opts...)
 }
 
 func (txn *Transaction) ListAllEncryptedIndexes(

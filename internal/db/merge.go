@@ -23,9 +23,9 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -477,9 +477,7 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 
 	cols, err := db.getCollections(
 		ctx,
-		client.CollectionFetchOptions{
-			CollectionID: immutable.Some(collectionID),
-		},
+		options.GetCollections().SetCollectionID(collectionID),
 	)
 	if err != nil {
 		return nil, err

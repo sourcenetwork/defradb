@@ -70,7 +70,7 @@ type Collection interface {
 	// Exists checks if a given document exists with supplied DocID.
 	//
 	// Will return true if a matching document exists, otherwise will return false.
-	Exists(ctx context.Context, docID DocID) (bool, error)
+	Exists(ctx context.Context, docID DocID, opts ...*options.CollectionExistsOptions) (bool, error)
 
 	// UpdateWithFilter updates using a filter to target documents for update.
 	//
@@ -104,7 +104,7 @@ type Collection interface {
 	) (*Document, error)
 
 	// GetAllDocIDs returns all the document IDs that exist in the collection.
-	GetAllDocIDs(ctx context.Context) (<-chan DocIDResult, error)
+	GetAllDocIDs(ctx context.Context, opts ...*options.CollectionGetAllDocIDsOptions) (<-chan DocIDResult, error)
 
 	// CreateIndex creates a new index on the collection.
 	// `IndexDescription` contains the description of the index to be created.
@@ -115,10 +115,10 @@ type Collection interface {
 	CreateIndex(context.Context, IndexCreateRequest, ...*options.CollectionCreateIndexOptions) (IndexDescription, error)
 
 	// DropIndex drops an index from the collection.
-	DropIndex(ctx context.Context, indexName string) error
+	DropIndex(ctx context.Context, indexName string, opts ...*options.CollectionDropIndexOptions) error
 
 	// GetIndexes returns all the indexes that exist on the collection.
-	GetIndexes(ctx context.Context) ([]IndexDescription, error)
+	GetIndexes(ctx context.Context, opts ...*options.CollectionGetIndexesOptions) ([]IndexDescription, error)
 
 	// CreateEncryptedIndex creates a new encrypted index on the collection.
 	CreateEncryptedIndex(context.Context, EncryptedIndexDescription) (EncryptedIndexDescription, error)

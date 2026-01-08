@@ -92,7 +92,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 		return nil, ErrCollectionNameEmpty
 	}
 
-	cols, err := db.getCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+	cols, err := db.getCollections(ctx, options.GetCollections().SetName(name))
 	if err != nil {
 		return nil, err
 	}
@@ -112,27 +112,31 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 // is provided.
 func (db *DB) getCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts *options.GetCollectionsOptions,
 ) ([]client.Collection, error) {
+	if opts == nil {
+		opts = &options.GetCollectionsOptions{}
+	}
+
 	var cols []client.CollectionVersion
 	switch {
-	case options.Name.HasValue() && !options.IncludeInactive.Value():
-		col, err := description.GetCollectionByName(ctx, options.Name.Value())
+	case opts.Name.HasValue() && !opts.IncludeInactive.Value():
+		col, err := description.GetCollectionByName(ctx, opts.Name.Value())
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)
 
-	case options.VersionID.HasValue():
-		col, err := description.GetCollectionByID(ctx, options.VersionID.Value())
+	case opts.VersionID.HasValue():
+		col, err := description.GetCollectionByID(ctx, opts.VersionID.Value())
 		if err != nil {
 			return nil, err
 		}
 		cols = append(cols, col)
 
-	case options.CollectionID.HasValue():
+	case opts.CollectionID.HasValue():
 		var err error
-		cols, err = description.GetCollectionsByCollectionID(ctx, options.CollectionID.Value())
+		cols, err = description.GetCollectionsByCollectionID(ctx, opts.CollectionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -142,10 +146,10 @@ func (db *DB) getCollections(
 	// in this being called, and so for now we tolerate a full scan plus filter instead of maintaining
 	// and index. The commented out case below, highlights its omission - if we want to index it in the
 	// future it should be uncommented and handled.
-	// case options.CollectionSetID.HasValue():
+	// case opts.CollectionSetID.HasValue():
 
 	default:
-		if options.IncludeInactive.HasValue() && options.IncludeInactive.Value() {
+		if opts.IncludeInactive.HasValue() && opts.IncludeInactive.Value() {
 			var err error
 			cols, err = description.GetCollections(ctx)
 			if err != nil {
@@ -162,29 +166,29 @@ func (db *DB) getCollections(
 
 	collections := []client.Collection{}
 	for _, col := range cols {
-		if options.VersionID.HasValue() {
-			if col.VersionID != options.VersionID.Value() {
+		if opts.VersionID.HasValue() {
+			if col.VersionID != opts.VersionID.Value() {
 				continue
 			}
 		}
 
-		if options.Name.HasValue() {
-			if col.Name != options.Name.Value() {
+		if opts.Name.HasValue() {
+			if col.Name != opts.Name.Value() {
 				continue
 			}
 		}
 
 		// By default, we don't return inactive collections unless a specific version is requested.
-		if !options.IncludeInactive.Value() && !col.IsActive && !options.VersionID.HasValue() {
+		if !opts.IncludeInactive.Value() && !col.IsActive && !opts.VersionID.HasValue() {
 			continue
 		}
 
-		if options.CollectionSetID.HasValue() {
+		if opts.CollectionSetID.HasValue() {
 			if !col.CollectionSet.HasValue() {
 				continue
 			}
 
-			if col.CollectionSet.Value().CollectionSetID != options.CollectionSetID.Value() {
+			if col.CollectionSet.Value().CollectionSetID != opts.CollectionSetID.Value() {
 				continue
 			}
 		}
@@ -205,11 +209,17 @@ func (db *DB) getCollections(
 // it hits every key and will cause Tx conflicts for concurrent Txs
 func (c *collection) GetAllDocIDs(
 	ctx context.Context,
+	opts ...*options.CollectionGetAllDocIDsOptions,
 ) (<-chan client.DocIDResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeDocumentReadPerm); err != nil {
+	var ident immutable.Option[identity.Identity]
+	if len(opts) > 0 && opts[0] != nil {
+		ident = opts[0].Identity
+	}
+
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
 
@@ -880,11 +890,17 @@ func (c *collection) Delete(
 func (c *collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...*options.CollectionExistsOptions,
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, immutable.None[identity.Identity](), acpTypes.NodeDocumentReadPerm); err != nil {
+	var ident immutable.Option[identity.Identity]
+	if len(opts) > 0 && opts[0] != nil {
+		ident = opts[0].Identity
+	}
+
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentReadPerm); err != nil {
 		return false, err
 	}
 

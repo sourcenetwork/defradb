@@ -87,7 +87,7 @@ func P2PsetReplicator(nodePtr C.uintptr_t, collections *C.char, addresses *C.cha
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.SetReplicator(ctx, addressesArgs, colArgs...)
+	err = node.DB.SetReplicator(ctx, addressesArgs, colArgs)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -107,7 +107,7 @@ func P2PdeleteReplicator(nodePtr C.uintptr_t, collections *C.char, id *C.char, i
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.DeleteReplicator(ctx, C.GoString(id), colArgs...)
+	err = node.DB.DeleteReplicator(ctx, C.GoString(id), colArgs)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -127,7 +127,7 @@ func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.ui
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.AddP2PCollections(ctx, colArgs...)
+	err = node.DB.AddP2PCollections(ctx, colArgs)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -147,7 +147,7 @@ func P2PcollectionRemove(nodePtr C.uintptr_t, collections *C.char, identityPtr C
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.RemoveP2PCollections(ctx, colArgs...)
+	err = node.DB.RemoveP2PCollections(ctx, colArgs)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -186,7 +186,7 @@ func P2PdocumentAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uint
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.AddP2PDocuments(ctx, colArgs...)
+	err = node.DB.AddP2PDocuments(ctx, colArgs)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -206,7 +206,7 @@ func P2PdocumentRemove(nodePtr C.uintptr_t, collections *C.char, identityPtr C.u
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.RemoveP2PDocuments(ctx, colArgs...)
+	err = node.DB.RemoveP2PDocuments(ctx, colArgs)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

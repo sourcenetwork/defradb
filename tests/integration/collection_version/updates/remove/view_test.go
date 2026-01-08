@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -53,9 +54,7 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("UserView"),
-				},
+				FilterOptions: options.GetCollections().SetName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -102,9 +101,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("UserView"),
-				},
+				FilterOptions: options.GetCollections().SetName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -154,9 +151,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("UserView"),
-				},
+				FilterOptions: options.GetCollections().SetName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -243,9 +238,7 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("Users"),
-				},
+				FilterOptions: options.GetCollections().SetName("Users"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			testUtils.Request{
@@ -298,9 +291,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("Users"),
-				},
+				FilterOptions: options.GetCollections().SetName("Users"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			testUtils.Request{
