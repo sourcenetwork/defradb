@@ -28,18 +28,28 @@ type abLock struct {
 
 func (l *abLock) LockA(txn txn) {
 	l.aGroup.Add(1)
-	txn.OnDiscard(func() { l.aGroup.Done() })
-	txn.OnError(func() { l.aGroup.Done() })
-	txn.OnSuccess(func() { l.aGroup.Done() })
+
+	// We need to make sure this is only ever called once!  It is permitted to discard
+	// a transaction after it is commited whether it errors or not.
+	var once sync.Once
+	done := func() { once.Do(func() { l.aGroup.Done() }) }
+	txn.OnDiscard(done)
+	txn.OnError(done)
+	txn.OnSuccess(done)
 
 	l.bGroup.Wait()
 }
 
 func (l *abLock) LockB(txn txn) {
 	l.bGroup.Add(1)
-	txn.OnDiscard(func() { l.bGroup.Done() })
-	txn.OnError(func() { l.bGroup.Done() })
-	txn.OnSuccess(func() { l.bGroup.Done() })
+
+	// We need to make sure this is only ever called once!  It is permitted to discard
+	// a transaction after it is commited whether it errors or not.
+	var once sync.Once
+	done := func() { once.Do(func() { l.bGroup.Done() }) }
+	txn.OnDiscard(done)
+	txn.OnError(done)
+	txn.OnSuccess(done)
 
 	l.aGroup.Wait()
 }

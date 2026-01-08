@@ -226,6 +226,17 @@ func TestLockSet_ClosingPromotedTxnLock_ClearsLock(t *testing.T) {
 	lockSet.Lock(txn2, 1)
 }
 
+func TestLockSet_ClosingTxnMultipleTimes_Succedes(t *testing.T) {
+	txn1 := newTxn(1)
+	lockSet := newLockSet[int]()
+
+	lockSet.Lock(txn1, 1)
+	txn1.Close()
+	// Discard can be called multiple times, including after txn commit, so it is important
+	// to test for this.
+	txn1.Close()
+}
+
 // todo - This (and the reverse, lock then RLockAll) is the only known case when a
 // transaction can deadlock on itself.
 //
@@ -287,8 +298,18 @@ func newTxn(id uint64) *dummyTxn {
 
 // Close is a simple test function that represents either
 // a Discard or Commit call both succeding and erroring.
+//
+// It is permitted for users to discard multiple times,
+// including after commit, so multiple calls to this should
+// be tested.
 func (t *dummyTxn) Close() {
 	for _, fn := range t.onSuccess {
+		fn()
+	}
+	for _, fn := range t.onError {
+		fn()
+	}
+	for _, fn := range t.onDiscard {
 		fn()
 	}
 }
