@@ -14,7 +14,7 @@ import (
 	"sync"
 )
 
-// lockSet manages Defra-wide locks, scoped to an arbitrary Defra-element deliminated by the given `TKey`
+// lockSet manages Defra-wide locks, scoped to an arbitrary Defra-element delimited by the given `TKey`
 // parameters, such as a collection, or document id.
 //
 // Calls into this type made by the same transaction for the same key will not compete for the same lock.

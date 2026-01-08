@@ -21,7 +21,7 @@ import "sync"
 // This type deletes the mutex associated with each transaction when the transaction is commited/discarded.
 //
 // Only public functions on this type should be called from outside of this type.  Calling private members
-// from anywhere else, internal or otherwise, removes any guarentees over its state's correctness.
+// from anywhere else, internal or otherwise, removes any guarantees over its state's correctness.
 type txnLocks struct {
 	// locksByTxnID is a map of RWMutexes by transaction ID.
 	//
