@@ -57,12 +57,12 @@ func NewErrFieldIdNotFound(fieldId uint32) error {
 
 // NewErrFailedToSeek returns an error indicating that the given target could not be seeked to.
 func NewErrFailedToSeek(target any, inner error) error {
-	return errors.Wrap(errFailedToSeek, inner, errors.NewKV("Target", target))
+	return fmt.Errorf("%s: Target='%v': %w", errFailedToSeek, target, inner)
 }
 
 // NewErrFailedToMergeState returns an error indicating that the given state could not be merged.
 func NewErrFailedToMergeState(inner error) error {
-	return errors.Wrap(errFailedToMergeState, inner)
+	return fmt.Errorf("%s: %w", errFailedToMergeState, inner)
 }
 
 // NewErrVFetcherFailedToFindBlock returns an error indicating that the given block could not be found.

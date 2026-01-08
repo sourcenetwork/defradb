@@ -101,7 +101,7 @@ var (
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.
 func NewErrFieldNotExist(name string) error {
-	return errors.New(errFieldNotExist, errors.NewKV("Name", name))
+	return fmt.Errorf("%s: Name='%s'", errFieldNotExist, name)
 }
 
 // NewErrFieldIndexNotExist returns an error indicating that a field does not exist at the
