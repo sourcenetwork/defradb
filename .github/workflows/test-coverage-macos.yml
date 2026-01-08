@@ -1,0 +1,113 @@
+# Copyright 2025 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Test Coverage macOS Workflow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-\
+    ${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CGO_ENABLED: 1
+
+  DEFRA_CLIENT_GO: true
+  DEFRA_CLIENT_HTTP: false
+  DEFRA_CLIENT_CLI: false
+  DEFRA_CLIENT_C: false
+
+  DEFRA_BADGER_MEMORY: true
+  DEFRA_BADGER_FILE: false
+
+  DEFRA_BADGER_ENCRYPTION: false
+
+  DEFRA_VECTOR_EMBEDDING: false
+
+  DEFRA_MUTATION_TYPE: collection-save
+  DEFRA_LENS_TYPE: wasm-time
+  DEFRA_DOCUMENT_ACP_TYPE: local
+  DEFRA_VIEW_TYPE: cacheless
+
+
+defaults:
+  run:
+    shell: bash
+
+
+jobs:
+  test-coverage-os:
+    name: Test coverage os job
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_os_${{ matrix.os }}"
+          coverage-path: coverage.txt
+
+
+  upload-coverage:
+    name: Upload test code coverage job
+
+    needs:
+      - test-coverage-os
+
+    if: success() || failure()
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage_os_*
+          merge-multiple: false
+          path: coverage_reports
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: defradb-codecov
+          files: coverage_reports/**/*.txt
+          flags: all-tests
+          os: 'macos'
+          fail_ci_if_error: true
+          verbose: true
