@@ -1,0 +1,89 @@
+# Copyright 2025 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+# Note:
+# - Unlike the [test-coverage.yml] workflow, the jobs in this workflow run on default
+#  github runners that are limited in resources (i.e. slower). This is done to help us
+#  detect failures that might be specific to devices that have less resources.
+# - The jobs in this workflow are not required to pass with PRs.
+# - None of the jobs in this workflow generate any coverage reports (nor uploads anything).
+name: Test Limited Resource Workflow
+
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
+      - develop
+
+
+# Cancel the workflow if its in progress when there is a new commit. This will reduce unecessary resource usage.
+concurrency:
+  group: ${{ github.workflow }}-\
+    ${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+
+# We run all runners via the bash shell to provide us with a consistent set of env variables and commands
+defaults:
+  run:
+    shell: bash
+
+
+jobs:
+  # The job that runs with limited/slow resource runner, only for http client with badger filestore, and
+  # some other features enabled that don't get tested against each other in the normal coverage runs.
+  test-limited-resource:
+    name: Test Limited Resource job
+
+    runs-on: ubuntu-latest
+
+    env:
+      CGO_ENABLED: 1
+      # Run with these configurations
+      DEFRA_CLIENT_HTTP: true
+      DEFRA_BADGER_FILE: true
+      DEFRA_BADGER_ENCRYPTION: true
+      DEFRA_VECTOR_EMBEDDING: true
+      DEFRA_MUTATION_TYPE: collection-named
+      DEFRA_LENS_TYPE: wasm-time
+      DEFRA_DOCUMENT_ACP_TYPE: local
+      DEFRA_VIEW_TYPE: materialized
+      # Disable the rest.
+      DEFRA_CLIENT_GO: false
+      DEFRA_CLIENT_CLI: false
+      DEFRA_CLIENT_C: false
+      DEFRA_BADGER_MEMORY: false
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v4
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Install Ollama
+        run: make deps:ollama
+
+      - name: Run Ollama
+        run: make ollama
+
+      - name: Pull LLM model
+        run: make ollama:nomic
+
+      - name: Run integration tests
+        run: make test:names

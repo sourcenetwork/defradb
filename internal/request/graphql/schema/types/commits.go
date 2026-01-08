@@ -24,7 +24,7 @@ import (
 //		CID: String
 //		DocID: String
 //		CollectionID: Int
-//		SchemaVersionID: String
+//		CollectionVersionID: String
 //		Delta: String
 //		Links: [Commit]
 //		Heads: [Commit]
@@ -79,8 +79,8 @@ func CommitObject(
 				Description: commitDocIDFieldDescription,
 				Type:        gql.String,
 			},
-			request.SchemaVersionIDFieldName: &gql.Field{
-				Description: commitSchemaVersionIDFieldDescription,
+			request.CollectionVersionIDFieldName: &gql.Field{
+				Description: commitCollectionVersionIDFieldDescription,
 				Type:        gql.String,
 			},
 			request.FieldNameName: &gql.Field{
