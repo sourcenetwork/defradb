@@ -303,7 +303,7 @@ func (w *Wrapper) ListAllEncryptedIndexes(
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...client.RequestOption,
+	opts ...*options.ExecRequestOptions,
 ) *client.RequestResult {
 	return w.client.ExecRequest(ctx, query, opts...)
 }

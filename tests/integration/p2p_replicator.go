@@ -111,7 +111,7 @@ func configureReplicator(
 	require.NoError(s.T, err)
 
 	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.SetReplicator(ctx, targetAddresses)
+	err = sourceNode.SetReplicator(ctx, targetAddresses, nil)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -138,7 +138,7 @@ func deleteReplicator(
 	require.NoError(s.T, err)
 
 	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.DeleteReplicator(ctx, id)
+	err = sourceNode.DeleteReplicator(ctx, id, nil)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)

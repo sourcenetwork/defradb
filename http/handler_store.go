@@ -18,11 +18,10 @@ import (
 	"strconv"
 
 	"github.com/getkin/kin-openapi/openapi3"
-
-	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 const (
@@ -200,15 +199,15 @@ func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	options := client.CollectionFetchOptions{}
+	opt := options.GetCollections()
 	if req.URL.Query().Has("name") {
-		options.Name = immutable.Some(req.URL.Query().Get("name"))
+		opt.SetName(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
-		options.VersionID = immutable.Some(req.URL.Query().Get("version_id"))
+		opt.SetVersionID(req.URL.Query().Get("version_id"))
 	}
 	if req.URL.Query().Has("collection_id") {
-		options.CollectionID = immutable.Some(req.URL.Query().Get("collection_id"))
+		opt.SetCollectionID(req.URL.Query().Get("collection_id"))
 	}
 	if req.URL.Query().Has("get_inactive") {
 		getInactiveStr := req.URL.Query().Get("get_inactive")
@@ -218,10 +217,10 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		options.IncludeInactive = immutable.Some(getInactive)
+		opt.SetIncludeInactive(getInactive)
 	}
 
-	cols, err := db.GetCollections(req.Context(), options)
+	cols, err := db.GetCollections(req.Context(), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -236,28 +235,27 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	options := client.CollectionFetchOptions{}
+	opt := options.RefreshViews()
 	if req.URL.Query().Has("name") {
-		options.Name = immutable.Some(req.URL.Query().Get("name"))
+		opt.SetName(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
-		options.VersionID = immutable.Some(req.URL.Query().Get("version_id"))
+		opt.SetVersionID(req.URL.Query().Get("version_id"))
 	}
 	if req.URL.Query().Has("collection_id") {
-		options.CollectionID = immutable.Some(req.URL.Query().Get("collection_id"))
+		opt.SetCollectionID(req.URL.Query().Get("collection_id"))
 	}
 	if req.URL.Query().Has("get_inactive") {
 		getInactiveStr := req.URL.Query().Get("get_inactive")
-		var err error
 		getInactive, err := strconv.ParseBool(getInactiveStr)
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		options.IncludeInactive = immutable.Some(getInactive)
+		opt.SetIncludeInactive(getInactive)
 	}
 
-	err := db.RefreshViews(req.Context(), options)
+	err := db.RefreshViews(req.Context(), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -319,13 +317,13 @@ func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	request, options, err := extractGraphQLRequest(req)
+	request, opt, err := extractGraphQLRequest(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	result := db.ExecRequest(req.Context(), request.Query, options...)
+	result := db.ExecRequest(req.Context(), request.Query, opt)
 
 	// if at this point the we get a subscription query, it isn't using
 	// the correct accept headers, and we error
@@ -340,7 +338,7 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	request, options, err := extractGraphQLRequest(req)
+	request, opt, err := extractGraphQLRequest(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -359,7 +357,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 	flusher.Flush()
 
-	result := db.ExecRequest(req.Context(), request.Query, options...)
+	result := db.ExecRequest(req.Context(), request.Query, opt)
 
 	// if we get an error in the initial GQL request, we need to emit
 	// it as a SSE event, then we can close the connection/subscription
@@ -430,7 +428,7 @@ func emitSSEEvent(rw http.ResponseWriter, flusher http.Flusher, eventType string
 	return nil
 }
 
-func extractGraphQLRequest(req *http.Request) (GraphQLRequest, []client.RequestOption, error) {
+func extractGraphQLRequest(req *http.Request) (GraphQLRequest, *options.ExecRequestOptions, error) {
 	var request GraphQLRequest
 	switch {
 	case req.URL.Query().Get("query") != "":
@@ -455,15 +453,18 @@ func extractGraphQLRequest(req *http.Request) (GraphQLRequest, []client.RequestO
 	default:
 		return GraphQLRequest{}, nil, ErrMissingRequest
 	}
-	var options []client.RequestOption
-	if request.OperationName != "" {
-		options = append(options, client.WithOperationName(request.OperationName))
-	}
-	if len(request.Variables) > 0 {
-		options = append(options, client.WithVariables(request.Variables))
+	var opt *options.ExecRequestOptions
+	if request.OperationName != "" || len(request.Variables) > 0 {
+		opt = options.ExecRequest()
+		if request.OperationName != "" {
+			opt.SetOperationName(request.OperationName)
+		}
+		if len(request.Variables) > 0 {
+			opt.SetVariables(request.Variables)
+		}
 	}
 
-	return request, options, nil
+	return request, opt, nil
 }
 
 func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {

@@ -17,13 +17,27 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
+
+func withOptIdentity[T options.OptionWithIdentity[T]](ctx context.Context, opt T) context.Context {
+	if ident := opt.GetIdentity(); ident.HasValue() {
+		return identity.WithContext(ctx, ident)
+	}
+	return ctx
+}
 
 func (c *Client) AddDACPolicy(
 	ctx context.Context,
 	policy string,
+	opts ...*options.AddDACPolicyOptions,
 ) (client.AddPolicyResult, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("acp", "document", "policy")
 
 	req, err := http.NewRequestWithContext(
@@ -58,7 +72,12 @@ func (c *Client) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...*options.AddDACActorRelationshipOptions,
 ) (client.AddActorRelationshipResult, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("acp", "document", "relationship")
 
 	body, err := json.Marshal(
@@ -106,7 +125,12 @@ func (c *Client) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...*options.DeleteDACActorRelationshipOptions,
 ) (client.DeleteActorRelationshipResult, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("acp", "document", "relationship")
 
 	body, err := json.Marshal(
@@ -150,7 +174,12 @@ func (c *Client) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...*options.AddNACActorRelationshipOptions,
 ) (client.AddActorRelationshipResult, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "relationship")
 
 	body, err := json.Marshal(
@@ -192,7 +221,12 @@ func (c *Client) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...*options.DeleteNACActorRelationshipOptions,
 ) (client.DeleteActorRelationshipResult, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "relationship")
 
 	body, err := json.Marshal(
@@ -225,7 +259,11 @@ func (c *Client) DeleteNACActorRelationship(
 	return deleteDocActorRelResult, nil
 }
 
-func (c *Client) ReEnableNAC(ctx context.Context) error {
+func (c *Client) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "re-enable")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
@@ -241,7 +279,11 @@ func (c *Client) ReEnableNAC(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) DisableNAC(ctx context.Context) error {
+func (c *Client) DisableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "disable")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
@@ -257,7 +299,11 @@ func (c *Client) DisableNAC(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+func (c *Client) GetNACStatus(ctx context.Context, opts ...*options.NACOptions) (client.NACStatusResult, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "status")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)

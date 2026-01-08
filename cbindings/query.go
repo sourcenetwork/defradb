@@ -18,11 +18,13 @@ import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 
 	"github.com/google/uuid"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 // We cannot return a channel to/from C, so instead we have a map of subscription IDs to
@@ -104,12 +106,22 @@ func ExecuteQuery(
 	variables *C.char,
 ) C.Result {
 	ctx := context.Background()
-	opt, err := buildRequestOptions(C.GoString(operationName), C.GoString(variables))
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
+
+	opt := options.ExecRequest()
+	opName := C.GoString(operationName)
+	if opName != "" {
+		opt.SetOperationName(opName)
+	}
+	varsStr := C.GoString(variables)
+	if varsStr != "" {
+		var vars map[string]any
+		if err := json.Unmarshal([]byte(varsStr), &vars); err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		opt.SetVariables(vars)
 	}
 
-	ctx, err = contextWithIdentity(ctx, identityPtr)
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

@@ -16,6 +16,9 @@ import (
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 type p2pHandler struct{}
@@ -42,13 +45,20 @@ func (h *p2pHandler) ActivePeers(rw http.ResponseWriter, req *http.Request) {
 
 func (h *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var resp []string
 	if err := requestJSON(req, &resp); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.Connect(req.Context(), resp)
+
+	opt := options.Connect()
+	if ident := identity.FromContext(ctx); ident.HasValue() {
+		opt.SetIdentity(ident.Value())
+	}
+
+	err := db.Connect(ctx, resp, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -58,13 +68,20 @@ func (h *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 
 func (h *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var rep SetReplicatorParams
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.SetReplicator(req.Context(), rep.Addresses, rep.Collections...)
+
+	opt := options.SetReplicator()
+	if ident := identity.FromContext(ctx); ident.HasValue() {
+		opt.SetIdentity(ident.Value())
+	}
+
+	err := db.SetReplicator(ctx, rep.Addresses, rep.Collections, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -74,13 +91,20 @@ func (h *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 
 func (h *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var rep DeleteReplicatorParams
 	if err := requestJSON(req, &rep); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.DeleteReplicator(req.Context(), rep.ID, rep.Collections...)
+
+	opt := options.DeleteReplicator()
+	if ident := identity.FromContext(ctx); ident.HasValue() {
+		opt.SetIdentity(ident.Value())
+	}
+
+	err := db.DeleteReplicator(ctx, rep.ID, rep.Collections, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -90,8 +114,14 @@ func (h *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 
 func (h *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
-	reps, err := db.GetAllReplicators(req.Context())
+	opt := options.GetAllReplicators()
+	if ident := identity.FromContext(ctx); ident.HasValue() {
+		opt.SetIdentity(ident.Value())
+	}
+
+	reps, err := db.GetAllReplicators(ctx, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -101,13 +131,20 @@ func (h *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request
 
 func (h *p2pHandler) AddP2PCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var collectionIDs []string
 	if err := requestJSON(req, &collectionIDs); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.AddP2PCollections(req.Context(), collectionIDs...)
+
+	opt := options.AddP2PCollections()
+	if ident := identity.FromContext(ctx); ident.HasValue() {
+		opt.SetIdentity(ident.Value())
+	}
+
+	err := db.AddP2PCollections(ctx, collectionIDs, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -117,13 +154,20 @@ func (h *p2pHandler) AddP2PCollections(rw http.ResponseWriter, req *http.Request
 
 func (h *p2pHandler) RemoveP2PCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var collectionIDs []string
 	if err := requestJSON(req, &collectionIDs); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.RemoveP2PCollections(req.Context(), collectionIDs...)
+
+	opt := options.RemoveP2PCollections()
+	if ident := identity.FromContext(ctx); ident.HasValue() {
+		opt.SetIdentity(ident.Value())
+	}
+
+	err := db.RemoveP2PCollections(ctx, collectionIDs, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -133,8 +177,14 @@ func (h *p2pHandler) RemoveP2PCollections(rw http.ResponseWriter, req *http.Requ
 
 func (h *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
-	cols, err := db.GetAllP2PCollections(req.Context())
+	opt := options.GetAllP2PCollections()
+	if ident := identity.FromContext(ctx); ident.HasValue() {
+		opt.SetIdentity(ident.Value())
+	}
+
+	cols, err := db.GetAllP2PCollections(ctx, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -144,13 +194,20 @@ func (h *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Requ
 
 func (h *p2pHandler) AddP2PDocuments(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var docIDs []string
 	if err := requestJSON(req, &docIDs); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.AddP2PDocuments(req.Context(), docIDs...)
+
+	opt := options.AddP2PDocuments()
+	if ident := identity.FromContext(ctx); ident.HasValue() {
+		opt.SetIdentity(ident.Value())
+	}
+
+	err := db.AddP2PDocuments(ctx, docIDs, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -160,13 +217,20 @@ func (h *p2pHandler) AddP2PDocuments(rw http.ResponseWriter, req *http.Request) 
 
 func (h *p2pHandler) RemoveP2PDocuments(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var docIDs []string
 	if err := requestJSON(req, &docIDs); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.RemoveP2PDocuments(req.Context(), docIDs...)
+
+	opt := options.RemoveP2PDocuments()
+	if ident := identity.FromContext(ctx); ident.HasValue() {
+		opt.SetIdentity(ident.Value())
+	}
+
+	err := db.RemoveP2PDocuments(ctx, docIDs, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -176,8 +240,14 @@ func (h *p2pHandler) RemoveP2PDocuments(rw http.ResponseWriter, req *http.Reques
 
 func (h *p2pHandler) GetAllP2PDocuments(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
-	docIDs, err := db.GetAllP2PDocuments(req.Context())
+	opt := options.GetAllP2PDocuments()
+	if ident := identity.FromContext(ctx); ident.HasValue() {
+		opt.SetIdentity(ident.Value())
+	}
+
+	docIDs, err := db.GetAllP2PDocuments(ctx, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

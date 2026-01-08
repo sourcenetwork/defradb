@@ -17,6 +17,7 @@ import (
 	"syscall/js"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/goji"
 )
 
@@ -75,7 +76,7 @@ func (c *clientCollection) create(this js.Value, args []js.Value) (js.Value, err
 		return js.Undefined(), err
 	}
 
-	opts, err := getCreateOptionsFromArg(args, 1)
+	opts, err := getCreateOptionsFromArg(args, 1, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -98,7 +99,7 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 		return js.Undefined(), err
 	}
 
-	opts, err := getCreateOptionsFromArg(args, 1)
+	opts, err := getCreateOptionsFromArg(args, 1, 2)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -119,21 +120,27 @@ func (c *clientCollection) createMany(this js.Value, args []js.Value) (js.Value,
 	return js.Undefined(), err
 }
 
-func getCreateOptionsFromArg(args []js.Value, argIndex int) ([]client.DocCreateOption, error) {
-	var createOptions client.DocCreateOptions
-	if err := structArg(args, argIndex, "options", &createOptions); err != nil {
+// createOptionsInput represents the input structure for create options from JS.
+type createOptionsInput struct {
+	EncryptDoc      bool     `json:"encryptDoc"`
+	EncryptedFields []string `json:"encryptedFields"`
+}
+
+func getCreateOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]*options.CollectionCreateOptions, error) {
+	var input createOptionsInput
+	if err := structArg(args, argIndex, "options", &input); err != nil {
 		return nil, err
 	}
 
-	opts := []client.DocCreateOption{}
-	if len(createOptions.EncryptedFields) > 0 {
-		opts = append(opts, client.CreateDocWithEncryptedFields(createOptions.EncryptedFields))
+	opt := options.CollectionCreate()
+	if input.EncryptDoc {
+		opt.SetEncryptDoc(true)
 	}
-
-	if createOptions.EncryptDoc {
-		opts = append(opts, client.CreateDocEncrypted(true))
+	if len(input.EncryptedFields) > 0 {
+		opt.SetEncryptedFields(input.EncryptedFields)
 	}
-	return opts, nil
+	setOptIdentity(opt, args, ctxArgIndex)
+	return []*options.CollectionCreateOptions{opt}, nil
 }
 
 func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, error) {
@@ -160,7 +167,9 @@ func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, err
 	if err := doc.SetWithJSON(ctx, []byte(patch)); err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.Update(ctx, doc)
+	opt := options.CollectionUpdate()
+	setOptIdentity(opt, args, 2)
+	err = c.col.Update(ctx, doc, opt)
 	return js.Undefined(), err
 }
 
@@ -177,7 +186,9 @@ func (c *clientCollection) delete(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	deleted, err := c.col.Delete(ctx, docID)
+	opt := options.CollectionDelete()
+	setOptIdentity(opt, args, 1)
+	deleted, err := c.col.Delete(ctx, docID, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -197,7 +208,9 @@ func (c *clientCollection) exists(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	exists, err := c.col.Exists(ctx, docID)
+	opt := options.CollectionExists()
+	setOptIdentity(opt, args, 1)
+	exists, err := c.col.Exists(ctx, docID, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -217,7 +230,9 @@ func (c *clientCollection) updateWithFilter(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	result, err := c.col.UpdateWithFilter(ctx, filter, updater)
+	opt := options.CollectionUpdateWithFilter()
+	setOptIdentity(opt, args, 2)
+	result, err := c.col.UpdateWithFilter(ctx, filter, updater, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -233,7 +248,9 @@ func (c *clientCollection) deleteWithFilter(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	result, err := c.col.DeleteWithFilter(ctx, filter)
+	opt := options.CollectionDeleteWithFilter()
+	setOptIdentity(opt, args, 1)
+	result, err := c.col.DeleteWithFilter(ctx, filter, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -257,7 +274,9 @@ func (c *clientCollection) get(this js.Value, args []js.Value) (js.Value, error)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	doc, err := c.col.Get(ctx, docID, showDeleted)
+	opt := options.CollectionGet()
+	setOptIdentity(opt, args, 2)
+	doc, err := c.col.Get(ctx, docID, showDeleted, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -269,7 +288,9 @@ func (c *clientCollection) getAllDocIDs(this js.Value, args []js.Value) (js.Valu
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.col.GetAllDocIDs(ctx)
+	opt := options.CollectionGetAllDocIDs()
+	setOptIdentity(opt, args, 0)
+	res, err := c.col.GetAllDocIDs(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -292,7 +313,9 @@ func (c *clientCollection) createIndex(this js.Value, args []js.Value) (js.Value
 	if err != nil {
 		return js.Undefined(), err
 	}
-	desc, err := c.col.CreateIndex(ctx, request)
+	opt := options.CollectionCreateIndex()
+	setOptIdentity(opt, args, 1)
+	desc, err := c.col.CreateIndex(ctx, request, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -308,7 +331,9 @@ func (c *clientCollection) dropIndex(this js.Value, args []js.Value) (js.Value, 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.DropIndex(ctx, name)
+	opt := options.CollectionDropIndex()
+	setOptIdentity(opt, args, 1)
+	err = c.col.DropIndex(ctx, name, opt)
 	return js.Undefined(), err
 }
 
@@ -317,7 +342,9 @@ func (c *clientCollection) getIndexes(this js.Value, args []js.Value) (js.Value,
 	if err != nil {
 		return js.Undefined(), err
 	}
-	desc, err := c.col.GetIndexes(ctx)
+	opt := options.CollectionGetIndexes()
+	setOptIdentity(opt, args, 0)
+	desc, err := c.col.GetIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

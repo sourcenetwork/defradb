@@ -217,7 +217,7 @@ func (txn *Transaction) ListAllEncryptedIndexes(
 func (txn *Transaction) ExecRequest(
 	ctx context.Context,
 	request string,
-	opts ...client.RequestOption,
+	opts ...*options.ExecRequestOptions,
 ) *client.RequestResult {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.ExecRequest(ctx, request, opts...)

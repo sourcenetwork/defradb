@@ -57,9 +57,9 @@ func identityFromContext(ctx context.Context) C.uintptr_t {
 	return C.uintptr_t(handle)
 }
 
-// identityFromOptions creates a cgo handle, wrapped as a pointer, from options that implement IdentityProvider.
+// identityFromOptions creates a cgo handle, wrapped as a pointer, from options that implement OptionWithIdentity.
 // If the options slice is empty or nil, returns 0.
-func identityFromOptions[T options.IdentityProvider](opts []T) C.uintptr_t {
+func identityFromOptions[T options.OptionWithIdentity[T]](opts []T) C.uintptr_t {
 	if len(opts) == 0 {
 		return C.uintptr_t(0)
 	}

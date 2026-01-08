@@ -22,6 +22,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/js"
@@ -121,8 +122,22 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
-	res, err := execute(ctx, w.value, "addSchema", schema)
+func (w *Wrapper) AddSchema(
+	ctx context.Context,
+	schema string,
+	opts ...*options.AddSchemaOptions,
+) ([]client.CollectionVersion, error) {
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	res, err := execute(ctx, w.value, "addSchema", schema, optsVal)
 	if err != nil {
 		return nil, err
 	}
@@ -136,8 +151,19 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
+	opts ...*options.AddDACPolicyOptions,
 ) (client.AddPolicyResult, error) {
-	res, err := execute(ctx, w.value, "addDACPolicy", policy)
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return client.AddPolicyResult{}, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	res, err := execute(ctx, w.value, "addDACPolicy", policy, optsVal)
 	if err != nil {
 		return client.AddPolicyResult{}, err
 	}
@@ -154,8 +180,19 @@ func (w *Wrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...*options.AddDACActorRelationshipOptions,
 ) (client.AddActorRelationshipResult, error) {
-	res, err := execute(ctx, w.value, "addDACActorRelationship", collectionName, docID, relation, targetActor)
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return client.AddActorRelationshipResult{}, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	res, err := execute(ctx, w.value, "addDACActorRelationship", collectionName, docID, relation, targetActor, optsVal)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
@@ -172,8 +209,19 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...*options.DeleteDACActorRelationshipOptions,
 ) (client.DeleteActorRelationshipResult, error) {
-	res, err := execute(ctx, w.value, "deleteDACActorRelationship", collectionName, docID, relation, targetActor)
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return client.DeleteActorRelationshipResult{}, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	res, err := execute(ctx, w.value, "deleteDACActorRelationship", collectionName, docID, relation, targetActor, optsVal)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
@@ -184,8 +232,18 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	return out, nil
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
-	res, err := execute(ctx, w.value, "getNACStatus")
+func (w *Wrapper) GetNACStatus(ctx context.Context, opts ...*options.NACOptions) (client.NACStatusResult, error) {
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return client.NACStatusResult{}, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	res, err := execute(ctx, w.value, "getNACStatus", optsVal)
 	if err != nil {
 		return client.NACStatusResult{}, err
 	}
@@ -196,13 +254,33 @@ func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, err
 	return out, nil
 }
 
-func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
-	_, err := execute(ctx, w.value, "reEnableNAC")
+func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	_, err = execute(ctx, w.value, "reEnableNAC", optsVal)
 	return err
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context) error {
-	_, err := execute(ctx, w.value, "disableNAC")
+func (w *Wrapper) DisableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	_, err = execute(ctx, w.value, "disableNAC", optsVal)
 	return err
 }
 
@@ -210,8 +288,19 @@ func (w *Wrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...*options.AddNACActorRelationshipOptions,
 ) (client.AddActorRelationshipResult, error) {
-	res, err := execute(ctx, w.value, "addNACActorRelationship", relation, targetActor)
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return client.AddActorRelationshipResult{}, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	res, err := execute(ctx, w.value, "addNACActorRelationship", relation, targetActor, optsVal)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
@@ -226,8 +315,19 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...*options.DeleteNACActorRelationshipOptions,
 ) (client.DeleteActorRelationshipResult, error) {
-	res, err := execute(ctx, w.value, "deleteNACActorRelationship", relation, targetActor)
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return client.DeleteActorRelationshipResult{}, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	res, err := execute(ctx, w.value, "deleteNACActorRelationship", relation, targetActor, optsVal)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
@@ -242,18 +342,41 @@ func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
+	opts ...*options.PatchCollectionOptions,
 ) error {
 	migrationVal, err := goji.MarshalJS(migration)
 	if err != nil {
 		return err
 	}
-
-	_, err = execute(ctx, w.value, "patchCollection", patch, migrationVal)
+	var optsVal sysjs.Value
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	_, err = execute(ctx, w.value, "patchCollection", patch, migrationVal, optsVal)
 	return err
 }
 
-func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
-	_, err := execute(ctx, w.value, "setActiveCollectionVersion", schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(
+	ctx context.Context,
+	schemaVersionID string,
+	opts ...*options.SetActiveCollectionVersionOptions,
+) error {
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	_, err = execute(ctx, w.value, "setActiveCollectionVersion", schemaVersionID, optsVal)
 	return err
 }
 
@@ -278,10 +401,16 @@ func (w *Wrapper) AddView(
 	return out, nil
 }
 
-func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
-	optsVal, err := goji.MarshalJS(opts)
-	if err != nil {
-		return err
+func (w *Wrapper) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
 	}
 	_, err = execute(ctx, w.value, "refreshViews", optsVal)
 	return err
@@ -323,8 +452,22 @@ func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error)
 	return lenses, nil
 }
 
-func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	res, err := execute(ctx, w.value, "getCollectionByName", name)
+func (w *Wrapper) GetCollectionByName(
+	ctx context.Context,
+	name client.CollectionName,
+	opts ...*options.GetCollectionByNameOptions,
+) (client.Collection, error) {
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	res, err := execute(ctx, w.value, "getCollectionByName", name, optsVal)
 	if err != nil {
 		return nil, err
 	}
@@ -335,13 +478,19 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 
 func (w *Wrapper) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...*options.GetCollectionsOptions,
 ) ([]client.Collection, error) {
-	optionsVal, err := goji.MarshalJS(options)
-	if err != nil {
-		return nil, err
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
 	}
-	res, err := execute(ctx, w.value, "getCollections", optionsVal)
+	res, err := execute(ctx, w.value, "getCollections", optsVal)
 	if err != nil {
 		return nil, err
 	}
@@ -354,8 +503,21 @@ func (w *Wrapper) GetCollections(
 	return out, nil
 }
 
-func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	res, err := execute(ctx, w.value, "getAllIndexes")
+func (w *Wrapper) GetAllIndexes(
+	ctx context.Context,
+	opts ...*options.GetAllIndexesOptions,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	res, err := execute(ctx, w.value, "getAllIndexes", optsVal)
 	if err != nil {
 		return nil, err
 	}
@@ -369,17 +531,19 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...client.RequestOption,
+	opts ...*options.ExecRequestOptions,
 ) *client.RequestResult {
-	var gqlOpts client.GQLOptions
-	for _, o := range opts {
-		o(&gqlOpts)
+	var optsVal sysjs.Value
+	if len(opts) > 0 && opts[0] != nil {
+		var err error
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		optsVal = sysjs.Undefined()
 	}
-	reqOpts, err := goji.MarshalJS(gqlOpts)
-	if err != nil {
-		panic(err)
-	}
-	res, err := execute(ctx, w.value, "execRequest", query, reqOpts)
+	res, err := execute(ctx, w.value, "execRequest", query, optsVal)
 	if err != nil {
 		panic(err)
 	}
@@ -461,8 +625,8 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
-	return w.node.DB.Connect(ctx, addresses)
+func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...*options.ConnectOptions) error {
+	return w.node.DB.Connect(ctx, addresses, opts...)
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
@@ -477,8 +641,23 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 	return out, nil
 }
 
-func (w *Wrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	_, err := execute(ctx, w.value, "verifySignature", pubKey.String(), string(pubKey.Type()), blockCid)
+func (w *Wrapper) VerifySignature(
+	ctx context.Context,
+	blockCid string,
+	pubKey crypto.PublicKey,
+	opts ...*options.VerifySignatureOptions,
+) error {
+	var optsVal sysjs.Value
+	var err error
+	if len(opts) > 0 && opts[0] != nil {
+		optsVal, err = goji.MarshalJS(opts[0])
+		if err != nil {
+			return err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	_, err = execute(ctx, w.value, "verifySignature", pubKey.String(), string(pubKey.Type()), blockCid, optsVal)
 	return err
 }
 

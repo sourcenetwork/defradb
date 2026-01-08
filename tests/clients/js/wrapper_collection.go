@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/goji"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -70,7 +71,7 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionCreateOptions,
 ) error {
 	docVal, err := goji.MarshalJS(doc)
 	if err != nil {
@@ -84,11 +85,20 @@ func (c *Collection) Create(
 	return nil
 }
 
-func makeDocCreateOptions(opts []client.DocCreateOption) js.Value {
-	createOpts := client.DocCreateOptions{}
-	createOpts.Apply(opts)
+// createOptionsJS is used to marshal options for the JS client.
+type createOptionsJS struct {
+	EncryptDoc      bool     `json:"encryptDoc"`
+	EncryptedFields []string `json:"encryptedFields"`
+}
 
-	optsVal, err := goji.MarshalJS(createOpts)
+func makeDocCreateOptions(opts []*options.CollectionCreateOptions) js.Value {
+	jsOpts := createOptionsJS{}
+	if len(opts) > 0 && opts[0] != nil {
+		jsOpts.EncryptDoc = opts[0].EncryptDoc
+		jsOpts.EncryptedFields = opts[0].EncryptedFields
+	}
+
+	optsVal, err := goji.MarshalJS(jsOpts)
 	if err != nil {
 		return js.Undefined()
 	}
@@ -98,7 +108,7 @@ func makeDocCreateOptions(opts []client.DocCreateOption) js.Value {
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionCreateOptions,
 ) error {
 	docsVal, err := goji.MarshalJS(docs)
 	if err != nil {
@@ -117,6 +127,7 @@ func (c *Collection) CreateMany(
 func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...*options.CollectionUpdateOptions,
 ) error {
 	patch, err := doc.ToJSONPatch()
 	if err != nil {
@@ -134,14 +145,22 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...*options.CollectionSaveOptions,
 ) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
 	if err.Error() == client.ErrDocumentNotFoundOrNotAuthorized.Error() {
-		return c.Create(ctx, doc, opts...)
+		var createOpts []*options.CollectionCreateOptions
+		if len(opts) > 0 && opts[0] != nil {
+			createOpts = []*options.CollectionCreateOptions{
+				options.CollectionCreate().
+					SetEncryptDoc(opts[0].EncryptDoc).
+					SetEncryptedFields(opts[0].EncryptedFields),
+			}
+		}
+		return c.Create(ctx, doc, createOpts...)
 	}
 	return err
 }
@@ -149,6 +168,7 @@ func (c *Collection) Save(
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...*options.CollectionDeleteOptions,
 ) (bool, error) {
 	res, err := execute(ctx, c.client, "delete", docID.String())
 	if err != nil {
@@ -160,6 +180,7 @@ func (c *Collection) Delete(
 func (c *Collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...*options.CollectionExistsOptions,
 ) (bool, error) {
 	res, err := execute(ctx, c.client, "exists", docID.String())
 	if err != nil {
@@ -172,6 +193,7 @@ func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
+	opts ...*options.CollectionUpdateWithFilterOptions,
 ) (*client.UpdateResult, error) {
 	res, err := execute(ctx, c.client, "updateWithFilter", filter, updater)
 	if err != nil {
@@ -187,6 +209,7 @@ func (c *Collection) UpdateWithFilter(
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
+	opts ...*options.CollectionDeleteWithFilterOptions,
 ) (*client.DeleteResult, error) {
 	res, err := execute(ctx, c.client, "deleteWithFilter", filter)
 	if err != nil {
@@ -203,6 +226,7 @@ func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
 	showDeleted bool,
+	opts ...*options.CollectionGetOptions,
 ) (*client.Document, error) {
 	res, err := execute(ctx, c.client, "get", docID.String(), showDeleted)
 	if err != nil {
@@ -227,6 +251,7 @@ func (c *Collection) Get(
 
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
+	opts ...*options.CollectionGetAllDocIDsOptions,
 ) (<-chan client.DocIDResult, error) {
 	panic("not implemented")
 }
@@ -234,6 +259,7 @@ func (c *Collection) GetAllDocIDs(
 func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
+	opts ...*options.CollectionCreateIndexOptions,
 ) (client.IndexDescription, error) {
 	indexDescVal, err := goji.MarshalJS(indexDesc)
 	if err != nil {
@@ -250,12 +276,12 @@ func (c *Collection) CreateIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
+func (c *Collection) DropIndex(ctx context.Context, indexName string, opts ...*options.CollectionDropIndexOptions) error {
 	_, err := execute(ctx, c.client, "dropIndex", indexName)
 	return err
 }
 
-func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+func (c *Collection) GetIndexes(ctx context.Context, opts ...*options.CollectionGetIndexesOptions) ([]client.IndexDescription, error) {
 	res, err := execute(ctx, c.client, "getIndexes")
 	if err != nil {
 		return nil, err

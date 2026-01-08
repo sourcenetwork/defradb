@@ -28,6 +28,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
@@ -96,7 +97,11 @@ func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
 	return peers, nil
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
+func (w *Wrapper) Connect(
+	ctx context.Context,
+	addresses []string,
+	opts ...*options.ConnectOptions,
+) error {
 	args := []string{"client", "p2p", "connect"}
 
 	args = append(args, strings.Join(addresses, ","))
@@ -105,7 +110,12 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
 	return err
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (w *Wrapper) SetReplicator(
+	ctx context.Context,
+	addresses []string,
+	collections []string,
+	opts ...*options.SetReplicatorOptions,
+) error {
 	args := []string{"client", "p2p", "replicator", "set"}
 	args = append(args, "--collection", strings.Join(collections, ","))
 
@@ -115,7 +125,12 @@ func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collect
 	return err
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(
+	ctx context.Context,
+	id string,
+	collections []string,
+	opts ...*options.DeleteReplicatorOptions,
+) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
 	args = append(args, "--collection", strings.Join(collections, ","))
 
@@ -125,7 +140,10 @@ func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections .
 	return err
 }
 
-func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (w *Wrapper) GetAllReplicators(
+	ctx context.Context,
+	opts ...*options.GetAllReplicatorsOptions,
+) ([]client.Replicator, error) {
 	args := []string{"client", "p2p", "replicator", "getall"}
 
 	data, err := w.cmd.execute(ctx, args)
@@ -139,7 +157,11 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	return reps, nil
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *Wrapper) AddP2PCollections(
+	ctx context.Context,
+	collectionIDs []string,
+	opts ...*options.AddP2PCollectionsOptions,
+) error {
 	args := []string{"client", "p2p", "collection", "add"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
@@ -147,7 +169,11 @@ func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string
 	return err
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *Wrapper) RemoveP2PCollections(
+	ctx context.Context,
+	collectionIDs []string,
+	opts ...*options.RemoveP2PCollectionsOptions,
+) error {
 	args := []string{"client", "p2p", "collection", "remove"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
@@ -155,7 +181,10 @@ func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...str
 	return err
 }
 
-func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (w *Wrapper) GetAllP2PCollections(
+	ctx context.Context,
+	opts ...*options.GetAllP2PCollectionsOptions,
+) ([]string, error) {
 	args := []string{"client", "p2p", "collection", "getall"}
 
 	data, err := w.cmd.execute(ctx, args)
@@ -169,7 +198,11 @@ func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return cols, nil
 }
 
-func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *Wrapper) AddP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...*options.AddP2PDocumentsOptions,
+) error {
 	args := []string{"client", "p2p", "document", "add"}
 	args = append(args, strings.Join(docIDs, ","))
 
@@ -177,7 +210,11 @@ func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	return err
 }
 
-func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *Wrapper) RemoveP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...*options.RemoveP2PDocumentsOptions,
+) error {
 	args := []string{"client", "p2p", "document", "remove"}
 	args = append(args, strings.Join(docIDs, ","))
 
@@ -185,7 +222,10 @@ func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) erro
 	return err
 }
 
-func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (w *Wrapper) GetAllP2PDocuments(
+	ctx context.Context,
+	opts ...*options.GetAllP2PDocumentsOptions,
+) ([]string, error) {
 	args := []string{"client", "p2p", "document", "getall"}
 
 	data, err := w.cmd.execute(ctx, args)
@@ -270,7 +310,11 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	return err
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
+func (w *Wrapper) AddSchema(
+	ctx context.Context,
+	schema string,
+	opts ...*options.AddSchemaOptions,
+) ([]client.CollectionVersion, error) {
 	args := []string{"client", "schema", "add"}
 	args = append(args, schema)
 
@@ -289,6 +333,7 @@ func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
+	opts ...*options.PatchCollectionOptions,
 ) error {
 	args := []string{"client", "collection", "patch"}
 	args = append(args, patch)
@@ -305,7 +350,11 @@ func (w *Wrapper) PatchCollection(
 	return err
 }
 
-func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+func (w *Wrapper) SetActiveCollectionVersion(
+	ctx context.Context,
+	schemaVersionID string,
+	opts ...*options.SetActiveCollectionVersionOptions,
+) error {
 	args := []string{"client", "collection", "set-active"}
 	args = append(args, schemaVersionID)
 
@@ -344,13 +393,13 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...*options.RefreshView
 		opt := opts[0]
 		if opt.Name.HasValue() {
 			args = append(args, "--name", opt.Name.Value())
-	}
+		}
 		if opt.VersionID.HasValue() {
 			args = append(args, "--version-id", opt.VersionID.Value())
-	}
+		}
 		if opt.CollectionID.HasValue() {
 			args = append(args, "--collection-id", opt.CollectionID.Value())
-	}
+		}
 		if opt.IncludeInactive.HasValue() {
 			args = append(args, "--get-inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
 		}
@@ -419,8 +468,12 @@ func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error)
 	return lenses, nil
 }
 
-func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	cols, err := w.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+func (w *Wrapper) GetCollectionByName(
+	ctx context.Context,
+	name client.CollectionName,
+	opts ...*options.GetCollectionByNameOptions,
+) (client.Collection, error) {
+	cols, err := w.GetCollections(ctx, options.GetCollections().SetName(name))
 	if err != nil {
 		return nil, err
 	}
@@ -431,20 +484,20 @@ func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.Collectio
 
 func (w *Wrapper) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...*options.GetCollectionsOptions,
 ) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
 	if len(opts) > 0 && opts[0] != nil {
 		opt := opts[0]
 		if opt.Name.HasValue() {
 			args = append(args, "--name", opt.Name.Value())
-	}
+		}
 		if opt.VersionID.HasValue() {
 			args = append(args, "--version-id", opt.VersionID.Value())
-	}
+		}
 		if opt.CollectionID.HasValue() {
 			args = append(args, "--collection-id", opt.CollectionID.Value())
-	}
+		}
 		if opt.IncludeInactive.HasValue() {
 			args = append(args, "--get-inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
 		}
@@ -465,7 +518,10 @@ func (w *Wrapper) GetCollections(
 	return cols, err
 }
 
-func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
+func (w *Wrapper) GetAllIndexes(
+	ctx context.Context,
+	opts ...*options.GetAllIndexesOptions,
+) (map[client.CollectionName][]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 
 	data, err := w.cmd.execute(ctx, args)
@@ -498,27 +554,25 @@ func (w *Wrapper) ListAllEncryptedIndexes(
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...client.RequestOption,
+	opts ...*options.ExecRequestOptions,
 ) *client.RequestResult {
 	args := []string{"client", "query"}
 	args = append(args, query)
 
-	options := &client.GQLOptions{}
-	for _, o := range opts {
-		o(options)
-	}
-
 	result := &client.RequestResult{}
-	if options.OperationName != "" {
-		args = append(args, "--operation", options.OperationName)
-	}
-	if len(options.Variables) > 0 {
-		enc, err := json.Marshal(options.Variables)
-		if err != nil {
-			result.GQL.Errors = append(result.GQL.Errors, err)
-			return result
+	if len(opts) > 0 && opts[0] != nil {
+		opt := opts[0]
+		if opt.OperationName.HasValue() {
+			args = append(args, "--operation", opt.OperationName.Value())
 		}
-		args = append(args, "--variables", string(enc))
+		if len(opt.Variables) > 0 {
+			enc, err := json.Marshal(opt.Variables)
+			if err != nil {
+				result.GQL.Errors = append(result.GQL.Errors, err)
+				return result
+			}
+			args = append(args, "--variables", string(enc))
+		}
 	}
 
 	stdOut, stdErr, err := w.cmd.executeStream(ctx, args)
@@ -657,7 +711,12 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 	return immutable.Some(res), nil
 }
 
-func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+func (w *Wrapper) VerifySignature(
+	ctx context.Context,
+	cid string,
+	pubKey crypto.PublicKey,
+	opts ...*options.VerifySignatureOptions,
+) error {
 	args := []string{"client", "block", "verify-signature"}
 
 	args = append(args, "--type", string(pubKey.Type()))

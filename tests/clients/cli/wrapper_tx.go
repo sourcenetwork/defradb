@@ -194,7 +194,7 @@ func (txn *Transaction) GetAllIndexes(
 func (txn *Transaction) ExecRequest(
 	ctx context.Context,
 	request string,
-	opts ...client.RequestOption,
+	opts ...*options.ExecRequestOptions,
 ) *client.RequestResult {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Wrapper.ExecRequest(ctx, request, opts...)

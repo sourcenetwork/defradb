@@ -16,9 +16,11 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
-// IdentityProvider is an interface for options that provide an identity.
-type IdentityProvider interface {
+// OptionWithIdentity is an interface for options that provide and can set an identity.
+// T is the concrete options type (for fluent API support).
+type OptionWithIdentity[T any] interface {
 	GetIdentity() immutable.Option[identity.Identity]
+	SetIdentity(id identity.Identity) T
 }
 
 // AddDACPolicyOptions contains options for AddDACPolicy operation.

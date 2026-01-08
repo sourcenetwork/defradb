@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/db"
 )
@@ -124,6 +125,15 @@ func contextIdentityArg(value js.Value) (immutable.Option[acpIdentity.Identity],
 		return immutable.None[acpIdentity.Identity](), err
 	}
 	return immutable.Some[acpIdentity.Identity](identity), nil
+}
+
+// setOptIdentity extracts identity from args at the given index and sets it on the option.
+func setOptIdentity[T options.OptionWithIdentity[T]](opt T, args []js.Value, argIndex int) {
+	if len(args) > argIndex {
+		if ident, err := contextIdentityArg(args[argIndex]); err == nil && ident.HasValue() {
+			opt.SetIdentity(ident.Value())
+		}
+	}
 }
 
 // initKeypairAndGetIdentity initializes the keypair and gets an identity.

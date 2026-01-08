@@ -202,7 +202,11 @@ func (c *Collection) Delete(
 func (c *Collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...*options.CollectionExistsOptions,
 ) (bool, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
 	_, err := c.Get(ctx, docID, false)
 	if err != nil {
 		return false, err
@@ -304,7 +308,12 @@ func (c *Collection) Get(
 
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
+	opts ...*options.CollectionGetAllDocIDsOptions,
 ) (<-chan client.DocIDResult, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -379,7 +388,15 @@ func (c *Collection) CreateIndex(
 	return index, nil
 }
 
-func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
+func (c *Collection) DropIndex(
+	ctx context.Context,
+	indexName string,
+	opts ...*options.CollectionDropIndexOptions,
+) error {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes", indexName)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
@@ -390,7 +407,14 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 	return err
 }
 
-func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+func (c *Collection) GetIndexes(
+	ctx context.Context,
+	opts ...*options.CollectionGetIndexesOptions,
+) ([]client.IndexDescription, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
