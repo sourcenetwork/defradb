@@ -40,10 +40,7 @@ func MakeCollectionGetCommand(ctx context.Context) *cobra.Command {
 				return err
 			}
 
-			getOpt := options.CollectionGet()
-			if ident := identity.FromContext(ctx); ident.HasValue() {
-				getOpt.SetIdentity(ident.Value())
-			}
+			getOpt := options.WithIdentity(options.CollectionGet(), identity.FromContext(ctx))
 
 			doc, err := col.Get(ctx, docID, showDeleted, getOpt)
 			if err != nil {

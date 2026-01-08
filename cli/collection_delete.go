@@ -42,18 +42,13 @@ func MakeCollectionDeleteCommand(ctx context.Context) *cobra.Command {
 					return err
 				}
 
-				deleteOpt := options.CollectionDelete()
-				if ident := identity.FromContext(ctx); ident.HasValue() {
-					deleteOpt.SetIdentity(ident.Value())
-				}
+				deleteOpt := options.WithIdentity(options.CollectionDelete(), identity.FromContext(ctx))
 
 				_, err = col.Delete(ctx, docID, deleteOpt)
 				return err
 			case filter != "":
-				deleteWithFilterOpt := options.CollectionDeleteWithFilter()
-				if ident := identity.FromContext(ctx); ident.HasValue() {
-					deleteWithFilterOpt.SetIdentity(ident.Value())
-				}
+				deleteWithFilterOpt := options.WithIdentity(
+					options.CollectionDeleteWithFilter(), identity.FromContext(ctx))
 
 				res, err := col.DeleteWithFilter(ctx, filter, deleteWithFilterOpt)
 				if err != nil {

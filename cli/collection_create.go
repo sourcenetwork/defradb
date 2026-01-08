@@ -75,13 +75,12 @@ Options:
 
 			ctx := cmd.Context()
 
-			createOpt := options.CollectionCreate().
-				SetEncryptDoc(shouldEncryptDoc).
-				SetEncryptedFields(encryptedFields)
-
-			if ident := identity.FromContext(ctx); ident.HasValue() {
-				createOpt.SetIdentity(ident.Value())
-			}
+			createOpt := options.WithIdentity(
+				options.CollectionCreate().
+					SetEncryptDoc(shouldEncryptDoc).
+					SetEncryptedFields(encryptedFields),
+				identity.FromContext(ctx),
+			)
 
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(ctx, docData, col.Version())

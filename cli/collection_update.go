@@ -47,10 +47,8 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 					return err
 				}
 
-				updateWithFilterOpt := options.CollectionUpdateWithFilter()
-				if ident := identity.FromContext(ctx); ident.HasValue() {
-					updateWithFilterOpt.SetIdentity(ident.Value())
-				}
+				updateWithFilterOpt := options.WithIdentity(
+					options.CollectionUpdateWithFilter(), identity.FromContext(ctx))
 
 				res, err := col.UpdateWithFilter(ctx, filterValue, updater, updateWithFilterOpt)
 				if err != nil {
@@ -63,10 +61,7 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 					return err
 				}
 
-				getOpt := options.CollectionGet()
-				if ident := identity.FromContext(ctx); ident.HasValue() {
-					getOpt.SetIdentity(ident.Value())
-				}
+				getOpt := options.WithIdentity(options.CollectionGet(), identity.FromContext(ctx))
 
 				doc, err := col.Get(ctx, docID, true, getOpt)
 				if err != nil {
@@ -76,10 +71,7 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 					return err
 				}
 
-				updateOpt := options.CollectionUpdate()
-				if ident := identity.FromContext(ctx); ident.HasValue() {
-					updateOpt.SetIdentity(ident.Value())
-				}
+				updateOpt := options.WithIdentity(options.CollectionUpdate(), identity.FromContext(ctx))
 
 				return col.Update(ctx, doc, updateOpt)
 			default:
