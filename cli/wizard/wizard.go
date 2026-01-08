@@ -11,6 +11,7 @@
 package wizard
 
 import (
+	"fmt"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -238,7 +239,9 @@ func Main() {
 
 	stepWillRunHealthcheck := initialModelText(
 		stepWillRunHealthcheckID,
-		"A health check will be performed. This may take up to 10 seconds to complete.",
+		"A health check will be performed. This may take up to "+
+			fmt.Sprintf("%d seconds", HealthCheckTimeoutTimeInSeconds)+
+			" to complete.",
 	)
 
 	stepPerformHealthcheck := initialModelBlank()

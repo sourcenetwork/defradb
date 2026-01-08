@@ -343,10 +343,15 @@ func callback_PerformHealthcheck(_ step, ctx *WizardContext) error {
 	defer printToTerminal(TerminalClearANSICode)
 
 	// Entire health check must finish within a finite amount of time
-	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), HealthCheckTimeoutTimeInSeconds*time.Second)
 	defer cancel()
 
 	// Resolve the binary path to the one that launched the wizard
+	// The reason we do this, is because the purpose of the wizard is to help the user configure
+	// DefraDB after installing it. If this function is being called by the wizard, we know
+	// that the binary has been built successfully. This function will use that binary to
+	// start DefraDB and perform the health check. This ensures that we are testing a specific
+	// installation of Defra, rather than testing the behavior of our code in a general sense.
 	binPath, err := os.Executable()
 	if err != nil {
 		return NewErrFailedToResolveBinary(err)
