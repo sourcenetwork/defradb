@@ -384,7 +384,6 @@ func callback_PerformHealthcheck(_ step, ctx *WizardContext) error {
 	for {
 		select {
 		case <-ctxWithTimeout.Done():
-			ctx.ReturnCode = returnCode_HealthcheckFailed
 			return NewErrFailedToStartDefraDB(errors.New(extractMeaningfulError(output.String())))
 
 		case <-ticker.C:
@@ -393,11 +392,10 @@ func callback_PerformHealthcheck(_ step, ctx *WizardContext) error {
 				continue // server not up yet
 			}
 
-			resp.Body.Close()
+			_ = resp.Body.Close()
 
 			// The health check is successful
 			if resp.StatusCode == http.StatusOK {
-				ctx.ReturnCode = returnCode_Success
 				return nil
 			}
 		}

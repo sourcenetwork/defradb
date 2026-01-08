@@ -28,19 +28,13 @@ type WizardContext struct {
 	// to allow easier integration with the unit tests, so that they can set a different, temporary
 	// root directory for the test if needed.
 	RootDir string
-
-	// ReturnCode is the exit code of the wizard. This can be adjusted dynamically by the
-	// callbacks if needed. Specifically, it exists for the health check to communicate success or failure.
-	ReturnCode int
 }
 
 // Main is the entry point of the wizard, and is wired into the CLI's MakeWizardCommand() function.
-func Main() error {
+func Main() {
 	ctx := &WizardContext{
 		Results: map[string][]any{},
 		RootDir: getRootDir(),
-		// If nothing ever defines the return code, it can be assumed that the wizard was exited early.
-		ReturnCode: returnCode_EarlyExit,
 	}
 
 	// Define the steps
@@ -344,7 +338,7 @@ func Main() error {
 	// Run the Bubbletea program
 	program := tea.NewProgram(&mainModel{currentStep: stepWizardStart, ctx: ctx})
 	if _, err := program.Run(); err != nil {
-		os.Exit(ctx.ReturnCode)
+		os.Exit(1)
 	}
 
 	return nil

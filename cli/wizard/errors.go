@@ -33,7 +33,6 @@ var (
 	errInvalidEd25519KeyLength     = errors.New("invalid Ed25519 key length")
 	errFailedToResolveDefraBinary  = errors.New("failed to resolve defradb binary")
 	errFailedToStartDefraDB        = errors.New("failed to start defradb")
-	errFailedToResolveBinary       = errors.New("failed to resolve binary")
 )
 
 func NewErrModelTypeMismatch(stepID, expectedType string) error {
