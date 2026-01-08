@@ -248,7 +248,7 @@ func Main() {
 
 	stepHealthcheckGood := initialModelText(
 		stepHealthcheckGoodID,
-		"DefraDB is set up successfully.",
+		"DefraDB is configured and ready for use.",
 	)
 
 	stepSetupComplete := initialModelText(
