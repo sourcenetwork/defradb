@@ -25,6 +25,9 @@ var (
 	ErrTimeoutCollectionSync   = errors.New("timeout while syncing branchable collection")
 	ErrCollectionNotBranchable = errors.New("collection is not branchable")
 	ErrNoHeadsForBranchableCol = errors.New("no heads found for branchable collection")
+	ErrSyncDuplicate           = errors.New("sync already in progress for this key")
+	ErrSyncQueueFull           = errors.New("sync queue is full")
+	ErrSyncQueueClosed         = errors.New("sync queue is closed")
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {

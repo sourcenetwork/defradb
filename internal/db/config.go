@@ -53,7 +53,7 @@ func defaultDBOptions() *dbOptions {
 			time.Minute * 16,
 			time.Minute * 32,
 		},
-		p2pBlockSyncTimeout: time.Second * 5,
+		p2pBlockSyncTimeout: time.Second * 15,
 		LensRuntimeType:     DefaultLens,
 		LensOptions:         []lens.Option{},
 	}

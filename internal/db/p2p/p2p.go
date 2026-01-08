@@ -55,7 +55,13 @@ type (
 	peerAddresses = map[peerID]addresses
 )
 
-const networkRequestTimeout = 10 * time.Second
+const (
+	networkRequestTimeout = 10 * time.Second
+	// syncWorkerCount is the number of workers processing sync requests.
+	syncWorkerCount = 500
+	// syncQueueSize is the maximum number of pending sync requests.
+	syncQueueSize = 50000
+)
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
 // Implementations can perform additional actions like generating SE artifacts.
@@ -121,7 +127,7 @@ type P2P struct {
 	retryIntervals   []time.Duration
 	handleRetryMutex sync.Mutex
 
-	// a cid queue for the processing of Pushlogs
+	// processQueue is a worker pool for processing sync requests.
 	processQueue *processQueue
 
 	// timeout duration for syncing block links.
@@ -180,7 +186,7 @@ func New(
 		replicators:          make(map[string]map[string][]string),
 		peerIdentities:       make(map[string]identity.Identity),
 		retryIntervals:       db.RetryIntervals(),
-		processQueue:         newProcessQueue(),
+		processQueue:         newProcessQueue(syncWorkerCount, syncQueueSize),
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 	}
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
@@ -516,64 +522,75 @@ func (p *P2P) processPushlogRequest(
 	// underlying pubsub topic and this brings along potential pitfalls. One of them being that
 	// if this initial sync call had a negative response for a given link, the subsequent calls will
 	// assume a negative response for that same link without retrying.
-	p.processQueue.add(headCID)
-	done := p.processQueue.doneOnce(headCID)
-	defer done()
-
-	// Check if we've already merged this block. If so, skip the sink process.
-	isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
-	if err != nil {
-		return err
-	}
-	if isMerged {
-		return nil
+	// For branchable collections, use collectionID as the sync key to serialize collection-level syncs.
+	syncKey := headCID.String()
+	if isBranchableSync(req.CollectionID, req.DocID) {
+		syncKey = req.CollectionID
 	}
 
-	// No need to check access if the message is for replication as the node sending
-	// will have done so deliberately.
-	if !isReplicator {
-		mightHaveAccess, err := p.trySelfHasAccess(ctx, block, req.CollectionID)
+	processSync := func() error {
+		isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
 		if err != nil {
 			return err
 		}
-		if !mightHaveAccess {
-			// If we know we don't have access, we can skip the rest of the processing.
+		if isMerged {
 			return nil
 		}
+
+		// No need to check access if the message is for replication as the node sending
+		// will have done so deliberately.
+		if !isReplicator {
+			mightHaveAccess, err := p.trySelfHasAccess(ctx, block, req.CollectionID)
+			if err != nil {
+				return err
+			}
+			if !mightHaveAccess {
+				return nil
+			}
+		}
+
+		err = p.syncDAG(ctx, block)
+		if err != nil {
+			return err
+		}
+
+		mergeEvt := event.Merge{
+			DocID:        req.DocID,
+			ByPeer:       req.SenderID,
+			FromPeer:     req.Creator,
+			Cid:          headCID,
+			CollectionID: req.CollectionID,
+		}
+		err = p.db.Merge(ctx, mergeEvt)
+		if err != nil {
+			return err
+		}
+
+		// Notify bus subscribers and the network of peers that we have a new document available.
+		updateEvt := event.Update{
+			DocID:        req.DocID,
+			Cid:          headCID,
+			CollectionID: req.CollectionID,
+			Block:        req.Block,
+			IsRelay:      true,
+		}
+		p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
+		if err := p.SendUpdate(updateEvt); err != nil {
+			log.ErrorE("Failed to send update after sync", err, slog.Any("PeerID", p.host.ID()))
+		}
+
+		return nil
 	}
 
-	err = p.syncDAG(ctx, block)
-	if err != nil {
+	if isReplicator {
+		err = p.processQueue.enqueue(syncKey, processSync)
+		if err == ErrSyncDuplicate || err == ErrSyncQueueFull {
+			return nil
+		}
 		return err
 	}
 
-	mergeEvt := event.Merge{
-		DocID:        req.DocID,
-		ByPeer:       req.SenderID,
-		FromPeer:     req.Creator,
-		Cid:          headCID,
-		CollectionID: req.CollectionID,
-	}
-	err = p.db.Merge(ctx, mergeEvt)
-	if err != nil {
-		return err
-	}
-
-	// Notify bus subscribers and the network of peers that we have a new document available.
-	updateEvt := event.Update{
-		DocID:        req.DocID,
-		Cid:          headCID,
-		CollectionID: req.CollectionID,
-		Block:        req.Block,
-		IsRelay:      true,
-	}
-	p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
-	if err := p.SendUpdate(updateEvt); err != nil {
-		// We don't need to return the error for this side-effect-function call.
-		// It's a bonus action that shouldn't affect the caller of `processPuslogRequest`.
-		log.ErrorE("Failed to send update after sync", err, slog.Any("PeerID", p.host.ID()))
-	}
-
+	p.processQueue.tryEnqueue(syncKey, processSync)
 	return nil
 }
 
@@ -610,52 +627,99 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 	return nil
 }
 
-// processQueue is synchronization source to ensure that concurrent
-// document merges do not cause transaction conflicts.
+// syncRequest represents a sync operation to be processed by workers.
+type syncRequest struct {
+	key     string
+	process func() error
+	result  chan error
+}
+
+// processQueue is a worker pool that processes sync operations.
 type processQueue struct {
-	cids  map[cid.Cid]chan struct{}
-	mutex sync.Mutex
+	inFlight map[string]struct{}
+	mu       sync.Mutex
+	queue    chan syncRequest
+	wg       sync.WaitGroup
+	closed   bool
 }
 
-func newProcessQueue() *processQueue {
-	return &processQueue{
-		cids: make(map[cid.Cid]chan struct{}),
+func newProcessQueue(workerCount, queueSize int) *processQueue {
+	pq := &processQueue{
+		inFlight: make(map[string]struct{}),
+		queue:    make(chan syncRequest, queueSize),
 	}
+	for range workerCount {
+		pq.wg.Add(1)
+		go pq.worker()
+	}
+	return pq
 }
 
-// add adds a cid to the queue. If the cid is already in the queue, it will
-// wait for the cid to be removed from the queue. For every add call, done must
-// be called to remove the cid from the queue. Otherwise, subsequent add calls will
-// block forever.
-func (m *processQueue) add(cid cid.Cid) {
-	for {
-		m.mutex.Lock()
-		done, ok := m.cids[cid]
-		if !ok {
-			m.cids[cid] = make(chan struct{})
-			m.mutex.Unlock()
-			return
+func (pq *processQueue) worker() {
+	defer pq.wg.Done()
+	for req := range pq.queue {
+		err := req.process()
+		pq.mu.Lock()
+		delete(pq.inFlight, req.key)
+		pq.mu.Unlock()
+		if req.result != nil {
+			req.result <- err
+		} else if err != nil {
+			log.ErrorE("Async sync request failed", err)
 		}
-		m.mutex.Unlock()
-		<-done
 	}
 }
 
-func (m *processQueue) done(cid cid.Cid) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-	done, ok := m.cids[cid]
-	if ok {
-		delete(m.cids, cid)
-		close(done)
+// doEnqueue adds a sync request to the queue if the key is not already in-flight.
+func (pq *processQueue) doEnqueue(key string, process func() error, resultCh chan error) error {
+	pq.mu.Lock()
+	if pq.closed {
+		pq.mu.Unlock()
+		return ErrSyncQueueClosed
+	}
+	if _, exists := pq.inFlight[key]; exists {
+		pq.mu.Unlock()
+		return ErrSyncDuplicate
+	}
+	pq.inFlight[key] = struct{}{}
+	pq.mu.Unlock()
+	req := syncRequest{
+		key:     key,
+		process: process,
+		result:  resultCh,
+	}
+	select {
+	case pq.queue <- req:
+		if resultCh != nil {
+			return <-resultCh
+		}
+		return nil
+	default:
+		pq.mu.Lock()
+		delete(pq.inFlight, key)
+		pq.mu.Unlock()
+		return ErrSyncQueueFull
 	}
 }
 
-// doneOnce returns a function that invokes done only once.
-func (m *processQueue) doneOnce(cid cid.Cid) func() {
-	return sync.OnceFunc(func() {
-		m.done(cid)
-	})
+// enqueue adds a sync request to the queue and waits for the result.
+func (pq *processQueue) enqueue(key string, process func() error) error {
+	resultCh := make(chan error, 1)
+	return pq.doEnqueue(key, process, resultCh)
+}
+
+// tryEnqueue adds a sync request to the queue without waiting for the result.
+func (pq *processQueue) tryEnqueue(key string, process func() error) bool {
+	return pq.doEnqueue(key, process, nil) == nil
+}
+
+// close shuts down the worker pool gracefully.
+func (pq *processQueue) close() {
+	pq.mu.Lock()
+	pq.closed = true
+	pq.mu.Unlock()
+	close(pq.queue)
+	pq.wg.Wait()
 }
 
 // QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
@@ -669,4 +733,9 @@ func (p *P2P) QueryDocIDsWithSETags(
 	}
 
 	return p.seCoordinator.QueryDocIDsByValues(ctx, collectionID, fieldValues)
+}
+
+// isBranchableSync returns true if this is a branchable collection sync operation.
+func isBranchableSync(collectionID, docID string) bool {
+	return collectionID != "" && docID == ""
 }

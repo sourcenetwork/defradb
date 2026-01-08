@@ -52,18 +52,25 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 		return err
 	}
 
-	return p.loadBlockLinks(sessionCtx, &linkSystem, block)
+	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+
+	return p.loadBlockLinks(sessionCtx, &linkSystem, block, bstore)
 }
 
 // loadBlockLinks loads the links of a block recursively.
 //
 // The function returns immediately on the first error encountered.
-func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
+func (p *P2P) loadBlockLinks(
+	ctx context.Context,
+	linkSys *linking.LinkSystem,
+	block *coreblock.Block,
+	bstore datastore.Blockstore,
+) error {
 	link, err := block.GenerateLink()
 	if err != nil {
 		return err
 	}
-	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+
 	merged, err := bstore.IsMerged(ctx, link.Cid)
 	if err != nil {
 		return err
@@ -111,7 +118,7 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 			return err
 		}
 
-		err = p.loadBlockLinks(ctx, linkSys, linkBlock)
+		err = p.loadBlockLinks(ctx, linkSys, linkBlock, bstore)
 		if err != nil {
 			return err
 		}

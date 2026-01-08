@@ -94,8 +94,9 @@ type VersionedFetcher struct {
 	// embed the regular doc fetcher
 	Fetcher
 
-	txn datastore.Txn
-	ctx context.Context
+	txn    datastore.Txn
+	ctx    context.Context
+	cancel context.CancelFunc
 
 	// Transient version store
 	root  corekv.TxnStore
@@ -130,8 +131,10 @@ func (vf *VersionedFetcher) Init(
 	vf.queuedCids = list.New()
 	vf.txn = txn
 
+	vf.ctx, vf.cancel = context.WithCancel(ctx)
+
 	// create store
-	root := memory.NewDatastore(ctx)
+	root := memory.NewDatastore(vf.ctx)
 	vf.root = root
 
 	// Copy the entire system store into the temp store so that important stuff
@@ -447,6 +450,10 @@ func (vf *VersionedFetcher) getDAGBlock(c cid.Cid) (*coreblock.Block, error) {
 
 // Close closes the VersionedFetcher.
 func (vf *VersionedFetcher) Close() error {
+	if vf.cancel != nil {
+		vf.cancel()
+	}
+
 	if err := vf.root.Close(); err != nil {
 		return err
 	}

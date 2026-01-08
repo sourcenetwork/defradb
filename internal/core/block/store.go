@@ -234,7 +234,13 @@ func updateHeads(
 		return NewErrMarkingAsMerged(blockLink.Cid, err)
 	}
 
-	for _, l := range block.AllLinks() {
+	// For collection blocks and composites, we only process Heads, Links are processed in their own transactions.
+	linksToProcess := block.AllLinks()
+	if block.Delta.IsCollection() || block.Delta.IsComposite() {
+		linksToProcess = block.Heads
+	}
+
+	for _, l := range linksToProcess {
 		linkCid := l.Cid
 		isHead, err := headset.IsHead(ctx, linkCid)
 		if err != nil {
@@ -274,8 +280,7 @@ func updateHeads(
 					err,
 					corelog.Any("Root", blockLink.Cid),
 				)
-				// OR should this also return like below comment??
-				// return nil, errors.Wrap("error adding head (when root is new head): %s ", root, err)
+				return NewErrAddingHead(blockLink.Cid, err)
 			}
 			continue
 		}

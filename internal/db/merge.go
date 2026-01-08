@@ -37,6 +37,11 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
+const (
+	// mergeBlockBatchSize is the maximum number of blocks to process in a single transaction during merge operations.
+	mergeBlockBatchSize = 100
+)
+
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
 	if err != nil {
@@ -72,6 +77,7 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 		if err != nil {
 			return err
 		}
+		break
 	}
 	return nil
 }
@@ -113,7 +119,9 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		return err
 	}
 
-	err = mp.mergeComposites(ctx)
+	// mergeComposites may commit and start new transactions for large DAGs,
+	// so we need to use the returned context which contains the current transaction
+	ctx, err = mp.mergeComposites(ctx)
 	if err != nil {
 		return err
 	}
@@ -129,6 +137,8 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		}
 	}
 
+	// Get the current transaction (may be different from original if batching occurred)
+	txn = datastore.CtxMustGetTxn(ctx)
 	err = txn.Commit()
 	if err != nil {
 		return err
@@ -185,12 +195,16 @@ type mergeProcessor struct {
 	blockLS    linking.LinkSystem
 	encBlockLS linking.LinkSystem
 	col        *collection
+	db         *DB
 
 	// docIDs contains all docIDs that have been merged so far by the mergeProcessor
 	docIDs map[string]struct{}
 
 	// composites is a list of composites that need to be merged.
 	composites *list.List
+
+	// blocksProcessed tracks how many blocks have been processed in the current transaction.
+	blocksProcessed int
 }
 
 func (db *DB) newMergeProcessor(
@@ -209,6 +223,7 @@ func (db *DB) newMergeProcessor(
 		blockLS:    blockLS,
 		encBlockLS: encBlockLS,
 		col:        col,
+		db:         db,
 		docIDs:     make(map[string]struct{}),
 		composites: list.New(),
 	}, nil
@@ -281,20 +296,20 @@ func (mp *mergeProcessor) loadComposites(
 	return nil
 }
 
-func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
+func (mp *mergeProcessor) mergeComposites(ctx context.Context) (context.Context, error) {
 	for e := mp.composites.Front(); e != nil; e = e.Next() {
 		block := e.Value.(*coreblock.Block)
 		link, err := block.GenerateLink()
 		if err != nil {
-			return err
+			return ctx, err
 		}
-		err = mp.processBlock(ctx, block, link)
+		ctx, err = mp.processBlock(ctx, block, link)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 	}
 
-	return nil
+	return ctx, nil
 }
 
 func (mp *mergeProcessor) loadEncryptionBlock(
@@ -338,52 +353,92 @@ func (mp *mergeProcessor) processEncryptedBlock(
 	return dagBlock, true, nil
 }
 
+// commitBatchIfNeeded checks if the current transaction has processed enough blocks and commits it.
+func (mp *mergeProcessor) commitBatchIfNeeded(ctx context.Context) (context.Context, error) {
+	if mp.blocksProcessed < mergeBlockBatchSize {
+		return ctx, nil
+	}
+
+	txn := datastore.CtxMustGetTxn(ctx)
+	err := txn.Commit()
+	if err != nil {
+		return ctx, err
+	}
+
+	// Create a new transaction using a fresh context to avoid reusing the committed transaction.
+	// ensureContextTxn would otherwise see the old (committed) transaction and try to reuse it.
+	freshCtx := context.Background()
+	newCtx, newTxn, err := ensureContextTxn(freshCtx, mp.db, false)
+	if err != nil {
+		return ctx, err
+	}
+
+	mp.blockLS.SetReadStorage(blockstore.NewIPLDStore(newTxn.Blockstore()))
+	mp.encBlockLS.SetReadStorage(blockstore.NewIPLDStore(newTxn.Encstore()))
+
+	mp.blocksProcessed = 0
+
+	return newCtx, nil
+}
+
 // processBlock merges the block and its children to the datastore and sets the head accordingly.
 func (mp *mergeProcessor) processBlock(
 	ctx context.Context,
 	dagBlock *coreblock.Block,
 	blockLink cidlink.Link,
-) error {
+) (context.Context, error) {
 	block, canRead, err := mp.processEncryptedBlock(ctx, dagBlock)
 	if err != nil {
-		return err
+		return ctx, err
 	}
 
 	if canRead {
 		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 
 		// If the CRDT is nil, it means the field is not part
 		// of the schema and we can safely ignore it.
 		if crdt == nil {
-			return nil
+			return ctx, nil
 		}
 
 		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
-			return err
+			return ctx, err
 		}
+
+		mp.blocksProcessed++
+		ctx, err = mp.commitBatchIfNeeded(ctx)
+		if err != nil {
+			return ctx, err
+		}
+	}
+
+	// For collection blocks, Links point to document composites which are processed in their own merge events.
+	if dagBlock.Delta.IsCollection() {
+		return ctx, nil
 	}
 
 	for _, link := range dagBlock.Links {
 		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.BlockSchemaPrototype)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 
 		childBlock, err := coreblock.GetFromNode(nd)
 		if err != nil {
-			return err
+			return ctx, err
 		}
 
-		if err := mp.processBlock(ctx, childBlock, link.Link); err != nil {
-			return err
+		ctx, err = mp.processBlock(ctx, childBlock, link.Link)
+		if err != nil {
+			return ctx, err
 		}
 	}
 
-	return nil
+	return ctx, nil
 }
 
 func decryptBlock(
