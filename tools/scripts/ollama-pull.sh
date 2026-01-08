@@ -1,4 +1,8 @@
 #!/bin/bash
+# Script to manually pull Ollama models by directly downloading blobs and manifests
+# Source: https://www.andreagrandi.it/posts/how-to-workaround-ollama-pull-issues/
+# Author: Andrea Grandi
+
 die(){
   echo "$1"
   exit 1
