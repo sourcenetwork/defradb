@@ -18,9 +18,11 @@ _=$(command -v curl) || die "Need curl"
 name=${1%%:*}
 [[ "$1" = *:* ]] && tag="${1##*:}" || tag=latest
 
-OLLAMA_MODELS=${OLLAMA_MODELS-/usr/share/ollama/.ollama/models}
-
-cd $OLLAMA_MODELS || die "Couldn't cd to OLLAMA_MODELS ($OLLAMA_MODELS)"
+OLLAMA_PATH=$HOME/.ollama
+[ ! -d $OLLAMA_PATH ] && { mkdir -p "$OLLAMA_PATH" || die "Couldn't mkdir OLLAMA_PATH ($OLLAMA_PATH)" ; }
+cd $OLLAMA_PATH || die "Couldn't cd to OLLAMA_PATH ($OLLAMA_PATH)"
+[ ! -d models ] && mkdir -p models
+cd models || die "Couldn't cd to models dir"
 [ ! -d blobs ] && mkdir -p blobs
 [ ! -d manifests ] && mkdir -p manifests
 manifest_dir="manifests/registry.ollama.ai/library/$name"
