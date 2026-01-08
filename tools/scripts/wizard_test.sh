@@ -96,7 +96,7 @@ send "\r"
 
 # --- Step 13: Health check completion ---
 expect {
-    -re ".*successfully.*" {}
+    -re ".*ready.*" {}
     timeout { puts "Timeout waiting for health check completion"; exit 1 }
 }
 send "\r"
