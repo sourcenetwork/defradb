@@ -226,9 +226,26 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	plan.planNode = plan.selectNode
 
 	// wire up any potential update mutation plan
+	// note: we need to also wire up the versionSelect
+	// planNode if its defined, using a parallelNode.
+	// Similar patterns would need to be taken for other
+	// plan nodes that would need to explicitly happen
+	// *after* an update that would've usally happened
+	// during the original Select plan.
 	if plan.update != nil {
 		plan.update.results = plan.planNode
-		plan.planNode = plan.update
+		if plan.update.versionSelect != nil {
+			m := &parallelNode{
+				p:         p,
+				source:    plan.update.versionSelect,
+				docMapper: docMapper{plan.update.results.DocumentMap()},
+			}
+			m.addChild(-1, plan.update)
+			m.addChild(plan.update.versionSelectIndex, plan.update.versionSelect)
+			plan.planNode = m
+		} else {
+			plan.planNode = plan.update
+		}
 	}
 
 	// The similarity plan need to be expanded before group, order, aggregate and limit or otherwise

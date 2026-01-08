@@ -11,9 +11,8 @@
 package planner
 
 import (
-	"fmt"
+	"slices"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -40,6 +39,9 @@ type updateNode struct {
 
 	results planNode
 
+	versionSelect      *dagScanNode
+	versionSelectIndex int
+
 	execInfo updateExecInfo
 }
 
@@ -65,9 +67,6 @@ func (n *updateNode) Next() (bool, error) {
 
 	n.currentValue = n.results.Value()
 
-	fmt.Println("pre update")
-	spew.Dump(n.currentValue)
-
 	docID, err := client.NewDocIDFromString(n.currentValue.GetID())
 	if err != nil {
 		return false, err
@@ -92,9 +91,6 @@ func (n *updateNode) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	fmt.Println("post update1")
-	spew.Dump(coreDoc)
 
 	n.currentValue = coreDoc
 	return true, nil
@@ -172,6 +168,33 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 	}
 	update.collection = col
 
+	// There is a single problem with the `SelectTopNode` approach as
+	// the update result plan. It will run an entire plan, including nodes
+	// we might want to run *after* the update has been applied, such
+	// as the version query. So we need to handle those nodes specially.
+	// At the moment, this is only the `dagScanNode` so we can
+	// extract the `_version` field if it exists, so we can manually
+	// add it later via a parallelNode
+	var versionSelect *mapper.Select
+	deleteIndex := -1
+	for i, field := range parsed.Select.Fields {
+		switch f := field.(type) {
+		case *mapper.Select:
+			if f.Name == request.VersionFieldName {
+				versionSelect = f
+				deleteIndex = i
+			}
+		}
+	}
+	if deleteIndex >= 0 {
+		parsed.Select.Fields = slices.Delete(parsed.Select.Fields, deleteIndex, deleteIndex+1)
+		commitSlct := &mapper.CommitSelect{
+			Select: *versionSelect,
+		}
+		update.versionSelect = p.DAGScan(commitSlct)
+		update.versionSelectIndex = versionSelect.Index
+	}
+
 	// create the results Select node
 	selectTopNode, err := p.SelectTopNode(&parsed.Select)
 	if err != nil {
@@ -180,7 +203,9 @@ func (p *Planner) UpdateDocs(parsed *mapper.Mutation) (planNode, error) {
 
 	// IMPORTANT: This assignment is a noop, but is left in place for
 	// documentation reasons. The undelying results plan is set during
-	// plan expansion. Specifically, the `expandSelectTopNode` function.
+	// plan expansion, including the rewiring to support nodes that
+	// need to run after the update. The rewiring can be found in the
+	// `expandSelectTopNode` function.
 	update.results = nil
 
 	selectTopNode.update = update

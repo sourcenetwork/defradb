@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -108,6 +110,9 @@ func (p *parallelNode) Init() error {
 	p.children = newChildren
 	p.childIndexes = newChildIndexes
 
+	for _, c := range p.children {
+		fmt.Printf("child: %T %+v\n", c, c)
+	}
 	return p.applyToPlans(func(n planNode) error {
 		return n.Init()
 	})
@@ -144,11 +149,11 @@ func (p *parallelNode) Next() (bool, error) {
 		var err error
 		// isMerge := false
 		switch n := plan.(type) {
-		case *scanNode, *typeIndexJoin:
-			// isMerge = true
-			next, err = p.nextMerge(i, n)
 		case *dagScanNode:
 			next, err = p.nextAppend(i, n)
+		default: // anything else is a merge
+			// isMerge = true
+			next, err = p.nextMerge(i, n)
 		}
 		if err != nil {
 			return false, err
@@ -161,6 +166,7 @@ func (p *parallelNode) Next() (bool, error) {
 }
 
 func (p *parallelNode) nextMerge(_ int, plan planNode) (bool, error) {
+	fmt.Println("parallelNode.NextMerge()")
 	if next, err := plan.Next(); !next {
 		return false, err
 	}
@@ -172,6 +178,7 @@ func (p *parallelNode) nextMerge(_ int, plan planNode) (bool, error) {
 	for i := range newFields {
 		if p.currentValue.Fields[i] == nil {
 			p.currentValue.Fields[i] = newFields[i]
+			fmt.Println("parallelNode.NextMerge() fields:", newFields[i])
 		}
 	}
 
@@ -184,6 +191,8 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 		return false, nil
 	}
 
+	fmt.Println("parallelNode.NextAppend()", key)
+
 	// pass the doc key as a reference through the prefixes interface
 	prefixes := []keys.Walkable{keys.DataStoreKey{DocID: key}}
 	plan.Prefixes(prefixes)
@@ -194,15 +203,19 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 
 	results := make([]core.Doc, 0)
 	for {
+		fmt.Println("parallelNode.NextAppend().planNext()")
 		next, err := plan.Next()
 		if err != nil {
+			fmt.Println("parallelNode.NextAppend().planNext() err", err)
 			return false, err
 		}
 
 		if !next {
+			fmt.Println("parallelNode.NextAppend().planNext() !next")
 			break
 		}
 
+		fmt.Println("parallelNode.NextAppend().planNext() value")
 		results = append(results, plan.Value())
 	}
 	p.currentValue.Fields[p.childIndexes[index]] = results
