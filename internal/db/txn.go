@@ -49,9 +49,9 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 			// Start an operation to prevent concurrent commit/discard.
 			txn.BasicTxn.StartOp()
 			explicitTxn := &Txn{
-				txn.BasicTxn,
-				txn.db,
-				true,
+				BasicTxn: txn.BasicTxn,
+				db:       txn.db,
+				explicit: true,
 			}
 			return InitContext(ctx, explicitTxn), explicitTxn, nil
 		case *datastore.BasicTxn:
@@ -64,9 +64,9 @@ func ensureContextTxn(ctx context.Context, db transactionDB, readOnly bool) (con
 			// Start an operation to prevent concurrent commit/discard.
 			txn.StartOp()
 			explicitTxn := &Txn{
-				txn,
-				nil,
-				true,
+				BasicTxn: txn,
+				db:       nil,
+				explicit: true,
 			}
 			return InitContext(ctx, explicitTxn), explicitTxn, nil
 		default:
@@ -85,6 +85,9 @@ type Txn struct {
 	*datastore.BasicTxn
 	db       *DB
 	explicit bool
+	// opEnded tracks whether EndOp has already been called for this explicit txn.
+	// This prevents multiple Commit/Discard calls from decrementing activeOps multiple times.
+	opEnded bool
 }
 
 var _ client.Txn = (*Txn)(nil)
@@ -103,7 +106,10 @@ func (txn *Txn) Commit() error {
 		// only be executed by the transaction creator. As such, a call to
 		// `Commit` on an explicit transaction should result in a no-op.
 		// End the operation to allow the creator to commit/discard.
-		txn.BasicTxn.EndOp()
+		if !txn.opEnded {
+			txn.BasicTxn.EndOp()
+			txn.opEnded = true
+		}
 		return nil
 	}
 	return txn.BasicTxn.Commit()
@@ -115,7 +121,10 @@ func (txn *Txn) Discard() {
 		// only be executed by the transaction creator. As such, a call to
 		// `Discard` on an explicit transaction should result in a no-op.
 		// End the operation to allow the creator to commit/discard.
-		txn.BasicTxn.EndOp()
+		if !txn.opEnded {
+			txn.BasicTxn.EndOp()
+			txn.opEnded = true
+		}
 		return
 	}
 	txn.BasicTxn.Discard()

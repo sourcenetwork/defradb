@@ -49,20 +49,19 @@ func TestTxn_CommitWhileOperationInProgress(t *testing.T) {
 	// End the operation
 	basicTxn.EndOp()
 
-	// Now commit should work
+	// Now commit should succeed
 	err = txn.Commit()
 	require.NoError(t, err)
 }
 
 // TestTxn_ConcurrentCommitDuringOperation verifies that concurrent commit attempts
-// are correctly rejected while an operation is using the transaction.
+// are rejected while an operation is using the transaction.
 func TestTxn_ConcurrentCommitDuringOperation(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
-	// Create a manual transaction
 	txn, err := db.NewTxn(false)
 	require.NoError(t, err)
 
@@ -70,7 +69,6 @@ func TestTxn_ConcurrentCommitDuringOperation(t *testing.T) {
 
 	var wg sync.WaitGroup
 	var commitErr error
-	operationDone := make(chan struct{})
 
 	// Goroutine 1: Simulates a long-running operation
 	wg.Add(1)
@@ -78,66 +76,158 @@ func TestTxn_ConcurrentCommitDuringOperation(t *testing.T) {
 		defer wg.Done()
 		basicTxn.StartOp()
 		defer basicTxn.EndOp()
-
-		// Simulate some work
 		time.Sleep(100 * time.Millisecond)
-		close(operationDone)
 	}()
 
-	// Goroutine 2: User tries to commit while operation is running
+	// Goroutine 2: Attempts to commit while operation is running
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		// Wait a bit to ensure operation has started
 		time.Sleep(20 * time.Millisecond)
-
-		// Try to commit - should fail because operation is in progress
 		commitErr = txn.Commit()
 	}()
 
 	wg.Wait()
 
-	// The concurrent commit should have failed
-	require.ErrorIs(t, commitErr, datastore.ErrTxnHasActiveOps,
-		"Concurrent commit during operation should fail")
+	// Concurrent commit should have failed
+	require.ErrorIs(t, commitErr, datastore.ErrTxnHasActiveOps)
 
-	// After operation is done, commit should work
+	// After operation completes, commit should succeed
 	err = txn.Commit()
 	require.NoError(t, err)
 }
 
-// TestTxn_ExplicitTxnOperationTracking verifies that when a user-created transaction
-// is used in an operation via ensureContextTxn, the operation tracking works correctly
-// and prevents premature commits.
+// TestTxn_ExplicitTxnOperationTracking verifies that ensureContextTxn correctly
+// tracks operations and prevents premature commits.
 func TestTxn_ExplicitTxnOperationTracking(t *testing.T) {
 	ctx := context.Background()
 	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 	defer db.Close()
 
-	// Create a manual transaction
 	userTxn, err := db.NewTxn(false)
 	require.NoError(t, err)
 
-	// Set the transaction on the context (as a user would do)
+	// Set transaction on context and create explicit wrapper
 	ctx = datastore.CtxSetFromClientTxn(ctx, userTxn)
-
-	// Call ensureContextTxn (which is what operations do internally)
-	// This should call StartOp on the underlying BasicTxn
-	ctx, opTxn, err := ensureContextTxn(ctx, db, false)
+	_, opTxn, err := ensureContextTxn(ctx, db, false)
 	require.NoError(t, err)
 
-	// Now the user-created txn should not be committable because ensureContextTxn
-	// called StartOp
+	// User cannot commit while operation wrapper exists
 	err = userTxn.Commit()
-	require.ErrorIs(t, err, datastore.ErrTxnHasActiveOps,
-		"User txn should not be committable while operation is using it")
+	require.ErrorIs(t, err, datastore.ErrTxnHasActiveOps)
 
-	// When the operation "completes" (calls Commit/Discard on explicit wrapper),
-	// EndOp is called automatically
+	// Operation completes
 	opTxn.Discard()
 
-	// Now user should be able to commit
+	// Now user can commit
 	err = userTxn.Commit()
+	require.NoError(t, err)
+}
+
+// TestTxn_MultipleDiscardCalls verifies that calling Discard multiple times
+// on an explicit transaction does not cause incorrect activeOps count.
+func TestTxn_MultipleDiscardCalls(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	userTxn, err := db.NewTxn(false)
+	require.NoError(t, err)
+
+	ctx = datastore.CtxSetFromClientTxn(ctx, userTxn)
+	_, opTxn, err := ensureContextTxn(ctx, db, false)
+	require.NoError(t, err)
+
+	// Multiple Discard calls should not cause negative activeOps
+	opTxn.Discard()
+	opTxn.Discard()
+	opTxn.Discard()
+
+	// Commit should still work (activeOps should be 0, not negative)
+	err = userTxn.Commit()
+	require.NoError(t, err)
+}
+
+// TestTxn_MultipleOperationsThenCommit verifies that multiple sequential operations
+// can be performed on a transaction before a single commit.
+func TestTxn_MultipleOperationsThenCommit(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	userTxn, err := db.NewTxn(false)
+	require.NoError(t, err)
+
+	ctx = datastore.CtxSetFromClientTxn(ctx, userTxn)
+
+	// First operation
+	_, opTxn1, err := ensureContextTxn(ctx, db, false)
+	require.NoError(t, err)
+	opTxn1.Discard()
+
+	// Second operation
+	_, opTxn2, err := ensureContextTxn(ctx, db, false)
+	require.NoError(t, err)
+	opTxn2.Discard()
+
+	// Third operation
+	_, opTxn3, err := ensureContextTxn(ctx, db, false)
+	require.NoError(t, err)
+	opTxn3.Discard()
+
+	// Single commit at the end
+	err = userTxn.Commit()
+	require.NoError(t, err)
+}
+
+// TestTxn_DiscardThenOperationThenCommit verifies that a transaction can be
+// used after being discarded, if supported by the underlying store.
+func TestTxn_DiscardThenOperationThenCommit(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	userTxn, err := db.NewTxn(false)
+	require.NoError(t, err)
+
+	// Discard multiple times before any operation
+	userTxn.Discard()
+	userTxn.Discard()
+
+	// Perform an operation
+	ctx = datastore.CtxSetFromClientTxn(context.Background(), userTxn)
+	_, opTxn, err := ensureContextTxn(ctx, db, false)
+	require.NoError(t, err)
+
+	opTxn.Discard()
+
+	// Commit should work
+	err = userTxn.Commit()
+	require.NoError(t, err)
+}
+
+// TestTxn_ImmediateDiscard verifies that discarding a transaction immediately
+// after creation without performing any operations works correctly.
+func TestTxn_ImmediateDiscard(t *testing.T) {
+	ctx := context.Background()
+	db, err := newBadgerDB(ctx)
+	require.NoError(t, err)
+	defer db.Close()
+
+	userTxn, err := db.NewTxn(false)
+	require.NoError(t, err)
+
+	// Discard immediately without any operations
+	userTxn.Discard()
+	userTxn.Discard()
+
+	// Verify database is still functional
+	userTxn2, err := db.NewTxn(false)
+	require.NoError(t, err)
+	err = userTxn2.Commit()
 	require.NoError(t, err)
 }
