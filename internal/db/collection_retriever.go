@@ -55,7 +55,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	}
 	cols, err := r.db.GetCollections(
 		ctx,
-		options.GetCollections().SetVersionID(headIterator.CurrentBlock().Delta.GetSchemaVersionID()),
+		options.GetCollections().SetVersionID(headIterator.CurrentBlock().Delta.GetCollectionVersionID()),
 	)
 
 	if err != nil {
@@ -64,7 +64,7 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 
 	if len(cols) == 0 {
 		return nil, client.NewErrCollectionNotFoundForCollectionVersion(
-			headIterator.CurrentBlock().Delta.GetSchemaVersionID(),
+			headIterator.CurrentBlock().Delta.GetCollectionVersionID(),
 		)
 	}
 

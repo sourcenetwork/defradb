@@ -29,11 +29,11 @@ type LWWDelta struct {
 	DocID     []byte
 	FieldName string
 	Priority  uint64
-	// SchemaVersionID is the schema version datastore key at the time of commit.
+	// CollectionVersionID is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
-	SchemaVersionID string
-	Data            []byte
+	CollectionVersionID string
+	Data                []byte
 }
 
 var _ Delta = (*LWWDelta)(nil)
@@ -44,11 +44,11 @@ var _ Delta = (*LWWDelta)(nil)
 func (d LWWDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type LWWDelta struct {
-		docID     		Bytes
-		fieldName 		String
-		priority  		Int
-		schemaVersionID String
-		data            Bytes
+		docID     			Bytes
+		fieldName 			String
+		priority  			Int
+		collectionVersionID String
+		data            	Bytes
 	}`)
 }
 
@@ -64,10 +64,10 @@ func (d *LWWDelta) SetPriority(prio uint64) {
 
 // LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
 type LWW struct {
-	store           datastore.Keyedstore
-	key             keys.DataStoreKey
-	schemaVersionID string
-	fieldName       string
+	store               datastore.Keyedstore
+	key                 keys.DataStoreKey
+	collectionVersionID string
+	fieldName           string
 }
 
 var _ FieldLevelCRDT = (*LWW)(nil)
@@ -77,15 +77,15 @@ var _ ReplicatedData = (*LWW)(nil)
 // backed by a LWWRegister CRDT.
 func NewLWW(
 	store datastore.Keyedstore,
-	schemaVersionID string,
+	collectionVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 ) *LWW {
 	return &LWW{
-		key:             key,
-		store:           store,
-		schemaVersionID: schemaVersionID,
-		fieldName:       fieldName,
+		key:                 key,
+		store:               store,
+		collectionVersionID: collectionVersionID,
+		fieldName:           fieldName,
 	}
 }
 
@@ -101,10 +101,10 @@ func (l *LWW) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	}
 
 	return &LWWDelta{
-		Data:            bytes,
-		DocID:           []byte(l.key.DocID),
-		FieldName:       l.fieldName,
-		SchemaVersionID: l.schemaVersionID,
+		Data:                bytes,
+		DocID:               []byte(l.key.DocID),
+		FieldName:           l.fieldName,
+		CollectionVersionID: l.collectionVersionID,
 	}, nil
 }
 

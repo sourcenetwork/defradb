@@ -107,14 +107,14 @@ func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *h
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
-	schemaVersionID, err := io.ReadAll(req.Body)
+	collectionVersionID, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
 	opt := options.WithIdentity(options.SetActiveCollectionVersion(), identity.FromContext(ctx))
-	err = db.SetActiveCollectionVersion(ctx, string(schemaVersionID), opt)
+	err = db.SetActiveCollectionVersion(ctx, string(collectionVersionID), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

@@ -244,10 +244,10 @@ func (w *Wrapper) PatchCollection(
 
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
-	schemaVersionID string,
+	collectionVersionID string,
 	opts ...*options.SetActiveCollectionVersionOptions,
 ) error {
-	return w.client.SetActiveCollectionVersion(ctx, schemaVersionID, opts...)
+	return w.client.SetActiveCollectionVersion(ctx, collectionVersionID, opts...)
 }
 
 func (w *Wrapper) AddView(

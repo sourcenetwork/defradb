@@ -395,7 +395,7 @@ func (t *transaction) getNACStatus(this js.Value, args []js.Value) (js.Value, er
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.NAC()
+	opt := options.ReEnableNAC()
 	setOptIdentity(opt, args, 0)
 	res, err := t.txn.GetNACStatus(ctx, opt)
 	if err != nil {
@@ -409,7 +409,7 @@ func (t *transaction) reEnableNAC(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.NAC()
+	opt := options.ReEnableNAC()
 	setOptIdentity(opt, args, 0)
 	err = t.txn.ReEnableNAC(ctx, opt)
 	return js.Undefined(), err
@@ -420,7 +420,7 @@ func (t *transaction) disableNAC(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.NAC()
+	opt := options.ReEnableNAC()
 	setOptIdentity(opt, args, 0)
 	err = t.txn.DisableNAC(ctx, opt)
 	return js.Undefined(), err

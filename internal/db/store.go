@@ -247,7 +247,7 @@ func (db *DB) PatchCollection(
 
 func (db *DB) SetActiveCollectionVersion(
 	ctx context.Context,
-	schemaVersionID string,
+	collectionVersionID string,
 	opts ...*options.SetActiveCollectionVersionOptions,
 ) error {
 	ctx, span := tracer.Start(ctx)
@@ -268,7 +268,7 @@ func (db *DB) SetActiveCollectionVersion(
 	}
 	defer txn.Discard()
 
-	err = db.setActiveCollectionVersion(ctx, schemaVersionID)
+	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
 	if err != nil {
 		return err
 	}

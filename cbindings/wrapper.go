@@ -515,7 +515,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	return deleteRelationshipRes, nil
 }
 
-func (w *CWrapper) GetNACStatus(ctx context.Context, opts ...*options.NACOptions) (client.NACStatusResult, error) {
+func (w *CWrapper) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 
@@ -528,7 +528,7 @@ func (w *CWrapper) GetNACStatus(ctx context.Context, opts ...*options.NACOptions
 	return unmarshalResult[client.NACStatusResult](res.Value)
 }
 
-func (w *CWrapper) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (w *CWrapper) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 
@@ -541,7 +541,7 @@ func (w *CWrapper) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions)
 	return nil
 }
 
-func (w *CWrapper) DisableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (w *CWrapper) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 
@@ -711,8 +711,8 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts ...*options.RefreshVie
 }
 
 func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
-	src := C.CString(config.SourceSchemaVersionID)
-	dst := C.CString(config.DestinationSchemaVersionID)
+	src := C.CString(config.SourceCollectionVersionID)
+	dst := C.CString(config.DestinationCollectionVersionID)
 	lensConfig, err := json.Marshal(config.Lens)
 	if err != nil {
 		return "", err

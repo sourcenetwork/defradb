@@ -352,11 +352,11 @@ func (w *Wrapper) PatchCollection(
 
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
-	schemaVersionID string,
+	collectionVersionID string,
 	opts ...*options.SetActiveCollectionVersionOptions,
 ) error {
 	args := []string{"client", "collection", "set-active"}
-	args = append(args, schemaVersionID)
+	args = append(args, collectionVersionID)
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
@@ -416,8 +416,8 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 	if err != nil {
 		return "", err
 	}
-	args = append(args, config.SourceSchemaVersionID)
-	args = append(args, config.DestinationSchemaVersionID)
+	args = append(args, config.SourceCollectionVersionID)
+	args = append(args, config.DestinationCollectionVersionID)
 	args = append(args, string(lenses))
 
 	data, err := w.cmd.execute(ctx, args)

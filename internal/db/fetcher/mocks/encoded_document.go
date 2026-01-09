@@ -36,6 +36,50 @@ func (_m *EncodedDocument) EXPECT() *EncodedDocument_Expecter {
 	return &EncodedDocument_Expecter{mock: &_m.Mock}
 }
 
+// CollectionVersionID provides a mock function for the type EncodedDocument
+func (_mock *EncodedDocument) CollectionVersionID() string {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for CollectionVersionID")
+	}
+
+	var r0 string
+	if returnFunc, ok := ret.Get(0).(func() string); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	return r0
+}
+
+// EncodedDocument_CollectionVersionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CollectionVersionID'
+type EncodedDocument_CollectionVersionID_Call struct {
+	*mock.Call
+}
+
+// CollectionVersionID is a helper method to define mock.On call
+func (_e *EncodedDocument_Expecter) CollectionVersionID() *EncodedDocument_CollectionVersionID_Call {
+	return &EncodedDocument_CollectionVersionID_Call{Call: _e.mock.On("CollectionVersionID")}
+}
+
+func (_c *EncodedDocument_CollectionVersionID_Call) Run(run func()) *EncodedDocument_CollectionVersionID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *EncodedDocument_CollectionVersionID_Call) Return(s string) *EncodedDocument_CollectionVersionID_Call {
+	_c.Call.Return(s)
+	return _c
+}
+
+func (_c *EncodedDocument_CollectionVersionID_Call) RunAndReturn(run func() string) *EncodedDocument_CollectionVersionID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ID provides a mock function for the type EncodedDocument
 func (_mock *EncodedDocument) ID() []byte {
 	ret := _mock.Called()
@@ -174,50 +218,6 @@ func (_c *EncodedDocument_Reset_Call) Return() *EncodedDocument_Reset_Call {
 
 func (_c *EncodedDocument_Reset_Call) RunAndReturn(run func()) *EncodedDocument_Reset_Call {
 	_c.Run(run)
-	return _c
-}
-
-// SchemaVersionID provides a mock function for the type EncodedDocument
-func (_mock *EncodedDocument) SchemaVersionID() string {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for SchemaVersionID")
-	}
-
-	var r0 string
-	if returnFunc, ok := ret.Get(0).(func() string); ok {
-		r0 = returnFunc()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-	return r0
-}
-
-// EncodedDocument_SchemaVersionID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SchemaVersionID'
-type EncodedDocument_SchemaVersionID_Call struct {
-	*mock.Call
-}
-
-// SchemaVersionID is a helper method to define mock.On call
-func (_e *EncodedDocument_Expecter) SchemaVersionID() *EncodedDocument_SchemaVersionID_Call {
-	return &EncodedDocument_SchemaVersionID_Call{Call: _e.mock.On("SchemaVersionID")}
-}
-
-func (_c *EncodedDocument_SchemaVersionID_Call) Run(run func()) *EncodedDocument_SchemaVersionID_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *EncodedDocument_SchemaVersionID_Call) Return(s string) *EncodedDocument_SchemaVersionID_Call {
-	_c.Call.Return(s)
-	return _c
-}
-
-func (_c *EncodedDocument_SchemaVersionID_Call) RunAndReturn(run func() string) *EncodedDocument_SchemaVersionID_Call {
-	_c.Call.Return(run)
 	return _c
 }
 

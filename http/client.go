@@ -174,7 +174,7 @@ func (c *Client) PatchCollection(
 
 func (c *Client) SetActiveCollectionVersion(
 	ctx context.Context,
-	schemaVersionID string,
+	collectionVersionID string,
 	opts ...*options.SetActiveCollectionVersionOptions,
 ) error {
 	if len(opts) > 0 && opts[0] != nil {
@@ -183,7 +183,8 @@ func (c *Client) SetActiveCollectionVersion(
 
 	methodURL := c.http.apiURL.JoinPath("collections", "default")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(),
+		strings.NewReader(collectionVersionID))
 	if err != nil {
 		return err
 	}

@@ -346,14 +346,15 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 
 	cols, err := p.db.GetCollections(
 		ctx,
-		options.GetCollections().SetVersionID(block.Delta.GetSchemaVersionID()),
+		options.GetCollections().SetVersionID(block.Delta.GetCollectionVersionID()),
 	)
 	if err != nil {
 		log.ErrorE("Failed to get collections", err)
 		return false
 	}
 	if len(cols) == 0 {
-		log.Info("No collections found", corelog.Any("Schema Version ID", block.Delta.GetSchemaVersionID()))
+		log.Info("No collections found",
+			corelog.Any("Collection Version ID", block.Delta.GetCollectionVersionID()))
 		return false
 	}
 

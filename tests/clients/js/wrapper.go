@@ -232,7 +232,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	return out, nil
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context, opts ...*options.NACOptions) (client.NACStatusResult, error) {
+func (w *Wrapper) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
 	var optsVal sysjs.Value
 	var err error
 	if len(opts) > 0 && opts[0] != nil {
@@ -254,7 +254,7 @@ func (w *Wrapper) GetNACStatus(ctx context.Context, opts ...*options.NACOptions)
 	return out, nil
 }
 
-func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	var optsVal sysjs.Value
 	var err error
 	if len(opts) > 0 && opts[0] != nil {
@@ -269,7 +269,7 @@ func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) 
 	return err
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (w *Wrapper) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	var optsVal sysjs.Value
 	var err error
 	if len(opts) > 0 && opts[0] != nil {
@@ -363,7 +363,7 @@ func (w *Wrapper) PatchCollection(
 
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
-	schemaVersionID string,
+	collectionVersionID string,
 	opts ...*options.SetActiveCollectionVersionOptions,
 ) error {
 	var optsVal sysjs.Value
@@ -376,7 +376,7 @@ func (w *Wrapper) SetActiveCollectionVersion(
 	} else {
 		optsVal = sysjs.Undefined()
 	}
-	_, err = execute(ctx, w.value, "setActiveCollectionVersion", schemaVersionID, optsVal)
+	_, err = execute(ctx, w.value, "setActiveCollectionVersion", collectionVersionID, optsVal)
 	return err
 }
 
