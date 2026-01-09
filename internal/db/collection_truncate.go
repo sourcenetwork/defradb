@@ -31,8 +31,7 @@ func (c *collection) Truncate(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	// todo - probably need a truncate perm
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentDeletePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeCollectionTruncatePerm); err != nil {
 		return err
 	}
 

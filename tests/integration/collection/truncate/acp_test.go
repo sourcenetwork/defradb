@@ -17,33 +17,41 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
+const policy = `
+name: Test Policy
+
+description: A Policy
+
+resources:
+- name: users
+  permissions:
+  - name: read
+    expr: reader + updater + deleter
+  - name: update
+    expr: updater
+  - name: delete
+    expr: deleter
+
+  relations:
+  - name: reader
+    types:
+    - actor
+
+  - name: updater
+    types:
+    - actor
+
+  - name: deleter
+    types:
+    - actor
+`
+
 func TestCollectionTruncateACP_RemovedPrivateDocumentRetainsPermissions(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
-				Policy: `
-					name: test
-					description: A Policy
-
-					actor:
-						name: actor
-
-					resources:
-						users:
-							permissions:
-								read:
-									expr: owner
-								update:
-									expr: owner
-								delete:
-									expr: owner
-
-							relations:
-								owner:
-									types:
-									- actor
-				`,
+				Policy:   policy,
 			},
 			&action.AddSchema{
 				Schema: `
@@ -97,28 +105,7 @@ func TestCollectionTruncateACP_RemovedPublicDocumentRetainsPermissions(t *testin
 		Actions: []any{
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
-				Policy: `
-					name: test
-					description: A Policy
-
-					actor:
-						name: actor
-
-					resources:
-						users:
-							permissions:
-								read:
-									expr: owner
-								update:
-									expr: owner
-								delete:
-									expr: owner
-
-							relations:
-								owner:
-									types:
-									- actor
-				`,
+				Policy:   policy,
 			},
 			&action.AddSchema{
 				Schema: `

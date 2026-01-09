@@ -10,12 +10,20 @@
 
 package action
 
-import "github.com/sourcenetwork/immutable"
+import (
+	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
+)
 
 type Truncate struct {
 	stateful
 
 	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	CollectionIndex int
 
@@ -35,7 +43,9 @@ func (a *Truncate) Execute() {
 		nodeID := nodeIDs[index]
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionIndex]
 
+		a.s.Ctx = getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
 		err := collection.Truncate(a.s.Ctx)
+		resetStateContext(a.s)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
