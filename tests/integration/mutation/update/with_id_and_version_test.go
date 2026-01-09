@@ -37,6 +37,8 @@ func TestMutationUpdate_WithIdAndVersion_ReturnResults(t *testing.T) {
 						name
 						_version {
 							cid
+							height
+							fieldName
 						}
 					}
 				}`,

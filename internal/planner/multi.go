@@ -166,7 +166,6 @@ func (p *parallelNode) Next() (bool, error) {
 }
 
 func (p *parallelNode) nextMerge(_ int, plan planNode) (bool, error) {
-	fmt.Println("parallelNode.NextMerge()")
 	if next, err := plan.Next(); !next {
 		return false, err
 	}
@@ -178,7 +177,6 @@ func (p *parallelNode) nextMerge(_ int, plan planNode) (bool, error) {
 	for i := range newFields {
 		if p.currentValue.Fields[i] == nil {
 			p.currentValue.Fields[i] = newFields[i]
-			fmt.Println("parallelNode.NextMerge() fields:", newFields[i])
 		}
 	}
 
@@ -191,7 +189,6 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 		return false, nil
 	}
 
-	fmt.Println("parallelNode.NextAppend()", key)
 
 	// pass the doc key as a reference through the prefixes interface
 	prefixes := []keys.Walkable{keys.DataStoreKey{DocID: key}}
@@ -203,19 +200,15 @@ func (p *parallelNode) nextAppend(index int, plan planNode) (bool, error) {
 
 	results := make([]core.Doc, 0)
 	for {
-		fmt.Println("parallelNode.NextAppend().planNext()")
 		next, err := plan.Next()
 		if err != nil {
-			fmt.Println("parallelNode.NextAppend().planNext() err", err)
 			return false, err
 		}
 
 		if !next {
-			fmt.Println("parallelNode.NextAppend().planNext() !next")
 			break
 		}
 
-		fmt.Println("parallelNode.NextAppend().planNext() value")
 		results = append(results, plan.Value())
 	}
 	p.currentValue.Fields[p.childIndexes[index]] = results
