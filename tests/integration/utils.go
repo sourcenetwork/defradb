@@ -2055,6 +2055,16 @@ nodeLoop:
 			options = append(options, client.WithOperationName(action.OperationName.Value()))
 		}
 		if action.Variables.HasValue() {
+			variables := action.Variables.Value()
+			// interpolate any `DocIndex` values within the variables
+			// object
+			for k, v := range variables {
+				switch val := v.(type) {
+				case DocIndex:
+					docID := s.DocIDs[val.CollectionIndex][val.Index]
+					variables[k] = docID.String()
+				}
+			}
 			options = append(options, client.WithVariables(action.Variables.Value()))
 		}
 
