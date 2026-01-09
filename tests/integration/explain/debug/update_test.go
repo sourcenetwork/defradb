@@ -21,8 +21,8 @@ var updatePattern = dataMap{
 	"explain": dataMap{
 		"operationNode": []dataMap{
 			{
-				"updateNode": dataMap{
-					"selectTopNode": dataMap{
+				"selectTopNode": dataMap{
+					"updateNode": dataMap{
 						"selectNode": dataMap{
 							"scanNode": dataMap{},
 						},

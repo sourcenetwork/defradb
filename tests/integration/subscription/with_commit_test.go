@@ -176,6 +176,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 	updateCid := testUtils.NewSameValue()
 
 	docID := "bae-45e90427-d499-598b-902a-6a3c65d0b504"
+	createDocCID := "bafyreialxrvwrz4rhgomch7kr7scx6t7m6xspbjecvzneirkgskh2tjele"
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -235,6 +236,9 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 							"_version": []map[string]any{
 								{
 									"cid": updateCid,
+								},
+								{
+									"cid": createDocCID,
 								},
 							},
 						},
