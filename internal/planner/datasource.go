@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
@@ -26,7 +27,11 @@ func (p *Planner) getSource(parsed *mapper.Select) (planSource, error) {
 }
 
 func (p *Planner) getCollectionScanPlan(mapperSelect *mapper.Select) (planSource, error) {
-	col, err := p.db.GetCollectionByName(p.ctx, mapperSelect.CollectionName)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		mapperSelect.CollectionName,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return planSource{}, err
 	}

@@ -14,7 +14,9 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -24,7 +26,11 @@ import (
 
 const marker = byte(0xff)
 
-func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (p *P2P) AddP2PCollections(
+	ctx context.Context,
+	ident immutable.Option[identity.Identity],
+	collectionNames ...string,
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -36,7 +42,7 @@ func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			options.GetCollections().SetName(col),
+			options.WithIdentity(options.GetCollections(), ident).SetName(col),
 		)
 		if err != nil {
 			return err
@@ -69,7 +75,11 @@ func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 	return nil
 }
 
-func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (p *P2P) RemoveP2PCollections(
+	ctx context.Context,
+	ident immutable.Option[identity.Identity],
+	collectionNames ...string,
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -81,7 +91,7 @@ func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			options.GetCollections().SetName(col),
+			options.WithIdentity(options.GetCollections(), ident).SetName(col),
 		)
 		if err != nil {
 			return err
@@ -114,7 +124,10 @@ func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 	return nil
 }
 
-func (p *P2P) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (p *P2P) GetAllP2PCollections(
+	ctx context.Context,
+	ident immutable.Option[identity.Identity],
+) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -146,7 +159,7 @@ func (p *P2P) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			options.GetCollections().SetCollectionID(key.CollectionID),
+			options.WithIdentity(options.GetCollections(), ident).SetCollectionID(key.CollectionID),
 		)
 		if err != nil {
 			return nil, err

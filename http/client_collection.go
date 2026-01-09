@@ -54,6 +54,9 @@ func (c *Collection) Create(
 	doc *client.Document,
 	opts ...*options.CollectionCreateOptions,
 ) error {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	body, err := doc.String()
@@ -81,6 +84,9 @@ func (c *Collection) CreateMany(
 	docs []*client.Document,
 	opts ...*options.CollectionCreateOptions,
 ) error {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	var docMapList []json.RawMessage
@@ -138,6 +144,9 @@ func (c *Collection) Update(
 	doc *client.Document,
 	opts ...*options.CollectionUpdateOptions,
 ) error {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, doc.ID().String())
 
 	body, err := doc.ToJSONPatch()
@@ -162,18 +171,35 @@ func (c *Collection) Save(
 	doc *client.Document,
 	opts ...*options.CollectionSaveOptions,
 ) error {
-	_, err := c.Get(ctx, doc.ID(), true)
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
+	var getOpts []*options.CollectionGetOptions
+	if len(opts) > 0 && opts[0] != nil && opts[0].Identity.HasValue() {
+		getOpts = []*options.CollectionGetOptions{
+			options.CollectionGet().SetIdentity(opts[0].Identity.Value()),
+		}
+	}
+	_, err := c.Get(ctx, doc.ID(), true, getOpts...)
 	if err == nil {
-		return c.Update(ctx, doc)
+		var updateOpts []*options.CollectionUpdateOptions
+		if len(opts) > 0 && opts[0] != nil && opts[0].Identity.HasValue() {
+			updateOpts = []*options.CollectionUpdateOptions{
+				options.CollectionUpdate().SetIdentity(opts[0].Identity.Value()),
+			}
+		}
+		return c.Update(ctx, doc, updateOpts...)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		var createOpts []*options.CollectionCreateOptions
 		if len(opts) > 0 && opts[0] != nil {
-			createOpts = []*options.CollectionCreateOptions{
-				options.CollectionCreate().
-					SetEncryptDoc(opts[0].EncryptDoc).
-					SetEncryptedFields(opts[0].EncryptedFields),
+			createOpt := options.CollectionCreate().
+				SetEncryptDoc(opts[0].EncryptDoc).
+				SetEncryptedFields(opts[0].EncryptedFields)
+			if opts[0].Identity.HasValue() {
+				createOpt.SetIdentity(opts[0].Identity.Value())
 			}
+			createOpts = []*options.CollectionCreateOptions{createOpt}
 		}
 		return c.Create(ctx, doc, createOpts...)
 	}
@@ -185,6 +211,9 @@ func (c *Collection) Delete(
 	docID client.DocID,
 	opts ...*options.CollectionDeleteOptions,
 ) (bool, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, docID.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
@@ -220,6 +249,9 @@ func (c *Collection) UpdateWithFilter(
 	updater string,
 	opts ...*options.CollectionUpdateWithFilterOptions,
 ) (*client.UpdateResult, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	request := CollectionUpdateRequest{
@@ -248,6 +280,9 @@ func (c *Collection) DeleteWithFilter(
 	filter any,
 	opts ...*options.CollectionDeleteWithFilterOptions,
 ) (*client.DeleteResult, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	request := CollectionDeleteRequest{
@@ -277,6 +312,9 @@ func (c *Collection) Get(
 	showDeleted bool,
 	opts ...*options.CollectionGetOptions,
 ) (*client.Document, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
 	query := url.Values{}
 	if showDeleted {
 		query.Add("show_deleted", "true")
@@ -371,6 +409,9 @@ func (c *Collection) CreateIndex(
 	indexDesc client.IndexCreateRequest,
 	opts ...*options.CollectionCreateIndexOptions,
 ) (client.IndexDescription, error) {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes")
 
 	body, err := json.Marshal(&indexDesc)

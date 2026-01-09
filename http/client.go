@@ -416,6 +416,9 @@ func (c *Client) ExecRequest(
 	query string,
 	opts ...*options.ExecRequestOptions,
 ) *client.RequestResult {
+	if len(opts) > 0 && opts[0] != nil {
+		ctx = withOptIdentity(ctx, opts[0])
+	}
 	methodURL := c.http.apiURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 

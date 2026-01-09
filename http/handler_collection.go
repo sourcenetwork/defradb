@@ -307,13 +307,14 @@ func (h *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 	name := chi.URLParam(req, "name")
-	col, err := db.GetCollectionByName(ctx, name)
+	ident := identity.FromContext(ctx)
+	col, err := db.GetCollectionByName(ctx, name, options.WithIdentity(options.GetCollectionByName(), ident))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	getIndexesOpt := options.WithIdentity(options.CollectionGetIndexes(), identity.FromContext(ctx))
+	getIndexesOpt := options.WithIdentity(options.CollectionGetIndexes(), ident)
 
 	indexes, err := col.GetIndexes(ctx, getIndexesOpt)
 	if err != nil {

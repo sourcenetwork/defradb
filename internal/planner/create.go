@@ -169,14 +169,21 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
 		createOptions: []*options.CollectionCreateOptions{
-			options.CollectionCreate().
-				SetEncryptDoc(parsed.Encrypt).
-				SetEncryptedFields(parsed.EncryptFields),
+			options.WithIdentity(
+				options.CollectionCreate().
+					SetEncryptDoc(parsed.Encrypt).
+					SetEncryptedFields(parsed.EncryptFields),
+				p.identity,
+			),
 		},
 	}
 
 	// get collection
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		parsed.Name,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}

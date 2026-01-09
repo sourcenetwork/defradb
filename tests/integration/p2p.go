@@ -91,8 +91,9 @@ func connectPeers(
 		corelog.Any("Target", targetAddresses))
 
 	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
+	opt := options.WithIdentity(options.Connect(), getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
 
-	err = connectWithRetry(ctx, sourceNode, targetAddresses)
+	err = connectWithRetry(ctx, sourceNode, targetAddresses, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -128,7 +129,8 @@ func reconnectPeers(s *state.State) {
 				corelog.Any("Source", sourceAddresses),
 				corelog.Any("Target", targetAddresses))
 
-			err = connectWithRetry(ctx, sourceNode, targetAddresses)
+			opt := options.WithIdentity(options.Connect(), getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID))
+			err = connectWithRetry(ctx, sourceNode, targetAddresses, opt)
 			require.NoError(s.T, err)
 		}
 	}
@@ -136,13 +138,13 @@ func reconnectPeers(s *state.State) {
 
 // connectWithRetry attempts to connect to target addresses with retry logic
 // to handle transient connection failures.
-func connectWithRetry(ctx context.Context, node *state.NodeState, targetAddresses []string) error {
+func connectWithRetry(ctx context.Context, node *state.NodeState, targetAddresses []string, opt *options.ConnectOptions) error {
 	const maxRetries = 5
 	const retryDelay = 50 * time.Millisecond
 
 	var lastErr error
 	for attempt := range maxRetries {
-		lastErr = node.Connect(ctx, targetAddresses)
+		lastErr = node.Connect(ctx, targetAddresses, opt)
 		if lastErr == nil {
 			return nil
 		}

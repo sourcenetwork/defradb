@@ -126,25 +126,25 @@ func (o *DeleteNACActorRelationshipOptions) GetIdentity() immutable.Option[ident
 	return o.Identity
 }
 
-// NACOptions contains options for NAC operations (ReEnableNAC, DisableNAC, GetNACStatus).
-type NACOptions struct {
+// ReEnableNACOptions contains options for ReEnableNAC operation 
+type ReEnableNACOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
-// NAC creates a new NACOptions instance.
-func NAC() *NACOptions {
-	return &NACOptions{}
+// ReEnableNAC creates a new NACOptions instance.
+func ReEnableNAC() *ReEnableNACOptions {
+	return &ReEnableNACOptions{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (o *NACOptions) SetIdentity(id identity.Identity) *NACOptions {
+func (o *ReEnableNACOptions) SetIdentity(id identity.Identity) *ReEnableNACOptions {
 	o.Identity = immutable.Some(id)
 	return o
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *NACOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *ReEnableNACOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 

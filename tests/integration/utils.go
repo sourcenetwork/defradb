@@ -1083,10 +1083,17 @@ func getIndexes(
 	for _, nodeID := range nodeIDs {
 		collections := s.Nodes[nodeID].Collections
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
+
+		// Pass identity via options since internal GetIndexes reads from options, not context
+		opts := options.CollectionGetIndexes()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
 		err := withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
-				actualIndexes, err := collections[action.CollectionID].GetIndexes(ctx)
+				actualIndexes, err := collections[action.CollectionID].GetIndexes(ctx, opts)
 				if err != nil {
 					return err
 				}
@@ -1175,7 +1182,13 @@ func patchCollection(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := node.PatchCollection(ctx, patch, action.Lens)
+
+		opts := options.PatchCollection()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		err := node.PatchCollection(ctx, patch, action.Lens, opts)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -1252,7 +1265,13 @@ func setActiveCollectionVersion(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := node.SetActiveCollectionVersion(ctx, versionID)
+
+		opts := options.SetActiveCollectionVersion()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		err := node.SetActiveCollectionVersion(ctx, versionID, opts)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -1396,7 +1415,7 @@ func createDocViaColSave(
 	}
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
-		err := collection.Save(ctx, doc, makeDocSaveOptions(&action)...)
+		err := collection.Save(ctx, doc, makeDocSaveOptions(s, &action, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
@@ -1410,20 +1429,26 @@ func makeContextForDocCreate(s *state.State, ctx context.Context, nodeIndex int,
 	return ctx
 }
 
-func makeDocCreateOptions(action *CreateDoc) []*options.CollectionCreateOptions {
-	return []*options.CollectionCreateOptions{
-		options.CollectionCreate().
+func makeDocCreateOptions(s *state.State, action *CreateDoc, nodeIndex int) []*options.CollectionCreateOptions {
+	opts := options.CollectionCreate().
 			SetEncryptDoc(action.IsDocEncrypted).
-			SetEncryptedFields(action.EncryptedFields),
+		SetEncryptedFields(action.EncryptedFields)
+	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
 	}
+	return []*options.CollectionCreateOptions{opts}
 }
 
-func makeDocSaveOptions(action *CreateDoc) []*options.CollectionSaveOptions {
-	return []*options.CollectionSaveOptions{
-		options.CollectionSave().
+func makeDocSaveOptions(s *state.State, action *CreateDoc, nodeIndex int) []*options.CollectionSaveOptions {
+	opts := options.CollectionSave().
 			SetEncryptDoc(action.IsDocEncrypted).
-			SetEncryptedFields(action.EncryptedFields),
+		SetEncryptedFields(action.EncryptedFields)
+	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
 	}
+	return []*options.CollectionSaveOptions{opts}
 }
 
 func createDocViaColCreate(
@@ -1443,13 +1468,13 @@ func createDocViaColCreate(
 
 	switch {
 	case len(docs) > 1:
-		err := collection.CreateMany(ctx, docs, makeDocCreateOptions(&action)...)
+		err := collection.CreateMany(ctx, docs, makeDocCreateOptions(s, &action, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
 
 	default:
-		err := collection.Create(ctx, docs[0], makeDocCreateOptions(&action)...)
+		err := collection.Create(ctx, docs[0], makeDocCreateOptions(s, &action, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
@@ -1555,10 +1580,16 @@ func deleteDoc(
 		nodeID := nodeIDs[index]
 		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
+
+		opts := options.CollectionDelete()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.Delete(ctx, docID)
+				_, err := collection.Delete(ctx, docID, opts)
 				return err
 			},
 		)
@@ -1636,7 +1667,12 @@ func updateDocViaColSave(
 ) error {
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
-	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true)
+	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
+	getOpts := options.CollectionGet()
+	if identOption.HasValue() {
+		getOpts.SetIdentity(identOption.Value())
+	}
+	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true, getOpts)
 	if err != nil {
 		return err
 	}
@@ -1644,7 +1680,12 @@ func updateDocViaColSave(
 	if err != nil {
 		return err
 	}
-	return collection.Save(ctx, doc)
+
+	saveOpts := options.CollectionSave()
+	if identOption.HasValue() {
+		saveOpts.SetIdentity(identOption.Value())
+	}
+	return collection.Save(ctx, doc, saveOpts)
 }
 
 func updateDocViaColUpdate(
@@ -1656,7 +1697,12 @@ func updateDocViaColUpdate(
 ) error {
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
-	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true)
+	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
+	getOpts := options.CollectionGet()
+	if identOption.HasValue() {
+		getOpts.SetIdentity(identOption.Value())
+	}
+	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true, getOpts)
 	if err != nil {
 		return err
 	}
@@ -1664,7 +1710,12 @@ func updateDocViaColUpdate(
 	if err != nil {
 		return err
 	}
-	return collection.Update(ctx, doc)
+
+	updateOpts := options.CollectionUpdate()
+	if identOption.HasValue() {
+		updateOpts.SetIdentity(identOption.Value())
+	}
+	return collection.Update(ctx, doc, updateOpts)
 }
 
 func updateDocViaGQL(
@@ -1709,11 +1760,17 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 		nodeID := nodeIDs[index]
 		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
+
+		opts := options.CollectionUpdateWithFilter()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
 		err := withRetryOnNode(
 			node,
 			func() error {
 				var err error
-				res, err = collection.UpdateWithFilter(ctx, action.Filter, action.Updater)
+				res, err = collection.UpdateWithFilter(ctx, action.Filter, action.Updater, opts)
 				return err
 			},
 		)
@@ -1762,10 +1819,16 @@ func createIndex(
 
 		indexDesc.Unique = action.Unique
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
+
+		opts := options.CollectionCreateIndex()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.CreateIndex(ctx, indexDesc)
+				_, err := collection.CreateIndex(ctx, indexDesc, opts)
 				return err
 			},
 		)
@@ -1790,10 +1853,16 @@ func dropIndex(
 		collection := s.Nodes[nodeID].Collections[action.CollectionID]
 
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
+
+		opts := options.CollectionDropIndex()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
 		err := withRetryOnNode(
 			node,
 			func() error {
-				return collection.DropIndex(ctx, action.IndexName)
+				return collection.DropIndex(ctx, action.IndexName, opts)
 			},
 		)
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
@@ -2076,15 +2145,16 @@ nodeLoop:
 		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
 		ctx := getContextWithIdentity(db.InitContext(s.Ctx, txn), s, action.Identity, nodeID)
 
-		var reqOption *options.ExecRequestOptions
-		if action.OperationName.HasValue() || action.Variables.HasValue() {
-			reqOption = options.ExecRequest()
+		reqOption := options.ExecRequest()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			reqOption.SetIdentity(identOption.Value())
+		}
 			if action.OperationName.HasValue() {
 				reqOption.SetOperationName(action.OperationName.Value())
 			}
 			if action.Variables.HasValue() {
 				reqOption.SetVariables(action.Variables.Value())
-			}
 		}
 
 		if !expectedErrorRaised && viewType == MaterializedViewType {

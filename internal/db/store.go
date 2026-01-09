@@ -28,6 +28,10 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...*options.
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if len(opts) > 0 && opts[0] != nil && opts[0].Identity.HasValue() {
+		ctx = identity.WithContext(ctx, opts[0].Identity)
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		res := &client.RequestResult{}

@@ -171,17 +171,17 @@ func (txn *Txn) DeleteNACActorRelationship(
 	return txn.db.DeleteNACActorRelationship(ctx, relation, targetActor, opts...)
 }
 
-func (txn *Txn) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (txn *Txn) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ReEnableNAC(ctx, opts...)
 }
 
-func (txn *Txn) DisableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (txn *Txn) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.DisableNAC(ctx, opts...)
 }
 
-func (txn *Txn) GetNACStatus(ctx context.Context, opts ...*options.NACOptions) (client.NACStatusResult, error) {
+func (txn *Txn) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetNACStatus(ctx, opts...)
 }

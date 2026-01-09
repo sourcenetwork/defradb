@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -323,7 +324,11 @@ func (p *Planner) newInvertableTypeJoin(
 		}
 	}
 
-	subCol, err := p.db.GetCollectionByName(p.ctx, subSelect.CollectionName)
+	subCol, err := p.db.GetCollectionByName(
+		p.ctx,
+		subSelect.CollectionName,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return invertibleTypeJoin{}, err
 	}

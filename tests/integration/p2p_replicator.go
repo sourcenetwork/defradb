@@ -14,6 +14,7 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
 )
@@ -111,7 +112,8 @@ func configureReplicator(
 	require.NoError(s.T, err)
 
 	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.SetReplicator(ctx, targetAddresses, nil)
+	opt := options.WithIdentity(options.SetReplicator(), getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
+	err = sourceNode.SetReplicator(ctx, targetAddresses, nil, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -138,7 +140,8 @@ func deleteReplicator(
 	require.NoError(s.T, err)
 
 	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.DeleteReplicator(ctx, id, nil)
+	opt := options.WithIdentity(options.DeleteReplicator(), getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
+	err = sourceNode.DeleteReplicator(ctx, id, nil, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)

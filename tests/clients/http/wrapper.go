@@ -221,15 +221,15 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	)
 }
 
-func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	return w.client.ReEnableNAC(ctx, opts...)
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (w *Wrapper) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	return w.client.DisableNAC(ctx, opts...)
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context, opts ...*options.NACOptions) (client.NACStatusResult, error) {
+func (w *Wrapper) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
 	return w.client.GetNACStatus(ctx, opts...)
 }
 
@@ -358,6 +358,11 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 	return w.client.GetNodeIdentity(ctx)
 }
 
-func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey, opts ...*options.VerifySignatureOptions) error {
+func (w *Wrapper) VerifySignature(
+	ctx context.Context, 
+	cid string, 
+	pubKey crypto.PublicKey, 
+	opts ...*options.VerifySignatureOptions,
+) error {
 	return w.client.VerifySignature(ctx, cid, pubKey, opts...)
 }

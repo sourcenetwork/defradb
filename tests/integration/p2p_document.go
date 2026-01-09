@@ -15,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
 )
@@ -119,7 +120,8 @@ func subscribeToDocument(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.AddP2PDocuments(ctx, docIDs)
+	opt := options.WithIdentity(options.AddP2PDocuments(), getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	err := node.AddP2PDocuments(ctx, docIDs, opt)
 	if err == nil {
 		waitForSubscribeToDocumentEvent(s, action)
 	}
@@ -154,7 +156,8 @@ func unsubscribeToDocument(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.RemoveP2PDocuments(ctx, docIDs)
+	opt := options.WithIdentity(options.RemoveP2PDocuments(), getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	err := node.RemoveP2PDocuments(ctx, docIDs, opt)
 	if err == nil {
 		waitForUnsubscribeToDocumentEvent(s, action)
 	}
@@ -184,7 +187,8 @@ func getAllP2PDocuments(
 
 	node := s.Nodes[action.NodeID]
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	cols, err := node.GetAllP2PDocuments(ctx)
+	opt := options.WithIdentity(options.GetAllP2PDocuments(), getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	cols, err := node.GetAllP2PDocuments(ctx, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

@@ -107,7 +107,8 @@ func (db *DB) AddDACActorRelationship(
 		return client.AddActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
-	collection, err := db.GetCollectionByName(ctx, collectionName)
+	colOpt := options.WithIdentity(options.GetCollectionByName(), ident)
+	collection, err := db.GetCollectionByName(ctx, collectionName, colOpt)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
@@ -165,7 +166,8 @@ func (db *DB) DeleteDACActorRelationship(
 		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
-	collection, err := db.GetCollectionByName(ctx, collectionName)
+	colOpt := options.WithIdentity(options.GetCollectionByName(), ident)
+	collection, err := db.GetCollectionByName(ctx, collectionName, colOpt)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}

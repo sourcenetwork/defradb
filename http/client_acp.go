@@ -259,7 +259,7 @@ func (c *Client) DeleteNACActorRelationship(
 	return deleteDocActorRelResult, nil
 }
 
-func (c *Client) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (c *Client) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
 	}
@@ -279,7 +279,7 @@ func (c *Client) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) e
 	return nil
 }
 
-func (c *Client) DisableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (c *Client) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
 	}
@@ -299,7 +299,7 @@ func (c *Client) DisableNAC(ctx context.Context, opts ...*options.NACOptions) er
 	return nil
 }
 
-func (c *Client) GetNACStatus(ctx context.Context, opts ...*options.NACOptions) (client.NACStatusResult, error) {
+func (c *Client) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
 	}

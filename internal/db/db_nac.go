@@ -67,7 +67,7 @@ func (db *DB) PurgeNACState(ctx context.Context) error {
 //
 // Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 // authorized to perform this operation.
-func (db *DB) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (db *DB) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -103,7 +103,7 @@ func (db *DB) ReEnableNAC(ctx context.Context, opts ...*options.NACOptions) erro
 //
 // Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 // authorized to perform this operation.
-func (db *DB) DisableNAC(ctx context.Context, opts ...*options.NACOptions) error {
+func (db *DB) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -129,7 +129,7 @@ func (db *DB) DisableNAC(ctx context.Context, opts ...*options.NACOptions) error
 	return db.saveNodeACPDesc(ctx)
 }
 
-func (db *DB) GetNACStatus(ctx context.Context, opts ...*options.NACOptions) (client.NACStatusResult, error) {
+func (db *DB) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

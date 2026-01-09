@@ -71,6 +71,10 @@ func (db *DB) SetReplicator(
 		return err
 	}
 
+	if ident.HasValue() {
+		ctx = identity.WithContext(ctx, ident)
+	}
+
 	if db.p2p == nil {
 		return ErrNoP2P
 	}
@@ -103,6 +107,10 @@ func (db *DB) DeleteReplicator(
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PReplicatorDeletePerm); err != nil {
 		return err
+	}
+
+	if ident.HasValue() {
+		ctx = identity.WithContext(ctx, ident)
 	}
 
 	if db.p2p == nil {
@@ -179,7 +187,7 @@ func (db *DB) AddP2PCollections(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.AddP2PCollections(ctx, collectionNames...)
+	err = db.p2p.AddP2PCollections(ctx, ident, collectionNames...)
 	if err != nil {
 		return err
 	}
@@ -213,7 +221,7 @@ func (db *DB) RemoveP2PCollections(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.RemoveP2PCollections(ctx, collectionNames...)
+	err = db.p2p.RemoveP2PCollections(ctx, ident, collectionNames...)
 	if err != nil {
 		return err
 	}
@@ -242,7 +250,7 @@ func (db *DB) GetAllP2PCollections(ctx context.Context, opts ...*options.GetAllP
 	}
 	defer txn.Discard()
 
-	return db.p2p.GetAllP2PCollections(ctx)
+	return db.p2p.GetAllP2PCollections(ctx, ident)
 }
 
 // AddP2PDocuments adds the given docIDs to the P2P system and

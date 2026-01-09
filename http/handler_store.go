@@ -66,13 +66,16 @@ func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 
 func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	schema, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	cols, err := db.AddSchema(req.Context(), string(schema))
+
+	opt := options.WithIdentity(options.AddSchema(), identity.FromContext(ctx))
+	cols, err := db.AddSchema(ctx, string(schema), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -82,6 +85,7 @@ func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 
 func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var message patchCollectionRequest
 	err := requestJSON(req, &message)
@@ -90,7 +94,8 @@ func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	err = db.PatchCollection(req.Context(), message.Patch, message.Migration)
+	opt := options.WithIdentity(options.PatchCollection(), identity.FromContext(ctx))
+	err = db.PatchCollection(ctx, message.Patch, message.Migration, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -100,13 +105,16 @@ func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 
 func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	schemaVersionID, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err = db.SetActiveCollectionVersion(req.Context(), string(schemaVersionID))
+
+	opt := options.WithIdentity(options.SetActiveCollectionVersion(), identity.FromContext(ctx))
+	err = db.SetActiveCollectionVersion(ctx, string(schemaVersionID), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -318,6 +326,7 @@ func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 
 func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	request, opt, err := extractGraphQLRequest(req)
 	if err != nil {
@@ -325,7 +334,8 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := db.ExecRequest(req.Context(), request.Query, opt)
+	opt = options.WithIdentity(opt, identity.FromContext(ctx))
+	result := db.ExecRequest(ctx, request.Query, opt)
 
 	// if at this point the we get a subscription query, it isn't using
 	// the correct accept headers, and we error
@@ -339,12 +349,15 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 
 func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	request, opt, err := extractGraphQLRequest(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+
+	opt = options.WithIdentity(opt, identity.FromContext(ctx))
 
 	// upgrade to SSE connection
 	flusher, ok := rw.(http.Flusher)
@@ -359,7 +372,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 	flusher.Flush()
 
-	result := db.ExecRequest(req.Context(), request.Query, opt)
+	result := db.ExecRequest(ctx, request.Query, opt)
 
 	// if we get an error in the initial GQL request, we need to emit
 	// it as a SSE event, then we can close the connection/subscription
@@ -455,15 +468,12 @@ func extractGraphQLRequest(req *http.Request) (GraphQLRequest, *options.ExecRequ
 	default:
 		return GraphQLRequest{}, nil, ErrMissingRequest
 	}
-	var opt *options.ExecRequestOptions
-	if request.OperationName != "" || len(request.Variables) > 0 {
-		opt = options.ExecRequest()
-		if request.OperationName != "" {
-			opt.SetOperationName(request.OperationName)
-		}
-		if len(request.Variables) > 0 {
-			opt.SetVariables(request.Variables)
-		}
+	opt := options.ExecRequest()
+	if request.OperationName != "" {
+		opt.SetOperationName(request.OperationName)
+	}
+	if len(request.Variables) > 0 {
+		opt.SetVariables(request.Variables)
 	}
 
 	return request, opt, nil
