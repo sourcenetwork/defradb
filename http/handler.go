@@ -12,6 +12,7 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -108,8 +109,12 @@ func NewHandler(db DB) (*Handler, error) {
 	}, nil
 }
 
-func (h *Handler) Transaction(id uint64) (client.Txn, error) {
-	tx, ok := h.txs.Load(id)
+// Transaction returns the transaction with the given ID for the specified identity.
+// The identityDID should be the DID of the user who owns the transaction, or "anonymous"
+// for unauthenticated users.
+func (h *Handler) Transaction(identityDID string, id uint64) (client.Txn, error) {
+	key := fmt.Sprintf("%s:%d", identityDID, id)
+	tx, ok := h.txs.Load(key)
 	if !ok {
 		return nil, ErrInvalidTransactionId
 	}

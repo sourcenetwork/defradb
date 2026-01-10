@@ -34,7 +34,8 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Store(tx.ID(), tx)
+	identityKey := getIdentityTxKey(req, tx.ID())
+	txs.Store(identityKey, tx)
 	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
@@ -48,7 +49,8 @@ func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Store(tx.ID(), tx)
+	identityKey := getIdentityTxKey(req, tx.ID())
+	txs.Store(identityKey, tx)
 	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
 }
 
@@ -60,7 +62,8 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal, ok := txs.Load(txID)
+	identityKey := getIdentityTxKey(req, txID)
+	txVal, ok := txs.Load(identityKey)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
@@ -72,7 +75,7 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Delete(txID)
+	txs.Delete(identityKey)
 	rw.WriteHeader(http.StatusOK)
 }
 
@@ -84,7 +87,8 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	txVal, ok := txs.LoadAndDelete(txID)
+	identityKey := getIdentityTxKey(req, txID)
+	txVal, ok := txs.LoadAndDelete(identityKey)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return

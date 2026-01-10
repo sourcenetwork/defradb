@@ -69,7 +69,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(rw, req)
 			return
 		}
-		tx, ok := txs.Load(id)
+		tx, ok := txs.Load(getIdentityTxKey(req, id))
 		if !ok {
 			next.ServeHTTP(rw, req)
 			return
