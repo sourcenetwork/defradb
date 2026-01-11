@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"sort"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -532,6 +534,7 @@ type primaryObjectsRetriever struct {
 
 	targetSecondaryDoc core.Doc
 	filter             *mapper.Filter
+	ordering           []mapper.OrderCondition
 
 	primaryScan *scanNode
 
@@ -604,6 +607,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 
 	oldFetcher := r.primaryScan.fetcher
 	oldIndex := r.primaryScan.index
+	oldOrdering := r.primaryScan.ordering
 
 	r.primaryScan.index = findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
 	r.primaryScan.initFetcher(immutable.None[string]())
@@ -620,8 +624,105 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 
 	r.primaryScan.fetcher = oldFetcher
 	r.primaryScan.index = oldIndex
+	r.primaryScan.ordering = oldOrdering
+
+	// Sort the collected docs based on the ordering conditions
+	if len(r.ordering) > 0 {
+		sortDocsByOrdering(docs, r.ordering)
+	}
 
 	return docs, nil
+}
+
+// sortDocsByOrdering sorts the documents based on the given ordering conditions.
+// This is used to apply ordering when fetching related documents in one-to-many joins,
+// where the index-based ordering might be lost during the lookup process.
+func sortDocsByOrdering(docs []core.Doc, ordering []mapper.OrderCondition) {
+	if len(docs) <= 1 || len(ordering) == 0 {
+		return
+	}
+	sort.SliceStable(docs, func(i, j int) bool {
+		return docValueLess(docs[i], docs[j], ordering)
+	})
+}
+
+// docValueLess compares two documents based on the ordering conditions.
+// Returns true if docA should come before docB.
+func docValueLess(docA, docB core.Doc, ordering []mapper.OrderCondition) bool {
+	for _, order := range ordering {
+		compare := compareDocProps(
+			getDocProp(docA, order.FieldIndexes),
+			getDocProp(docB, order.FieldIndexes),
+		)
+
+		if compare == 0 {
+			continue
+		}
+
+		if order.Direction == mapper.DESC {
+			return compare > 0
+		}
+		return compare < 0
+	}
+	return false
+}
+
+// compareDocProps compares two property values for sorting.
+// Returns -1 if a < b, 0 if a == b, 1 if a > b.
+func compareDocProps(a, b any) int {
+	if a == nil && b == nil {
+		return 0
+	}
+	if a == nil {
+		return -1
+	}
+	if b == nil {
+		return 1
+	}
+
+	switch va := a.(type) {
+	case int64:
+		if vb, ok := b.(int64); ok {
+			if va < vb {
+				return -1
+			}
+			if va > vb {
+				return 1
+			}
+			return 0
+		}
+	case float64:
+		if vb, ok := b.(float64); ok {
+			if va < vb {
+				return -1
+			}
+			if va > vb {
+				return 1
+			}
+			return 0
+		}
+	case string:
+		if vb, ok := b.(string); ok {
+			if va < vb {
+				return -1
+			}
+			if va > vb {
+				return 1
+			}
+			return 0
+		}
+	case bool:
+		if vb, ok := b.(bool); ok {
+			if !va && vb {
+				return -1
+			}
+			if va && !vb {
+				return 1
+			}
+			return 0
+		}
+	}
+	return 0
 }
 
 func docsToDocIDs(docs []core.Doc) []string {
@@ -672,12 +773,14 @@ func fetchPrimaryDocsReferencingSecondaryDoc(
 	primarySide, secondarySide *joinSide,
 	secondaryDoc core.Doc,
 	filter *mapper.Filter,
+	ordering []mapper.OrderCondition,
 ) ([]core.Doc, core.Doc, error) {
 	retriever := primaryObjectsRetriever{
 		primarySide:        primarySide,
 		secondarySide:      secondarySide,
 		targetSecondaryDoc: secondaryDoc,
 		filter:             filter,
+		ordering:           ordering,
 	}
 	err := retriever.retrievePrimaryDocsReferencingSecondaryDoc()
 	return retriever.resultPrimaryDocs, retriever.resultSecondaryDoc, err
@@ -705,8 +808,13 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 	if firstSide.isPrimary() {
 		return join.fetchRelatedSecondaryDocWithChildren(firstSide.plan.Value())
 	} else {
+		primaryScan := getNode[*scanNode](join.getPrimarySide().plan)
+		var ordering []mapper.OrderCondition
+		if primaryScan != nil {
+			ordering = primaryScan.ordering
+		}
 		primaryDocs, secondaryDoc, err := fetchPrimaryDocsReferencingSecondaryDoc(
-			join.getPrimarySide(), join.getSecondarySide(), firstSide.plan.Value(), join.subFilter)
+			join.getPrimarySide(), join.getSecondarySide(), firstSide.plan.Value(), join.subFilter, ordering)
 		if err != nil {
 			return false, err
 		}
@@ -775,8 +883,13 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 			primaryDocs, secondaryDoc = joinPrimaryDocs(
 				[]core.Doc{firstSide.plan.Value()}, secondaryDoc, join.getPrimarySide(), join.getSecondSide())
 		} else {
+			primaryScan := getNode[*scanNode](join.getPrimarySide().plan)
+			var ordering []mapper.OrderCondition
+			if primaryScan != nil {
+				ordering = primaryScan.ordering
+			}
 			primaryDocs, secondaryDoc, err = fetchPrimaryDocsReferencingSecondaryDoc(
-				join.getPrimarySide(), join.getSecondarySide(), secondaryDoc, join.subFilter)
+				join.getPrimarySide(), join.getSecondarySide(), secondaryDoc, join.subFilter, ordering)
 			if err != nil {
 				return false, err
 			}
