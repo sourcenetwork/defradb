@@ -31,7 +31,7 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 
 	tx, err := db.NewTxn(readOnly)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	txs.Store(tx.ID(), tx)
@@ -45,7 +45,7 @@ func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 
 	tx, err := db.NewConcurrentTxn(readOnly)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	txs.Store(tx.ID(), tx)
@@ -62,14 +62,14 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 	}
 	txVal, ok := txs.Load(txID)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
+		responseJSON(rw, http.StatusNotFound, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 
 	dsTxn := mustGetDataStoreTxn(txVal)
 	err = dsTxn.Commit()
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	txs.Delete(txID)
@@ -86,7 +86,7 @@ func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	}
 	txVal, ok := txs.LoadAndDelete(txID)
 	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
+		responseJSON(rw, http.StatusNotFound, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 

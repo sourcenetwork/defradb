@@ -50,7 +50,7 @@ func (h *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 	}
 	err := db.Connect(req.Context(), resp)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -66,7 +66,7 @@ func (h *p2pHandler) SetReplicator(rw http.ResponseWriter, req *http.Request) {
 	}
 	err := db.SetReplicator(req.Context(), rep.Addresses, rep.Collections...)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -82,7 +82,7 @@ func (h *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 	}
 	err := db.DeleteReplicator(req.Context(), rep.ID, rep.Collections...)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -93,7 +93,7 @@ func (h *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request
 
 	reps, err := db.GetAllReplicators(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, reps)
@@ -109,7 +109,7 @@ func (h *p2pHandler) AddP2PCollections(rw http.ResponseWriter, req *http.Request
 	}
 	err := db.AddP2PCollections(req.Context(), collectionIDs...)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -125,7 +125,7 @@ func (h *p2pHandler) RemoveP2PCollections(rw http.ResponseWriter, req *http.Requ
 	}
 	err := db.RemoveP2PCollections(req.Context(), collectionIDs...)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -136,7 +136,7 @@ func (h *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Requ
 
 	cols, err := db.GetAllP2PCollections(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, cols)
@@ -152,7 +152,7 @@ func (h *p2pHandler) AddP2PDocuments(rw http.ResponseWriter, req *http.Request) 
 	}
 	err := db.AddP2PDocuments(req.Context(), docIDs...)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -168,7 +168,7 @@ func (h *p2pHandler) RemoveP2PDocuments(rw http.ResponseWriter, req *http.Reques
 	}
 	err := db.RemoveP2PDocuments(req.Context(), docIDs...)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -179,7 +179,7 @@ func (h *p2pHandler) GetAllP2PDocuments(rw http.ResponseWriter, req *http.Reques
 
 	docIDs, err := db.GetAllP2PDocuments(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, docIDs)

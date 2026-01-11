@@ -65,7 +65,7 @@ func (h *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 	}
 	resultJSON, err := json.Marshal(result.GQL)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	resultHex := "0x" + hex.EncodeToString(resultJSON)

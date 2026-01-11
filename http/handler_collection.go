@@ -72,7 +72,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		if err := col.CreateMany(ctx, docList, createOpts...); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 			return
 		}
 		rw.WriteHeader(http.StatusOK)
@@ -83,7 +83,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		if err := col.Create(ctx, doc, createOpts...); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 			return
 		}
 		rw.WriteHeader(http.StatusOK)
@@ -101,7 +101,7 @@ func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 
 	result, err := col.DeleteWithFilter(req.Context(), request.Filter)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, result)
@@ -118,7 +118,7 @@ func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.R
 
 	result, err := col.UpdateWithFilter(req.Context(), request.Filter, request.Updater)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, result)
@@ -136,12 +136,12 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 
 	doc, err := col.Get(req.Context(), docID, true)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 
 	if doc == nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
 		return
 	}
 
@@ -156,7 +156,7 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	}
 	err = col.Update(req.Context(), doc)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -173,7 +173,7 @@ func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 
 	_, err = col.Delete(req.Context(), docID)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -191,18 +191,18 @@ func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 
 	doc, err := col.Get(req.Context(), docID, showDeleted)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 
 	if doc == nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
+		responseJSON(rw, http.StatusNotFound, errorResponse{client.ErrDocumentNotFoundOrNotAuthorized})
 		return
 	}
 
 	docMap, err := doc.ToMap()
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, docMap)
@@ -224,7 +224,7 @@ func (h *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 
 	docIDsResult, err := col.GetAllDocIDs(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 
@@ -269,7 +269,7 @@ func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 	}
 	index, err := col.CreateIndex(req.Context(), descWithoutID)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, index)
@@ -280,7 +280,7 @@ func (h *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request
 	name := chi.URLParam(req, "name")
 	col, err := db.GetCollectionByName(req.Context(), name)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	indexes, err := col.GetIndexes(req.Context())
@@ -296,7 +296,7 @@ func (h *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request)
 
 	err := col.DropIndex(req.Context(), chi.URLParam(req, "index"))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -313,7 +313,7 @@ func (h *collectionHandler) CreateEncryptedIndex(rw http.ResponseWriter, req *ht
 
 	index, err := col.CreateEncryptedIndex(req.Context(), indexDesc)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	responseJSON(rw, http.StatusOK, index)
@@ -341,7 +341,7 @@ func (h *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *ht
 
 	err := col.DeleteEncryptedIndex(req.Context(), fieldName)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
