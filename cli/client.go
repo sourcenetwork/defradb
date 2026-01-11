@@ -17,7 +17,7 @@ import (
 )
 
 func MakeClientCommand(ctx context.Context) *cobra.Command {
-	var txID uint64
+	var txID string
 	var identity string
 	var cmd = &cobra.Command{
 		Use:   "client",
@@ -42,6 +42,6 @@ Execute queries, add schema types, obtain node info, etc.`,
 	}
 	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
 		"Hex formatted private key used to authenticate with ACP")
-	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
+	cmd.PersistentFlags().StringVar(&txID, "tx", "", "Transaction ID")
 	return cmd
 }

@@ -66,7 +66,12 @@ func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
 	if err := c.http.requestJson(req, &txRes); err != nil {
 		return nil, err
 	}
-	return &Transaction{&Client{c.http}, txRes.ID}, nil
+	numericID, _ := strconv.ParseUint(txRes.ID, 10, 64)
+	return &Transaction{
+		Client:  &Client{c.http},
+		id:      numericID,
+		tokenID: txRes.ID,
+	}, nil
 }
 
 func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
@@ -86,7 +91,12 @@ func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	if err := c.http.requestJson(req, &txRes); err != nil {
 		return nil, err
 	}
-	return &Transaction{&Client{c.http}, txRes.ID}, nil
+	numericID, _ := strconv.ParseUint(txRes.ID, 10, 64)
+	return &Transaction{
+		Client:  &Client{c.http},
+		id:      numericID,
+		tokenID: txRes.ID,
+	}, nil
 }
 
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {

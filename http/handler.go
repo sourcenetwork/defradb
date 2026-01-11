@@ -110,10 +110,15 @@ func NewHandler(db DB) (*Handler, error) {
 }
 
 // Transaction returns the transaction with the given ID for the specified identity.
-// The identityDID should be the DID of the user who owns the transaction, or "anonymous"
-// for unauthenticated users.
-func (h *Handler) Transaction(identityDID string, id uint64) (client.Txn, error) {
-	key := fmt.Sprintf("%s:%d", identityDID, id)
+// The identityDID should be the DID of the user who owns the transaction.
+// If identityDID is empty, it treats the tokenID as the direct storage key (anonymous/UUID).
+func (h *Handler) Transaction(identityDID string, tokenID string) (client.Txn, error) {
+	var key string
+	if identityDID != "" {
+		key = fmt.Sprintf("%s:%s", identityDID, tokenID)
+	} else {
+		key = tokenID
+	}
 	tx, ok := h.txs.Load(key)
 	if !ok {
 		return nil, ErrInvalidTransactionId

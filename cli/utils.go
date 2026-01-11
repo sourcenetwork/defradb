@@ -115,8 +115,8 @@ func setContextConfig(cmd *cobra.Command) error {
 }
 
 // setContextTransaction sets the transaction for the current command context.
-func setContextTransaction(cmd *cobra.Command, txId uint64) error {
-	if txId == 0 {
+func setContextTransaction(cmd *cobra.Command, txId string) error {
+	if txId == "" {
 		return nil
 	}
 	cfg := mustGetContextConfig(cmd)

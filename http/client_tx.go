@@ -12,8 +12,8 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -30,19 +30,29 @@ var _ client.Txn = (*Transaction)(nil)
 // Transaction implements the client.Txn interface over HTTP.
 type Transaction struct {
 	*Client
-	id uint64
+	id      uint64
+	tokenID string
 }
 
-func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
+func NewTransaction(rawURL string, tokenID string) (*Transaction, error) {
 	httpClient, err := newHttpClient(rawURL)
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{&Client{httpClient}, id}, nil
+	numericID, _ := strconv.ParseUint(tokenID, 10, 64)
+	return &Transaction{
+		Client:  &Client{httpClient},
+		id:      numericID,
+		tokenID: tokenID,
+	}, nil
 }
 
 func (txn *Transaction) ID() uint64 {
 	return txn.id
+}
+
+func (txn *Transaction) TokenID() string {
+	return txn.tokenID
 }
 
 func (txn *Transaction) StartTS() time.Time {
@@ -50,7 +60,7 @@ func (txn *Transaction) StartTS() time.Time {
 }
 
 func (txn *Transaction) Commit() error {
-	methodURL := txn.http.apiURL.JoinPath("tx", fmt.Sprintf("%d", txn.id))
+	methodURL := txn.http.apiURL.JoinPath("tx", txn.tokenID)
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
 	if err != nil {
@@ -61,7 +71,7 @@ func (txn *Transaction) Commit() error {
 }
 
 func (txn *Transaction) Discard() {
-	methodURL := txn.http.apiURL.JoinPath("tx", fmt.Sprintf("%d", txn.id))
+	methodURL := txn.http.apiURL.JoinPath("tx", txn.tokenID)
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, methodURL.String(), nil)
 	if err != nil {

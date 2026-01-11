@@ -21,7 +21,7 @@ import (
 )
 
 func MakeCollectionCommand(ctx context.Context) *cobra.Command {
-	var txID uint64
+	var txID string
 	var identity string
 	var name string
 	var collectionID string
@@ -80,7 +80,7 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 			return nil
 		},
 	}
-	cmd.PersistentFlags().Uint64Var(&txID, "tx", 0, "Transaction ID")
+	cmd.PersistentFlags().StringVar(&txID, "tx", "", "Transaction ID")
 	cmd.PersistentFlags().StringVarP(&identity, "identity", "i", "",
 		"Hex formatted private key used to authenticate with ACP")
 	cmd.PersistentFlags().StringVar(&name, "name", "", "Collection name")

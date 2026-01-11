@@ -13,12 +13,10 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"sync"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -98,18 +96,4 @@ func responseJSON(rw http.ResponseWriter, status int, data any) {
 	if err != nil {
 		log.ErrorE("failed to write response", err)
 	}
-}
-
-// getIdentityTxKey returns a composite key for storing transactions that includes
-// the user's identity DID. This ensures transactions are scoped to the user who
-// created them, preventing other users from accessing/stealing transactions.
-//
-// For authenticated users: "did:key:abc123:1"
-// For anonymous users: "anonymous:1"
-func getIdentityTxKey(req *http.Request, txID uint64) string {
-	id := acpIdentity.FromContext(req.Context())
-	if id.HasValue() {
-		return fmt.Sprintf("%s:%d", id.Value().DID(), txID)
-	}
-	return fmt.Sprintf("anonymous:%d", txID)
 }

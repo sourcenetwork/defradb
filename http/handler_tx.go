@@ -16,12 +16,14 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 )
 
 type txHandler struct{}
 
 type CreateTxResponse struct {
-	ID uint64 `json:"id"`
+	ID string `json:"id"`
 }
 
 func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
@@ -34,9 +36,24 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	identityKey := getIdentityTxKey(req, tx.ID())
-	txs.Store(identityKey, tx)
-	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
+
+	// Generate a unique UUID token for the transaction for all users
+	// This unifies the client-facing ID format.
+	token := uuid.NewString()
+	clientID := token
+
+	var storageKey string
+	identity := acpIdentity.FromContext(req.Context())
+	if identity.HasValue() {
+		// Authenticated user: Scope the UUID with their DID
+		storageKey = identity.Value().DID() + ":" + token
+	} else {
+		// Anonymous user: Use the UUID directly
+		storageKey = token
+	}
+
+	txs.Store(storageKey, tx)
+	responseJSON(rw, http.StatusOK, &CreateTxResponse{clientID})
 }
 
 func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) {
@@ -49,46 +66,83 @@ func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	identityKey := getIdentityTxKey(req, tx.ID())
-	txs.Store(identityKey, tx)
-	responseJSON(rw, http.StatusOK, &CreateTxResponse{tx.ID()})
+
+	// Generate a unique UUID token for the transaction for all users
+	// This unifies the client-facing ID format.
+	token := uuid.NewString()
+	clientID := token
+
+	var storageKey string
+	identity := acpIdentity.FromContext(req.Context())
+	if identity.HasValue() {
+		// Authenticated user: Scope the UUID with their DID
+		storageKey = identity.Value().DID() + ":" + token
+	} else {
+		// Anonymous user: Use the UUID directly
+		storageKey = token
+	}
+
+	txs.Store(storageKey, tx)
+	responseJSON(rw, http.StatusOK, &CreateTxResponse{clientID})
 }
 
 func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 	txs := mustGetContextSyncMap(req)
 
-	txID, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
-	if err != nil {
+	txIDParam := chi.URLParam(req, "id")
+	if txIDParam == "" {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	identityKey := getIdentityTxKey(req, txID)
-	txVal, ok := txs.Load(identityKey)
+
+	// Determine the storage key based on user identity
+	var storageKey string
+	identity := acpIdentity.FromContext(req.Context())
+	if identity.HasValue() {
+		// Authenticated user: construct DID-scoped key
+		storageKey = identity.Value().DID() + ":" + txIDParam
+	} else {
+		// Anonymous user: the ID IS the storage key (UUID token)
+		storageKey = txIDParam
+	}
+
+	txVal, ok := txs.Load(storageKey)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 
 	dsTxn := mustGetDataStoreTxn(txVal)
-	err = dsTxn.Commit()
+	err := dsTxn.Commit()
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Delete(identityKey)
+	txs.Delete(storageKey)
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	txs := mustGetContextSyncMap(req)
 
-	txID, err := strconv.ParseUint(chi.URLParam(req, "id"), 10, 64)
-	if err != nil {
+	txIDParam := chi.URLParam(req, "id")
+	if txIDParam == "" {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
-	identityKey := getIdentityTxKey(req, txID)
-	txVal, ok := txs.LoadAndDelete(identityKey)
+
+	// Determine the storage key based on user identity
+	var storageKey string
+	identity := acpIdentity.FromContext(req.Context())
+	if identity.HasValue() {
+		// Authenticated user: construct DID-scoped key
+		storageKey = identity.Value().DID() + ":" + txIDParam
+	} else {
+		// Anonymous user: the ID IS the storage key (UUID token)
+		storageKey = txIDParam
+	}
+
+	txVal, ok := txs.LoadAndDelete(storageKey)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return

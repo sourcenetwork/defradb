@@ -12,7 +12,6 @@ package cli
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/spf13/cobra"
 
@@ -28,10 +27,7 @@ func MakeTxCommitCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			cfg := mustGetContextConfig(cmd)
 
-			id, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
+			id := args[0]
 			tx, err := http.NewTransaction(cfg.GetString("api.address"), id)
 			if err != nil {
 				return err
