@@ -13,13 +13,17 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
 // collectionRetriever is a helper struct that retrieves a collection from a document ID.
 type collectionRetriever struct {
-	db client.TxnStore
+	db    client.TxnStore
+	ident immutable.Option[identity.Identity]
 }
 
 // NewCollectionRetriever creates a new CollectionRetriever.
@@ -27,6 +31,12 @@ func NewCollectionRetriever(db client.TxnStore) collectionRetriever {
 	return collectionRetriever{
 		db: db,
 	}
+}
+
+// WithIdentity sets the identity for the collectionRetriever.
+func (r collectionRetriever) WithIdentity(ident immutable.Option[identity.Identity]) collectionRetriever {
+	r.ident = ident
+	return r
 }
 
 // RetrieveCollectionFromDocID retrieves a collection from a document ID.
@@ -53,11 +63,13 @@ func (r collectionRetriever) RetrieveCollectionFromDocID(
 	if !hasValue {
 		return nil, NewErrDocIDNotFound(docID)
 	}
-	cols, err := r.db.GetCollections(
-		ctx,
-		options.GetCollections().SetVersionID(headIterator.CurrentBlock().Delta.GetCollectionVersionID()),
-	)
 
+	opt := options.GetCollections().SetVersionID(headIterator.CurrentBlock().Delta.GetCollectionVersionID())
+	if r.ident.HasValue() {
+		opt = opt.SetIdentity(r.ident.Value())
+	}
+
+	cols, err := r.db.GetCollections(ctx, opt)
 	if err != nil {
 		return nil, err
 	}

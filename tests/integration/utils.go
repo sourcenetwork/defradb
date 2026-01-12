@@ -183,13 +183,13 @@ func ExecuteTestCase(
 
 	var clients []state.ClientType
 	//if httpClient {
-		clients = append(clients, state.HTTPClientType)
+	clients = append(clients, state.HTTPClientType)
 	//}
 	//if goClient {
-		clients = append(clients, state.GoClientType)
+	clients = append(clients, state.GoClientType)
 	//}
 	//if cliClient {
-		clients = append(clients, state.CLIClientType)
+	clients = append(clients, state.CLIClientType)
 	//}
 	if jsClient {
 		clients = append(clients, state.JSClientType)
@@ -1431,7 +1431,7 @@ func makeContextForDocCreate(s *state.State, ctx context.Context, nodeIndex int,
 
 func makeDocCreateOptions(s *state.State, action *CreateDoc, nodeIndex int) []*options.CollectionCreateOptions {
 	opts := options.CollectionCreate().
-			SetEncryptDoc(action.IsDocEncrypted).
+		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
 	if identOption.HasValue() {
@@ -1442,7 +1442,7 @@ func makeDocCreateOptions(s *state.State, action *CreateDoc, nodeIndex int) []*o
 
 func makeDocSaveOptions(s *state.State, action *CreateDoc, nodeIndex int) []*options.CollectionSaveOptions {
 	opts := options.CollectionSave().
-			SetEncryptDoc(action.IsDocEncrypted).
+		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
 	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
 	if identOption.HasValue() {
@@ -2150,11 +2150,11 @@ nodeLoop:
 		if identOption.HasValue() {
 			reqOption.SetIdentity(identOption.Value())
 		}
-			if action.OperationName.HasValue() {
-				reqOption.SetOperationName(action.OperationName.Value())
-			}
-			if action.Variables.HasValue() {
-				reqOption.SetVariables(action.Variables.Value())
+		if action.OperationName.HasValue() {
+			reqOption.SetOperationName(action.OperationName.Value())
+		}
+		if action.Variables.HasValue() {
+			reqOption.SetVariables(action.Variables.Value())
 		}
 
 		if !expectedErrorRaised && viewType == MaterializedViewType {
@@ -2983,8 +2983,10 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 	_, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for i, node := range nodes {
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, i)
+		actorIdentity := getIdentityForRequestSpecificToNode(s, action.Identity, i)
+		opt := options.WithIdentity(options.VerifySignature(), actorIdentity)
 		signerIdentity := state.GetIdentity(s, immutable.Some(action.SignerIdentity))
-		err := node.VerifySignature(ctx, action.Cid, signerIdentity.PublicKey())
+		err := node.VerifySignature(ctx, action.Cid, signerIdentity.PublicKey(), opt)
 
 		if action.ExpectedError != "" {
 			require.Error(s.T, err)

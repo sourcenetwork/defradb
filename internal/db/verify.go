@@ -72,14 +72,14 @@ func (db *DB) VerifySignature(
 
 	if db.documentACP.HasValue() {
 		docID := string(block.Delta.GetDocID())
-		collection, err := NewCollectionRetriever(db).RetrieveCollectionFromDocID(ctx, docID)
+		collection, err := NewCollectionRetriever(db).WithIdentity(ident).RetrieveCollectionFromDocID(ctx, docID)
 		if err != nil {
 			return err
 		}
 
 		hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
 			ctx,
-			identity.FromContext(ctx),
+			ident,
 			db.nodeACP,
 			db.documentACP.Value(),
 			collection,
