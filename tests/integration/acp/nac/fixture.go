@@ -18,7 +18,7 @@ resources:
   permissions:
   - expr: deleter
     name: delete
-  - expr: ((reader + updater) + deleter)
+  - expr: reader + updater + deleter
     name: read
   - expr: updater
     name: update

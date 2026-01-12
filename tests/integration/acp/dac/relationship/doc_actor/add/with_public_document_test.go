@@ -35,7 +35,7 @@ resources:
     name: delete
   - expr: dummy
     name: nothing
-  - expr: ((reader + updater) + deleter)
+  - expr: reader + updater + deleter
     name: read
   - expr: updater
     name: update
