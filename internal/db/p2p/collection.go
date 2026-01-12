@@ -14,7 +14,6 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -28,7 +27,6 @@ const marker = byte(0xff)
 
 func (p *P2P) AddP2PCollections(
 	ctx context.Context,
-	ident immutable.Option[identity.Identity],
 	collectionNames ...string,
 ) error {
 	ctx, span := tracer.Start(ctx)
@@ -39,6 +37,7 @@ func (p *P2P) AddP2PCollections(
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
+	ident := identity.FromContext(ctx)
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
@@ -77,7 +76,6 @@ func (p *P2P) AddP2PCollections(
 
 func (p *P2P) RemoveP2PCollections(
 	ctx context.Context,
-	ident immutable.Option[identity.Identity],
 	collectionNames ...string,
 ) error {
 	ctx, span := tracer.Start(ctx)
@@ -88,6 +86,7 @@ func (p *P2P) RemoveP2PCollections(
 
 	// first let's make sure the collections actually exists
 	storeCollections := []client.Collection{}
+	ident := identity.FromContext(ctx)
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
@@ -126,7 +125,6 @@ func (p *P2P) RemoveP2PCollections(
 
 func (p *P2P) GetAllP2PCollections(
 	ctx context.Context,
-	ident immutable.Option[identity.Identity],
 ) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -143,6 +141,7 @@ func (p *P2P) GetAllP2PCollections(
 	}
 
 	collectionNames := []string{}
+	ident := identity.FromContext(ctx)
 	for {
 		hasNext, err := iter.Next()
 		if err != nil {

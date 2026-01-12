@@ -187,7 +187,7 @@ func (db *DB) AddP2PCollections(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.AddP2PCollections(ctx, ident, collectionNames...)
+	err = db.p2p.AddP2PCollections(identity.WithContext(ctx, ident), collectionNames...)
 	if err != nil {
 		return err
 	}
@@ -221,7 +221,7 @@ func (db *DB) RemoveP2PCollections(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.RemoveP2PCollections(ctx, ident, collectionNames...)
+	err = db.p2p.RemoveP2PCollections(identity.WithContext(ctx, ident), collectionNames...)
 	if err != nil {
 		return err
 	}
@@ -250,7 +250,7 @@ func (db *DB) GetAllP2PCollections(ctx context.Context, opts ...*options.GetAllP
 	}
 	defer txn.Discard()
 
-	return db.p2p.GetAllP2PCollections(ctx, ident)
+	return db.p2p.GetAllP2PCollections(identity.WithContext(ctx, ident))
 }
 
 // AddP2PDocuments adds the given docIDs to the P2P system and
