@@ -215,7 +215,7 @@ jobs:
         if: |
           github.event_name == 'push' &&
           github.ref_name == 'develop'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bench-artifact-${{ github.sha }}
           path: bench-artifact-${{ github.sha }}.txt
