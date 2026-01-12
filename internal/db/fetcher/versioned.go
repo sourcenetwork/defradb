@@ -286,59 +286,64 @@ func (vf *VersionedFetcher) seekTo(c cid.Cid) error {
 	return nil
 }
 
-// seekNext is the recursive iteration step of seekTo, its goal is
-// to build the queuedCids list, and to transfer the required
-// blocks from the global to the local store.
+// seekNextItem represents an item in the seekNext work stack.
+type seekNextItem struct {
+	cid       cid.Cid
+	topParent bool
+}
+
+// seekNext iteratively steps through the graph to build the queuedCids list
+// and transfer the required blocks from the global to the local store.
 func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
-	// check if cid block exists in the global store, handle err
+	stack := make([]seekNextItem, 0, 64)
+	stack = append(stack, seekNextItem{cid: c, topParent: topParent})
 
-	// @todo: Find an efficient way to determine if a CID is a member of a
-	// DocID State graph
-	// @body: We could possibly append the DocID to the CID either as a
-	// child key, or an instance on the CID key.
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
 
-	hasLocalBlock, err := vf.store.Blockstore().Has(vf.ctx, c)
-	if err != nil {
-		return NewErrVFetcherFailedToFindBlock(err)
-	}
-	// skip if we already have it locally
-	if hasLocalBlock {
-		return nil
-	}
+		// check if cid block exists in the global store, handle err
+		// @todo: Find an efficient way to determine if a CID is a member of a
+		// DocID State graph
+		// @body: We could possibly append the DocID to the CID either as a
+		// child key, or an instance on the CID key.
 
-	blk, err := vf.txn.Blockstore().Get(vf.ctx, c)
-	if err != nil {
-		return NewErrVFetcherFailedToGetBlock(err)
-	}
-
-	// store the block in the local (transient store)
-	if err := vf.store.Blockstore().Put(vf.ctx, blk); err != nil {
-		return NewErrVFetcherFailedToWriteBlock(err)
-	}
-
-	// add the CID to the queuedCIDs list
-	if topParent {
-		vf.queuedCids.PushFront(c)
-	}
-
-	// decode the block
-	block, err := coreblock.GetFromBytes(blk.RawData())
-	if err != nil {
-		return NewErrVFetcherFailedToDecodeNode(err)
-	}
-
-	// only seekNext on parent if we have a HEAD link
-	if len(block.Heads) != 0 {
-		err := vf.seekNext(block.Heads[0].Cid, true)
+		hasLocalBlock, err := vf.store.Blockstore().Has(vf.ctx, current.cid)
 		if err != nil {
-			return err
+			return NewErrVFetcherFailedToFindBlock(err)
 		}
-	}
+		// skip if we already have it locally
+		if hasLocalBlock {
+			continue
+		}
 
-	for _, l := range block.Links {
-		err := vf.seekNext(l.Link.Cid, false)
+		blk, err := vf.txn.Blockstore().Get(vf.ctx, current.cid)
 		if err != nil {
-			return err
+			return NewErrVFetcherFailedToGetBlock(err)
+		}
+
+		// store the block in the local (transient store)
+		if err := vf.store.Blockstore().Put(vf.ctx, blk); err != nil {
+			return NewErrVFetcherFailedToWriteBlock(err)
+		}
+
+		// add the CID to the queuedCIDs list
+		if current.topParent {
+			vf.queuedCids.PushFront(current.cid)
+		}
+
+		// decode the block
+		block, err := coreblock.GetFromBytes(blk.RawData())
+		if err != nil {
+			return NewErrVFetcherFailedToDecodeNode(err)
+		}
+
+		for i := len(block.Links) - 1; i >= 0; i-- {
+			stack = append(stack, seekNextItem{cid: block.Links[i].Link.Cid, topParent: false})
+		}
+
+		if len(block.Heads) != 0 {
+			stack = append(stack, seekNextItem{cid: block.Heads[0].Cid, topParent: true})
 		}
 	}
 
@@ -355,83 +360,87 @@ func (vf *VersionedFetcher) seekNext(c cid.Cid, topParent bool) error {
 //
 // Currently we assume the CID is a CompositeDAG CRDT node.
 func (vf *VersionedFetcher) merge(c cid.Cid) error {
-	// get node
-	block, err := vf.getDAGBlock(c)
-	if err != nil {
-		return err
-	}
-
 	shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
 	if err != nil {
 		return err
 	}
 
-	var mcrdt crdt.ReplicatedData
-	switch {
-	case block.Delta.IsCollection():
-		mcrdt = crdt.NewCollection(
-			vf.col.Version().VersionID,
-			keys.NewHeadstoreColKey(shortID),
-		)
+	stack := make([]cid.Cid, 0, 64)
+	stack = append(stack, c)
 
-	case block.Delta.IsComposite():
-		mcrdt = crdt.NewDocComposite(
-			vf.store.Datastore(),
-			block.Delta.GetSchemaVersionID(),
-			keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             string(block.Delta.GetDocID()),
-				FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		block, err := vf.getDAGBlock(current)
+		if err != nil {
+			return err
+		}
+
+		var mcrdt crdt.ReplicatedData
+		switch {
+		case block.Delta.IsCollection():
+			mcrdt = crdt.NewCollection(
+				vf.col.Version().VersionID,
+				keys.NewHeadstoreColKey(shortID),
+			)
+
+		case block.Delta.IsComposite():
+			mcrdt = crdt.NewDocComposite(
+				vf.store.Datastore(),
+				block.Delta.GetSchemaVersionID(),
+				keys.DataStoreKey{
+					CollectionShortID: shortID,
+					DocID:             string(block.Delta.GetDocID()),
+					FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
+				},
+			)
+
+		default:
+			field, ok := vf.col.Version().GetFieldByName(block.Delta.GetFieldName())
+			if !ok {
+				return client.NewErrFieldNotExist(block.Delta.GetFieldName())
+			}
+
+			fieldShortID, err := id.GetShortFieldID(vf.ctx, shortID, field.FieldID)
+			if err != nil {
+				return err
+			}
+
+			mcrdt, err = crdt.FieldLevelCRDTWithStore(
+				vf.store.Datastore(),
+				block.Delta.GetSchemaVersionID(),
+				field.Typ,
+				field.Kind,
+				keys.DataStoreKey{
+					CollectionShortID: shortID,
+					DocID:             string(block.Delta.GetDocID()),
+					FieldID:           fmt.Sprint(fieldShortID),
+				},
+				field.Name,
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = coreblock.ProcessBlock(
+			vf.ctx,
+			mcrdt,
+			block,
+			cidlink.Link{
+				Cid: current,
 			},
 		)
-
-	default:
-		field, ok := vf.col.Version().GetFieldByName(block.Delta.GetFieldName())
-		if !ok {
-			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
-		}
-
-		fieldShortID, err := id.GetShortFieldID(vf.ctx, shortID, field.FieldID)
 		if err != nil {
 			return err
 		}
 
-		mcrdt, err = crdt.FieldLevelCRDTWithStore(
-			vf.store.Datastore(),
-			block.Delta.GetSchemaVersionID(),
-			field.Typ,
-			field.Kind,
-			keys.DataStoreKey{
-				CollectionShortID: shortID,
-				DocID:             string(block.Delta.GetDocID()),
-				FieldID:           fmt.Sprint(fieldShortID),
-			},
-			field.Name,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = coreblock.ProcessBlock(
-		vf.ctx,
-		mcrdt,
-		block,
-		cidlink.Link{
-			Cid: c,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	// Handle subgraphs. We range over `Links` only (not `Heads``) because the trunk is already accounted for
-	// by the initial caller or `merge`. Including `Heads` would result in unnecessary recursion and possible
-	// wrong final value for the fields.
-	for _, l := range block.Links {
-		err = vf.merge(l.Cid)
-		if err != nil {
-			return err
+		// Handle subgraphs. We range over `Links` only (not `Heads`) because the trunk is already accounted for
+		// by the initial caller of `merge`. Including `Heads` would result in unnecessary recursion and possible
+		// wrong final value for the fields.
+		for i := len(block.Links) - 1; i >= 0; i-- {
+			stack = append(stack, block.Links[i].Cid)
 		}
 	}
 
