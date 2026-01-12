@@ -169,15 +169,16 @@ func newMergeQueue() *mergeQueue {
 // be called to remove the key from the queue. Otherwise, subsequent add calls will
 // block forever.
 func (m *mergeQueue) add(key string) {
-	m.mutex.Lock()
-	done, ok := m.keys[key]
-	if !ok {
-		m.keys[key] = make(chan struct{})
-	}
-	m.mutex.Unlock()
-	if ok {
+	for {
+		m.mutex.Lock()
+		done, ok := m.keys[key]
+		if !ok {
+			m.keys[key] = make(chan struct{})
+			m.mutex.Unlock()
+			return
+		}
+		m.mutex.Unlock()
 		<-done
-		m.add(key)
 	}
 }
 
