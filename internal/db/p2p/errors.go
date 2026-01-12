@@ -28,6 +28,8 @@ var (
 	ErrSyncDuplicate           = errors.New("sync already in progress for this key")
 	ErrSyncQueueFull           = errors.New("sync queue is full")
 	ErrSyncQueueClosed         = errors.New("sync queue is closed")
+	ErrEmptyCARRoots           = errors.New("CAR file has no roots")
+	ErrCARRootBlockNotFound    = errors.New("root block not found in CAR file")
 )
 
 func NewErrReplicatorCollections(inner error, kv ...errors.KV) error {

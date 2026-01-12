@@ -22,6 +22,8 @@ type PushLogRequest struct {
 	CollectionID string
 	Creator      string
 	Block        []byte
+	// CAR contains the DAG blocks in CAR format.
+	CAR []byte
 }
 
 // PushLogReply is the expected response struct that should be received after

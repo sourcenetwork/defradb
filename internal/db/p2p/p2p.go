@@ -549,9 +549,16 @@ func (p *P2P) processPushlogRequest(
 			}
 		}
 
-		err = p.syncDAG(ctx, block)
-		if err != nil {
-			return err
+		if len(req.CAR) > 0 {
+			_, err = p.importCAR(ctx, req.CAR)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = p.syncDAG(ctx, block)
+			if err != nil {
+				return err
+			}
 		}
 
 		mergeEvt := event.Merge{
@@ -606,6 +613,19 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 			CollectionID: evt.CollectionID,
 			Creator:      p.host.ID(),
 			Block:        evt.Block,
+		}
+
+		// Generate CAR containing root block and all linked blocks
+		if !evt.IsRelay {
+			rootBlock, err := coreblock.GetFromBytes(evt.Block)
+			if err != nil {
+				return err
+			}
+			carData, err := p.generateCAR(p.ctx, rootBlock)
+			if err != nil {
+				return err
+			}
+			req.CAR = carData
 		}
 
 		b, err := cbor.Marshal(req)
