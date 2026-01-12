@@ -10,19 +10,19 @@ description: A Document ACP Policy
 resources:
   - name: users
     permissions:
-    - name: read
-      expr: reader + updater + deleter
-    - name: update
-      expr: updater
-    - name: delete
-      expr: deleter
+      - name: read
+        expr: reader + updater + deleter
+      - name: update
+        expr: updater
+      - name: delete
+        expr: deleter
     relations:
-    - name: reader
-      types:
-      - actor
-    - name: updater
-      types:
-      - actor
-    - name: deleter
-      types:
-      - actor
+      - name: reader
+        types:
+          - actor
+      - name: updater
+        types:
+          - actor
+      - name: deleter
+        types:
+          - actor

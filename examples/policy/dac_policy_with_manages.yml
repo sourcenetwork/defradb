@@ -13,38 +13,38 @@ description: A Document ACP Policy With Manages
 resources:
   - name: users
     permissions:
-    - name: read
-      expr: writer + updater + deleter + reader
-    - name: update
-      expr: writer + updater
-    - name: delete
-      expr: writer + deleter
-    - name: nothing
-      expr: dummy
+      - name: read
+        expr: writer + updater + deleter + reader
+      - name: update
+        expr: writer + updater
+      - name: delete
+        expr: writer + deleter
+      - name: nothing
+        expr: dummy
 
     relations:
-    - name: reader
-      types:
-      - actor
+      - name: reader
+        types:
+          - actor
 
-    - name: updater
-      types:
-      - actor
+      - name: updater
+        types:
+          - actor
 
-    - name: deleter
-      types:
-      - actor
+      - name: deleter
+        types:
+          - actor
 
-    - name: writer
-      types:
-      - actor
+      - name: writer
+        types:
+          - actor
 
-    - name: admin
-      manages:
-      - reader
-      types:
-      - actor
+      - name: admin
+        manages:
+          - reader
+        types:
+          - actor
 
-    - name: dummy
-      types:
-      - actor
+      - name: dummy
+        types:
+          - actor
