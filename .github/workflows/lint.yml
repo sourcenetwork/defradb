@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Setting up Go explicitly is required for v3.0.0+ of golangci/golangci-lint-action.
       - name: Setup Go environment explicitly
@@ -87,7 +87,7 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run yamllint linter
         uses: ibiqlik/action-yamllint@v3

@@ -64,7 +64,7 @@ jobs:
             core.setFailed(unprivileged_warning)
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Terraform action setup
         uses: hashicorp/setup-terraform@v3
