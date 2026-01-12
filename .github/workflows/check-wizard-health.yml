@@ -1,4 +1,4 @@
-# Copyright 2024 Democratized Data Foundation
+# Copyright 2026 Democratized Data Foundation
 #
 # Use of this software is governed by the Business Source License
 # included in the file licenses/BSL.txt.
@@ -8,9 +8,7 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-# This workflow checks that all mocks are up to date.
-# If the mocks are not up to date then this action will fail.
-name: Check Mocks Workflow
+name: Check Wizard Health Workflow
 
 on:
   pull_request:
@@ -26,8 +24,8 @@ on:
       - develop
 
 jobs:
-  check-mocks:
-    name: Check mocks job
+  check-wizard-health:
+    name: Check wizard health job
 
     runs-on: ubuntu-latest
 
@@ -35,17 +33,13 @@ jobs:
       - name: Checkout code into the directory
         uses: actions/checkout@v6
 
-      - name: Setup Go environment explicitly
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: 'go.mod'
-          check-latest: true
-          cache: false
+      - name: Install Expect
+        run: sudo apt-get update && sudo apt-get install -y expect
 
-      - name: Try generating mocks
-        run: make mocks
+      - name: Build binary
+        run: make build
 
-      - name: Check no new changes exist
-        uses: tj-actions/verify-changed-files@v20
-        with:
-          fail-if-changed: true
+      - name: Run wizard test
+        run: |
+          chmod +x ./tools/scripts/wizard_test.sh
+          ./tools/scripts/wizard_test.sh
