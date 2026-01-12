@@ -103,7 +103,7 @@ func (db *DB) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOptio
 //
 // Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 // authorized to perform this operation.
-func (db *DB) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
+func (db *DB) DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -129,7 +129,7 @@ func (db *DB) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOption
 	return db.saveNodeACPDesc(ctx)
 }
 
-func (db *DB) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
+func (db *DB) GetNACStatus(ctx context.Context, opts ...*options.GetNACStatusOptions) (client.NACStatusResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

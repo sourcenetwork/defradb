@@ -165,7 +165,7 @@ func (h *acpHandler) ReEnableNAC(rw http.ResponseWriter, req *http.Request) {
 func (h *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	opt := options.WithIdentity(options.ReEnableNAC(), identity.FromContext(req.Context()))
+	opt := options.WithIdentity(options.DisableNAC(), identity.FromContext(req.Context()))
 	err := db.DisableNAC(req.Context(), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -178,7 +178,7 @@ func (h *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
 func (h *acpHandler) GetNACStatus(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	opt := options.WithIdentity(options.ReEnableNAC(), identity.FromContext(req.Context()))
+	opt := options.WithIdentity(options.GetNACStatus(), identity.FromContext(req.Context()))
 	statusNACResult, err := db.GetNACStatus(req.Context(), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})

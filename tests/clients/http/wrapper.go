@@ -225,11 +225,14 @@ func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACO
 	return w.client.ReEnableNAC(ctx, opts...)
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
+func (w *Wrapper) DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error {
 	return w.client.DisableNAC(ctx, opts...)
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
+func (w *Wrapper) GetNACStatus(
+	ctx context.Context,
+	opts ...*options.GetNACStatusOptions,
+) (client.NACStatusResult, error) {
 	return w.client.GetNACStatus(ctx, opts...)
 }
 
@@ -359,9 +362,9 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 }
 
 func (w *Wrapper) VerifySignature(
-	ctx context.Context, 
-	cid string, 
-	pubKey crypto.PublicKey, 
+	ctx context.Context,
+	cid string,
+	pubKey crypto.PublicKey,
 	opts ...*options.VerifySignatureOptions,
 ) error {
 	return w.client.VerifySignature(ctx, cid, pubKey, opts...)

@@ -86,7 +86,8 @@ func disableNAC(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		opt := options.WithIdentity(options.ReEnableNAC(), getIdentityForRequestSpecificToNode(s, action.Identity, nodeID))
+		opt := options.WithIdentity(options.DisableNAC(),
+			getIdentityForRequestSpecificToNode(s, action.Identity, nodeID))
 		err := node.DisableNAC(ctx, opt)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
@@ -247,7 +248,8 @@ func getNACStatus(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		opt := options.WithIdentity(options.ReEnableNAC(), getIdentityForRequestSpecificToNode(s, action.Identity, nodeID))
+		opt := options.WithIdentity(options.GetNACStatus(),
+			getIdentityForRequestSpecificToNode(s, action.Identity, nodeID))
 
 		statusNACResult, err := node.GetNACStatus(ctx, opt)
 

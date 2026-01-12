@@ -279,7 +279,7 @@ func (c *Client) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOp
 	return nil
 }
 
-func (c *Client) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
+func (c *Client) DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error {
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
 	}
@@ -299,7 +299,10 @@ func (c *Client) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOpt
 	return nil
 }
 
-func (c *Client) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
+func (c *Client) GetNACStatus(
+	ctx context.Context,
+	opts ...*options.GetNACStatusOptions,
+) (client.NACStatusResult, error) {
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
 	}

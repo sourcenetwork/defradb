@@ -232,7 +232,10 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	return out, nil
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
+func (w *Wrapper) GetNACStatus(
+	ctx context.Context,
+	opts ...*options.GetNACStatusOptions,
+) (client.NACStatusResult, error) {
 	var optsVal sysjs.Value
 	var err error
 	if len(opts) > 0 && opts[0] != nil {
@@ -269,7 +272,7 @@ func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACO
 	return err
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
+func (w *Wrapper) DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error {
 	var optsVal sysjs.Value
 	var err error
 	if len(opts) > 0 && opts[0] != nil {

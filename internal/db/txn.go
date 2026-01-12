@@ -176,12 +176,15 @@ func (txn *Txn) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOpt
 	return txn.db.ReEnableNAC(ctx, opts...)
 }
 
-func (txn *Txn) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
+func (txn *Txn) DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.DisableNAC(ctx, opts...)
 }
 
-func (txn *Txn) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
+func (txn *Txn) GetNACStatus(
+	ctx context.Context,
+	opts ...*options.GetNACStatusOptions,
+) (client.NACStatusResult, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetNACStatus(ctx, opts...)
 }

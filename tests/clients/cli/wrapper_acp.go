@@ -111,7 +111,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 
 func (w *Wrapper) GetNACStatus(
 	ctx context.Context,
-	opts ...*options.ReEnableNACOptions,
+	opts ...*options.GetNACStatusOptions,
 ) (client.NACStatusResult, error) {
 	args := []string{"client", "acp", "node", "status"}
 
@@ -150,7 +150,7 @@ func (w *Wrapper) ReEnableNAC(
 
 func (w *Wrapper) DisableNAC(
 	ctx context.Context,
-	opts ...*options.ReEnableNACOptions,
+	opts ...*options.DisableNACOptions,
 ) error {
 	args := []string{"client", "acp", "node", "disable"}
 

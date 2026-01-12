@@ -515,7 +515,10 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	return deleteRelationshipRes, nil
 }
 
-func (w *CWrapper) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
+func (w *CWrapper) GetNACStatus(
+	ctx context.Context,
+	opts ...*options.GetNACStatusOptions,
+) (client.NACStatusResult, error) {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 
@@ -541,7 +544,7 @@ func (w *CWrapper) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNAC
 	return nil
 }
 
-func (w *CWrapper) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
+func (w *CWrapper) DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 

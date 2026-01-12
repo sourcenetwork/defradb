@@ -151,11 +151,11 @@ type Store interface {
 	//
 	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 	// authorized to perform this operation.
-	DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error
+	DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error
 
 	// GetNACStatus returns the node acp status that tells us if node access was ever configured,
 	// or if node acp is currently enabled or temporarily disabled.
-	GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (NACStatusResult, error)
+	GetNACStatus(ctx context.Context, opts ...*options.GetNACStatusOptions) (NACStatusResult, error)
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)

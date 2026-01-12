@@ -148,6 +148,50 @@ func (o *ReEnableNACOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
+// DisableNACOptions contains options for DisableNAC operation.
+type DisableNACOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// DisableNAC creates a new DisableNACOptions instance.
+func DisableNAC() *DisableNACOptions {
+	return &DisableNACOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *DisableNACOptions) SetIdentity(id identity.Identity) *DisableNACOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *DisableNACOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// GetNACStatusOptions contains options for GetNACStatus operation.
+type GetNACStatusOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetNACStatus creates a new GetNACStatusOptions instance.
+func GetNACStatus() *GetNACStatusOptions {
+	return &GetNACStatusOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *GetNACStatusOptions) SetIdentity(id identity.Identity) *GetNACStatusOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *GetNACStatusOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
 // VerifySignatureOptions contains options for VerifySignature operation.
 type VerifySignatureOptions struct {
 	// Identity is the identity of the actor performing the operation.
