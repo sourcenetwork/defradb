@@ -11,15 +11,12 @@ resources:
   - name: users
     permissions:
     - name: read
-      expr: owner + reader + updater + deleter
+      expr: reader + updater + deleter
     - name: update
-      expr: owner + updater
+      expr: updater
     - name: delete
-      expr: owner + deleter
+      expr: deleter
     relations:
-    - name: owner
-      types:
-      - actor
     - name: reader
       types:
       - actor

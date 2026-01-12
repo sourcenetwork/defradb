@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_PermissionExprWithInocorrectSymbol_Error(t *testing.T) {
+func TestACP_AddPolicy_PermissionExprWithIncorrectSymbol_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
