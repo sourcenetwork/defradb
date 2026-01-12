@@ -400,7 +400,7 @@ jobs:
           path: coverage_reports
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: defradb-codecov
