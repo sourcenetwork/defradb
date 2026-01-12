@@ -26,22 +26,22 @@ import (
 )
 
 const (
-	opEq       = "_eq"
-	opGt       = "_gt"
-	opGe       = "_ge"
-	opLt       = "_lt"
-	opLe       = "_le"
-	opNe       = "_ne"
-	opIn       = "_in"
-	opNin      = "_nin"
-	opLike     = "_like"
-	opNlike    = "_nlike"
-	opILike    = "_ilike"
-	opNILike   = "_nilike"
-	compOpAny  = "_any"
-	compOpAll  = "_all"
-	compOpNone = "_none"
-	opNot      = "_not"
+	opEq       = connor.EqualOp
+	opGt       = connor.GreaterOp
+	opGe       = connor.GreaterOrEqualOp
+	opLt       = connor.LesserOp
+	opLe       = connor.LesserOrEqualOp
+	opNe       = connor.NotEqualOp
+	opIn       = connor.InOp
+	opNin      = connor.NotInOp
+	opLike     = connor.LikeOp
+	opNlike    = connor.NotLikeOp
+	opILike    = connor.CaseInsensitiveLikeOp
+	opNILike   = connor.CaseInsensitiveNotLikeOp
+	compOpAny  = connor.AnyOp
+	compOpAll  = connor.AllOp
+	compOpNone = connor.NoneOp
+	opNot      = connor.NotOp
 	// it's just there for composite indexes. We construct a slice of value matchers with
 	// every matcher being responsible for a corresponding field in the index to match.
 	// For some fields there might not be any criteria to match. For examples if you have

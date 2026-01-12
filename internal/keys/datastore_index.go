@@ -43,6 +43,7 @@ type IndexDataStoreKey struct {
 }
 
 var _ Walkable = (*IndexDataStoreKey)(nil)
+var _ CollectionedKey = (*IndexDataStoreKey)(nil)
 
 // NewIndexDataStoreKey creates a new IndexDataStoreKey from a collection ID, index ID and fields.
 // It also validates values of the fields.
@@ -216,4 +217,8 @@ func (k *IndexDataStoreKey) PrefixEnd() Walkable {
 		Fields:            newFields,
 		Offset:            k.Offset + 1,
 	}
+}
+
+func (k *IndexDataStoreKey) GetCollectionShortID() uint32 {
+	return k.CollectionShortID
 }

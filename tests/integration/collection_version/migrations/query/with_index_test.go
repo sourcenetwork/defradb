@@ -62,8 +62,8 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      schemaV1,
-					DestinationSchemaVersionID: schemaV2,
+					SourceCollectionVersionID:      schemaV1,
+					DestinationCollectionVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -152,8 +152,8 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigrate
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      schemaV1,
-					DestinationSchemaVersionID: schemaV2,
+					SourceCollectionVersionID:      schemaV1,
+					DestinationCollectionVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -239,8 +239,8 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      schemaV1,
-					DestinationSchemaVersionID: schemaV2,
+					SourceCollectionVersionID:      schemaV1,
+					DestinationCollectionVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -329,8 +329,8 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      schemaV1,
-					DestinationSchemaVersionID: schemaV2,
+					SourceCollectionVersionID:      schemaV1,
+					DestinationCollectionVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -419,8 +419,8 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexD
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      schemaV1,
-					DestinationSchemaVersionID: schemaV2,
+					SourceCollectionVersionID:      schemaV1,
+					DestinationCollectionVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -539,8 +539,8 @@ func setupDistantVersions() []any {
 func addMigrationBetweenV3AndV4() any {
 	return testUtils.ConfigureMigration{
 		LensConfig: client.LensConfig{
-			SourceSchemaVersionID:      schemaV3,
-			DestinationSchemaVersionID: schemaV4,
+			SourceCollectionVersionID:      schemaV3,
+			DestinationCollectionVersionID: schemaV4,
 			Lens: model.Lens{
 				Lenses: []model.LensModule{
 					{
@@ -819,8 +819,8 @@ func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Should
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      schemaV1,
-					DestinationSchemaVersionID: schemaV2,
+					SourceCollectionVersionID:      schemaV1,
+					DestinationCollectionVersionID: schemaV2,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

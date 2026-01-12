@@ -64,20 +64,14 @@ const (
 
 	CommitsName = "_commits"
 
-	CommitTypeName           = "Commit"
-	LinksFieldName           = "links"
-	HeadsFieldName           = "heads"
-	SignatureFieldName       = "signature"
-	SignatureTypeName        = "Signature"
-	HeightFieldName          = "height"
-	SchemaVersionIDFieldName = "schemaVersionId"
-	DeltaFieldName           = "delta"
-
-	DeltaArgFieldName       = "FieldName"
-	DeltaArgData            = "Data"
-	DeltaArgSchemaVersionID = "SchemaVersionID"
-	DeltaArgPriority        = "Priority"
-	DeltaArgDocID           = "DocID"
+	CommitTypeName               = "Commit"
+	LinksFieldName               = "links"
+	HeadsFieldName               = "heads"
+	SignatureFieldName           = "signature"
+	SignatureTypeName            = "Signature"
+	HeightFieldName              = "height"
+	CollectionVersionIDFieldName = "collectionVersionId"
+	DeltaFieldName               = "delta"
 
 	// SelfTypeName is the name given to relation field types that reference the host type.
 	//
@@ -93,8 +87,6 @@ const (
 	SignatureValueFieldName    = "value"
 
 	DocIDsFieldName = "docIDs"
-
-	HeadLinkName = "_head"
 
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")
@@ -141,7 +133,7 @@ var (
 		HeightFieldName,
 		CidFieldName,
 		DocIDArgName,
-		SchemaVersionIDFieldName,
+		CollectionVersionIDFieldName,
 		FieldNameName,
 		DeltaFieldName,
 		LinksNameFieldName,

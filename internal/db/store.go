@@ -195,7 +195,7 @@ func (db *DB) PatchCollection(
 	return txn.Commit()
 }
 
-func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+func (db *DB) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -209,7 +209,7 @@ func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID st
 	}
 	defer txn.Discard()
 
-	err = db.setActiveCollectionVersion(ctx, schemaVersionID)
+	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
 	if err != nil {
 		return err
 	}
