@@ -13,53 +13,19 @@ package node
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
-// NodeACPOpt is a function for setting node ACP configuration values.
-type NodeACPOpt func(*NodeACPOptions)
-
-// NodeACPOptions contains ACP configuration values.
-type NodeACPOptions struct {
-	// isEnabled is true if node acp is enabled, and false otherwise.
-	isEnabled bool
-
-	// Note: An empty path will result in an in-memory ACP instance.
-	path string
-}
-
-// DefaultNodeACPOptions returns the default node acp options.
-func DefaultNodeACPOptions() *NodeACPOptions {
-	return &NodeACPOptions{
-		isEnabled: false,
+// NewNodeACP creates a new node ACP with the given options.
+func NewNodeACP(ctx context.Context, opts ...*options.NodeACPOptions) (acpDB.NACInfo, error) {
+	var opt *options.NodeACPOptions
+	if len(opts) > 0 {
+		opt = opts[0]
 	}
-}
-
-// WithNodeACPPath sets the node ACP system path.
-//
-// Note: An empty path will result in an in-memory node ACP instance.
-func WithNodeACPPath(path string) NodeACPOpt {
-	return func(o *NodeACPOptions) {
-		o.path = path
-	}
-}
-
-// WithEnableNodeACP enables node acp.
-func WithEnableNodeACP(enable bool) NodeACPOpt {
-	return func(o *NodeACPOptions) {
-		o.isEnabled = enable
-	}
-}
-
-func NewNodeACP(ctx context.Context, opts ...NodeACPOpt) (acpDB.NACInfo, error) {
-	options := DefaultNodeACPOptions()
-	for _, opt := range opts {
-		opt(options)
+	if opt == nil {
+		opt = options.NodeACP()
 	}
 
-	return acpDB.NewNACInfo(ctx, options.path, options.isEnabled)
-}
-
-func (o *NodeACPOptions) IsEnabled() bool {
-	return o.isEnabled
+	return acpDB.NewNACInfo(ctx, opt.Path, opt.IsEnabled)
 }

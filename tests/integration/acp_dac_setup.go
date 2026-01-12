@@ -26,18 +26,16 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/keyring"
-	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	toml "github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/immutable"
 )
 
-func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, error) {
+func setupSourceHub(s *state.State, testCase TestCase) (*options.NodeDocumentACPOptions, error) {
 	var isDocumentACPTest bool
 	for _, a := range testCase.Actions {
 		switch a.(type) {
@@ -281,12 +279,11 @@ cmdReaderLoop:
 		return nil, err
 	}
 
-	return []node.DocumentACPOpt{
-		node.WithTxnSigner(immutable.Some[node.TxSigner](signer)),
-		node.WithSourceHubChainID(chainID),
-		node.WithSourceHubGRPCAddress(gRpcAddress),
-		node.WithSourceHubCometRPCAddress(rpcAddress),
-	}, nil
+	return options.NodeDocumentACP().
+		SetTxnSigner(signer).
+		SetSourceHubChainID(chainID).
+		SetSourceHubGRPCAddress(gRpcAddress).
+		SetSourceHubCometRPCAddress(rpcAddress), nil
 }
 
 func getFreePort() (int, func(), error) {

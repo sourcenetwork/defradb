@@ -21,10 +21,9 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -53,40 +52,44 @@ func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
-	opts ...node.Option,
+	setupOpts *NodeSetupOptions,
 ) (*state.NodeState, error) {
-	opts = append(defaultNodeOpts(), opts...)
-	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
+	if setupOpts == nil {
+		setupOpts = &NodeSetupOptions{}
+	}
+	nodeOpts := defaultNodeOpts()
+	nodeOpts.DB.EnableSigning = testCase.EnableSigning
 
 	if s.EnableSearchableEncryption {
 		seKey, err := crypto.GenerateAES256()
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate searchable encryption key: %w", err)
 		}
-		opts = append(opts, db.WithSearchableEncryptionKey(seKey))
+		nodeOpts.DB.SearchableEncryptionKey = seKey
 	}
 
 	err := createBadgerEncryptionKey()
 	if err != nil {
 		return nil, err
 	}
+
 	if badgerEncryption && encryptionKey != nil {
-		opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+		nodeOpts.Store.BadgerEncryptionKey = encryptionKey
 	}
 
 	switch s.DocumentACPType {
 	case state.LocalDocumentACPType:
-		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
+		nodeOpts.DocumentACP.DocumentACPType = options.NodeLocalDocumentACPType
 
 	case state.SourceHubDocumentACPType:
-		if len(s.DocumentACPOptions) == 0 {
+		if s.DocumentACPOptions == nil {
 			s.DocumentACPOptions, err = setupSourceHub(s, testCase)
 			require.NoError(s.T, err)
 		}
 
-		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
-		for _, opt := range s.DocumentACPOptions {
-			opts = append(opts, opt)
+		nodeOpts.DocumentACP.DocumentACPType = options.NodeSourceHubDocumentACPType
+		if s.DocumentACPOptions != nil {
+			nodeOpts.DocumentACP = *s.DocumentACPOptions
 		}
 
 	default:
@@ -96,7 +99,7 @@ func setupNode(
 	var path string
 	switch s.DbType {
 	case BadgerIMType:
-		opts = append(opts, node.WithBadgerInMemory(true))
+		nodeOpts.Store.BadgerInMemory = true
 
 	case BadgerFileType:
 		switch {
@@ -113,31 +116,38 @@ func setupNode(
 			path = s.T.TempDir()
 		}
 
-		opts = append(
-			opts,
-			node.WithStorePath(path),
-			node.WithDocumentACPPath(path),
-			node.WithNodeACPPath(path),
-		)
+		nodeOpts.Store.Path = path
+		nodeOpts.DocumentACP.Path = path
+		nodeOpts.NodeACP.Path = path
 
 	case DefraIMType:
-		opts = append(opts, node.WithStoreType(node.MemoryStore))
+		nodeOpts.Store.Store = options.NodeMemoryStore
 
 	default:
 		return nil, fmt.Errorf("invalid database type: %v", s.DbType)
 	}
 
 	if s.KMS == PubSubKMSType {
-		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
+		nodeOpts.SetKMS(options.NodePubSubKMSType)
 	}
 
-	netOpts := getP2POptions(opts)
+	nodeOpts.P2P = setupOpts.P2POpts
+
+	if setupOpts.NodeIdentity != nil {
+		nodeOpts.SetNodeIdentity(setupOpts.NodeIdentity)
+	}
+
+	nodeOpts.NodeACP.IsEnabled = setupOpts.EnableNAC
+
+	if len(setupOpts.RetryIntervals) > 0 {
+		nodeOpts.DB.SetRetryIntervals(setupOpts.RetryIntervals)
+	}
 
 	if s.IsNetworkEnabled {
-		opts = append(opts, node.WithDisableP2P(false))
+		nodeOpts.DisableP2P = false
 	}
 
-	nodeObj, err := node.New(s.Ctx, opts...)
+	nodeObj, err := node.New(s.Ctx, nodeOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +172,7 @@ func setupNode(
 		Event:   eventState,
 		P2P:     state.NewP2PState(),
 		DbPath:  path,
-		NetOpts: netOpts,
+		P2POpts: setupOpts.P2POpts,
 	}
 
 	addresses, err := nodeObj.DB.PeerInfo()

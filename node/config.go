@@ -11,8 +11,7 @@
 package node
 
 import (
-	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/kms"
 
 	"github.com/sourcenetwork/immutable"
@@ -26,18 +25,7 @@ const (
 	defaultChunkSize = (1 << 20) - 1
 )
 
-// Option is a generic option that applies to any subsystem.
-//
-// Invalid option types will be silently ignored. Valid option types are:
-// - `ACPOpt`
-// - `NodeOpt`
-// - `StoreOpt`
-// - `db.Option`
-// - `http.ServerOpt`
-// - `net.NodeOpt`
-type Option any
-
-// Config contains node configuration values.
+// Config contains internal node configuration values derived from options.
 type Config struct {
 	disableP2P        bool
 	disableAPI        bool
@@ -50,51 +38,15 @@ func DefaultConfig() *Config {
 	return &Config{}
 }
 
-// NodeOpt is a function for setting configuration values.
-type NodeOpt func(*Config)
-
-// WithDisableP2P sets the disable p2p flag.
-func WithDisableP2P(disable bool) NodeOpt {
-	return func(o *Config) {
-		o.disableP2P = disable
+// applyNodeOptions applies NodeOptions to the config.
+func (c *Config) applyNodeOptions(opts *options.NodeOptions) {
+	if opts == nil {
+		return
 	}
-}
-
-// WithDisableAPI sets the disable api flag.
-func WithDisableAPI(disable bool) NodeOpt {
-	return func(o *Config) {
-		o.disableAPI = disable
+	c.disableP2P = opts.DisableP2P
+	c.disableAPI = opts.DisableAPI
+	c.enableDevelopment = opts.EnableDevelopment
+	if opts.KMSType.HasValue() {
+		c.kmsType = immutable.Some(kms.ServiceType(opts.KMSType.Value()))
 	}
-}
-
-func WithKMS(kms kms.ServiceType) NodeOpt {
-	return func(o *Config) {
-		o.kmsType = immutable.Some(kms)
-	}
-}
-
-// WithEnableDevelopment sets the enable development mode flag.
-func WithEnableDevelopment(enable bool) NodeOpt {
-	return func(o *Config) {
-		o.enableDevelopment = enable
-	}
-}
-
-// WithNodeIdentity sets the identity for the node. This is the identity that
-// will be used for things like block signatures and P2P sync operations.
-func WithNodeIdentity(ident identity.Identity) db.Option {
-	return db.WithNodeIdentity(ident)
-}
-
-// filterOptions returns a list of options containing
-// only options that match the given generic type.
-func filterOptions[T any](options []Option) []T {
-	var out []T
-	for _, o := range options {
-		switch t := o.(type) {
-		case T:
-			out = append(out, t)
-		}
-	}
-	return out
 }

@@ -42,7 +42,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
-	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
@@ -827,7 +826,9 @@ func setStartingNodes(
 			s,
 			acpIdentity.None,
 			testCase,
-			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))),
+			&NodeSetupOptions{
+				NodeIdentity: state.GetIdentity(s, NodeIdentity(0)),
+			},
 		)
 		require.Nil(s.T, err)
 		s.Nodes = append(s.Nodes, st)
@@ -841,18 +842,22 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		nodeIndex := nodeIDs[i]
 		originalPath := databaseDir
 		databaseDir = s.Nodes[nodeIndex].DbPath
-		opts := []node.Option{
-			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(nodeIndex))),
-		}
-		opts = append(opts, s.Nodes[nodeIndex].NetOpts...)
 
-		opts = withWithListenAddresses(opts, s.Nodes[nodeIndex].CachedAddresses...)
-		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
+		p2pOpts := s.Nodes[nodeIndex].P2POpts
+		if len(s.Nodes[nodeIndex].CachedAddresses) > 0 {
+			p2pOpts.ListenAddresses = s.Nodes[nodeIndex].CachedAddresses
+		}
+
+		setupOpts := &NodeSetupOptions{
+			P2POpts:      p2pOpts,
+			NodeIdentity: state.GetIdentity(s, NodeIdentity(nodeIndex)),
+			EnableNAC:    action.EnableNAC,
+		}
 		node, err := setupNode(
 			s,
 			getIdentityOption(s, action.Identity),
 			testCase,
-			opts...,
+			setupOpts,
 		)
 		databaseDir = originalPath
 
@@ -981,15 +986,16 @@ func configureNode(
 	privateKey, err := crypto.GenerateEd25519()
 	require.NoError(s.T, err)
 
-	netNodeOpts := action()
+	p2pOpts := action()
+	p2pOpts.PrivateKey = privateKey
 
-	netNodeOpts = withPrivateKey(netNodeOpts, privateKey)
+	setupOpts := &NodeSetupOptions{
+		P2POpts:        p2pOpts,
+		NodeIdentity:   state.GetIdentity(s, NodeIdentity(len(s.Nodes))),
+		RetryIntervals: []time.Duration{time.Millisecond * 1},
+	}
 
-	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
-	nodeOpts = append(nodeOpts, netNodeOpts...)
-	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
-
-	node, err := setupNode(s, acpIdentity.None, testCase, nodeOpts...) //disable change detector, or allow it?
+	node, err := setupNode(s, acpIdentity.None, testCase, setupOpts)
 	require.NoError(s.T, err)
 
 	s.Nodes = append(s.Nodes, node)

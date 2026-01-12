@@ -17,25 +17,27 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/badger"
+
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 // BadgerStore specifies the badger datastore
-const BadgerStore = StoreType("badger")
+const BadgerStore = options.NodeBadgerStore
 
 func init() {
-	constructor := func(ctx context.Context, options *StoreOptions) (corekv.TxnStore, error) {
+	constructor := func(ctx context.Context, opts *options.NodeStoreOptions) (corekv.TxnStore, error) {
 		var path string
-		if !options.badgerInMemory {
+		if !opts.BadgerInMemory {
 			// Badger will error if we give it a path and set `InMemory` to true
-			path = options.path
+			path = opts.Path
 		}
 
 		badgerOpts := badgerds.DefaultOptions(path)
-		badgerOpts.InMemory = options.badgerInMemory
-		badgerOpts.ValueLogFileSize = options.badgerFileSize
-		badgerOpts.EncryptionKey = options.badgerEncryptionKey
+		badgerOpts.InMemory = opts.BadgerInMemory
+		badgerOpts.ValueLogFileSize = opts.BadgerFileSize
+		badgerOpts.EncryptionKey = opts.BadgerEncryptionKey
 
-		if len(options.badgerEncryptionKey) > 0 {
+		if len(opts.BadgerEncryptionKey) > 0 {
 			// Having a cache improves the performance.
 			// Otherwise, your reads would be very slow while encryption is enabled.
 			// https://dgraph.io/docs/badger/get-started/#encryption-mode
@@ -44,8 +46,8 @@ func init() {
 
 		return badger.NewDatastore(path, badgerOpts)
 	}
-	purge := func(ctx context.Context, options *StoreOptions) error {
-		store, err := constructor(ctx, options)
+	purge := func(ctx context.Context, opts *options.NodeStoreOptions) error {
+		store, err := constructor(ctx, opts)
 		if err != nil {
 			return err
 		}
@@ -61,25 +63,4 @@ func init() {
 
 	storeConstructors[DefaultStore] = constructor
 	storePurgeFuncs[DefaultStore] = purge
-}
-
-// WithBadgerInMemory sets the badger in memory option.
-func WithBadgerInMemory(enable bool) StoreOpt {
-	return func(o *StoreOptions) {
-		o.badgerInMemory = enable
-	}
-}
-
-// WithBadgerFileSize sets the badger value log file size.
-func WithBadgerFileSize(size int64) StoreOpt {
-	return func(o *StoreOptions) {
-		o.badgerFileSize = size
-	}
-}
-
-// WithBadgerEncryptionKey sets the badger encryption key.
-func WithBadgerEncryptionKey(encryptionKey []byte) StoreOpt {
-	return func(o *StoreOptions) {
-		o.badgerEncryptionKey = encryptionKey
-	}
 }

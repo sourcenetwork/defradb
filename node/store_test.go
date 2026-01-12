@@ -14,16 +14,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
-func TestWithStore(t *testing.T) {
-	options := &StoreOptions{}
-	WithStoreType(MemoryStore)(options)
-	assert.Equal(t, MemoryStore, options.store)
+func TestNodeStoreOptions_Store(t *testing.T) {
+	storeOpts := options.NodeStore()
+	storeOpts.Store = options.NodeMemoryStore
+	assert.Equal(t, options.NodeMemoryStore, storeOpts.Store)
 }
 
-func TestWithStorePath(t *testing.T) {
-	options := &StoreOptions{}
-	WithStorePath("test")(options)
-	assert.Equal(t, "test", options.path)
+func TestNodeStoreOptions_Path(t *testing.T) {
+	storeOpts := options.NodeStore()
+	storeOpts.Path = "test"
+	assert.Equal(t, "test", storeOpts.Path)
 }

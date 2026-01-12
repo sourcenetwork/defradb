@@ -17,13 +17,24 @@ import (
 	"testing"
 	"time"
 
-	lensNode "github.com/sourcenetwork/lens/host-go/node"
-
-	"github.com/sourcenetwork/defradb/internal/db"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
+
+// NodeSetupOptions contains options for setting up a node in tests.
+type NodeSetupOptions struct {
+	// P2POpts contains P2P configuration options.
+	P2POpts options.NodeP2POptions
+	// NodeIdentity is the identity to use for the node.
+	NodeIdentity acpIdentity.Identity
+	// EnableNAC enables Node Access Control.
+	EnableNAC bool
+	// RetryIntervals specifies replicator retry intervals.
+	RetryIntervals []time.Duration
+}
 
 const (
 	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
@@ -69,58 +80,54 @@ func init() {
 	}
 }
 
-func defaultNodeOpts() []node.Option {
-	return []node.Option{
-		db.WithLensOpts(
-			lensNode.WithPoolSize(lensPoolSize),
-		),
-		db.WithLensRuntime(lensType),
-		// The test framework sets this up elsewhere when required so that it may be wrapped
-		// into a [client.TxnStore].
-		node.WithDisableAPI(true),
-		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
-		// to keep the tests as lightweight as possible.
-		node.WithDisableP2P(true),
-		// The default is 5 and that is never going to be needed in a testing scenario where all the
-		// nodes are on the same machine with no network latency.
-		db.WithP2PBlockSyncTimeout(1 * time.Second),
-	}
+func defaultNodeOpts() *options.NodeOptions {
+	nodeOpts := options.Node()
+	// The test framework sets this up elsewhere when required so that it may be wrapped
+	// into a [client.TxnStore].
+	nodeOpts.DisableAPI = true
+	// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
+	// to keep the tests as lightweight as possible.
+	nodeOpts.DisableP2P = true
+	nodeOpts.DB.LensPoolSize = lensPoolSize
+	nodeOpts.DB.LensRuntime = options.NodeLensRuntimeType(lensType)
+	// The default is 5 and that is never going to be needed in a testing scenario where all the
+	// nodes are on the same machine with no network latency.
+	nodeOpts.DB.P2PBlockSyncTimeout = 1 * time.Second
+	return nodeOpts
 }
 
 func NewBadgerMemoryDB(ctx context.Context) (node.DB, error) {
-	opts := []node.Option{
-		node.WithDisableP2P(true),
-		node.WithDisableAPI(true),
-		node.WithBadgerInMemory(true),
-	}
+	nodeOpts := options.Node()
+	nodeOpts.DisableP2P = true
+	nodeOpts.DisableAPI = true
+	nodeOpts.Store.BadgerInMemory = true
 
-	node, err := node.New(ctx, opts...)
+	n, err := node.New(ctx, nodeOpts)
 	if err != nil {
 		return nil, err
 	}
-	err = node.Start(ctx)
+	err = n.Start(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return node.DB, err
+	return n.DB, err
 }
 
 func NewBadgerFileDB(ctx context.Context, t testing.TB) (node.DB, error) {
 	path := t.TempDir()
 
-	opts := []node.Option{
-		node.WithDisableP2P(true),
-		node.WithDisableAPI(true),
-		node.WithStorePath(path),
-	}
+	nodeOpts := options.Node()
+	nodeOpts.DisableP2P = true
+	nodeOpts.DisableAPI = true
+	nodeOpts.Store.Path = path
 
-	node, err := node.New(ctx, opts...)
+	n, err := node.New(ctx, nodeOpts)
 	if err != nil {
 		return nil, err
 	}
-	err = node.Start(ctx)
+	err = n.Start(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return node.DB, err
+	return n.DB, err
 }

@@ -21,9 +21,9 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 )
 
@@ -172,7 +172,7 @@ type NodeState struct {
 	// P2P contains P2P states for the node.
 	P2P *P2PState
 	// The network configurations for the nodes
-	NetOpts []node.Option
+	P2POpts options.NodeP2POptions
 	// The path to any file-based databases active in this test.
 	DbPath string
 	// Collections by index present in the test.
@@ -208,7 +208,7 @@ type State struct {
 	DocumentACPType DocumentACPType
 
 	// The Document ACP options to share between each node (currently only used for sourcehub).
-	DocumentACPOptions []node.DocumentACPOpt
+	DocumentACPOptions *options.NodeDocumentACPOptions
 
 	// Any explicit transactions active in this test.
 	//
@@ -326,7 +326,7 @@ func NewState(
 		DbType:                          dbt,
 		ClientType:                      clientType,
 		DocumentACPType:                 documentACPType,
-		DocumentACPOptions:              []node.DocumentACPOpt{},
+		DocumentACPOptions:              nil,
 		Txns:                            []client.Txn{},
 		IdentityTypes:                   identityTypes,
 		EnableSearchableEncryption:      enableSearchableEncryption,
