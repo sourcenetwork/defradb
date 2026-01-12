@@ -174,34 +174,33 @@ func (c *Collection) Save(
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
 	}
-	var getOpts []*options.CollectionGetOptions
-	if len(opts) > 0 && opts[0] != nil && opts[0].Identity.HasValue() {
-		getOpts = []*options.CollectionGetOptions{
-			options.CollectionGet().SetIdentity(opts[0].Identity.Value()),
-		}
+	var getOpts *options.CollectionGetOptions
+	if len(opts) > 0 && opts[0] != nil && opts[0].GetIdentity().HasValue() {
+		getOpts = options.CollectionGet().SetIdentity(opts[0].GetIdentity().Value())
 	}
-	_, err := c.Get(ctx, doc.ID(), true, getOpts...)
+	_, err := c.Get(ctx, doc.ID(), true, getOpts)
 	if err == nil {
-		var updateOpts []*options.CollectionUpdateOptions
-		if len(opts) > 0 && opts[0] != nil && opts[0].Identity.HasValue() {
-			updateOpts = []*options.CollectionUpdateOptions{
-				options.CollectionUpdate().SetIdentity(opts[0].Identity.Value()),
-			}
+		var updateOpts *options.CollectionUpdateOptions
+		if len(opts) > 0 && opts[0] != nil && opts[0].GetIdentity().HasValue() {
+			updateOpts = options.CollectionUpdate().SetIdentity(opts[0].GetIdentity().Value())
 		}
-		return c.Update(ctx, doc, updateOpts...)
+		return c.Update(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		var createOpts []*options.CollectionCreateOptions
+		var createOpts *options.CollectionCreateOptions
 		if len(opts) > 0 && opts[0] != nil {
 			createOpt := options.CollectionCreate().
 				SetEncryptDoc(opts[0].EncryptDoc).
 				SetEncryptedFields(opts[0].EncryptedFields)
-			if opts[0].Identity.HasValue() {
-				createOpt.SetIdentity(opts[0].Identity.Value())
+
+			if opts[0].GetIdentity().HasValue() {
+				createOpts = createOpt.SetIdentity(opts[0].GetIdentity().Value())
 			}
-			createOpts = []*options.CollectionCreateOptions{createOpt}
+
+			createOpts = createOpt
 		}
-		return c.Create(ctx, doc, createOpts...)
+
+		return c.Create(ctx, doc, createOpts)
 	}
 	return err
 }
