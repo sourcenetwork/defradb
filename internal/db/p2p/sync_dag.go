@@ -57,7 +57,7 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 	return p.loadBlockLinks(sessionCtx, &linkSystem, block, bstore)
 }
 
-// loadBlockLinks loads the links of a block recursively.
+// loadBlockLinks loads the links of a block iteratively.
 //
 // The function returns immediately on the first error encountered.
 func (p *P2P) loadBlockLinks(
@@ -66,68 +66,73 @@ func (p *P2P) loadBlockLinks(
 	block *coreblock.Block,
 	bstore datastore.Blockstore,
 ) error {
-	link, err := block.GenerateLink()
-	if err != nil {
-		return err
-	}
+	stack := make([]*coreblock.Block, 0, 64)
+	stack = append(stack, block)
 
-	merged, err := bstore.IsMerged(ctx, link.Cid)
-	if err != nil {
-		return err
-	}
-	if merged {
-		return nil
-	}
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
 
-	// TODO: this part is not tested yet because there is not easy way of doing it at the moment.
-	// https://github.com/sourcenetwork/defradb/issues/3525
-	if block.Signature != nil {
-		// we deliberately ignore the first returned value, which indicates whether the signature
-		// the block was actually verified or not, because we don't handle it any different here.
-		// But we want to keep the API of VerifyBlockSignature explicit about the results.
-		_, err := coreblock.VerifyBlockSignature(block, linkSys)
-		if err != nil {
-			return err
-		}
-	}
-
-	var encResults *encryption.Results
-	if block.IsEncrypted() {
-		results, err := p.kms.GetKeys(ctx, *block.Encryption)
-		if err != nil {
-			return err
-		}
-		encResults = results
-	}
-
-	for _, lnk := range block.AllLinks() {
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-
-		ctxWithTimeout, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
-		nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
-		cancel()
-
+		link, err := current.GenerateLink()
 		if err != nil {
 			return err
 		}
 
-		linkBlock, err := coreblock.GetFromNode(nd)
+		merged, err := bstore.IsMerged(ctx, link.Cid)
 		if err != nil {
 			return err
 		}
-
-		err = p.loadBlockLinks(ctx, linkSys, linkBlock, bstore)
-		if err != nil {
-			return err
+		if merged {
+			continue
 		}
-	}
 
-	if encResults != nil {
-		for res := range encResults.Get() {
-			if res.Error != nil {
-				return res.Error
+		// TODO: this part is not tested yet because there is not easy way of doing it at the moment.
+		// https://github.com/sourcenetwork/defradb/issues/3525
+		if current.Signature != nil {
+			// we deliberately ignore the first returned value, which indicates whether the signature
+			// the block was actually verified or not, because we don't handle it any different here.
+			// But we want to keep the API of VerifyBlockSignature explicit about the results.
+			_, err := coreblock.VerifyBlockSignature(current, linkSys)
+			if err != nil {
+				return err
+			}
+		}
+
+		var encResults *encryption.Results
+		if current.IsEncrypted() {
+			results, err := p.kms.GetKeys(ctx, *current.Encryption)
+			if err != nil {
+				return err
+			}
+			encResults = results
+		}
+
+		for _, lnk := range current.AllLinks() {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+
+			ctxWithTimeout, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
+			nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
+			cancel()
+
+			if err != nil {
+				return err
+			}
+
+			linkBlock, err := coreblock.GetFromNode(nd)
+			if err != nil {
+				return err
+			}
+
+			stack = append(stack, linkBlock)
+		}
+
+		if encResults != nil {
+			for res := range encResults.Get() {
+				if res.Error != nil {
+					return res.Error
+				}
 			}
 		}
 	}
