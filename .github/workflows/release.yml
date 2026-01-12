@@ -41,7 +41,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           check-latest: true
@@ -103,7 +103,7 @@ jobs:
         run: git tag v${{ github.event.inputs.tag }}
 
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           check-latest: true

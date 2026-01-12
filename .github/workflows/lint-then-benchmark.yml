@@ -55,7 +55,7 @@ jobs:
 
       # Setting up Go explicitly is required for v3.0.0+ of golangci/golangci-lint-action.
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           check-latest: true
