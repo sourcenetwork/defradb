@@ -35,6 +35,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
@@ -110,6 +111,9 @@ type DB struct {
 	retryIntervals []time.Duration
 	// timeout duration for syncing block links.
 	p2pBlockSyncTimeout time.Duration
+
+	// lockSet contains and manages the set of locks held and available to this Defra instance.
+	lockSet *lock.LockSet
 }
 
 var _ client.TxnStore = (*DB)(nil)
@@ -157,6 +161,7 @@ func newDB(
 		colMergeQueue:       newMergeQueue(),
 		retryIntervals:      opts.retryIntervals,
 		p2pBlockSyncTimeout: opts.p2pBlockSyncTimeout,
+		lockSet:             lock.NewLockSet(),
 	}
 
 	if opts.maxTxnRetries.HasValue() {
@@ -210,14 +215,14 @@ func newDB(
 // NewTxn creates a new transaction.
 func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewTxnFrom(db.rootstore, txnId, readonly, db.blockStoreChunkSize)
+	txn := datastore.NewTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	txn := datastore.NewConcurrentTxnFrom(db.rootstore, txnId, readonly, db.blockStoreChunkSize)
+	txn := datastore.NewConcurrentTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
 }
 
@@ -335,7 +340,7 @@ func (db *DB) Rootstore() corekv.TxnStore {
 }
 
 func (db *DB) Multistore() *datastore.Multistore {
-	return datastore.NewMultistore(db.rootstore, db.blockStoreChunkSize)
+	return datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
 }
 
 // Events returns the events Channel.

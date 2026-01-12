@@ -15,26 +15,35 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/namespace"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type datastore struct {
 	underlying corekv.ReaderWriter
+
+	lockSet *lock.LockSet
 }
 
 var _ Keyedstore = (*datastore)(nil)
 
-func newDatastore(rootstore corekv.ReaderWriter) *datastore {
+func newDatastore(rootstore corekv.ReaderWriter, lockSet *lock.LockSet) *datastore {
 	return &datastore{
 		underlying: namespace.Wrap(rootstore, []byte{dataStoreKey}),
+		lockSet:    lockSet,
 	}
 }
 
 func (s *datastore) Get(ctx context.Context, key Key) ([]byte, error) {
+	s.collectionRLock(ctx, key)
+
 	keyBytes := key.Bytes()
 	return s.underlying.Get(ctx, keyBytes)
 }
 
 func (s *datastore) Has(ctx context.Context, key Key) (bool, error) {
+	s.collectionRLock(ctx, key)
+
 	keyBytes := key.Bytes()
 	return s.underlying.Has(ctx, keyBytes)
 }
@@ -45,13 +54,19 @@ func (s *datastore) Iterator(ctx context.Context, opts IterOptions) (corekv.Iter
 	var end []byte
 
 	if opts.Prefix != nil {
+		s.collectionRLock(ctx, opts.Prefix)
 		prefix = opts.Prefix.Bytes()
 	}
 	if opts.Start != nil {
+		s.collectionRLock(ctx, opts.Start)
 		start = opts.Start.Bytes()
 	}
 	if opts.End != nil {
 		end = opts.End.Bytes()
+	}
+
+	if opts.Prefix == nil && opts.Start == nil {
+		s.lockSet.RLockAll(CtxMustGetTxn(ctx))
 	}
 
 	ckvOpts := corekv.IterOptions{
@@ -65,11 +80,26 @@ func (s *datastore) Iterator(ctx context.Context, opts IterOptions) (corekv.Iter
 }
 
 func (s *datastore) Set(ctx context.Context, key Key, value []byte) error {
+	s.collectionRLock(ctx, key)
+
 	keyBytes := key.Bytes()
 	return s.underlying.Set(ctx, keyBytes, value)
 }
 
 func (s *datastore) Delete(ctx context.Context, key Key) error {
+	s.collectionRLock(ctx, key)
+
 	keyBytes := key.Bytes()
 	return s.underlying.Delete(ctx, keyBytes)
+}
+
+func (s *datastore) collectionRLock(ctx context.Context, key Key) {
+	colKey, isKeyedByCollection := key.(keys.CollectionedKey)
+	if !isKeyedByCollection {
+		// No-op, the key does not contain a reference to a collection,
+		// so we do not need to lock it
+		return
+	}
+
+	s.lockSet.CollectionRLock(CtxMustGetTxn(ctx), colKey.GetCollectionShortID())
 }

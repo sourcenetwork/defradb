@@ -330,21 +330,21 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 	}
 	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CidFieldName, link.String())
 
-	schemaVersionId := block.Delta.GetSchemaVersionID()
-	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.SchemaVersionIDFieldName, schemaVersionId)
+	collectionVersionId := block.Delta.GetCollectionVersionID()
+	n.commitSelect.DocumentMapping.SetFirstOfName(&commit, request.CollectionVersionIDFieldName, collectionVersionId)
 
 	cols, err := n.planner.db.GetCollections(
 		n.planner.ctx,
 		client.CollectionFetchOptions{
 			IncludeInactive: immutable.Some(true),
-			VersionID:       immutable.Some(schemaVersionId),
+			VersionID:       immutable.Some(collectionVersionId),
 		},
 	)
 	if err != nil {
 		return core.Doc{}, err
 	}
 	if len(cols) == 0 {
-		return core.Doc{}, client.NewErrCollectionNotFoundForCollectionVersion(schemaVersionId)
+		return core.Doc{}, client.NewErrCollectionNotFoundForCollectionVersion(collectionVersionId)
 	}
 
 	var fieldName any

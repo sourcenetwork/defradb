@@ -503,7 +503,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 						age
 						name
 						_version {
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -515,7 +515,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 							"name":   "John",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
+									"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 								},
 							},
 						},
@@ -567,7 +567,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 					Users {
 						_docID
 						_version {
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -577,7 +577,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 							"_docID": "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
+									"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 								},
 							},
 						},

@@ -26,7 +26,7 @@ import (
 
 func makeFieldBlock(fieldName string, value any) coreblock.Block {
 	const docID = "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790"
-	const schemaVersionID = "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq"
+	const collectionVersionID = "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq"
 
 	fieldVal, err := cbor.Marshal(value)
 	if err != nil {
@@ -34,11 +34,11 @@ func makeFieldBlock(fieldName string, value any) coreblock.Block {
 	}
 
 	delta := &crdt.LWWDelta{
-		Data:            fieldVal,
-		DocID:           []byte(docID),
-		FieldName:       fieldName,
-		SchemaVersionID: schemaVersionID,
-		Priority:        1,
+		Data:                fieldVal,
+		DocID:               []byte(docID),
+		FieldName:           fieldName,
+		CollectionVersionID: collectionVersionID,
+		Priority:            1,
 	}
 
 	block := coreblock.New(crdt.NewCRDT(delta), nil)

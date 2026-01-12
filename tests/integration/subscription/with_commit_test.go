@@ -29,14 +29,14 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 					{
 						"_commits": []map[string]any{
 							{
-								"cid": "bafyreiaxbbq4vafq22ptdverb7v22eaubqb5luxul7eooble7nqlqgg5ii",
+								"cid": "bafyreid3ymo4wt3gdubzo2n247qqecsbazjaujprvuv62rc3rne5fx765m",
 							},
 						},
 					},
 					{
 						"_commits": []map[string]any{
 							{
-								"cid": "bafyreialxrvwrz4rhgomch7kr7scx6t7m6xspbjecvzneirkgskh2tjele",
+								"cid": "bafyreib5dvg3wkm722kietpvx5gmfueilyvywyiz2tl44q6xnhv4bedcpq",
 							},
 						},
 					},
@@ -91,7 +91,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 					{
 						"_commits": []map[string]any{
 							{
-								"cid":   "bafyreiaxbbq4vafq22ptdverb7v22eaubqb5luxul7eooble7nqlqgg5ii",
+								"cid":   "bafyreid3ymo4wt3gdubzo2n247qqecsbazjaujprvuv62rc3rne5fx765m",
 								"links": create1Links,
 								"heads": create1Heads,
 							},
@@ -100,7 +100,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 					{
 						"_commits": []map[string]any{
 							{
-								"cid":   "bafyreialxrvwrz4rhgomch7kr7scx6t7m6xspbjecvzneirkgskh2tjele",
+								"cid":   "bafyreib5dvg3wkm722kietpvx5gmfueilyvywyiz2tl44q6xnhv4bedcpq",
 								"links": create2Links,
 								"heads": create2Heads,
 							},

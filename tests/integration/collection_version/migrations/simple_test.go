@@ -29,8 +29,8 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 		Actions: []any{
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "does not exist",
-					DestinationSchemaVersionID: "also does not exist",
+					SourceCollectionVersionID:      "does not exist",
+					DestinationCollectionVersionID: "also does not exist",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -74,8 +74,8 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 		Actions: []any{
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "does not exist",
-					DestinationSchemaVersionID: "also does not exist",
+					SourceCollectionVersionID:      "does not exist",
+					DestinationCollectionVersionID: "also does not exist",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -91,8 +91,8 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
-					DestinationSchemaVersionID: "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
+					SourceCollectionVersionID:      "bafyreigsld6ten2pppcu2tgkbexqwdndckp6zt2vfjhuuheykqkgpmwk7i",
+					DestinationCollectionVersionID: "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -148,8 +148,8 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 		Actions: []any{
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "a",
-					DestinationSchemaVersionID: "b",
+					SourceCollectionVersionID:      "a",
+					DestinationCollectionVersionID: "b",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -166,8 +166,8 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 			testUtils.ConfigureMigration{
 				// Replace the original migration with a new configuration
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "a",
-					DestinationSchemaVersionID: "c",
+					SourceCollectionVersionID:      "a",
+					DestinationCollectionVersionID: "c",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -240,8 +240,8 @@ func TestSchemaMigration_ConfigureMigrationSkippingVersion_Errors(t *testing.T) 
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      version1,
-					DestinationSchemaVersionID: version3,
+					SourceCollectionVersionID:      version1,
+					DestinationCollectionVersionID: version3,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

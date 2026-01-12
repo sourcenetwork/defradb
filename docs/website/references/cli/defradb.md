@@ -38,4 +38,5 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 * [defradb server-dump](defradb_server-dump.md)	 - Dumps the state of the entire database
 * [defradb start](defradb_start.md)	 - Start a DefraDB node
 * [defradb version](defradb_version.md)	 - Display the version information of DefraDB and its components
+* [defradb wizard](defradb_wizard.md)	 - Runs the DefraDB setup wizard
 
