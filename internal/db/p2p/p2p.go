@@ -426,6 +426,20 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	return peerHasAccess
 }
 
+// hasCollection checks if the local node has the given collection.
+func (p *P2P) hasCollection(ctx context.Context, collectionID string) (bool, error) {
+	cols, err := p.db.GetCollections(
+		ctx,
+		client.CollectionFetchOptions{
+			CollectionID: immutable.Some(collectionID),
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+	return len(cols) > 0, nil
+}
+
 // trySelfHasAccess checks if the local node has access to the given block.
 //
 // This is a best-effort check and returns true unless we explicitly find that the local node
@@ -446,7 +460,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return false, err
 	}
 	if len(cols) == 0 {
-		return false, client.ErrCollectionNotFound
+		return false, nil
 	}
 	ident, err := p.db.GetNodeIdentity(ctx)
 	if err != nil {
@@ -534,6 +548,15 @@ func (p *P2P) processPushlogRequest(
 			return err
 		}
 		if isMerged {
+			return nil
+		}
+
+		// Check if we have the collection
+		hasCollection, err := p.hasCollection(ctx, req.CollectionID)
+		if err != nil {
+			return err
+		}
+		if !hasCollection {
 			return nil
 		}
 
