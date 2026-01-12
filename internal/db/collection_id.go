@@ -395,6 +395,11 @@ setLoop:
 	}
 
 	if len(deferredSets) > 0 {
+		if len(result) == index {
+			// No progress was made in this pass, implying a cyclic dependency
+			// We can't continue with recursive sorting, so return the strongly-connected component
+			return append(result, deferredSets...)
+		}
 		return sortCollectionSetsFrom(len(result), append(result, deferredSets...))
 	}
 
