@@ -140,7 +140,10 @@ func (c *Client) DeleteReplicator(
 	return err
 }
 
-func (c *Client) GetAllReplicators(ctx context.Context, opts ...*options.GetAllReplicatorsOptions) ([]client.Replicator, error) {
+func (c *Client) GetAllReplicators(
+	ctx context.Context,
+	opts ...*options.GetAllReplicatorsOptions,
+) ([]client.Replicator, error) {
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
 	}
@@ -204,7 +207,10 @@ func (c *Client) RemoveP2PCollections(
 	return err
 }
 
-func (c *Client) GetAllP2PCollections(ctx context.Context, opts ...*options.GetAllP2PCollectionsOptions) ([]string, error) {
+func (c *Client) GetAllP2PCollections(
+	ctx context.Context,
+	opts ...*options.GetAllP2PCollectionsOptions,
+) ([]string, error) {
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
 	}

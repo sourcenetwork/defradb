@@ -33,7 +33,10 @@ const (
 //
 // Is is populated by the `init` functions in the runtime-specific files - this
 // allows it's population to be managed by build flags.
-var storeConstructors = map[StoreType]func(ctx context.Context, opts *options.NodeStoreOptions) (corekv.TxnStore, error){}
+var storeConstructors = map[StoreType]func(
+	ctx context.Context,
+	opts *options.NodeStoreOptions,
+) (corekv.TxnStore, error){}
 
 // storePurgeFuncs is a map of [StoreType]s to store purge functions.
 //

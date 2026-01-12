@@ -417,7 +417,11 @@ func getOrCreatePeerKey(kr keyring.Keyring, p2pOpts *options.NodeP2POptions) err
 	return nil
 }
 
-func getOrCreateIdentity(kr keyring.Keyring, nodeOpts *options.NodeOptions, cfg *viper.Viper) (*options.NodeOptions, error) {
+func getOrCreateIdentity(
+	kr keyring.Keyring,
+	nodeOpts *options.NodeOptions,
+	cfg *viper.Viper,
+) (*options.NodeOptions, error) {
 	identityBytes, err := kr.Get(nodeIdentityKeyName)
 	if err != nil {
 		if !errors.Is(err, keyring.ErrNotFound) {

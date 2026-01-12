@@ -24,7 +24,11 @@ import (
 )
 
 // ExecRequest executes a request against the database.
-func (db *DB) ExecRequest(ctx context.Context, request string, opts ...*options.ExecRequestOptions) *client.RequestResult {
+func (db *DB) ExecRequest(
+	ctx context.Context,
+	request string,
+	opts ...*options.ExecRequestOptions,
+) *client.RequestResult {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

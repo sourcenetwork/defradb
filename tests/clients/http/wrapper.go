@@ -93,31 +93,56 @@ func (w *Wrapper) DeleteReplicator(
 	return w.client.DeleteReplicator(ctx, id, collections, opts...)
 }
 
-func (w *Wrapper) GetAllReplicators(ctx context.Context, opts ...*options.GetAllReplicatorsOptions) ([]client.Replicator, error) {
+func (w *Wrapper) GetAllReplicators(
+	ctx context.Context,
+	opts ...*options.GetAllReplicatorsOptions,
+) ([]client.Replicator, error) {
 	return w.client.GetAllReplicators(ctx, opts...)
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string, opts ...*options.AddP2PCollectionsOptions) error {
+func (w *Wrapper) AddP2PCollections(
+	ctx context.Context,
+	collectionIDs []string,
+	opts ...*options.AddP2PCollectionsOptions,
+) error {
 	return w.client.AddP2PCollections(ctx, collectionIDs, opts...)
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs []string, opts ...*options.RemoveP2PCollectionsOptions) error {
+func (w *Wrapper) RemoveP2PCollections(
+	ctx context.Context,
+	collectionIDs []string,
+	opts ...*options.RemoveP2PCollectionsOptions,
+) error {
 	return w.client.RemoveP2PCollections(ctx, collectionIDs, opts...)
 }
 
-func (w *Wrapper) GetAllP2PCollections(ctx context.Context, opts ...*options.GetAllP2PCollectionsOptions) ([]string, error) {
+func (w *Wrapper) GetAllP2PCollections(
+	ctx context.Context,
+	opts ...*options.GetAllP2PCollectionsOptions,
+) ([]string, error) {
 	return w.client.GetAllP2PCollections(ctx, opts...)
 }
 
-func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.AddP2PDocumentsOptions) error {
+func (w *Wrapper) AddP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...*options.AddP2PDocumentsOptions,
+) error {
 	return w.client.AddP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.RemoveP2PDocumentsOptions) error {
+func (w *Wrapper) RemoveP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...*options.RemoveP2PDocumentsOptions,
+) error {
 	return w.client.RemoveP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (w *Wrapper) GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions) ([]string, error) {
+func (w *Wrapper) GetAllP2PDocuments(
+	ctx context.Context,
+	opts ...*options.GetAllP2PDocumentsOptions,
+) ([]string, error) {
 	return w.client.GetAllP2PDocuments(ctx, opts...)
 }
 
@@ -145,7 +170,11 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	return w.client.BasicExport(ctx, config)
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, schema string, opts ...*options.AddSchemaOptions) ([]client.CollectionVersion, error) {
+func (w *Wrapper) AddSchema(
+	ctx context.Context,
+	schema string,
+	opts ...*options.AddSchemaOptions,
+) ([]client.CollectionVersion, error) {
 	return w.client.AddSchema(ctx, schema, opts...)
 }
 
@@ -293,7 +322,10 @@ func (w *Wrapper) GetCollections(
 	return w.client.GetCollections(ctx, opts...)
 }
 
-func (w *Wrapper) GetAllIndexes(ctx context.Context, opts ...*options.GetAllIndexesOptions) (map[client.CollectionName][]client.IndexDescription, error) {
+func (w *Wrapper) GetAllIndexes(
+	ctx context.Context,
+	opts ...*options.GetAllIndexesOptions,
+) (map[client.CollectionName][]client.IndexDescription, error) {
 	return w.client.GetAllIndexes(ctx, opts...)
 }
 

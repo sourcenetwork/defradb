@@ -50,11 +50,3 @@ func getIPString() string {
 
 	return localAddr.IP.String()
 }
-
-func withPrivateKey(p2pOpts *options.NodeP2POptions, key []byte) {
-	p2pOpts.PrivateKey = key
-}
-
-func withListenAddresses(p2pOpts *options.NodeP2POptions, addresses ...string) {
-	p2pOpts.ListenAddresses = addresses
-}

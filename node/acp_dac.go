@@ -41,7 +41,10 @@ func DefaultACPOptions() *options.NodeDocumentACPOptions {
 }
 
 // NewDocumentACP returns a new ACP module with the given options.
-func NewDocumentACP(ctx context.Context, opts ...*options.NodeDocumentACPOptions) (immutable.Option[dac.DocumentACP], error) {
+func NewDocumentACP(
+	ctx context.Context,
+	opts ...*options.NodeDocumentACPOptions,
+) (immutable.Option[dac.DocumentACP], error) {
 	var opt *options.NodeDocumentACPOptions
 	if len(opts) > 0 {
 		opt = opts[0]

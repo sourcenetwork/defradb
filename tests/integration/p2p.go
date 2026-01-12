@@ -139,7 +139,12 @@ func reconnectPeers(s *state.State) {
 
 // connectWithRetry attempts to connect to target addresses with retry logic
 // to handle transient connection failures.
-func connectWithRetry(ctx context.Context, node *state.NodeState, targetAddresses []string, opt *options.ConnectOptions) error {
+func connectWithRetry(
+	ctx context.Context,
+	node *state.NodeState,
+	targetAddresses []string,
+	opt *options.ConnectOptions,
+) error {
 	const maxRetries = 5
 	const retryDelay = 50 * time.Millisecond
 

@@ -85,7 +85,7 @@ func AddDelta(
 		dagBlock.Encryption = &encLink
 	}
 
-	if ok, ident := EnabledSigningFromContext(ctx); ok  && ident.HasValue() {
+	if ok, ident := EnabledSigningFromContext(ctx); ok && ident.HasValue() {
 		err = signBlock(ctx, txn.Blockstore(), dagBlock, ident.Value())
 		if err != nil {
 			return cidlink.Link{}, nil, err

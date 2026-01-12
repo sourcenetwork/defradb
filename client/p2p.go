@@ -38,18 +38,18 @@ type P2P interface {
 	// SetReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
 	SetReplicator(
-		ctx context.Context, 
-		addresses []string, 
-		collectionNames []string, 
+		ctx context.Context,
+		addresses []string,
+		collectionNames []string,
 		opts ...*options.SetReplicatorOptions,
 	) error
 
 	// DeleteReplicator deletes a replicator from the persisted list
 	// or specific schemas if they are specified.
 	DeleteReplicator(
-		ctx context.Context, 
-		id string, 
-		collectionNames []string, 
+		ctx context.Context,
+		id string,
+		collectionNames []string,
 		opts ...*options.DeleteReplicatorOptions,
 	) error
 
@@ -66,8 +66,8 @@ type P2P interface {
 	// unsubscribes from their topics. It will error if the provided
 	// collection names are invalid.
 	RemoveP2PCollections(
-		ctx context.Context, 
-		collectionNames []string, 
+		ctx context.Context,
+		collectionNames []string,
 		opts ...*options.RemoveP2PCollectionsOptions,
 	) error
 

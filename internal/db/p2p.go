@@ -132,7 +132,10 @@ func (db *DB) DeleteReplicator(
 
 // GetAllReplicators returns the full list of replicators with their
 // subscribed schemas.
-func (db *DB) GetAllReplicators(ctx context.Context, opts ...*options.GetAllReplicatorsOptions) ([]client.Replicator, error) {
+func (db *DB) GetAllReplicators(
+	ctx context.Context,
+	opts ...*options.GetAllReplicatorsOptions,
+) ([]client.Replicator, error) {
 	var ident immutable.Option[identity.Identity]
 	if len(opts) > 0 && opts[0] != nil {
 		ident = opts[0].Identity
@@ -231,7 +234,10 @@ func (db *DB) RemoveP2PCollections(
 
 // GetAllP2PCollections returns the list of persisted collection names that
 // the P2P system subscribes to.
-func (db *DB) GetAllP2PCollections(ctx context.Context, opts ...*options.GetAllP2PCollectionsOptions) ([]string, error) {
+func (db *DB) GetAllP2PCollections(
+	ctx context.Context,
+	opts ...*options.GetAllP2PCollectionsOptions,
+) ([]string, error) {
 	var ident immutable.Option[identity.Identity]
 	if len(opts) > 0 && opts[0] != nil {
 		ident = opts[0].Identity
