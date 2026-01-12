@@ -687,6 +687,11 @@ func (c *collection) save(
 		DocID:             doc.ID().String(),
 	}
 
+	// Prefetch all heads for this document
+	if err := coreblock.PrefetchDocHeads(ctx, txn.Headstore(), doc.ID().String()); err != nil {
+		return err
+	}
+
 	links := make([]coreblock.DAGLink, 0)
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
