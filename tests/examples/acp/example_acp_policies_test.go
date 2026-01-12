@@ -1,3 +1,13 @@
+// Copyright 2023 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 package acp
 
 import (
@@ -6,12 +16,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cosmos/gogoproto/types"
+	prototypes "github.com/cosmos/gogoproto/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/acp/local"
 	acp_types "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/stretchr/testify/require"
 )
 
 var examplePolicyRelativeDir = "../../../examples/policy"
@@ -41,7 +52,7 @@ func Test_ExamplePolicies_PolicyIsValid(t *testing.T) {
 				id,
 				string(policy),
 				acp_types.PolicyMarshalType_YAML,
-				types.TimestampNow())
+				prototypes.TimestampNow())
 			require.NoError(t, err)
 		})
 	}
