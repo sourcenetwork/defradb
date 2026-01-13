@@ -92,125 +92,108 @@ type collectionRelations struct {
 // For example if User contains a relation *to* Dog, and Dog contains a relationship *to*
 // User, they will be grouped into the same set.
 func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.CollectionVersion {
-	collectionsWithRelations := map[string]collectionRelations{}
+	// Build relation graph: collection name -> relations
+	graph := map[string][]string{}
 	for _, collection := range newCollections {
-		relations := []string{}
+		var relations []string
 		for _, field := range collection.Fields {
 			if !field.IsPrimary {
 				continue
 			}
-
-			switch kind := field.Kind.(type) {
-			case *client.NamedKind:
+			if kind, ok := field.Kind.(*client.NamedKind); ok {
 				relations = append(relations, kind.Name)
-
-			default:
-				// no-op
 			}
 		}
-
-		if len(relations) == 0 {
-			// If a collection is defined with no relations, then it is not relevant to this function
-			// and can be skipped.
-			continue
-		}
-
-		collectionsWithRelations[collection.Name] = collectionRelations{
-			name:      collection.Name,
-			relations: relations,
+		if len(relations) > 0 {
+			graph[collection.Name] = relations
 		}
 	}
 
-	changedInLoop := true
-	for changedInLoop {
-		// This loop strips out collections from `collectionsWithRelations` that do not form circular
-		// collection sets (e.g. User=>Dog=>User).  This allows later logic that figures out the
-		// exact path that circles forms to operate on a minimal set of data, reducing its cost
-		// and complexity.
-		//
-		// Some non circular relations may still remain after this first pass, for example
-		// one-directional relations between two circles.
-		changedInLoop = false
-		for _, collection := range collectionsWithRelations {
-			i := 0
-			relation := ""
-			deleteI := false
-			for i, relation = range collection.relations {
-				if _, ok := collectionsWithRelations[relation]; !ok {
-					// If the related collection is not in `collectionsWithRelations` it must have been removed
-					// in a previous iteration of the collectionsWithRelations loop, this will have been
-					// done because it had no relevant remaining relations and thus could not be part
-					// of a circular collection set.  If this is the case, this `relation` is also irrelevant
-					// here and can be removed as it too cannot form part of a circular collection set.
-					changedInLoop = true
-					deleteI = true
+	// Tarjan SCC algorithm to find strongly connected components
+
+	index := 0
+	stack := []string{}
+	onStack := map[string]bool{}
+	indices := map[string]int{}
+	lowlink := map[string]int{}
+	sccs := [][]string{}
+
+	var strongConnect func(string)
+	strongConnect = func(v string) {
+		indices[v] = index
+		lowlink[v] = index
+		index++
+		stack = append(stack, v)
+		onStack[v] = true
+
+		for _, w := range graph[v] {
+			if _, seen := indices[w]; !seen {
+				strongConnect(w)
+				if lowlink[w] < lowlink[v] {
+					lowlink[v] = lowlink[w]
+				}
+			} else if onStack[w] {
+				if indices[w] < lowlink[v] {
+					lowlink[v] = indices[w]
+				}
+			}
+		}
+
+		// Root of SCC
+		if lowlink[v] == indices[v] {
+			var scc []string
+			for {
+				n := stack[len(stack)-1]
+				stack = stack[:len(stack)-1]
+				onStack[n] = false
+				scc = append(scc, n)
+				if n == v {
 					break
 				}
 			}
-
-			if deleteI {
-				collection.relations = append(collection.relations[:i], collection.relations[i+1:]...)
-				collectionsWithRelations[collection.name] = collection
-			}
-
-			if len(collection.relations) == 0 {
-				// If there are no relevant relations from this collection, remove the collection from
-				// `collectionsWithRelations` as the collection cannot form part of a circular collection
-				// set.
-				changedInLoop = true
-				delete(collectionsWithRelations, collection.name)
-				break
-			}
+			sccs = append(sccs, scc)
 		}
 	}
 
-	// If len(collectionsWithRelations) > 0 here there are circular relations.
-	// We then need to traverse them all to break the remaing set down into
-	// sub sets of non-overlapping circles - we want this as the self-referencing
-	// set must be as small as possible, so that users providing multiple SDL/collection operations
-	// will result in the same IDs as a single large operation, provided that the individual collection
-	// declarations remain the same.
-
-	circularCollectionNames := make([]string, len(collectionsWithRelations))
-	for name := range collectionsWithRelations {
-		circularCollectionNames = append(circularCollectionNames, name)
+	for name := range graph {
+		if _, seen := indices[name]; !seen {
+			strongConnect(name)
+		}
 	}
-	// The order in which ID indexes are assigned must be deterministic, so
-	// we must loop through a sorted slice instead of the map.
-	slices.Sort(circularCollectionNames)
 
-	var i int
+	// Build collection sets
+
+	// Map collection name -> set ID
 	collectionSetIds := map[string]int{}
-	collectionsHit := map[string]struct{}{}
-	for _, name := range circularCollectionNames {
-		collection := collectionsWithRelations[name]
-		mapCollectionSetIDs(&i, collection, collectionSetIds, collectionsWithRelations, collectionsHit)
+	nextSetID := 0
+
+	for _, scc := range sccs {
+		// Each SCC (size >= 1) is one collection set
+		nextSetID++
+		for _, name := range scc {
+			collectionSetIds[name] = nextSetID
+		}
 	}
 
+	// Assign remaining (acyclic, no relations) collections
+	for _, collection := range newCollections {
+		if _, ok := collectionSetIds[collection.Name]; !ok {
+			nextSetID++
+			collectionSetIds[collection.Name] = nextSetID
+		}
+	}
+
+	// Materialize sets
 	collectionSetsByID := map[int][]*client.CollectionVersion{}
 	for _, collection := range newCollections {
-		collectionSetId, ok := collectionSetIds[collection.Name]
-		if !ok {
-			// In most cases, if a collection does not form a circular set then it will not be in
-			// collectionSetIds, and we can assign it a new, unused setID
-			i++
-			collectionSetId = i
-		}
-
-		collectionSet, ok := collectionSetsByID[collectionSetId]
-		if !ok {
-			collectionSet = make([]*client.CollectionVersion, 0, 1)
-		}
-
-		collectionSet = append(collectionSet, collection)
-		collectionSetsByID[collectionSetId] = collectionSet
+		id := collectionSetIds[collection.Name]
+		collectionSetsByID[id] = append(collectionSetsByID[id], collection)
 	}
 
-	collectionSets := [][]*client.CollectionVersion{}
-	for _, collectionSet := range collectionSetsByID {
-		collectionSets = append(collectionSets, collectionSet)
+	collectionSets := make([][]*client.CollectionVersion, 0, len(collectionSetsByID))
+	for _, set := range collectionSetsByID {
+		collectionSets = append(collectionSets, set)
 	}
-
 	return collectionSets
 }
 
@@ -395,11 +378,6 @@ setLoop:
 	}
 
 	if len(deferredSets) > 0 {
-		if len(result) == index {
-			// No progress was made in this pass, implying a cyclic dependency
-			// We can't continue with recursive sorting, so return the strongly-connected component
-			return append(result, deferredSets...)
-		}
 		return sortCollectionSetsFrom(len(result), append(result, deferredSets...))
 	}
 
