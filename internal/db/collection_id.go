@@ -91,14 +91,16 @@ type collectionRelations struct {
 //
 // For example if User contains a relation *to* Dog, and Dog contains a relationship *to*
 // User, they will be grouped into the same set.
-func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.CollectionVersion {
+func getCollectionSets(
+	newCollections []*client.CollectionVersion,
+) [][]*client.CollectionVersion {
+	// Build name-level relation graph
 	type collInfo struct {
-		name      string
 		relations []string
 	}
 
-	// Step 1: Build relation graph
 	graph := map[string]collInfo{}
+
 	for _, col := range newCollections {
 		var rels []string
 		for _, f := range col.Fields {
@@ -110,36 +112,33 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 			}
 		}
 		if len(rels) > 0 {
-			graph[col.Name] = collInfo{name: col.Name, relations: rels}
+			graph[col.Name] = collInfo{relations: rels}
 		}
 	}
 
-	// Step 2: Identify circular collections using Tarjan SCC
+	// Perform Tarjan SCC on the collection names
 	index := 0
 	stack := []string{}
 	onStack := map[string]bool{}
 	indices := map[string]int{}
 	lowlink := map[string]int{}
-	circularCollections := map[string]struct{}{}
+	circularNames := map[string]struct{}{}
 
 	var strongConnect func(string)
 	strongConnect = func(v string) {
 		indices[v] = index
 		lowlink[v] = index
 		index++
+
 		stack = append(stack, v)
 		onStack[v] = true
 
 		for _, w := range graph[v].relations {
 			if _, seen := indices[w]; !seen {
 				strongConnect(w)
-				if lowlink[w] < lowlink[v] {
-					lowlink[v] = lowlink[w]
-				}
+				lowlink[v] = min(lowlink[v], lowlink[w])
 			} else if onStack[w] {
-				if indices[w] < lowlink[v] {
-					lowlink[v] = indices[w]
-				}
+				lowlink[v] = min(lowlink[v], indices[w])
 			}
 		}
 
@@ -156,7 +155,7 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 			}
 			if len(scc) > 1 {
 				for _, name := range scc {
-					circularCollections[name] = struct{}{}
+					circularNames[name] = struct{}{}
 				}
 			}
 		}
@@ -168,59 +167,46 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 		}
 	}
 
-	// Step 3: Prepare sets
-	collectionSetIds := map[string]int{}
+	// Assign set IDs per version
+	setIDByVersion := map[string]int{}
 	nextSetID := 0
 
-	// First, assign acyclic collections in original order
+	// First: circular collections (grouped by name)
+	circularSetIDByName := map[string]int{}
+
 	for _, col := range newCollections {
-		if _, isCircular := circularCollections[col.Name]; !isCircular {
+		if _, isCircular := circularNames[col.Name]; !isCircular {
+			continue
+		}
+
+		setID, exists := circularSetIDByName[col.Name]
+		if !exists {
 			nextSetID++
-			collectionSetIds[col.Name] = nextSetID
+			setID = nextSetID
+			circularSetIDByName[col.Name] = setID
 		}
+
+		setIDByVersion[col.VersionID] = setID
 	}
 
-	// Step 4: Handle circular collections with SCC grouping
-	visited := map[string]struct{}{}
-	var assignCircular func(string)
-	assignCircular = func(name string) {
-		if _, ok := visited[name]; ok {
-			return
-		}
-		visited[name] = struct{}{}
-		nextSetID++
-		var sccSet []string
-
-		// Re-run DFS to collect all connected circular nodes
-		var dfs func(string)
-		dfs = func(n string) {
-			if _, ok := circularCollections[n]; !ok {
-				return
-			}
-			if _, ok := collectionSetIds[n]; ok {
-				return
-			}
-			collectionSetIds[n] = nextSetID
-			sccSet = append(sccSet, n)
-			for _, r := range graph[n].relations {
-				dfs(r)
-			}
-		}
-		dfs(name)
-	}
-
-	for name := range circularCollections {
-		assignCircular(name)
-	}
-
-	// Step 5: Materialize collection sets
-	collectionSetsByID := map[int][]*client.CollectionVersion{}
+	// Then: non-circular versions (each gets its own set)
 	for _, col := range newCollections {
-		id := collectionSetIds[col.Name]
-		collectionSetsByID[id] = append(collectionSetsByID[id], col)
+		if _, ok := setIDByVersion[col.VersionID]; ok {
+			continue
+		}
+		nextSetID++
+		setIDByVersion[col.VersionID] = nextSetID
 	}
 
-	collectionSets := make([][]*client.CollectionVersion, 0, len(collectionSetsByID))
+	// Materialize sets
+	collectionSetsByID := map[int][]*client.CollectionVersion{}
+
+	for _, col := range newCollections {
+		setID := setIDByVersion[col.VersionID]
+		collectionSetsByID[setID] = append(collectionSetsByID[setID], col)
+	}
+
+	collectionSets := make([][]*client.CollectionVersion, 0, nextSetID)
 	for i := 1; i <= nextSetID; i++ {
 		if set, ok := collectionSetsByID[i]; ok {
 			collectionSets = append(collectionSets, set)
@@ -228,6 +214,14 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 	}
 
 	return collectionSets
+}
+
+// min is a Helper function needed for the Tarjan SCC algorithm. Returns the minimum of two integers.
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // mapCollectionSetIDs recursively scans through a collection and its relations, assigning each collection to a
