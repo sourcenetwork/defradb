@@ -47,7 +47,7 @@ func (hh *heads) Write(ctx context.Context, c cid.Cid, height uint64) error {
 	n := binary.PutUvarint(buf, height)
 
 	if cache := getHeadsCache(ctx); cache != nil {
-		cache.invalidate(string(hh.namespace.Bytes()))
+		cache.updateOnWrite(string(hh.namespace.Bytes()), c, height)
 	}
 
 	return hh.store.Set(ctx, hh.key(c).Bytes(), buf[0:n])
@@ -68,7 +68,7 @@ func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height u
 		corelog.Uint64("Height", height))
 
 	if cache := getHeadsCache(ctx); cache != nil {
-		cache.invalidate(string(hh.namespace.Bytes()))
+		cache.updateOnReplace(string(hh.namespace.Bytes()), old, new, height)
 	}
 
 	err := hh.store.Delete(ctx, hh.key(old).Bytes())

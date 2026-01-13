@@ -74,6 +74,82 @@ func (c *headsCache) invalidate(namespace string) {
 	delete(c.cache, namespace)
 }
 
+// updateOnWrite updates the cache when a new head is written.
+func (c *headsCache) updateOnWrite(namespace string, newCid cid.Cid, height uint64) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	entry := c.cache[namespace]
+	if entry == nil {
+		c.cache[namespace] = &headsCacheEntry{
+			heads:     []cid.Cid{newCid},
+			maxHeight: height,
+		}
+		return
+	}
+
+	newHeads := make([]cid.Cid, 0, len(entry.heads)+1)
+	inserted := false
+	newCidBytes := newCid.Bytes()
+
+	for _, h := range entry.heads {
+		hBytes := h.Bytes()
+		if !inserted && bytes.Compare(newCidBytes, hBytes) < 0 {
+			newHeads = append(newHeads, newCid)
+			inserted = true
+		}
+		newHeads = append(newHeads, h)
+	}
+	if !inserted {
+		newHeads = append(newHeads, newCid)
+	}
+
+	newHeight := height
+	if entry.maxHeight > height {
+		newHeight = entry.maxHeight
+	}
+
+	c.cache[namespace] = &headsCacheEntry{
+		heads:     newHeads,
+		maxHeight: newHeight,
+	}
+}
+
+// updateOnReplace updates the cache when a head is replaced.
+func (c *headsCache) updateOnReplace(namespace string, oldCid, newCid cid.Cid, height uint64) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	entry := c.cache[namespace]
+	if entry == nil {
+		return
+	}
+
+	newHeads := make([]cid.Cid, 0, len(entry.heads))
+	newCidBytes := newCid.Bytes()
+	inserted := false
+
+	for _, h := range entry.heads {
+		if h.Equals(oldCid) {
+			continue
+		}
+		hBytes := h.Bytes()
+		if !inserted && bytes.Compare(newCidBytes, hBytes) < 0 {
+			newHeads = append(newHeads, newCid)
+			inserted = true
+		}
+		newHeads = append(newHeads, h)
+	}
+	if !inserted {
+		newHeads = append(newHeads, newCid)
+	}
+
+	c.cache[namespace] = &headsCacheEntry{
+		heads:     newHeads,
+		maxHeight: height,
+	}
+}
+
 // invalidateByPrefix removes all cached entries that start with the given prefix.
 func (c *headsCache) invalidateByPrefix(prefix string) {
 	c.mu.Lock()
