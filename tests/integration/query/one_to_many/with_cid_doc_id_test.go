@@ -101,10 +101,12 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
+				//cid: "bafyreihquqdxvroagzhtkot2quun4msslvubrktfhjckt65oi47yrprjyu"
+				//docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 				Request: `query {
 					Book (
-							cid: "bafyreihquqdxvroagzhtkot2quun4msslvubrktfhjckt65oi47yrprjyu"
-							docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
+							cid: "bafyreigtv2b622cj2pyavkgyvpbt7yrybz2rqj6tmf5ghqpin4vjkv7ivq"
+							docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
 						) {
 						name
 						author {
@@ -177,10 +179,12 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
+				//cid: "bafyreihquqdxvroagzhtkot2quun4msslvubrktfhjckt65oi47yrprjyu",
+				//docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 				Request: `query {
 					Book (
-							cid: "bafyreihquqdxvroagzhtkot2quun4msslvubrktfhjckt65oi47yrprjyu",
-							docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
+							cid: "bafyreigtv2b622cj2pyavkgyvpbt7yrybz2rqj6tmf5ghqpin4vjkv7ivq",
+							docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
 						) {
 						name
 						author {
@@ -251,10 +255,12 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
+				//cid: "bafyreihquqdxvroagzhtkot2quun4msslvubrktfhjckt65oi47yrprjyu",
+				//docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 				Request: `query {
 					Book (
-						cid: "bafyreihquqdxvroagzhtkot2quun4msslvubrktfhjckt65oi47yrprjyu",
-						docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
+						cid: "bafyreigtv2b622cj2pyavkgyvpbt7yrybz2rqj6tmf5ghqpin4vjkv7ivq",
+						docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
 					) {
 						name
 						rating
@@ -325,10 +331,12 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
+				//cid: "bafyreif72b7skq24ji6tztwsq4wvk7hh2vxvxhkenu5i47h377qi5wzeqm",
+				//docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 				Request: `query {
 					Book (
-						cid: "bafyreif72b7skq24ji6tztwsq4wvk7hh2vxvxhkenu5i47h377qi5wzeqm",
-						docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
+						cid: "bafyreigfspu26a3rilku5qxpfp2ax627tp7lvkmioisj6narhsud47t3my",
+						docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
 					) {
 						name
 						rating

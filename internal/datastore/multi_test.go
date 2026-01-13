@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/immutable"
 )
@@ -27,8 +28,11 @@ import (
 func TestMultistore_HumanReadableKeys_ShouldSucceed(t *testing.T) {
 	ctx := context.Background()
 	rootstore := memory.NewDatastore(ctx)
+	lockSet := lock.NewLockSet()
 
-	ms := NewMultistore(rootstore, immutable.None[int]())
+	ms := NewMultistore(rootstore, lockSet, immutable.None[int]())
+
+	ctx = CtxSetTxn(ctx, NewTxnFrom(rootstore, lockSet, 1, false, immutable.None[int]()))
 
 	err := ms.Blockstore().Put(ctx, blocks.NewBlock([]byte("123")))
 	require.NoError(t, err)

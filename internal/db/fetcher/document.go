@@ -179,7 +179,7 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 
 func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {
 	if kv.Key.FieldID == keys.DATASTORE_DOC_VERSION_FIELD_ID {
-		doc.schemaVersionID = string(kv.Value)
+		doc.collectionVersionID = string(kv.Value)
 		return nil
 	}
 

@@ -154,7 +154,7 @@ var collectionUpdateValidators = append(
 			updateOnlyValidators...,
 		),
 		validateCollectionNotAdded,
-		validateSchemaVersionIDNotMutated,
+		validateCollectionVersionIDNotMutated,
 		validateCollectionIsBranchableNotMutated,
 	),
 	globalValidators...,
@@ -638,7 +638,7 @@ func validateCollectionIDNotMutated(
 	return errors.Join(errs...)
 }
 
-func validateSchemaVersionIDNotMutated(
+func validateCollectionVersionIDNotMutated(
 	ctx context.Context,
 	db *DB,
 	newState *definitionState,
@@ -652,7 +652,7 @@ func validateSchemaVersionIDNotMutated(
 		}
 
 		if newCol.VersionID != oldCol.VersionID {
-			errs = append(errs, NewErrCollectionSchemaVersionIDCannotBeMutated(newCol.VersionID))
+			errs = append(errs, NewErrCollectionVersionIDCannotBeMutated(newCol.VersionID))
 		}
 	}
 

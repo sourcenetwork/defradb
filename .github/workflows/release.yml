@@ -36,12 +36,12 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           check-latest: true
@@ -70,21 +70,21 @@ jobs:
 
       - name: Save cache on Linux
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: dist/linux_amd64
           key: linux-${{ env.sha_short }}
 
       - name: Save cache on MacOS
         if: matrix.os == 'macos-latest'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: dist/darwin_arm64
           key: darwin-${{ env.sha_short }}
 
       - name: Save cache on Windows
         if: matrix.os == 'windows-latest'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: dist/windows_amd64
           key: windows-${{ env.sha_short }}
@@ -95,7 +95,7 @@ jobs:
     needs: prepare
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -103,7 +103,7 @@ jobs:
         run: git tag v${{ github.event.inputs.tag }}
 
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           check-latest: true
@@ -116,7 +116,7 @@ jobs:
       # Restore the cashes that were prepared for all OS
       - name: Restore from cache on Linux
         id: restore-linux
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: dist/linux_amd64
           key: linux-${{ env.sha_short }}
@@ -124,7 +124,7 @@ jobs:
 
       - name: Save from cache on MacOS
         id: restore-macos
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: dist/darwin_arm64
           key: darwin-${{ env.sha_short }}
@@ -132,7 +132,7 @@ jobs:
 
       - name: Restore from cache on Windows
         id: restore-windows
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: dist/windows_amd64
           key: windows-${{ env.sha_short }}
@@ -170,7 +170,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 

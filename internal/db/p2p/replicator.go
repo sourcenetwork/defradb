@@ -763,7 +763,7 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 		pushLogReq := protocol.PushLogRequest{
 			DocID:        docID,
 			CID:          head.cid.Bytes(),
-			CollectionID: head.block.Delta.GetSchemaVersionID(),
+			CollectionID: head.block.Delta.GetCollectionVersionID(),
 			Creator:      p.host.ID(),
 			Block:        rawblock,
 		}

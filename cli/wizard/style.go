@@ -27,7 +27,8 @@ var (
 	promptStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color(sourceGreen)).
-			MarginBottom(1)
+			MarginBottom(1).
+			Width(80)
 
 	choiceStyle = lipgloss.NewStyle().
 			PaddingLeft(1)
@@ -39,7 +40,8 @@ var (
 
 	bodyStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(sourceGreen)).
-			PaddingLeft(1)
+			PaddingLeft(1).
+			Width(80)
 
 	hintStyle = lipgloss.NewStyle().
 			Faint(true).
