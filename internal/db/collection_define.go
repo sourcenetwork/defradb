@@ -27,6 +27,7 @@ import (
 	"slices"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -138,61 +139,30 @@ func (db *DB) patchCollection(
 	patchString string,
 	migration immutable.Option[model.Lens],
 ) error {
-	// Decode the JSON patch
 	patch, err := jsonpatch.DecodePatch([]byte(patchString))
 	if err != nil {
 		return err
 	}
-
-	// Fetch existing collections
 	existingCols, err := description.GetCollections(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Convert to pointers for getCollectionSets
-	existingColPtrs := make([]*client.CollectionVersion, len(existingCols))
-	for i := range existingCols {
-		existingColPtrs[i] = &existingCols[i]
-	}
-
-	// Get deterministic collection sets (related versions)
-	collectionSets := getCollectionSets(existingColPtrs) // [][]*client.CollectionVersion
-
-	// Flatten into a single slice in DAG order, deactivating older versions
-	var sortedCols []*client.CollectionVersion
-	for _, set := range collectionSets {
-		for _, col := range set {
-			// deactivate previous active version for same CollectionID
-			for _, existing := range sortedCols {
-				if existing.CollectionID == col.CollectionID && existing.IsActive {
-					existing.IsActive = false
-				}
-			}
-			sortedCols = append(sortedCols, col)
-		}
-	}
-
-	// Build lookup maps
 	existingColsByName := map[string]client.CollectionVersion{}
 	existingColsByID := map[string]client.CollectionVersion{}
-	for _, col := range sortedCols {
-		// Always keep every version in the ID map
-		existingColsByID[col.VersionID] = *col
-
-		// Only track the active version by name
+	for _, col := range existingCols {
 		if col.IsActive {
-			existingColsByName[col.Name] = *col
+			existingColsByName[col.Name] = col
 		}
+		existingColsByID[col.VersionID] = col
 	}
 
-	// Substitute enums in the patch
+	// Here we swap out any string representations of enums for their integer values
 	patch, err = substituteCollectionPatch(patch, existingColsByName)
 	if err != nil {
 		return err
 	}
 
-	// Marshal to JSON for patch application
 	existingDescriptionJson, err := json.Marshal(existingColsByID)
 	if err != nil {
 		return err
@@ -203,7 +173,6 @@ func (db *DB) patchCollection(
 		return err
 	}
 
-	// Decode patched collections
 	var newColsByID map[string]client.CollectionVersion
 	decoder := json.NewDecoder(strings.NewReader(string(newDescriptionJson)))
 	decoder.DisallowUnknownFields()
@@ -212,13 +181,14 @@ func (db *DB) patchCollection(
 		return err
 	}
 
-	// Identify removed collection versions
 	removedCollectionVersions := []client.CollectionVersion{}
 existingVersionLoop:
 	for versionID, version := range existingColsByID {
 		if _, ok := newColsByID[versionID]; !ok {
 			for _, newCol := range newColsByID {
 				if newCol.VersionID == versionID {
+					// If the missing version id is found in another location, we do not wish to delete the collection,
+					// it has essentially been moved by the JSON patch for reasons known only to the user.
 					continue existingVersionLoop
 				}
 			}
@@ -226,11 +196,12 @@ existingVersionLoop:
 		}
 	}
 
-	// Add missing ID fields for object relations
 	for _, col := range newColsByID {
+		// Automatically add any id fields for object fields added by the patch, if the patch did not explicitly
+		// add one.
 		for _, field := range col.Fields {
 			if field.Kind.IsObject() && !field.Kind.IsArray() {
-				idFieldName := field.Name + "_id"
+				idFieldName := request.ToFieldID(field.Name)
 				if _, ok := col.GetFieldByName(idFieldName); !ok {
 					col.Fields = append(col.Fields, client.CollectionFieldDescription{
 						Name:         idFieldName,
@@ -248,7 +219,6 @@ existingVersionLoop:
 		return err
 	}
 
-	// Default new CRDT fields to LWW_REGISTER
 	for key, col := range newColsByID {
 		previousCol := existingColsByName[col.Name]
 
@@ -259,33 +229,87 @@ existingVersionLoop:
 
 		for i, field := range col.Fields {
 			if _, existed := previousFieldNames[field.FieldID]; !existed && field.Typ == client.NONE_CRDT {
+				// If no CRDT Type has been provided to a new field, default to LWW_REGISTER.
+				// If the field existed before it might have been explicitly cleared by the user, in which
+				// case it is up to the validation logic to error or not.
 				newColsByID[key].Fields[i].Typ = client.LWW_REGISTER
 			}
 		}
 	}
 
-	// Flatten newColsByID into deterministic slice based on collectionSets
-	var newCollections []*client.CollectionVersion
-	for _, set := range collectionSets {
-		for _, col := range set {
-			if patched, ok := newColsByID[col.VersionID]; ok {
-				c := patched
-				newCollections = append(newCollections, &c)
-			}
-		}
+	newCollections := make([]client.CollectionVersion, 0, len(newColsByID))
+	for _, col := range newColsByID {
+		newCollections = append(newCollections, col)
 	}
 
-	// Apply collection IDs
-	err = setCollectionIDs(ctx, toConcreteSlice(newCollections), existingCols)
+	err = setCollectionIDs(ctx, newCollections, existingCols)
 	if err != nil {
 		return err
 	}
 
-	// Track placeholders for later reindex
+	for _, existingCol := range existingColsByName {
+		isMissing := true
+		for _, newCol := range newCollections {
+			if newCol.VersionID == existingCol.VersionID {
+				isMissing = false
+				break
+			}
+		}
+
+		// If an existing collection is not present in the new collection set,
+		// it must have mutated into a new collection version.
+		// The original still needs to exist and must be validated against.
+		// It may also be mutated later in this function.
+		if isMissing {
+			for _, newCol := range newCollections {
+				if newCol.CollectionID == existingCol.CollectionID && newCol.IsActive {
+					existingCol.IsActive = false
+					break
+				}
+			}
+			newCollections = append(newCollections, existingCol)
+		}
+	}
+
+	// Track collections that were upgraded from placeholders and may need reindexing
 	var placeholderReplacers []client.CollectionVersion
 
+	for i := 0; i < len(newCollections); i++ {
+		placeholder := newCollections[i]
+		if placeholder.IsPlaceholder {
+			isFound := false
+			for j, col := range newCollections {
+				if col.VersionID == placeholder.VersionID && !col.IsPlaceholder {
+					newCollections[j].PreviousVersion = placeholder.PreviousVersion
+					// Track this collection as it may have a migration that needs to be applied
+					if col.IsActive {
+						placeholderReplacers = append(placeholderReplacers, newCollections[j])
+					}
+					isFound = true
+					break
+				}
+			}
+
+			if isFound {
+				// Remove the original placeholder from the collection set, its sources
+				// have been copied to the actual definition (with the same VersionID)
+				newCollections = append(newCollections[:i], newCollections[i+1:]...)
+				i--
+			}
+		}
+	}
+
+	err = db.validateCollectionChanges(ctx, existingCols, newCollections)
+	if err != nil {
+		return err
+	}
+
+	err = db.deleteCollectionVersions(ctx, removedCollectionVersions)
+	if err != nil {
+		return err
+	}
+
 	for _, col := range newCollections {
-		// Skip deleted collections
 		isDeleted := false
 		for _, removedCol := range removedCollectionVersions {
 			if col.VersionID == removedCol.VersionID {
@@ -294,6 +318,12 @@ existingVersionLoop:
 			}
 		}
 		if isDeleted {
+			// We need to make sure we dont save any collections that we have just deleted.
+			// This check is needed due to the unfortunate way mutated collections have their
+			// originals re-added to `newCollections` on line 260.
+			//
+			// This re-adding, and this check, are planned to be removed post v1 in issue:
+			// https://github.com/sourcenetwork/defradb/issues/4197
 			continue
 		}
 
@@ -302,14 +332,14 @@ existingVersionLoop:
 			continue
 		}
 
-		err := description.SaveCollection(ctx, *col)
+		err := description.SaveCollection(ctx, col)
 		if err != nil {
 			return err
 		}
 
 		if col.IsActive {
 			if indexReqs, hasReqs := oneToOneIndexRequests[col.Name]; hasReqs {
-				colObj, err := db.newCollection(*col)
+				colObj, err := db.newCollection(col)
 				if err != nil {
 					return err
 				}
@@ -318,11 +348,21 @@ existingVersionLoop:
 						return err
 					}
 				}
-				*col = colObj.Version()
+				col = colObj.Version()
 			}
 		}
 
-		if col.PreviousVersion.HasValue() && migration.HasValue() {
+		if colExists {
+			if existingCol.IsMaterialized && !col.IsMaterialized {
+				// If the collection is being de-materialized - delete any cached values.
+				// Leaving them around will not break anything, but it would be a waste of
+				// storage space.
+				err := db.clearViewCache(ctx, col)
+				if err != nil {
+					return err
+				}
+			}
+		} else if col.PreviousVersion.HasValue() && migration.HasValue() {
 			_, err = db.setMigration(ctx, client.LensConfig{
 				SourceCollectionVersionID:      col.PreviousVersion.Value().SourceCollectionID,
 				DestinationCollectionVersionID: col.VersionID,
@@ -332,13 +372,9 @@ existingVersionLoop:
 				return err
 			}
 		}
-
-		if col.IsPlaceholder {
-			placeholderReplacers = append(placeholderReplacers, *col)
-		}
 	}
 
-	// Reindex placeholders with migrations
+	// Reindex any collections that were upgraded from placeholders with migrations
 	for _, col := range placeholderReplacers {
 		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
 			err = db.reindexNewActiveVersion(ctx, col)
@@ -349,15 +385,6 @@ existingVersionLoop:
 	}
 
 	return db.loadSchema(ctx)
-}
-
-// helper: converts []*client.CollectionVersion to []client.CollectionVersion
-func toConcreteSlice(ptrs []*client.CollectionVersion) []client.CollectionVersion {
-	result := make([]client.CollectionVersion, len(ptrs))
-	for i, p := range ptrs {
-		result[i] = *p
-	}
-	return result
 }
 
 const (
@@ -771,7 +798,7 @@ func deleteCollectionBlocks(
 }
 
 // finalizeRelations determines which side of a relation is primary and sets IsPrimary=true
-// on both the relation field and its corresponding _id field.
+// on both the relation field and its corresponding _<fieldName>ID field.
 //
 // A relation field is marked as primary if:
 // - The target collection has no corresponding field pointing back (one-sided relation), OR
@@ -786,7 +813,7 @@ func deleteCollectionBlocks(
 // one primary side to store the foreign key.
 //
 // For one-to-one relations, this function also ensures a unique index exists on the primary
-// side's _id field to enforce the 1-to-1 constraint efficiently.
+// side's _<fieldName>ID field to enforce the 1-to-1 constraint efficiently.
 func finalizeRelations(
 	newCollections []core.Collection,
 	existingCollections []client.CollectionVersion,
@@ -835,7 +862,7 @@ func finalizeRelations(
 			if !field.IsPrimary && !isOneToOne {
 				newCollections[i].Definition.Fields[fieldIndex].IsPrimary = true
 
-				idFieldName := field.Name + "_id"
+				idFieldName := request.ToFieldID(field.Name)
 				for j, f := range newCollections[i].Definition.Fields {
 					if f.Name == idFieldName {
 						newCollections[i].Definition.Fields[j].IsPrimary = true
@@ -909,10 +936,10 @@ func ensureOneToOneUniqueIndex(
 	collectionName string,
 	relationFieldName string,
 ) (newIndex *client.IndexCreateRequest, err error) {
-	idFieldName := relationFieldName + "_id"
+	idFieldName := request.ToFieldID(relationFieldName)
 
 	// Check for user-defined index on either the _id field or the relation field name
-	// (e.g., "address_id" or "address" since @index on relation field uses field name)
+	// (e.g., "_addressID" or "address" since @index on relation field uses field name)
 	isUnique, hasIndex := findIndexWithFirstField(createIndexes, existingIndexes, idFieldName)
 	if !hasIndex {
 		isUnique, hasIndex = findIndexWithFirstField(createIndexes, existingIndexes, relationFieldName)

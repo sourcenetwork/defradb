@@ -1314,13 +1314,3 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 
 	testUtils.ExecuteTestCase(t, test)
 }
-
-func TestPrintAllCollectionVersionIDs(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			setupDistantVersions(), // your existing setup
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
