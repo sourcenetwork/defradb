@@ -127,6 +127,13 @@ type JSONFieldGenerator struct{}
 
 func (g *JSONFieldGenerator) Generate(value client.NormalValue, f func(client.NormalValue) error) error {
 	json, _ := value.JSON()
+	if json == nil {
+		val, err := client.NewNormalNil(client.FieldKind_NILLABLE_JSON)
+		if err != nil {
+			return err
+		}
+		return f(val)
+	}
 	return client.TraverseJSON(json, func(value client.JSON) error {
 		val, err := client.NewNormalValue(value)
 		if err != nil {
