@@ -8,27 +8,37 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: Validate Wizard Workflow
+name: Check Wizard Health Workflow
 
 on:
   pull_request:
-    types:
-      - edited
-      - opened
-      - reopened
-      - synchronize
     branches:
+      - master
+      - develop
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
       - develop
 
 jobs:
-  test-wizard:
+  check-wizard-health:
+    name: Check wizard health job
+
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code into the directory
+        uses: actions/checkout@v6
+
       - name: Install Expect
         run: sudo apt-get update && sudo apt-get install -y expect
+
       - name: Build binary
         run: make build
+
       - name: Run wizard test
         run: |
           chmod +x ./tools/scripts/wizard_test.sh

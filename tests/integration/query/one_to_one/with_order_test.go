@@ -39,7 +39,7 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -48,7 +48,7 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"published_id": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
+					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
 			testUtils.Request{
@@ -112,7 +112,7 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -121,7 +121,7 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"published_id": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
+					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
 			testUtils.Request{
@@ -185,7 +185,7 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -194,7 +194,7 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"published_id": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
+					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
 			testUtils.Request{
@@ -246,7 +246,7 @@ func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *t
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -255,7 +255,7 @@ func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *t
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"published_id": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
+					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
 			testUtils.Request{
@@ -307,7 +307,7 @@ func TestQueryOneToOne_WithAliasedChildIntOrderAscending_ShouldOrder(t *testing.
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -316,7 +316,7 @@ func TestQueryOneToOne_WithAliasedChildIntOrderAscending_ShouldOrder(t *testing.
 					"name":         "Cornelia Funke",
 					"age":          62,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.Request{
@@ -377,7 +377,7 @@ func TestQueryOneToOne_WithChildAliasedIntOrderAscending_ShouldOrder(t *testing.
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -386,7 +386,7 @@ func TestQueryOneToOne_WithChildAliasedIntOrderAscending_ShouldOrder(t *testing.
 					"name":         "Cornelia Funke",
 					"age":          62,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.Request{

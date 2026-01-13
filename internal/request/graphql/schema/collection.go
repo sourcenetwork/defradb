@@ -550,7 +550,7 @@ func fieldsFromAST(
 				},
 			)
 		} else {
-			idFieldName := fmt.Sprintf("%s_id", field.Name.Value)
+			idFieldName := request.ToFieldID(field.Name.Value)
 			_, isPrimary := findDirective(field, "primary")
 
 			collectionFieldDescriptions = append(

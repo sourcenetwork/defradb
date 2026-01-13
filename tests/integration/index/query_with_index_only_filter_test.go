@@ -754,16 +754,16 @@ func TestQueryWithIndex_WithFilterOn2Relations_ShouldFilter(t *testing.T) {
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"model":           "iPhone",
-					"owner_id":        testUtils.NewDocIndex(0, 0),
-					"manufacturer_id": testUtils.NewDocIndex(1, 0),
+					"_ownerID":        testUtils.NewDocIndex(0, 0),
+					"_manufacturerID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"model":           "MacBook",
-					"owner_id":        testUtils.NewDocIndex(0, 0),
-					"manufacturer_id": testUtils.NewDocIndex(1, 0),
+					"_ownerID":        testUtils.NewDocIndex(0, 0),
+					"_manufacturerID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.Request{

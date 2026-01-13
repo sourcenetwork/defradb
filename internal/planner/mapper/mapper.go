@@ -198,7 +198,7 @@ func toSelect(
 				if fieldDesc.Kind.IsArray() {
 					return nil, NewErrInvalidFieldToGroupBy(groupByField)
 				}
-				groupByFields[index] = groupByField + request.RelatedObjectID
+				groupByFields[index] = request.ToFieldID(groupByField)
 			}
 		}
 
@@ -1261,7 +1261,10 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
+		objectFieldName, ok := request.ToRelatedObjectName(existingField.Name)
+		if !ok {
+			continue
+		}
 
 		var siblingFound bool
 		for _, siblingRequestable := range requestables {
@@ -1272,8 +1275,6 @@ func resolveSecondaryRelationIDs(
 		}
 
 		if !siblingFound {
-			objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
-
 			// We only require the docID of the related object, so an empty join is all we need.
 			join, err := constructEmptyJoin(
 				ctx,

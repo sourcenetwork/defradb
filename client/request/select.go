@@ -97,7 +97,7 @@ func (s *Select) validateGroupBy() []error {
 				if typedChildSelection.Name == groupByField {
 					fieldExistsInGroupBy = true
 					break
-				} else if typedChildSelection.Name == groupByField+RelatedObjectID {
+				} else if typedChildSelection.Name == ToFieldID(groupByField) {
 					isAliasFieldInGroupBy = true
 					break
 				}

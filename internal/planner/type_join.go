@@ -341,7 +341,7 @@ func (p *Planner) newInvertableTypeJoin(
 			return invertibleTypeJoin{}, client.NewErrFieldNotExist(subSelect.Name)
 		}
 
-		ind := subSelectPlan.DocumentMap().IndexesByName[def.Name+request.RelatedObjectID]
+		ind := subSelectPlan.DocumentMap().IndexesByName[request.ToFieldID(def.Name)]
 		if len(ind) > 0 {
 			childSideRelIDFieldMapIndex = immutable.Some(ind[0])
 		}
@@ -358,7 +358,7 @@ func (p *Planner) newInvertableTypeJoin(
 		isParent:         true,
 	}
 
-	ind := parent.documentMapping.IndexesByName[parentsRelFieldDef.Name+request.RelatedObjectID]
+	ind := parent.documentMapping.IndexesByName[request.ToFieldID(parentsRelFieldDef.Name)]
 	if len(ind) > 0 {
 		parentSide.relIDFieldMapIndex = immutable.Some(ind[0])
 	}
@@ -436,7 +436,7 @@ func (n *typeJoinMany) Kind() string {
 
 // getForeignKey returns the docID of the related object referenced by the given relation field.
 func getForeignKey(node planNode, relFieldName string) string {
-	ind := node.DocumentMap().FirstIndexOfName(relFieldName + request.RelatedObjectID)
+	ind := node.DocumentMap().FirstIndexOfName(request.ToFieldID(relFieldName))
 	docIDStr, _ := node.Value().Fields[ind].(string)
 	return docIDStr
 }
@@ -541,9 +541,9 @@ type primaryObjectsRetriever struct {
 
 func (r *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() error {
 	relIDFieldDef, ok := r.primarySide.col.Version().GetFieldByName(
-		r.primarySide.relFieldDef.Value().Name + request.RelatedObjectID)
+		request.ToFieldID(r.primarySide.relFieldDef.Value().Name))
 	if !ok {
-		return client.NewErrFieldNotExist(r.primarySide.relFieldDef.Value().Name + request.RelatedObjectID)
+		return client.NewErrFieldNotExist(request.ToFieldID(r.primarySide.relFieldDef.Value().Name))
 	}
 
 	r.primaryScan = getNode[*scanNode](r.primarySide.plan)
@@ -813,7 +813,7 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	ordering []mapper.OrderCondition,
 ) error {
 	childScan := getNode[*scanNode](join.childSide.plan)
-	childScan.tryAddFieldWithName(join.childSide.relFieldDef.Value().Name + request.RelatedObjectID)
+	childScan.tryAddFieldWithName(request.ToFieldID(join.childSide.relFieldDef.Value().Name))
 	// replace child's filter with the filter that utilizes the index
 	// the original child's filter is stored in join.subFilter
 	childScan.filter = fieldFilter

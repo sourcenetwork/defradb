@@ -223,6 +223,13 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 														},
 													},
 													map[string]any{
+														"name": "_authorID",
+														"type": map[string]any{
+															"name":   "IDOperatorBlock",
+															"ofType": nil,
+														},
+													},
+													map[string]any{
 														"name": "_docID",
 														"type": map[string]any{
 															"name":   "IDOperatorBlock",
@@ -249,13 +256,6 @@ func TestFilterForOneToOneSchema(t *testing.T) {
 														"name": "author",
 														"type": map[string]any{
 															"name":   "AuthorFilterArg",
-															"ofType": nil,
-														},
-													},
-													map[string]any{
-														"name": "author_id",
-														"type": map[string]any{
-															"name":   "IDOperatorBlock",
 															"ofType": nil,
 														},
 													},

@@ -49,14 +49,14 @@ func TestQueryOneToOneToMany(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Observable1",
-					"indicator_id": testUtils.NewDocIndex(0, 0),
+					"_indicatorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":          "Observation1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.Request{
@@ -123,14 +123,14 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Indicator1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":          "Observation1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.Request{
@@ -199,14 +199,14 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Indicator1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":          "Observation1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.Request{
@@ -273,14 +273,14 @@ func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Observable1",
-					"indicator_id": testUtils.NewDocIndex(0, 0),
+					"_indicatorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":          "Observation1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.Request{
