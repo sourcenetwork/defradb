@@ -91,137 +91,127 @@ type collectionRelations struct {
 //
 // For example if User contains a relation *to* Dog, and Dog contains a relationship *to*
 // User, they will be grouped into the same set.
-func getCollectionSets(
-	newCollections []*client.CollectionVersion,
-) [][]*client.CollectionVersion {
-	// Build name-level relation graph
-	type collInfo struct {
-		relations []string
-	}
-
-	graph := map[string]collInfo{}
-
-	for _, col := range newCollections {
-		var rels []string
-		for _, f := range col.Fields {
-			if !f.IsPrimary {
+func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.CollectionVersion {
+	collectionsWithRelations := map[string]collectionRelations{}
+	for _, collection := range newCollections {
+		relations := []string{}
+		for _, field := range collection.Fields {
+			if !field.IsPrimary {
 				continue
 			}
-			if kind, ok := f.Kind.(*client.NamedKind); ok {
-				rels = append(rels, kind.Name)
+
+			switch kind := field.Kind.(type) {
+			case *client.NamedKind:
+				relations = append(relations, kind.Name)
+
+			default:
+				// no-op
 			}
 		}
-		if len(rels) > 0 {
-			graph[col.Name] = collInfo{relations: rels}
+
+		if len(relations) == 0 {
+			// If a collection is defined with no relations, then it is not relevant to this function
+			// and can be skipped.
+			continue
+		}
+
+		collectionsWithRelations[collection.Name] = collectionRelations{
+			name:      collection.Name,
+			relations: relations,
 		}
 	}
 
-	// Perform Tarjan SCC on the collection names
-	index := 0
-	stack := []string{}
-	onStack := map[string]bool{}
-	indices := map[string]int{}
-	lowlink := map[string]int{}
-	circularNames := map[string]struct{}{}
-
-	var strongConnect func(string)
-	strongConnect = func(v string) {
-		indices[v] = index
-		lowlink[v] = index
-		index++
-
-		stack = append(stack, v)
-		onStack[v] = true
-
-		for _, w := range graph[v].relations {
-			if _, seen := indices[w]; !seen {
-				strongConnect(w)
-				lowlink[v] = min(lowlink[v], lowlink[w])
-			} else if onStack[w] {
-				lowlink[v] = min(lowlink[v], indices[w])
-			}
-		}
-
-		if lowlink[v] == indices[v] {
-			var scc []string
-			for {
-				n := stack[len(stack)-1]
-				stack = stack[:len(stack)-1]
-				onStack[n] = false
-				scc = append(scc, n)
-				if n == v {
+	changedInLoop := true
+	for changedInLoop {
+		// This loop strips out collections from `collectionsWithRelations` that do not form circular
+		// collection sets (e.g. User=>Dog=>User).  This allows later logic that figures out the
+		// exact path that circles forms to operate on a minimal set of data, reducing its cost
+		// and complexity.
+		//
+		// Some non circular relations may still remain after this first pass, for example
+		// one-directional relations between two circles.
+		changedInLoop = false
+		for _, collection := range collectionsWithRelations {
+			i := 0
+			relation := ""
+			deleteI := false
+			for i, relation = range collection.relations {
+				if _, ok := collectionsWithRelations[relation]; !ok {
+					// If the related collection is not in `collectionsWithRelations` it must have been removed
+					// in a previous iteration of the collectionsWithRelations loop, this will have been
+					// done because it had no relevant remaining relations and thus could not be part
+					// of a circular collection set.  If this is the case, this `relation` is also irrelevant
+					// here and can be removed as it too cannot form part of a circular collection set.
+					changedInLoop = true
+					deleteI = true
 					break
 				}
 			}
-			if len(scc) > 1 {
-				for _, name := range scc {
-					circularNames[name] = struct{}{}
-				}
+
+			if deleteI {
+				collection.relations = append(collection.relations[:i], collection.relations[i+1:]...)
+				collectionsWithRelations[collection.name] = collection
+			}
+
+			if len(collection.relations) == 0 {
+				// If there are no relevant relations from this collection, remove the collection from
+				// `collectionsWithRelations` as the collection cannot form part of a circular collection
+				// set.
+				changedInLoop = true
+				delete(collectionsWithRelations, collection.name)
+				break
 			}
 		}
 	}
 
-	for name := range graph {
-		if _, seen := indices[name]; !seen {
-			strongConnect(name)
-		}
+	// If len(collectionsWithRelations) > 0 here there are circular relations.
+	// We then need to traverse them all to break the remaing set down into
+	// sub sets of non-overlapping circles - we want this as the self-referencing
+	// set must be as small as possible, so that users providing multiple SDL/collection operations
+	// will result in the same IDs as a single large operation, provided that the individual collection
+	// declarations remain the same.
+
+	circularCollectionNames := make([]string, len(collectionsWithRelations))
+	for name := range collectionsWithRelations {
+		circularCollectionNames = append(circularCollectionNames, name)
+	}
+	// The order in which ID indexes are assigned must be deterministic, so
+	// we must loop through a sorted slice instead of the map.
+	slices.Sort(circularCollectionNames)
+
+	var i int
+	collectionSetIds := map[string]int{}
+	collectionsHit := map[string]struct{}{}
+	for _, name := range circularCollectionNames {
+		collection := collectionsWithRelations[name]
+		mapCollectionSetIDs(&i, collection, collectionSetIds, collectionsWithRelations, collectionsHit)
 	}
 
-	// Assign set IDs per version
-	setIDByVersion := map[string]int{}
-	nextSetID := 0
-
-	// First: circular collections (grouped by name)
-	circularSetIDByName := map[string]int{}
-
-	for _, col := range newCollections {
-		if _, isCircular := circularNames[col.Name]; !isCircular {
-			continue
-		}
-
-		setID, exists := circularSetIDByName[col.Name]
-		if !exists {
-			nextSetID++
-			setID = nextSetID
-			circularSetIDByName[col.Name] = setID
-		}
-
-		setIDByVersion[col.VersionID] = setID
-	}
-
-	// Then: non-circular versions (each gets its own set)
-	for _, col := range newCollections {
-		if _, ok := setIDByVersion[col.VersionID]; ok {
-			continue
-		}
-		nextSetID++
-		setIDByVersion[col.VersionID] = nextSetID
-	}
-
-	// Materialize sets
 	collectionSetsByID := map[int][]*client.CollectionVersion{}
+	for _, collection := range newCollections {
+		collectionSetId, ok := collectionSetIds[collection.Name]
+		if !ok {
+			// In most cases, if a collection does not form a circular set then it will not be in
+			// collectionSetIds, and we can assign it a new, unused setID
+			i++
+			collectionSetId = i
+		}
 
-	for _, col := range newCollections {
-		setID := setIDByVersion[col.VersionID]
-		collectionSetsByID[setID] = append(collectionSetsByID[setID], col)
+		collectionSet, ok := collectionSetsByID[collectionSetId]
+		if !ok {
+			collectionSet = make([]*client.CollectionVersion, 0, 1)
+		}
+
+		collectionSet = append(collectionSet, collection)
+		collectionSetsByID[collectionSetId] = collectionSet
 	}
 
-	collectionSets := make([][]*client.CollectionVersion, 0, nextSetID)
-	for i := 1; i <= nextSetID; i++ {
-		if set, ok := collectionSetsByID[i]; ok {
-			collectionSets = append(collectionSets, set)
-		}
+	collectionSets := [][]*client.CollectionVersion{}
+	for _, collectionSet := range collectionSetsByID {
+		collectionSets = append(collectionSets, collectionSet)
 	}
 
 	return collectionSets
-}
-
-// min is a Helper function needed for the Tarjan SCC algorithm. Returns the minimum of two integers.
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 // mapCollectionSetIDs recursively scans through a collection and its relations, assigning each collection to a
@@ -258,22 +248,20 @@ func mapCollectionSetIDs(
 		circlesBackHere := circlesBack(collection.name, relation, collectionRelationsByCollectionName, map[string]struct{}{})
 
 		var circleID int
-		if circlesBackHere {
-			if id, ok := collectionSetIds[relation]; ok {
-				// If this collection has already been assigned a setID, use that
-				circleID = id
-			} else {
-				collectionSetId, ok := collectionSetIds[collection.name]
-				if !ok {
-					// If this collection has not already been assigned a setID, it must be
-					// the first discovered node in a new circle.  Assign it a new setID,
-					// this will be picked up by its circle-forming descendents.
-					*i = *i + 1
-					collectionSetId = *i
-				}
-				collectionSetIds[collection.name] = collectionSetId
-				circleID = collectionSetId
+		if id, ok := collectionSetIds[relation]; ok {
+			// If this collection has already been assigned a setID, use that
+			circleID = id
+		} else if circlesBackHere {
+			collectionSetId, ok := collectionSetIds[collection.name]
+			if !ok {
+				// If this collection has not already been assigned a setID, it must be
+				// the first discovered node in a new circle.  Assign it a new setID,
+				// this will be picked up by its circle-forming descendents.
+				*i = *i + 1
+				collectionSetId = *i
 			}
+			collectionSetIds[collection.name] = collectionSetId
+			circleID = collectionSetId
 		} else {
 			// If this collection and its relations does not circle back to itself, we
 			// increment `i` and assign the new value to this collection *only*
