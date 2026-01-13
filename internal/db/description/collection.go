@@ -412,14 +412,13 @@ func GetRelatedCollection(
 	host client.CollectionVersion,
 	kind client.FieldKind,
 ) (client.CollectionVersion, bool, error) {
-
-	// Handle standard kinds
 	switch typedKind := kind.(type) {
 	case *client.NamedKind:
 		col, err := GetCollectionByName(ctx, typedKind.Name)
 		if errors.Is(err, corekv.ErrNotFound) {
 			return client.CollectionVersion{}, false, nil
 		}
+
 		return col, true, err
 
 	case *client.CollectionKind:
@@ -427,38 +426,35 @@ func GetRelatedCollection(
 		if errors.Is(err, corekv.ErrNotFound) {
 			return client.CollectionVersion{}, false, nil
 		}
+
 		return col, true, err
 
 	case *client.SelfKind:
 		if typedKind.RelativeID == "" {
 			return host, true, nil
 		}
+
 		cols, err := GetActiveCollections(ctx)
 		if err != nil {
 			return client.CollectionVersion{}, false, err
 		}
+
 		for _, col := range cols {
 			if col.CollectionID == host.CollectionID {
 				continue
 			}
+
 			if col.CollectionSet.Value().CollectionSetID != host.CollectionSet.Value().CollectionSetID {
 				continue
 			}
+
 			if fmt.Sprint(col.CollectionSet.Value().RelativeID) == typedKind.RelativeID {
 				return col, true, nil
 			}
 		}
-	}
 
-	// Attempt generic resolution:
-	// Look at the kind’s string representation and try to find a collection by that name
-	kindName := fmt.Sprintf("%v", kind)
-	if kindName != "" {
-		col, err := GetCollectionByName(ctx, kindName)
-		if errors.Is(err, corekv.ErrNotFound) {
-			return client.CollectionVersion{}, false, nil
-		}
-		return col, true, err
+	default:
+		// no-op
 	}
 
 	return client.CollectionVersion{}, false, nil

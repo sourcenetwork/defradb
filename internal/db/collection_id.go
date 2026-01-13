@@ -92,31 +92,35 @@ type collectionRelations struct {
 // For example if User contains a relation *to* Dog, and Dog contains a relationship *to*
 // User, they will be grouped into the same set.
 func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.CollectionVersion {
-	// Build relation graph: collection name -> relations
-	graph := map[string][]string{}
-	for _, collection := range newCollections {
-		var relations []string
-		for _, field := range collection.Fields {
-			if !field.IsPrimary {
+	type collInfo struct {
+		name      string
+		relations []string
+	}
+
+	// Step 1: Build relation graph
+	graph := map[string]collInfo{}
+	for _, col := range newCollections {
+		var rels []string
+		for _, f := range col.Fields {
+			if !f.IsPrimary {
 				continue
 			}
-			if kind, ok := field.Kind.(*client.NamedKind); ok {
-				relations = append(relations, kind.Name)
+			if kind, ok := f.Kind.(*client.NamedKind); ok {
+				rels = append(rels, kind.Name)
 			}
 		}
-		if len(relations) > 0 {
-			graph[collection.Name] = relations
+		if len(rels) > 0 {
+			graph[col.Name] = collInfo{name: col.Name, relations: rels}
 		}
 	}
 
-	// Tarjan SCC algorithm to find strongly connected components
-
+	// Step 2: Identify circular collections using Tarjan SCC
 	index := 0
 	stack := []string{}
 	onStack := map[string]bool{}
 	indices := map[string]int{}
 	lowlink := map[string]int{}
-	sccs := [][]string{}
+	circularCollections := map[string]struct{}{}
 
 	var strongConnect func(string)
 	strongConnect = func(v string) {
@@ -126,7 +130,7 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 		stack = append(stack, v)
 		onStack[v] = true
 
-		for _, w := range graph[v] {
+		for _, w := range graph[v].relations {
 			if _, seen := indices[w]; !seen {
 				strongConnect(w)
 				if lowlink[w] < lowlink[v] {
@@ -139,7 +143,6 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 			}
 		}
 
-		// Root of SCC
 		if lowlink[v] == indices[v] {
 			var scc []string
 			for {
@@ -151,7 +154,11 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 					break
 				}
 			}
-			sccs = append(sccs, scc)
+			if len(scc) > 1 {
+				for _, name := range scc {
+					circularCollections[name] = struct{}{}
+				}
+			}
 		}
 	}
 
@@ -161,39 +168,65 @@ func getCollectionSets(newCollections []*client.CollectionVersion) [][]*client.C
 		}
 	}
 
-	// Build collection sets
-
-	// Map collection name -> set ID
+	// Step 3: Prepare sets
 	collectionSetIds := map[string]int{}
 	nextSetID := 0
 
-	for _, scc := range sccs {
-		// Each SCC (size >= 1) is one collection set
-		nextSetID++
-		for _, name := range scc {
-			collectionSetIds[name] = nextSetID
-		}
-	}
-
-	// Assign remaining (acyclic, no relations) collections
-	for _, collection := range newCollections {
-		if _, ok := collectionSetIds[collection.Name]; !ok {
+	// First, assign acyclic collections in original order
+	for _, col := range newCollections {
+		if _, isCircular := circularCollections[col.Name]; !isCircular {
 			nextSetID++
-			collectionSetIds[collection.Name] = nextSetID
+			collectionSetIds[col.Name] = nextSetID
 		}
 	}
 
-	// Materialize sets
+	// Step 4: Handle circular collections with SCC grouping
+	visited := map[string]struct{}{}
+	var assignCircular func(string)
+	assignCircular = func(name string) {
+		if _, ok := visited[name]; ok {
+			return
+		}
+		visited[name] = struct{}{}
+		nextSetID++
+		var sccSet []string
+
+		// Re-run DFS to collect all connected circular nodes
+		var dfs func(string)
+		dfs = func(n string) {
+			if _, ok := circularCollections[n]; !ok {
+				return
+			}
+			if _, ok := collectionSetIds[n]; ok {
+				return
+			}
+			collectionSetIds[n] = nextSetID
+			sccSet = append(sccSet, n)
+			for _, r := range graph[n].relations {
+				dfs(r)
+			}
+		}
+		dfs(name)
+	}
+
+	for name := range circularCollections {
+		assignCircular(name)
+	}
+
+	// Step 5: Materialize collection sets
 	collectionSetsByID := map[int][]*client.CollectionVersion{}
-	for _, collection := range newCollections {
-		id := collectionSetIds[collection.Name]
-		collectionSetsByID[id] = append(collectionSetsByID[id], collection)
+	for _, col := range newCollections {
+		id := collectionSetIds[col.Name]
+		collectionSetsByID[id] = append(collectionSetsByID[id], col)
 	}
 
 	collectionSets := make([][]*client.CollectionVersion, 0, len(collectionSetsByID))
-	for _, set := range collectionSetsByID {
-		collectionSets = append(collectionSets, set)
+	for i := 1; i <= nextSetID; i++ {
+		if set, ok := collectionSetsByID[i]; ok {
+			collectionSets = append(collectionSets, set)
+		}
 	}
+
 	return collectionSets
 }
 

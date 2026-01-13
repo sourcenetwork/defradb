@@ -62,7 +62,13 @@ func AddDelta(
 	if err != nil {
 		return cidlink.Link{}, nil, NewErrGettingHeads(err)
 	}
-	height = height + 1
+
+	// Ensure height is correct if no heads exist
+	if len(heads) == 0 {
+		height = 1
+	} else {
+		height = height + 1
+	}
 
 	delta.SetPriority(height)
 	block := New(crdt.NewCRDT(delta), links, heads...)
