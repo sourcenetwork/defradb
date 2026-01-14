@@ -613,11 +613,17 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	oldFetcher := r.primaryScan.fetcher
 	oldIndex := r.primaryScan.index
 
-	r.primaryScan.index = findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
+	// we first try to find an index based on sub-filter fields
+	r.primaryScan.index = findIndexByFilteringField(r.primaryScan)
+
+	if !r.primaryScan.index.HasValue() {
+		// if no index can be used for sub-filter fall back to relation ID field index
+		r.primaryScan.index = findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
+	}
 
 	canOrderByIndex := false
 
-	// if there is not index for filter, we try to find one for ordering
+	// if there is no index for filter, we try to find one for ordering
 	if !r.primaryScan.index.HasValue() {
 		var orderIndex immutable.Option[client.IndexDescription]
 		orderIndex, canOrderByIndex = r.findOrderingIndex()
