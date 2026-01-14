@@ -328,3 +328,32 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestAddSchemaWithCyclicMutuallyReferentialRelations_DoesNotError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Player {
+						name: String
+						decks: [Deck] @relation(name: "deck_player")
+						game: Game @relation(name: "game_players")
+					}
+
+					type Deck {
+						name: String
+						owner: Player @relation(name: "deck_player")
+						game: Game @relation(name: "game_decks")
+					}
+
+					type Game {
+						players: [Player] @relation(name: "game_players")
+						decks: [Deck] @relation(name: "game_decks")
+						winner: Player
+					}
+                `,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
