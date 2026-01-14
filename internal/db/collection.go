@@ -455,6 +455,7 @@ func (c *collection) create(
 	}
 
 	ctx = setContextDocEncryption(ctx, opts)
+	ctx = coreblock.ContextWithNewDocCreateMode(ctx)
 
 	// write data to DB via MerkleClock/CRDT
 	err = c.save(ctx, doc, true)

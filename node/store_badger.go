@@ -35,6 +35,10 @@ func init() {
 		badgerOpts.ValueLogFileSize = options.badgerFileSize
 		badgerOpts.EncryptionKey = options.badgerEncryptionKey
 
+		badgerOpts.NumCompactors = 2
+		badgerOpts.NumLevelZeroTables = 10
+		badgerOpts.NumLevelZeroTablesStall = 20
+
 		if len(options.badgerEncryptionKey) > 0 {
 			// Having a cache improves the performance.
 			// Otherwise, your reads would be very slow while encryption is enabled.

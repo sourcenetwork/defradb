@@ -93,6 +93,14 @@ func (hh *heads) List(ctx context.Context) ([]cid.Cid, uint64, error) {
 		}
 	}
 
+	// No heads when creating a document
+	if IsNewDocCreateMode(ctx) {
+		if cache := getHeadsCache(ctx); cache != nil {
+			cache.set(namespaceKey, nil, 0)
+		}
+		return nil, 0, nil
+	}
+
 	iter, err := hh.store.Iterator(ctx, corekv.IterOptions{
 		Prefix: hh.namespace.Bytes(),
 	})

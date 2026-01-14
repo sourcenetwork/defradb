@@ -25,6 +25,18 @@ import (
 )
 
 type headsCacheKey struct{}
+type newDocCreateModeKey struct{}
+
+// ContextWithNewDocCreateMode returns a context that signals that we are creating a document.
+func ContextWithNewDocCreateMode(ctx context.Context) context.Context {
+	return context.WithValue(ctx, newDocCreateModeKey{}, true)
+}
+
+// IsNewDocCreateMode returns true if we are creating new document.
+func IsNewDocCreateMode(ctx context.Context) bool {
+	v, _ := ctx.Value(newDocCreateModeKey{}).(bool)
+	return v
+}
 
 // headsCache caches the result of heads.List() calls.
 type headsCache struct {
