@@ -836,6 +836,15 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 	ordering []mapper.OrderCondition,
 ) error {
 	childScan := getNode[*scanNode](join.childSide.plan)
+	parentScan := getNode[*scanNode](join.parentSide.plan)
+
+	// Preserve the parent's filter when inverting the join. After inversion,
+	// docs are fetched from the parent via foreign key, so the original parent
+	// filter must still be applied.
+	if parentScan != nil && parentScan.filter != nil {
+		join.subFilter = filter.Merge(join.subFilter, parentScan.filter)
+	}
+
 	childScan.tryAddFieldWithName(request.ToFieldID(join.childSide.relFieldDef.Value().Name))
 	// replace child's filter with the filter that utilizes the index
 	// the original child's filter is stored in join.subFilter
