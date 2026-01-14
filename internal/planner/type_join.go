@@ -612,13 +612,12 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 
 	oldFetcher := r.primaryScan.fetcher
 	oldIndex := r.primaryScan.index
-	oldOrdering := r.primaryScan.ordering
 
 	r.primaryScan.index = findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
-	r.primaryScan.ordering = nil
 
 	canOrderByIndex := false
 
+	// if there is not index for filter, we try to find one for ordering
 	if !r.primaryScan.index.HasValue() {
 		var orderIndex immutable.Option[client.IndexDescription]
 		orderIndex, canOrderByIndex = r.findOrderingIndex()
@@ -642,7 +641,6 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 
 	r.primaryScan.fetcher = oldFetcher
 	r.primaryScan.index = oldIndex
-	r.primaryScan.ordering = oldOrdering
 
 	return docs, nil
 }
