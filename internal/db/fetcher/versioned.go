@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -171,6 +172,10 @@ func (vf *VersionedFetcher) Init(
 
 	vf.store = datastore.NewTxnFrom(
 		vf.root,
+		// Because we have created a new root, and are not operating on the actual 'main' Defra instance,
+		// we should create a new lockset - the main lockset on `db` must not be used, as
+		// we have zero reason to be locking that whilst operating on this temporary store.
+		lock.NewLockSet(),
 		// We can take the parent txn id here
 		txn.ID(),
 		false,
@@ -388,7 +393,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		case block.Delta.IsComposite():
 			mcrdt = crdt.NewDocComposite(
 				vf.store.Datastore(),
-				block.Delta.GetSchemaVersionID(),
+				block.Delta.GetCollectionVersionID(),
 				keys.DataStoreKey{
 					CollectionShortID: shortID,
 					DocID:             string(block.Delta.GetDocID()),
@@ -409,7 +414,7 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 
 			mcrdt, err = crdt.FieldLevelCRDTWithStore(
 				vf.store.Datastore(),
-				block.Delta.GetSchemaVersionID(),
+				block.Delta.GetCollectionVersionID(),
 				field.Typ,
 				field.Kind,
 				keys.DataStoreKey{

@@ -221,8 +221,8 @@ func (w *Wrapper) PatchCollection(
 	return w.client.PatchCollection(ctx, patch, migration)
 }
 
-func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
-	return w.client.SetActiveCollectionVersion(ctx, schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+	return w.client.SetActiveCollectionVersion(ctx, collectionVersionID)
 }
 
 func (w *Wrapper) AddView(

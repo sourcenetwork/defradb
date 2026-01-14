@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package cli
+package config
 
 import (
 	"errors"
@@ -24,26 +24,26 @@ import (
 )
 
 const (
-	configStoreBadger   = "badger"
-	configStoreMemory   = "memory"
-	configLogFormatJSON = "json"
-	configLogFormatCSV  = "csv"
-	configLogLevelInfo  = "info"
-	configLogLevelDebug = "debug"
-	configLogLevelError = "error"
-	configLogLevelFatal = "fatal"
+	ConfigStoreBadger   = "badger"
+	ConfigStoreMemory   = "memory"
+	ConfigLogFormatJSON = "json"
+	ConfigLogFormatCSV  = "csv"
+	ConfigLogLevelInfo  = "info"
+	ConfigLogLevelDebug = "debug"
+	ConfigLogLevelError = "error"
+	ConfigLogLevelFatal = "fatal"
 )
 
-// configPaths are config keys that will be made relative to the rootdir
-var configPaths = []string{
+// ConfigPaths are config keys that will be made relative to the rootdir
+var ConfigPaths = []string{
 	"datastore.badger.path",
 	"api.pubkeypath",
 	"api.privkeypath",
 	"keyring.path",
 }
 
-// configFlags is a mapping of cli flag names to config keys to bind.
-var configFlags = map[string]string{
+// ConfigFlags is a mapping of cli flag names to config keys to bind.
+var ConfigFlags = map[string]string{
 	"log-level":                  "log.level",
 	"log-output":                 "log.output",
 	"log-format":                 "log.format",
@@ -77,8 +77,8 @@ var configFlags = map[string]string{
 	"replicator-retry-intervals": "replicator.retryintervals",
 }
 
-// configDefaults contains default values for config entries.
-var configDefaults = map[string]any{
+// ConfigDefaults contains default values for config entries.
+var ConfigDefaults = map[string]any{
 	"api.address":                       "127.0.0.1:9181",
 	"api.allowed-origins":               []string{},
 	"datastore.badger.path":             "data",
@@ -111,8 +111,8 @@ var configDefaults = map[string]any{
 	"replicator.retryintervals":         []int{30, 60, 120, 240, 480, 960, 1920},
 }
 
-// defaultConfig returns a new config with default values.
-func defaultConfig() *viper.Viper {
+// DefaultConfig returns a new config with default values.
+func DefaultConfig() *viper.Viper {
 	cfg := viper.New()
 
 	cfg.AutomaticEnv()
@@ -122,15 +122,15 @@ func defaultConfig() *viper.Viper {
 	cfg.SetConfigName("config")
 	cfg.SetConfigType("yaml")
 
-	for key, val := range configDefaults {
+	for key, val := range ConfigDefaults {
 		cfg.SetDefault(key, val)
 	}
 	return cfg
 }
 
-// createConfig writes the default config file if one does not exist.
-func createConfig(rootdir string, flags *pflag.FlagSet) error {
-	cfg := defaultConfig()
+// CreateConfig writes the default config file if one does not exist.
+func CreateConfig(rootdir string, flags *pflag.FlagSet) error {
+	cfg := DefaultConfig()
 	cfg.AddConfigPath(rootdir)
 
 	if err := bindConfigFlags(cfg, flags); err != nil {
@@ -150,9 +150,9 @@ func createConfig(rootdir string, flags *pflag.FlagSet) error {
 	return err
 }
 
-// loadConfig returns a new config with values from the config in the given rootdir.
-func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
-	cfg := defaultConfig()
+// LoadConfig returns a new config with values from the config in the given rootdir.
+func LoadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
+	cfg := DefaultConfig()
 	cfg.AddConfigPath(rootdir)
 
 	// attempt to read the existing config
@@ -169,7 +169,7 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 	}
 
 	// make paths relative to the rootdir
-	for _, key := range configPaths {
+	for _, key := range ConfigPaths {
 		path := cfg.GetString(key)
 		if path != "" && !filepath.IsAbs(path) {
 			cfg.Set(key, filepath.Join(rootdir, path))
@@ -202,7 +202,7 @@ func loadConfig(rootdir string, flags *pflag.FlagSet) (*viper.Viper, error) {
 func bindConfigFlags(cfg *viper.Viper, flags *pflag.FlagSet) error {
 	var errs []error
 	flags.VisitAll(func(f *pflag.Flag) {
-		errs = append(errs, cfg.BindPFlag(configFlags[f.Name], f))
+		errs = append(errs, cfg.BindPFlag(ConfigFlags[f.Name], f))
 	})
 	return errors.Join(errs...)
 }

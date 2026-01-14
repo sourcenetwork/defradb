@@ -26,13 +26,13 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 				ImportContent: `{
 					"User":[
 						{
-							"_docID":"bae-498fc496-9ad7-5239-b003-1044d326e072",
+							"_docID":"bae-692a9178-a258-5224-990f-9ad703a2bbea",
 							"age":31,
-							"boss_id":"bae-59a4a7b9-1ce9-557f-bbb8-48485ee44f35",
+							"_bossID":"bae-1635f80b-612a-5378-a185-cad7a3018354",
 							"name":"Bob"
 						},
 						{
-							"_docID":"bae-59a4a7b9-1ce9-557f-bbb8-48485ee44f35",
+							"_docID":"bae-1635f80b-612a-5378-a185-cad7a3018354",
 							"age":30,
 							"name":"John"
 						}
@@ -75,10 +75,10 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"User":[` +
 		`{` +
-		`"_docID":"bae-498fc496-9ad7-5239-b003-1044d326e072",` +
-		`"_docIDNew":"bae-498fc496-9ad7-5239-b003-1044d326e072",` +
+		`"_bossID":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
+		`"_docID":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
+		`"_docIDNew":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
 		`"age":31,` +
-		`"boss_id":"bae-498fc496-9ad7-5239-b003-1044d326e072",` +
 		`"name":"Bob"` +
 		`}` +
 		`]` +
@@ -102,7 +102,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"boss_id": "bae-498fc496-9ad7-5239-b003-1044d326e072"
+					"_bossID": "bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9"
 				}`,
 			},
 			testUtils.BackupExport{
@@ -281,7 +281,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 		`{` +
 		`"_docID":"bae-bf1f16db-3c02-5759-8127-7d73346442cc",` +
 		`"_docIDNew":"bae-bf1f16db-3c02-5759-8127-7d73346442cc",` +
-		`"book_id":"bae-89136f56-3779-5656-b8a6-f76a1c262f37",` +
+		`"_bookID":"bae-89136f56-3779-5656-b8a6-f76a1c262f37",` +
 		`"name":"John"` +
 		`}` +
 		`],` +
@@ -290,7 +290,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 		`"_docID":"bae-89136f56-3779-5656-b8a6-f76a1c262f37",` +
 		`"_docIDNew":"bae-66b0f769-c743-5a50-ae6d-1dcd978e2404",` +
 		`"name":"John and the sourcerers' stone",` +
-		`"reviewedBy_id":"bae-bf1f16db-3c02-5759-8127-7d73346442cc"` +
+		`"_reviewedByID":"bae-bf1f16db-3c02-5759-8127-7d73346442cc"` +
 		`}` +
 		`]` +
 		`}`
@@ -336,7 +336,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				CollectionID: 1,
 				DocID:        0,
 				Doc: `{
-					"reviewedBy_id": "bae-bf1f16db-3c02-5759-8127-7d73346442cc"
+					"_reviewedByID": "bae-bf1f16db-3c02-5759-8127-7d73346442cc"
 				}`,
 			},
 			/*

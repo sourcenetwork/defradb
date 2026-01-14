@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestGetSchema_GivenNonExistantSchemaVersionID_Errors(t *testing.T) {
+func TestGetSchema_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.GetCollections{

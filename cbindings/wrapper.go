@@ -679,8 +679,8 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts client.CollectionFetch
 }
 
 func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
-	src := C.CString(config.SourceSchemaVersionID)
-	dst := C.CString(config.DestinationSchemaVersionID)
+	src := C.CString(config.SourceCollectionVersionID)
+	dst := C.CString(config.DestinationCollectionVersionID)
 	lensConfig, err := json.Marshal(config.Lens)
 	if err != nil {
 		return "", err

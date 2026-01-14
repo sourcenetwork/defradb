@@ -81,13 +81,13 @@ mutation {
 
 ```graphql
 mutation {
-  create_User(input: {name: "Alice", username: "awesomealice", age: 35, address_id: "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"}) {
+  create_User(input: {name: "Alice", username: "awesomealice", age: 35, _addressID: "bae-818aecea-02f9-5064-9e17-c8b7cc20e63f"}) {
   	_docID
   }
 }
 ```
 
-Note: Currently, the developer must create the secondary side of the relation (`Address`) first followed by the primary side with the secondary id (`address_id`) included, but in a future version of Defra, this can be done in either order.
+Note: Currently, the developer must create the secondary side of the relation (`Address`) first followed by the primary side with the secondary id (`_addressID`) included, but in a future version of Defra, this can be done in either order.
 
 3. Querying Types - After creating the required documents, the developer has to send a query request from the primary side. Therefore, in the above example, it will ask for the three respective fields of the "user", and it will also have the embedded address type in the selection set. As the developer will query from the "user" into the "address", and as defined above, the "user" is the primary type, this lookup of "user" into "address" will be an efficient lookup that will only require a single point. A single point lookup means that it won't incur a table scan. This is explained in the query below:
 
@@ -186,7 +186,7 @@ mutation {
 
 ```graphql
 mutation {
-  	create_Book(input: {name: "Gulistan", genre: "Poetry", author_id: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4"}) {
+  	create_Book(input: {name: "Gulistan", genre: "Poetry", _authorID: "bae-0e7c3bb5-4917-5d98-9fcf-b9db369ea6e4"}) {
       	_docID
     }
 }

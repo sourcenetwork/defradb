@@ -61,7 +61,7 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{
@@ -136,7 +136,7 @@ func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{

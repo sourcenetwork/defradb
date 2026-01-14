@@ -81,8 +81,8 @@ The docID of the document that this commit is for.
 	commitCollectionIDFieldDescription string = `
 The ID of the collection that this commit was committed against.
 `
-	commitSchemaVersionIDFieldDescription string = `
-The ID of the schema version that this commit was committed against. This ID allows one
+	commitCollectionVersionIDFieldDescription string = `
+The ID of the collection version that this commit was committed against. This ID allows one
  to determine the state of the data model at the time of commit.
 `
 	commitFieldNameFieldDescription string = `

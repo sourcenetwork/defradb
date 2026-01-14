@@ -56,7 +56,7 @@ func TestGroupByFieldForTheManySideInSchema(t *testing.T) {
 						"enumValues": []any{
 							// Internal related object fields.
 							map[string]any{"name": "author"},
-							map[string]any{"name": "author_id"},
+							map[string]any{"name": "_authorID"},
 
 							// Internal fields.
 							map[string]any{"name": "_deleted"},
@@ -116,7 +116,7 @@ func TestGroupByFieldForTheSingleSideInSchema(t *testing.T) {
 						"enumValues": []any{
 							// Internal related object fields.
 							map[string]any{"name": "published"},
-							// Note: No `published_id` of this side.
+							// Note: No `_publishedID` of this side.
 
 							// Internal fields.
 							map[string]any{"name": "_deleted"},

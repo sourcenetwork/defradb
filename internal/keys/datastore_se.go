@@ -33,6 +33,7 @@ type DatastoreSE struct {
 }
 
 var _ Key = (*DatastoreSE)(nil)
+var _ CollectionedKey = DatastoreSE{}
 
 func (k DatastoreSE) Bytes() []byte {
 	return []byte(k.ToString())
@@ -106,4 +107,8 @@ func NewDatastoreSEFromString(key string) (DatastoreSE, error) {
 	}
 
 	return k, nil
+}
+
+func (k DatastoreSE) GetCollectionShortID() uint32 {
+	return k.CollectionShortID
 }

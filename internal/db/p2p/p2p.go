@@ -352,7 +352,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 	cols, err := p.db.GetCollections(
 		ctx,
 		client.CollectionFetchOptions{
-			VersionID: immutable.Some(block.Delta.GetSchemaVersionID()),
+			VersionID: immutable.Some(block.Delta.GetCollectionVersionID()),
 		},
 	)
 	if err != nil {
@@ -360,7 +360,8 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return false
 	}
 	if len(cols) == 0 {
-		log.Info("No collections found", corelog.Any("Schema Version ID", block.Delta.GetSchemaVersionID()))
+		log.Info("No collections found",
+			corelog.Any("Collection Version ID", block.Delta.GetCollectionVersionID()))
 		return false
 	}
 
@@ -502,6 +503,10 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	req.SenderID = from
 
 	if err := p.processPushlogRequest(p.ctx, req, false); err != nil {
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			log.Info("Context done during pushlog request processing", corelog.Any("Error", err))
+			return nil, nil
+		}
 		return nil, errors.Wrap(fmt.Sprintf("Failed to process pushlog request %s", topic), err)
 	}
 
@@ -522,6 +527,9 @@ func (p *P2P) processPushlogRequest(
 	req *protocol.PushLogRequest,
 	isReplicator bool,
 ) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	block, err := coreblock.GetFromBytes(req.Block)
 	if err != nil {
 		return err

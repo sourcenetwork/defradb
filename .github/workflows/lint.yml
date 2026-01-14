@@ -34,18 +34,18 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Setting up Go explicitly is required for v3.0.0+ of golangci/golangci-lint-action.
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           check-latest: true
           cache: false
 
       - name: Run golangci-lint linter
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
         with:
           # Required: the version of golangci-lint is required.
           # Note: The version should not pick the patch version as the latest patch
@@ -87,7 +87,7 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run yamllint linter
         uses: ibiqlik/action-yamllint@v3
