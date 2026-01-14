@@ -458,3 +458,86 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithIndexOnOneToMany_WithSameFilterOnParentAndSubType_ShouldFilterBothWithIndexes(t *testing.T) {
+	req := `query {
+		User(filter: {devices: {model: {_eq: "Walkman"}}}) {
+			name
+			devices(filter: {model: {_eq: "Galaxy"}}) {
+				model
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String @index
+						devices: [Device]
+					}
+					type Device {
+						model: String @index
+						owner: User
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "Alice"}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "Bob"}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model": "Walkman",
+					"owner": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model": "iPod",
+					"owner": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model": "Galaxy",
+					"owner": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"model": "Pixel",
+					"owner": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "Alice",
+							"devices": []map[string]any{
+								{"model": "Galaxy"},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req),
+				// 2 indexFetches: 1 for parent filter (users with Walkman) + 1 for Galaxy devices
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
