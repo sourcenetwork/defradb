@@ -330,3 +330,101 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthors_ShouldOrderEachAuthorsBoo
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithOrderOnOneToMany_WithMultipleAuthorsAndIndexOnRelation_ShouldOrderEachAuthorsBooks(t *testing.T) {
+	req := `query {
+		Author(order: {name: ASC}) {
+			name
+			published(order: {rating: DESC}) {
+				title
+				rating
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+						published: [Book]
+					}
+					type Book {
+						title: String
+						rating: Float @index
+						author: Author @index
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "Alice"}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "Bob"}`,
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book A1",
+					"rating": 3.5,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book A2",
+					"rating": 4.8,
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book B1",
+					"rating": 4.0,
+					"author": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book B2",
+					"rating": 2.5,
+					"author": testUtils.NewDocIndex(0, 1),
+				},
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "Alice",
+							"published": []map[string]any{
+								{"title": "Book A2", "rating": 4.8},
+								{"title": "Book A1", "rating": 3.5},
+							},
+						},
+						{
+							"name": "Bob",
+							"published": []map[string]any{
+								{"title": "Book B1", "rating": 4.0},
+								{"title": "Book B2", "rating": 2.5},
+							},
+						},
+					},
+				},
+			},
+			testUtils.Request{
+				Request: makeExplainQuery(req),
+				// index fetches 4: relation ID index fetches 2 books per author, then sorts in memory
+				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(4),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+

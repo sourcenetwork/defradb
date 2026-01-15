@@ -612,6 +612,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 
 	oldFetcher := r.primaryScan.fetcher
 	oldIndex := r.primaryScan.index
+	oldOrdering := r.primaryScan.ordering
 
 	// we first try to find an index based on sub-filter fields
 	r.primaryScan.index = findIndexByFilteringField(r.primaryScan)
@@ -621,12 +622,20 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 		r.primaryScan.index = findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
 	}
 
-	canOrderByIndex := false
-
-	// if there is no index for filter, we try to find one for ordering
-	if !r.primaryScan.index.HasValue() {
-		var orderIndex immutable.Option[client.IndexDescription]
-		orderIndex, canOrderByIndex = r.findOrderingIndex()
+	// Check if the selected index can satisfy ordering. Use the same function (CanBeOrderedByIndex)
+	// that isOrderedByIndex uses to ensure consistent behavior between plan expansion and execution.
+	if r.primaryScan.index.HasValue() && len(r.ordering) > 0 {
+		canOrder, _ := fetcher.CanBeOrderedByIndex(r.ordering, r.primaryScan.index.Value(), r.primaryScan.documentMapping)
+		if canOrder {
+			r.primaryScan.ordering = r.ordering
+		} else {
+			// Clear ordering so the fetcher doesn't try to use it with an incompatible index.
+			// The orderNode (added during plan expansion) will handle in-memory sorting.
+			r.primaryScan.ordering = nil
+		}
+	} else if !r.primaryScan.index.HasValue() && len(r.ordering) > 0 {
+		// if there is no index for filter, we try to find one for ordering
+		orderIndex, canOrderByIndex := r.findOrderingIndex()
 		if canOrderByIndex {
 			r.primaryScan.index = orderIndex
 			r.primaryScan.ordering = r.ordering
@@ -647,6 +656,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 
 	r.primaryScan.fetcher = oldFetcher
 	r.primaryScan.index = oldIndex
+	r.primaryScan.ordering = oldOrdering
 
 	return docs, nil
 }
@@ -772,10 +782,8 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 	if secondSide.isParent {
 		// child primary docs reference the same secondary parent doc. So if we already encountered
 		// the secondary parent doc, we continue to the next primary doc.
-		for i := range join.encounteredDocIDs {
-			if join.encounteredDocIDs[i] == secondaryDocID {
-				return join.Next()
-			}
+		if slices.Contains(join.encounteredDocIDs, secondaryDocID) {
+			return join.Next()
 		}
 		join.encounteredDocIDs = append(join.encounteredDocIDs, secondaryDocID)
 	}

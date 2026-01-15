@@ -393,7 +393,7 @@ func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, par
 			// the parent filter. This prevents re-evaluation at the parent level which would fail
 			// when the sub-filter modifies the child docs (e.g., filtering by model="Galaxy" when
 			// parent filter is model="Walkman").
-			// 
+			//
 			// Example:
 			// 	User(filter: {devices: {model: {_eq: "Walkman"}}}) {
 			// 		name
@@ -475,7 +475,37 @@ func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTop
 		return err
 	}
 
+	ensureOrderNodeForRelationIndex(node)
+
 	return p.expandPlan(node.childSide.plan, parentPlan)
+}
+
+// ensureOrderNodeForRelationIndex clears the child's index if a relation ID index exists,
+// ensuring orderNode is added during plan expansion. Without this, isOrderedByIndex might
+// see an ordering index that can satisfy ordering, so orderNode won't be added. But
+// retrievePrimaryDocs might use a relation ID index instead, which can't satisfy ordering.
+func ensureOrderNodeForRelationIndex(node *invertibleTypeJoin) {
+	childTop, ok := node.childSide.plan.(*selectTopNode)
+	if !ok || childTop.order == nil {
+		return
+	}
+
+	if !node.childSide.relFieldDef.HasValue() || !node.childSide.isPrimary() {
+		return
+	}
+
+	relIDFieldName := request.ToFieldID(node.childSide.relFieldDef.Value().Name)
+	relIDIndex := findIndexByFieldName(node.childSide.col, relIDFieldName)
+	if !relIDIndex.HasValue() {
+		return
+	}
+
+	// A relation ID index exists and might be used instead of ordering index.
+	// Clear the current index to ensure orderNode is added.
+	childScan := getNode[*scanNode](node.childSide.plan)
+	if childScan != nil {
+		childScan.index = immutable.None[client.IndexDescription]()
+	}
 }
 
 func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
