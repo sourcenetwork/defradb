@@ -151,6 +151,9 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	}
 
 	for _, key := range keysToDelete {
+		// Not all store implementations support mutations whilst iterating, so whilst it would
+		// be simpler and probably more efficient to delete whilst iterating, it would not work
+		// with all supported corekv store implementations.
 		err := ds.Delete(ctx, key)
 		if err != nil {
 			return err
@@ -223,6 +226,9 @@ func (c *collection) hardDeleteDatastorePrefix(
 	unsafeStore := txn.Datastore().Unsafe()
 
 	for _, key := range keysToDelete {
+		// Not all store implementations support mutations whilst iterating, so whilst it would
+		// be simpler and probably more efficient to delete whilst iterating, it would not work
+		// with all supported corekv store implementations.
 		err := unsafeStore.Delete(ctx, key)
 		if err != nil {
 			return err
@@ -274,6 +280,9 @@ func (c *collection) hardDeleteHeadstorePrefix(
 	}
 
 	for _, key := range keysToDelete {
+		// Not all store implementations support mutations whilst iterating, so whilst it would
+		// be simpler and probably more efficient to delete whilst iterating, it would not work
+		// with all supported corekv store implementations.
 		err := headstore.Delete(ctx, key)
 		if err != nil {
 			return err
