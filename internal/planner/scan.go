@@ -100,7 +100,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 			n.tryAddFieldWithName(requestable.GetName())
 		// select might have its own select fields and filters fields
 		case *mapper.Select:
-			n.tryAddFieldWithName(requestable.Field.Name + request.RelatedObjectID) // foreign key for type joins
+			n.tryAddFieldWithName(request.ToFieldID(requestable.Field.Name)) // foreign key for type joins
 			err := n.initFields(requestable.Fields)
 			if err != nil {
 				return err

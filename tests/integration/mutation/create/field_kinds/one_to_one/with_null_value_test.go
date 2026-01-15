@@ -64,14 +64,14 @@ func TestMutationCreateOneToOne_WithExplicitNullOnPrimarySide(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name":   "Secrets at Maple Syrup Farm",
-							"author": nil,
-						},
-						{
 							"name": "How to Be a Canadian",
 							"author": map[string]any{
 								"name": "Will Ferguson",
 							},
+						},
+						{
+							"name":   "Secrets at Maple Syrup Farm",
+							"author": nil,
 						},
 					},
 				},
