@@ -506,7 +506,7 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 							},
 						},
 						{
-							"name": "Fred",
+							"name":      "Fred",
 							"published": []map[string]any{},
 						},
 					},
@@ -606,7 +606,7 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 			testUtils.Request{
 				Request: makeExplainQuery(req),
 				// 5 indexFetch: parent filter uses rating index via inverted join (1 book matches _gte: 4.0)
-				// For the matched author full index scan is done to get all 4 books 
+				// For the matched author full index scan is done to get all 4 books
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
 		},
