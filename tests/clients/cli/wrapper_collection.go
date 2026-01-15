@@ -409,7 +409,7 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 
 func (c *Collection) Truncate(ctx context.Context) error {
 	args := []string{"client", "collection", "truncate"}
-	args = append(args, "--collection", c.Version().Name)
+	args = append(args, "--name", c.Version().Name)
 
 	_, err := c.cmd.execute(ctx, args)
 	return err

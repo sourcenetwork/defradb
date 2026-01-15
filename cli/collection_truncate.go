@@ -22,7 +22,7 @@ func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
 		Short: "Truncate the given collection",
 		Long: `Truncate the given collection, removing all document data within it from the local node.
  Does not propagate the deletion to other Defra nodes in the peer network.`,
-		Args: cobra.ExactArgs(1),
+		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
