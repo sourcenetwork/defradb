@@ -104,6 +104,11 @@ func (c *collection) truncate(
 	return nil
 }
 
+// hardDeleteDocKeysAndHeadstore iterates through the `keys.DataStoreKey` for this collection
+// and deletes both them, *and* the headstore keys for those found documents.
+//
+// The headstore keys must be discovered based on datastore keys, as the headstore keys are not
+// indexed by collection id, and so cannot be found independently.
 func (c *collection) hardDeleteDocKeysAndHeadstore(
 	ctx context.Context,
 	colShortID uint32,
