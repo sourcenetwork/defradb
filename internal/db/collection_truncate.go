@@ -295,7 +295,7 @@ func (c *collection) hardDeleteHeadstorePrefix(
 	}
 
 	if hasMore {
-		return c.hardDeleteDatastorePrefix(ctx, prefix)
+		return c.hardDeleteHeadstorePrefix(ctx, prefix)
 	}
 
 	return nil
