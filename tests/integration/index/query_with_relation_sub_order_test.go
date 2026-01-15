@@ -514,7 +514,7 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
-				// 6 indexFetches: sub-filter uses rating index (3 books match for each author),
+				// 6 indexFetches: sub-filter uses rating index (3 books match filter rating _ge: 4.0) for 2 authors,
 				// DESC instructs the index to iterate in reverse order, so no in-memory sort needed
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
 			},
