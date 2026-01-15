@@ -29,7 +29,7 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -74,7 +74,7 @@ func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testi
 					}
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -90,7 +90,7 @@ func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testi
 					},
 				},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 1,
 				ExpectedIndexes: []client.IndexDescription{
 					{

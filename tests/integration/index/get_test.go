@@ -29,7 +29,7 @@ func TestIndexGet_IfThereAreNoIndexes_ReturnEmptyList(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
