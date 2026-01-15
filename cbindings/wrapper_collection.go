@@ -31,7 +31,7 @@ extern Result IndexDrop(uintptr_t nodePtr, char* indexName, CollectionOptions op
 extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
-extern Result CollectionTruncate(uintptr_t nodePtr, CollectionOptions options);
+extern Result CollectionTruncate(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern void IdentityFree(uintptr_t identityPtr);
 */
 import "C"
@@ -720,7 +720,13 @@ func (c *Collection) Truncate(ctx context.Context) error {
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.CollectionTruncate(C.uintptr_t(c.w.handle), copts))
+	res := ConvertAndFreeCResult(
+		C.CollectionTruncate(
+			C.uintptr_t(c.w.handle),
+			copts,
+			cIdentity,
+		),
+	)
 	if res.Status != 0 {
 		return errors.New(res.Error)
 	}
