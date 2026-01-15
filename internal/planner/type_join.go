@@ -11,6 +11,8 @@
 package planner
 
 import (
+	"slices"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -465,6 +467,12 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 	prefixes := []keys.Walkable{dsKey}
 
 	node.Prefixes(prefixes)
+
+	// Temporarily clear the index for direct docID lookup. When the scan node has an index,
+	// the fetcher uses the index keys instead of the docID prefix, which breaks the lookup.
+	oldIndex := scan.index
+	scan.index = immutable.None[client.IndexDescription]()
+	defer func() { scan.index = oldIndex }()
 
 	if err := node.Init(); err != nil {
 		return immutable.None[core.Doc](), NewErrSubTypeInit(err)
