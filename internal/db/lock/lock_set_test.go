@@ -237,29 +237,26 @@ func TestLockSet_ClosingTxnMultipleTimes_Succedes(t *testing.T) {
 	txn1.Close()
 }
 
-// todo - This (and the reverse, lock then RLockAll) is the only known case when a
-// transaction can deadlock on itself.
-//
-// It is not known to happen in production at the moment, but it is possible to introduce it
-// if not paying attention.
-//
-// https://github.com/sourcenetwork/defradb/issues/4311
-func TestLockSet_RLockAllAndLockSameTxn_Deadlocks(t *testing.T) {
+// This verifies that a transaction can hold both RLockAll and Lock without deadlocking.
+func TestLockSet_RLockAllAndLockSameTxn_DoNotDeadlock(t *testing.T) {
 	txn1 := newTxn(1)
 	lockSet := newLockSet[int]()
 
 	lockSet.RLockAll(txn1)
+	// This call should not block - the same transaction should be able to acquire
+	// both the RLockAll (B-lock) and Lock (A-lock) without deadlocking.
+	lockSet.Lock(txn1, 1)
+}
 
-	require.Never(
-		t,
-		func() bool {
-			// This call should never complete, because txn1 has read locked everything
-			lockSet.Lock(txn1, 1)
-			return true
-		},
-		timeout,
-		timeout,
-	)
+// This verifies that the reverse order (Lock then RLockAll) also works.
+func TestLockSet_LockAndRLockAllSameTxn_DoNotDeadlock(t *testing.T) {
+	txn1 := newTxn(1)
+	lockSet := newLockSet[int]()
+
+	lockSet.Lock(txn1, 1)
+	// This call should not block - the same transaction should be able to acquire
+	// both the Lock (A-lock) and RLockAll (B-lock) without deadlocking.
+	lockSet.RLockAll(txn1)
 }
 
 func TestLockSet_RLockAllAndLockDifferentTxn_Deadlocks(t *testing.T) {
@@ -274,6 +271,56 @@ func TestLockSet_RLockAllAndLockDifferentTxn_Deadlocks(t *testing.T) {
 		func() bool {
 			// This call should never complete, because txn1 has read locked everything
 			lockSet.Lock(txn2, 1)
+			return true
+		},
+		timeout,
+		timeout,
+	)
+}
+
+// This verifies that when txn1 holds both RLockAll and Lock, other transactions
+// are still properly blocked - the fix must maintain lock semantics.
+func TestLockSet_RLockAllThenLockSameTxn_BlocksOtherTxnRLockAll(t *testing.T) {
+	txn1 := newTxn(1)
+	txn2 := newTxn(2)
+	lockSet := newLockSet[int]()
+
+	// txn1 acquires RLockAll (B-lock), then Lock (A-lock)
+	// After fix, txn1 should hold both locks
+	lockSet.RLockAll(txn1)
+	lockSet.Lock(txn1, 1)
+
+	require.Never(
+		t,
+		func() bool {
+			// This call should block because txn1 holds an A-lock (via Lock)
+			// and RLockAll needs to wait for all A-locks to complete
+			lockSet.RLockAll(txn2)
+			return true
+		},
+		timeout,
+		timeout,
+	)
+}
+
+// This verifies that when txn1 holds both Lock and RLockAll (reverse order),
+// other transactions are still properly blocked.
+func TestLockSet_LockThenRLockAllSameTxn_BlocksOtherTxnLock(t *testing.T) {
+	txn1 := newTxn(1)
+	txn2 := newTxn(2)
+	lockSet := newLockSet[int]()
+
+	// txn1 acquires Lock (A-lock), then RLockAll (B-lock)
+	// After fix, txn1 should hold both locks
+	lockSet.Lock(txn1, 1)
+	lockSet.RLockAll(txn1)
+
+	require.Never(
+		t,
+		func() bool {
+			// This call should block because txn1 holds a B-lock (via RLockAll)
+			// and Lock needs to wait for all B-locks to complete
+			lockSet.Lock(txn2, 2)
 			return true
 		},
 		timeout,
