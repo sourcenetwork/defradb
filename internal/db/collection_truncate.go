@@ -130,6 +130,8 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	}
 
 	keysToDelete := make([]keys.DataStoreKey, 0, hardDeleteChunkSize)
+	// If there are more keys than we wish to load into memory at once, this will be set to
+	// true, and we'll continue the delete in another pass.
 	hasMore := true
 
 	for i := 0; i < hardDeleteChunkSize; i++ {
@@ -201,6 +203,8 @@ func (c *collection) hardDeleteDatastorePrefix(
 	}
 
 	keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
+	// If there are more keys than we wish to load into memory at once, this will be set to
+	// true, and we'll continue the delete in another pass.
 	hasMore := true
 
 	for i := 0; i < hardDeleteChunkSize; i++ {
@@ -269,6 +273,8 @@ func (c *collection) hardDeleteHeadstorePrefix(
 	}
 
 	keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
+	// If there are more keys than we wish to load into memory at once, this will be set to
+	// true, and we'll continue the delete in another pass.
 	hasMore := true
 
 	for i := 0; i < hardDeleteChunkSize; i++ {
