@@ -155,6 +155,9 @@ func addIndexesToSchema(schema string) string {
 	}
 
 	// Add @index to relation fields that hold foreign keys:
+	// 1. One-to-many: the "many" side holds the foreign key
+	// 2. One-to-one with @primary: the side with @primary holds the foreign key
+	// 3. Self-references: implicitly primary (hold their own foreign key)
 	typeNames := extractTypeNames(schema)
 	for _, typeName := range typeNames {
 		// Check if this type is the "many" side of a one-to-many relation
@@ -172,10 +175,32 @@ func addIndexesToSchema(schema string) string {
 			}
 		}
 
-		// One-to-one: the side with @primary holds the foreign key
+		// One-to-one with @primary: the side with @primary holds the foreign key
 		pattern := regexp.MustCompile(`(\w+:\s*)(` + typeName + `)([^\n]*@primary[^\n]*)(\n|$)`)
 		result = pattern.ReplaceAllString(result, "${1}${2} @index${3}${4}")
+
+		// Self-references: a type referencing itself is implicitly primary
+		// e.g., "boss: User" within "type User" holds the foreign key "_bossID"
+		result = addSelfReferenceIndexes(result, typeName)
 	}
 
 	return result
+}
+
+// addSelfReferenceIndexes adds @index to self-referential fields within a type definition.
+// e.g., "boss: User" within "type User { ... }" gets @index because it holds _bossID.
+func addSelfReferenceIndexes(schema, typeName string) string {
+	// Find the type block for this typeName
+	typeBlockPattern := regexp.MustCompile(`type\s+` + typeName + `\s*\{([^}]*)\}`)
+	return typeBlockPattern.ReplaceAllStringFunc(schema, func(typeBlock string) string {
+		// Within this type block, find self-references (fieldName: TypeName)
+		// that don't already have @index
+		selfRefPattern := regexp.MustCompile(`(\w+:\s*)(` + typeName + `)([^\n]*)(\n|$)`)
+		return selfRefPattern.ReplaceAllStringFunc(typeBlock, func(match string) string {
+			if strings.Contains(match, "@index") {
+				return match
+			}
+			return selfRefPattern.ReplaceAllString(match, "${1}${2} @index${3}${4}")
+		})
+	})
 }

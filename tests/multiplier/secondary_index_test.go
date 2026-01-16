@@ -282,6 +282,62 @@ type Manufacturer {
 	assert.Contains(t, result, "manufacturer: Manufacturer @index")
 }
 
+func TestAddIndexesToSchema_WithSelfReference_IndexesSelfReference(t *testing.T) {
+	schema := `type User {
+	name: String
+	boss: User
+}`
+	result := addIndexesToSchema(schema)
+
+	assert.Contains(t, result, "name: String @index")
+	assert.Contains(t, result, "boss: User @index")
+}
+
+func TestAddIndexesToSchema_WithRelationDirective_IndexesOnlyPrimary(t *testing.T) {
+	schema := `type User {
+	hosts: Dog @primary @relation(name:"hosts")
+	walks: Dog @relation(name:"walkies")
+}
+
+type Dog {
+	host: User @relation(name:"hosts")
+	walker: User @primary @relation(name:"walkies")
+}`
+	result := addIndexesToSchema(schema)
+
+	assert.Contains(t, result, "hosts: Dog @index @primary @relation(name:\"hosts\")")
+	assert.Contains(t, result, "walker: User @index @primary @relation(name:\"walkies\")")
+
+	assert.Contains(t, result, "walks: Dog @relation(name:\"walkies\")")
+	assert.NotContains(t, result, "walks: Dog @index")
+	assert.Contains(t, result, "host: User @relation(name:\"hosts\")")
+	assert.NotContains(t, result, "host: User @index")
+}
+
+func TestAddIndexesToSchema_WithCircularDependency_IndexesOnlyPrimary(t *testing.T) {
+	schema := `type User {
+	toleratedBy: Cat @relation(name:"tolerates")
+}
+
+type Cat {
+	loves: Mouse @primary @relation(name:"loves")
+	tolerates: User @primary @relation(name:"tolerates")
+}
+
+type Mouse {
+	lovedBy: Cat @relation(name:"loves")
+}`
+	result := addIndexesToSchema(schema)
+
+	assert.Contains(t, result, "loves: Mouse @index @primary")
+	assert.Contains(t, result, "tolerates: User @index @primary")
+
+	assert.Contains(t, result, "toleratedBy: Cat @relation")
+	assert.NotContains(t, result, "toleratedBy: Cat @index")
+	assert.Contains(t, result, "lovedBy: Cat @relation")
+	assert.NotContains(t, result, "lovedBy: Cat @index")
+}
+
 func TestAddIndexesToSchema_WithVariousFormatting_PreservesWhitespace(t *testing.T) {
 	schema := `type User {
 	name:    String
