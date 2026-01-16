@@ -11,13 +11,17 @@
 package multiplier
 
 import (
+	"context"
 	"regexp"
 	"strings"
 
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/testo/multiplier"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 )
+
+var log = corelog.NewLogger("tests.multiplier")
 
 func init() {
 	multiplier.Register(&secondaryIndex{})
@@ -69,6 +73,8 @@ func (m *secondaryIndex) Apply(source action.Actions) action.Actions {
 			if !hasIndexDirective(schemaAdd.Schema) {
 				newSchema := addIndexesToSchema(schemaAdd.Schema)
 				if newSchema != schemaAdd.Schema {
+					log.InfoContext(context.Background(),
+						"Modified schema for secondary-index multiplier:\n"+newSchema)
 					newSchemaAdd := *schemaAdd
 					newSchemaAdd.Schema = newSchema
 					result[i] = &newSchemaAdd
@@ -134,11 +140,23 @@ func extractTypeNames(schema string) []string {
 	return names
 }
 
-// hasArrayFieldOfType checks if the schema has an array field of the given type.
-// For example, hasArrayFieldOfType(schema, "Device") returns true if schema contains "[Device]".
-func hasArrayFieldOfType(schema, typeName string) bool {
-	pattern := regexp.MustCompile(`:\s*\[` + typeName + `[!\]]`)
-	return pattern.MatchString(schema)
+// hasSingleRelationTo checks if a type has a single (non-array) relation field pointing to targetType.
+func hasSingleRelationTo(schema, sourceType, targetType string) bool {
+	typeBlockPattern := regexp.MustCompile(`type\s+` + sourceType + `\s*\{([^}]*)\}`)
+	match := typeBlockPattern.FindStringSubmatch(schema)
+	if len(match) < 2 {
+		return false
+	}
+	typeBody := match[1]
+
+	singleRelPattern := regexp.MustCompile(`\w+:\s*` + targetType + `[^!\w\[]`)
+	return singleRelPattern.MatchString(typeBody)
+}
+
+// isOneToOneRelation checks if there's a one-to-one relationship between two types.
+// One-to-one exists when both types have single (non-array) relations to each other.
+func isOneToOneRelation(schema, typeA, typeB string) bool {
+	return hasSingleRelationTo(schema, typeA, typeB) && hasSingleRelationTo(schema, typeB, typeA)
 }
 
 // addIndexesToSchema adds @index directives to indexable fields (scalars, arrays, and relations).
@@ -154,53 +172,37 @@ func addIndexesToSchema(schema string) string {
 		result = pattern.ReplaceAllString(result, "${1}${2} @index${3}${4}")
 	}
 
-	// Add @index to relation fields that hold foreign keys:
-	// 1. One-to-many: the "many" side holds the foreign key
-	// 2. One-to-one with @primary: the side with @primary holds the foreign key
-	// 3. Self-references: implicitly primary (hold their own foreign key)
+	// Add @index to relation fields that hold foreign keys.
+	// One-to-one relations are NOT indexed because DefraDB automatically creates a unique index.
 	typeNames := extractTypeNames(schema)
 	for _, typeName := range typeNames {
-		// Check if this type is the "many" side of a one-to-many relation
-		// (i.e., there's an array field [ThisType] somewhere in the schema)
-		if hasArrayFieldOfType(schema, typeName) {
-			for _, otherType := range typeNames {
-				if otherType == typeName {
-					continue
-				}
-				// Match: fieldName: OtherType (single relation to a type that has [ThisType] array)
-				// Array fields like [OtherType] won't match because the pattern requires
-				// the type name immediately after the colon.
-				pattern := regexp.MustCompile(`(\w+:\s*)(` + otherType + `)([^\n]*)(\n|$)`)
-				result = pattern.ReplaceAllString(result, "${1}${2} @index${3}${4}")
-			}
-		}
-
-		// One-to-one with @primary: the side with @primary holds the foreign key
-		pattern := regexp.MustCompile(`(\w+:\s*)(` + typeName + `)([^\n]*@primary[^\n]*)(\n|$)`)
-		result = pattern.ReplaceAllString(result, "${1}${2} @index${3}${4}")
-
-		// Self-references: a type referencing itself is implicitly primary
-		// e.g., "boss: User" within "type User" holds the foreign key "_bossID"
-		result = addSelfReferenceIndexes(result, typeName)
+		result = addRelationIndexesForType(result, schema, typeName, typeNames)
 	}
 
 	return result
 }
 
-// addSelfReferenceIndexes adds @index to self-referential fields within a type definition.
-// e.g., "boss: User" within "type User { ... }" gets @index because it holds _bossID.
-func addSelfReferenceIndexes(schema, typeName string) string {
-	// Find the type block for this typeName
+// addRelationIndexesForType adds @index to relation fields in the given type that hold foreign keys.
+func addRelationIndexesForType(result, originalSchema, typeName string, allTypes []string) string {
 	typeBlockPattern := regexp.MustCompile(`type\s+` + typeName + `\s*\{([^}]*)\}`)
-	return typeBlockPattern.ReplaceAllStringFunc(schema, func(typeBlock string) string {
-		// Within this type block, find self-references (fieldName: TypeName)
-		// that don't already have @index
-		selfRefPattern := regexp.MustCompile(`(\w+:\s*)(` + typeName + `)([^\n]*)(\n|$)`)
-		return selfRefPattern.ReplaceAllStringFunc(typeBlock, func(match string) string {
-			if strings.Contains(match, "@index") {
-				return match
+
+	return typeBlockPattern.ReplaceAllStringFunc(result, func(typeBlock string) string {
+		for _, otherType := range allTypes {
+			// Skip one-to-one relations (DefraDB auto-creates unique index)
+			if otherType != typeName && isOneToOneRelation(originalSchema, typeName, otherType) {
+				continue
 			}
-			return selfRefPattern.ReplaceAllString(match, "${1}${2} @index${3}${4}")
-		})
+
+			// Match single relation fields to otherType (not arrays)
+			// Pattern: fieldName: OtherType (followed by space, @, newline, or end)
+			pattern := regexp.MustCompile(`(\w+:\s*)(` + otherType + `)(\s|@|\n|$)`)
+			typeBlock = pattern.ReplaceAllStringFunc(typeBlock, func(match string) string {
+				if strings.Contains(match, "@index") {
+					return match
+				}
+				return pattern.ReplaceAllString(match, "${1}${2} @index${3}")
+			})
+		}
+		return typeBlock
 	})
 }

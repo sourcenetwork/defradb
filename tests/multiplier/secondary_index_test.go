@@ -189,20 +189,18 @@ type Device {
 }`
 	result := addIndexesToSchema(schema)
 
-	// Scalar fields get indexed
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "model: String @index")
 
-	// Array relation (one side) does not get indexed
 	assert.Contains(t, result, "devices: [Device]")
 	assert.NotContains(t, result, "[Device] @index")
 
-	// Single relation (many side, holds foreign key) gets indexed
 	assert.Contains(t, result, "owner: User @index")
 }
 
-func TestAddIndexesToSchema_WithOneToOnePrimaryOnSecondary_IndexesPrimarySide(t *testing.T) {
-	// @primary is on Address.user, so Address holds the foreign key (_userID)
+func TestAddIndexesToSchema_WithOneToOne_DoesNotAddIndex(t *testing.T) {
+	// One-to-one relations are NOT indexed because DefraDB automatically
+	// creates a unique index to maintain the one-to-one invariant
 	schema := `type User {
 	name: String
 	address: Address
@@ -214,45 +212,17 @@ type Address {
 }`
 	result := addIndexesToSchema(schema)
 
-	// Scalar fields get indexed
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "city: String @index")
 
-	// Primary relation (with @primary, holds foreign key) gets indexed
-	assert.Contains(t, result, "user: User @index @primary")
-
-	// Secondary relation (no @primary, no foreign key) does not get indexed
+	// Neither side of one-to-one should be indexed (unique index is auto-created)
+	assert.Contains(t, result, "user: User @primary")
+	assert.NotContains(t, result, "user: User @index")
 	assert.Contains(t, result, "address: Address")
 	assert.NotContains(t, result, "address: Address @index")
 }
 
-func TestAddIndexesToSchema_WithOneToOnePrimaryOnPrimary_IndexesPrimarySide(t *testing.T) {
-	// @primary is on User.address, so User holds the foreign key (_addressID)
-	schema := `type User {
-	name: String
-	address: Address @primary
-}
-
-type Address {
-	city: String
-	user: User
-}`
-	result := addIndexesToSchema(schema)
-
-	// Scalar fields get indexed
-	assert.Contains(t, result, "name: String @index")
-	assert.Contains(t, result, "city: String @index")
-
-	// Primary relation (with @primary, holds foreign key) gets indexed
-	assert.Contains(t, result, "address: Address @index @primary")
-
-	// Secondary relation (no @primary, no foreign key) does not get indexed
-	assert.Contains(t, result, "user: User")
-	assert.NotContains(t, result, "user: User @index")
-}
-
 func TestAddIndexesToSchema_WithMultipleRelations_IndexesAllManySides(t *testing.T) {
-	// Device has two foreign keys: _ownerID and _manufacturerID
 	schema := `type User {
 	name: String
 	devices: [Device]
@@ -270,14 +240,11 @@ type Manufacturer {
 }`
 	result := addIndexesToSchema(schema)
 
-	// Scalar fields get indexed
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "model: String @index")
 
-	// Array relations (one side, no foreign key) do not get indexed
 	assert.NotContains(t, result, "[Device] @index")
 
-	// Both single relations on Device (many side, hold foreign keys) get indexed
 	assert.Contains(t, result, "owner: User @index")
 	assert.Contains(t, result, "manufacturer: Manufacturer @index")
 }
@@ -293,7 +260,9 @@ func TestAddIndexesToSchema_WithSelfReference_IndexesSelfReference(t *testing.T)
 	assert.Contains(t, result, "boss: User @index")
 }
 
-func TestAddIndexesToSchema_WithRelationDirective_IndexesOnlyPrimary(t *testing.T) {
+func TestAddIndexesToSchema_WithRelationDirective_DoesNotAddIndex(t *testing.T) {
+	// One-to-one relations with @relation directive are NOT indexed
+	// because DefraDB automatically creates unique indexes
 	schema := `type User {
 	hosts: Dog @primary @relation(name:"hosts")
 	walks: Dog @relation(name:"walkies")
@@ -305,8 +274,11 @@ type Dog {
 }`
 	result := addIndexesToSchema(schema)
 
-	assert.Contains(t, result, "hosts: Dog @index @primary @relation(name:\"hosts\")")
-	assert.Contains(t, result, "walker: User @index @primary @relation(name:\"walkies\")")
+	// None of the one-to-one relations should be indexed
+	assert.Contains(t, result, "hosts: Dog @primary @relation(name:\"hosts\")")
+	assert.NotContains(t, result, "hosts: Dog @index")
+	assert.Contains(t, result, "walker: User @primary @relation(name:\"walkies\")")
+	assert.NotContains(t, result, "walker: User @index")
 
 	assert.Contains(t, result, "walks: Dog @relation(name:\"walkies\")")
 	assert.NotContains(t, result, "walks: Dog @index")
@@ -314,7 +286,8 @@ type Dog {
 	assert.NotContains(t, result, "host: User @index")
 }
 
-func TestAddIndexesToSchema_WithCircularDependency_IndexesOnlyPrimary(t *testing.T) {
+func TestAddIndexesToSchema_WithCircularOneToOne_DoesNotAddIndex(t *testing.T) {
+	// One-to-one circular relations are NOT indexed (unique indexes auto-created)
 	schema := `type User {
 	toleratedBy: Cat @relation(name:"tolerates")
 }
@@ -329,13 +302,54 @@ type Mouse {
 }`
 	result := addIndexesToSchema(schema)
 
-	assert.Contains(t, result, "loves: Mouse @index @primary")
-	assert.Contains(t, result, "tolerates: User @index @primary")
+	// None of the one-to-one relations should be indexed
+	assert.Contains(t, result, "loves: Mouse @primary")
+	assert.NotContains(t, result, "loves: Mouse @index")
+	assert.Contains(t, result, "tolerates: User @primary")
+	assert.NotContains(t, result, "tolerates: User @index")
 
 	assert.Contains(t, result, "toleratedBy: Cat @relation")
 	assert.NotContains(t, result, "toleratedBy: Cat @index")
 	assert.Contains(t, result, "lovedBy: Cat @relation")
 	assert.NotContains(t, result, "lovedBy: Cat @index")
+}
+
+func TestAddIndexesToSchema_WithManyToManyJoinTable_IndexesJoinRelations(t *testing.T) {
+	schema := `type Student {
+	name: String
+}
+
+type Course {
+	name: String
+}
+
+type Enrollment {
+	student: Student @relation(name: "student_enrollments")
+	course: Course @relation(name: "course_enrollments")
+}`
+	result := addIndexesToSchema(schema)
+
+	assert.Contains(t, result, "name: String @index")
+
+	assert.Contains(t, result, "student: Student @index")
+	assert.Contains(t, result, "course: Course @index")
+}
+
+func TestAddIndexesToSchema_WithSingleRelationNoBackReference_AddsIndex(t *testing.T) {
+	schema := `type Author {
+	name: String
+}
+
+type Book {
+	title: String
+	author: Author
+}`
+	result := addIndexesToSchema(schema)
+
+	assert.Contains(t, result, "name: String @index")
+	assert.Contains(t, result, "title: String @index")
+
+	assert.Contains(t, result, "author: Author @index")
 }
 
 func TestAddIndexesToSchema_WithVariousFormatting_PreservesWhitespace(t *testing.T) {
@@ -350,8 +364,6 @@ func TestAddIndexesToSchema_WithVariousFormatting_PreservesWhitespace(t *testing
 }
 
 func TestApply_WithIndexActions_StillModifiesSchema(t *testing.T) {
-	// Note: Apply does not check for index actions - that's ShouldSkip's job.
-	// The test framework calls ShouldSkip before Apply.
 	m := &secondaryIndex{}
 
 	actions := action.Actions{
