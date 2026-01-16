@@ -253,7 +253,7 @@ type Manufacturer {
 	assert.Contains(t, result, "manufacturer: Manufacturer @index")
 }
 
-func TestAddIndexesToSchema_WithSelfReference_IndexesSelfReference(t *testing.T) {
+func TestAddIndexesToSchema_WithSingleSelfReference_IndexesSelfReference(t *testing.T) {
 	schema := `type User {
 	name: String
 	boss: User
@@ -264,9 +264,22 @@ func TestAddIndexesToSchema_WithSelfReference_IndexesSelfReference(t *testing.T)
 	assert.Contains(t, result, "boss: User @index")
 }
 
+func TestAddIndexesToSchema_WithOneToOneSelfReference_DoesNotIndex(t *testing.T) {
+	schema := `type User {
+	name: String
+	boss: User @primary
+	underling: User
+}`
+	result := addIndexesToSchema(schema)
+
+	assert.Contains(t, result, "name: String @index")
+	assert.Contains(t, result, "boss: User @primary")
+	assert.NotContains(t, result, "boss: User @index")
+	assert.Contains(t, result, "underling: User")
+	assert.NotContains(t, result, "underling: User @index")
+}
+
 func TestAddIndexesToSchema_WithRelationDirective_DoesNotAddIndex(t *testing.T) {
-	// One-to-one relations with @relation directive are NOT indexed
-	// because DefraDB automatically creates unique indexes
 	schema := `type User {
 	hosts: Dog @primary @relation(name:"hosts")
 	walks: Dog @relation(name:"walkies")
@@ -278,7 +291,6 @@ type Dog {
 }`
 	result := addIndexesToSchema(schema)
 
-	// None of the one-to-one relations should be indexed
 	assert.Contains(t, result, "hosts: Dog @primary @relation(name:\"hosts\")")
 	assert.NotContains(t, result, "hosts: Dog @index")
 	assert.Contains(t, result, "walker: User @primary @relation(name:\"walkies\")")
@@ -291,7 +303,6 @@ type Dog {
 }
 
 func TestAddIndexesToSchema_WithCircularOneToOne_DoesNotAddIndex(t *testing.T) {
-	// One-to-one circular relations are NOT indexed (unique indexes auto-created)
 	schema := `type User {
 	toleratedBy: Cat @relation(name:"tolerates")
 }
@@ -306,7 +317,6 @@ type Mouse {
 }`
 	result := addIndexesToSchema(schema)
 
-	// None of the one-to-one relations should be indexed
 	assert.Contains(t, result, "loves: Mouse @primary")
 	assert.NotContains(t, result, "loves: Mouse @index")
 	assert.Contains(t, result, "tolerates: User @primary")

@@ -141,22 +141,33 @@ func extractTypeNames(schema string) []string {
 	return names
 }
 
-// hasSingleRelationTo checks if a type has a single (non-array) relation field pointing to targetType.
-func hasSingleRelationTo(schema, sourceType, targetType string) bool {
+// countSingleRelationsTo counts how many single (non-array) relation fields a type has pointing to targetType.
+func countSingleRelationsTo(schema, sourceType, targetType string) int {
 	typeBlockPattern := regexp.MustCompile(`type\s+` + sourceType + `\s*\{([^}]*)\}`)
 	match := typeBlockPattern.FindStringSubmatch(schema)
 	if len(match) < 2 {
-		return false
+		return 0
 	}
 	typeBody := match[1]
 
 	singleRelPattern := regexp.MustCompile(`\w+:\s*` + targetType + `[^!\w\[]`)
-	return singleRelPattern.MatchString(typeBody)
+	return len(singleRelPattern.FindAllString(typeBody, -1))
+}
+
+// hasSingleRelationTo checks if a type has a single (non-array) relation field pointing to targetType.
+func hasSingleRelationTo(schema, sourceType, targetType string) bool {
+	return countSingleRelationsTo(schema, sourceType, targetType) > 0
 }
 
 // isOneToOneRelation checks if there's a one-to-one relationship between two types.
 // One-to-one exists when both types have single (non-array) relations to each other.
+// For self-references, one-to-one exists when a type has exactly 2 single relations to itself.
 func isOneToOneRelation(schema, typeA, typeB string) bool {
+	if typeA == typeB {
+		// Self-reference: one-to-one if there are exactly 2 single relations to itself
+		// e.g., type User { boss: User @primary; underling: User }
+		return countSingleRelationsTo(schema, typeA, typeA) == 2
+	}
 	return hasSingleRelationTo(schema, typeA, typeB) && hasSingleRelationTo(schema, typeB, typeA)
 }
 
@@ -190,7 +201,7 @@ func addRelationIndexesForType(result, originalSchema, typeName string, allTypes
 	return typeBlockPattern.ReplaceAllStringFunc(result, func(typeBlock string) string {
 		for _, otherType := range allTypes {
 			// Skip one-to-one relations (DefraDB auto-creates unique index)
-			if otherType != typeName && isOneToOneRelation(originalSchema, typeName, otherType) {
+			if isOneToOneRelation(originalSchema, typeName, otherType) {
 				continue
 			}
 
