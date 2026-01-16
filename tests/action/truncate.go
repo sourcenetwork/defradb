@@ -18,6 +18,9 @@ import (
 type Truncate struct {
 	stateful
 
+	// NodeID may hold the ID (index) of a node to truncate.
+	//
+	// If a value is not provided all nodes will be truncated.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.
@@ -25,6 +28,7 @@ type Truncate struct {
 	// If node acp is enabled, identity will be used to check if this operation can be performed.
 	Identity immutable.Option[state.Identity]
 
+	// CollectionIndex is the index of the collection to truncate.
 	CollectionIndex int
 
 	// Any error expected from the action. Optional.
