@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestSyncColVersion_WithPatchVersionOfUnknownCollection(t *testing.T) {
@@ -110,6 +111,8 @@ func TestSyncColVersion_WithPatchVersionOfUnknownCollection(t *testing.T) {
 
 func TestSyncColVersion_WithPatchVersionOfKnownCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		// Exclude the secondary-index multiplier as it would modify the schema being tested
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
