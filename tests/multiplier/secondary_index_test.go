@@ -97,6 +97,8 @@ func TestAddIndexesToSchema_WithAllScalarTypes_AddsIndexToAll(t *testing.T) {
 	name: String
 	age: Int
 	score: Float
+	points: Float32
+	points2: Float64
 	active: Boolean
 	created: DateTime
 	docID: ID
@@ -106,6 +108,8 @@ func TestAddIndexesToSchema_WithAllScalarTypes_AddsIndexToAll(t *testing.T) {
 	name: String @index
 	age: Int @index
 	score: Float @index
+	points: Float32 @index
+	points2: Float64 @index
 	active: Boolean @index
 	created: DateTime @index
 	docID: ID @index

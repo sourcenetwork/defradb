@@ -109,7 +109,7 @@ func hasIndexDirective(schema string) bool {
 }
 
 // scalarTypes are the built-in types that can be indexed.
-var scalarTypes = []string{"String", "Int", "Float", "Boolean", "DateTime", "ID", "JSON"}
+var scalarTypes = []string{"String", "Int", "Float", "Float32", "Float64", "Boolean", "DateTime", "ID", "JSON"}
 
 // scalarPatterns are precompiled patterns for scalar types.
 var scalarPatterns = make([]*regexp.Regexp, len(scalarTypes))
@@ -121,9 +121,10 @@ func init() {
 	for i, typ := range scalarTypes {
 		// Match scalar and array types:
 		// - Type, Type!, [Type], [Type!], [Type]!, [Type!]!
-		// The pattern handles all valid GraphQL type variations
+		// The pattern handles all valid GraphQL type variations.
+		// Uses word boundary (\b) after type name to avoid partial matches (e.g., Float matching Float32).
 		scalarPatterns[i] = regexp.MustCompile(
-			`(\w+:\s*)(\[?` + typ + `!?\]?!?)([^\n]*)(\n|$)`,
+			`(\w+:\s*)(\[?` + typ + `\b!?\]?!?)([^\n]*)(\n|$)`,
 		)
 	}
 }
