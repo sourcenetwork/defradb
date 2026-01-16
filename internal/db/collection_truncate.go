@@ -182,7 +182,7 @@ func (c *collection) hardDeleteDocKeysAndHeadstore(
 	}
 
 	if hasMore {
-		return c.hardDeleteDatastorePrefix(ctx, prefix)
+		return c.hardDeleteDocKeysAndHeadstore(ctx, colShortID)
 	}
 
 	return nil
