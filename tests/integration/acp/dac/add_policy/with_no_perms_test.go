@@ -70,7 +70,7 @@ resources:
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddPolicy_NoPermissionsLabelSingeRelation_ValidID(t *testing.T) {
+func TestACP_AddPolicy_NoPermissionsLabelSingleRelation_ValidID(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
