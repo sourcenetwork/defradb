@@ -219,11 +219,51 @@ type Address {
 	assert.Contains(t, result, "name: String @index")
 	assert.Contains(t, result, "city: String @index")
 
-	// Neither side of one-to-one should be indexed (unique index is auto-created)
 	assert.Contains(t, result, "user: User @primary")
 	assert.NotContains(t, result, "user: User @index")
 	assert.Contains(t, result, "address: Address")
 	assert.NotContains(t, result, "address: Address @index")
+}
+
+func TestAddIndexesToSchema_WithExplicitFKFieldForOneToOne_DoesNotIndex(t *testing.T) {
+	schema := `type Book {
+	name: String
+	_authorID: Int
+	author: Author @primary
+}
+
+type Author {
+	name: String
+	published: Book
+}`
+	result := addIndexesToSchema(schema)
+
+	assert.Contains(t, result, "name: String @index")
+	assert.Contains(t, result, "_authorID: Int")
+	assert.NotContains(t, result, "_authorID: Int @index")
+	assert.Contains(t, result, "author: Author @primary")
+	assert.NotContains(t, result, "author: Author @index")
+	assert.Contains(t, result, "published: Book")
+	assert.NotContains(t, result, "published: Book @index")
+}
+
+func TestAddIndexesToSchema_WithExplicitFKFieldForOneToMany_IndexesFKField(t *testing.T) {
+	schema := `type User {
+	name: String
+	devices: [Device]
+}
+
+type Device {
+	model: String
+	_ownerID: String
+	owner: User
+}`
+	result := addIndexesToSchema(schema)
+
+	assert.Contains(t, result, "name: String @index")
+	assert.Contains(t, result, "model: String @index")
+	assert.Contains(t, result, "_ownerID: String @index")
+	assert.Contains(t, result, "owner: User @index")
 }
 
 func TestAddIndexesToSchema_WithMultipleRelations_IndexesAllManySides(t *testing.T) {

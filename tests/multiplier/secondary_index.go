@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/testo/multiplier"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/action"
 )
 
@@ -171,22 +172,76 @@ func isOneToOneRelation(schema, typeA, typeB string) bool {
 	return hasSingleRelationTo(schema, typeA, typeB) && hasSingleRelationTo(schema, typeB, typeA)
 }
 
+// extractFieldName extracts the field name from a match like "fieldName: Type..."
+func extractFieldName(match string) string {
+	before, _, ok := strings.Cut(match, ":")
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(before)
+}
+
+// findOneToOneFKFields returns a set of explicit FK field names that correspond to one-to-one relations.
+// For example, if there's a one-to-one relation "author: Author", this returns {"_authorID": true}.
+func findOneToOneFKFields(schema string, typeNames []string) map[string]bool {
+	result := make(map[string]bool)
+
+	for _, typeName := range typeNames {
+		// Get all single relation fields in this type
+		typeBlockPattern := regexp.MustCompile(`type\s+` + typeName + `\s*\{([^}]*)\}`)
+		match := typeBlockPattern.FindStringSubmatch(schema)
+		if len(match) < 2 {
+			continue
+		}
+		typeBody := match[1]
+
+		// For each other type (including self), check if it's a one-to-one relation
+		for _, otherType := range typeNames {
+			if !isOneToOneRelation(schema, typeName, otherType) {
+				continue
+			}
+
+			// Find all single relation field names pointing to otherType
+			fieldPattern := regexp.MustCompile(`(\w+):\s*` + otherType + `[^!\w\[]`)
+			fieldMatches := fieldPattern.FindAllStringSubmatch(typeBody, -1)
+			for _, fm := range fieldMatches {
+				if len(fm) > 1 {
+					// Add the FK field name (e.g., "_authorID" for field "author")
+					result[request.ToFieldID(fm[1])] = true
+				}
+			}
+		}
+	}
+
+	return result
+}
+
 // addIndexesToSchema adds @index directives to indexable fields (scalars, arrays, and relations).
 // This function assumes the schema has no existing @index directives (checked by ShouldSkip/Apply).
 func addIndexesToSchema(schema string) string {
 	result := schema
 
-	// Add @index to scalar types
+	// Build set of one-to-one FK field names to skip (e.g., "_authorID" for one-to-one "author: Author")
+	typeNames := extractTypeNames(schema)
+	oneToOneFKFields := findOneToOneFKFields(schema, typeNames)
+
+	// Add @index to scalar types, but skip one-to-one FK fields
 	for i := range scalarTypes {
 		pattern := scalarPatterns[i]
 		// Add @index after the type (before any other directives)
 		// Example: "name: String @crdt(...)\n" -> "name: String @index @crdt(...)\n"
-		result = pattern.ReplaceAllString(result, "${1}${2} @index${3}${4}")
+		result = pattern.ReplaceAllStringFunc(result, func(match string) string {
+			// Extract field name from match (format: "fieldName: Type...")
+			fieldName := extractFieldName(match)
+			if oneToOneFKFields[fieldName] {
+				return match // Skip one-to-one FK fields
+			}
+			return pattern.ReplaceAllString(match, "${1}${2} @index${3}${4}")
+		})
 	}
 
 	// Add @index to relation fields that hold foreign keys.
 	// One-to-one relations are NOT indexed because DefraDB automatically creates a unique index.
-	typeNames := extractTypeNames(schema)
 	for _, typeName := range typeNames {
 		result = addRelationIndexesForType(result, schema, typeName, typeNames)
 	}
