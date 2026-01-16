@@ -48,14 +48,6 @@ type Keyedstore interface {
 	// If no matching key is found the behaviour is undefined:
 	// https://github.com/sourcenetwork/corekv/issues/36
 	Delete(ctx context.Context, key Key) error
-
-	// `Unsafe` returns the underlying `corekv.ReaderWriter`.
-	//
-	// This allows access to the underlying the untyped `[]byte` functions and will
-	// bypass the locksystem.
-	//
-	// Legitimate uses of this function are rare, think very carefully if using this.
-	Unsafe() corekv.ReaderWriter
 }
 
 // IterOptions contains the full set of available iterator options,

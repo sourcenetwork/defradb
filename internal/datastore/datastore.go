@@ -93,6 +93,12 @@ func (s *datastore) Delete(ctx context.Context, key Key) error {
 	return s.underlying.Delete(ctx, keyBytes)
 }
 
+// `Unsafe` returns the underlying `corekv.ReaderWriter`.
+//
+// This allows access to the underlying the untyped `[]byte` functions and will
+// bypass the locksystem.
+//
+// Legitimate uses of this function are rare, think very carefully if using this.
 func (s *datastore) Unsafe() corekv.ReaderWriter {
 	return s.underlying
 }

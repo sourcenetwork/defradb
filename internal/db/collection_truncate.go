@@ -221,6 +221,11 @@ func (c *collection) hardDeleteDatastorePrefix(
 		return err
 	}
 
+	type unsafestore interface {
+		Unsafe() corekv.ReaderWriter
+	}
+	datastore, _ := txn.Datastore().(unsafestore)
+
 	// This `Unsafe` call is not technically required, it just allows us to
 	// write this function using the `keys.Key` interface and call `Delete`
 	// using an untyped key.
@@ -228,13 +233,13 @@ func (c *collection) hardDeleteDatastorePrefix(
 	// Bypassing the lock system here is a safe side-effect, as this function
 	// is only ever called within the context of a collection level write lock -
 	// attempting to obtain a read lock would essentially be a no-op anyway.
-	unsafeStore := txn.Datastore().Unsafe()
+	underlyingStore := datastore.Unsafe()
 
 	for _, key := range keysToDelete {
 		// Not all store implementations support mutations whilst iterating, so whilst it would
 		// be simpler and probably more efficient to delete whilst iterating, it would not work
 		// with all supported corekv store implementations.
-		err := unsafeStore.Delete(ctx, key)
+		err := underlyingStore.Delete(ctx, key)
 		if err != nil {
 			return err
 		}
