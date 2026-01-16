@@ -24,7 +24,7 @@ func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 				Schema: `
 					type Book {
 						name: String
-						author_id: Int
+						_authorID: Int
 						author: Author
 					}
 
@@ -33,7 +33,7 @@ func TestQueryOneToManyWithIdFieldOnPrimary(t *testing.T) {
 						published: [Book]
 					}
 				`,
-				ExpectedError: "duplicate field. Name: author_id",
+				ExpectedError: "duplicate field. Name: _authorID",
 			},
 		},
 	}

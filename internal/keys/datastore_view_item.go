@@ -36,6 +36,7 @@ type ViewCacheKey struct {
 }
 
 var _ Key = (*ViewCacheKey)(nil)
+var _ CollectionedKey = ViewCacheKey{}
 
 func NewViewCacheColPrefix(collectionShortID uint32) ViewCacheKey {
 	return ViewCacheKey{
@@ -115,4 +116,8 @@ func (k ViewCacheKey) PrettyPrint() string {
 	}
 
 	return result
+}
+
+func (k ViewCacheKey) GetCollectionShortID() uint32 {
+	return k.CollectionShortID
 }

@@ -24,7 +24,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -32,7 +32,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -40,7 +40,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -48,7 +48,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -56,7 +56,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -64,7 +64,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
+					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -93,8 +93,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 			},
 			testUtils.Request{
 				Request: `query {
-					Book(groupBy: [author_id]) {
-						author_id
+					Book(groupBy: [_authorID]) {
+						_authorID
 						_group {
 							name
 							rating
@@ -108,7 +108,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
+							"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
 							"_group": []map[string]any{
 								{
 									"name":   "Candide",
@@ -129,7 +129,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 							},
 						},
 						{
-							"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
+							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
 							"_group": []map[string]any{
 								{
 									"name":   "Painted House",
@@ -158,7 +158,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 							},
 						},
 						{
-							"author_id": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
+							"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
 							"_group": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
@@ -188,7 +188,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -196,7 +196,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -204,7 +204,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -212,7 +212,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -220,7 +220,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -228,7 +228,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
+					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -257,8 +257,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 			},
 			testUtils.Request{
 				Request: `query {
-					Book(groupBy: [author_id]) {
-						author_id
+					Book(groupBy: [_authorID]) {
+						_authorID
 						_group {
 							name
 							rating
@@ -272,7 +272,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
+							"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
 							"_group": []map[string]any{
 								{
 									"name":   "Candide",
@@ -293,7 +293,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 							},
 						},
 						{
-							"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
+							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
 							"_group": []map[string]any{
 								{
 									"name":   "Painted House",
@@ -322,7 +322,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 							},
 						},
 						{
-							"author_id": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
+							"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
 							"_group": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
@@ -352,7 +352,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -360,7 +360,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -368,7 +368,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -376,7 +376,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -384,7 +384,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -392,7 +392,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
+					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -421,7 +421,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 			},
 			testUtils.Request{
 				Request: `query {
-					Author(groupBy: [published_id]) {
+					Author(groupBy: [_publishedID]) {
 						_group {
 							name
 							published {
@@ -431,7 +431,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 						}
 					}
 				}`,
-				ExpectedError: "Argument \"groupBy\" has invalid value [published_id].\nIn element #1: Expected type \"AuthorField\", found published_id.",
+				ExpectedError: "Argument \"groupBy\" has invalid value [_publishedID].\nIn element #1: Expected type \"AuthorField\", found _publishedID.",
 			},
 		},
 	}
@@ -447,7 +447,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -455,7 +455,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -463,7 +463,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -471,7 +471,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -479,7 +479,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -487,7 +487,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
+					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -516,8 +516,8 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 			},
 			testUtils.Request{
 				Request: `query {
-					Author(groupBy: [published_id]) {
-						published_id
+					Author(groupBy: [_publishedID]) {
+						_publishedID
 						_group {
 							name
 							published {
@@ -527,7 +527,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 						}
 					}
 				}`,
-				ExpectedError: "Argument \"groupBy\" has invalid value [published_id].\nIn element #1: Expected type \"AuthorField\", found published_id.",
+				ExpectedError: "Argument \"groupBy\" has invalid value [_publishedID].\nIn element #1: Expected type \"AuthorField\", found _publishedID.",
 			},
 		},
 	}

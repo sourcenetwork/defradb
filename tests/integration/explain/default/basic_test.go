@@ -65,7 +65,7 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 										"filter": nil,
 										"scanNode": dataMap{
 											"filter":         nil,
-											"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
+											"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 											"collectionName": "Author",
 											"prefixes": []string{
 												"/3",

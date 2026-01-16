@@ -109,7 +109,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 						OccurancesToSkip:  0,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -122,7 +122,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 						OccurancesToSkip:  1,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreihlwj5mr73cjwhvkctg6ywd6c2z3kldafxmju7ppcvwqpjjt74p4q",
+							"collectionID":   "bafyreifnc6yphaqxf7x7fa3phxrsuvzqvnnjz4q7fuirhty4cnrxubp6eq",
 							"collectionName": "Book",
 							"filter": dataMap{
 								"pages": dataMap{
@@ -260,7 +260,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 						OccurancesToSkip:  0,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -273,7 +273,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 						OccurancesToSkip:  1,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreihlwj5mr73cjwhvkctg6ywd6c2z3kldafxmju7ppcvwqpjjt74p4q",
+							"collectionID":   "bafyreifnc6yphaqxf7x7fa3phxrsuvzqvnnjz4q7fuirhty4cnrxubp6eq",
 							"collectionName": "Book",
 							"filter": dataMap{
 								"pages": dataMap{
@@ -300,7 +300,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 						OccurancesToSkip:  2,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -313,7 +313,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 						OccurancesToSkip:  3,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreiboye46wpmcj5zscmsgysiguun5goojvqpo2gtp7q6xzedg5osveu",
+							"collectionID":   "bafyreidpjzf5kytlap2nilnnemywjmwt74hr56e72llri2z7c6w7un7sje",
 							"collectionName": "Article",
 							"filter": dataMap{
 								"pages": dataMap{

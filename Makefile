@@ -84,6 +84,9 @@ default:
 install:
 	@go install $(BUILD_FLAGS) ./cmd/defradb
 
+install-wizard: install
+	@defradb wizard
+
 .PHONY: install\:manpages
 install\:manpages:
 ifeq ($(OS_GENERAL),Linux)
@@ -211,7 +214,7 @@ ollama:
 ollama\:nomic:
 # make sure ollama is running before continuing
 	time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://localhost:11434
-	ollama pull nomic-embed-text
+	tools/scripts/ollama-pull.sh nomic-embed-text
 
 .PHONY: dev\:start
 dev\:start:
@@ -372,7 +375,7 @@ test\:changes:
 
 .PHONY: test\:js
 test\:js:
-	GOOS=js GOARCH=wasm go test $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
+	GOOS=js GOARCH=wasm gotestsum --format testname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
 
 .PHONY: test\:introspectionjs
 test\:introspectionjs:

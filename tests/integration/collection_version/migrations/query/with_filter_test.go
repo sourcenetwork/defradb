@@ -159,8 +159,8 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApp
 			},
 			testUtils.ConfigureMigration{
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      schemaV3,
-					DestinationSchemaVersionID: schemaV4,
+					SourceCollectionVersionID:      schemaV3,
+					DestinationCollectionVersionID: schemaV4,
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

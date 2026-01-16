@@ -174,7 +174,7 @@ func TestNAC_AddRelationshipWithInvalidRelationName_Error(t *testing.T) {
 				RequestorIdentity: testUtils.ClientIdentity(1),
 				TargetIdentity:    testUtils.ClientIdentity(2),
 				Relation:          "unknown",
-				ExpectedError:     "relation not found in resource",
+				ExpectedError:     "relation not in resource",
 			},
 		},
 	}

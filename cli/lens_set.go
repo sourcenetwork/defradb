@@ -57,8 +57,8 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return ErrNoLensConfig
 			}
 
-			srcSchemaVersionID := args[0]
-			dstSchemaVersionID := args[1]
+			srcCollectionVersionID := args[0]
+			dstCollectionVersionID := args[1]
 
 			decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
 			decoder.DisallowUnknownFields()
@@ -69,9 +69,9 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			}
 
 			migrationCfg := client.LensConfig{
-				SourceSchemaVersionID:      srcSchemaVersionID,
-				DestinationSchemaVersionID: dstSchemaVersionID,
-				Lens:                       lensCfg,
+				SourceCollectionVersionID:      srcCollectionVersionID,
+				DestinationCollectionVersionID: dstCollectionVersionID,
+				Lens:                           lensCfg,
 			}
 
 			lensID, err := cliClient.SetMigration(cmd.Context(), migrationCfg)

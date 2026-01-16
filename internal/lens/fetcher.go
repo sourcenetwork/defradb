@@ -166,7 +166,7 @@ func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument,
 
 		var resultDoc fetcher.EncodedDocument
 
-		if !f.hasMigrations || doc.SchemaVersionID() == f.targetVersionID {
+		if !f.hasMigrations || doc.CollectionVersionID() == f.targetVersionID {
 			// If there are no migrations registered for this schema, or if the document is already
 			// at the target schema version, no migration is required.
 			resultDoc = doc
@@ -176,7 +176,7 @@ func (f *lensedFetcher) FetchNext(ctx context.Context) (fetcher.EncodedDocument,
 				return nil, fetcher.ExecInfo{}, err
 			}
 
-			err = f.lens.Put(doc.SchemaVersionID(), sourceLensDoc)
+			err = f.lens.Put(doc.CollectionVersionID(), sourceLensDoc)
 			if err != nil {
 				return nil, fetcher.ExecInfo{}, err
 			}
@@ -276,10 +276,10 @@ func (f *lensedFetcher) lensDocToEncodedDoc(docAsMap LensDoc) (fetcher.EncodedDo
 	}
 
 	return &lensEncodedDocument{
-		key:             []byte(key),
-		schemaVersionID: f.col.Version().VersionID,
-		status:          status,
-		properties:      properties,
+		key:                 []byte(key),
+		collectionVersionID: f.col.Version().VersionID,
+		status:              status,
+		properties:          properties,
 	}, nil
 }
 
@@ -370,10 +370,10 @@ func (f *lensedFetcher) updateDataStore(ctx context.Context, original map[string
 }
 
 type lensEncodedDocument struct {
-	key             []byte
-	schemaVersionID string
-	status          client.DocumentStatus
-	properties      map[client.CollectionFieldDescription]any
+	key                 []byte
+	collectionVersionID string
+	status              client.DocumentStatus
+	properties          map[client.CollectionFieldDescription]any
 }
 
 var _ fetcher.EncodedDocument = (*lensEncodedDocument)(nil)
@@ -382,8 +382,8 @@ func (encdoc *lensEncodedDocument) ID() []byte {
 	return encdoc.key
 }
 
-func (encdoc *lensEncodedDocument) SchemaVersionID() string {
-	return encdoc.schemaVersionID
+func (encdoc *lensEncodedDocument) CollectionVersionID() string {
+	return encdoc.collectionVersionID
 }
 
 func (encdoc *lensEncodedDocument) Status() client.DocumentStatus {
@@ -396,7 +396,7 @@ func (encdoc *lensEncodedDocument) Properties(onlyFilterProps bool) (map[client.
 
 func (encdoc *lensEncodedDocument) Reset() {
 	encdoc.key = nil
-	encdoc.schemaVersionID = ""
+	encdoc.collectionVersionID = ""
 	encdoc.status = 0
 	encdoc.properties = map[client.CollectionFieldDescription]any{}
 }

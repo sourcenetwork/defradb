@@ -33,7 +33,7 @@ func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
-						"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+						"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 					}`,
 			},
 			testUtils.Request{
@@ -82,7 +82,7 @@ func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true,
-						"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+						"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 					}`,
 			},
 			testUtils.Request{
@@ -154,7 +154,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -163,7 +163,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 					"name":         "Andrew Lone",
 					"age":          30,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.Request{
@@ -233,14 +233,14 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Cornelia Funke",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.Request{
@@ -268,6 +268,7 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -366,21 +367,21 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 					Author {
 						name
-						published_id
+						_publishedID
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
 							"name":         "John Grisham",
-							"published_id": "bae-ffa6fd8c-8fd7-5da1-81d5-481bb4efd3c6",
+							"_publishedID": "bae-ffa6fd8c-8fd7-5da1-81d5-481bb4efd3c6",
 						},
 					},
 				},
@@ -417,21 +418,21 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 					Book {
 						name
-						author_id
+						_authorID
 					}
 				}`,
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
 							"name":      "Painted House",
-							"author_id": "bae-d92e6b41-9df9-519f-b823-c3e13f4e1b0b",
+							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
 						},
 					},
 				},

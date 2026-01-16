@@ -271,9 +271,9 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req1),
-				// With the auto-created unique index on address_id:
+				// With the auto-created unique index on _addressID:
 				// 1 index fetch to get the address with city == "London"
-				// 1 index fetch to find the user with matching address_id
+				// 1 index fetch to find the user with matching _addressID
 				// 5 field fetches total
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(5).WithIndexFetches(2),
 			},
@@ -289,9 +289,9 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req2),
-				// With the auto-created unique index on address_id:
+				// With the auto-created unique index on _addressID:
 				// 3 index fetches to get the 3 addresses with city == "Montreal"
-				// 3 index fetches to find the users with matching address_id
+				// 3 index fetches to find the users with matching _addressID
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
 			},
 		},
@@ -800,7 +800,7 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIndex(t *testing.T) {
 	req := `query {
 		Device(filter: {
-			owner_id: {_ne: null}
+			_ownerID: {_ne: null}
 		}) {
 			model
 		}
@@ -869,7 +869,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
-				// we make 4 index fetches to find 2 devices with owner_id != null
+				// we make 4 index fetches to find 2 devices with _ownerID != null
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
@@ -881,7 +881,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIndex(t *testing.T) {
 	req := `query {
 		Device(filter: {
-			owner_id: {_eq: null}
+			_ownerID: {_eq: null}
 		}) {
 			model
 		}
@@ -942,14 +942,14 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 				Request: req,
 				Results: map[string]any{
 					"Device": []map[string]any{
-						{"model": "PlayStation 5"},
 						{"model": "Running Man"},
+						{"model": "PlayStation 5"},
 					},
 				},
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
-				// we make 2 index fetches to get all 2 devices with owner_id == null
+				// we make 2 index fetches to get all 2 devices with _ownerID == null
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
@@ -1005,8 +1005,8 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 				Request: `query {
 					User {
 						devices {
-							owner_id
-							manufacturer_id
+							_ownerID
+							_manufacturerID
 						}
 					}
 				}`,
@@ -1015,8 +1015,8 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 						{
 							"devices": []map[string]any{
 								{
-									"owner_id":        testUtils.NewDocIndex(0, 0),
-									"manufacturer_id": testUtils.NewDocIndex(2, 0),
+									"_ownerID":        testUtils.NewDocIndex(0, 0),
+									"_manufacturerID": testUtils.NewDocIndex(2, 0),
 								},
 							},
 						},

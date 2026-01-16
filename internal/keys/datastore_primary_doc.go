@@ -26,6 +26,7 @@ type PrimaryDataStoreKey struct {
 }
 
 var _ Key = (*PrimaryDataStoreKey)(nil)
+var _ CollectionedKey = PrimaryDataStoreKey{}
 
 func (k PrimaryDataStoreKey) ToDataStoreKey() DataStoreKey {
 	return DataStoreKey{
@@ -54,4 +55,8 @@ func (k PrimaryDataStoreKey) ToString() string {
 	}
 
 	return result
+}
+
+func (k PrimaryDataStoreKey) GetCollectionShortID() uint32 {
+	return k.CollectionShortID
 }

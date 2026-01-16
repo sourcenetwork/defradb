@@ -34,9 +34,9 @@ type Doc struct {
 
 	Fields DocFields
 	Status client.DocumentStatus
-	// The id of the schema version that this document is currently at.  This includes
+	// The id of the collection version that this document is currently at.  This includes
 	// any migrations that may have been run.
-	SchemaVersionID string
+	CollectionVersionID string
 }
 
 // GetID returns the DocID for this document.

@@ -33,25 +33,25 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 			testUtils.CreateDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 				Doc: `{
 					"name": "Book By Website",
 					"rating": 4.0,
-					"publisher_id": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
+					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
 			testUtils.Request{
 				// Delete a linked book that exists.
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-			        delete_Book(docID: "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96") {
+			        delete_Book(docID: "bae-e06e5f77-ef19-570a-a866-511e12ed423e") {
 			            _docID
 			        }
 			    }`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 						},
 					},
 				},
@@ -93,11 +93,11 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 			testUtils.CreateDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 				Doc: `{
 					"name": "Book By Website",
 					"rating": 4.0,
-					"publisher_id": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
+					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -113,14 +113,14 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 				// Delete a linked book that exists.
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-			        delete_Book(docID: "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96") {
+			        delete_Book(docID: "bae-e06e5f77-ef19-570a-a866-511e12ed423e") {
 			            _docID
 			        }
 			    }`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 						},
 					},
 				},
@@ -156,11 +156,11 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 			testUtils.CreateDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 				Doc: `{
 					"name": "Book By Website",
 					"rating": 4.0,
-					"publisher_id": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
+					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -176,14 +176,14 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 				// Delete a linked book that exists.
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-			        delete_Book(docID: "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96") {
+			        delete_Book(docID: "bae-e06e5f77-ef19-570a-a866-511e12ed423e") {
 			            _docID
 			        }
 			    }`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 						},
 					},
 				},
@@ -207,7 +207,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 							"_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
 							"name":   "Website",
 							"published": map[string]any{
-								"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+								"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 								"name":   "Book By Website",
 							},
 						},
@@ -251,11 +251,11 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 			testUtils.CreateDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 				Doc: `{
 					"name": "Book By Website",
 					"rating": 4.0,
-					"publisher_id": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
+					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -271,14 +271,14 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 				// Delete a linked book that exists in transaction 0.
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
-			        delete_Book(docID: "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96") {
+			        delete_Book(docID: "bae-e06e5f77-ef19-570a-a866-511e12ed423e") {
 			            _docID
 			        }
 			    }`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 						},
 					},
 				},
@@ -299,7 +299,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"_docID": "bae-f412a4b4-1a86-54c2-9523-73e2f66d6e96",
+							"_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
 							"name":   "Book By Website",
 							"publisher": map[string]any{
 								"_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
@@ -340,11 +340,11 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 			testUtils.CreateDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-cd5d64a6-90ff-5a59-8a40-3d8ffd42752a",
+				// "_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
 				Doc: `{
 					"name": "Book By Online",
 					"rating": 4.0,
-					"publisher_id": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
+					"_publisherID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -404,11 +404,11 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 			testUtils.CreateDoc{
 				// books
 				CollectionID: 0,
-				// "_docID": "bae-cd5d64a6-90ff-5a59-8a40-3d8ffd42752a",
+				// "_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
 				Doc: `{
 					"name": "Book By Online",
 					"rating": 4.0,
-					"publisher_id": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
+					"_publisherID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -455,7 +455,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"_docID":    "bae-cd5d64a6-90ff-5a59-8a40-3d8ffd42752a",
+							"_docID":    "bae-2bc16473-47d5-5458-9099-c09ef0361303",
 							"name":      "Book By Online",
 							"publisher": nil,
 						},

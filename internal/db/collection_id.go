@@ -248,22 +248,20 @@ func mapCollectionSetIDs(
 		circlesBackHere := circlesBack(collection.name, relation, collectionRelationsByCollectionName, map[string]struct{}{})
 
 		var circleID int
-		if circlesBackHere {
-			if id, ok := collectionSetIds[relation]; ok {
-				// If this collection has already been assigned a setID, use that
-				circleID = id
-			} else {
-				collectionSetId, ok := collectionSetIds[collection.name]
-				if !ok {
-					// If this collection has not already been assigned a setID, it must be
-					// the first discovered node in a new circle.  Assign it a new setID,
-					// this will be picked up by its circle-forming descendents.
-					*i = *i + 1
-					collectionSetId = *i
-				}
-				collectionSetIds[collection.name] = collectionSetId
-				circleID = collectionSetId
+		if id, ok := collectionSetIds[relation]; ok {
+			// If this collection has already been assigned a setID, use that
+			circleID = id
+		} else if circlesBackHere {
+			collectionSetId, ok := collectionSetIds[collection.name]
+			if !ok {
+				// If this collection has not already been assigned a setID, it must be
+				// the first discovered node in a new circle.  Assign it a new setID,
+				// this will be picked up by its circle-forming descendents.
+				*i = *i + 1
+				collectionSetId = *i
 			}
+			collectionSetIds[collection.name] = collectionSetId
+			circleID = collectionSetId
 		} else {
 			// If this collection and its relations does not circle back to itself, we
 			// increment `i` and assign the new value to this collection *only*

@@ -206,6 +206,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeStartCommand(ctx),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(ctx),
+		MakeWizardCommand(),
 	)
 
 	return root
