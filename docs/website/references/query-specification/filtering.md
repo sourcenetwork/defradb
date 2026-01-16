@@ -154,9 +154,9 @@ Let's query for all books with a rating greater than or equal to 4.
 | `_eq`    | Equal to        |
 | `_neq`   | Not Equal to        |
 | `_gt`    | Greater Than        |
-| `_geq`   | Greater Than or Equal to        |
+| `_gte`   | Greater Than or Equal to        |
 | `_lt`    | Less Than        |
-| `_leq`   | Less Than or Equal to        |
+| `_lte`   | Less Than or Equal to        |
 | `_in`    | In the List        |
 | `_nin`   | Not in the List        |
 | `_like`  | Like Sub-String         |
@@ -169,10 +169,10 @@ The table below displays the operators that can be used for every value type:
 | Scalar Type | Operators |
 | -------- | -------- |
 | String     | `_eq, _neq, _like, _in, _nin`     |
-| Integer     | `_eq, _neq, _gt, _geq, _lt, _leq, _in, _nin`     |
-| Floating Point     | `_eq, _neq, _gt, _geq, _lt, _leq, _in, _nin`     |
+| Integer     | `_eq, _neq, _gt, _gte, _lt, _lte, _in, _nin`     |
+| Floating Point     | `_eq, _neq, _gt, _gte, _lt, _lte, _in, _nin`     |
 | Boolean     | `_eq, _neq, _in, _nin`     |
-| DateTime     | `_eq, _neq, _gt, _geq, _lt, _leq, _in, _nin`     |
+| DateTime     | `_eq, _neq, _gt, _gte, _lt, _lte, _in, _nin`     |
 ###### Table 2. Operators supported by Scalar types.
 
 There are 3 types of conditional keywords, i.e, `_and`, `_or`, and `_not`. Conditional keywords like `_and` and `_or` are used when we need to apply filters on multiple fields simultaneously.  The `_not` conditional keyword only accepts an object.

@@ -163,7 +163,7 @@ func TestQueryWithUniqueIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithUniqueIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_leq 23}}) {
+		User(filter: {age: {_leq: 23}}) {
 			name
 		}
 	}`

@@ -222,7 +222,7 @@ func TestQueryWithIndex_WithLtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 
 func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	req := `query {
-		User(filter: {birthday: {_leq "2001-01-01T00:00:00-00:00"}}) {
+		User(filter: {birthday: {_leq: "2001-01-01T00:00:00-00:00"}}) {
 			name
 		}
 	}`

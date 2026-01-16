@@ -298,7 +298,7 @@ func TestJSONIndex_WithLtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithLeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {height: {_leq 178}}}) {
+		User(filter: {custom: {height: {_leq: 178}}}) {
 			name
 		}
 	}`

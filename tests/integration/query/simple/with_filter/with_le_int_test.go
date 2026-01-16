@@ -33,7 +33,7 @@ func TestQuerySimpleWithIntLEFilterBlockWithEqualValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Age: {_leq 21}}) {
+					Users(filter: {Age: {_leq: 21}}) {
 						Name
 					}
 				}`,
@@ -68,7 +68,7 @@ func TestQuerySimpleWithIntLEFilterBlockWithGreaterValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Age: {_leq 22}}) {
+					Users(filter: {Age: {_leq: 22}}) {
 						Name
 					}
 				}`,
@@ -102,7 +102,7 @@ func TestQuerySimpleWithIntLEFilterBlockWithNullValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Age: {_leq null}}) {
+					Users(filter: {Age: {_leq: null}}) {
 						Name
 					}
 				}`,

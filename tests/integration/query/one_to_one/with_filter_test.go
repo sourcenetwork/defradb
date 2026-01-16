@@ -443,10 +443,10 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 					Book(filter: {_or: [
 						{_and: [
 							{rating: {_geq: 4.0}},
-							{author: {age: {_leq 45}}}
+							{author: {age: {_leq: 45}}}
 						]},
 						{_and: [
-							{rating: {_leq 3.5}},
+							{rating: {_leq: 3.5}},
 							{author: {age: {_geq: 35}}}
 						]}
 					]}) {

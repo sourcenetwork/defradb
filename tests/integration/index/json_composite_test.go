@@ -222,7 +222,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 			name: "With _le and _gt filters",
 			req: `query {
 				User(filter: {
-					age: {_leq 35},
+					age: {_leq: 35},
 					custom: {val: {_gt: 4}}
 				}) {
 					name

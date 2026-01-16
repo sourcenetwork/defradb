@@ -351,8 +351,8 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 						{_not: {age: {_geq: 70}}},
 						{book: {rating: {_gt: 2.5}}},
 						{_or: [
-							{book: {publisher: {yearOpened: {_leq 2020}}}},
-							{_not: {book: {rating: {_leq 4.0}}}}
+							{book: {publisher: {yearOpened: {_leq: 2020}}}},
+							{_not: {book: {rating: {_leq: 4.0}}}}
 						]}
 					]}){
 						name

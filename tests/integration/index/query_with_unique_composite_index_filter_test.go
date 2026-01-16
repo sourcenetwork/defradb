@@ -329,7 +329,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFet
 
 func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_leq 28}, name: {_neq: "Bruno"}}) {
+		User(filter: {age: {_leq: 28}, name: {_neq: "Bruno"}}) {
 			name
 		}
 	}`
@@ -367,7 +367,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 
 func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_leq 28}, name: {_neq: "Bruno"}}) {
+		User(filter: {age: {_leq: 28}, name: {_neq: "Bruno"}}) {
 			name
 		}
 	}`
