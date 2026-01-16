@@ -774,7 +774,7 @@ func applyMultipliers(t testing.TB, testCase *TestCase) {
 		return
 	}
 
-	multiplier.Skip(t, actions, nil, nil)
+	multiplier.Skip(t, actions, testCase.MultiplierIncludes, testCase.MultiplierExcludes)
 
 	modified := multiplier.Apply(actions)
 
