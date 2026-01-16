@@ -348,7 +348,7 @@ func TestDefaultExplainRequestOneToManyWithAverageAndChildNeNilFilterSharesJoinF
 					Author {
 						name
 						_avg(books: {field: rating})
-						books(filter: {rating: {_ne: null}}){
+						books(filter: {rating: {_neq: null}}){
 							name
 						}
 					}

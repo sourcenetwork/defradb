@@ -102,7 +102,7 @@ Beyond updating by an ID or IDs, we can use a query filter to select which field
 
 ```graphql
 mutation {
-    update_Book(filter: {rating: {_le: 1.0}}, input: {rating: 1.5}) {
+    update_Book(filter: {rating: {_leq 1.0}}, input: {rating: 1.5}) {
         _docID
         rating
         name

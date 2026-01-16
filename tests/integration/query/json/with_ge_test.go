@@ -42,7 +42,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithEqualValue_ShouldFilter(t *testing.
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: 32}}) {
+					Users(filter: {Custom: {_geq: 32}}) {
 						Name
 					}
 				}`,
@@ -85,7 +85,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithGreaterValue_ShouldFilter(t *testin
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: 31}}) {
+					Users(filter: {Custom: {_geq: 31}}) {
 						Name
 					}
 				}`,
@@ -127,7 +127,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithNullValue_ShouldFilter(t *testing.T
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: null}}) {
+					Users(filter: {Custom: {_geq: null}}) {
 						Name
 					}
 				}`,
@@ -174,7 +174,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedEqualValue_ShouldFilter(t *te
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_ge: 32}}}) {
+					Users(filter: {Custom: {age: {_geq: 32}}}) {
 						Name
 					}
 				}`,
@@ -217,7 +217,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedGreaterValue_ShouldFilter(t *
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_ge: 31}}}) {
+					Users(filter: {Custom: {age: {_geq: 31}}}) {
 						Name
 					}
 				}`,
@@ -259,7 +259,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *tes
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_ge: null}}}) {
+					Users(filter: {Custom: {age: {_geq: null}}}) {
 						Name
 					}
 				}`,
@@ -306,7 +306,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithBoolValue_ReturnsError(t *testing.T
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: true}}) {
+					Users(filter: {Custom: {_geq: true}}) {
 						Name
 					}
 				}`,
@@ -343,7 +343,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithStringValue_ReturnsError(t *testing
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: ""}}) {
+					Users(filter: {Custom: {_geq: ""}}) {
 						Name
 					}
 				}`,
@@ -380,7 +380,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithObjectValue_ReturnsError(t *testing
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: {one: 1}}}) {
+					Users(filter: {Custom: {_geq: {one: 1}}}) {
 						Name
 					}
 				}`,
@@ -417,7 +417,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithArrayValue_ReturnsError(t *testing.
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: [1, 2]}}) {
+					Users(filter: {Custom: {_geq: [1, 2]}}) {
 						Name
 					}
 				}`,
@@ -472,7 +472,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithAllTypes_ShouldFilter(t *testing.T)
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: 32}}) {
+					Users(filter: {Custom: {_geq: 32}}) {
 						Name
 					}
 				}`,

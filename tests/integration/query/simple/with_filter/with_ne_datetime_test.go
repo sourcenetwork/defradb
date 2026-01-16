@@ -35,7 +35,7 @@ func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ne: "2017-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_neq: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -78,7 +78,7 @@ func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ne: null}}) {
+					Users(filter: {CreatedAt: {_neq: null}}) {
 						Name
 					}
 				}`,
@@ -124,7 +124,7 @@ func TestQuerySimple_WithNilDateTimeNotEqualAndNonNilFilterBlock_ShouldSucceed(t
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ne: "2016-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_neq: "2016-07-23T03:46:56-05:00"}}) {
 						Name
 						Age
 						CreatedAt

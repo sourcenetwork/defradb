@@ -33,7 +33,7 @@ func TestQuerySimpleWithFloatLEFilterBlockWithEqualValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_le: 1.82}}) {
+					Users(filter: {HeightM: {_leq 1.82}}) {
 						Name
 					}
 				}`,
@@ -68,7 +68,7 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_le: 1.820000000001}}) {
+					Users(filter: {HeightM: {_leq 1.820000000001}}) {
 						Name
 					}
 				}`,
@@ -103,7 +103,7 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_le: 2}}) {
+					Users(filter: {HeightM: {_leq 2}}) {
 						Name
 					}
 				}`,
@@ -137,7 +137,7 @@ func TestQuerySimpleWithFloatLEFilterBlockWithNullValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_le: null}}) {
+					Users(filter: {HeightM: {_leq null}}) {
 						Name
 					}
 				}`,

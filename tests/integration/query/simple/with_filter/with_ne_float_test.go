@@ -33,7 +33,7 @@ func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ne: 2.1}}) {
+					Users(filter: {HeightM: {_neq: 2.1}}) {
 						Name
 					}
 				}`,
@@ -73,7 +73,7 @@ func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ne: null}}) {
+					Users(filter: {HeightM: {_neq: null}}) {
 						Name
 					}
 				}`,

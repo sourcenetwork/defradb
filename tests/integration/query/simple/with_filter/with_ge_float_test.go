@@ -33,7 +33,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ge: 2.1}}) {
+					Users(filter: {HeightM: {_geq: 2.1}}) {
 						Name
 					}
 				}`,
@@ -68,7 +68,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ge: 2.0999999999999}}) {
+					Users(filter: {HeightM: {_geq: 2.0999999999999}}) {
 						Name
 					}
 				}`,
@@ -103,7 +103,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ge: 2}}) {
+					Users(filter: {HeightM: {_geq: 2}}) {
 						Name
 					}
 				}`,
@@ -137,7 +137,7 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ge: null}}) {
+					Users(filter: {HeightM: {_geq: null}}) {
 						Name
 					}
 				}`,

@@ -33,7 +33,7 @@ func TestQuerySimpleWithIntNotEqualsFilterBlock(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Age: {_ne: 21}}) {
+					Users(filter: {Age: {_neq: 21}}) {
 						Name
 					}
 				}`,
@@ -73,7 +73,7 @@ func TestQuerySimpleWithIntNotEqualsNilFilterBlock(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Age: {_ne: null}}) {
+					Users(filter: {Age: {_neq: null}}) {
 						Name
 					}
 				}`,

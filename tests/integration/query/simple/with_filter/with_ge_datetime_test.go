@@ -35,7 +35,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_geq: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -72,7 +72,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-22T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_geq: "2017-07-22T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -109,7 +109,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-25T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_geq: "2017-07-25T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -139,7 +139,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ge: null}}) {
+					Users(filter: {CreatedAt: {_geq: null}}) {
 						Name
 					}
 				}`,
@@ -186,7 +186,7 @@ func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *test
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2016-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_geq: "2016-07-23T03:46:56-05:00"}}) {
 						Name
 						Age
 						CreatedAt
