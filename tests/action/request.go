@@ -86,22 +86,6 @@ type Request struct {
 var _ Action = (*Request)(nil)
 var _ Stateful = (*Request)(nil)
 
-// RequestViewRefresher is a function type that refreshes materialized views.
-// It is set by the tests/integration package.
-type RequestViewRefresher func(s *state.State, node *state.NodeState, expectedError string) bool
-
-// ReplaceFunc is a function type that replaces template placeholders in a string.
-// It is set by the tests/integration package to provide the CID template support.
-type ReplaceFunc func(s *state.State, nodeID int, input string) string
-
-// RefreshViewsFunc is the callback for refreshing materialized views.
-// This must be set by tests/integration before Request actions can be executed.
-var RefreshViewsFunc RequestViewRefresher
-
-// ReplaceTemplatesFunc is the callback for replacing template placeholders.
-// This must be set by tests/integration before Request actions can be executed.
-var ReplaceTemplatesFunc ReplaceFunc
-
 // Execute executes the request action.
 func (a *Request) Execute() {
 	var expectedErrorRaised bool
@@ -122,20 +106,15 @@ nodeLoop:
 		}
 
 		// Refresh views if needed (for materialized view tests)
-		if !expectedErrorRaised && RefreshViewsFunc != nil {
-			expectedErrorRaised = RefreshViewsFunc(a.s, node, a.ExpectedError)
+		if !expectedErrorRaised {
+			expectedErrorRaised = refreshViewsForCollections(a.s, node, a.ExpectedError)
 			if expectedErrorRaised {
 				continue nodeLoop
 			}
 		}
 
 		// Replace any template placeholders with the appropriate data.
-		var request string
-		if ReplaceTemplatesFunc != nil {
-			request = ReplaceTemplatesFunc(a.s, nodeID, a.Request)
-		} else {
-			request = replace(a.s, nodeID, a.Request)
-		}
+		request := replace(a.s, nodeID, a.Request)
 		result := node.ExecRequest(ctx, request, options...)
 
 		expectedErrorRaised = AssertRequestResults(
