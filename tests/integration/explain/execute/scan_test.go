@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -43,7 +44,7 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -87,7 +88,7 @@ func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -150,7 +151,7 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(filter: {name: {_eq: "Shahzad"}}) {
 						name
@@ -214,7 +215,7 @@ func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(filter: {name: {_eq: "John"}}) {
 						name

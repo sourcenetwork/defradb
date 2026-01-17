@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -38,7 +39,7 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -63,7 +64,7 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChild(t *testing.T) {
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "limitNode",
 						IncludeChildNodes: false,
@@ -86,7 +87,7 @@ func TestDefaultExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -111,7 +112,7 @@ func TestDefaultExplainRequestWithOnlyOffsetOnRelatedChild(t *testing.T) {
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "limitNode",
 						IncludeChildNodes: false,
@@ -134,7 +135,7 @@ func TestDefaultExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T)
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -159,7 +160,7 @@ func TestDefaultExplainRequestWithBothLimitAndOffsetOnRelatedChild(t *testing.T)
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "limitNode",
 						IncludeChildNodes: false,
@@ -182,7 +183,7 @@ func TestDefaultExplainRequestWithLimitOnRelatedChildAndBothLimitAndOffsetOnPare
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(limit: 3, offset: 1) {
@@ -209,7 +210,7 @@ func TestDefaultExplainRequestWithLimitOnRelatedChildAndBothLimitAndOffsetOnPare
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "limitNode",
 						OccurancesToSkip:  0,
