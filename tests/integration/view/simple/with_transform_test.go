@@ -46,7 +46,7 @@ func TestView_SimpleWithTransform(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -132,7 +132,7 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -214,7 +214,7 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -284,7 +284,7 @@ func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name

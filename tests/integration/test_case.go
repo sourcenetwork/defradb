@@ -240,11 +240,6 @@ type SetActiveCollectionVersion struct {
 	ExpectedError string
 }
 
-// CreateView is a type alias for backward compatibility.
-type CreateView = action.CreateView
-
-// RefreshViews is a type alias for backward compatibility.
-type RefreshViews = action.RefreshViews
 
 // CreateDoc will attempt to create the given document in the given collection
 // using the set [MutationType].
