@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"testing"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -20,6 +19,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -336,15 +336,8 @@ type CreateDoc struct {
 //
 // The targeted document must have been defined in an action prior to the action that this index
 // is hosted upon.
-type DocIndex struct {
-	// CollectionIndex is the index of the collection holding the document to target.
-	CollectionIndex int
-
-	// Index is the index within the target collection at which the document exists.
-	//
-	// This is dependent on the order in which test [CreateDoc] actions were defined.
-	Index int
-}
+// This is a type alias for backward compatibility.
+type DocIndex = action.DocIndex
 
 // NewDocIndex creates a new [DocIndex] instance allowing relation fields to be set without worrying
 // about the specific document id.
@@ -658,18 +651,12 @@ type DeleteEncryptedIndex struct {
 }
 
 // ResultAsserter is an interface that can be implemented to provide custom result
-// assertions.
-type ResultAsserter interface {
-	// Assert will be called with the test and the result of the request.
-	Assert(t testing.TB, result map[string]any)
-}
+// assertions. This is a type alias for backward compatibility.
+type ResultAsserter = action.ResultAsserter
 
-// ResultAsserterFunc is a function that can be used to implement the ResultAsserter
-type ResultAsserterFunc func(testing.TB, map[string]any) (bool, string)
-
-func (f ResultAsserterFunc) Assert(t testing.TB, result map[string]any) {
-	f(t, result)
-}
+// ResultAsserterFunc is a function that can be used to implement the ResultAsserter.
+// This is a type alias for backward compatibility.
+type ResultAsserterFunc = action.ResultAsserterFunc
 
 // Benchmark is an action that will run another test action for benchmark test.
 // It will run benchmarks for a base case and optimized case and assert that
@@ -688,51 +675,8 @@ type Benchmark struct {
 }
 
 // Request represents a standard Defra (GQL) request.
-type Request struct {
-	// NodeID may hold the ID (index) of a node to execute this request on.
-	//
-	// If a value is not provided the request will be executed against all nodes,
-	// in which case the expected results must all match across all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If an Identity is not provided then can only operate over public document(s).
-	//
-	// If an Identity is provided and the collection has a policy, then can
-	// operate over private document(s) that are owned by this Identity.
-	//
-	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
-	// Default value is `NoIdentity()`.
-	Identity immutable.Option[state.Identity]
-
-	// Used to identify the transaction for this to run against. Optional.
-	TransactionID immutable.Option[int]
-
-	// OperationName sets the operation name option for the request.
-	OperationName immutable.Option[string]
-
-	// Variables sets the variables option for the request.
-	Variables immutable.Option[map[string]any]
-
-	// The request to execute.
-	Request string
-
-	// The expected (data) results of the issued request.
-	Results map[string]any
-
-	// NonOrderedResults specifies that the results set doesn't need to care about the ordering of the items.
-	NonOrderedResults bool
-
-	// Asserter is an optional custom result asserter.
-	Asserter ResultAsserter
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
+// This is a type alias for backward compatibility.
+type Request = action.Request
 
 // GenerateDocs is an action that will trigger generation of documents.
 type GenerateDocs struct {
@@ -791,25 +735,8 @@ type TransactionCommit struct {
 }
 
 // SubscriptionRequest represents a subscription request.
-//
-// The subscription will remain active until shortly after all actions have been processed.
-// The results of the subscription will then be asserted upon.
-type SubscriptionRequest struct {
-	// NodeID is the node ID (index) of the node in which to subscribe to.
-	NodeID immutable.Option[int]
-
-	// The subscription request to submit.
-	Request string
-
-	// The expected (data) results yielded through the subscription across its lifetime.
-	Results []map[string]any
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
+// This is a type alias for backward compatibility.
+type SubscriptionRequest = action.SubscriptionRequest
 
 type IntrospectionRequest struct {
 	// NodeID is the node ID (index) of the node in which to introspect.
