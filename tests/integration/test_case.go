@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -240,46 +241,11 @@ type SetActiveCollectionVersion struct {
 	ExpectedError string
 }
 
-// CreateView is an action that will create a new View.
-type CreateView struct {
-	// NodeID may hold the ID (index) of a node to create this View on.
-	//
-	// If a value is not provided the view will be created on all nodes.
-	NodeID immutable.Option[int]
+// CreateView is a type alias for backward compatibility.
+type CreateView = action.CreateView
 
-	// The query that this View is to be based off of. Required.
-	Query string
-
-	// The SDL containing all types used by the view output.
-	SDL string
-
-	// An optional CID of an existing lens transform.
-	// Use AddLens action first to store the lens and get its CID.
-	TransformCID immutable.Option[string]
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// RefreshViews action will execute a call to `store.RefreshViews` using the provided options.
-type RefreshViews struct {
-	// NodeID may hold the ID (index) of a node to create this View on.
-	//
-	// If a value is not provided the view will be created on all nodes.
-	NodeID immutable.Option[int]
-
-	// The set of fetch options for the views.
-	FilterOptions client.CollectionFetchOptions
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
+// RefreshViews is a type alias for backward compatibility.
+type RefreshViews = action.RefreshViews
 
 // CreateDoc will attempt to create the given document in the given collection
 // using the set [MutationType].
