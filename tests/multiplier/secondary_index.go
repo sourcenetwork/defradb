@@ -46,11 +46,15 @@ func (m *secondaryIndex) Name() Name {
 
 // ShouldSkip implements [multiplier.ActionAwareSkipper].
 //
-// Returns true if the action set contains index-related actions or schemas with
-// existing @index directives, as these tests are specifically designed to test
-// indexing behavior and should not be modified by this multiplier.
+// Returns true if the action set contains index-related actions, explain queries,
+// or schemas with existing @index directives. Index tests should not be modified,
+// and explain tests verify query plan structure which changes with indexes.
 func (m *secondaryIndex) ShouldSkip(actions action.Actions) bool {
 	if hasIndexActions(actions) {
+		return true
+	}
+
+	if hasExplainActions(actions) {
 		return true
 	}
 
@@ -98,6 +102,16 @@ func hasIndexActions(actions action.Actions) bool {
 	for _, a := range actions {
 		switch a.(type) {
 		case *action.CreateIndex, *action.DropIndex, *action.GetIndexes:
+			return true
+		}
+	}
+	return false
+}
+
+// hasExplainActions returns true if any action in the set is an explain query.
+func hasExplainActions(actions action.Actions) bool {
+	for _, a := range actions {
+		if _, ok := a.(*action.ExplainRequest); ok {
 			return true
 		}
 	}

@@ -505,6 +505,17 @@ func TestShouldSkip_WithUniqueIndexDirective_ReturnsTrue(t *testing.T) {
 	assert.True(t, m.ShouldSkip(actions))
 }
 
+func TestShouldSkip_WithExplainRequest_ReturnsTrue(t *testing.T) {
+	m := &secondaryIndex{}
+
+	actions := action.Actions{
+		&action.AddSchema{Schema: "type User { name: String }"},
+		&action.ExplainRequest{Request: `query @explain(type: debug) { User { name } }`},
+	}
+
+	assert.True(t, m.ShouldSkip(actions))
+}
+
 func TestShouldSkip_WithNoIndex_ReturnsFalse(t *testing.T) {
 	m := &secondaryIndex{}
 
