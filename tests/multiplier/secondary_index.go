@@ -109,10 +109,16 @@ func hasIndexActions(actions action.Actions) bool {
 }
 
 // hasExplainActions returns true if any action in the set is an explain query.
+// This includes both ExplainRequest actions and regular Request actions with @explain directive.
 func hasExplainActions(actions action.Actions) bool {
 	for _, a := range actions {
-		if _, ok := a.(*action.ExplainRequest); ok {
+		switch req := a.(type) {
+		case *action.ExplainRequest:
 			return true
+		case *action.Request:
+			if strings.Contains(req.Request, "@explain") {
+				return true
+			}
 		}
 	}
 	return false

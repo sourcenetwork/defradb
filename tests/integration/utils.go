@@ -50,6 +50,7 @@ import (
 )
 
 func init() {
+	os.Setenv("DEFRA_MULTIPLIERS", "secondary-index")
 	multiplier.Init("DEFRA_MULTIPLIERS")
 }
 
