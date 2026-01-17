@@ -30,7 +30,7 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				SDL: `
 					type UserView @materialized(if: false) {
 						name: String
@@ -74,7 +74,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				SDL: `
 					type UserView @materialized(if: false) {
 						name: String
@@ -123,7 +123,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				SDL: `
 					type UserView @materialized(if: true) {
 						name: String
@@ -175,7 +175,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				SDL: `
 					type UserView @materialized(if: true) {
 						name: String
@@ -192,7 +192,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.RefreshViews{},
+			&action.RefreshViews{},
 			testUtils.PatchCollection{
 				Patch: `
 					[
@@ -220,7 +220,7 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				SDL: `
 					type UserView @materialized(if: false) {
 						name: String
@@ -275,7 +275,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				SDL: `
 					type UserView @materialized(if: true) {
 						name: String
@@ -313,7 +313,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 					"UserView": []map[string]any{},
 				},
 			},
-			testUtils.RefreshViews{
+			&action.RefreshViews{
 				ExpectedError: "key not found",
 			},
 		},

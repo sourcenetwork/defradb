@@ -27,7 +27,7 @@ func TestView_SimpleWithAlias(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						fullname: name
