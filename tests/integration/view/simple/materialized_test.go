@@ -52,7 +52,7 @@ func TestView_SimpleMaterialized_DoesNotAutoUpdateOnViewCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							UserView {
 								name
@@ -109,7 +109,7 @@ func TestView_SimpleMaterialized_DoesNotAutoUpdate(t *testing.T) {
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							UserView {
 								name

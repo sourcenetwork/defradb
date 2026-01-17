@@ -27,7 +27,7 @@ func TestMutationCreate_ReturnsVersionCID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 							create_Users(input: {name: "John"}) {
 								_version {

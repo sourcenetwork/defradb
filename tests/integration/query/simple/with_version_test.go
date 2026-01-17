@@ -26,7 +26,7 @@ func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -87,7 +87,7 @@ func TestQuery_CreateDocWithNestedLatestCommit(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -158,7 +158,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 					"Age": 22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -236,7 +236,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithCollectionVersionID(t *testing.T
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -275,7 +275,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -317,7 +317,7 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -391,7 +391,7 @@ func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.
 					"Age": 22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -492,7 +492,7 @@ func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -563,7 +563,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -643,7 +643,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 				DocID:        0,
 				Doc:          `{"Age": 22}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name

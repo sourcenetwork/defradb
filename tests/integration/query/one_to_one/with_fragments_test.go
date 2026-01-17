@@ -47,7 +47,7 @@ func TestQueryOneToOne_WithFragment(t *testing.T) {
 					"author": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -108,7 +108,7 @@ func TestQueryOneToOne_WithFragmentWithObjectWithFragment(t *testing.T) {
 					"author": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

@@ -32,7 +32,7 @@ func TestMutationDeletion_WithIDsAndEmptyFilter(t *testing.T) {
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(docID: ["bae-390b4419-fe1c-506b-98bd-20847cdab2d9"], filter: {}) {
 						_docID

@@ -197,7 +197,7 @@ resources:
 
 			// At this point the document is only accessible to the owner so node 1
 			// should not have been able to sync the document.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   immutable.Some(1),
 				Request: `query {
@@ -221,7 +221,7 @@ resources:
 
 			testUtils.WaitForSync{},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   immutable.Some(1),
 				Request: `query {

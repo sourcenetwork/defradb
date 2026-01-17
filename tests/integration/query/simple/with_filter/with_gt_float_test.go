@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +32,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_OneMatchingResult(t *testing
 						"HeightM": 1.82
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {HeightM: {_gt: 2.0999999999999}}) {
 							Name
@@ -66,7 +67,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_NoMatchingResult(t *testing.
 						"HeightM": 1.82
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {HeightM: {_gt: 40}}) {
 							Name
@@ -97,7 +98,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_AllMatchingResult(t *testing
 						"HeightM": 1.82
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {HeightM: {_gt: 1.8199999999999}}) {
 							Name
@@ -136,7 +137,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlockWithIntFilterValue(t *testing
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {HeightM: {_gt: 2}}) {
 						Name
@@ -170,7 +171,7 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlockWithNullFilterValue(t *testin
 					"Name": "Bob"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {HeightM: {_gt: null}}) {
 						Name

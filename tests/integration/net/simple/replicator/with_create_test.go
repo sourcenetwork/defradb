@@ -47,7 +47,7 @@ func TestP2POneToOneReplicator(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -94,7 +94,7 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 				TargetNodeID: 1,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -140,7 +140,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 				TargetNodeID: 1,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Assert that John has not been synced to the first (source) node
 				NodeID: immutable.Some(0),
 				Request: `query {
@@ -190,7 +190,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
 			testUtils.WaitForSync{
 				// No documents should be synced
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that John has not been synced to the second (target) node
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -239,7 +239,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -287,7 +287,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -302,7 +302,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -317,7 +317,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(2),
 				Request: `query {
 					Users {
@@ -369,7 +369,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -432,7 +432,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -494,7 +494,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// The document should have been synced, and should contain the same values
 				// including document id and schema version id.
 				Request: `query {
@@ -560,7 +560,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 					"age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that the document id and schema version id are the same across all nodes,
 				// even though the schema field order is different.
 				Request: `query {
@@ -637,7 +637,7 @@ func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSu
 				NodeID: immutable.Some(1),
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age

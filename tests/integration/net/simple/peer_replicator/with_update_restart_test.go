@@ -67,7 +67,7 @@ func TestP2PPeerReplicatorWithUpdateAndRestart(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age

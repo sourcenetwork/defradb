@@ -39,7 +39,7 @@ func TestNAC_GatesDocumentCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
-			testUtils.Request{ // Should now be created
+			&action.Request{ // Should now be created
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -75,7 +75,7 @@ func TestNAC_GatesDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Doc:           `{ "name": "Shahzad" }`,
 				ExpectedError: "not authorized to perform operation",
 			},
-			testUtils.Request{ // Should not be created
+			&action.Request{ // Should not be created
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results:  map[string]any{"User": []map[string]any{}},
@@ -109,7 +109,7 @@ func TestNAC_GatesDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				Doc:           `{ "name": "Shahzad" }`,
 				ExpectedError: "not authorized to perform operation",
 			},
-			testUtils.Request{ // Should not be created
+			&action.Request{ // Should not be created
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results:  map[string]any{"User": []map[string]any{}},

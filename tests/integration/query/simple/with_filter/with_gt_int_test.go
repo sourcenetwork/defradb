@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +32,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock_ReturnOneAsOneMatches(t *testi
 						"Age": 19
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {Age: {_gt: 20}}) {
 							Name
@@ -68,7 +69,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock_ReturnNoneAsNoMatch(t *testing
 						"Age": 32
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {Age: {_gt: 40}}) {
 							Name
@@ -100,7 +101,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlock_ReturnAllMultiMatches(t *testi
 						"Age": 32
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {Age: {_gt: 20}}) {
 							Name
@@ -141,7 +142,7 @@ func TestQuerySimpleWithIntGreaterThanFilterBlockWithNullFilterValue(t *testing.
 					"Name": "Bob"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Age: {_gt: null}}) {
 						Name

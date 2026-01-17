@@ -240,7 +240,6 @@ type SetActiveCollectionVersion struct {
 	ExpectedError string
 }
 
-
 // CreateDoc will attempt to create the given document in the given collection
 // using the set [MutationType].
 type CreateDoc struct {
@@ -537,10 +536,6 @@ type Benchmark struct {
 	// Factor is the factor by which the optimized case should be better than the base case.
 	Factor float64
 }
-
-// Request represents a standard Defra (GQL) request.
-// This is a type alias for backward compatibility.
-type Request = action.Request
 
 // GenerateDocs is an action that will trigger generation of documents.
 type GenerateDocs struct {

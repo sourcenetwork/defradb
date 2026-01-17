@@ -42,7 +42,7 @@ func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 				}`,
 				ExpectedError: "the given field does not exist. Name: fieldDoesNotExist",
 			},
-			testUtils.Request{
+			&action.Request{
 				// Ensure that no documents have been written.
 				Request: `
 					query {
@@ -78,7 +78,7 @@ func TestMutationCreate(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -150,7 +150,7 @@ func TestMutationCreate_GivenEmptyInput(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_Users(input: {}) {
 						_docID

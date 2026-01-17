@@ -83,7 +83,7 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 					},
 				}),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

@@ -40,7 +40,7 @@ func TestQuerySimple_WithEqOpOnBlobField_ShouldFilter(t *testing.T) {
 					"data": "FA02CC45"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {data: {_eq: "00FF99AA"}}) {
 						name

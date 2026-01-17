@@ -37,7 +37,7 @@ func TestEncryptedIndexCreate_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -82,7 +82,7 @@ func TestEncryptedIndexCreate_AfterCreateRequest_ShouldNotHinderQuerying(t *test
 			testUtils.CreateEncryptedIndex{
 				FieldName: "age",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {

@@ -37,7 +37,7 @@ func TestQuerySimpleWithVersionAndCidAndCorrectDocID(t *testing.T) {
 					"Name": "Chris",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq", docID: ["bae-97a6033e-d2b5-564d-828f-d5edd9d4d536"]) {
 						Name
@@ -85,7 +85,7 @@ func TestQuerySimpleWithVersionAndCidAndCorrectAndIncorrectDocID(t *testing.T) {
 					"Name": "Chris",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(
 						cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq",
@@ -136,7 +136,7 @@ func TestQuerySimpleWithVersionAndCidAndIncorrectDocID(t *testing.T) {
 					"Name": "Chris",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(
 						cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq",

@@ -60,7 +60,7 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(input: {name: "Johnnnn"}) {
 						name
@@ -78,7 +78,7 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -147,7 +147,7 @@ func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

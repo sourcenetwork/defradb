@@ -14,8 +14,9 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // ConfigureReplicator configures a directional replicator relationship between

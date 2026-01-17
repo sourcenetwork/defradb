@@ -53,7 +53,7 @@ func TestP2POneToOneReplicatorUpdate_PCounter_NoError(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						points

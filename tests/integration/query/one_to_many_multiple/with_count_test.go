@@ -107,7 +107,7 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 					"score":     4,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -235,7 +235,7 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 					"score":     4,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name

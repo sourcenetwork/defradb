@@ -51,7 +51,7 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid

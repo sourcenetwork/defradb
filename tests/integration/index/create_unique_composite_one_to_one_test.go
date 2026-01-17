@@ -279,7 +279,7 @@ func TestOneToOneUniqueIndex_MultipleNullRelations_Allowed(t *testing.T) {
 					"name": "Jane"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name

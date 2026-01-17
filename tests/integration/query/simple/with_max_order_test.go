@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -34,7 +35,7 @@ func TestQuerySimpleWithMaxWithOrder_Succeeds(t *testing.T) {
 			}, // Max: 25
 
 			// Test descending order by computed total
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
 						total: _max(HeightM: {}, Age: {})
@@ -53,7 +54,7 @@ func TestQuerySimpleWithMaxWithOrder_Succeeds(t *testing.T) {
 			},
 
 			// Test ascending order by computed total
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
 						total: _max(HeightM: {}, Age: {})

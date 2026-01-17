@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -27,7 +28,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 						_commits(
 							docID: "bae-not-this-doc",
@@ -65,7 +66,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 						_commits(
 							docID: "bae-not-this-doc",
@@ -103,7 +104,7 @@ func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 						_commits(
 							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
@@ -146,7 +147,7 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 			},
 			// depth is pretty arbitrary here, as long as its big enough to cover the updates
 			// from the target cid (ie >=2)
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 						_commits(
 							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",

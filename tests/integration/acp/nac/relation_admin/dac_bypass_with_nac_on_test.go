@@ -43,7 +43,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanDACBypass(t *testing.T) {
 			},
 
 			// This user, can not access the document as both NAC and DAC are enabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -65,7 +65,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanDACBypass(t *testing.T) {
 
 			// This user, can now dac-bypass when DAC and NAC are enabled (as it has dac-bypass rights).
 			// Note: This user does not own the document, but can still see it.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -122,7 +122,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
 			},
 
 			// This user, can not access the document as even though it has DAC ownership, but NAC is enabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -145,7 +145,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
 			// This user, can now dac-bypass when DAC and NAC are enabled (as it has dac-bypass rights).
 			// Note: This user does own the document in this case (but even if this user didn't own
 			// it would still be able to access, due to bypass magic when NAC is enabled).
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -202,7 +202,7 @@ func TestNAC_AdminRelation_PublicDocument_CanAccessPublicDocument(t *testing.T) 
 			},
 
 			// This user, can not access the document as even though it has DAC ownership, but NAC is enabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -223,7 +223,7 @@ func TestNAC_AdminRelation_PublicDocument_CanAccessPublicDocument(t *testing.T) 
 			},
 
 			// This user, can now get past NAC and access the public document that is not gated by DAC.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -281,7 +281,7 @@ func TestNAC_AdminRelation_DACByPassRevokation_CanNotDACBypass(t *testing.T) {
 
 			// This request will put an entry into the bypass cache. The following steps will
 			// make sure the revokation/clearing of cache is properly handled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -308,7 +308,7 @@ func TestNAC_AdminRelation_DACByPassRevokation_CanNotDACBypass(t *testing.T) {
 			},
 
 			// They should no longer be able to dac-bypass, this works only if cache is properly cleared.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {

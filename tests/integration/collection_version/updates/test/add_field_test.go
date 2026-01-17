@@ -35,7 +35,7 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -70,7 +70,7 @@ func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 				`,
 				ExpectedError: "test failed",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

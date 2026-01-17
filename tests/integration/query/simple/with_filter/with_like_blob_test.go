@@ -40,7 +40,7 @@ func TestQuerySimple_WithLikeOpOnBlobField_ShouldFilter(t *testing.T) {
 					"data": "FA02CC45"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {data: {_like: "%FF99%"}}) {
 						name

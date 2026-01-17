@@ -15,6 +15,7 @@ import (
 
 	"github.com/onsi/gomega"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -32,7 +33,7 @@ func TestQueryCommits_WithSingleCreateNestedLinks_Succeed(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {
@@ -103,7 +104,7 @@ func TestQueryCommits_WithSingleCreateNestedLinksCompositeFilter_Succeed(t *test
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits(filter: {fieldName: {_eq: "_C"}}) {
@@ -150,7 +151,7 @@ func TestQueryCommits_WithSingleCreateNestedLinksNestedFilter_Succeed(t *testing
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits(filter: {fieldName: {_eq: "_C"}}) {
@@ -206,7 +207,7 @@ func TestQueryCommits_WithSingleUpdateDoubleNestedLinks_Succeeds(t *testing.T) {
 						"age":	22
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {

@@ -60,7 +60,7 @@ func TestP2PDocumentAddAndRemoveSingle(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Fred has not been synced, as it was removed from the subscription set
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -140,7 +140,7 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -159,7 +159,7 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Andy the User has not been synced, as the docID was removed from the subscription set.
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -225,7 +225,7 @@ func TestP2PDocumentAddSingleAndRemoveErroneous(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Andy has been synced, as the unsubscribe errored and should not have affected
 				// the subscription to doc 0.
 				Request: `query {
@@ -288,7 +288,7 @@ func TestP2PDocumentAddSingleAndRemoveNone(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Andy has been synced, as nothing was removed from the subscription set
 				Request: `query {
 					Users {

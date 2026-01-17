@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 
 	"github.com/sourcenetwork/immutable"
@@ -33,7 +34,7 @@ func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				OperationName: immutable.Some("UsersByName"),
 				Request: `query UsersByName {
 					Users {
@@ -57,7 +58,7 @@ func TestQuerySimpleMultipleOperationsWithOperationName(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				OperationName: immutable.Some("UsersByAge"),
 				Request: `query UsersByName {
 					Users {
@@ -102,7 +103,7 @@ func TestQuerySimpleMultipleOperationsWithNoOperationName_ReturnsError(t *testin
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query UsersByName {
 					Users {
 						Name

@@ -34,7 +34,7 @@ func TestSchemaUpdates_AddFieldCRDTPCounter_NoError(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

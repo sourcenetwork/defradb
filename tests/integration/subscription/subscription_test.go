@@ -49,7 +49,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
@@ -63,7 +63,7 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
@@ -104,7 +104,7 @@ func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
@@ -137,7 +137,7 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 				}`,
 				Results: []map[string]any{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
@@ -178,7 +178,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
@@ -192,7 +192,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
@@ -253,7 +253,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_User(filter: {name: {_eq: "John"}}, input: {points: 45}) {
 						name
@@ -323,7 +323,7 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_User(input: {points: 55}) {
 						name

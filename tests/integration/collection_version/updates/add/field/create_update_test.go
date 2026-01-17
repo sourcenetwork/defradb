@@ -38,7 +38,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 			},
 			// We want to make sure that this works across database versions, so we tell
 			// the change detector to split here.
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -76,7 +76,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 					"email": "ih8oraclelicensing@netscape.net"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -143,7 +143,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 					"email": "ih8oraclelicensing@netscape.net"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits (filter: {fieldName: {_eq: "_C"}}) {
 						collectionVersionId

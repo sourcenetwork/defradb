@@ -44,7 +44,7 @@ func TestNAC_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNodeOwner_No
 			},
 
 			// Empty user can not access the private document.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(),
 				Request: `
 					query {
@@ -95,7 +95,7 @@ func TestNAC_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNonNodeOwner
 			},
 
 			// Empty user can not access the private document.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(),
 				Request: `
 					query {
@@ -146,7 +146,7 @@ func TestNAC_WithDACEnabled_AccessEmptyUser_PublicDocument_NotAuthorizedError(t 
 			},
 
 			// Empty user can not access the private document, because of NAC.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(),
 				Request: `
 					query {
