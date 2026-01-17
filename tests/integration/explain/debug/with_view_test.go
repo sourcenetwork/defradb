@@ -62,7 +62,7 @@ func TestDebugExplainRequestWithView(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: debug) {
 					UserView {
 						name
