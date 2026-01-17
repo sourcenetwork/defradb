@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testing.T) {
+func TestACP_AddPolicy_OneResourceThatIsEmpty_DoesntError(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -25,23 +25,9 @@ func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testin
 
 				Policy: `
 description: a policy
-name: test
+name: a policy
 resources:
 - name: users
-  permissions:
-  - name: delete
-  - expr: joker
-    name: extra
-  - expr: reader
-    name: read
-  - name: update
-  relations:
-  - name: joker
-    types:
-    - actor
-  - name: reader
-    types:
-    - actor
 `,
 			},
 		},
