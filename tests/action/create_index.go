@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -16,14 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
-
-// IndexedField contains the description of a field to be indexed.
-type IndexedField struct {
-	// Name contains the name of the field.
-	Name string
-	// Descending indicates whether the field is indexed in descending order.
-	Descending bool
-}
 
 // CreateIndex will attempt to create the given secondary index for the given collection
 // using the collection api.
@@ -47,10 +39,12 @@ type CreateIndex struct {
 	IndexName string
 
 	// The name of the field to index. Used only for single field indexes.
+	// It's a convenience field so that tests don't have to create a slice
+	// of [IndexedField] when only a single field index is needed.
 	FieldName string
 
 	// The fields to index. Used only for composite indexes.
-	Fields []IndexedField
+	Fields []client.IndexedFieldDescription
 
 	// If Unique is true, the index will be created as a unique index.
 	Unique bool
