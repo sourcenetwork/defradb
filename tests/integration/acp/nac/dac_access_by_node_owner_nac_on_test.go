@@ -51,7 +51,7 @@ func TestNAC_WithDACEnabled_AccessByNodeOwner_DoesNotOwnTheDocument_AllowAccess(
 			},
 
 			// Since this identity is the node owner, it can bypass DAC when NAC is enabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -97,7 +97,7 @@ func TestNAC_WithDACEnabled_AccessByNodeOwner_OwnsTheDocument_AllowAccess(t *tes
 			},
 
 			// Since this identity is the node and document owner, it can access.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -149,7 +149,7 @@ func TestNAC_WithDACEnabled_AccessByNodeOwner_PublicDocument_AllowAccess(t *test
 			},
 
 			// Since this identity is the node owner, it can bypass DAC when NAC is enabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {

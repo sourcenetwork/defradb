@@ -13,9 +13,10 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {

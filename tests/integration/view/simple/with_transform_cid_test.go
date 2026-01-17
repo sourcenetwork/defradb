@@ -62,7 +62,7 @@ func TestView_WithTransformCID_CanReuseExistingLens(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

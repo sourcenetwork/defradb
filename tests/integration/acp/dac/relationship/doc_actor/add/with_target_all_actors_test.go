@@ -98,7 +98,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
@@ -156,7 +156,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Now any identity can read
 
 				Request: `
@@ -180,7 +180,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // Now any identity can read
 
 				Request: `
@@ -313,7 +313,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(), // Can not read without an identity.
 
 				Request: `
@@ -371,7 +371,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(), // Now any identity can read, even if there is no identity
 
 				Request: `

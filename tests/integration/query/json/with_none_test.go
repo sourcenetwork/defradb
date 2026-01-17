@@ -38,7 +38,7 @@ func TestQueryJSON_WithNoneFilter_ShouldFilter(t *testing.T) {
 					"custom": [null, false, "second", {"one": 1}, [1, 2]]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_none: {_eq: null}}}) {
 						name
@@ -97,7 +97,7 @@ func TestQueryJSON_WithNoneFilterAndNestedArray_ShouldFilter(t *testing.T) {
 					"custom": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_none: {_eq: 3}}}) {
 						name

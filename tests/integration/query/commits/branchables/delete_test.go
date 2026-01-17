@@ -48,7 +48,7 @@ func TestQueryCommitsBranchables_WithDelete(t *testing.T) {
 			testUtils.DeleteDoc{
 				DocID: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid

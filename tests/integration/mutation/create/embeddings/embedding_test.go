@@ -55,7 +55,7 @@ func TestMutationCreate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {
@@ -105,7 +105,7 @@ func TestMutationCreate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 					"name_v": [1, 2, 3]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {

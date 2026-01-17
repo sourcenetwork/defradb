@@ -63,7 +63,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToLatest_AppliesForwardMigration(t *
 			testUtils.SetActiveCollectionVersion{
 				VersionID: collectionVersionID2,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -138,7 +138,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginal_AppliesInverseMigration(t
 			testUtils.SetActiveCollectionVersion{
 				VersionID: collectionVersionID1,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -213,7 +213,7 @@ func TestSchemaMigrationQuery_WithSetDefaultToOriginalVersionThatDocWasCreatedAt
 			testUtils.SetActiveCollectionVersion{
 				VersionID: collectionVersionID1,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

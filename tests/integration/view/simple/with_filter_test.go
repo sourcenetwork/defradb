@@ -49,7 +49,7 @@ func TestView_SimpleWithFilter(t *testing.T) {
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {
@@ -114,7 +114,7 @@ func TestView_SimpleWithFilterOnViewAndQuery(t *testing.T) {
 					"age": 31
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView(filter: {age: {_eq: 31}}) {

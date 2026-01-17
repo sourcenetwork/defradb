@@ -184,7 +184,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					UserView {
 						fullName

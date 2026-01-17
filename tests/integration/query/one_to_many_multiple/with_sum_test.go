@@ -115,7 +115,7 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoins(t *testing.T) {
 					"score":     4,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name

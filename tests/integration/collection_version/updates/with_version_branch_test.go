@@ -55,7 +55,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -100,7 +100,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// The phone field is queriable
 				Request: `query {
 					Users {
@@ -230,7 +230,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// The phone and discordName fields are queriable
 				Request: `query {
 					Users {
@@ -373,7 +373,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 				// Set the second schema version to be active
 				VersionID: schemaVersion2ID,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -385,7 +385,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -483,7 +483,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// The email and discordName fields are queriable
 				Request: `query {
 					Users {

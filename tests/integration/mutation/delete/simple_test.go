@@ -27,7 +27,7 @@ func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User
 				}`,
@@ -49,7 +49,7 @@ func TestMutationDeletion_WithoutSubSelectionFields(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User{
 

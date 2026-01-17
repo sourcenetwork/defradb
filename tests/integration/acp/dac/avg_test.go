@@ -13,6 +13,7 @@ package test_acp_dac
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func TestACP_QueryAverageWithoutIdentity(t *testing.T) {
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_avg(Employee: {field: salary})
@@ -45,7 +46,7 @@ func TestACP_QueryAverageWithIdentity(t *testing.T) {
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -69,7 +70,7 @@ func TestACP_QueryAverageWithWrongIdentity(t *testing.T) {
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {

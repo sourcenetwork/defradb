@@ -79,7 +79,7 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 					"_authorID":    testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -183,7 +183,7 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 					"_printedID": testUtils.NewDocIndex(2, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -287,7 +287,7 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(2, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

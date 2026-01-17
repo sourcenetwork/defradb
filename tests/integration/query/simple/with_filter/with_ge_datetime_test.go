@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
@@ -34,7 +35,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_ge: "2017-07-23T03:46:56-05:00"}}) {
 						Name
@@ -71,7 +72,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_ge: "2017-07-22T03:46:56-05:00"}}) {
 						Name
@@ -108,7 +109,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_ge: "2017-07-25T03:46:56-05:00"}}) {
 						Name
@@ -138,7 +139,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 					"Name": "Bob"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_ge: null}}) {
 						Name
@@ -187,7 +188,7 @@ func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *test
 					"Age":  44,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_ge: "2016-07-23T03:46:56-05:00"}}) {
 						Name

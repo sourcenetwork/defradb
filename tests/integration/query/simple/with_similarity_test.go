@@ -26,7 +26,7 @@ func TestQuerySimple_WithSimilarityOnQuery_ShouldError(t *testing.T) {
 					vector: [Int!]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_similarity
 				}`,
@@ -46,7 +46,7 @@ func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 					name: String
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User{
 						_similarity(pointsList: {vector: [1, 2, 3]})
@@ -69,7 +69,7 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 					pointsList: [Int!]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User{
 						_similarity(pointsList: {vector: [1.1, 1.2, 0.9]})
@@ -94,7 +94,7 @@ func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 					pets: [String!]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User{
 						_similarity(pets: {vector: [1.1, 1.2, 0.9]})
@@ -118,7 +118,7 @@ func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T)
 					pointsList: [Int!]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User{
 						_similarity(pointsList: {vector: [1, 2, 3]})
@@ -149,7 +149,7 @@ func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 					"pointsList": []int64{2, 4, 1},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User{
 						name
@@ -186,7 +186,7 @@ func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testi
 					"pointsList": []int64{2, 4, 1},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User{
 						name
@@ -216,7 +216,7 @@ func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 					"pointsList": []float32{2, 4, 1},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User{
 						name
@@ -253,7 +253,7 @@ func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 					"pointsList": []float64{2, 4, 1},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User{
 						name
@@ -290,7 +290,7 @@ func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 					"pointsList": [2, 4, 1]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User{
 						name
@@ -339,7 +339,7 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 					"pointsList": []int64{4, 5, 3},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {_alias: {sim: {_lt: 11}}}){
 						name
@@ -392,7 +392,7 @@ func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_Should
 					"pointsList": []int64{4, 5, 3},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(order: {_alias: {sim: DESC}}, limit: 2){
 						name
@@ -445,7 +445,7 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 					"pointsList": []int64{4, 5, 3},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {_alias: {sim2: {_gt: 20}}}){
 						name
@@ -499,7 +499,7 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testin
 					"pointsList": []int64{4, 5, 3},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {_or: [{_alias: {sim2: {_gt: 20}}}, {_alias: {sim: {_lt: 10}}}]}){
 						name

@@ -46,7 +46,7 @@ func TestQueryJSON_WithInFilter_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_in: [{tree:"oak",age:450}]}}) {
 						name

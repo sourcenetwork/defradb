@@ -53,7 +53,7 @@ func TestQueryCommitsBranchables_WithMultipleCreate(t *testing.T) {
 					"age":	25
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid

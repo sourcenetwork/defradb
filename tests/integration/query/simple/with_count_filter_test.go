@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -37,7 +38,7 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_count(Users: {filter: {Age: {_gt: 26}}})
 				}`,
@@ -75,7 +76,7 @@ func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
 					"CreatedAt": "2017-10-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_count(Users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56-05:00"}}})
 				}`,

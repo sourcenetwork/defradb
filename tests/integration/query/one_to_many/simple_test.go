@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -35,7 +36,7 @@ func TestQueryOneToMany_PrimaryDirection(t *testing.T) {
 						"verified": true
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Book {
 							name
@@ -108,7 +109,7 @@ func TestQueryOneToMany_SecondaryDirection(t *testing.T) {
 						"verified": false
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -165,7 +166,7 @@ func TestQueryOneToManyWithNonExistantParent(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -34,7 +35,7 @@ func TestQueryCommitsWithGroupBy(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 						_commits(groupBy: [height]) {
 							height
@@ -75,7 +76,7 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 						_commits(groupBy: [height]) {
 							height
@@ -132,7 +133,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 						_commits(groupBy: [cid]) {
 							cid
@@ -208,7 +209,7 @@ func TestQueryCommitsWithGroupByDocID(t *testing.T) {
 					"age":	26
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 						_commits(groupBy: [docID]) {
 							docID
@@ -249,7 +250,7 @@ func TestQueryCommitsWithGroupByFieldName(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 						_commits(groupBy: [fieldName]) {
 							fieldName
@@ -293,7 +294,7 @@ func TestQueryCommitsWithGroupByFieldNameWithChild(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 						_commits(groupBy: [fieldName]) {
 							fieldName

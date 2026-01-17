@@ -13,13 +13,14 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_sum
 				}`,
@@ -34,7 +35,7 @@ func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_sum(Users: {})
 				}`,
@@ -49,7 +50,7 @@ func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_sum(Users: {field: Age})
 				}`,
@@ -78,7 +79,7 @@ func TestQuerySimpleWithSum(t *testing.T) {
 					"Age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_sum(Users: {field: Age})
 				}`,

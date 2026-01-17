@@ -66,7 +66,7 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 					"_holdingID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						HandView {

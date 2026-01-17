@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -67,7 +68,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 						"verified": false
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -206,7 +207,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 						"verified": true
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author (groupBy: [age]) {
 						age
@@ -283,7 +284,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 func TestQueryOneToManyWithInnerJoinGroupNumberWithNonGroupFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name

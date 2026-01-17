@@ -193,11 +193,11 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 							"age": nil,
 						},
 					},
-					testUtils.Request{
+					&action.Request{
 						Request: tc.req,
 						Results: tc.result,
 					},
-					testUtils.Request{
+					&action.Request{
 						Request:  makeExplainQuery(tc.req),
 						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
 					},
@@ -356,11 +356,11 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 							"age": nil,
 						},
 					},
-					testUtils.Request{
+					&action.Request{
 						Request: tc.req,
 						Results: tc.result,
 					},
-					testUtils.Request{
+					&action.Request{
 						Request:  makeExplainQuery(tc.req),
 						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
 					},
@@ -548,11 +548,11 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 							"age": nil,
 						},
 					},
-					testUtils.Request{
+					&action.Request{
 						Request: tc.req,
 						Results: tc.result,
 					},
-					testUtils.Request{
+					&action.Request{
 						Request:  makeExplainQuery(tc.req),
 						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
 					},
@@ -740,11 +740,11 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 							"age": nil,
 						},
 					},
-					testUtils.Request{
+					&action.Request{
 						Request: tc.req,
 						Results: tc.result,
 					},
-					testUtils.Request{
+					&action.Request{
 						Request:  makeExplainQuery(tc.req),
 						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
 					},
@@ -932,11 +932,11 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"tags": []any{"colleague"},
 						},
 					},
-					testUtils.Request{
+					&action.Request{
 						Request: tc.req,
 						Results: tc.result,
 					},
-					testUtils.Request{
+					&action.Request{
 						Request:  makeExplainQuery(tc.req),
 						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
 					},

@@ -71,7 +71,7 @@ func TestView_SimpleWithTransformAggregate(t *testing.T) {
 					"age": 34,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserStdDev {

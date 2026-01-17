@@ -124,7 +124,7 @@ func TestBranchableCollection_AddNewFieldWithMultipleDocs_ShouldAddField(t *test
 					"email": "islam@gmail.com"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					User {

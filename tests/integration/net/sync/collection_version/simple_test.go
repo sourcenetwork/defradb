@@ -141,7 +141,7 @@ func TestSyncColVersion_WithInitialColVersion_CanBeActivatedAndQueried(t *testin
 				DocIDs:       []int{0},
 				SourceNodes:  []int{0},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

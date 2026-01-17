@@ -43,7 +43,7 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -111,7 +111,7 @@ func TestSchemaUpdates_AddFieldSimpleInactiveFalse_Errors(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -207,7 +207,7 @@ func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T
 				`,
 				ExpectedError: "add operation does not apply: doc is missing path",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -240,7 +240,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -281,7 +281,7 @@ func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -341,7 +341,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 				`,
 				ExpectedError: "no type found for given name. Type: 111",
 			},
-			testUtils.Request{
+			&action.Request{
 				// Email does not exist as the commit failed
 				Request: `query {
 					Users {
@@ -351,7 +351,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 				}`,
 				ExpectedError: "Cannot query field \"email\" on type \"Users\"",
 			},
-			testUtils.Request{
+			&action.Request{
 				// Original schema is preserved
 				Request: `query {
 					Users {

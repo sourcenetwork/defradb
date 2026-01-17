@@ -13,6 +13,7 @@ package backup
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func TestBackupImport_Simple_NoError(t *testing.T) {
 			testUtils.BackupImport{
 				ImportContent: `{"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -94,7 +95,7 @@ func TestBackupImport_WithNoKeys_NoError(t *testing.T) {
 			testUtils.BackupImport{
 				ImportContent: `{"User":[{"age":30,"name":"John"}]}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -127,7 +128,7 @@ func TestBackupImport_WithMultipleNoKeys_NoError(t *testing.T) {
 					{"age":32,"name":"Bob"}
 				]}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -164,7 +165,7 @@ func TestBackupImport_EmptyObject_NoError(t *testing.T) {
 			testUtils.BackupImport{
 				ImportContent: `{"User":[{}]}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -196,7 +197,7 @@ func TestBackupImport_WithMultipleNoKeysAndInvalidField_Errors(t *testing.T) {
 				]}`,
 				ExpectedError: "the given field does not exist. Name: INVALID",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {

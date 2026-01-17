@@ -38,7 +38,7 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -47,7 +47,7 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 				}`,
 				ExpectedError: "Cannot query field \"name\" on type \"Users\".",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						email
@@ -82,7 +82,7 @@ func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_docID

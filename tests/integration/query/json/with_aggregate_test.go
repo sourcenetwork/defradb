@@ -50,7 +50,7 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 					"custom": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_count(Users: {filter: {custom: {tree: {_eq: "oak"}}}})
 				}`,

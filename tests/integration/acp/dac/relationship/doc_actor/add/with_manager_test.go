@@ -88,7 +88,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // This identity can not read yet.
 
 				Request: `
@@ -134,7 +134,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // The other actor can read
 
 				Request: `
@@ -258,7 +258,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // This identity can not read yet.
 
 				Request: `
@@ -318,7 +318,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // The other actor can read
 
 				Request: `
@@ -364,7 +364,7 @@ resources:
 				DocID: 0,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3),
 
 				Request: `
@@ -455,7 +455,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity (to be manager) can not read yet.
 
 				Request: `
@@ -501,7 +501,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Manager can read now
 
 				Request: `
@@ -635,7 +635,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity (to be manager) can not read yet.
 
 				Request: `
@@ -736,7 +736,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Manager can read now
 
 				Request: `
@@ -792,7 +792,7 @@ resources:
 				DocID: 0,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Make sure manager was able to delete the document.
 
 				Request: `
@@ -934,7 +934,7 @@ resources:
 				ExpectedError: "UNAUTHORIZED",
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // The other actor can't read
 
 				Request: `
@@ -1074,7 +1074,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Manager can not read
 
 				Request: `

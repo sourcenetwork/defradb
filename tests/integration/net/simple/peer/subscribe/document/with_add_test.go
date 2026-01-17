@@ -63,7 +63,7 @@ func TestP2PDocument_AddSingle_ShouldSync(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -82,7 +82,7 @@ func TestP2PDocument_AddSingle_ShouldSync(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -137,7 +137,7 @@ func TestP2PDocument_AddSingleErroneousDocID_ShouldNotSync(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Nothing should sync
 				NodeID: immutable.Some(1),
 				Request: `query {

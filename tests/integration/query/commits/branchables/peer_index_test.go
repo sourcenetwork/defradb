@@ -46,7 +46,7 @@ func TestQueryCommitsBranchables_SyncsIndexAcrossPeerConnection(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// This query errors out if the document's index has not been correctly
 				// constructed
 				Request: `query {

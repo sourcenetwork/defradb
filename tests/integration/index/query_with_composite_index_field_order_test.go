@@ -59,7 +59,7 @@ func TestQueryWithCompositeIndex_WithDefaultOrder_ShouldFetchInDefaultOrder(t *t
 						"age":	24
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_like: "Al%"}}) {
@@ -136,7 +136,7 @@ func TestQueryWithCompositeIndex_WithDefaultOrderCaseInsensitive_ShouldFetchInDe
 						"age":	24
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_ilike: "al%"}}) {
@@ -227,7 +227,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInReve
 						"age":	24
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -254,7 +254,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstField_ShouldFetchInReve
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// we fetch all available docs with index
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
@@ -321,7 +321,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldAndNoFilter_Should
 						"age":	24
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -348,7 +348,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldAndNoFilter_Should
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// we fetch all available docs with index
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
@@ -409,7 +409,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnFirstFieldCaseInsensitive_Sh
 						"age":	24
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_ilike: "a%"}}) {
@@ -490,7 +490,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondField_ShouldFetchInRev
 						"age":	24
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_like: "Al%"}}) {
@@ -569,7 +569,7 @@ func TestQueryWithCompositeIndex_WithRevertedOrderOnSecondFieldCaseInsensitive_S
 						"age":	24
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_ilike: "al%"}}) {
@@ -638,7 +638,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnFirstField_Shoul
 						"age":	29
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_eq: "Alice"}, age: {_eq: 22}}) {
@@ -695,7 +695,7 @@ func TestQueryWithCompositeIndex_IfExactMatchWithRevertedOrderOnSecondField_Shou
 						"age":	29
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_eq: "Alice"}, age: {_eq: 22}}) {
@@ -732,7 +732,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnFirstFieldWithRevertedOrder_Shoul
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {name: {_in: ["Addo", "Andy", "Fred"]}}) {
 							name
@@ -767,7 +767,7 @@ func TestQueryWithCompositeIndex_WithInFilterOnSecondFieldWithRevertedOrder_Shou
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {age: {_in: [20, 28, 33]}}) {
 							name
@@ -846,7 +846,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstField_ShouldUseRangeOptimi
 						"age":	28
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -865,7 +865,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstField_ShouldUseRangeOptimi
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -935,7 +935,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstFieldWithMultipleFilters_S
 						"age":	32
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -950,7 +950,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstFieldWithMultipleFilters_S
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// Should fetch all entries with age > 25, then filter by name
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
@@ -1014,7 +1014,7 @@ func TestQueryWithCompositeIndex_WithDescendingFirstFieldAndRangeQuery_ShouldUse
 						"age":	28
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1037,7 +1037,7 @@ func TestQueryWithCompositeIndex_WithDescendingFirstFieldAndRangeQuery_ShouldUse
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
