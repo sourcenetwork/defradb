@@ -49,7 +49,7 @@ func TestNAC_AdminRelation_CanIndexList(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				ExpectedError: "not authorized to perform operation",
@@ -64,7 +64,7 @@ func TestNAC_AdminRelation_CanIndexList(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				Identity:        testUtils.ClientIdentity(2),
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
