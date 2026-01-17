@@ -34,7 +34,7 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				// Create the view on the `Books` collection
 				Query: `
 					Books {
@@ -102,7 +102,7 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				// Create the view on the `Books` collection
 				Query: `
 					Books {

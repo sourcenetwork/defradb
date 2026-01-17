@@ -27,7 +27,7 @@ func TestView_Simple(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -74,7 +74,7 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -131,7 +131,7 @@ func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -175,7 +175,7 @@ func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -225,7 +225,7 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				// `age` is present in the query but not the SDL
 				Query: `
 					User {
@@ -276,7 +276,7 @@ func TestView_SimpleViewOfView(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -288,7 +288,7 @@ func TestView_SimpleViewOfView(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					UserView {
 						name

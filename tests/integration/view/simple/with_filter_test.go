@@ -27,7 +27,7 @@ func TestView_SimpleWithFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User(filter: {name: {_eq: "John"}}) {
 						name
@@ -82,7 +82,7 @@ func TestView_SimpleWithFilterOnViewAndQuery(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User(filter: {name: {_eq: "John"}}) {
 						name

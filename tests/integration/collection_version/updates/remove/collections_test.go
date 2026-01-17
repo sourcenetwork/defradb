@@ -13,11 +13,12 @@ package remove
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/multiplier"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
