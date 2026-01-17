@@ -56,7 +56,6 @@ func (a *DropIndex) Execute() {
 
 		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
 		err := collection.DropIndex(ctx, a.IndexName)
-		resetStateContext(a.s)
 
 		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 	}

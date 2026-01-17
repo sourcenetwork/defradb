@@ -87,7 +87,6 @@ func (a *CreateIndex) Execute() {
 
 		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
 		_, err := collection.CreateIndex(ctx, indexDesc)
-		resetStateContext(a.s)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		if expectedErrorRaised {

@@ -64,7 +64,6 @@ func (a *GetIndexes) Execute() {
 
 		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
 		actualIndexes, err := collection.GetIndexes(ctx)
-		resetStateContext(a.s)
 
 		if assertError(a.s.T, err, a.ExpectedError) {
 			expectedErrorRaised = true
