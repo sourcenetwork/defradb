@@ -19,10 +19,13 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestSchemaOneMany_Primary(t *testing.T) {
 	test := testUtils.TestCase{
+		// exclude the secondary-index multiplier as it would modify the schema being tested
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -96,6 +99,8 @@ func TestSchemaOneMany_Primary(t *testing.T) {
 
 func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 	test := testUtils.TestCase{
+		// exclude the secondary-index multiplier as it would modify the schema being tested
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -146,6 +151,8 @@ func TestSchemaOneMany_SelfReferenceOneFieldLexographicallyFirst(t *testing.T) {
 
 func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) {
 	test := testUtils.TestCase{
+		// exclude the secondary-index multiplier as it would modify the schema being tested
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -194,6 +201,8 @@ func TestSchemaOneMany_SelfReferenceManyFieldLexographicallyFirst(t *testing.T) 
 
 func TestSchemaOneMany_SelfUsingActualName(t *testing.T) {
 	test := testUtils.TestCase{
+		// exclude the secondary-index multiplier as it would modify the schema being tested
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				// Note: The @primary directive is required due to

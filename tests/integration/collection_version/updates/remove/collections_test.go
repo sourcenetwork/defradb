@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -212,6 +213,8 @@ func TestColVersionUpdateRemoveCollectionWithSoftDeletedData(t *testing.T) {
 
 func TestColVersionUpdateCopyCollectionAddFieldRemoveOriginalCollection(t *testing.T) {
 	test := testUtils.TestCase{
+		// exclude the secondary-index multiplier as it would modify the schema being tested
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -407,6 +410,8 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 
 func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testing.T) {
 	test := testUtils.TestCase{
+		// exclude the secondary-index multiplier as it would modify the schema being tested
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -593,6 +598,8 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndMiddle(t *t
 
 func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *testing.T) {
 	test := testUtils.TestCase{
+		// exclude the secondary-index multiplier as it would modify the schema being tested
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

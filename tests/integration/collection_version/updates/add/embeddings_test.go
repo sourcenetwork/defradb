@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestColVersionUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldError(t *testing.T) {
@@ -174,6 +175,8 @@ func TestColVersionUpdate_AddVectorEmbeddingWithInvalidEmbeddingGenerationFieldK
 
 func TestColVersionUpdate_AddVectorEmbedding_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		// exclude the secondary-index multiplier as it would modify the schema being tested
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -535,6 +538,8 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingModel_ShouldErrorMultiple
 
 func TestColVersionUpdate_AddVectorEmbeddingWithMissingURL_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		// exclude the secondary-index multiplier as it would modify the schema being tested
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

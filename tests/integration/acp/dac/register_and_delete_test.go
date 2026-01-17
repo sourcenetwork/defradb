@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestACP_CreateWithoutIdentityAndDeleteWithoutIdentity_CanDelete(t *testing.T) {
@@ -273,6 +274,8 @@ resources:
 
 func TestACP_CreateWithIdentityAndDeleteWithoutIdentity_CanNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
@@ -364,6 +367,8 @@ resources:
 
 func TestACP_CreateWithIdentityAndDeleteWithWrongIdentity_CanNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 
 		Actions: []any{
 			testUtils.AddDACPolicy{

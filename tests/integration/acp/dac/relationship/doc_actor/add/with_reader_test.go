@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
@@ -573,6 +574,8 @@ resources:
 
 func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 
 		Actions: []any{
 			testUtils.AddDACPolicy{
