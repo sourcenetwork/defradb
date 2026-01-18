@@ -31,7 +31,7 @@ func equalAnyToAnySlice(a any, b []any) (bool, error) {
 	case []string:
 		return equalSlice(aTyped, b), nil
 	case []time.Time:
-		return equalSlice(aTyped, b), nil
+		return equalSliceTime(aTyped, b), nil
 
 	case []immutable.Option[bool]:
 		return equalOptionSlice(aTyped, b), nil
@@ -106,6 +106,35 @@ func equalSliceNumeric[T cmp.Ordered](a []T, b any) bool {
 			if !ok && !numbers.Equal(v, bTyped[i]) {
 				return false
 			} else if ok && v != bv {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
+	}
+}
+
+// equalSliceTime compares time.Time slices using the Equal method
+// which correctly handles timezone differences.
+func equalSliceTime(a []time.Time, b any) bool {
+	switch bTyped := b.(type) {
+	case []time.Time:
+		if len(a) != len(bTyped) {
+			return false
+		}
+		for i, v := range a {
+			if !v.Equal(bTyped[i]) {
+				return false
+			}
+		}
+		return true
+	case []any:
+		if len(a) != len(bTyped) {
+			return false
+		}
+		for i, v := range a {
+			if bv, ok := bTyped[i].(time.Time); !ok || !v.Equal(bv) {
 				return false
 			}
 		}
