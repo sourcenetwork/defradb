@@ -46,7 +46,7 @@ func TestPatchRelation_OneToOne_CreatesUniqueIndex(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -59,7 +59,7 @@ func TestPatchRelation_OneToOne_CreatesUniqueIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    1,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -109,7 +109,7 @@ func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *te
 					]
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 1,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -130,11 +130,11 @@ func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *te
 					},
 				},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    2,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -172,11 +172,11 @@ func TestPatchRelation_OneToMany_DoesNotCreateUniqueIndex(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    1,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -219,7 +219,7 @@ func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *
 					]
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -235,14 +235,14 @@ func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *
 			testUtils.SetActiveCollectionVersion{
 				VersionID: authorV1,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
 			testUtils.SetActiveCollectionVersion{
 				VersionID: authorV2,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{

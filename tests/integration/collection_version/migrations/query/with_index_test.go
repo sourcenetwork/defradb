@@ -344,7 +344,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 					},
 				},
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				FieldName: "age",
 			},
 			testUtils.Request{
@@ -437,7 +437,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexD
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV1,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				FieldName: "age",
 			},
 			testUtils.Request{
