@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	router, err := http.NewApiRouter()
+	router, err := http.NewApiRouter(nil)
 	if err != nil {
 		panic(err)
 	}
