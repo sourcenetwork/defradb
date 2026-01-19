@@ -48,8 +48,6 @@ func (c *collection) Truncate(
 	return txn.Commit()
 }
 
-// todo - this function should also remove relevant blocks from the blockstore.
-// https://github.com/sourcenetwork/defradb/issues/4324
 func (c *collection) truncate(
 	ctx context.Context,
 ) error {
