@@ -240,7 +240,6 @@ type SetActiveCollectionVersion struct {
 	ExpectedError string
 }
 
-
 // CreateDoc will attempt to create the given document in the given collection
 // using the set [MutationType].
 type CreateDoc struct {
