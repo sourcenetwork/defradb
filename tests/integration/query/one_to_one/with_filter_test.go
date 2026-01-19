@@ -36,7 +36,7 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{
@@ -90,7 +90,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			testUtils.Request{
@@ -144,7 +144,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
 			testUtils.Request{
@@ -203,7 +203,7 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -212,7 +212,7 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 					"name":         "Cornelia Funke",
 					"age":          62,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.Request{
@@ -264,7 +264,7 @@ func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{
@@ -322,7 +322,7 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -331,7 +331,7 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 					"name":         "Some Writer",
 					"age":          45,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -340,13 +340,13 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 					"name":         "Some Other Writer",
 					"age":          30,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 2),
+					"_publishedID": testUtils.NewDocIndex(0, 2),
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 					Book(filter: {_and: [
-						{rating: {_ge: 4.0}},
+						{rating: {_geq: 4.0}},
 						{author: {verified: {_eq: true}}}
 					]}) {
 						name
@@ -408,7 +408,7 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -417,7 +417,7 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 					"name":         "Some Writer",
 					"age":          45,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -426,7 +426,7 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 					"name":         "Some Other Writer",
 					"age":          35,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 2),
+					"_publishedID": testUtils.NewDocIndex(0, 2),
 				},
 			},
 			testUtils.CreateDoc{
@@ -435,19 +435,19 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 					"name":         "Yet Another Writer",
 					"age":          30,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 3),
+					"_publishedID": testUtils.NewDocIndex(0, 3),
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 					Book(filter: {_or: [
 						{_and: [
-							{rating: {_ge: 4.0}},
-							{author: {age: {_le: 45}}}
+							{rating: {_geq: 4.0}},
+							{author: {age: {_leq: 45}}}
 						]},
 						{_and: [
-							{rating: {_le: 3.5}},
-							{author: {age: {_ge: 35}}}
+							{rating: {_leq: 3.5}},
+							{author: {age: {_geq: 35}}}
 						]}
 					]}) {
 						name
@@ -525,7 +525,7 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -534,7 +534,7 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 					"name":         "Some Writer",
 					"age":          45,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -543,7 +543,7 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 					"name":         "Some Other Writer",
 					"age":          30,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 2),
+					"_publishedID": testUtils.NewDocIndex(0, 2),
 				},
 			},
 			testUtils.Request{
@@ -573,7 +573,7 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 			testUtils.Request{
 				Request: `query {
 					Book(filter: {_and: [
-						{rating: {_ge: 4.0}},
+						{rating: {_geq: 4.0}},
 						{author: {age: {_eq: 45}}}
 					]}) {
 						name
@@ -590,10 +590,10 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 				},
 			},
 			testUtils.Request{
-				// This is the same as {_not: {_and: [{rating: {_ge: 4.0}}, {author: {age: {_eq: 45}}}]}}
+				// This is the same as {_not: {_and: [{rating: {_geq: 4.0}}, {author: {age: {_eq: 45}}}]}}
 				Request: `query {
 					Book(filter: {_not: {
-						rating: {_ge: 4.0},
+						rating: {_geq: 4.0},
 						author: {age: {_eq: 45}}
 					}}) {
 						name

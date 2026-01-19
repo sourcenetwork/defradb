@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_OneResourceThatIsEmpty_Error(t *testing.T) {
+func TestACP_AddPolicy_NoRelationsLabel_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -24,17 +24,36 @@ func TestACP_AddPolicy_OneResourceThatIsEmpty_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: a policy
-                    description: a policy
+description: a policy
+name: a policy
+resources:
+- name: users
+  permissions:
+  - name: delete
+`,
+			},
+		},
+	}
 
-                    actor:
-                      name: actor
+	testUtils.ExecuteTestCase(t, test)
+}
 
-                    resources:
-                      users:
-                `,
+func TestACP_AddPolicy_EmptyRelations_NoError(t *testing.T) {
+	test := testUtils.TestCase{
 
-				ExpectedError: "BAD_INPUT",
+		Actions: []any{
+			testUtils.AddDACPolicy{
+				Identity: testUtils.ClientIdentity(1),
+
+				Policy: `
+description: a policy
+name: a policy
+resources:
+- name: users
+  permissions:
+  - name: delete
+  relations:
+`,
 			},
 		},
 	}

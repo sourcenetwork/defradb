@@ -16,31 +16,31 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
+func TestQuerySimpleWithIntLEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"HeightM": 2.1
+					"Age": 21
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"HeightM": 3.2
+					"Age": 32
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ne: 2.1}}) {
+					Users(filter: {Age: {_leq: 21}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 					},
 				},
@@ -51,29 +51,58 @@ func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
+func TestQuerySimpleWithIntLEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"HeightM": 2.1
+					"Age": 21
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"HeightM": 3.2
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred"
+					"Age": 32
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ne: null}}) {
+					Users(filter: {Age: {_leq: 22}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithIntLEFilterBlockWithNullValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {Age: {_leq: null}}) {
 						Name
 					}
 				}`,
@@ -82,12 +111,8 @@ func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
 						{
 							"Name": "Bob",
 						},
-						{
-							"Name": "John",
-						},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}

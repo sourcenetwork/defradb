@@ -28,47 +28,30 @@ func TestACP_LinkSchema_UseValidResource_AcceptSchema(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: A Partially DRI Compliant Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      usersValid:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                      usersInvalid:
-                        permissions:
-                          read:
-                            expr: reader - owner
-                          update:
-                            expr: reader
-                          delete:
-                            expr: reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+name: test
+description: A Partially DRI Compliant Policy
+resources:
+- name: usersInvalid
+  permissions:
+  - expr: reader
+    name: delete
+  - expr: reader
+    name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+- name: usersValid
+  permissions:
+  - name: delete
+  - name: read
+    expr: reader
+  - name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{

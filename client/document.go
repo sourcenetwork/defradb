@@ -708,19 +708,20 @@ func (doc *Document) Set(ctx context.Context, field string, value any) error {
 		return NewErrFieldNotExist(field)
 	}
 
-	if fd.Kind == FieldKind_DocID && strings.HasSuffix(field, request.RelatedObjectID) {
-		objFieldName := strings.TrimSuffix(field, request.RelatedObjectID)
-		ofd, exists := doc.collection.GetFieldByName(objFieldName)
-		if exists && !ofd.IsPrimary {
-			return NewErrCannotSetRelationFromSecondarySide(field)
+	if fd.Kind == FieldKind_DocID {
+		if objFieldName, ok := request.ToRelatedObjectName(field); ok {
+			ofd, exists := doc.collection.GetFieldByName(objFieldName)
+			if exists && !ofd.IsPrimary {
+				return NewErrCannotSetRelationFromSecondarySide(field)
+			}
 		}
 	} else if fd.Kind.IsObject() && !fd.IsPrimary {
 		return NewErrCannotSetRelationFromSecondarySide(field)
 	}
 
 	if fd.Kind.IsObject() && !fd.Kind.IsArray() {
-		if !strings.HasSuffix(field, request.RelatedObjectID) {
-			field = field + request.RelatedObjectID
+		if _, ok := request.ToRelatedObjectName(field); !ok {
+			field = request.ToFieldID(field)
 		}
 		fd, exists = doc.collection.GetFieldByName(field)
 		if !exists {

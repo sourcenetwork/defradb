@@ -11,8 +11,13 @@
 package wizard
 
 import (
+	"bytes"
+	"context"
 	"encoding/hex"
+	"net/http"
 	"os"
+	"os/exec"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -329,4 +334,75 @@ func callback_GenerateSearchableEncryptionKey(_ step, ctx *WizardContext) error 
 		return err
 	}
 	return nil
+}
+
+// This callback will start a DefraDB instance and perform a health check on it
+func callback_PerformHealthcheck(_ step, ctx *WizardContext) error {
+	printToTerminal(TerminalClearANSICode)
+	printToTerminal("Performing health check...")
+	defer printToTerminal(TerminalClearANSICode)
+
+	// Entire health check must finish within a finite amount of time
+	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), HealthCheckTimeoutTimeInSeconds*time.Second)
+	defer cancel()
+
+	// Resolve the binary path to the one that launched the wizard
+	// The reason we do this, is because the purpose of the wizard is to help the user configure
+	// DefraDB after installing it. If this function is being called by the wizard, we know
+	// that the binary has been built successfully. This function will use that binary to
+	// start DefraDB and perform the health check. This ensures that we are testing a specific
+	// installation of Defra, rather than testing the behavior of our code in a general sense.
+	binPath, err := os.Executable()
+	if err != nil {
+		return NewErrFailedToResolveBinary(err)
+	}
+
+	cmd := exec.CommandContext(
+		ctxWithTimeout,
+		binPath,
+		"start",
+	)
+
+	// Capture the output of the command
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+
+	// Start DefraDB, checking that it started successfully
+	if err := cmd.Start(); err != nil {
+		return NewErrFailedToStartDefraDB(err)
+	}
+
+	// Defer shutting down defra after the health check
+	defer func() {
+		if cmd.Process != nil {
+			_ = cmd.Process.Signal(os.Interrupt)
+			_, _ = cmd.Process.Wait()
+		}
+	}()
+
+	// Poll the health endpoint
+	healthURL := "http://localhost:9181/health-check"
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctxWithTimeout.Done():
+			return NewErrFailedToStartDefraDB(errors.New(extractMeaningfulError(output.String())))
+
+		case <-ticker.C:
+			resp, err := http.Get(healthURL)
+			if err != nil {
+				continue // server not up yet
+			}
+
+			_ = resp.Body.Close()
+
+			// The health check is successful
+			if resp.StatusCode == http.StatusOK {
+				return nil
+			}
+		}
+	}
 }

@@ -59,7 +59,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 				Request: `query {
 					Book {
 						name
-						author_id
+						_authorID
 						author {
 							name
 						}
@@ -69,20 +69,21 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 					"Book": []map[string]any{
 						{
 							"name":      "A Time for Mercy",
-							"author_id": testUtils.NewDocIndex(0, 0),
+							"_authorID": testUtils.NewDocIndex(0, 0),
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
 						},
 						{
 							"name":      "Painted House",
-							"author_id": testUtils.NewDocIndex(0, 0),
+							"_authorID": testUtils.NewDocIndex(0, 0),
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -140,11 +141,11 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 				Request: `query {
 					Book {
 						name
-						author_id
+						_authorID
 						author {
 							name
 						}
-						publisher_id
+						_publisherID
 						publisher {
 							name
 						}
@@ -154,11 +155,11 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 					"Book": []map[string]any{
 						{
 							"name":      "Painted House",
-							"author_id": testUtils.NewDocIndex(0, 0),
+							"_authorID": testUtils.NewDocIndex(0, 0),
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
-							"publisher_id": testUtils.NewDocIndex(1, 0),
+							"_publisherID": testUtils.NewDocIndex(1, 0),
 							"publisher": map[string]any{
 								"name": "Penguin Books",
 							},
@@ -196,7 +197,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 							"Name": "author", "Kind": "Author", "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
-							"Name": "author_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+							"Name": "_authorID", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
 							"Name": "books", "Kind": "[Book]", "RelationName": "author_book"
@@ -244,6 +245,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

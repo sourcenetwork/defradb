@@ -68,7 +68,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 			DocMap: map[string]any{
 				"name":      "Painted House",
 				"rating":    4.9,
-				"author_id": testUtils.NewDocIndex(0, 0),
+				"_authorID": testUtils.NewDocIndex(0, 0),
 			},
 		},
 		testUtils.CreateDoc{
@@ -77,7 +77,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 			DocMap: map[string]any{
 				"name":      "A Time for Mercy",
 				"rating":    4.5,
-				"author_id": testUtils.NewDocIndex(0, 0),
+				"_authorID": testUtils.NewDocIndex(0, 0),
 			},
 		},
 		testUtils.CreateDoc{
@@ -86,7 +86,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 			DocMap: map[string]any{
 				"name":      "Theif Lord",
 				"rating":    4.8,
-				"author_id": testUtils.NewDocIndex(0, 1),
+				"_authorID": testUtils.NewDocIndex(0, 1),
 			},
 		},
 	}

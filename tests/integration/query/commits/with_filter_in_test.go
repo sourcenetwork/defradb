@@ -198,7 +198,7 @@ func TestQueryCommits_WithFilterFieldNameInAndCondition_ReturnsFilteredCommits(t
 			},
 			testUtils.Request{
 				Request: `query {
-					_commits(filter: {_and: [{fieldName: {_in: ["age", "name"]}}, {fieldName: {_ne: "age"}}]}) {
+					_commits(filter: {_and: [{fieldName: {_in: ["age", "name"]}}, {fieldName: {_neq: "age"}}]}) {
 						fieldName
 					}
 				}`,

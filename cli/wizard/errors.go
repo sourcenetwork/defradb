@@ -31,6 +31,8 @@ var (
 	errInvalidHexKey               = errors.New("invalid hex key")
 	errInvalidAES256KeyLength      = errors.New("invalid AES-256 key length")
 	errInvalidEd25519KeyLength     = errors.New("invalid Ed25519 key length")
+	errFailedToResolveBinary       = errors.New("failed to resolve binary")
+	errFailedToStartDefraDB        = errors.New("failed to start defradb")
 )
 
 func NewErrModelTypeMismatch(stepID, expectedType string) error {
@@ -88,5 +90,21 @@ func NewErrInvalidEd25519KeyLength(length int) error {
 		"%w: "+"invalid Ed25519 key length: %d bytes, expected 64 or 96",
 		errInvalidEd25519KeyLength,
 		length,
+	)
+}
+
+func NewErrFailedToStartDefraDB(err error) error {
+	return fmt.Errorf(
+		"%w: "+"failed to start defradb: %w",
+		errFailedToStartDefraDB,
+		err,
+	)
+}
+
+func NewErrFailedToResolveBinary(err error) error {
+	return fmt.Errorf(
+		"%w: "+"failed to resolve binary: %w",
+		errFailedToResolveBinary,
+		err,
 	)
 }

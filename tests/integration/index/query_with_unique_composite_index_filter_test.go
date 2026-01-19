@@ -105,7 +105,7 @@ func TestQueryWithUniqueCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T)
 
 func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {name: {_ne: "Keenan"}, age: {_gt: 44}}) {
+		User(filter: {name: {_neq: "Keenan"}, age: {_gt: 44}}) {
 			name
 		}
 	}`
@@ -142,7 +142,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldF
 
 func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {name: {_ne: "Keenan"}, age: {_gt: 44}}) {
+		User(filter: {name: {_neq: "Keenan"}, age: {_gt: 44}}) {
 			name
 		}
 	}`
@@ -179,7 +179,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterThanFilterOnSecondField_Should
 
 func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {name: {_ne: "Keenan"}, age: {_ge: 44},}) {
+		User(filter: {name: {_neq: "Keenan"}, age: {_geq: 44},}) {
 			name
 		}
 	}`
@@ -217,7 +217,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnFirstField_Shou
 
 func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_ge: 44}, name: {_ne: "Keenan"}}) {
+		User(filter: {age: {_geq: 44}, name: {_neq: "Keenan"}}) {
 			name
 		}
 	}`
@@ -255,7 +255,7 @@ func TestQueryWithUniqueCompositeIndex_WithGreaterOrEqualFilterOnSecondField_Sho
 
 func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_lt: 24}, name: {_ne: "Shahzad"}}) {
+		User(filter: {age: {_lt: 24}, name: {_neq: "Shahzad"}}) {
 			name
 		}
 	}`
@@ -292,7 +292,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetc
 
 func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_lt: 24}, name: {_ne: "Shahzad"}}) {
+		User(filter: {age: {_lt: 24}, name: {_neq: "Shahzad"}}) {
 			name
 		}
 	}`
@@ -329,7 +329,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessThanFilterOnSecondField_ShouldFet
 
 func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_le: 28}, name: {_ne: "Bruno"}}) {
+		User(filter: {age: {_leq: 28}, name: {_neq: "Bruno"}}) {
 			name
 		}
 	}`
@@ -367,7 +367,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldF
 
 func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_le: 28}, name: {_ne: "Bruno"}}) {
+		User(filter: {age: {_leq: 28}, name: {_neq: "Bruno"}}) {
 			name
 		}
 	}`
@@ -405,7 +405,7 @@ func TestQueryWithUniqueCompositeIndex_WithLessOrEqualFilterOnSecondField_Should
 
 func TestQueryWithUniqueCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {name: {_ne: "Islam"}, age: {_ne: 28}}) {
+		User(filter: {name: {_neq: "Islam"}, age: {_neq: 28}}) {
 			name
 		}
 	}`

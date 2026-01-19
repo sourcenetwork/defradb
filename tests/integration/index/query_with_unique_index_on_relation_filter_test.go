@@ -43,14 +43,14 @@ func TestQueryWithUniqueCompositeIndex_WithFilterOnIndexedRelation_ShouldFilter(
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"manufacturer": "Apple",
-					"owner_id":     testUtils.NewDocIndex(0, 0),
+					"_ownerID":     testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{
 				Request: `query {
 					User {
 						name
-						devices(filter: {owner_id: {_eq: "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd"}}) {
+						devices(filter: {_ownerID: {_eq: "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd"}}) {
 							manufacturer
 						}
 					}

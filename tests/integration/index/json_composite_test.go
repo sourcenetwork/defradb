@@ -222,7 +222,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 			name: "With _le and _gt filters",
 			req: `query {
 				User(filter: {
-					age: {_le: 35},
+					age: {_leq: 35},
 					custom: {val: {_gt: 4}}
 				}) {
 					name
@@ -257,8 +257,8 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 			name: "With _ne and _ge filters",
 			req: `query {
 				User(filter: {
-					_and: [{ age: {_ne: 35} }, { age: {_ne: 40} }],
-					custom: {val: {_ge: 5}} 
+					_and: [{ age: {_neq: 35} }, { age: {_neq: 40} }],
+					custom: {val: {_geq: 5}} 
 				}) {
 					name
 				}

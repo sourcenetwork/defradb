@@ -11,6 +11,10 @@
 package wizard
 
 const (
+
+	// The maximum amount of time to allow for the health check to complete
+	HealthCheckTimeoutTimeInSeconds = 10
+
 	// Keyboard keys
 	KEY_CONTROL_C = "ctrl+c"
 	KEY_ENTER     = "enter"
@@ -55,4 +59,9 @@ const (
 	stepSelectKeyTypesID                          = "stepSelectKeyTypes"
 	stepConfirmKeyringFilesGeneratedID            = "stepConfirmKeyringFilesGenerated"
 	stepConfirmSystemKeyringKeysGeneratedID       = "stepConfirmSystemKeyringKeysGenerated"
+	stepQueryPerformingHealthCheckID              = "stepQueryPerformingHealthCheck"
+	stepWillRunHealthcheckID                      = "stepWillRunHealthcheck"
+	stepPerformHealthcheckID                      = "stepPerformHealthcheck"
+	stepHealthcheckGoodID                         = "stepHealthcheckGood"
+	stepSetupCompleteID                           = "stepSetupComplete"
 )

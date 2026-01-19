@@ -48,7 +48,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing
 				Doc: fmt.Sprintf(
 					`{
 						"name": "Painted House",
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author1ID,
 				),
@@ -56,14 +56,14 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing
 			testUtils.UpdateDoc{
 				CollectionID: 1,
 				DocID:        1,
-				// NOTE: There is no `published_id` on book.
+				// NOTE: There is no `_publishedID` on book.
 				Doc: fmt.Sprintf(
 					`{
-						"published_id": "%s"
+						"_publishedID": "%s"
 					}`,
 					bookID,
 				),
-				ExpectedError: "the given field does not exist. Name: published_id",
+				ExpectedError: "the given field does not exist. Name: _publishedID",
 			},
 		},
 	}
@@ -88,7 +88,7 @@ func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.
 				Doc: fmt.Sprintf(
 					`{
 						"name": "Painted House",
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author1ID,
 				),
@@ -98,7 +98,7 @@ func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					invalidAuthorID,
 				),
@@ -139,7 +139,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Erro
 				Doc: fmt.Sprintf(
 					`{
 						"name": "Painted House",
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author1ID,
 				),
@@ -150,7 +150,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Erro
 				Doc: fmt.Sprintf(
 					`{
 						"notName": "Unpainted Condo",
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author2ID,
 				),
@@ -185,7 +185,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 				Doc: fmt.Sprintf(
 					`{
 						"name": "Painted House",
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author1ID,
 				),
@@ -195,7 +195,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author2ID,
 				),

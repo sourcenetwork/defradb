@@ -27,6 +27,7 @@ import (
 	"slices"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -200,7 +201,7 @@ existingVersionLoop:
 		// add one.
 		for _, field := range col.Fields {
 			if field.Kind.IsObject() && !field.Kind.IsArray() {
-				idFieldName := field.Name + "_id"
+				idFieldName := request.ToFieldID(field.Name)
 				if _, ok := col.GetFieldByName(idFieldName); !ok {
 					col.Fields = append(col.Fields, client.CollectionFieldDescription{
 						Name:         idFieldName,
@@ -797,7 +798,7 @@ func deleteCollectionBlocks(
 }
 
 // finalizeRelations determines which side of a relation is primary and sets IsPrimary=true
-// on both the relation field and its corresponding _id field.
+// on both the relation field and its corresponding _<fieldName>ID field.
 //
 // A relation field is marked as primary if:
 // - The target collection has no corresponding field pointing back (one-sided relation), OR
@@ -812,7 +813,7 @@ func deleteCollectionBlocks(
 // one primary side to store the foreign key.
 //
 // For one-to-one relations, this function also ensures a unique index exists on the primary
-// side's _id field to enforce the 1-to-1 constraint efficiently.
+// side's _<fieldName>ID field to enforce the 1-to-1 constraint efficiently.
 func finalizeRelations(
 	newCollections []core.Collection,
 	existingCollections []client.CollectionVersion,
@@ -861,7 +862,7 @@ func finalizeRelations(
 			if !field.IsPrimary && !isOneToOne {
 				newCollections[i].Definition.Fields[fieldIndex].IsPrimary = true
 
-				idFieldName := field.Name + "_id"
+				idFieldName := request.ToFieldID(field.Name)
 				for j, f := range newCollections[i].Definition.Fields {
 					if f.Name == idFieldName {
 						newCollections[i].Definition.Fields[j].IsPrimary = true
@@ -935,10 +936,10 @@ func ensureOneToOneUniqueIndex(
 	collectionName string,
 	relationFieldName string,
 ) (newIndex *client.IndexCreateRequest, err error) {
-	idFieldName := relationFieldName + "_id"
+	idFieldName := request.ToFieldID(relationFieldName)
 
 	// Check for user-defined index on either the _id field or the relation field name
-	// (e.g., "address_id" or "address" since @index on relation field uses field name)
+	// (e.g., "_addressID" or "address" since @index on relation field uses field name)
 	isUnique, hasIndex := findIndexWithFirstField(createIndexes, existingIndexes, idFieldName)
 	if !hasIndex {
 		isUnique, hasIndex = findIndexWithFirstField(createIndexes, existingIndexes, relationFieldName)

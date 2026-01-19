@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
+func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -30,12 +30,12 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2010-07-23T03:46:56-05:00"
+					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_leq: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -53,7 +53,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
+func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -67,12 +67,12 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2010-07-23T03:46:56-05:00"
+					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-22T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_leq: "2018-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -90,7 +90,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
+func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -103,57 +103,22 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"Age": 32,
-					"CreatedAt": "2010-07-23T03:46:56-05:00"
+					"Age": 32
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2017-07-25T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"CreatedAt": "2010-07-23T03:46:56-05:00"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users(filter: {CreatedAt: {_ge: null}}) {
+					Users(filter: {CreatedAt: {_leq: null}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"Name": "John",
-						},
 						{
 							"Name": "Bob",
 						},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}
@@ -161,7 +126,7 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
+func TestQuerySimple_WithNilDateTimeLEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -186,7 +151,7 @@ func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *test
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ge: "2016-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_leq: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 						Age
 						CreatedAt

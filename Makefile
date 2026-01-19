@@ -214,7 +214,7 @@ ollama:
 ollama\:nomic:
 # make sure ollama is running before continuing
 	time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://localhost:11434
-	ollama pull nomic-embed-text
+	tools/scripts/ollama-pull.sh nomic-embed-text
 
 .PHONY: dev\:start
 dev\:start:

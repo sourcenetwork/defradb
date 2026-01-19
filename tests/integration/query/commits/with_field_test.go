@@ -152,7 +152,7 @@ func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t
 			},
 			testUtils.Request{
 				Request: `query {
-						_commits(filter: {fieldName: {_ne: "_C"}}) {
+						_commits(filter: {fieldName: {_neq: "_C"}}) {
 							fieldName
 						}
 					}`,
