@@ -13,6 +13,7 @@ package action
 import (
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -55,7 +56,14 @@ func (a *DropIndex) Execute() {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
 
 		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
-		err := collection.DropIndex(ctx, a.IndexName)
+
+		opts := options.CollectionDropIndex()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
+		err := collection.DropIndex(ctx, a.IndexName, opts)
 
 		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 	}

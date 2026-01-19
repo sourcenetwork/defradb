@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -63,7 +64,14 @@ func (a *GetIndexes) Execute() {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
 
 		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
-		actualIndexes, err := collection.GetIndexes(ctx)
+
+		opts := options.CollectionGetIndexes()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
+		actualIndexes, err := collection.GetIndexes(ctx, opts)
 
 		if assertError(a.s.T, err, a.ExpectedError) {
 			expectedErrorRaised = true
