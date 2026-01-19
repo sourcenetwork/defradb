@@ -20,9 +20,9 @@ import (
 type RefreshViews struct {
 	stateful
 
-	// NodeID may hold the ID (index) of a node to create this View on.
+	// NodeID may hold the ID (index) of a node to refresh views on.
 	//
-	// If a value is not provided the view will be created on all nodes.
+	// If a value is not provided the views will be refreshed on all nodes.
 	NodeID immutable.Option[int]
 
 	// The set of fetch options for the views.
