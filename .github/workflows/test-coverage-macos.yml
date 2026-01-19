@@ -24,8 +24,7 @@ on:
       - develop
 
 concurrency:
-  group: ${{ github.workflow }}-\
-    ${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -102,7 +101,7 @@ jobs:
           path: coverage_reports
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: defradb-codecov
