@@ -141,8 +141,8 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_count(published: {filter: {rating: {_ne: null}}})
-						published(filter: {rating: {_ne: null}}){
+						_count(published: {filter: {rating: {_neq: null}}})
+						published(filter: {rating: {_neq: null}}){
 							name
 						}
 					}

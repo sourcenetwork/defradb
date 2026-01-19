@@ -34,7 +34,7 @@ func TestQueryInlineStringArray_WithAllFilter_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {pageHeaders: {_all: {_ne: null}}}) {
+					Users(filter: {pageHeaders: {_all: {_neq: null}}}) {
 						name
 					}
 				}`,
@@ -69,7 +69,7 @@ func TestQueryInlineNotNullStringArray_WithAllFilter_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {preferredStrings: {_all: {_ne: ""}}}) {
+					Users(filter: {preferredStrings: {_all: {_neq: ""}}}) {
 						name
 					}
 				}`,
@@ -104,7 +104,7 @@ func TestQueryInlineIntArray_WithAllFilter_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {testScores: {_all: {_ne: null}}}) {
+					Users(filter: {testScores: {_all: {_neq: null}}}) {
 						name
 					}
 				}`,
@@ -174,7 +174,7 @@ func TestQueryInlineFloatArray_WithAllFilter_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {pageRatings: {_all: {_ne: null}}}) {
+					Users(filter: {pageRatings: {_all: {_neq: null}}}) {
 						name
 					}
 				}`,
@@ -244,7 +244,7 @@ func TestQueryInlineBooleanArray_WithAllFilter_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {indexLikesDislikes: {_all: {_ne: null}}}) {
+					Users(filter: {indexLikesDislikes: {_all: {_neq: null}}}) {
 						name
 					}
 				}`,

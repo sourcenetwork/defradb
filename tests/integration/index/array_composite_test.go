@@ -369,7 +369,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 		User(filter: {
 			numbers1: {_all: {_gt: 0}}, 
 			numbers2: {_none: {_eq: 40}}, 
-			numbers3: {_any: {_le: 200}}
+			numbers3: {_any: {_leq: 200}}
 		}) {
 			name
 		}

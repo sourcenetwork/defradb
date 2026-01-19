@@ -17,39 +17,31 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
+func TestQuerySimpleWithStringNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Verified": true
+					"Age": 21
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred",
-					"Verified": false
+					"Name": "Bob",
+					"Age": 32
 				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {Verified: {_ne: true}}) {
-						Name
+					Users(filter: {Name: {_neq: "John"}}) {
+						Age
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Fred",
-						},
-						{
-							"Name": "Bob",
+							"Age": int64(32),
 						},
 					},
 				},
@@ -60,85 +52,43 @@ func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
+func TestQuerySimpleWithStringNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Verified": true
+					"Age": 21
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob"
+					"Name": "Bob",
+					"Age": 32
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Fred",
-					"Verified": false
+					"Age": 36
 				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {Verified: {_ne: null}}) {
-						Name
+					Users(filter: {Name: {_neq: null}}) {
+						Age
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Fred",
+							"Age": int64(32),
 						},
 						{
-							"Name": "John",
+							"Age": int64(21),
 						},
 					},
 				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Verified": true
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred",
-					"Verified": false
-				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Users(filter: {Verified: {_ne: false}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "John",
-						},
-						{
-							"Name": "Bob",
-						},
-					},
-				},
+				NonOrderedResults: true,
 			},
 		},
 	}

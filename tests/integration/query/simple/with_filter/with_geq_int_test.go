@@ -17,24 +17,24 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
+func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"HeightM": 2.1
+					"Age": 21
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"HeightM": 3.2
+					"Age": 32
 				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ne: 2.1}}) {
+					Users(filter: {Age: {_geq: 32}}) {
 						Name
 					}
 				}`,
@@ -52,29 +52,24 @@ func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
+func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"HeightM": 2.1
+					"Age": 21
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"HeightM": 3.2
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred"
+					"Age": 32
 				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ne: null}}) {
+					Users(filter: {Age: {_geq: 31}}) {
 						Name
 					}
 				}`,
@@ -83,12 +78,45 @@ func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
 						{
 							"Name": "Bob",
 						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {Age: {_geq: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
 							"Name": "John",
 						},
+						{
+							"Name": "Bob",
+						},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}

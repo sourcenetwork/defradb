@@ -153,6 +153,15 @@ type Collection interface {
 
 	// ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
 	ListEncryptedIndexes(ctx context.Context) ([]EncryptedIndexDescription, error)
+
+	// Truncate this collection, permanently deleting all document state on this node.
+	//
+	// Changes made by this call will not impact other nodes, and cannot be synced to them over the P2P
+	// system.
+	//
+	// This call will lock the collection, and no other read or write document operations on this collection
+	// will progress whilst this is executing.
+	Truncate(ctx context.Context) error
 }
 
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.

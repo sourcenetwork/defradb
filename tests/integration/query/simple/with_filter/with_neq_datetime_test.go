@@ -17,93 +17,26 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithIntLEFilterBlockWithEqualValue(t *testing.T) {
+func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Age": 21
+					"Age": 21,
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"Age": 32
+					"Age": 32,
+					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {Age: {_le: 21}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "John",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithIntLEFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Users(filter: {Age: {_le: 22}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "John",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithIntLEFilterBlockWithNullValue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Users(filter: {Age: {_le: null}}) {
+					Users(filter: {CreatedAt: {_neq: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -111,6 +44,104 @@ func TestQuerySimpleWithIntLEFilterBlockWithNullValue(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"Name": "Bob",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21,
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32,
+					"CreatedAt": "2011-07-23T03:46:56-05:00"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred",
+					"Age": 32
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_neq: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+						{
+							"Name": "Bob",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithNilDateTimeNotEqualAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name":      "John",
+					"Age":       int64(21),
+					"CreatedAt": "2017-07-23T03:46:56-05:00",
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name":      "Bob",
+					"Age":       int64(32),
+					"CreatedAt": "2016-07-23T03:46:56-05:00",
+				},
+			},
+			testUtils.CreateDoc{
+				DocMap: map[string]any{
+					"Name": "Fred",
+					"Age":  44,
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_neq: "2016-07-23T03:46:56-05:00"}}) {
+						Name
+						Age
+						CreatedAt
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name":      "John",
+							"Age":       int64(21),
+							"CreatedAt": testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+						},
+						{
+							"Name":      "Fred",
+							"Age":       int64(44),
+							"CreatedAt": nil,
 						},
 					},
 				},

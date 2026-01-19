@@ -17,69 +17,24 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
+func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56-05:00"
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"Age": 32,
-					"CreatedAt": "2011-07-23T03:46:56-05:00"
+					"HeightM": 1.82
 				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ne: "2017-07-23T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "Bob",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56-05:00"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob",
-					"Age": 32,
-					"CreatedAt": "2011-07-23T03:46:56-05:00"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred",
-					"Age": 32
-				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Users(filter: {CreatedAt: {_ne: null}}) {
+					Users(filter: {HeightM: {_geq: 2.1}}) {
 						Name
 					}
 				}`,
@@ -88,8 +43,40 @@ func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 						{
 							"Name": "John",
 						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_geq: 2.0999999999999}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 					},
 				},
@@ -100,51 +87,72 @@ func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithNilDateTimeNotEqualAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
+func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"Name":      "John",
-					"Age":       int64(21),
-					"CreatedAt": "2017-07-23T03:46:56-05:00",
-				},
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"Name":      "Bob",
-					"Age":       int64(32),
-					"CreatedAt": "2016-07-23T03:46:56-05:00",
-				},
-			},
-			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"Name": "Fred",
-					"Age":  44,
-				},
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ne: "2016-07-23T03:46:56-05:00"}}) {
+					Users(filter: {HeightM: {_geq: 2}}) {
 						Name
-						Age
-						CreatedAt
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name":      "John",
-							"Age":       int64(21),
-							"CreatedAt": testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
-						},
-						{
-							"Name":      "Fred",
-							"Age":       int64(44),
-							"CreatedAt": nil,
+							"Name": "John",
 						},
 					},
 				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_geq: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
+					},
+				},
+				NonOrderedResults: true,
 			},
 		},
 	}

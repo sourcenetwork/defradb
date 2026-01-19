@@ -137,7 +137,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 					Author {
 						name
 						s1: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
-						s2: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_ge: 2020}}}})
+						s2: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_geq: 2020}}}})
 					}
 				}`,
 				Results: map[string]any{
@@ -179,7 +179,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 					Author {
 						name
 						s1: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
-						books2020: book(filter: {publisher: {yearOpened: {_ge: 2020}}}) {
+						books2020: book(filter: {publisher: {yearOpened: {_geq: 2020}}}) {
 							name
 						}
 					}
@@ -226,7 +226,7 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 			createDocsWith6BooksAnd5Publishers(),
 			&action.Request{
 				Request: `query {
-					Author (filter: {book: {publisher: {yearOpened: { _ge: 2020}}}}){
+					Author (filter: {book: {publisher: {yearOpened: { _geq: 2020}}}}){
 						name
 						book {
 							name
@@ -349,11 +349,11 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Author (filter: {_and: [
-						{_not: {age: {_ge: 70}}},
+						{_not: {age: {_geq: 70}}},
 						{book: {rating: {_gt: 2.5}}},
 						{_or: [
-							{book: {publisher: {yearOpened: {_le: 2020}}}},
-							{_not: {book: {rating: {_le: 4.0}}}}
+							{book: {publisher: {yearOpened: {_leq: 2020}}}},
+							{_not: {book: {rating: {_leq: 4.0}}}}
 						]}
 					]}){
 						name

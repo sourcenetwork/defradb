@@ -174,7 +174,7 @@ func TestQueryWithIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_ge: 48}}) {
+		User(filter: {age: {_geq: 48}}) {
 			name
 		}
 	}`
@@ -247,7 +247,7 @@ func TestQueryWithIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_le: 23}}) {
+		User(filter: {age: {_leq: 23}}) {
 			name
 		}
 	}`
@@ -284,7 +284,7 @@ func TestQueryWithIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {name: {_ne: "Islam"}}) {
+		User(filter: {name: {_neq: "Islam"}}) {
 			name
 		}
 	}`
@@ -794,12 +794,12 @@ func TestQueryWithIndex_WithFilterOn2Relations_ShouldFilter(t *testing.T) {
 
 func TestQueryWithIndex_WithNeFilterAgainstIntField_ShouldFetchNilValues(t *testing.T) {
 	req1 := `query {
-		User(filter: {age: {_ne: 48}}) {
+		User(filter: {age: {_neq: 48}}) {
 			name
 		}
 	}`
 	req2 := `query {
-		User(filter: {age: {_ne: null}}) {
+		User(filter: {age: {_neq: null}}) {
 			name
 		}
 	}`
@@ -863,12 +863,12 @@ func TestQueryWithIndex_WithNeFilterAgainstIntField_ShouldFetchNilValues(t *test
 
 func TestQueryWithIndex_WithNeFilterAgainstFloatField_ShouldFetchNilValues(t *testing.T) {
 	req1 := `query {
-		User(filter: {rating: {_ne: 4.5}}) {
+		User(filter: {rating: {_neq: 4.5}}) {
 			name
 		}
 	}`
 	req2 := `query {
-		User(filter: {rating: {_ne: null}}) {
+		User(filter: {rating: {_neq: null}}) {
 			name	
 		}
 	}`
@@ -932,12 +932,12 @@ func TestQueryWithIndex_WithNeFilterAgainstFloatField_ShouldFetchNilValues(t *te
 
 func TestQueryWithIndex_WithNeFilterAgainstStringField_ShouldFetchNilValues(t *testing.T) {
 	req1 := `query {
-		User(filter: {city: {_ne: "Istanbul"}}) {
+		User(filter: {city: {_neq: "Istanbul"}}) {
 			name
 		}
 	}`
 	req2 := `query {
-		User(filter: {city: {_ne: null}}) {
+		User(filter: {city: {_neq: null}}) {
 			name	
 		}
 	}`
@@ -1001,12 +1001,12 @@ func TestQueryWithIndex_WithNeFilterAgainstStringField_ShouldFetchNilValues(t *t
 
 func TestQueryWithIndex_WithNeFilterAgainstDateTimeField_ShouldFetchNilValues(t *testing.T) {
 	req1 := `query {
-		User(filter: {birthdate: {_ne: "2020-01-01T00:00:00Z"}}) {
+		User(filter: {birthdate: {_neq: "2020-01-01T00:00:00Z"}}) {
 			name
 		}
 	}`
 	req2 := `query {
-		User(filter: {birthdate: {_ne: null}}) {
+		User(filter: {birthdate: {_neq: null}}) {
 			name	
 		}
 	}`
@@ -1070,12 +1070,12 @@ func TestQueryWithIndex_WithNeFilterAgainstDateTimeField_ShouldFetchNilValues(t 
 
 func TestQueryWithIndex_WithNeFilterAgainstBooleanField_ShouldFetchNilValues(t *testing.T) {
 	req1 := `query {
-		User(filter: {verified: {_ne: true}}) {
+		User(filter: {verified: {_neq: true}}) {
 			name
 		}
 	}`
 	req2 := `query {
-		User(filter: {verified: {_ne: null}}) {
+		User(filter: {verified: {_neq: null}}) {
 			name	
 		}
 	}`

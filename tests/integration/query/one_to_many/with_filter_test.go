@@ -429,7 +429,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 							{published: {rating: {_gt: 4.8}}}
 						]},
 						{_and: [
-							{age: {_le: 65}},
+							{age: {_leq: 65}},
 							{published: {name: {_like: "%Lord%"}}}
 						]},
 					]}) {
@@ -538,7 +538,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 							{published: {rating: {_gt: 4.8}}}
 						]},
 						{_and: [
-							{age: {_le: 65}},
+							{age: {_leq: 65}},
 							{published: {name: {_ilike: "%lord%"}}}
 						]},
 					]}) {
