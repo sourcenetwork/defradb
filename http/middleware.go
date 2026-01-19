@@ -31,12 +31,13 @@ import (
 func CorsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 	return cors.Handler(cors.Options{
 		AllowOriginFunc: func(r *http.Request, origin string) bool {
+			fmt.Println("ORIGINS:", allowedOrigins)
 			if slices.Contains(allowedOrigins, "*") {
 				return true
 			}
 			return slices.Contains(allowedOrigins, strings.ToLower(origin))
 		},
-		AllowedMethods: []string{"GET", "HEAD", "POST", "PATCH", "DELETE"},
+		AllowedMethods: []string{"GET", "HEAD", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
 		MaxAge:         300,
 	})

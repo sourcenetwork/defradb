@@ -32,7 +32,7 @@ var Version string = "v0"
 // playgroundHandler is set when building with the playground build tag
 var playgroundHandler http.Handler = http.HandlerFunc(http.NotFound)
 
-func NewApiRouter() (*Router, error) {
+func NewApiRouter(serverOpts *ServerOptions) (*Router, error) {
 	tx_handler := &txHandler{}
 	acp_handler := &acpHandler{}
 	collection_handler := &collectionHandler{}
@@ -41,8 +41,15 @@ func NewApiRouter() (*Router, error) {
 	extras_handler := &extrasHandler{}
 	block_handler := &blockHandler{}
 
+	var allowedOrigins []string
+	if serverOpts != nil {
+		allowedOrigins = serverOpts.AllowedOrigins
+	}
 	store_handler := &storeHandler{
 		gqlTransports: []graphql.Transport{
+			graphql.Websocket{
+				AllowedOrigins: allowedOrigins,
+			},
 			graphql.SSE{},
 			graphql.POST{},
 			graphql.GET{},
@@ -88,8 +95,9 @@ type Handler struct {
 	txs *sync.Map
 }
 
-func NewHandler(db DB) (*Handler, error) {
-	router, err := NewApiRouter()
+func NewHandler(db DB, serverOpts ...ServerOpt) (*Handler, error) {
+	options := resolveServerOptions(serverOpts)
+	router, err := NewApiRouter(options)
 	if err != nil {
 		return nil, err
 	}

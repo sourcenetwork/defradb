@@ -6,6 +6,7 @@ type key string
 
 const (
 	initpayload key = "ws_initpayload_context"
+	closeReason key = "ws_close_reason_context"
 )
 
 // InitPayload is a structure that is parsed from the websocket init message payload. TO use
@@ -54,4 +55,16 @@ func GetInitPayload(ctx context.Context) InitPayload {
 	}
 
 	return payload
+}
+
+// withCloseReason adds a close reason to the context that will be sent to the client
+// when the connection is closed.
+func withCloseReason(ctx context.Context, reason string) context.Context {
+	return context.WithValue(ctx, closeReason, reason)
+}
+
+// closeReasonForContext retrieves the close reason from the context, if any.
+func closeReasonForContext(ctx context.Context) string {
+	reason, _ := ctx.Value(closeReason).(string)
+	return reason
 }

@@ -1,3 +1,14 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+// primarily based on https://github.com/99designs/gqlgen/blob/master/graphql/handler/transport/websocket.go
 package graphql
 
 import (
@@ -6,21 +17,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	// "log"
 	"net"
 	"net/http"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/vektah/gqlparser/gqlerror"
 
-	gqlgen "github.com/99designs/gqlgen/graphql"
+	"github.com/sourcenetwork/defradb/client"
 )
 
 type (
 	Websocket struct {
+		AllowedOrigins        []string
 		Upgrader              websocket.Upgrader
 		InitFunc              WebsocketInitFunc
 		InitTimeout           time.Duration
@@ -52,7 +63,7 @@ type (
 		pongOnlyTicker  *time.Ticker
 		pingPongTicker  *time.Ticker
 		receivedPong    bool
-		exec            gqlgen.GraphExecutor
+		exec            Executor
 		closed          bool
 		headers         http.Header
 
@@ -83,20 +94,25 @@ func (e WebsocketError) Error() string {
 }
 
 var (
-	_ gqlgen.Transport = Websocket{}
-	_ error            = WebsocketError{}
+	_ Transport = Websocket{}
+	_ error     = WebsocketError{}
 )
 
 func (t Websocket) Supports(r *http.Request) bool {
 	return r.Header.Get("Upgrade") != ""
 }
 
-func (t Websocket) Do(w http.ResponseWriter, r *http.Request, exec gqlgen.GraphExecutor) {
+func (t Websocket) Methods() []string {
+	return []string{http.MethodGet}
+}
+
+func (t Websocket) Do(w http.ResponseWriter, r *http.Request, exec Executor) {
+	t.injectGraphQLWSAllowedOrigins(t.AllowedOrigins)
 	t.injectGraphQLWSSubprotocols()
 	ws, err := t.Upgrader.Upgrade(w, r, http.Header{})
 	if err != nil {
-		log.Printf("unable to upgrade %T to websocket %s: ", w, err.Error())
-		SendErrorf(w, http.StatusBadRequest, "unable to upgrade")
+		log.ErrorE("unable to upgrade to websocket", err)
+		responseJSON(w, http.StatusBadRequest, errorResponse{errors.New("unable to upgrade")})
 		return
 	}
 
@@ -206,6 +222,16 @@ func (t messageType) String() string {
 	return text
 }
 
+func (t *Websocket) injectGraphQLWSAllowedOrigins(allowedOrigins []string) {
+	t.Upgrader.CheckOrigin = func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		if slices.Contains(allowedOrigins, "*") {
+			return true
+		}
+		return slices.Contains(allowedOrigins, strings.ToLower(origin))
+	}
+}
+
 func (t *Websocket) injectGraphQLWSSubprotocols() {
 	// the list of subprotocols is specified by the consumer of the Websocket struct,
 	// in order to preserve backward compatibility, we inject the graphql specific subprotocols
@@ -302,7 +328,8 @@ func (c *wsConnection) init() bool {
 		if initAckPayload != nil {
 			initJsonAckPayload, err := json.Marshal(*initAckPayload)
 			if err != nil {
-				panic(err)
+				log.ErrorE("failed to marshal init ack payload", err)
+				return false
 			}
 			c.write(&message{t: connectionAckMessageType, payload: initJsonAckPayload})
 		} else {
@@ -376,7 +403,6 @@ func (c *wsConnection) run() {
 	go c.closeOnCancel(ctx)
 
 	for {
-		start := gqlgen.Now()
 		m, err := c.me.NextMessage()
 		if err != nil {
 			// If the connection got closed by us, don't report the error
@@ -388,7 +414,7 @@ func (c *wsConnection) run() {
 
 		switch m.t {
 		case startMessageType:
-			c.subscribe(start, &m)
+			c.subscribe(&m)
 		case stopMessageType:
 			c.mu.Lock()
 			closer := c.active[m.id]
@@ -468,38 +494,23 @@ func (c *wsConnection) closeOnCancel(ctx context.Context) {
 	c.close(websocket.CloseNormalClosure, "terminated")
 }
 
-func (c *wsConnection) subscribe(start time.Time, msg *message) {
-	ctx := gqlgen.StartOperationTrace(c.ctx)
-	var params *gqlgen.RawParams
-	if err := jsonDecode(bytes.NewReader(msg.payload), &params); err != nil {
-		c.sendError(msg.id, &gqlerror.Error{Message: "invalid json"})
+func (c *wsConnection) subscribe(msg *message) {
+	var request Request
+	if err := jsonDecode(bytes.NewReader(msg.payload), &request); err != nil {
+		c.sendError(msg.id, errors.New("invalid json"))
 		c.complete(msg.id)
 		return
 	}
 
-	params.ReadTime = gqlgen.TraceTiming{
-		Start: start,
-		End:   gqlgen.Now(),
+	var options []client.RequestOption
+	if request.OperationName != "" {
+		options = append(options, client.WithOperationName(request.OperationName))
+	}
+	if len(request.Variables) > 0 {
+		options = append(options, client.WithVariables(request.Variables))
 	}
 
-	params.Headers = c.headers
-
-	rc, err := c.exec.CreateOperationContext(ctx, params)
-	if err != nil {
-		resp := c.exec.DispatchError(gqlgen.WithOperationContext(ctx, rc), err)
-		switch errcode.GetErrorKind(err) {
-		case errcode.KindProtocol:
-			c.sendError(msg.id, resp.Errors...)
-		default:
-			c.sendResponse(msg.id, &gqlgen.Response{Errors: err})
-		}
-
-		c.complete(msg.id)
-		return
-	}
-
-	ctx = gqlgen.WithOperationContext(ctx, rc)
-
+	ctx := c.ctx
 	if c.initPayload != nil {
 		ctx = withInitPayload(ctx, c.initPayload)
 	}
@@ -510,18 +521,15 @@ func (c *wsConnection) subscribe(start time.Time, msg *message) {
 	c.mu.Unlock()
 
 	go func() {
-		// ctx = withSubscriptionErrorContext(ctx)
 		defer func() {
 			if r := recover(); r != nil {
-				err := rc.Recover(ctx, r)
-				var gqlerr *gqlerror.Error
-				if !errors.As(err, &gqlerr) {
-					gqlerr = &gqlerror.Error{}
-					if err != nil {
-						gqlerr.Message = err.Error()
-					}
+				var err error
+				if e, ok := r.(error); ok {
+					err = e
+				} else {
+					err = fmt.Errorf("%v", r)
 				}
-				c.sendError(msg.id, gqlerr)
+				c.sendError(msg.id, err)
 			}
 			c.complete(msg.id)
 			c.mu.Lock()
@@ -530,24 +538,40 @@ func (c *wsConnection) subscribe(start time.Time, msg *message) {
 			cancel()
 		}()
 
-		responses, ctx := c.exec.DispatchOperation(ctx, rc)
-		for {
-			response := responses(ctx)
-			if response == nil {
-				break
-			}
+		result := c.exec(ctx, request.Query, options...)
 
-			c.sendResponse(msg.id, response)
+		// Handle immediate errors (non-subscription queries or errors)
+		if len(result.GQL.Errors) > 0 {
+			c.sendResponse(msg.id, result.GQL)
+			return
 		}
 
-		// complete and context cancel comes from the defer
+		// If this is not a subscription, send the result and complete
+		if result.Subscription == nil {
+			c.sendResponse(msg.id, result.GQL)
+			return
+		}
+
+		// Handle subscription - iterate over the channel like SSE does
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case item, open := <-result.Subscription:
+				if !open {
+					return
+				}
+				c.sendResponse(msg.id, item)
+			}
+		}
 	}()
 }
 
-func (c *wsConnection) sendResponse(id string, response *gqlgen.Response) {
+func (c *wsConnection) sendResponse(id string, response client.GQLResult) {
 	b, err := json.Marshal(response)
 	if err != nil {
-		panic(err)
+		log.ErrorE("failed to marshal response", err)
+		return
 	}
 	c.write(&message{
 		payload: b,
@@ -560,22 +584,28 @@ func (c *wsConnection) complete(id string) {
 	c.write(&message{id: id, t: completeMessageType})
 }
 
-func (c *wsConnection) sendError(id string, errors ...*gqlerror.Error) {
-	errs := make([]error, len(errors))
-	for i, err := range errors {
-		errs[i] = err
+func (c *wsConnection) sendError(id string, errs ...error) {
+	// Per GraphQL spec, errors should be an array of error objects
+	errList := make([]map[string]any, len(errs))
+	for i, err := range errs {
+		errList[i] = map[string]any{"message": err.Error()}
 	}
-	b, err := json.Marshal(errs)
+	b, err := json.Marshal(errList)
 	if err != nil {
-		panic(err)
+		log.ErrorE("failed to marshal error", err)
+		return
 	}
 	c.write(&message{t: errorMessageType, id: id, payload: b})
 }
 
 func (c *wsConnection) sendConnectionError(format string, args ...any) {
-	b, err := json.Marshal(&gqlerror.Error{Message: fmt.Sprintf(format, args...)})
+	errPayload := map[string]any{
+		"message": fmt.Sprintf(format, args...),
+	}
+	b, err := json.Marshal(errPayload)
 	if err != nil {
-		panic(err)
+		log.ErrorE("failed to marshal connection error", err)
+		return
 	}
 
 	c.write(&message{t: connectionErrorMessageType, payload: b})

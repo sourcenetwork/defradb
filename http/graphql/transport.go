@@ -14,6 +14,7 @@ package graphql
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"mime"
 	"net/http"
 	"strings"
@@ -100,4 +101,11 @@ func responseJSON(rw http.ResponseWriter, status int, data any) {
 	if err != nil {
 		log.ErrorE("failed to write response", err)
 	}
+}
+
+// jsonDecode decodes JSON from a reader into the provided value.
+// It uses UseNumber() to preserve numeric precision in JSON parsing.
+func jsonDecode(r io.Reader, val any) error {
+	dec := json.NewDecoder(r)
+	return dec.Decode(val)
 }

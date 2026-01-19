@@ -14,12 +14,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/gorilla/websocket"
 	sse "github.com/vito/go-sse/sse"
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -37,17 +40,45 @@ import (
 
 var _ client.TxnStore = (*Client)(nil)
 
-// Client implements the client.TxnStore interface over HTTP.
-type Client struct {
-	http *httpClient
+// SubscriptionTransport specifies the transport protocol to use for GraphQL subscriptions.
+type SubscriptionTransport string
+
+const (
+	// SSESubscriptionTransport uses Server-Sent Events for subscriptions (default).
+	SSESubscriptionTransport SubscriptionTransport = "sse"
+	// WebSocketSubscriptionTransport uses WebSocket for subscriptions.
+	WebSocketSubscriptionTransport SubscriptionTransport = "websocket"
+)
+
+// ClientOption is a functional option for configuring the Client.
+type ClientOption func(*Client)
+
+// WithSubscriptionTransport sets the transport protocol to use for GraphQL subscriptions.
+func WithSubscriptionTransport(transport SubscriptionTransport) ClientOption {
+	return func(c *Client) {
+		c.subscriptionTransport = transport
+	}
 }
 
-func NewClient(rawURL string) (*Client, error) {
+// Client implements the client.TxnStore interface over HTTP.
+type Client struct {
+	http                  *httpClient
+	subscriptionTransport SubscriptionTransport
+}
+
+func NewClient(rawURL string, opts ...ClientOption) (*Client, error) {
 	httpClient, err := newHttpClient(rawURL)
 	if err != nil {
 		return nil, err
 	}
-	return &Client{httpClient}, nil
+	c := &Client{
+		http:                  httpClient,
+		subscriptionTransport: SSESubscriptionTransport, // default to SSE
+	}
+	for _, opt := range opts {
+		opt(c)
+	}
+	return c, nil
 }
 
 func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
@@ -67,7 +98,7 @@ func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
 	if err := c.http.requestJson(req, &txRes); err != nil {
 		return nil, err
 	}
-	return &Transaction{&Client{c.http}, txRes.ID}, nil
+	return &Transaction{&Client{http: c.http, subscriptionTransport: c.subscriptionTransport}, txRes.ID}, nil
 }
 
 func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
@@ -87,7 +118,7 @@ func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	if err := c.http.requestJson(req, &txRes); err != nil {
 		return nil, err
 	}
-	return &Transaction{&Client{c.http}, txRes.ID}, nil
+	return &Transaction{&Client{http: c.http, subscriptionTransport: c.subscriptionTransport}, txRes.ID}, nil
 }
 
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {
@@ -408,6 +439,11 @@ func (c *Client) ExecRequest(
 	}
 
 	if op == ast.OperationTypeSubscription {
+		// Use WebSocket transport if configured
+		if c.subscriptionTransport == WebSocketSubscriptionTransport {
+			return c.execRequestWebsocket(ctx, query, opts...)
+		}
+		// Default to SSE transport
 		req.Header.Set("Accept", sseAcceptHeader)
 	}
 
@@ -417,7 +453,7 @@ func (c *Client) ExecRequest(
 		return result
 	}
 	if res.Header.Get("Content-Type") == sseAcceptHeader {
-		result.Subscription = c.execRequestSubscription(res.Body)
+		result.Subscription = c.execRequestSSE(res.Body)
 		return result
 	}
 	// ignore close errors because they have
@@ -437,7 +473,7 @@ func (c *Client) ExecRequest(
 	return result
 }
 
-func (c *Client) execRequestSubscription(r io.ReadCloser) chan client.GQLResult {
+func (c *Client) execRequestSSE(r io.ReadCloser) chan client.GQLResult {
 	resCh := make(chan client.GQLResult)
 	go func() {
 		eventReader := sse.NewReadCloser(r)
@@ -459,6 +495,146 @@ func (c *Client) execRequestSubscription(r io.ReadCloser) chan client.GQLResult 
 				res.Errors = append(res.Errors, err)
 			}
 			resCh <- res
+		}
+	}()
+
+	return resCh
+}
+
+// execRequestWebsocket executes a GraphQL subscription request over a WebSocket connection.
+// This method only supports subscription operations. For queries and mutations, use ExecRequest.
+func (c *Client) execRequestWebsocket(
+	ctx context.Context,
+	query string,
+	opts ...client.RequestOption,
+) *client.RequestResult {
+	result := &client.RequestResult{}
+
+	gqlOptions := &client.GQLOptions{}
+	for _, o := range opts {
+		o(gqlOptions)
+	}
+
+	wsURL := *c.http.apiURL
+	if wsURL.Scheme == "https" {
+		wsURL.Scheme = "wss"
+	} else {
+		wsURL.Scheme = "ws"
+	}
+	wsURL.Path = strings.TrimSuffix(wsURL.Path, "/") + "/graphql"
+
+	dialer := websocket.Dialer{
+		Subprotocols: []string{"graphql-ws"},
+	}
+
+	conn, _, err := dialer.DialContext(ctx, wsURL.String(), nil)
+	if err != nil {
+		result.GQL.Errors = append(result.GQL.Errors, err)
+		return result
+	}
+
+	initMsg := map[string]any{
+		"type": "connection_init",
+	}
+	if err := conn.WriteJSON(initMsg); err != nil {
+		result.GQL.Errors = append(result.GQL.Errors, err)
+		conn.Close()
+		return result
+	}
+
+	// Wait for connection_ack
+	var ackMsg map[string]any
+	if err := conn.ReadJSON(&ackMsg); err != nil {
+		result.GQL.Errors = append(result.GQL.Errors, err)
+		conn.Close()
+		return result
+	}
+	if ackMsg["type"] != "connection_ack" {
+		result.GQL.Errors = append(result.GQL.Errors, ErrInvalidGraphQLRequest)
+		conn.Close()
+		return result
+	}
+
+	// Read and discard keep-alive message if present
+	_ = conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	var kaMsg map[string]any
+	if err := conn.ReadJSON(&kaMsg); err == nil {
+		// ignore keep-alive messages
+	}
+	_ = conn.SetReadDeadline(time.Time{}) // Clear deadline
+
+	gqlRequest := &graphql.Request{
+		Query:         query,
+		OperationName: gqlOptions.OperationName,
+		Variables:     gqlOptions.Variables,
+	}
+	startMsg := map[string]any{
+		"id":      "1",
+		"type":    "start",
+		"payload": gqlRequest,
+	}
+	if err := conn.WriteJSON(startMsg); err != nil {
+		result.GQL.Errors = append(result.GQL.Errors, err)
+		conn.Close()
+		return result
+	}
+
+	result.Subscription = c.execWebsocketSubscription(ctx, conn)
+	return result
+}
+
+func (c *Client) execWebsocketSubscription(ctx context.Context, conn *websocket.Conn) chan client.GQLResult {
+	resCh := make(chan client.GQLResult)
+	go func() {
+		defer func() {
+			// Send stop message before closing
+			stopMsg := map[string]any{
+				"id":   "1",
+				"type": "stop",
+			}
+			conn.WriteJSON(stopMsg)
+			conn.Close()
+			close(resCh)
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				var msg map[string]any
+				if err := conn.ReadJSON(&msg); err != nil {
+					return
+				}
+
+				switch msg["type"] {
+				case "data":
+					var res client.GQLResult
+					if payload, ok := msg["payload"].(map[string]any); ok {
+						payloadBytes, _ := json.Marshal(payload)
+						if err := json.Unmarshal(payloadBytes, &res); err != nil {
+							res.Errors = append(res.Errors, err)
+						}
+					}
+					resCh <- res
+				case "error":
+					var res client.GQLResult
+					if payload, ok := msg["payload"].([]any); ok {
+						for _, e := range payload {
+							if errMap, ok := e.(map[string]any); ok {
+								if errMsg, ok := errMap["message"].(string); ok {
+									res.Errors = append(res.Errors, errors.New(errMsg))
+								}
+							}
+						}
+					}
+					resCh <- res
+				case "complete":
+					return
+				case "ka":
+					// Keep-alive, ignore
+				}
+			}
 		}
 	}()
 

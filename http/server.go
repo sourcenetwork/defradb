@@ -121,12 +121,18 @@ type Server struct {
 	ctxCancel context.CancelFunc
 }
 
-// NewServer instantiates a new server with the given http.Handler.
-func NewServer(ctx context.Context, handler http.Handler, opts ...ServerOpt) (*Server, error) {
+func resolveServerOptions(opts []ServerOpt) *ServerOptions {
 	options := DefaultServerOptions()
 	for _, opt := range opts {
 		opt(options)
 	}
+	return options
+}
+
+// NewServer instantiates a new server with the given http.Handler.
+func NewServer(ctx context.Context, handler http.Handler, opts ...ServerOpt) (*Server, error) {
+	options := resolveServerOptions(opts)
+
 	ctx, cancel := context.WithCancel(ctx)
 
 	// setup a mux with the default middleware stack
@@ -219,3 +225,7 @@ func (s *Server) Address() string {
 // 		})
 // 	}
 // }
+
+func applyOptsToHandler(options *ServerOptions, handler http.Handler) {
+
+}

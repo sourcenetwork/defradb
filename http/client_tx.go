@@ -38,7 +38,7 @@ func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{&Client{httpClient}, id}, nil
+	return &Transaction{&Client{http: httpClient}, id}, nil
 }
 
 func (txn *Transaction) ID() uint64 {
