@@ -20,7 +20,6 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/encryption"
-	"github.com/sourcenetwork/immutable"
 )
 
 func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
@@ -52,7 +51,7 @@ func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
 		return err
 	}
 
-	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+	bstore := p.db.Multistore().Blockstore()
 
 	return p.loadBlockLinks(sessionCtx, &linkSystem, block, bstore)
 }

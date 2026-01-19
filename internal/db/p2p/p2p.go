@@ -61,6 +61,10 @@ const (
 	syncWorkerCount = 200
 	// syncQueueSize is the maximum number of pending sync requests.
 	syncQueueSize = 50000
+	// publishQueueSize is the buffer size for async P2P publishing.
+	publishQueueSize = 10000
+	// publishWorkerCount is the number of workers processing publish requests.
+	publishWorkerCount = 4
 )
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
@@ -138,6 +142,17 @@ type P2P struct {
 
 	// pushHandlers are called when documents are pushed to replicators
 	pushHandlers []PushToReplicatorsHandler
+
+	// publishQueue is a non-blocking channel for async P2P publishing.
+	publishQueue chan *publishRequest
+	// publishWg tracks active publish workers.
+	publishWg sync.WaitGroup
+}
+
+// publishRequest represents a message to be published via P2P.
+type publishRequest struct {
+	topic string
+	data  []byte
 }
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
@@ -188,6 +203,7 @@ func New(
 		retryIntervals:       db.RetryIntervals(),
 		processQueue:         newProcessQueue(syncWorkerCount, syncQueueSize),
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
+		publishQueue:         make(chan *publishRequest, publishQueueSize),
 	}
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 
@@ -246,7 +262,13 @@ func New(
 		p.AddPushToReplicatorsHandler(coord)
 	}
 
-	return &p, nil
+	pPtr := &p
+	for i := 0; i < publishWorkerCount; i++ {
+		p.publishWg.Add(1)
+		go pPtr.publishWorker()
+	}
+
+	return pPtr, nil
 }
 
 func (p *P2P) KMS() kms.Service {
@@ -665,17 +687,40 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 		}
 
 		if evt.DocID != "" {
-			if err := p.host.PublishToTopicAsync(p.ctx, evt.DocID, b); err != nil {
-				return NewErrPublishingToDocIDTopic(err, evt.Cid.String(), evt.DocID)
-			}
+			p.tryPublish(evt.DocID, b)
 		}
-
-		if err := p.host.PublishToTopicAsync(p.ctx, evt.CollectionID, b); err != nil {
-			return NewErrPublishingToSchemaTopic(err, evt.Cid.String(), evt.CollectionID)
-		}
+		p.tryPublish(evt.CollectionID, b)
 	}
 
 	return nil
+}
+
+// tryPublish attempts to enqueue a message for async publishing.
+// If the queue is full, the message is dropped to prevent backpressure.
+func (p *P2P) tryPublish(topic string, data []byte) {
+	select {
+	case p.publishQueue <- &publishRequest{topic: topic, data: data}:
+	default:
+		log.Error("P2P publish queue full, dropping message", corelog.String("topic", topic))
+	}
+}
+
+// publishWorker processes messages from the publish queue.
+func (p *P2P) publishWorker() {
+	defer p.publishWg.Done()
+	for {
+		select {
+		case <-p.ctx.Done():
+			return
+		case req, ok := <-p.publishQueue:
+			if !ok {
+				return
+			}
+			if err := p.host.PublishToTopicAsync(p.ctx, req.topic, req.data); err != nil {
+				log.Error("Failed to publish to topic", corelog.String("topic", req.topic), corelog.Any("error", err))
+			}
+		}
+	}
 }
 
 // syncRequest represents a sync operation to be processed by workers.

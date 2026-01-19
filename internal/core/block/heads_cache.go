@@ -180,6 +180,11 @@ func PrefetchDocHeads(ctx context.Context, store corekv.ReaderWriter, docID stri
 		return nil
 	}
 
+	// Skip prefetch for new document creation
+	if IsNewDocCreateMode(ctx) {
+		return nil
+	}
+
 	// Create prefix for all heads of this document: /d/[DocID]/
 	docPrefix := keys.HeadstoreDocKey{DocID: docID}
 	prefixBytes := docPrefix.Bytes()

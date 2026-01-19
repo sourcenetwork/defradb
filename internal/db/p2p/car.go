@@ -34,7 +34,7 @@ func (p *P2P) generateCAR(ctx context.Context, rootBlock *coreblock.Block) ([]by
 		return nil, err
 	}
 
-	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+	bstore := p.db.Multistore().Blockstore()
 	linkSystem := makeLinkSystem(blockstore.NewIPLDStore(bstore))
 
 	blockCIDs := make(map[string]struct{})

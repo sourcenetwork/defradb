@@ -55,7 +55,7 @@ const (
 	// commandBufferSize is the size of the channel buffer used to handle events.
 	commandBufferSize = 100_000
 	// eventBufferSize is the size of the channel buffer used to subscribe to events.
-	eventBufferSize = 100
+	eventBufferSize = 100_000
 )
 
 // DB is the main struct for DefraDB's storage layer.
