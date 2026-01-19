@@ -24,7 +24,7 @@ runs:
 
   steps:
     - name: Checkout sourcehub code into the directory
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: sourcenetwork/sourcehub
         path: _sourceHub

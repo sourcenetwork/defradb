@@ -11,7 +11,7 @@ type User {
 type Friend {
 	name: String
 	friendsDate: DateTime
-	user_id: DocID
+	_userID: DocID
 }
 
 - >
@@ -27,7 +27,7 @@ type Friend {
 			name
 
 			// key = bae-KHDFLGHJFLDG
-			friends selectNode -> (source) scanNode(friend) -> filter: {user_id: {_eq: "bae-KHDFLGHJFLDG"}} {
+			friends selectNode -> (source) scanNode(friend) -> filter: {_userID: {_eq: "bae-KHDFLGHJFLDG"}} {
 				name
 				date: friendsDate
 			}
@@ -74,7 +74,7 @@ query {
 				{
 					name: "Bob",
 					points:  11
-					user_id: "bae-ALICE"
+					_userID: "bae-ALICE"
 				},
 			]
 		},
@@ -131,7 +131,7 @@ type user {
 	name: String
 
 	address: Address @primary
-	address_id: bae-address-VALUE
+	_addressID: bae-address-VALUE
 }
 
 type Address: {
@@ -142,7 +142,7 @@ type Address: {
 	...
 
 	user: user
-	# user_id: DocID
+	# _userID: DocID
 }
 
 query {

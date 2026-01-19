@@ -375,8 +375,8 @@ func TestBasicExport_WithMultipleCollectionsAndUpdate_NoError(t *testing.T) {
 	bookNames := make([]string, 2)
 	for i, b := range books {
 		book, _ := b.(map[string]any)
-		require.Contains(t, book, "author_id")
-		require.Equal(t, johnNewDocID, book["author_id"])
+		require.Contains(t, book, "_authorID")
+		require.Equal(t, johnNewDocID, book["_authorID"])
 		bookNames[i], _ = book["name"].(string)
 	}
 	require.ElementsMatch(t, []string{"John and the sourcerers' stone", "Game of chains"}, bookNames)

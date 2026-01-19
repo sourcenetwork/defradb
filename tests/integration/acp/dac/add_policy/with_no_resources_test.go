@@ -31,10 +31,6 @@ func TestACP_AddPolicy_NoResource_ValidID(t *testing.T) {
 				Policy: `
                     name: test
                     description: a policy
-
-                    actor:
-                      name: actor
-
                     resources:
                 `,
 			},
@@ -56,9 +52,6 @@ func TestACP_AddPolicy_NoResourceLabel_ValidID(t *testing.T) {
 				Policy: `
                     name: test
                     description: a policy
-
-                    actor:
-                      name: actor
                 `,
 			},
 		},
@@ -81,7 +74,7 @@ func TestACP_AddPolicy_PolicyWithOnlySpace_NameIsRequired(t *testing.T) {
 
 				Policy: " ",
 
-				ExpectedError: "name is required",
+				ExpectedError: "name required",
 			},
 		},
 	}

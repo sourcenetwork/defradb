@@ -102,7 +102,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -144,7 +144,7 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -183,7 +183,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -232,7 +232,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -261,7 +261,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -290,7 +290,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -318,7 +318,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -346,7 +346,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -389,10 +389,10 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download coverage reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: coverage_*
           # Note: https://github.com/actions/download-artifact/blob/main/docs/MIGRATION.md
@@ -400,7 +400,7 @@ jobs:
           path: coverage_reports
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: defradb-codecov

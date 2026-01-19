@@ -11,91 +11,11 @@
 package test_acp_dac_link_schema
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
-
-func TestACP_LinkSchema_OwnerMissingRequiredUpdatePermissionOnDRI_SchemaRejected(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-
-			testUtils.AddDACPolicy{
-
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: w
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          w:
-                            types:
-                              - actor
-                `,
-			},
-
-			&action.AddSchema{
-				Schema: `
-					type Users @policy(
-						id: "{{.Policy0}}",
-						resource: "users"
-					) {
-						name: String
-						age: Int
-					}
-				`,
-
-				ExpectedError: fmt.Sprintf(
-					"expr of required permission must start with required relation. Permission: %s, Relation: %s",
-					"update",
-					"owner",
-				),
-			},
-
-			testUtils.IntrospectionRequest{
-				Request: `
-					query {
-						__type (name: "Users") {
-							name
-							fields {
-								name
-								type {
-								name
-								kind
-								}
-							}
-						}
-					}
-				`,
-				ExpectedData: map[string]any{
-					"__type": nil, // NOTE: No "Users" should exist.
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
 
 func TestACP_LinkSchema_OwnerMissingRequiredUpdatePermissionLabelOnDRI_SchemaRejected(t *testing.T) {
 	test := testUtils.TestCase{
@@ -107,28 +27,18 @@ func TestACP_LinkSchema_OwnerMissingRequiredUpdatePermissionLabelOnDRI_SchemaRej
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                     name: test
-                     description: a policy
-
-                     actor:
-                       name: actor
-
-                     resources:
-                       users:
-                         permissions:
-                           read:
-                             expr: owner
-                           delete:
-                             expr: owner
-
-                         relations:
-                           owner:
-                             types:
-                               - actor
-                           reader:
-                             types:
-                               - actor
-                 `,
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - name: read
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -155,244 +65,6 @@ func TestACP_LinkSchema_OwnerMissingRequiredUpdatePermissionLabelOnDRI_SchemaRej
  								type {
  									name
  									kind
- 								}
- 							}
- 						}
- 					}
- 				`,
-				ExpectedData: map[string]any{
-					"__type": nil, // NOTE: No "Users" should exist.
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnUpdatePermissionExprOnDRI_SchemaRejected(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-
-			testUtils.AddDACPolicy{
-
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-                     name: test
-                     description: a policy
-
-                     actor:
-                       name: actor
-
-                     resources:
-                       users:
-                         permissions:
-                           read:
-                             expr: owner
-                           update:
-                             expr: updater + owner
-                           delete:
-                             expr: owner
-
-                         relations:
-                           owner:
-                             types:
-                               - actor
-                           updater:
-                             types:
-                               - actor
-                 `,
-			},
-
-			&action.AddSchema{
-				Schema: `
- 					type Users @policy(
-						id: "{{.Policy0}}",
- 						resource: "users"
- 					) {
- 						name: String
- 						age: Int
- 					}
- 				`,
-
-				ExpectedError: fmt.Sprintf(
-					"expr of required permission must start with required relation. Permission: %s, Relation: %s",
-					"update",
-					"owner",
-				),
-			},
-
-			testUtils.IntrospectionRequest{
-				Request: `
- 					query {
- 						__type (name: "Users") {
- 							name
- 							fields {
- 								name
- 								type {
- 								name
- 								kind
- 								}
- 							}
- 						}
- 					}
- 				`,
-				ExpectedData: map[string]any{
-					"__type": nil, // NOTE: No "Users" should exist.
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_LinkSchema_OwnerSpecifiedIncorrectlyOnUpdatePermissionNoSpaceExprOnDRI_SchemaRejected(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-
-			testUtils.AddDACPolicy{
-
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-                     name: test
-                     description: a policy
-
-                     actor:
-                       name: actor
-
-                     resources:
-                       users:
-                         permissions:
-                           read:
-                             expr: owner
-                           update:
-                             expr: updater+owner
-                           delete:
-                             expr: owner
-
-                         relations:
-                           owner:
-                             types:
-                               - actor
-                           updater:
-                             types:
-                               - actor
-                 `,
-			},
-
-			&action.AddSchema{
-				Schema: `
- 					type Users @policy(
-						id: "{{.Policy0}}",
- 						resource: "users"
- 					) {
- 						name: String
- 						age: Int
- 					}
- 				`,
-
-				ExpectedError: fmt.Sprintf(
-					"expr of required permission must start with required relation. Permission: %s, Relation: %s",
-					"update",
-					"owner",
-				),
-			},
-
-			testUtils.IntrospectionRequest{
-				Request: `
- 					query {
- 						__type (name: "Users") {
- 							name
- 							fields {
- 								name
- 								type {
- 								name
- 								kind
- 								}
- 							}
- 						}
- 					}
- 				`,
-				ExpectedData: map[string]any{
-					"__type": nil, // NOTE: No "Users" should exist.
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_LinkSchema_MaliciousOwnerSpecifiedOnUpdatePermissionExprOnDRI_SchemaRejected(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-
-			testUtils.AddDACPolicy{
-
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-                     name: test
-                     description: a policy
-
-                     actor:
-                       name: actor
-
-                     resources:
-                       users:
-                         permissions:
-                           read:
-                             expr: owner
-                           update:
-                             expr: ownerBad
-                           delete:
-                             expr: owner
-
-                         relations:
-                           owner:
-                             types:
-                               - actor
-                           ownerBad:
-                             types:
-                               - actor
-                 `,
-			},
-
-			&action.AddSchema{
-				Schema: `
- 					type Users @policy(
-						id: "{{.Policy0}}",
- 						resource: "users"
- 					) {
- 						name: String
- 						age: Int
- 					}
- 				`,
-
-				ExpectedError: fmt.Sprintf(
-					"expr of required permission has invalid character after relation. Permission: %s, Relation: %s, Character: %s",
-					"update",
-					"owner",
-					"B",
-				),
-			},
-
-			testUtils.IntrospectionRequest{
-				Request: `
- 					query {
- 						__type (name: "Users") {
- 							name
- 							fields {
- 								name
- 								type {
- 								name
- 								kind
  								}
  							}
  						}

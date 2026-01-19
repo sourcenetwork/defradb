@@ -231,7 +231,7 @@ func TestExecuteExplain_WithOneToOneJoinFromSecondarySide_ShouldIncludeIndex(t *
 			create2AuthorDocuments(),
 
 			// Query from ContactAddress (secondary side) to AuthorContact (primary side).
-			// This should use the unique index on AuthorContact.address_id to find the related contact.
+			// This should use the unique index on AuthorContact._addressID to find the related contact.
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					ContactAddress {
@@ -262,7 +262,7 @@ func TestExecuteExplain_WithOneToOneJoinFromSecondarySide_ShouldIncludeIndex(t *
 												"indexFetches": uint64(0),
 											},
 											// The subTypeScanNode uses the unique index (indexFetches: 2)
-											// to find AuthorContact documents by their address_id field.
+											// to find AuthorContact documents by their _addressID field.
 											"subTypeScanNode": dataMap{
 												"iterations":   uint64(4),
 												"docFetches":   uint64(2),

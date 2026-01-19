@@ -57,7 +57,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -66,7 +66,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 					"name":         "Some Writer",
 					"age":          45,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -75,7 +75,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 					"name":         "Some Other Writer",
 					"age":          35,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 2),
+					"_publishedID": testUtils.NewDocIndex(0, 2),
 				},
 			},
 			testUtils.CreateDoc{
@@ -84,7 +84,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 					"name":         "Yet Another Writer",
 					"age":          30,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 3),
+					"_publishedID": testUtils.NewDocIndex(0, 3),
 				},
 			},
 			testUtils.Request{

@@ -29,7 +29,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -37,7 +37,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -45,7 +45,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParent(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -115,7 +115,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -123,7 +123,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -131,7 +131,7 @@ func TestQueryOneToManyWithNumericGreaterThanChildFilterOnParentWithUnrenderedCh
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -184,7 +184,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -192,7 +192,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -200,7 +200,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndChild(t *testing.T
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -265,7 +265,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -273,7 +273,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -281,7 +281,7 @@ func TestQueryOneToManyWithMultipleAliasedFilteredChildren(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -367,7 +367,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -375,7 +375,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -383,7 +383,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -391,7 +391,7 @@ func TestQueryOneToManyWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				Doc: `{
 					"name": "The Lord of the Rings",
 					"rating": 5.0,
-					"author_id": "bae-3027a2d8-0820-5db3-a25f-20239a3571c8"
+					"_authorID": "bae-3027a2d8-0820-5db3-a25f-20239a3571c8"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -503,7 +503,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 				DocMap: map[string]any{
 					"name":      "Painted House",
 					"rating":    4.9,
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -511,7 +511,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
 					"rating":    4.5,
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -519,7 +519,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
 					"rating":    4.8,
-					"author_id": testUtils.NewDocIndex(1, 1),
+					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -527,7 +527,7 @@ func TestQueryOneToMany_WithCompoundOperatorInFilterAndRelationAndCaseInsensitiv
 				DocMap: map[string]any{
 					"name":      "The Lord of the Rings",
 					"rating":    5.0,
-					"author_id": testUtils.NewDocIndex(1, 2),
+					"_authorID": testUtils.NewDocIndex(1, 2),
 				},
 			},
 			testUtils.Request{
@@ -574,7 +574,7 @@ func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -582,7 +582,7 @@ func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -590,7 +590,7 @@ func TestQueryOneToMany_WithAliasFilterOnRelated_Succeeds(t *testing.T) {
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{

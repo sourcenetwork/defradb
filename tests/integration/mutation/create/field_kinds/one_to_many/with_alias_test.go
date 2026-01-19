@@ -158,7 +158,7 @@ func TestMutationCreateOneToMany_AliasedRelationNameToLinkFromManySide(t *testin
 
 func TestMutationUpdateOneToMany_AliasRelationNameAndInternalIDBothProduceSameDocID(t *testing.T) {
 	// These IDs MUST be shared by both tests below.
-	bookID := "bae-20153a95-82e6-5d5f-a867-d21607b7bb7f"
+	bookID := "bae-a2df247a-8bc2-5761-9557-90400f490eef"
 
 	nonAliasedTest := testUtils.TestCase{
 		Actions: []any{
