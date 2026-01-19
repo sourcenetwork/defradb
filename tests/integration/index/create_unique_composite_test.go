@@ -48,13 +48,13 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 						"email": "another@gmail.com"
 					}`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID:  0,
-				Fields:        []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
+				Fields:        []client.IndexedFieldDescription{{Name: "name"}, {Name: "age"}},
 				Unique:        true,
 				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -140,13 +140,13 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 						"email": "different@gmail.com"
 					}`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID: 0,
-				Fields:       []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
+				Fields:       []client.IndexedFieldDescription{{Name: "name"}, {Name: "age"}},
 				IndexName:    "name_age_unique_index",
 				Unique:       true,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -209,13 +209,16 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreOrdered_Succeed(t *testing.T
 						"email": "different@gmail.com"
 					}`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID: 0,
-				Fields:       []testUtils.IndexedField{{Name: "name", Descending: true}, {Name: "age", Descending: false}, {Name: "email"}},
-				IndexName:    "name_age_unique_index",
-				Unique:       true,
+				Fields: []client.IndexedFieldDescription{
+					{Name: "name", Descending: true},
+					{Name: "age", Descending: false}, {Name: "email"},
+				},
+				IndexName: "name_age_unique_index",
+				Unique:    true,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{

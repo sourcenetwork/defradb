@@ -48,7 +48,7 @@ func TestNAC_AdminRelation_CanIndexDrop(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.DropIndex{
+			&action.DropIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				IndexName:     "User_name_ASC",
 				ExpectedError: "not authorized to perform operation",
@@ -63,7 +63,7 @@ func TestNAC_AdminRelation_CanIndexDrop(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.DropIndex{
+			&action.DropIndex{
 				Identity:  testUtils.ClientIdentity(2),
 				IndexName: "User_name_ASC",
 			},
