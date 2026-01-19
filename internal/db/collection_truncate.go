@@ -254,7 +254,6 @@ func (c *collection) hardDeleteDocumentBlocks(
 	ctx context.Context,
 	docID string,
 ) error {
-
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	headstore := txn.Headstore()
