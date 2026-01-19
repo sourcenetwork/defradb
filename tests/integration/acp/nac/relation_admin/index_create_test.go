@@ -48,7 +48,7 @@ func TestNAC_AdminRelation_CanIndexCreate(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -64,7 +64,7 @@ func TestNAC_AdminRelation_CanIndexCreate(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				FieldName:    "name",
