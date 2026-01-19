@@ -606,6 +606,53 @@ func (c *collection) Save(
 	return txn.Commit()
 }
 
+// SaveMany saves multiple documents in a single transaction.
+func (c *collection) SaveMany(
+	ctx context.Context,
+	docs []*client.Document,
+	opts ...client.DocCreateOption,
+) error {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+		return err
+	}
+
+	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
+	if err != nil {
+		return err
+	}
+	defer txn.Discard()
+
+	for _, doc := range docs {
+		primaryKey, err := c.getPrimaryKeyFromDocID(ctx, doc.ID())
+		if err != nil {
+			return err
+		}
+
+		exists, isDeleted, err := c.exists(ctx, primaryKey)
+		if err != nil {
+			return err
+		}
+
+		if isDeleted {
+			return NewErrDocumentDeleted(doc.ID().String())
+		}
+
+		if exists {
+			err = c.update(ctx, doc)
+		} else {
+			err = c.create(ctx, doc, opts)
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	return txn.Commit()
+}
+
 // hasPrivateKey checks if the identity is a FullIdentity and has a non-nil private key.
 func hasPrivateKey(ident identity.Identity) bool {
 	if fullIdent, ok := ident.(identity.FullIdentity); ok {

@@ -87,6 +87,12 @@ type Collection interface {
 	// will be created.
 	Save(ctx context.Context, doc *Document, opts ...DocCreateOption) error
 
+	// SaveMany saves multiple documents in a single transaction.
+	//
+	// For each document, if it exists with the given DocID it will be updated.
+	// Otherwise a new document will be created.
+	SaveMany(ctx context.Context, docs []*Document, opts ...DocCreateOption) error
+
 	// Delete will attempt to delete a document by DocID.
 	//
 	// Will return true if a deletion is successful, and return false along with an error

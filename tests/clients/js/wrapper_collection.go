@@ -146,6 +146,19 @@ func (c *Collection) Save(
 	return err
 }
 
+func (c *Collection) SaveMany(
+	ctx context.Context,
+	docs []*client.Document,
+	opts ...client.DocCreateOption,
+) error {
+	for _, doc := range docs {
+		if err := c.Save(ctx, doc, opts...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
