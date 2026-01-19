@@ -346,7 +346,7 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Book(filter: {_and: [
-						{rating: {_ge: 4.0}},
+						{rating: {_geq: 4.0}},
 						{author: {verified: {_eq: true}}}
 					]}) {
 						name
@@ -442,12 +442,12 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 				Request: `query {
 					Book(filter: {_or: [
 						{_and: [
-							{rating: {_ge: 4.0}},
-							{author: {age: {_le: 45}}}
+							{rating: {_geq: 4.0}},
+							{author: {age: {_leq: 45}}}
 						]},
 						{_and: [
-							{rating: {_le: 3.5}},
-							{author: {age: {_ge: 35}}}
+							{rating: {_leq: 3.5}},
+							{author: {age: {_geq: 35}}}
 						]}
 					]}) {
 						name
@@ -573,7 +573,7 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 			testUtils.Request{
 				Request: `query {
 					Book(filter: {_and: [
-						{rating: {_ge: 4.0}},
+						{rating: {_geq: 4.0}},
 						{author: {age: {_eq: 45}}}
 					]}) {
 						name
@@ -590,10 +590,10 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 				},
 			},
 			testUtils.Request{
-				// This is the same as {_not: {_and: [{rating: {_ge: 4.0}}, {author: {age: {_eq: 45}}}]}}
+				// This is the same as {_not: {_and: [{rating: {_geq: 4.0}}, {author: {age: {_eq: 45}}}]}}
 				Request: `query {
 					Book(filter: {_not: {
-						rating: {_ge: 4.0},
+						rating: {_geq: 4.0},
 						author: {age: {_eq: 45}}
 					}}) {
 						name

@@ -196,7 +196,7 @@ You can further filter results with the `filter` argument.
 ```shell
 defradb client query '
   query {
-    User(filter: {points: {_ge: 50}}) {
+    User(filter: {points: {_geq: 50}}) {
       _docID
       age
       name

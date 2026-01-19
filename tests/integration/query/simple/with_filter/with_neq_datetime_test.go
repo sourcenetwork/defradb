@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
+func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -30,85 +30,12 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2019-07-23T03:46:56-05:00"
+					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_le: "2017-07-23T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "John",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56-05:00"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob",
-					"Age": 32,
-					"CreatedAt": "2019-07-23T03:46:56-05:00"
-				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users(filter: {CreatedAt: {_le: "2018-07-23T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "John",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56-05:00"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users(filter: {CreatedAt: {_le: null}}) {
+					Users(filter: {CreatedAt: {_neq: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -126,7 +53,53 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithNilDateTimeLEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
+func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21,
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32,
+					"CreatedAt": "2011-07-23T03:46:56-05:00"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred",
+					"Age": 32
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_neq: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+						{
+							"Name": "Bob",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimple_WithNilDateTimeNotEqualAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -151,7 +124,7 @@ func TestQuerySimple_WithNilDateTimeLEAndNonNilFilterBlock_ShouldSucceed(t *test
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_le: "2017-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_neq: "2016-07-23T03:46:56-05:00"}}) {
 						Name
 						Age
 						CreatedAt
@@ -165,9 +138,9 @@ func TestQuerySimple_WithNilDateTimeLEAndNonNilFilterBlock_ShouldSucceed(t *test
 							"CreatedAt": testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
 						},
 						{
-							"Name":      "Bob",
-							"Age":       int64(32),
-							"CreatedAt": testUtils.MustParseTime("2016-07-23T03:46:56-05:00"),
+							"Name":      "Fred",
+							"Age":       int64(44),
+							"CreatedAt": nil,
 						},
 					},
 				},

@@ -964,7 +964,7 @@ func TestQueryWithCompositeIndex_WithRangeQueryOnFirstFieldWithMultipleFilters_S
 func TestQueryWithCompositeIndex_WithDescendingFirstFieldAndRangeQuery_ShouldUseRangeOptimization(t *testing.T) {
 	req := `
 		query {
-			User(filter: {age: {_le: 30}}) {
+			User(filter: {age: {_leq: 30}}) {
 				name
 				age
 			}

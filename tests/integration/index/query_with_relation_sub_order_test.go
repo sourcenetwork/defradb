@@ -432,7 +432,7 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 	req := `query {
 		Author {
 			name
-			published(filter: {rating: {_ge: 4.0}}, order: {rating: DESC}) {
+			published(filter: {rating: {_geq: 4.0}}, order: {rating: DESC}) {
 				title
 				rating
 			}
@@ -514,7 +514,7 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
-				// 6 indexFetches: sub-filter uses rating index (3 books match filter rating _ge: 4.0) for 2 authors,
+				// 6 indexFetches: sub-filter uses rating index (3 books match filter rating _geq: 4.0) for 2 authors,
 				// DESC instructs the index to iterate in reverse order, so no in-memory sort needed
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
 			},
@@ -526,7 +526,7 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 
 func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldOrderChildren(t *testing.T) {
 	req := `query {
-		Author(filter: {published: {rating: {_ge: 4.0}}}) {
+		Author(filter: {published: {rating: {_geq: 4.0}}}) {
 			name
 			published(order: {rating: DESC}) {
 				title
