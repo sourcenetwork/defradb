@@ -54,7 +54,17 @@ func (a *CreateView) Execute() {
 
 	if a.s.ViewType == state.MaterializedViewType {
 		typeIndex := strings.Index(sdl, "\ttype ")
+		if typeIndex == -1 {
+			a.s.T.Fatal("materialized view SDL must contain '\ttype ' declaration")
+			return
+		}
+
 		subStrSquigglyIndex := strings.Index(sdl[typeIndex:], "{")
+		if subStrSquigglyIndex == -1 {
+			a.s.T.Fatal("materialized view SDL type declaration must contain '{'")
+			return
+		}
+
 		squigglyIndex := typeIndex + subStrSquigglyIndex
 		sdl = strings.Join([]string{
 			sdl[:squigglyIndex],
