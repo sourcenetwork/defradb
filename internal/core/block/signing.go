@@ -47,7 +47,7 @@ func extractFullIdentity(ctx context.Context) immutable.Option[identity.FullIden
 		return immutable.None[identity.FullIdentity]()
 	}
 
-		return immutable.Some(fullIdent)
+	return immutable.Some(fullIdent)
 }
 
 func signBlock(

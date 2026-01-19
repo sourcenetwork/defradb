@@ -126,7 +126,7 @@ func (o *DeleteNACActorRelationshipOptions) GetIdentity() immutable.Option[ident
 	return o.Identity
 }
 
-// ReEnableNACOptions contains options for ReEnableNAC operation 
+// ReEnableNACOptions contains options for ReEnableNAC operation
 type ReEnableNACOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]

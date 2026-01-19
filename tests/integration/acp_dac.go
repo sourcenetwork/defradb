@@ -191,7 +191,8 @@ func addDACActorRelationship(
 		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
 		ctx := getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID)
-		opt := options.WithIdentity(options.AddDACActorRelationship(), getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
+		opt := options.WithIdentity(options.AddDACActorRelationship(),
+			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 		exists, err := node.AddDACActorRelationship(
 			ctx,
 			collectionName,
@@ -284,7 +285,8 @@ func deleteDACActorRelationship(
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
 		ctx := getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID)
-		opt := options.WithIdentity(options.DeleteDACActorRelationship(), getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
+		opt := options.WithIdentity(options.DeleteDACActorRelationship(),
+			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 		deleteActorRelationshipResult, err := node.DeleteDACActorRelationship(
 			ctx,
 			collectionName,

@@ -345,7 +345,10 @@ func (txn *Txn) DeleteReplicator(
 	return txn.db.DeleteReplicator(ctx, id, collectionNames, opts...)
 }
 
-func (txn *Txn) GetAllReplicators(ctx context.Context, opts ...*options.GetAllReplicatorsOptions) ([]client.Replicator, error) {
+func (txn *Txn) GetAllReplicators(
+	ctx context.Context,
+	opts ...*options.GetAllReplicatorsOptions,
+) ([]client.Replicator, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetAllReplicators(ctx, opts...)
 }
@@ -368,7 +371,10 @@ func (txn *Txn) RemoveP2PCollections(
 	return txn.db.RemoveP2PCollections(ctx, collectionNames, opts...)
 }
 
-func (txn *Txn) GetAllP2PCollections(ctx context.Context, opts ...*options.GetAllP2PCollectionsOptions) ([]string, error) {
+func (txn *Txn) GetAllP2PCollections(
+	ctx context.Context,
+	opts ...*options.GetAllP2PCollectionsOptions,
+) ([]string, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetAllP2PCollections(ctx, opts...)
 }

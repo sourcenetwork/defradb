@@ -54,7 +54,7 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetName("UserView"),
+				FilterOptions:   options.GetCollections().SetName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -101,7 +101,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetName("UserView"),
+				FilterOptions:   options.GetCollections().SetName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -151,7 +151,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetName("UserView"),
+				FilterOptions:   options.GetCollections().SetName("UserView"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -238,7 +238,7 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetName("Users"),
+				FilterOptions:   options.GetCollections().SetName("Users"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			testUtils.Request{
@@ -291,7 +291,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetName("Users"),
+				FilterOptions:   options.GetCollections().SetName("Users"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			testUtils.Request{

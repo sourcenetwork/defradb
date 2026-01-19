@@ -163,9 +163,9 @@ type Store interface {
 	// VerifySignature verifies the signatures of a block using a public key.
 	// Returns an error if any signature verification fails.
 	VerifySignature(
-		ctx context.Context, 
-		blockCid string, 
-		pubKey crypto.PublicKey, 
+		ctx context.Context,
+		blockCid string,
+		pubKey crypto.PublicKey,
 		opts ...*options.VerifySignatureOptions,
 	) error
 
@@ -197,9 +197,9 @@ type Store interface {
 	// A lens configuration may also be provided, and will become the migration to any new CollectionVersions created
 	// by the patch.
 	PatchCollection(
-		ctx context.Context, 
-		patch string, 
-		migration immutable.Option[model.Lens], 
+		ctx context.Context,
+		patch string,
+		migration immutable.Option[model.Lens],
 		opts ...*options.PatchCollectionOptions,
 	) error
 
@@ -211,8 +211,8 @@ type Store interface {
 	//
 	// It will return an error if the provided version ID does not exist.
 	SetActiveCollectionVersion(
-		ctx context.Context, 
-		versionID string, 
+		ctx context.Context,
+		versionID string,
 		opts ...*options.SetActiveCollectionVersionOptions,
 	) error
 
@@ -310,7 +310,7 @@ type Store interface {
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(
-		ctx context.Context, 
+		ctx context.Context,
 		opts ...*options.GetAllIndexesOptions,
 	) (map[CollectionName][]IndexDescription, error)
 
@@ -432,4 +432,3 @@ type RequestResult struct {
 	// from a subscription request.
 	Subscription <-chan GQLResult
 }
-

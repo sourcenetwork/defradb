@@ -120,7 +120,8 @@ func subscribeToDocument(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	opt := options.WithIdentity(options.AddP2PDocuments(), getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	opt := options.WithIdentity(options.AddP2PDocuments(),
+		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
 	err := node.AddP2PDocuments(ctx, docIDs, opt)
 	if err == nil {
 		waitForSubscribeToDocumentEvent(s, action)
@@ -156,7 +157,8 @@ func unsubscribeToDocument(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	opt := options.WithIdentity(options.RemoveP2PDocuments(), getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	opt := options.WithIdentity(options.RemoveP2PDocuments(),
+		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
 	err := node.RemoveP2PDocuments(ctx, docIDs, opt)
 	if err == nil {
 		waitForUnsubscribeToDocumentEvent(s, action)
@@ -187,7 +189,8 @@ func getAllP2PDocuments(
 
 	node := s.Nodes[action.NodeID]
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	opt := options.WithIdentity(options.GetAllP2PDocuments(), getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	opt := options.WithIdentity(options.GetAllP2PDocuments(),
+		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
 	cols, err := node.GetAllP2PDocuments(ctx, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)

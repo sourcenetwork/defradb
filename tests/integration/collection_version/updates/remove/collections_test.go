@@ -291,7 +291,7 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_SamePatch(t *testing.T
 				`,
 			},
 			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetIncludeInactive(true),
+				FilterOptions:   options.GetCollections().SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},

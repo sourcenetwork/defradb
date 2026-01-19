@@ -139,7 +139,8 @@ func addNACActorRelationship(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID)
-		opt := options.WithIdentity(options.AddNACActorRelationship(), getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
+		opt := options.WithIdentity(options.AddNACActorRelationship(),
+			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 
 		addActorRelationshipResult, err := node.AddNACActorRelationship(
 			ctx,
@@ -200,7 +201,8 @@ func deleteNACActorRelationship(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID)
-		opt := options.WithIdentity(options.DeleteNACActorRelationship(), getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
+		opt := options.WithIdentity(options.DeleteNACActorRelationship(),
+			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 
 		deleteActorRelationshipResult, err := node.DeleteNACActorRelationship(
 			ctx,

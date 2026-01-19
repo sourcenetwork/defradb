@@ -120,7 +120,8 @@ func subscribeToCollection(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	opt := options.WithIdentity(options.AddP2PCollections(), getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	opt := options.WithIdentity(options.AddP2PCollections(),
+		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
 	err := node.AddP2PCollections(ctx, collectionNames, opt)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
@@ -156,7 +157,8 @@ func unsubscribeToCollection(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	opt := options.WithIdentity(options.RemoveP2PCollections(), getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	opt := options.WithIdentity(options.RemoveP2PCollections(),
+		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
 	err := node.RemoveP2PCollections(ctx, collectionNames, opt)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
@@ -187,7 +189,8 @@ func getAllP2PCollections(
 
 	node := s.Nodes[action.NodeID]
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	opt := options.WithIdentity(options.GetAllP2PCollections(), getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
+	opt := options.WithIdentity(options.GetAllP2PCollections(),
+		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
 	cols, err := node.GetAllP2PCollections(ctx, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)

@@ -50,7 +50,7 @@ func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetCollectionID("does not exist"),
+				FilterOptions:   options.GetCollections().SetCollectionID("does not exist"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -63,7 +63,7 @@ func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetName("does not exist"),
+				FilterOptions:   options.GetCollections().SetName("does not exist"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
