@@ -343,7 +343,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 		return err
 	}
 
-	keysToDelete := make([][]byte, 0, hardDeleteChunkSize)
+	keysToDelete := make([]keys.HeadstoreColKey, 0, hardDeleteChunkSize)
 	// If there are more keys than we wish to load into memory at once, this will be set to
 	// true, and we'll continue the delete in another pass.
 	hasMore := true
@@ -358,7 +358,12 @@ func (c *collection) hardDeleteCollectionBlocks(
 			break
 		}
 
-		keysToDelete = append(keysToDelete, iter.Key())
+		key, err := keys.NewHeadstoreColKeyFromString(string(iter.Key()))
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		keysToDelete = append(keysToDelete, key)
 	}
 
 	err = iter.Close()
@@ -366,11 +371,18 @@ func (c *collection) hardDeleteCollectionBlocks(
 		return err
 	}
 
+	blockstore := txn.Blockstore()
+
 	for _, key := range keysToDelete {
 		// Not all store implementations support mutations whilst iterating, so whilst it would
 		// be simpler and probably more efficient to delete whilst iterating, it would not work
 		// with all supported corekv store implementations.
-		err := headstore.Delete(ctx, key)
+		err := headstore.Delete(ctx, key.Bytes())
+		if err != nil {
+			return err
+		}
+
+		err = blockstore.DeleteBlock(ctx, key.Cid)
 		if err != nil {
 			return err
 		}
