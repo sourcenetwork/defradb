@@ -51,10 +51,11 @@ import (
 )
 
 const (
-	mutationTypeEnvName     = "DEFRA_MUTATION_TYPE"
-	viewTypeEnvName         = "DEFRA_VIEW_TYPE"
-	skipNetworkTestsEnvName = "DEFRA_SKIP_NETWORK_TESTS"
-	vectorEmbeddingEnvName  = "DEFRA_VECTOR_EMBEDDING"
+	mutationTypeEnvName            = "DEFRA_MUTATION_TYPE"
+	viewTypeEnvName                = "DEFRA_VIEW_TYPE"
+	skipNetworkTestsEnvName        = "DEFRA_SKIP_NETWORK_TESTS"
+	vectorEmbeddingEnvName         = "DEFRA_VECTOR_EMBEDDING"
+	subscriptionTransportEnvName   = "DEFRA_SUBSCRIPTION_TRANSPORT"
 )
 
 // The MutationType that tests will run using.
@@ -101,6 +102,8 @@ var (
 	skipBackupTests = false
 	// runVectorEmbeddingTests will whether tests with vector embedding generation should be executed.
 	runVectorEmbeddingTests = false
+	// subscriptionTransport specifies the transport to use for GraphQL subscriptions.
+	subscriptionTransport = state.SSETransportType
 )
 
 const (
@@ -137,6 +140,10 @@ func init() {
 
 	if value, ok := os.LookupEnv(vectorEmbeddingEnvName); ok {
 		runVectorEmbeddingTests, _ = strconv.ParseBool(value)
+	}
+
+	if value, ok := os.LookupEnv(subscriptionTransportEnvName); ok {
+		subscriptionTransport = state.SubscriptionTransportType(value)
 	}
 }
 
@@ -179,6 +186,7 @@ func ExecuteTestCase(
 	skipIfBackupTest(t, testCase.Actions)
 	skipIfViewCacheTypeUnsupported(t, testCase.SupportedViewTypes)
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
+	skipIfSubscriptionTransportUnsupported(t, testCase.SupportedSubscriptionTransports)
 
 	var clients []state.ClientType
 	if httpClient {
@@ -2614,6 +2622,27 @@ func skipIfViewCacheTypeUnsupported(t testing.TB, supportedViewTypes immutable.O
 
 		if !isTypeSupported {
 			t.Skipf("test does not support given view cache type. Type: %s", viewType)
+		}
+	}
+}
+
+// skipIfSubscriptionTransportUnsupported skips the current test if the given supportedSubscriptionTransports
+// option has value and the active subscription transport is not contained within that value set.
+func skipIfSubscriptionTransportUnsupported(
+	t testing.TB,
+	supportedSubscriptionTransports immutable.Option[[]state.SubscriptionTransportType],
+) {
+	if supportedSubscriptionTransports.HasValue() {
+		var isTypeSupported bool
+		for _, supportedTransport := range supportedSubscriptionTransports.Value() {
+			if supportedTransport == subscriptionTransport {
+				isTypeSupported = true
+				break
+			}
+		}
+
+		if !isTypeSupported {
+			t.Skipf("test does not support given subscription transport. Transport: %s", subscriptionTransport)
 		}
 	}
 }

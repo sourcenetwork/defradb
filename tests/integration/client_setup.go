@@ -17,6 +17,7 @@ import (
 	"fmt"
 
 	cbindings "github.com/sourcenetwork/defradb/cbindings"
+	defrahttp "github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
@@ -41,7 +42,15 @@ func init() {
 func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 	switch s.ClientType {
 	case state.HTTPClientType:
-		return http.NewWrapper(s.Ctx, nodeObj)
+		// Convert state subscription transport type to http client transport type
+		var opts []defrahttp.ClientOption
+		switch subscriptionTransport {
+		case state.WebSocketTransportType:
+			opts = append(opts, defrahttp.WithSubscriptionTransport(defrahttp.WebSocketSubscriptionTransport))
+		default:
+			opts = append(opts, defrahttp.WithSubscriptionTransport(defrahttp.SSESubscriptionTransport))
+		}
+		return http.NewWrapper(s.Ctx, nodeObj, opts...)
 
 	case state.CLIClientType:
 		return cli.NewWrapper(s.Ctx, nodeObj, s.SourcehubAddress)

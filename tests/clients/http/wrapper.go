@@ -40,7 +40,7 @@ type Wrapper struct {
 	serverCancel context.CancelFunc
 }
 
-func NewWrapper(ctx context.Context, node *node.Node) (*Wrapper, error) {
+func NewWrapper(ctx context.Context, node *node.Node, opts ...http.ClientOption) (*Wrapper, error) {
 	handler, err := http.NewHandler(node.DB)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func NewWrapper(ctx context.Context, node *node.Node) (*Wrapper, error) {
 	}
 	httpServer.Start()
 
-	client, err := http.NewClient(httpServer.URL)
+	client, err := http.NewClient(httpServer.URL, opts...)
 	if err != nil {
 		cancel()
 		return nil, err

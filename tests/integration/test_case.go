@@ -67,6 +67,13 @@ type TestCase struct {
 	// differences between database types, or we need to temporarily document a bug.
 	SupportedDatabaseTypes immutable.Option[[]state.DatabaseType]
 
+	// If provided a value, SupportedSubscriptionTransports will cause this test to be skipped
+	// if the active subscription transport is not within the given set.
+	//
+	// This is to only be used in the very rare cases where we really do want behavioural
+	// differences between subscription transports, or we need to temporarily document a bug.
+	SupportedSubscriptionTransports immutable.Option[[]state.SubscriptionTransportType]
+
 	// Configuration for KMS to be used in the test
 	KMS KMS
 
