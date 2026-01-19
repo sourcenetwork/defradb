@@ -459,7 +459,7 @@ func TestOrderQueryWithIndex_WithOrderOnNestedField_ShouldUseIndexForOrdering(t 
 
 func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrdering(t *testing.T) {
 	req := `query {
-		Device(order: {owner_id: ASC}) {
+		Device(order: {_ownerID: ASC}) {
 			model
 		}
 	}`
@@ -1483,7 +1483,7 @@ func TestOrderQueryWithIndexOnRelation_OrderBySecondaryDoc_ShouldOrderWithIndex(
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
-				// 4 indexFetches for device model index + 4 for the auto-created unique index on device_id
+				// 4 indexFetches for device model index + 4 for the auto-created unique index on _deviceID
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(8),
 			},
 		},

@@ -54,7 +54,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 				DocMap: map[string]any{
 					"name":      "The Rooster Bar",
 					"rating":    4,
-					"author_id": testUtils.NewDocIndex(0, 1),
+					"_authorID": testUtils.NewDocIndex(0, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -63,7 +63,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
 					"rating":    4.8,
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -72,7 +72,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 				DocMap: map[string]any{
 					"name":      "The Associate",
 					"rating":    4.2,
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			// Publishers
@@ -82,7 +82,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 					"name":       "Only Publisher of The Rooster Bar",
 					"address":    "1 Rooster Ave., Waterloo, Ontario",
 					"yearOpened": 2022,
-					"book_id":    testUtils.NewDocIndex(1, 0),
+					"_bookID":    testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -91,7 +91,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 					"name":       "Only Publisher of Theif Lord",
 					"address":    "1 Theif Lord, Waterloo, Ontario",
 					"yearOpened": 2020,
-					"book_id":    testUtils.NewDocIndex(1, 1),
+					"_bookID":    testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.Request{
@@ -309,7 +309,7 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				DocMap: map[string]any{
 					"name":      "The Lord of the Rings",
 					"rating":    5.0,
-					"author_id": testUtils.NewDocIndex(0, 3),
+					"_authorID": testUtils.NewDocIndex(0, 3),
 				},
 			},
 			testUtils.CreateDoc{
@@ -318,7 +318,7 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 					"name":       "Allen & Unwin",
 					"address":    "1 Allen Ave., Sydney, Australia",
 					"yearOpened": 1954,
-					"book_id":    testUtils.NewDocIndex(1, 6),
+					"_bookID":    testUtils.NewDocIndex(1, 6),
 				},
 			},
 			testUtils.Request{

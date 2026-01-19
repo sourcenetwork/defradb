@@ -61,7 +61,7 @@ func TestView_OneToMany(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{
@@ -133,7 +133,7 @@ func TestView_OneToManyWithMixedSDL(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{
@@ -314,7 +314,7 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 				CollectionID: 1,
 				Doc: `{
 					"name":	"To Kill a Mockingbird",
-					"author_id": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
+					"_authorID": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
 				}`,
 			},
 			testUtils.Request{
@@ -459,7 +459,7 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.Request{

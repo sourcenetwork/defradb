@@ -124,6 +124,7 @@ func TestACP_QueryManyToOneRelationObjectsWithIdentity(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

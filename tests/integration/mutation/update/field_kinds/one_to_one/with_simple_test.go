@@ -37,7 +37,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"published_id": "%s"
+						"_publishedID": "%s"
 					}`,
 					unknownID,
 				),
@@ -83,7 +83,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"published_id": "%s"
+						"_publishedID": "%s"
 					}`,
 					bookID,
 				),
@@ -224,7 +224,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -238,7 +238,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromPrimarySide(t *testing.T) {
 				DocID:        1,
 				Doc: fmt.Sprintf(
 					`{
-						"published_id": "%s"
+						"_publishedID": "%s"
 					}`,
 					bookID,
 				),
@@ -282,7 +282,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author2ID,
 				),
@@ -325,7 +325,7 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_GQL(t *testing
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author2ID,
 				),
@@ -360,7 +360,7 @@ func TestMutationUpdateOneToOne_InvalidLengthRelationIDToLink_Error(t *testing.T
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"published_id": "%s"
+						"_publishedID": "%s"
 					}`,
 					invalidBookID,
 				),

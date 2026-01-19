@@ -39,7 +39,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 			// It is important to test that the index shows up in both the `GetIndexes` call,
 			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
 			// where patching a schema would result in the index disappearing from one of those locations.
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name:   "Users_name_ASC",
@@ -140,7 +140,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 			// It is important to test that the index shows up in both the `GetIndexes` call,
 			// *and* the `GetCollections` call, as indexes are stored in multiple places and we had a bug
 			// where patching a schema would result in the index disappearing from one of those locations.
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name:   "Users_name_ASC",

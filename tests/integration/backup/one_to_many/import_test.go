@@ -92,13 +92,13 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 						{
 							"_docID":"bae-9828df35-b4cd-5d3a-acab-193c84e521c6",
 							"_docIDNew":"bae-d7b5bc04-26af-570f-9aec-b9c5d923842f",
-							"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
+							"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"name":"Game of chains"
 						},
 						{
 							"_docID":"bae-0fa157eb-c762-51af-859d-9d0eb941d2f4",
 							"_docIDNew":"bae-8507cb9a-54ea-5db3-bb38-6b4e6e8f3dbf",
-							"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
+							"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"name":"John and the sourcerers' stone"
 						}
 					],

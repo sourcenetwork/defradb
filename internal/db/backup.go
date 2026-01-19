@@ -74,10 +74,11 @@ func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
 			resetMap := map[string]any{}
 			for _, field := range col.Version().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					if val, ok := docMap[field.Name+request.RelatedObjectID]; ok {
+					fieldID := request.ToFieldID(field.Name)
+					if val, ok := docMap[fieldID]; ok {
 						if docMap[request.NewDocIDFieldName] == val {
-							resetMap[field.Name+request.RelatedObjectID] = val
-							delete(docMap, field.Name+request.RelatedObjectID)
+							resetMap[fieldID] = val
+							delete(docMap, fieldID)
 						}
 					}
 				}
@@ -211,15 +212,16 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 			// replace any foreign key if it needs to be changed
 			for _, field := range col.Version().Fields {
 				if field.Kind.IsObject() && !field.Kind.IsArray() {
-					if foreignKey, err := doc.Get(field.Name + request.RelatedObjectID); err == nil {
+					fieldID := request.ToFieldID(field.Name)
+					if foreignKey, err := doc.Get(fieldID); err == nil {
 						if newKey, ok := keyChangeCache[foreignKey.(string)]; ok {
-							err := doc.Set(ctx, field.Name+request.RelatedObjectID, newKey)
+							err := doc.Set(ctx, request.ToFieldID(field.Name), newKey)
 							if err != nil {
 								return err
 							}
 							if foreignKey.(string) == doc.ID().String() {
 								isSelfReference = true
-								refFieldName = field.Name + request.RelatedObjectID
+								refFieldName = fieldID
 							}
 						} else {
 							foreignDef, _, err := description.GetRelatedCollection(ctx, col.Version(), field.Kind)
@@ -238,7 +240,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 							}
 							foreignDoc, err := foreignCol.Get(ctx, foreignDocID, false)
 							if err != nil {
-								err := doc.Set(ctx, field.Name+request.RelatedObjectID, nil)
+								err := doc.Set(ctx, request.ToFieldID(field.Name), nil)
 								if err != nil {
 									return err
 								}
@@ -250,12 +252,12 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 
 								delete(oldForeignDoc, request.DocIDFieldName)
 								if foreignDoc.ID().String() == foreignDocID.String() {
-									delete(oldForeignDoc, field.Name+request.RelatedObjectID)
+									delete(oldForeignDoc, fieldID)
 								}
 
 								if foreignDoc.ID().String() == doc.ID().String() {
 									isSelfReference = true
-									refFieldName = field.Name + request.RelatedObjectID
+									refFieldName = fieldID
 								}
 
 								newForeignDoc, err := client.NewDocFromMap(ctx, oldForeignDoc, foreignCol.Version())
@@ -264,7 +266,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 								}
 
 								if foreignDoc.ID().String() != doc.ID().String() {
-									err = doc.Set(ctx, field.Name+request.RelatedObjectID, newForeignDoc.ID().String())
+									err = doc.Set(ctx, request.ToFieldID(field.Name), newForeignDoc.ID().String())
 									if err != nil {
 										return err
 									}

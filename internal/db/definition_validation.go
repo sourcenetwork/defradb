@@ -976,7 +976,7 @@ func validateRelationalFieldIDType(
 
 		for _, field := range col.Fields {
 			if field.Kind.IsObject() && !field.Kind.IsArray() {
-				idFieldName := field.Name + request.RelatedObjectID
+				idFieldName := request.ToFieldID(field.Name)
 				idField, idFieldFound := fieldsByName[idFieldName]
 				if idFieldFound {
 					if idField.Kind != client.FieldKind_DocID {
