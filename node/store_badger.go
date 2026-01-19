@@ -35,11 +35,18 @@ func init() {
 		badgerOpts.ValueLogFileSize = options.badgerFileSize
 		badgerOpts.EncryptionKey = options.badgerEncryptionKey
 
+		badgerOpts.NumCompactors = 12
+		badgerOpts.NumLevelZeroTables = 15
+		badgerOpts.NumLevelZeroTablesStall = 30
+		badgerOpts.MemTableSize = 256 << 20
+		badgerOpts.BlockCacheSize = 1 << 30
+		badgerOpts.ValueThreshold = 1 << 10
+
 		if len(options.badgerEncryptionKey) > 0 {
 			// Having a cache improves the performance.
 			// Otherwise, your reads would be very slow while encryption is enabled.
 			// https://dgraph.io/docs/badger/get-started/#encryption-mode
-			badgerOpts.IndexCacheSize = 100 << 20
+			badgerOpts.IndexCacheSize = 512 << 20
 		}
 
 		return badger.NewDatastore(path, badgerOpts)
