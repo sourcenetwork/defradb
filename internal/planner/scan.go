@@ -224,9 +224,15 @@ func (n *scanNode) Next() (bool, error) {
 		return false, err
 	}
 
-	n.currentValue, err = fetcher.DecodeToDoc(n.p.ctx, shortID, doc, n.documentMapping, false)
-	if err != nil {
-		return false, err
+	if len(n.fields) == 0 {
+		n.currentValue = n.documentMapping.NewDoc()
+		n.currentValue.SetID(string(doc.ID()))
+		n.currentValue.Status = doc.Status()
+	} else {
+		n.currentValue, err = fetcher.DecodeToDoc(n.p.ctx, shortID, doc, n.documentMapping, false)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	n.documentMapping.SetFirstOfName(
