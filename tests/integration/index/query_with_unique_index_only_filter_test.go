@@ -90,7 +90,7 @@ func TestQueryWithUniqueIndex_WithGreaterThanFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithUniqueIndex_WithGreaterOrEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_ge: 48}}) {
+		User(filter: {age: {_geq: 48}}) {
 			name
 		}
 	}`
@@ -163,7 +163,7 @@ func TestQueryWithUniqueIndex_WithLessThanFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithUniqueIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_le: 23}}) {
+		User(filter: {age: {_leq: 23}}) {
 			name
 		}
 	}`
@@ -200,7 +200,7 @@ func TestQueryWithUniqueIndex_WithLessOrEqualFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithUniqueIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {name: {_ne: "Islam"}}) {
+		User(filter: {name: {_neq: "Islam"}}) {
 			name
 		}
 	}`
@@ -695,7 +695,7 @@ func TestQueryWithUniqueIndex_WithNotEqualFilterOnNilValue_ShouldFetch(t *testin
 			testUtils.Request{
 				Request: `
 					query {
-						User(filter: {age: {_ne: null}}) {
+						User(filter: {age: {_neq: null}}) {
 							name
 						}
 					}`,

@@ -33,15 +33,15 @@ func TestOneToOneUniqueIndex_OnPrimarySide_AutoCreated(t *testing.T) {
 						user: User
 					}`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "User_address_id_ASC",
+						Name:   "User__addressID_ASC",
 						ID:     1,
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
-							{Name: "address_id"},
+							{Name: "_addressID"},
 						},
 					},
 				},
@@ -67,7 +67,7 @@ func TestOneToOneUniqueIndex_UserDefinedUniqueIndexWithName_Succeeds(t *testing.
 						user: User
 					}`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -75,7 +75,7 @@ func TestOneToOneUniqueIndex_UserDefinedUniqueIndexWithName_Succeeds(t *testing.
 						ID:     1,
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
-							{Name: "address_id"},
+							{Name: "_addressID"},
 						},
 					},
 				},
@@ -113,7 +113,7 @@ func TestOneToOneUniqueIndex_TypeLevelCompositeUniqueIndex_Succeeds(t *testing.T
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
-					type User @index(unique: true, includes: [{field: "address_id"}, {field: "name"}]) {
+					type User @index(unique: true, includes: [{field: "_addressID"}, {field: "name"}]) {
 						name: String
 						address: Address @primary
 					}
@@ -123,15 +123,15 @@ func TestOneToOneUniqueIndex_TypeLevelCompositeUniqueIndex_Succeeds(t *testing.T
 						user: User
 					}`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
-						Name:   "User_address_id_ASC",
+						Name:   "User__addressID_ASC",
 						ID:     1,
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
-							{Name: "address_id"},
+							{Name: "_addressID"},
 							{Name: "name"},
 						},
 					},
@@ -148,7 +148,7 @@ func TestOneToOneUniqueIndex_TypeLevelNonUniqueIndex_ReturnsError(t *testing.T) 
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
-					type User @index(unique: false, includes: [{field: "address_id"}]) {
+					type User @index(unique: false, includes: [{field: "_addressID"}]) {
 						name: String
 						address: Address @primary
 					}
@@ -172,7 +172,7 @@ func TestOneToOneUniqueIndex_CompositeIndexRelationNotFirst_AutoIndexStillCreate
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
-					type User @index(unique: true, includes: [{field: "name"}, {field: "address_id"}]) {
+					type User @index(unique: true, includes: [{field: "name"}, {field: "_addressID"}]) {
 						name: String
 						address: Address @primary
 					}
@@ -182,7 +182,7 @@ func TestOneToOneUniqueIndex_CompositeIndexRelationNotFirst_AutoIndexStillCreate
 						user: User
 					}`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -191,15 +191,15 @@ func TestOneToOneUniqueIndex_CompositeIndexRelationNotFirst_AutoIndexStillCreate
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
 							{Name: "name"},
-							{Name: "address_id"},
+							{Name: "_addressID"},
 						},
 					},
 					{
-						Name:   "User_address_id_ASC",
+						Name:   "User__addressID_ASC",
 						ID:     2,
 						Unique: true,
 						Fields: []client.IndexedFieldDescription{
-							{Name: "address_id"},
+							{Name: "_addressID"},
 						},
 					},
 				},
@@ -235,14 +235,14 @@ func TestOneToOneUniqueIndex_ReferenceSameRelatedDoc_RejectsDuplicateLink(t *tes
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":       "John",
-					"address_id": testUtils.NewDocIndex(1, 0),
+					"_addressID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":       "Jane",
-					"address_id": testUtils.NewDocIndex(1, 0),
+					"_addressID": testUtils.NewDocIndex(1, 0),
 				},
 				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
@@ -314,11 +314,11 @@ func TestOneToOneUniqueIndex_OneToMany_ShouldNotCreateIndex(t *testing.T) {
 						author: Author
 					}`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    1,
 				ExpectedIndexes: []client.IndexDescription{},
 			},

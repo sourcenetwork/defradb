@@ -52,7 +52,7 @@ func TestQueryOneToManyWithSameFieldName_SingleSide(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
-						"relationship1_id": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
+						"_relationship1ID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -94,7 +94,7 @@ func TestQueryOneToManyWithSameFieldName_MultiSide(t *testing.T) {
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
-						"relationship1_id": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
+						"_relationship1ID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
 					}`,
 			},
 			testUtils.CreateDoc{

@@ -90,10 +90,10 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							"height": int64(2),
 							"_group": []map[string]any{
 								{
-									"cid": "bafyreia5jhb6ughpzd2rjszl4qbdd4w5zrdjfoseyrvnmhm2xiyrudvja4",
+									"cid": "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
 								},
 								{
-									"cid": "bafyreieira5p74wdicqhelwbjsin7jtnnvvlplngrrcqfapleq2phexqga",
+									"cid": "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
 								},
 							},
 						},
@@ -101,13 +101,13 @@ func TestQueryCommitsWithGroupByHeightWithChild(t *testing.T) {
 							"height": int64(1),
 							"_group": []map[string]any{
 								{
-									"cid": "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
+									"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 								},
 								{
-									"cid": "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
+									"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 								},
 								{
-									"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
+									"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 								},
 							},
 						},
@@ -144,7 +144,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreihakk5jjukb4fw7klfejdmniwhuscnckcjo677p3mtcxrdpiahuea",
+							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 							"_group": []map[string]any{
 								{
 									"height": int64(1),
@@ -152,7 +152,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							},
 						},
 						{
-							"cid": "bafyreihx4lnknvruc6vonsg3dvb3nnlsycwzbbkeulcutnzgidkzfvea64",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 							"_group": []map[string]any{
 								{
 									"height": int64(1),
@@ -160,7 +160,7 @@ func TestQueryCommitsWithGroupByCidWithChild(t *testing.T) {
 							},
 						},
 						{
-							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 							"_group": []map[string]any{
 								{
 									"height": int64(1),

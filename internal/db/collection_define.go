@@ -27,6 +27,7 @@ import (
 	"slices"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -200,7 +201,7 @@ existingVersionLoop:
 		// add one.
 		for _, field := range col.Fields {
 			if field.Kind.IsObject() && !field.Kind.IsArray() {
-				idFieldName := field.Name + "_id"
+				idFieldName := request.ToFieldID(field.Name)
 				if _, ok := col.GetFieldByName(idFieldName); !ok {
 					col.Fields = append(col.Fields, client.CollectionFieldDescription{
 						Name:         idFieldName,
@@ -361,13 +362,11 @@ existingVersionLoop:
 					return err
 				}
 			}
-		}
-
-		if col.PreviousVersion.HasValue() && migration.HasValue() {
+		} else if col.PreviousVersion.HasValue() && migration.HasValue() {
 			_, err = db.setMigration(ctx, client.LensConfig{
-				SourceSchemaVersionID:      col.PreviousVersion.Value().SourceCollectionID,
-				DestinationSchemaVersionID: col.VersionID,
-				Lens:                       migration.Value(),
+				SourceCollectionVersionID:      col.PreviousVersion.Value().SourceCollectionID,
+				DestinationCollectionVersionID: col.VersionID,
+				Lens:                           migration.Value(),
 			})
 			if err != nil {
 				return err
@@ -551,7 +550,7 @@ func (db *DB) setActiveCollectionVersion(
 	versionID string,
 ) error {
 	if versionID == "" {
-		return ErrSchemaVersionIDEmpty
+		return ErrCollectionVersionIDEmpty
 	}
 	col, err := description.GetCollectionByID(ctx, versionID)
 	if err != nil {
@@ -613,8 +612,7 @@ func (db *DB) setActiveCollectionVersion(
 }
 
 // shouldReindexForVersionSwitch determines if reindexing is needed when switching
-// to a new active version by examining the full version history DAG using the lens
-// package's GetTargetedCollectionHistory function.
+// to a new active version by examining the full version history DAG.
 //
 // This properly handles branching version histories by checking if any version
 // reachable from the new active version has a migration.
@@ -622,29 +620,7 @@ func (db *DB) shouldReindexForVersionSwitch(
 	ctx context.Context,
 	newActiveCol client.CollectionVersion,
 ) (bool, error) {
-	history, err := description.GetTargetedCollectionHistory(
-		ctx,
-		newActiveCol.CollectionID,
-		newActiveCol.VersionID,
-	)
-	if err != nil {
-		return false, err
-	}
-
-	if history == nil {
-		return false, nil
-	}
-
-	for _, historyLink := range history {
-		if historyLink.Collection().PreviousVersion.HasValue() {
-			prevVersion := historyLink.Collection().PreviousVersion.Value()
-			if prevVersion.Transform.HasValue() {
-				return true, nil
-			}
-		}
-	}
-
-	return false, nil
+	return description.HasMigrations(ctx, newActiveCol.CollectionID, newActiveCol.VersionID)
 }
 
 func (db *DB) deleteCollectionVersions(
@@ -822,7 +798,7 @@ func deleteCollectionBlocks(
 }
 
 // finalizeRelations determines which side of a relation is primary and sets IsPrimary=true
-// on both the relation field and its corresponding _id field.
+// on both the relation field and its corresponding _<fieldName>ID field.
 //
 // A relation field is marked as primary if:
 // - The target collection has no corresponding field pointing back (one-sided relation), OR
@@ -837,7 +813,7 @@ func deleteCollectionBlocks(
 // one primary side to store the foreign key.
 //
 // For one-to-one relations, this function also ensures a unique index exists on the primary
-// side's _id field to enforce the 1-to-1 constraint efficiently.
+// side's _<fieldName>ID field to enforce the 1-to-1 constraint efficiently.
 func finalizeRelations(
 	newCollections []core.Collection,
 	existingCollections []client.CollectionVersion,
@@ -886,7 +862,7 @@ func finalizeRelations(
 			if !field.IsPrimary && !isOneToOne {
 				newCollections[i].Definition.Fields[fieldIndex].IsPrimary = true
 
-				idFieldName := field.Name + "_id"
+				idFieldName := request.ToFieldID(field.Name)
 				for j, f := range newCollections[i].Definition.Fields {
 					if f.Name == idFieldName {
 						newCollections[i].Definition.Fields[j].IsPrimary = true
@@ -960,10 +936,10 @@ func ensureOneToOneUniqueIndex(
 	collectionName string,
 	relationFieldName string,
 ) (newIndex *client.IndexCreateRequest, err error) {
-	idFieldName := relationFieldName + "_id"
+	idFieldName := request.ToFieldID(relationFieldName)
 
 	// Check for user-defined index on either the _id field or the relation field name
-	// (e.g., "address_id" or "address" since @index on relation field uses field name)
+	// (e.g., "_addressID" or "address" since @index on relation field uses field name)
 	isUnique, hasIndex := findIndexWithFirstField(createIndexes, existingIndexes, idFieldName)
 	if !hasIndex {
 		isUnique, hasIndex = findIndexWithFirstField(createIndexes, existingIndexes, relationFieldName)

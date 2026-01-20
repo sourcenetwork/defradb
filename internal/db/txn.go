@@ -210,10 +210,10 @@ func (txn *Txn) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddView(ctx, gqlQuery, sdl, transform)
+	return txn.db.AddView(ctx, gqlQuery, sdl, transformCID)
 }
 
 func (txn *Txn) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {

@@ -67,11 +67,11 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
-									"_ne": nil,
+									"_neq": nil,
 								},
 							},
 							"prefixes": []string{
@@ -89,7 +89,7 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 									"fieldName":      "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -105,7 +105,7 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 									"fieldName": "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -153,12 +153,12 @@ func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "bafyreieuz5havjhscyfrvmpkwnjycxrohivnq5vtfoi6v5unyjay4ktawu",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
-									"_gt": int32(26),
-									"_ne": nil,
+									"_gt":  int32(26),
+									"_neq": nil,
 								},
 							},
 							"prefixes": []string{
@@ -176,8 +176,8 @@ func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 									"fieldName":      "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_gt": int32(26),
-											"_ne": nil,
+											"_gt":  int32(26),
+											"_neq": nil,
 										},
 									},
 								},
@@ -193,8 +193,8 @@ func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 									"fieldName": "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_gt": int32(26),
-											"_ne": nil,
+											"_gt":  int32(26),
+											"_neq": nil,
 										},
 									},
 								},

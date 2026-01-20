@@ -11,6 +11,7 @@
 package tests
 
 import (
+	"context"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -90,7 +91,9 @@ func connectPeers(
 		corelog.Any("Target", targetAddresses))
 
 	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.Connect(ctx, targetAddresses)
+
+	err = connectWithRetry(ctx, sourceNode, targetAddresses)
+
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
 
@@ -125,10 +128,29 @@ func reconnectPeers(s *state.State) {
 				corelog.Any("Source", sourceAddresses),
 				corelog.Any("Target", targetAddresses))
 
-			err = sourceNode.Connect(ctx, targetAddresses)
+			err = connectWithRetry(ctx, sourceNode, targetAddresses)
 			require.NoError(s.T, err)
 		}
 	}
+}
+
+// connectWithRetry attempts to connect to target addresses with retry logic
+// to handle transient connection failures.
+func connectWithRetry(ctx context.Context, node *state.NodeState, targetAddresses []string) error {
+	const maxRetries = 5
+	const retryDelay = 50 * time.Millisecond
+
+	var lastErr error
+	for attempt := range maxRetries {
+		lastErr = node.Connect(ctx, targetAddresses)
+		if lastErr == nil {
+			return nil
+		}
+		if attempt < maxRetries-1 {
+			time.Sleep(retryDelay)
+		}
+	}
+	return lastErr
 }
 
 // syncDocs requests document sync from peers.

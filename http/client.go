@@ -190,10 +190,11 @@ func (c *Client) PatchCollection(
 	return err
 }
 
-func (c *Client) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+func (c *Client) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
 	methodURL := c.http.apiURL.JoinPath("collections", "default")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(),
+		strings.NewReader(collectionVersionID))
 	if err != nil {
 		return err
 	}
@@ -202,20 +203,20 @@ func (c *Client) SetActiveCollectionVersion(ctx context.Context, schemaVersionID
 }
 
 type addViewRequest struct {
-	Query     string
-	SDL       string
-	Transform immutable.Option[model.Lens]
+	Query        string
+	SDL          string
+	TransformCID immutable.Option[string]
 }
 
 func (c *Client) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	methodURL := c.http.apiURL.JoinPath("view")
 
-	body, err := json.Marshal(addViewRequest{query, sdl, transform})
+	body, err := json.Marshal(addViewRequest{query, sdl, transformCID})
 	if err != nil {
 		return nil, err
 	}

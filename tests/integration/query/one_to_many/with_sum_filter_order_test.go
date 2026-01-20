@@ -24,7 +24,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -32,7 +32,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -40,7 +40,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -48,7 +48,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -56,7 +56,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -64,7 +64,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -114,7 +114,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 						},
 						{
 							"name": "John Grisham",
-							"_sum": 20.799999999999997,
+							"_sum": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 						},
 						{
 							"name": "Not a Writer",
@@ -137,7 +137,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -145,7 +145,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -153,7 +153,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -161,7 +161,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -169,7 +169,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -177,7 +177,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -227,7 +227,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 						},
 						{
 							"name": "John Grisham",
-							"_sum": 20.799999999999997,
+							"_sum": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 						},
 						{
 							"name": "Cornelia Funke",
@@ -250,7 +250,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -258,7 +258,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -266,7 +266,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -274,7 +274,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -282,7 +282,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -290,7 +290,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -352,7 +352,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 						},
 						{
 							"name": "John Grisham",
-							"sum1": 20.799999999999997,
+							"sum1": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 							"sum2": 4.9 + 4.5,
 						},
 					},
@@ -372,7 +372,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -380,7 +380,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -388,7 +388,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -396,7 +396,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -404,7 +404,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -412,7 +412,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -474,7 +474,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 						},
 						{
 							"name": "John Grisham",
-							"sum1": 20.799999999999997,
+							"sum1": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 							"sum2": 4.0 + 3.2,
 						},
 					},
@@ -494,7 +494,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -502,7 +502,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -510,7 +510,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -518,7 +518,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -526,7 +526,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -534,7 +534,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -624,7 +624,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -632,7 +632,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -640,7 +640,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -648,7 +648,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -656,7 +656,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -664,7 +664,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
 			testUtils.CreateDoc{

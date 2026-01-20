@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	schemaTypes "github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 )
@@ -424,7 +425,7 @@ func (g *Generator) createExpandedFieldList(
 		Description: f.Description,
 		Type:        gql.NewList(t),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), docIDsArgDescription),
 			"filter": schemaTypes.NewArgConfig(
 				g.manager.schema.TypeMap()[typeName+filterInputNameSuffix],
 				listFieldFilterArgDescription,
@@ -594,19 +595,19 @@ func (g *Generator) buildMutationInputTypes(collections []client.CollectionVersi
 			fields := make(gql.InputObjectConfigFieldMap)
 
 			for _, field := range collection.Fields {
-				if strings.HasPrefix(field.Name, "_") {
-					// ignore system defined args as the
-					// user cannot override their values
-					continue
-				}
-
-				if field.Kind == client.FieldKind_DocID && strings.HasSuffix(field.Name, request.RelatedObjectID) {
-					objFieldName := strings.TrimSuffix(field.Name, request.RelatedObjectID)
-					ofd, exists := collection.GetFieldByName(objFieldName)
-					if exists && !ofd.IsPrimary {
-						// We do not allow the mutation of relations from the secondary side,
-						// they must not be included in the input type(s)
+				if field.Kind == client.FieldKind_DocID {
+					if field.Name == request.DocIDFieldName {
+						// This is the system _docID field, users cannot set its value
 						continue
+					}
+					objFieldName, isRelationID := request.ToRelatedObjectName(field.Name)
+					if isRelationID {
+						ofd, exists := collection.GetFieldByName(objFieldName)
+						if exists && !ofd.IsPrimary {
+							// We do not allow the mutation of relations from the secondary side,
+							// they must not be included in the input type(s)
+							continue
+						}
 					}
 				} else if field.Kind.IsObject() && !field.IsPrimary {
 					// We do not allow the mutation of relations from the secondary side,
@@ -1232,7 +1233,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Description: updateDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), updateIDsArgDescription),
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), updateIDsArgDescription),
 			"filter":             schemaTypes.NewArgConfig(filterInput, updateFilterArgDescription),
 			request.Input:        schemaTypes.NewArgConfig(mutationInput, "Update field values"),
 		},
@@ -1243,7 +1244,7 @@ func (g *Generator) GenerateMutationInputForGQLType(obj *gql.Object) ([]*gql.Fie
 		Description: deleteDocumentsDescription,
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.ID), deleteIDsArgDescription),
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), deleteIDsArgDescription),
 			"filter":             schemaTypes.NewArgConfig(filterInput, deleteFilterArgDescription),
 		},
 	}
@@ -1469,7 +1470,7 @@ func (g *Generator) genEncryptedLeafFilterArgInput(obj gql.Type) *gql.InputObjec
 			underlyingType = notNull.OfType
 		}
 
-		fields["_eq"] = &gql.InputObjectFieldConfig{
+		fields[connor.EqualOp] = &gql.InputObjectFieldConfig{
 			Type: underlyingType,
 		}
 
@@ -1554,7 +1555,7 @@ func (g *Generator) genTypeQueryableFieldList(
 		Description: obj.Description(),
 		Type:        gql.NewList(obj),
 		Args: gql.FieldConfigArgument{
-			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.String)), docIDsArgDescription),
+			request.DocIDArgName: schemaTypes.NewArgConfig(gql.NewList(gql.NewNonNull(gql.ID)), docIDsArgDescription),
 			"cid":                schemaTypes.NewArgConfig(gql.String, cidArgDescription),
 			"filter":             schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
 			"groupBy": schemaTypes.NewArgConfig(

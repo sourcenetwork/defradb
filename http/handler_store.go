@@ -102,12 +102,12 @@ func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	schemaVersionID, err := io.ReadAll(req.Body)
+	collectionVersionID, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err = db.SetActiveCollectionVersion(req.Context(), string(schemaVersionID))
+	err = db.SetActiveCollectionVersion(req.Context(), string(collectionVersionID))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -125,7 +125,7 @@ func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defs, err := db.AddView(req.Context(), message.Query, message.SDL, message.Transform)
+	defs, err := db.AddView(req.Context(), message.Query, message.SDL, message.TransformCID)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

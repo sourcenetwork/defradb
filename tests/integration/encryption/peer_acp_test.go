@@ -26,50 +26,36 @@ name: Test Policy
 
 description: A Policy
 
-actor:
-  name: actor
-
 resources:
-  users:
+  - name: users
     permissions:
-      read:
-        expr: owner + reader + updater + deleter
-
-      update:
-        expr: owner + updater
-
-      delete:
-        expr: owner + deleter
-
-      nothing:
-        expr: dummy
+    - name: read
+      expr: reader + updater + deleter
+    - name: update
+      expr: updater
+    - name: delete
+      expr: deleter
+    - name: nothing
+      expr: dummy
 
     relations:
-      owner:
-        types:
-          - actor
-
-      reader:
-        types:
-          - actor
-
-      updater:
-        types:
-          - actor
-
-      deleter:
-        types:
-          - actor
-
-      admin:
-        manages:
-          - reader
-        types:
-          - actor
-
-      dummy:
-        types:
-          - actor
+    - name: reader
+      types:
+      - actor
+    - name: updater
+      types:
+      - actor
+    - name: deleter
+      types:
+      - actor
+    - name: admin
+      manages:
+      - reader
+      types:
+      - actor
+    - name: dummy
+      types:
+      - actor
 `
 
 func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {

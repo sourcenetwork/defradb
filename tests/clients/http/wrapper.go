@@ -227,17 +227,17 @@ func (w *Wrapper) PatchCollection(
 	return w.client.PatchCollection(ctx, patch, migration)
 }
 
-func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
-	return w.client.SetActiveCollectionVersion(ctx, schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+	return w.client.SetActiveCollectionVersion(ctx, collectionVersionID)
 }
 
 func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	return w.client.AddView(ctx, query, sdl, transform)
+	return w.client.AddView(ctx, query, sdl, transformCID)
 }
 
 func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {

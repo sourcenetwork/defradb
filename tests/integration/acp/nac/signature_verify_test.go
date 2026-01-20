@@ -60,7 +60,7 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(1),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
+				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
 			},
 		},
 	}
@@ -108,7 +108,7 @@ func TestNAC_GatesVerifySignature_GoClient_AuthorizedIdentity_AllowAccess(t *tes
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(1),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
+				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
 				ExpectedError:  "could not find",
 			},
 		},
@@ -132,7 +132,7 @@ func TestNAC_GatesVerifySignature_NoIdentity_NotAuthorizedError(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.NoIdentity(),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
+				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
 				ExpectedError:  "not authorized to perform operation",
 			},
 
@@ -140,7 +140,7 @@ func TestNAC_GatesVerifySignature_NoIdentity_NotAuthorizedError(t *testing.T) {
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.NoIdentity(),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
+				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
 				ExpectedError:  "not authorized to perform operation",
 			},
 		},
@@ -164,7 +164,7 @@ func TestNAC_GatesVerifySignature_WrongIdentity_NotAuthorizedError(t *testing.T)
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
-				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
+				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
 				ExpectedError:  "not authorized to perform operation",
 			},
 
@@ -172,7 +172,7 @@ func TestNAC_GatesVerifySignature_WrongIdentity_NotAuthorizedError(t *testing.T)
 			testUtils.VerifyBlockSignature{
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
-				Cid:            "bafyreibphszakimmug77fvftqmpv4uqtn3rmc5rv4u6qafeqiuu7oyeyca",
+				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
 				ExpectedError:  "not authorized to perform operation",
 			},
 		},

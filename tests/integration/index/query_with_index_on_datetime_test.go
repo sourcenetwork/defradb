@@ -123,7 +123,7 @@ func TestQueryWithIndex_WithGtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 
 func TestQueryWithIndex_WithGeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	req := `query {
-		User(filter: {birthday: {_ge: "2001-01-01T00:00:00-00:00"}}) {
+		User(filter: {birthday: {_geq: "2001-01-01T00:00:00-00:00"}}) {
 			name
 		}
 	}`
@@ -222,7 +222,7 @@ func TestQueryWithIndex_WithLtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 
 func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	req := `query {
-		User(filter: {birthday: {_le: "2001-01-01T00:00:00-00:00"}}) {
+		User(filter: {birthday: {_leq: "2001-01-01T00:00:00-00:00"}}) {
 			name
 		}
 	}`
@@ -297,7 +297,7 @@ func TestQueryWithIndex_WithNeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					User(filter: {birthday: {_ne: "2000-07-23T03:00:00-00:00"}}) {
+					User(filter: {birthday: {_neq: "2000-07-23T03:00:00-00:00"}}) {
 						name
 					}
 				}`,

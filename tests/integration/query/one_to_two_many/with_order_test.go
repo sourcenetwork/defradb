@@ -60,8 +60,8 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 				DocMap: map[string]any{
 					"name":          "Painted House",
 					"rating":        4.9,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -69,8 +69,8 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 				DocMap: map[string]any{
 					"name":          "A Time for Mercy",
 					"rating":        4.5,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -78,8 +78,8 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 				DocMap: map[string]any{
 					"name":          "Theif Lord",
 					"rating":        4.8,
-					"author_id":     testUtils.NewDocIndex(1, 1),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 1),
+					"_reviewedByID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.Request{

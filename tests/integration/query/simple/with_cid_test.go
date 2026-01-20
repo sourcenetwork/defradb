@@ -58,7 +58,7 @@ func TestQuerySimpleWithCid(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreigtrukuq65u2bx6f2rw4ueyqqeccjzcnhc5w3wfl23dku5o5rkiuq"
+							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
 						) {
 						name
 					}
@@ -100,7 +100,7 @@ func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 			testUtils.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreigtrukuq65u2bx6f2rw4ueyqqeccjzcnhc5w3wfl23dku5o5rkiuq"
+							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
 						) {
 						name
 					}
@@ -181,7 +181,7 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 			testUtils.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreial6pyp3rg4ruvtc32dp6y2ivf2rsdo7kwmwfls2qw3tu2vvifqhe"
+						cid: "bafyreic2vrbl344kkc7h5d7e2hpnwvffta4ck73bvjs5acgjtvqubvvioe"
 						showDeleted: true
 					){
 						name

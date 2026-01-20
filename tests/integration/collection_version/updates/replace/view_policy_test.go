@@ -32,32 +32,22 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_
 				Policy: `
                     name: test
                     description: a test policy which marks a collection in a database as a resource
-
-                    actor:
-                      name: actor
-
                     resources:
-                      userView:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
+                    - name: userView
+                      permissions:
+                      - name: read
+                        expr: reader
+                      - name: update
+                      - name: delete
+                      relations:
+                      - name: reader
+                        types:
+                        - actor
+                      - name: admin
+                        manages:
+                        - reader
+                        types:
+                        - actor
                 `,
 			},
 			&action.AddSchema{
@@ -75,7 +65,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_
 				`,
 				SDL: `
 					type UserView @policy(
-						id: "214e815615f3535588652eb91ed392d5581909266c60cd20a442e8dbbd1603c7",
+						id: "62cff38630eb2732c5f5e763ab31478a4bac7077ed66c9ad0c061c86a5b498c9",
 						resource: "userView"
 					) @materialized(if: false) {
 						name: String

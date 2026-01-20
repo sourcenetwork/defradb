@@ -24,46 +24,30 @@ func TestACP_AddPolicy_MultipleResources_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                      books:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+description: a policy
+name: test
+resources:
+- name: books
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
 			},
 		},
 	}
@@ -79,99 +63,28 @@ func TestACP_AddPolicy_MultipleResourcesUsingRelationDefinedInOther_Error(t *tes
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
+description: a policy
+name: test
+resources:
+- name: books
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
 
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                      books:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                `,
-
-				ExpectedError: "resource books missing relation reader",
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestACP_AddPolicy_SecondResourcesMissingRequiredOwner_Error(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Actions: []any{
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                      books:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-
-                        relations:
-                          reader:
-                            types:
-                              - actor
-                `,
-
-				ExpectedError: "BAD_INPUT",
+				ExpectedError: "resource does not have relation",
 			},
 		},
 	}

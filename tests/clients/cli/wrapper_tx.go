@@ -119,10 +119,10 @@ func (txn *Transaction) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Wrapper.AddView(ctx, gqlQuery, sdl, transform)
+	return txn.Wrapper.AddView(ctx, gqlQuery, sdl, transformCID)
 }
 
 func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {

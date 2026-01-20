@@ -310,9 +310,9 @@ func (w *Wrapper) PatchCollection(
 	return err
 }
 
-func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
 	args := []string{"client", "collection", "set-active"}
-	args = append(args, schemaVersionID)
+	args = append(args, collectionVersionID)
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
@@ -322,18 +322,14 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	args := []string{"client", "view", "add"}
 	args = append(args, query)
 	args = append(args, sdl)
 
-	if transform.HasValue() {
-		lenses, err := json.Marshal(transform.Value())
-		if err != nil {
-			return nil, err
-		}
-		args = append(args, string(lenses))
+	if transformCID.HasValue() {
+		args = append(args, "--lens-cid", transformCID.Value())
 	}
 
 	data, err := w.cmd.execute(ctx, args)
@@ -373,8 +369,8 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 	if err != nil {
 		return "", err
 	}
-	args = append(args, config.SourceSchemaVersionID)
-	args = append(args, config.DestinationSchemaVersionID)
+	args = append(args, config.SourceCollectionVersionID)
+	args = append(args, config.DestinationCollectionVersionID)
 	args = append(args, string(lenses))
 
 	data, err := w.cmd.execute(ctx, args)

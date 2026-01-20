@@ -71,7 +71,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 				CollectionID: 1,
 				DocID:        0,
 				Doc: `{
-					"Author_id": "bae-9ace7ed9-8229-5d2f-9e30-ffd5d2c84406"
+					"_AuthorID": "bae-9ace7ed9-8229-5d2f-9e30-ffd5d2c84406"
 				}`,
 			},
 			testUtils.WaitForSync{},
@@ -80,7 +80,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 				Request: `query {
 					Book {
 						Name
-						Author_id
+						_AuthorID
 						Author {
 							Name
 						}
@@ -90,7 +90,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 					"Book": []map[string]any{
 						{
 							"Name":      "Gulistan",
-							"Author_id": testUtils.NewDocIndex(0, 0),
+							"_AuthorID": testUtils.NewDocIndex(0, 0),
 							"Author": map[string]any{
 								"Name": "Saadi",
 							},
@@ -103,7 +103,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 				Request: `query {
 					Book {
 						Name
-						Author_id
+						_AuthorID
 						Author {
 							Name
 						}
@@ -113,7 +113,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 					"Book": []map[string]any{
 						{
 							"Name":      "Gulistan",
-							"Author_id": testUtils.NewDocIndex(0, 0),
+							"_AuthorID": testUtils.NewDocIndex(0, 0),
 							// "Saadi" was not synced to node 1, the update did not
 							// result in an error and synced to relational id even though "Saadi"
 							// does not exist in this node.

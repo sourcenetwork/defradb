@@ -54,6 +54,19 @@ func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 					}
 				`,
 			},
+			&action.AddLens{
+				Lens: model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "name",
+								"dst": "fullName",
+							},
+						},
+					},
+				},
+			},
 			testUtils.CreateView{
 				Query: `
 					User {
@@ -65,17 +78,7 @@ func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 						fullName: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.CopyModulePath,
-							Arguments: map[string]any{
-								"src": "name",
-								"dst": "fullName",
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.ExplainRequest{
 				Request: `query @explain(type: debug) {

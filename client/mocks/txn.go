@@ -594,8 +594,8 @@ func (_c *Txn_AddSchema_Call) RunAndReturn(run func(ctx context.Context, sdl str
 }
 
 // AddView provides a mock function for the type Txn
-func (_mock *Txn) AddView(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens]) ([]client.CollectionVersion, error) {
-	ret := _mock.Called(ctx, gqlQuery, sdl, transform)
+func (_mock *Txn) AddView(ctx context.Context, gqlQuery string, sdl string, transformCID immutable.Option[string]) ([]client.CollectionVersion, error) {
+	ret := _mock.Called(ctx, gqlQuery, sdl, transformCID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddView")
@@ -603,18 +603,18 @@ func (_mock *Txn) AddView(ctx context.Context, gqlQuery string, sdl string, tran
 
 	var r0 []client.CollectionVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[model.Lens]) ([]client.CollectionVersion, error)); ok {
-		return returnFunc(ctx, gqlQuery, sdl, transform)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[string]) ([]client.CollectionVersion, error)); ok {
+		return returnFunc(ctx, gqlQuery, sdl, transformCID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[model.Lens]) []client.CollectionVersion); ok {
-		r0 = returnFunc(ctx, gqlQuery, sdl, transform)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[string]) []client.CollectionVersion); ok {
+		r0 = returnFunc(ctx, gqlQuery, sdl, transformCID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.CollectionVersion)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, immutable.Option[model.Lens]) error); ok {
-		r1 = returnFunc(ctx, gqlQuery, sdl, transform)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, immutable.Option[string]) error); ok {
+		r1 = returnFunc(ctx, gqlQuery, sdl, transformCID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -630,12 +630,12 @@ type Txn_AddView_Call struct {
 //   - ctx context.Context
 //   - gqlQuery string
 //   - sdl string
-//   - transform immutable.Option[model.Lens]
-func (_e *Txn_Expecter) AddView(ctx interface{}, gqlQuery interface{}, sdl interface{}, transform interface{}) *Txn_AddView_Call {
-	return &Txn_AddView_Call{Call: _e.mock.On("AddView", ctx, gqlQuery, sdl, transform)}
+//   - transformCID immutable.Option[string]
+func (_e *Txn_Expecter) AddView(ctx interface{}, gqlQuery interface{}, sdl interface{}, transformCID interface{}) *Txn_AddView_Call {
+	return &Txn_AddView_Call{Call: _e.mock.On("AddView", ctx, gqlQuery, sdl, transformCID)}
 }
 
-func (_c *Txn_AddView_Call) Run(run func(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens])) *Txn_AddView_Call {
+func (_c *Txn_AddView_Call) Run(run func(ctx context.Context, gqlQuery string, sdl string, transformCID immutable.Option[string])) *Txn_AddView_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -649,9 +649,9 @@ func (_c *Txn_AddView_Call) Run(run func(ctx context.Context, gqlQuery string, s
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
-		var arg3 immutable.Option[model.Lens]
+		var arg3 immutable.Option[string]
 		if args[3] != nil {
-			arg3 = args[3].(immutable.Option[model.Lens])
+			arg3 = args[3].(immutable.Option[string])
 		}
 		run(
 			arg0,
@@ -668,7 +668,7 @@ func (_c *Txn_AddView_Call) Return(collectionVersions []client.CollectionVersion
 	return _c
 }
 
-func (_c *Txn_AddView_Call) RunAndReturn(run func(ctx context.Context, gqlQuery string, sdl string, transform immutable.Option[model.Lens]) ([]client.CollectionVersion, error)) *Txn_AddView_Call {
+func (_c *Txn_AddView_Call) RunAndReturn(run func(ctx context.Context, gqlQuery string, sdl string, transformCID immutable.Option[string]) ([]client.CollectionVersion, error)) *Txn_AddView_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -59,8 +59,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 				DocMap: map[string]any{
 					"name":          "Painted House",
 					"rating":        4.9,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -68,8 +68,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 				DocMap: map[string]any{
 					"name":          "A Time for Mercy",
 					"rating":        4.5,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -77,8 +77,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromOneSide(t *testing.T) {
 				DocMap: map[string]any{
 					"name":          "Theif Lord",
 					"rating":        4.8,
-					"author_id":     testUtils.NewDocIndex(1, 1),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 1),
+					"_reviewedByID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.Request{
@@ -182,8 +182,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 				DocMap: map[string]any{
 					"name":          "Painted House",
 					"rating":        4.9,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -191,8 +191,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 				DocMap: map[string]any{
 					"name":          "A Time for Mercy",
 					"rating":        4.5,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -200,8 +200,8 @@ func TestQueryOneToTwoManyWithNilUnnamedRelationship_FromManySide(t *testing.T) 
 				DocMap: map[string]any{
 					"name":          "Theif Lord",
 					"rating":        4.8,
-					"author_id":     testUtils.NewDocIndex(1, 1),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 1),
+					"_reviewedByID": testUtils.NewDocIndex(1, 0),
 				},
 			},
 			testUtils.Request{
@@ -330,9 +330,9 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				DocMap: map[string]any{
 					"name":          "Painted House",
 					"rating":        4.9,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
-					"price_id":      testUtils.NewDocIndex(2, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
+					"_priceID":      testUtils.NewDocIndex(2, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -340,9 +340,9 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				DocMap: map[string]any{
 					"name":          "A Time for Mercy",
 					"rating":        4.5,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
-					"price_id":      testUtils.NewDocIndex(2, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
+					"_priceID":      testUtils.NewDocIndex(2, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -350,9 +350,9 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships(t *testing.T) {
 				DocMap: map[string]any{
 					"name":          "Theif Lord",
 					"rating":        4.8,
-					"author_id":     testUtils.NewDocIndex(1, 1),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
-					"price_id":      testUtils.NewDocIndex(2, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 1),
+					"_reviewedByID": testUtils.NewDocIndex(1, 0),
+					"_priceID":      testUtils.NewDocIndex(2, 0),
 				},
 			},
 			testUtils.Request{
@@ -493,9 +493,9 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 				DocMap: map[string]any{
 					"name":          "Painted House",
 					"rating":        4.9,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
-					"price_id":      testUtils.NewDocIndex(2, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
+					"_priceID":      testUtils.NewDocIndex(2, 0),
 				},
 			},
 			testUtils.CreateDoc{
@@ -503,9 +503,9 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 				DocMap: map[string]any{
 					"name":          "A Time for Mercy",
 					"rating":        4.5,
-					"author_id":     testUtils.NewDocIndex(1, 0),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 1),
-					"price_id":      testUtils.NewDocIndex(2, 1),
+					"_authorID":     testUtils.NewDocIndex(1, 0),
+					"_reviewedByID": testUtils.NewDocIndex(1, 1),
+					"_priceID":      testUtils.NewDocIndex(2, 1),
 				},
 			},
 			testUtils.CreateDoc{
@@ -513,9 +513,9 @@ func TestQueryOneToTwoManyWithNamedAndUnnamedRelationships_FromManySide(t *testi
 				DocMap: map[string]any{
 					"name":          "Theif Lord",
 					"rating":        4.8,
-					"author_id":     testUtils.NewDocIndex(1, 1),
-					"reviewedBy_id": testUtils.NewDocIndex(1, 0),
-					"price_id":      testUtils.NewDocIndex(2, 0),
+					"_authorID":     testUtils.NewDocIndex(1, 1),
+					"_reviewedByID": testUtils.NewDocIndex(1, 0),
+					"_priceID":      testUtils.NewDocIndex(2, 0),
 				},
 			},
 			testUtils.Request{

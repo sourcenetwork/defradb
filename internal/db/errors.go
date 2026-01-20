@@ -84,7 +84,7 @@ const (
 	errCollectionEncryptedIndexesCannotBeMutated string = "collection encrypted indexes cannot be mutated"
 	errCollectionPolicyCannotBeMutated           string = "collection policy cannot be mutated"
 	errCollectionIDCannotBeMutated               string = "collection ID cannot be mutated"
-	errCollectionSchemaVersionIDCannotBeMutated  string = "collection schema version ID cannot be mutated"
+	errCollectionVersionIDCannotBeMutated        string = "collection version ID cannot be mutated"
 	errCollectionIDCannotBeEmpty                 string = "collection ID cannot be empty"
 	errCannotDeleteOldVersion                    string = "cannot delete a version that is used by a newer version, " +
 		"first delete the new version"
@@ -126,6 +126,7 @@ const (
 	errUnknownCID                          string = "unknown CID, collection ids cannot be manually defined"
 	errMigrationBetweenNonAdjacentVersions string = "cannot migrate between non-adjacent collection versions"
 	errLensRuntimeNotSupported             string = "the selected lens runtime is not supported by this build"
+	errLensCIDNotFound                     string = "lens CID not found"
 	errOneToOneMustBeUnique                string = "one-to-one relation must have a unique index"
 )
 
@@ -137,7 +138,7 @@ var (
 	ErrCollectionNameEmpty                       = errors.New("collection name can't be empty")
 	ErrSchemaNameEmpty                           = errors.New("schema name can't be empty")
 	ErrSchemaRootEmpty                           = errors.New("schema root can't be empty")
-	ErrSchemaVersionIDEmpty                      = errors.New("schema version ID can't be empty")
+	ErrCollectionVersionIDEmpty                  = errors.New("collection version ID can't be empty")
 	ErrKeyEmpty                                  = errors.New("key cannot be empty")
 	ErrCannotSetVersionID                        = errors.New(errCannotSetVersionID)
 	ErrIndexMissingFields                        = errors.New(errIndexMissingFields)
@@ -154,7 +155,7 @@ var (
 	ErrCollectionIndexesCannotBeMutated          = errors.New(errCollectionIndexesCannotBeMutated)
 	ErrCollectionEncryptedIndexesCannotBeMutated = errors.New(errCollectionEncryptedIndexesCannotBeMutated)
 	ErrCollectionCollectionIDCannotBeMutated     = errors.New(errCollectionIDCannotBeMutated)
-	ErrCollectionSchemaVersionIDCannotBeMutated  = errors.New(errCollectionSchemaVersionIDCannotBeMutated)
+	ErrCollectionVersionIDCannotBeMutated        = errors.New(errCollectionVersionIDCannotBeMutated)
 	ErrCollectionIDCannotBeEmpty                 = errors.New(errCollectionIDCannotBeEmpty)
 	ErrCannotDeleteOldVersion                    = errors.New(errCannotDeleteOldVersion)
 	ErrCannotDeleteCollectionWithDocs            = errors.New(errCannotDeleteCollectionWithDocs)
@@ -191,6 +192,7 @@ var (
 	ErrBadDocsResultType                         = errors.New("bad docs result type")
 	ErrMigrationBetweenNonAdjacentVersions       = errors.New(errMigrationBetweenNonAdjacentVersions)
 	ErrLensRuntimeNotSupported                   = errors.New(errLensRuntimeNotSupported)
+	ErrLensCIDNotFound                           = errors.New(errLensCIDNotFound)
 )
 
 // NewErrFailedToGetHeads returns a new error indicating that the heads of a document
@@ -642,9 +644,9 @@ func NewErrCollectionIDCannotBeMutated(collectionVersionID string) error {
 	)
 }
 
-func NewErrCollectionSchemaVersionIDCannotBeMutated(colID string) error {
+func NewErrCollectionVersionIDCannotBeMutated(colID string) error {
 	return errors.New(
-		errCollectionSchemaVersionIDCannotBeMutated,
+		errCollectionVersionIDCannotBeMutated,
 		errors.NewKV("CollectionID", colID),
 	)
 }
@@ -810,6 +812,10 @@ func NewErrMigrationBetweenNonAdjacentVersions(sourceVersion string, destination
 
 func NewErrLensRuntimeNotSupported(lens LensRuntimeType) error {
 	return errors.New(errLensRuntimeNotSupported, errors.NewKV("Lens", lens))
+}
+
+func NewErrLensCIDNotFound(cid string) error {
+	return errors.New(errLensCIDNotFound, errors.NewKV("CID", cid))
 }
 
 // NewErrOneToOneRelationMustBeUnique returns an error indicating that a one-to-one

@@ -31,18 +31,8 @@ func TestView_SimpleWithTransform(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
-				Query: `
-					User {
-						name
-					}
-				`,
-				SDL: `
-					type UserView @materialized(if: false) {
-						fullName: String
-					}
-				`,
-				Transform: immutable.Some(model.Lens{
+			&action.AddLens{
+				Lens: model.Lens{
 					// This transform will copy the value from `name` into the `fullName` field,
 					// like an overly-complicated alias
 					Lenses: []model.LensModule{
@@ -54,7 +44,20 @@ func TestView_SimpleWithTransform(t *testing.T) {
 							},
 						},
 					},
-				}),
+				},
+			},
+			testUtils.CreateView{
+				Query: `
+					User {
+						name
+					}
+				`,
+				SDL: `
+					type UserView @materialized(if: false) {
+						fullName: String
+					}
+				`,
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.CreateDoc{
 				// Set the `name` field only
@@ -104,19 +107,8 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
-				Query: `
-					User {
-						name
-					}
-				`,
-				SDL: `
-					type UserView @materialized(if: false) {
-						fullName: String
-						age: Int
-					}
-				`,
-				Transform: immutable.Some(model.Lens{
+			&action.AddLens{
+				Lens: model.Lens{
 					// This transform will copy the value from `name` into the `fullName` field,
 					// like an overly-complicated alias.  It will then set `age` to 23.
 					//
@@ -138,7 +130,21 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 							},
 						},
 					},
-				}),
+				},
+			},
+			testUtils.CreateView{
+				Query: `
+					User {
+						name
+					}
+				`,
+				SDL: `
+					type UserView @materialized(if: false) {
+						fullName: String
+						age: Int
+					}
+				`,
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.CreateDoc{
 				Doc: `{
@@ -189,18 +195,8 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
-				Query: `
-					User {
-						name
-					}
-				`,
-				SDL: `
-					type UserView @materialized(if: false) {
-						name: String
-					}
-				`,
-				Transform: immutable.Some(model.Lens{
+			&action.AddLens{
+				Lens: model.Lens{
 					Lenses: []model.LensModule{
 						{
 							Path: lenses.PrependModulePath,
@@ -216,7 +212,20 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 							},
 						},
 					},
-				}),
+				},
+			},
+			testUtils.CreateView{
+				Query: `
+					User {
+						name
+					}
+				`,
+				SDL: `
+					type UserView @materialized(if: false) {
+						name: String
+					}
+				`,
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.CreateDoc{
 				Doc: `{
@@ -262,6 +271,19 @@ func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 					}
 				`,
 			},
+			&action.AddLens{
+				Lens: model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.FilterModulePath,
+							Arguments: map[string]any{
+								"src":   "valid",
+								"value": true,
+							},
+						},
+					},
+				},
+			},
 			testUtils.CreateView{
 				Query: `
 					User {
@@ -274,17 +296,7 @@ func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 						name: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.FilterModulePath,
-							Arguments: map[string]any{
-								"src":   "valid",
-								"value": true,
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.CreateDoc{
 				Doc: `{

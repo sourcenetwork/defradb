@@ -35,6 +35,22 @@ func TestSyncColVersion_WithView(t *testing.T) {
 					}
 				`,
 			},
+			&action.AddLens{
+				NodeID: immutable.Some(0),
+				Lens: model.Lens{
+					// This transform will copy the value from `name` into the `fullName` field,
+					// like an overly-complicated alias
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "name",
+								"dst": "fullName",
+							},
+						},
+					},
+				},
+			},
 			testUtils.CreateView{
 				NodeID: immutable.Some(0),
 				Query: `
@@ -47,19 +63,7 @@ func TestSyncColVersion_WithView(t *testing.T) {
 						fullName: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					// This transform will copy the value from `name` into the `fullName` field,
-					// like an overly-complicated alias
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.CopyModulePath,
-							Arguments: map[string]any{
-								"src": "name",
-								"dst": "fullName",
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
@@ -133,6 +137,22 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 					}
 				`,
 			},
+			&action.AddLens{
+				NodeID: immutable.Some(0),
+				Lens: model.Lens{
+					// This transform will copy the value from `name` into the `fullName` field,
+					// like an overly-complicated alias
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "name",
+								"dst": "fullName",
+							},
+						},
+					},
+				},
+			},
 			testUtils.CreateView{
 				NodeID: immutable.Some(0),
 				Query: `
@@ -145,19 +165,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 						fullName: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					// This transform will copy the value from `name` into the `fullName` field,
-					// like an overly-complicated alias
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.CopyModulePath,
-							Arguments: map[string]any{
-								"src": "name",
-								"dst": "fullName",
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,

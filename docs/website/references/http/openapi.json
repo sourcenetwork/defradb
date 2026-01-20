@@ -159,7 +159,7 @@
                     "SDL": {
                         "type": "string"
                     },
-                    "Transform": {}
+                    "TransformCID": {}
                 },
                 "type": "object"
             },
@@ -508,7 +508,7 @@
             },
             "lens_config": {
                 "properties": {
-                    "DestinationSchemaVersionID": {
+                    "DestinationCollectionVersionID": {
                         "type": "string"
                     },
                     "Lenses": {
@@ -529,7 +529,7 @@
                         },
                         "type": "array"
                     },
-                    "SourceSchemaVersionID": {
+                    "SourceCollectionVersionID": {
                         "type": "string"
                     }
                 },
@@ -1704,6 +1704,37 @@
                 },
                 "tags": [
                     "index"
+                ]
+            }
+        },
+        "/collections/{name}/truncate": {
+            "delete": {
+                "description": "Truncate a collection, removing all document data within it from the server. Does not propagate the deletion to other Defra nodes in the network.",
+                "operationId": "truncate",
+                "parameters": [
+                    {
+                        "description": "Collection name",
+                        "in": "path",
+                        "name": "name",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/components/responses/success"
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/error"
+                    },
+                    "default": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "truncate"
                 ]
             }
         },

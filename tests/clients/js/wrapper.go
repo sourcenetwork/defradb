@@ -242,8 +242,8 @@ func (w *Wrapper) PatchCollection(
 	return err
 }
 
-func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
-	_, err := execute(ctx, w.value, "setActiveCollectionVersion", schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+	_, err := execute(ctx, w.value, "setActiveCollectionVersion", collectionVersionID)
 	return err
 }
 
@@ -251,13 +251,13 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	transformVal, err := goji.MarshalJS(transform)
+	transformCIDVal, err := goji.MarshalJS(transformCID)
 	if err != nil {
 		return nil, err
 	}
-	res, err := execute(ctx, w.value, "addView", query, sdl, transformVal)
+	res, err := execute(ctx, w.value, "addView", query, sdl, transformCIDVal)
 	if err != nil {
 		return nil, err
 	}
