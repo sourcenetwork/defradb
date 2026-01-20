@@ -56,7 +56,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(col, initialDocState)
+	d, docID := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
@@ -101,7 +101,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(col, initialDocState)
+	d, docID := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
@@ -159,7 +159,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(col, initialDocState)
+	d, docID := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
@@ -189,7 +189,7 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 		Cid:          compInfo3.link.Cid,
 		CollectionID: col.CollectionID(),
 	})
-	require.ErrorContains(t, err, "could not find bafyreibdsxukhmkwea4hdd2svvf6fijvuhdxeil2bf75v4wzooldb74uwq")
+	require.ErrorContains(t, err, "could not find bafyreihs5kx5u6k6mc3m6st3ytam4e3mmk3sd6p4jn3hh5o63wpf4holoq")
 
 	// Verify the document was created with the expected values
 	doc, err := col.Get(ctx, docID, false)
@@ -211,8 +211,9 @@ type dagBuilder struct {
 	col          client.Collection
 }
 
-func newDagBuilder(col client.Collection, initalDocState map[string]any) (*dagBuilder, client.DocID) {
+func newDagBuilder(ctx context.Context, col client.Collection, initalDocState map[string]any) (*dagBuilder, client.DocID) {
 	doc, err := client.NewDocFromMap(
+		ctx,
 		initalDocState,
 		col.Version(),
 	)
@@ -245,11 +246,11 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 		fieldBlock := coreblock.Block{
 			Delta: crdt.CRDT{
 				LWWDelta: &crdt.LWWDelta{
-					DocID:           d.docID,
-					FieldName:       field,
-					Priority:        d.fieldsHeight[field],
-					SchemaVersionID: d.col.Version().VersionID,
-					Data:            encodeValue(val),
+					DocID:               d.docID,
+					FieldName:           field,
+					Priority:            d.fieldsHeight[field],
+					CollectionVersionID: d.col.Version().VersionID,
+					Data:                encodeValue(val),
 				},
 			},
 		}
@@ -265,10 +266,10 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 
 	compositeBlock := coreblock.New(
 		crdt.NewCRDT(&crdt.DocCompositeDelta{
-			DocID:           d.docID,
-			Priority:        newPriority,
-			SchemaVersionID: d.col.Version().VersionID,
-			Status:          1,
+			DocID:               d.docID,
+			Priority:            newPriority,
+			CollectionVersionID: d.col.Version().VersionID,
+			Status:              1,
 		}),
 		links,
 		heads...,

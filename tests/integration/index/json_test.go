@@ -159,7 +159,7 @@ func TestJSONIndex_WithGtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithGeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {height: {_ge: 178}}}) {
+		User(filter: {custom: {height: {_geq: 178}}}) {
 			name
 		}
 	}`
@@ -298,7 +298,7 @@ func TestJSONIndex_WithLtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithLeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {height: {_le: 178}}}) {
+		User(filter: {custom: {height: {_leq: 178}}}) {
 			name
 		}
 	}`
@@ -368,7 +368,7 @@ func TestJSONIndex_WithLeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithNeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {height: {_ne: 178}}}) {
+		User(filter: {custom: {height: {_neq: 178}}}) {
 			name
 		}
 	}`
@@ -755,7 +755,7 @@ func TestJSONIndex_WithEqFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithNeFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {isStudent: {_ne: false}}}) {
+		User(filter: {custom: {isStudent: {_neq: false}}}) {
 			name
 		}
 	}`
@@ -898,7 +898,7 @@ func TestJSONIndex_WithEqFilterOnNullField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithNeFilterOnNullField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {title: {_ne: null}}}) {
+		User(filter: {custom: {title: {_neq: null}}}) {
 			name
 		}
 	}`
@@ -1320,7 +1320,7 @@ func TestJSONIndex_WithCompoundFilterCondition_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {age: {_ne: 48}}}) {
+		User(filter: {custom: {age: {_neq: 48}}}) {
 			name
 		}
 	}`
@@ -1377,7 +1377,7 @@ func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testi
 
 func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {city: {_ne: "Istanbul"}}}) {
+		User(filter: {custom: {city: {_neq: "Istanbul"}}}) {
 			name
 		}
 	}`
@@ -1434,7 +1434,7 @@ func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testi
 
 func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {verified: {_ne: true}}}) {
+		User(filter: {custom: {verified: {_neq: true}}}) {
 			name
 		}
 	}`
@@ -1491,7 +1491,7 @@ func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing
 
 func TestJSONIndex_WithNeFilterAgainstNullField_ShouldFetchNonNullValues(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {age: {_ne: null}}}) {
+		User(filter: {custom: {age: {_neq: null}}}) {
 			name
 		}
 	}`
@@ -1543,5 +1543,96 @@ func TestJSONIndex_WithNeFilterAgainstNullField_ShouldFetchNonNullValues(t *test
 			},
 		},
 	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithEqFilterAgainstExplicitNullField_ShouldFetchNullValues(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {_eq: null}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": null
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": 100
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithEqFilterAgainstOmittedNullField_ShouldFetchNullValues(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {_eq: null}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String 
+						custom: JSON @index
+					}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Kyle"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name": "Islam",
+					"custom": 100
+				}`,
+			},
+			testUtils.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Kyle"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			testUtils.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
 	testUtils.ExecuteTestCase(t, test)
 }

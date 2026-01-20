@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 )
 
 var (
@@ -43,10 +44,10 @@ type Multistore struct {
 	system corekv.ReaderWriter
 }
 
-func NewMultistore(rootstore corekv.ReaderWriter, chunkSize immutable.Option[int]) *Multistore {
+func NewMultistore(rootstore corekv.ReaderWriter, lockSet *lock.LockSet, chunkSize immutable.Option[int]) *Multistore {
 	return &Multistore{
 		block:  BlockstoreFrom(rootstore, chunkSize),
-		data:   newDatastore(rootstore),
+		data:   newDatastore(rootstore, lockSet),
 		enc:    newBlockstore(namespace.Wrap(rootstore, []byte{encStoreKey})),
 		head:   namespace.Wrap(rootstore, []byte{headStoreKey}),
 		peer:   namespace.Wrap(rootstore, []byte{peerStoreKey}),

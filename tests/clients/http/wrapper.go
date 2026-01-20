@@ -122,6 +122,10 @@ func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...stri
 	return w.client.SyncCollectionVersions(ctx, versionIDs...)
 }
 
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	return w.client.SyncBranchableCollection(ctx, collectionID)
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	return w.client.BasicImport(ctx, filepath)
 }
@@ -217,17 +221,17 @@ func (w *Wrapper) PatchCollection(
 	return w.client.PatchCollection(ctx, patch, migration)
 }
 
-func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
-	return w.client.SetActiveCollectionVersion(ctx, schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+	return w.client.SetActiveCollectionVersion(ctx, collectionVersionID)
 }
 
 func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	return w.client.AddView(ctx, query, sdl, transform)
+	return w.client.AddView(ctx, query, sdl, transformCID)
 }
 
 func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
@@ -236,6 +240,14 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchO
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	return w.client.SetMigration(ctx, config)
+}
+
+func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	return w.client.AddLens(ctx, lens)
+}
+
+func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	return w.client.ListLenses(ctx)
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

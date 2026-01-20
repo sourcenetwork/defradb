@@ -175,15 +175,15 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			&action.AddSchema{
 				Schema: `
 					type User {
-						name: String 
+						name: String
 						age: Int
-						address: Address @primary @index
-					} 
+						address: Address @primary @index(unique: true)
+					}
 
 					type Address {
 						user: User
 						city: String @index
-						street: String 
+						street: String
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -271,11 +271,11 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req1),
-				// we make 1 index fetch to get the only address with city == "London"
-				// we fetch 2 fields for Address doc: "city" and "street"
-				// then we scan all 10 users to find one with matching "address_id"
-				// for each of User docs we fetch 3 fields: "name", "age" and "address_id"
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(32).WithIndexFetches(1),
+				// With the auto-created unique index on _addressID:
+				// 1 index fetch to get the address with city == "London"
+				// 1 index fetch to find the user with matching _addressID
+				// 5 field fetches total
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(5).WithIndexFetches(2),
 			},
 			testUtils.Request{
 				Request: req2,
@@ -289,10 +289,10 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req2),
-				// we make 3 index fetch to get the 3 address with city == "Montreal"
-				// then we scan all 10 users to find one with matching "address_id" for each address
-				// after this we fetch the name of each user
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				// With the auto-created unique index on _addressID:
+				// 3 index fetches to get the 3 addresses with city == "Montreal"
+				// 3 index fetches to find the users with matching _addressID
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
 			},
 		},
 	}
@@ -314,15 +314,15 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 			&action.AddSchema{
 				Schema: `
 					type User {
-						name: String 
+						name: String
 						age: Int
-						address: Address @primary @index
-					} 
+						address: Address @primary @index(unique: true)
+					}
 
 					type Address {
 						user: User
 						city: String @index
-						street: String 
+						street: String
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
@@ -500,7 +500,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_Shoul
 						devices: {model: {_eq: "Walkman"}}
 					}) {
 						name
-						devices(filter: {manufacturer: {_ne: "Sony"}}) {
+						devices(filter: {manufacturer: {_neq: "Sony"}}) {
 							model
 							manufacturer
 						}
@@ -800,7 +800,7 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIndex(t *testing.T) {
 	req := `query {
 		Device(filter: {
-			owner_id: {_ne: null}
+			_ownerID: {_neq: null}
 		}) {
 			model
 		}
@@ -869,7 +869,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
-				// we make 4 index fetches to find 2 devices with owner_id != null
+				// we make 4 index fetches to find 2 devices with _ownerID != null
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
@@ -881,7 +881,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIndex(t *testing.T) {
 	req := `query {
 		Device(filter: {
-			owner_id: {_eq: null}
+			_ownerID: {_eq: null}
 		}) {
 			model
 		}
@@ -942,14 +942,14 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 				Request: req,
 				Results: map[string]any{
 					"Device": []map[string]any{
-						{"model": "PlayStation 5"},
 						{"model": "Running Man"},
+						{"model": "PlayStation 5"},
 					},
 				},
 			},
 			testUtils.Request{
 				Request: makeExplainQuery(req),
-				// we make 2 index fetches to get all 2 devices with owner_id == null
+				// we make 2 index fetches to get all 2 devices with _ownerID == null
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
@@ -1005,8 +1005,8 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 				Request: `query {
 					User {
 						devices {
-							owner_id
-							manufacturer_id
+							_ownerID
+							_manufacturerID
 						}
 					}
 				}`,
@@ -1015,8 +1015,8 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 						{
 							"devices": []map[string]any{
 								{
-									"owner_id":        testUtils.NewDocIndex(0, 0),
-									"manufacturer_id": testUtils.NewDocIndex(2, 0),
+									"_ownerID":        testUtils.NewDocIndex(0, 0),
+									"_manufacturerID": testUtils.NewDocIndex(2, 0),
 								},
 							},
 						},

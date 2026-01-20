@@ -72,7 +72,7 @@ func (n *updateNode) Next() (bool, error) {
 				return false, err
 			}
 			for k, v := range n.input {
-				if err := doc.Set(k, v); err != nil {
+				if err := doc.Set(n.p.ctx, k, v); err != nil {
 					return false, err
 				}
 			}

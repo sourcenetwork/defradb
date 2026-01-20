@@ -99,6 +99,10 @@ func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...stri
 	panic("not implemented")
 }
 
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	panic("not implemented")
+}
+
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	panic("not implemented")
 }
@@ -238,8 +242,8 @@ func (w *Wrapper) PatchCollection(
 	return err
 }
 
-func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
-	_, err := execute(ctx, w.value, "setActiveCollectionVersion", schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+	_, err := execute(ctx, w.value, "setActiveCollectionVersion", collectionVersionID)
 	return err
 }
 
@@ -247,13 +251,13 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	transformVal, err := goji.MarshalJS(transform)
+	transformCIDVal, err := goji.MarshalJS(transformCID)
 	if err != nil {
 		return nil, err
 	}
-	res, err := execute(ctx, w.value, "addView", query, sdl, transformVal)
+	res, err := execute(ctx, w.value, "addView", query, sdl, transformCIDVal)
 	if err != nil {
 		return nil, err
 	}
@@ -283,6 +287,30 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 		return "", err
 	}
 	return res[0].String(), err
+}
+
+func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	lensVal, err := goji.MarshalJS(lens)
+	if err != nil {
+		return "", err
+	}
+	res, err := execute(ctx, w.value, "addLens", lensVal)
+	if err != nil {
+		return "", err
+	}
+	return res[0].String(), err
+}
+
+func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	res, err := execute(ctx, w.value, "listLenses")
+	if err != nil {
+		return nil, err
+	}
+	var lenses map[string]model.Lens
+	if err := goji.UnmarshalJS(res[0], &lenses); err != nil {
+		return nil, err
+	}
+	return lenses, nil
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {

@@ -183,7 +183,7 @@ type PatchCollection struct {
 
 // GetCollections is an action that fetches collections using the provided options.
 //
-// ID, RootID and SchemaVersionID will only be asserted on if an expected value is provided.
+// ID, RootID and CollectionVersionID will only be asserted on if an expected value is provided.
 type GetCollections struct {
 	// NodeID may hold the ID (index) of a node to get collections from.
 	//
@@ -253,8 +253,9 @@ type CreateView struct {
 	// The SDL containing all types used by the view output.
 	SDL string
 
-	// An optional Lens transform to add to the view.
-	Transform immutable.Option[model.Lens]
+	// An optional CID of an existing lens transform.
+	// Use AddLens action first to store the lens and get its CID.
+	TransformCID immutable.Option[string]
 
 	// Any error expected from the action. Optional.
 	//
@@ -475,102 +476,6 @@ type UpdateWithFilter struct {
 	// This should only be used for tests that do not correctly
 	// publish an update event to the local event bus.
 	SkipLocalUpdateEvent bool
-}
-
-// IndexField describes a field to be indexed.
-type IndexedField struct {
-	// Name contains the name of the field.
-	Name string
-	// Descending indicates whether the field is indexed in descending order.
-	Descending bool
-}
-
-// CreateIndex will attempt to create the given secondary index for the given collection
-// using the collection api.
-type CreateIndex struct {
-	// NodeID may hold the ID (index) of a node to create the secondary index on.
-	//
-	// If a value is not provided the index will be created in all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The collection for which this index should be created.
-	CollectionID int
-
-	// The name of the index to create. If not provided, one will be generated.
-	IndexName string
-
-	// The name of the field to index. Used only for single field indexes.
-	FieldName string
-
-	// The fields to index. Used only for composite indexes.
-	Fields []IndexedField
-
-	// If Unique is true, the index will be created as a unique index.
-	Unique bool
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// DropIndex will attempt to drop the given secondary index from the given collection
-// using the collection api.
-type DropIndex struct {
-	// NodeID may hold the ID (index) of a node to delete the secondary index from.
-	//
-	// If a value is not provided the index will be deleted from all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The collection from which the index should be deleted.
-	CollectionID int
-
-	// The index name of the secondary index within the collection.
-	// If it is provided, `IndexID` is ignored.
-	IndexName string
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// GetIndex will attempt to get the given secondary index from the given collection
-// using the collection api.
-type GetIndexes struct {
-	// NodeID may hold the ID (index) of a node to create the secondary index on.
-	//
-	// If a value is not provided the indexes will be retrieved from the first nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The collection for which this indexes should be retrieved.
-	CollectionID int
-
-	// The expected indexes to be returned.
-	ExpectedIndexes []client.IndexDescription
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
 }
 
 // CreateEncryptedIndex will attempt to create the given encrypted index for the given collection

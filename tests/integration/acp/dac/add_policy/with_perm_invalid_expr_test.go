@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_EmptyExpressionInPermission_Error(t *testing.T) {
+func TestACP_AddPolicy_PermissionExprWithIncorrectSymbol_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -24,32 +24,22 @@ func TestACP_AddPolicy_EmptyExpressionInPermission_Error(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
+name: test
+description: a policy
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader ^ asf
+    name: read
+  - name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
 
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
-
-				ExpectedError: "relation read: error parsing: expression needs: term",
+				ExpectedError: "token recognition error",
 			},
 		},
 	}
@@ -57,7 +47,7 @@ func TestACP_AddPolicy_EmptyExpressionInPermission_Error(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error(t *testing.T) {
+func TestACP_AddPolicy_PermissionExprReferencingOwner_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -65,32 +55,20 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
+name: test
+description: a policy
+resources:
+- name: users
+  permissions:
+  - expr: reader + owner
+    name: read
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
 
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: reader ^ owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
-
-				ExpectedError: "error parsing expression reader ^ owner: unknown token:",
+				ExpectedError: "permission cannot reference `owner`",
 			},
 		},
 	}
@@ -98,7 +76,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbol_Error
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbolNoSpace_Error(t *testing.T) {
+func TestACP_AddPolicy_ExpressionReferencesUndeclaredRelation_Error(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -106,32 +84,19 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithInocorrectSymbolNoSpac
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
+description: a policy
+name: a policy
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+`,
 
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: reader^owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
-
-				ExpectedError: "error parsing expression reader^owner: unknown token:",
+				ExpectedError: "BAD_INPUT",
 			},
 		},
 	}

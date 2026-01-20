@@ -22,22 +22,22 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 			testUtils.CreateDoc{
 				// Books
 				CollectionID: 0,
-				// bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd
+				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
 				Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
-						"publisher_id": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
+						"_publisherID": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
 					}`,
 			},
 			testUtils.CreateDoc{
 				// Authors
 				CollectionID: 1,
-				// bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2
+				// bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897
 				Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
 						"verified": true,
-						"wrote_id": "bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd"
+						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -51,14 +51,14 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `mutation {
-						delete_Author(docID: "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2") {
+						delete_Author(docID: "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897") {
 							_docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Author": []map[string]any{
 						{
-							"_docID": "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2",
+							"_docID": "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897",
 						},
 					},
 				},
@@ -75,22 +75,22 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 			testUtils.CreateDoc{
 				// Books
 				CollectionID: 0,
-				// bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd
+				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
 				Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
-						"publisher_id": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
+						"_publisherID": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
 					}`,
 			},
 			testUtils.CreateDoc{
 				// Authors
 				CollectionID: 1,
-				// bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2
+				// bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897
 				Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
 						"verified": true,
-						"wrote_id": "bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd"
+						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -104,14 +104,14 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 			},
 			testUtils.Request{
 				Request: `mutation {
-						delete_Author(docID: "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2") {
+						delete_Author(docID: "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897") {
 							AliasOfKey: _docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Author": []map[string]any{
 						{
-							"AliasOfKey": "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2",
+							"AliasOfKey": "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897",
 						},
 					},
 				},
@@ -128,22 +128,22 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 			testUtils.CreateDoc{
 				// Books
 				CollectionID: 0,
-				// bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd
+				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
 				Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
-						"publisher_id": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
+						"_publisherID": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
 					}`,
 			},
 			testUtils.CreateDoc{
 				// Authors
 				CollectionID: 1,
-				// bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2
+				// bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897
 				Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
 						"verified": true,
-						"wrote_id": "bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd"
+						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
 					}`,
 			},
 			testUtils.CreateDoc{
@@ -174,14 +174,14 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 			},
 			testUtils.Request{
 				Request: `mutation {
-						delete_Author(docID: "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2") {
+						delete_Author(docID: "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897") {
 							Key: _docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Author": []map[string]any{
 						{
-							"Key": "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2",
+							"Key": "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897",
 						},
 					},
 				},

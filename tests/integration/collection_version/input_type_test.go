@@ -215,6 +215,10 @@ var defaultGroupArgsWithoutOrder = trimFields(
 		docIDArg,
 		buildFilterArg("author", []argDef{
 			{
+				fieldName: "_wroteID",
+				typeName:  "IDOperatorBlock",
+			},
+			{
 				fieldName: "age",
 				typeName:  "IntOperatorBlock",
 			},
@@ -229,10 +233,6 @@ var defaultGroupArgsWithoutOrder = trimFields(
 			{
 				fieldName: "wrote",
 				typeName:  "bookFilterArg",
-			},
-			{
-				fieldName: "wrote_id",
-				typeName:  "IDOperatorBlock",
 			},
 		}),
 		groupByArg,

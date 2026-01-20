@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 	"github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -35,9 +36,30 @@ func (db *DB) getLensStore(ctx context.Context) store.Store {
 	return db.lensNode.Store
 }
 
+func (db *DB) addLens(ctx context.Context, lens model.Lens) (string, error) {
+	cid, err := db.getLensStore(ctx).Add(ctx, lens)
+	if err != nil {
+		return "", err
+	}
+	return cid.String(), nil
+}
+
+func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
+	lenses, err := db.getLensStore(ctx).List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]model.Lens, len(lenses))
+	for cid, lens := range lenses {
+		result[cid.String()] = lens
+	}
+	return result, nil
+}
+
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	dstFound := true
-	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationSchemaVersionID)
+	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationCollectionVersionID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			dstFound = false
@@ -47,7 +69,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	}
 
 	srcFound := true
-	sourceCol, err := description.GetCollectionByID(ctx, cfg.SourceSchemaVersionID)
+	sourceCol, err := description.GetCollectionByID(ctx, cfg.SourceCollectionVersionID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			srcFound = false
@@ -58,7 +80,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 
 	if !srcFound {
 		sourceCol = client.CollectionVersion{
-			VersionID:      cfg.SourceSchemaVersionID,
+			VersionID:      cfg.SourceCollectionVersionID,
 			CollectionID:   client.OrphanCollectionID,
 			IsMaterialized: true,
 			IsPlaceholder:  true,
@@ -73,7 +95,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	if !dstFound {
 		dstCol = client.CollectionVersion{
 			Name:           sourceCol.Name,
-			VersionID:      cfg.DestinationSchemaVersionID,
+			VersionID:      cfg.DestinationCollectionVersionID,
 			IsMaterialized: true,
 			IsPlaceholder:  true,
 			CollectionID:   sourceCol.CollectionID,
@@ -81,7 +103,8 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	}
 
 	if dstCol.PreviousVersion.HasValue() && dstCol.PreviousVersion.Value().SourceCollectionID != sourceCol.VersionID {
-		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceSchemaVersionID, cfg.DestinationSchemaVersionID)
+		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceCollectionVersionID,
+			cfg.DestinationCollectionVersionID)
 	}
 
 	id, err := db.getLensStore(ctx).Add(ctx, cfg.Lens)

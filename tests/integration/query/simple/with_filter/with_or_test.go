@@ -94,8 +94,8 @@ func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T)
 			testUtils.Request{
 				Request: `query {
 					Users(filter: {_or: [
-						{FavoriteNumbers: {_any: {_le: 100}}},
-						{FavoriteNumbers: {_any: {_ge: 0}}},
+						{FavoriteNumbers: {_any: {_leq: 100}}},
+						{FavoriteNumbers: {_any: {_geq: 0}}},
 					]}) {
 						Name
 					}

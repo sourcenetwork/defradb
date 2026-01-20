@@ -154,7 +154,7 @@ var collectionUpdateValidators = append(
 			updateOnlyValidators...,
 		),
 		validateCollectionNotAdded,
-		validateSchemaVersionIDNotMutated,
+		validateCollectionVersionIDNotMutated,
 		validateCollectionIsBranchableNotMutated,
 	),
 	globalValidators...,
@@ -638,7 +638,7 @@ func validateCollectionIDNotMutated(
 	return errors.Join(errs...)
 }
 
-func validateSchemaVersionIDNotMutated(
+func validateCollectionVersionIDNotMutated(
 	ctx context.Context,
 	db *DB,
 	newState *definitionState,
@@ -652,7 +652,7 @@ func validateSchemaVersionIDNotMutated(
 		}
 
 		if newCol.VersionID != oldCol.VersionID {
-			errs = append(errs, NewErrCollectionSchemaVersionIDCannotBeMutated(newCol.VersionID))
+			errs = append(errs, NewErrCollectionVersionIDCannotBeMutated(newCol.VersionID))
 		}
 	}
 
@@ -976,7 +976,7 @@ func validateRelationalFieldIDType(
 
 		for _, field := range col.Fields {
 			if field.Kind.IsObject() && !field.Kind.IsArray() {
-				idFieldName := field.Name + request.RelatedObjectID
+				idFieldName := request.ToFieldID(field.Name)
 				idField, idFieldFound := fieldsByName[idFieldName]
 				if idFieldFound {
 					if idField.Kind != client.FieldKind_DocID {
@@ -1108,7 +1108,7 @@ func validateCollectionFieldDefaultValue(
 	var errs []error
 	for name, col := range newState.activeCollectionsByName {
 		// default values are set when a doc is first created
-		_, err := client.NewDocFromMap(map[string]any{}, col)
+		_, err := client.NewDocFromMap(ctx, map[string]any{}, col)
 		if err != nil {
 			errs = append(errs, NewErrDefaultFieldValueInvalid(name, err))
 		}

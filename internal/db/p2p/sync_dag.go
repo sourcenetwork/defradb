@@ -12,15 +12,15 @@ package p2p
 
 import (
 	"context"
-	"sync"
 
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv/blockstore"
-	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	"github.com/sourcenetwork/immutable"
 )
 
 func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
@@ -38,31 +38,39 @@ func makeLinkSystem(blockService blockstore.IPLDStore) linking.LinkSystem {
 // This process walks the entire DAG until the issue below is resolved.
 // https://github.com/sourcenetwork/defradb/issues/2722
 func (p *P2P) syncDAG(ctx context.Context, block *coreblock.Block) error {
+	sessionCtx, cancelSession := context.WithCancel(ctx)
+	defer cancelSession()
+
 	// use a session to make remote fetches more efficient
-	ctx = p.host.ContextWithSession(ctx)
+	sessionCtx = p.host.ContextWithSession(sessionCtx)
 
 	linkSystem := makeLinkSystem(p.host.IPLDStore())
 
 	// Store the block in the DAG store
-	_, err := linkSystem.Store(linking.LinkContext{Ctx: ctx}, coreblock.GetLinkPrototype(), block.GenerateNode())
+	_, err := linkSystem.Store(linking.LinkContext{Ctx: sessionCtx}, coreblock.GetLinkPrototype(), block.GenerateNode())
 	if err != nil {
 		return err
 	}
 
-	return p.loadBlockLinks(ctx, &linkSystem, block)
+	return p.loadBlockLinks(sessionCtx, &linkSystem, block)
 }
 
 // loadBlockLinks loads the links of a block recursively.
 //
-// If it encounters errors in the concurrent loading of links, it will return
-// the first error it encountered.
+// The function returns immediately on the first error encountered.
 func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, block *coreblock.Block) error {
-	ctx, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
-	defer cancel()
-
-	var wg sync.WaitGroup
-	var asyncErr error
-	var asyncErrOnce sync.Once
+	link, err := block.GenerateLink()
+	if err != nil {
+		return err
+	}
+	bstore := datastore.BlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+	merged, err := bstore.IsMerged(ctx, link.Cid)
+	if err != nil {
+		return err
+	}
+	if merged {
+		return nil
+	}
 
 	// TODO: this part is not tested yet because there is not easy way of doing it at the moment.
 	// https://github.com/sourcenetwork/defradb/issues/3525
@@ -85,43 +93,37 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 		encResults = results
 	}
 
-	setAsyncErr := func(err error) {
-		asyncErr = err
-		cancel()
-	}
-
 	for _, lnk := range block.AllLinks() {
-		wg.Add(1)
-		go func(lnk cidlink.Link) {
-			defer wg.Done()
-			if ctx.Err() != nil {
-				return
-			}
-			nd, err := linkSys.Load(linking.LinkContext{Ctx: ctx}, lnk, coreblock.BlockSchemaPrototype)
-			if err != nil {
-				asyncErrOnce.Do(func() { setAsyncErr(err) })
-				return
-			}
-			linkBlock, err := coreblock.GetFromNode(nd)
-			if err != nil {
-				asyncErrOnce.Do(func() { setAsyncErr(err) })
-				return
-			}
-			err = p.loadBlockLinks(ctx, linkSys, linkBlock)
-			if err != nil {
-				asyncErrOnce.Do(func() { setAsyncErr(err) })
-				return
-			}
-		}(lnk)
-	}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 
-	wg.Wait()
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, p.syncBlockLinkTimeout)
+		nd, err := linkSys.Load(linking.LinkContext{Ctx: ctxWithTimeout}, lnk, coreblock.BlockSchemaPrototype)
+		cancel()
 
-	if encResults != nil {
-		for res := range encResults.Get() {
-			asyncErr = errors.Join(asyncErr, res.Error)
+		if err != nil {
+			return err
+		}
+
+		linkBlock, err := coreblock.GetFromNode(nd)
+		if err != nil {
+			return err
+		}
+
+		err = p.loadBlockLinks(ctx, linkSys, linkBlock)
+		if err != nil {
+			return err
 		}
 	}
 
-	return asyncErr
+	if encResults != nil {
+		for res := range encResults.Get() {
+			if res.Error != nil {
+				return res.Error
+			}
+		}
+	}
+
+	return nil
 }

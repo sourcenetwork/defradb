@@ -210,10 +210,10 @@ func (txn *Txn) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddView(ctx, gqlQuery, sdl, transform)
+	return txn.db.AddView(ctx, gqlQuery, sdl, transformCID)
 }
 
 func (txn *Txn) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
@@ -224,6 +224,16 @@ func (txn *Txn) RefreshViews(ctx context.Context, options client.CollectionFetch
 func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.SetMigration(ctx, config)
+}
+
+func (txn *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.addLens(ctx, lens)
+}
+
+func (txn *Txn) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	ctx = InitContext(ctx, txn)
+	return txn.db.listLenses(ctx)
 }
 
 func (txn *Txn) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
@@ -331,4 +341,9 @@ func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs
 func (txn *Txn) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.SyncCollectionVersions(ctx, versionIDs...)
+}
+
+func (txn *Txn) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	ctx = InitContext(ctx, txn)
+	return txn.db.SyncBranchableCollection(ctx, collectionID)
 }

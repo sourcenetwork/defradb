@@ -61,6 +61,13 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 		}
 		return res
 	},
+	"LensID": func(s *state.State, _ int) map[string]string {
+		res := map[string]string{}
+		for i, lensID := range s.LensIDs {
+			res["LensID"+strconv.Itoa(i)] = lensID
+		}
+		return res
+	},
 }
 
 // replace returns a new string with any templating placholders (see "text/template") with data drawn

@@ -70,7 +70,7 @@ func TestQueryJSON_WithAllFilterWithAllTypes_ShouldFilter(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {custom: {_all: {_ne: null}}}) {
+					Users(filter: {custom: {_all: {_neq: null}}}) {
 						name
 					}
 				}`,

@@ -11,8 +11,8 @@
 package gen
 
 import (
+	"context"
 	"math/rand"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -33,7 +33,7 @@ const (
 )
 
 // AutoGenerateFromSDL generates random documents from a GraphQL SDL.
-func AutoGenerateFromSDL(gqlSDL string, options ...Option) ([]GeneratedDoc, error) {
+func AutoGenerateFromSDL(ctx context.Context, gqlSDL string, options ...Option) ([]GeneratedDoc, error) {
 	genConfigs, err := parseConfig(gqlSDL)
 	if err != nil {
 		return nil, err
@@ -43,11 +43,14 @@ func AutoGenerateFromSDL(gqlSDL string, options ...Option) ([]GeneratedDoc, erro
 		return nil, err
 	}
 	generator := newRandomDocGenerator(cols, genConfigs)
-	return generator.generateDocs(options...)
+	return generator.generateDocs(ctx, options...)
 }
 
 // AutoGenerate generates random documents from collection definitions.
-func AutoGenerate(definitions []client.CollectionVersion, options ...Option) ([]GeneratedDoc, error) {
+func AutoGenerate(ctx context.Context,
+	definitions []client.CollectionVersion,
+	options ...Option,
+) ([]GeneratedDoc, error) {
 	err := validateDefinitions(definitions)
 	if err != nil {
 		return nil, err
@@ -57,7 +60,7 @@ func AutoGenerate(definitions []client.CollectionVersion, options ...Option) ([]
 		typeDefs[def.Name] = def
 	}
 	generator := newRandomDocGenerator(typeDefs, nil)
-	return generator.generateDocs(options...)
+	return generator.generateDocs(ctx, options...)
 }
 
 func newRandomDocGenerator(types map[string]client.CollectionVersion, config configsMap) *randomDocGenerator {
@@ -85,7 +88,7 @@ type randomDocGenerator struct {
 	random        rand.Rand
 }
 
-func (g *randomDocGenerator) generateDocs(options ...Option) ([]GeneratedDoc, error) {
+func (g *randomDocGenerator) generateDocs(ctx context.Context, options ...Option) ([]GeneratedDoc, error) {
 	err := g.configurator.Configure(options...)
 	if err != nil {
 		return nil, err
@@ -94,7 +97,7 @@ func (g *randomDocGenerator) generateDocs(options ...Option) ([]GeneratedDoc, er
 	g.random = *g.configurator.random
 
 	resultDocs := make([]GeneratedDoc, 0, g.getMaxTotalDemand())
-	err = g.generateRandomDocs(g.configurator.typesOrder)
+	err = g.generateRandomDocs(ctx, g.configurator.typesOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +133,7 @@ func (g *randomDocGenerator) getNextPrimaryDocID(
 	return g.generatedDocs[otherDef.Name][ind].docID
 }
 
-func (g *randomDocGenerator) generateRandomDocs(order []string) error {
+func (g *randomDocGenerator) generateRandomDocs(ctx context.Context, order []string) error {
 	for _, typeName := range order {
 		typeDef := g.configurator.types[typeName]
 
@@ -146,10 +149,10 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 				}
 				if field.RelationName.HasValue() {
 					if field.IsPrimary && field.Kind.IsObject() {
-						if strings.HasSuffix(field.Name, request.RelatedObjectID) {
+						if _, ok := request.ToRelatedObjectName(field.Name); ok {
 							newDoc[field.Name] = g.getNextPrimaryDocID(typeDef, typeName, &field)
 						} else {
-							newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocID(typeDef, typeName, &field)
+							newDoc[request.ToFieldID(field.Name)] = g.getNextPrimaryDocID(typeDef, typeName, &field)
 						}
 					}
 				} else {
@@ -157,7 +160,7 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 					newDoc[field.Name] = g.generateRandomValue(typeName, field.Kind, fieldConf)
 				}
 			}
-			doc, err := client.NewDocFromMap(newDoc, typeDef)
+			doc, err := client.NewDocFromMap(ctx, newDoc, typeDef)
 			if err != nil {
 				return err
 			}

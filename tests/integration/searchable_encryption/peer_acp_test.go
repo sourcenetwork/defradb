@@ -27,50 +27,43 @@ name: Test Policy
 
 description: A Policy
 
-actor:
-  name: actor
-
 resources:
-  users:
-    permissions:
-      read:
-        expr: owner + reader + updater + deleter
+- name: users
+  permissions:
+  - name: read
+    expr: reader + updater + deleter
+  - name: update
+    expr: updater
+  - name: delete
+    expr: deleter
+  - name: nothing
+    doc: |
+      placeholder permission, to show a policy can contain any user defined relation,
+      in addition to the defra required ones
+    expr: dummy
 
-      update:
-        expr: owner + updater
+  relations:
+  - name: reader
+    types:
+    - actor
 
-      delete:
-        expr: owner + deleter
+  - name: updater
+    types:
+    - actor
 
-      nothing:
-        expr: dummy
+  - name: deleter
+    types:
+    - actor
 
-    relations:
-      owner:
-        types:
-          - actor
+  - name: admin
+    manages:
+    - reader
+    types:
+    - actor
 
-      reader:
-        types:
-          - actor
-
-      updater:
-        types:
-          - actor
-
-      deleter:
-        types:
-          - actor
-
-      admin:
-        manages:
-          - reader
-        types:
-          - actor
-
-      dummy:
-        types:
-          - actor
+  - name: dummy
+    types:
+    - actor
 `
 
 func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {

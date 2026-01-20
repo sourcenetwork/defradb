@@ -29,7 +29,7 @@ runs:
 
   steps:
     - name: Upload coverage artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         # Make sure the name is always unique per job as artifacts are now immutable.
         # Note Issue: https://github.com/actions/upload-artifact/issues/478

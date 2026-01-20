@@ -243,11 +243,11 @@ func (c *Collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocWithID(docID, c.Version())
+	doc, err := client.NewDocWithID(ctx, docID, c.Version())
 	if err != nil {
 		return nil, err
 	}
-	err = doc.SetWithJSON(data)
+	err = doc.SetWithJSON(ctx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -402,6 +402,14 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 	args := []string{"client", "encrypted-index", "delete"}
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--field", fieldName)
+
+	_, err := c.cmd.execute(ctx, args)
+	return err
+}
+
+func (c *Collection) Truncate(ctx context.Context) error {
+	args := []string{"client", "collection", "truncate"}
+	args = append(args, "--name", c.Version().Name)
 
 	_, err := c.cmd.execute(ctx, args)
 	return err

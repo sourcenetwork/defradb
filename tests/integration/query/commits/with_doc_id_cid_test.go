@@ -69,7 +69,7 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 				Request: ` {
 						_commits(
 							docID: "bae-not-this-doc",
-							cid: "bafyreieira5p74wdicqhelwbjsin7jtnnvvlplngrrcqfapleq2phexqga"
+							cid: "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla"
 						) {
 							cid
 						}
@@ -107,7 +107,7 @@ func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 				Request: ` {
 						_commits(
 							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-							cid: "bafyreieira5p74wdicqhelwbjsin7jtnnvvlplngrrcqfapleq2phexqga"
+							cid: "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla"
 						) {
 							cid
 						}
@@ -115,7 +115,7 @@ func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreieira5p74wdicqhelwbjsin7jtnnvvlplngrrcqfapleq2phexqga",
+							"cid": "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
 						},
 					},
 				},
@@ -150,7 +150,7 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 				Request: ` {
 						_commits(
 							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
-							cid: "bafyreieira5p74wdicqhelwbjsin7jtnnvvlplngrrcqfapleq2phexqga",
+							cid: "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
 							depth: 5
 						) {
 							cid
@@ -159,10 +159,10 @@ func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid": "bafyreieira5p74wdicqhelwbjsin7jtnnvvlplngrrcqfapleq2phexqga",
+							"cid": "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
 						},
 						{
-							"cid": "bafyreihpq4duzngkledmxkxx3jevlp2q4aimhmbjygpv5chmgbf6u2fsqm",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},

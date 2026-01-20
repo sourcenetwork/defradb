@@ -53,13 +53,13 @@ func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID:  0,
 				FieldName:     "age",
 				Unique:        true,
 				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -107,7 +107,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 					"User": []map[string]any{},
 				},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -155,13 +155,13 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 						"age":	22
 					}`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID: 0,
 				IndexName:    "age_unique_index",
 				FieldName:    "age",
 				Unique:       true,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -215,13 +215,13 @@ func TestUniqueIndexCreate_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 						"name":	"Keenan"
 					}`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID: 0,
 				IndexName:    "age_unique_index",
 				FieldName:    "age",
 				Unique:       true,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{

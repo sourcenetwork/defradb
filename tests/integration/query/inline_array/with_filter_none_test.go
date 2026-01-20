@@ -278,7 +278,7 @@ func TestQueryInlineNonNullBooleanArrayWithNoneFilter(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {likedIndexes: {_none: {_ne: true}}}) {
+					Users(filter: {likedIndexes: {_none: {_neq: true}}}) {
 						name
 					}
 				}`,

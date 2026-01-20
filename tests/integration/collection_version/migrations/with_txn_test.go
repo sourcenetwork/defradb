@@ -27,8 +27,8 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 			testUtils.ConfigureMigration{
 				TransactionID: immutable.Some(0),
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "does not exist",
-					DestinationSchemaVersionID: "also does not exist",
+					SourceCollectionVersionID:      "does not exist",
+					DestinationCollectionVersionID: "also does not exist",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{

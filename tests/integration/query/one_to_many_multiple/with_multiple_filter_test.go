@@ -63,7 +63,7 @@ func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "After Guantánamo, Another Injustice",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"rating":    3,
 				},
 			},
@@ -71,7 +71,7 @@ func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "To my dear readers",
-					"author_id": testUtils.NewDocIndex(2, 1),
+					"_authorID": testUtils.NewDocIndex(2, 1),
 					"rating":    2,
 				},
 			},
@@ -79,7 +79,7 @@ func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Twinklestar's Favourite Xmas Cookie",
-					"author_id": testUtils.NewDocIndex(2, 1),
+					"_authorID": testUtils.NewDocIndex(2, 1),
 					"rating":    1,
 				},
 			},
@@ -87,7 +87,7 @@ func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"score":     1,
 				},
 			},
@@ -95,7 +95,7 @@ func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"score":     2,
 				},
 			},
@@ -103,7 +103,7 @@ func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"score":     3,
 				},
 			},
@@ -111,7 +111,7 @@ func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
-					"author_id": testUtils.NewDocIndex(2, 1),
+					"_authorID": testUtils.NewDocIndex(2, 1),
 					"score":     4,
 				},
 			},

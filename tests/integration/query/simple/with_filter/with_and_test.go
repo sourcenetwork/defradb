@@ -95,7 +95,7 @@ func TestQuerySimple_WithInlineIntArray_GreaterThanAndLessThanFilter_Succeeds(t 
 			testUtils.Request{
 				Request: `query {
 					Users(filter: {_and: [
-						{FavoriteNumbers: {_all: {_ge: 0}}},
+						{FavoriteNumbers: {_all: {_geq: 0}}},
 						{FavoriteNumbers: {_all: {_lt: 30}}},
 					]}) {
 						Name

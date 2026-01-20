@@ -275,11 +275,11 @@ func (c *Collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocWithID(docID, c.Version())
+	doc, err := client.NewDocWithID(ctx, docID, c.Version())
 	if err != nil {
 		return nil, err
 	}
-	err = doc.SetWithJSON(data)
+	err = doc.SetWithJSON(ctx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -425,6 +425,18 @@ func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Encrypt
 
 func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes", fieldName)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Collection) Truncate(ctx context.Context) error {
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "truncate")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {

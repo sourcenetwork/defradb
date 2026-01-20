@@ -23,6 +23,7 @@ import (
 	"context"
 	"errors"
 	"runtime/cgo"
+	"time"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
@@ -44,6 +45,10 @@ type Transaction struct {
 
 func (txn *Transaction) ID() uint64 {
 	return txn.tx.ID()
+}
+
+func (txn *Transaction) StartTS() time.Time {
+	return txn.tx.StartTS()
 }
 
 func (txn *Transaction) Commit() error {
@@ -116,9 +121,9 @@ func (txn *Transaction) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
-	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, transform)
+	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, transformCID)
 }
 
 func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
@@ -127,6 +132,14 @@ func (txn *Transaction) RefreshViews(ctx context.Context, options client.Collect
 
 func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	return txn.CWrapper.SetMigration(ctx, config)
+}
+
+func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	return txn.CWrapper.AddLens(ctx, lens)
+}
+
+func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	return txn.CWrapper.ListLenses(ctx)
 }
 
 func (txn *Transaction) GetCollectionByName(

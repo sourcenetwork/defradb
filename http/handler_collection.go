@@ -65,7 +65,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 
 	switch {
 	case client.IsJSONArray(data):
-		docList, err := client.NewDocsFromJSON(data, col.Version())
+		docList, err := client.NewDocsFromJSON(ctx, data, col.Version())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -77,7 +77,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		}
 		rw.WriteHeader(http.StatusOK)
 	default:
-		doc, err := client.NewDocFromJSON(data, col.Version())
+		doc, err := client.NewDocFromJSON(ctx, data, col.Version())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
@@ -125,6 +125,7 @@ func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.R
 }
 
 func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	col := mustGetContextClientCollection(req)
 
 	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
@@ -149,7 +150,7 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	if err := doc.SetWithJSON(patch); err != nil {
+	if err := doc.SetWithJSON(ctx, patch); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
@@ -343,6 +344,18 @@ func (h *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *ht
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	err := col.Truncate(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
 	rw.WriteHeader(http.StatusOK)
 }
 
@@ -590,6 +603,16 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	deleteEncryptedIndex.Responses.Set("200", successResponse)
 	deleteEncryptedIndex.Responses.Set("400", errorResponse)
 
+	truncate := openapi3.NewOperation()
+	truncate.OperationID = "truncate"
+	truncate.Description = "Truncate a collection, removing all document data within it from the server. " +
+		"Does not propagate the deletion to other Defra nodes in the network."
+	truncate.Tags = []string{"truncate"}
+	truncate.AddParameter(collectionNamePathParam)
+	truncate.Responses = openapi3.NewResponses()
+	truncate.Responses.Set("200", successResponse)
+	truncate.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
@@ -606,4 +629,5 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		h.ListEncryptedIndexes)
 	router.AddRoute("/collections/{name}/encrypted-indexes/{field}", http.MethodDelete, deleteEncryptedIndex,
 		h.DeleteEncryptedIndex)
+	router.AddRoute("/collections/{name}/truncate", http.MethodDelete, truncate, h.Truncate)
 }
