@@ -271,19 +271,13 @@ func NewErrNotFound(kv errors.KV) error {
 }
 
 type ErrNotAuthorizedMissingPermission struct {
-	Permission   string
-	PolicyID     string
-	ResourceName string
-	ObjectID     string
+	Permission string
 }
 
 func (e *ErrNotAuthorizedMissingPermission) Error() string {
 	return fmt.Sprintf(
-		"not authorized to perform operation: missing permission %q on %s/%s (policy %s)",
+		"not authorized to perform operation: missing permission %q",
 		e.Permission,
-		e.ResourceName,
-		e.ObjectID,
-		e.PolicyID,
 	)
 }
 
@@ -292,11 +286,8 @@ func (e *ErrNotAuthorizedMissingPermission) Is(target error) bool {
 	return target == ErrNotAuthorizedToPerformOperation
 }
 
-func NewErrNotAuthorizedMissingPermission(permission, policyID, resourceName, objectID string) error {
+func NewErrNotAuthorizedMissingPermission(permission string) error {
 	return &ErrNotAuthorizedMissingPermission{
-		Permission:   permission,
-		PolicyID:     policyID,
-		ResourceName: resourceName,
-		ObjectID:     objectID,
+		Permission: permission,
 	}
 }
