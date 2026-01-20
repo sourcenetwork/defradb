@@ -40,7 +40,7 @@ var (
 	ErrNegativeReplicatorRetryIntervals = errors.New("replicator retry intervals must only contain positive integers")
 	ErrStdinSingleInputOnly             = errors.New("stdin only allowed as single input")
 	ErrReadingInput                     = errors.New("reading input")
-	ErrWritingOutput                    = errors.New("writting output")
+	ErrWritingOutput                    = errors.New("writing output")
 	ErrParsingSDL                       = errors.New("parsing SDL")
 	ErrGeneratingSDL                    = errors.New("generating SDL")
 	ErrPurgeForceFlagRequired           = errors.New("run this command again with --force if you " +
