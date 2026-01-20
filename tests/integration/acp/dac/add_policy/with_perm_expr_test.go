@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testing.T) {
+func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ErrorsBecauseOwnerIsInExpr(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -24,30 +24,23 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: reader - owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+name: test
+description: a policy
+resources:
+- name: users
+  permissions:
+  - expr: owner
+    name: delete
+  - expr: reader - owner
+    name: read
+  - expr: owner
+    name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
+				ExpectedError: "permission cannot reference `owner` relation",
 			},
 		},
 	}
@@ -55,8 +48,7 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinus_ValidID(t *testi
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Note: this and above test both result in different policy ids.
-func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t *testing.T) {
+func TestACP_AddPolicy_EmptyExpressionInPermission_PermissionIsAccepted(t *testing.T) {
 	test := testUtils.TestCase{
 
 		Actions: []any{
@@ -64,30 +56,19 @@ func TestACP_AddPolicy_PermissionExprWithOwnerInTheEndWithMinusNoSpace_ValidID(t
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: reader-owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                `,
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - name: read
+  - name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
 			},
 		},
 	}

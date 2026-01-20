@@ -31,6 +31,7 @@ extern Result IndexDrop(uintptr_t nodePtr, char* indexName, CollectionOptions op
 extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern Result CollectionTruncate(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern void IdentityFree(uintptr_t identityPtr);
 */
 import "C"
@@ -698,4 +699,37 @@ func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Encrypt
 		return []client.EncryptedIndexDescription{}, err
 	}
 	return retRes, nil
+}
+
+func (c *Collection) Truncate(ctx context.Context) error {
+	cName := C.CString(c.def.Name)
+	cIndexName := C.CString("")
+	cVersion := C.CString("")
+	cCollectionID := C.CString("")
+	cIdentity := identityFromContext(ctx)
+
+	defer C.free(unsafe.Pointer(cName))
+	defer C.free(unsafe.Pointer(cVersion))
+	defer C.free(unsafe.Pointer(cCollectionID))
+	defer C.free(unsafe.Pointer(cIndexName))
+	defer C.IdentityFree(cIdentity)
+
+	var copts C.CollectionOptions
+	copts.version = cVersion
+	copts.collectionID = cCollectionID
+	copts.name = cName
+	copts.getInactive = 0
+
+	res := ConvertAndFreeCResult(
+		C.CollectionTruncate(
+			C.uintptr_t(c.w.handle),
+			copts,
+			cIdentity,
+		),
+	)
+	if res.Status != 0 {
+		return errors.New(res.Error)
+	}
+
+	return nil
 }

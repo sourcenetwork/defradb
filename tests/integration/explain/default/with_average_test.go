@@ -66,7 +66,7 @@ func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"filter":    dataMap{"_ne": nil},
+									"filter":    dataMap{"_neq": nil},
 									"fieldName": "chapterPages",
 								},
 							},
@@ -78,7 +78,7 @@ func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"filter":         dataMap{"_ne": nil},
+									"filter":         dataMap{"_neq": nil},
 									"fieldName":      "chapterPages",
 									"childFieldName": nil,
 								},

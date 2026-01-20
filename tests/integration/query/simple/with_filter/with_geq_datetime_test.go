@@ -16,7 +16,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
+func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -30,19 +30,19 @@ func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2011-07-23T03:46:56-05:00"
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ne: "2017-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_geq: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 					},
 				},
@@ -53,7 +53,7 @@ func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
+func TestQuerySimpleWithDateTimeGEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -67,18 +67,79 @@ func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
-					"CreatedAt": "2011-07-23T03:46:56-05:00"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred",
-					"Age": 32
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ne: null}}) {
+					Users(filter: {CreatedAt: {_geq: "2017-07-22T03:46:56-05:00"}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithDateTimeGEFilterBlockWithLesserValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21,
+					"CreatedAt": "2017-07-23T03:46:56-05:00"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"Age": 32,
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_geq: "2017-07-25T03:46:56-05:00"}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"CreatedAt": "2010-07-23T03:46:56-05:00"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {CreatedAt: {_geq: null}}) {
 						Name
 					}
 				}`,
@@ -92,6 +153,7 @@ func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -99,7 +161,7 @@ func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithNilDateTimeNotEqualAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
+func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -124,7 +186,7 @@ func TestQuerySimple_WithNilDateTimeNotEqualAndNonNilFilterBlock_ShouldSucceed(t
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_ne: "2016-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_geq: "2016-07-23T03:46:56-05:00"}}) {
 						Name
 						Age
 						CreatedAt
@@ -138,9 +200,9 @@ func TestQuerySimple_WithNilDateTimeNotEqualAndNonNilFilterBlock_ShouldSucceed(t
 							"CreatedAt": testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
 						},
 						{
-							"Name":      "Fred",
-							"Age":       int64(44),
-							"CreatedAt": nil,
+							"Name":      "Bob",
+							"Age":       int64(32),
+							"CreatedAt": testUtils.MustParseTime("2016-07-23T03:46:56-05:00"),
 						},
 					},
 				},

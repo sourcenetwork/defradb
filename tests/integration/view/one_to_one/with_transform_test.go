@@ -51,7 +51,7 @@ func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name

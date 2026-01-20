@@ -45,12 +45,12 @@ func TestCompositeIndexCreate_WhenCreated_CanRetrieve(t *testing.T) {
 						"age":	22
 					}`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID: 0,
 				IndexName:    "name_age_index",
-				Fields:       []testUtils.IndexedField{{Name: "name"}, {Name: "age"}},
+				Fields:       []client.IndexedFieldDescription{{Name: "name"}, {Name: "age"}},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -84,7 +84,7 @@ func TestCompositeIndexCreate_UsingObjectDirective_SetsDefaultDirection(t *testi
 					}
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -121,7 +121,7 @@ func TestCompositeIndexCreate_UsingObjectDirective_OverridesDefaultDirection(t *
 					}
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -158,7 +158,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_ImplicitlyAddsField(t *testing
 					}
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -192,7 +192,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_SetsDefaultDirection(t *testin
 					}
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -229,7 +229,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_OverridesDefaultDirection(t *t
 					}
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -266,7 +266,7 @@ func TestCompositeIndexCreate_UsingFieldDirective_WithExplicitIncludes_RespectsO
 					}
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{

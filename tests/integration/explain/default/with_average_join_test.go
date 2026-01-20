@@ -71,7 +71,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 									"fieldName": "books",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -88,7 +88,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 									"fieldName":      "books",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -126,7 +126,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 							"collectionName": "Book",
 							"filter": dataMap{
 								"pages": dataMap{
-									"_ne": nil,
+									"_neq": nil,
 								},
 							},
 							"prefixes": []string{
@@ -202,7 +202,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 									"fieldName": "books",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -210,8 +210,8 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 									"fieldName": "articles",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_gt": int32(3),
-											"_ne": nil,
+											"_gt":  int32(3),
+											"_neq": nil,
 										},
 									},
 								},
@@ -228,7 +228,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 									"fieldName":      "books",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -237,8 +237,8 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 									"fieldName":      "articles",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_gt": int32(3),
-											"_ne": nil,
+											"_gt":  int32(3),
+											"_neq": nil,
 										},
 									},
 								},
@@ -277,7 +277,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 							"collectionName": "Book",
 							"filter": dataMap{
 								"pages": dataMap{
-									"_ne": nil,
+									"_neq": nil,
 								},
 							},
 							"prefixes": []string{
@@ -317,8 +317,8 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 							"collectionName": "Article",
 							"filter": dataMap{
 								"pages": dataMap{
-									"_gt": int32(3),
-									"_ne": nil,
+									"_gt":  int32(3),
+									"_neq": nil,
 								},
 							},
 							"prefixes": []string{
@@ -348,7 +348,7 @@ func TestDefaultExplainRequestOneToManyWithAverageAndChildNeNilFilterSharesJoinF
 					Author {
 						name
 						_avg(books: {field: rating})
-						books(filter: {rating: {_ne: null}}){
+						books(filter: {rating: {_neq: null}}){
 							name
 						}
 					}

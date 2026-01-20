@@ -434,3 +434,15 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 	_, err = c.http.request(req)
 	return err
 }
+
+func (c *Collection) Truncate(ctx context.Context) error {
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "truncate")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
+}
