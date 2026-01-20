@@ -237,5 +237,4 @@ func CheckNodeOperationAccess(
 	}
 
 	return client.NewErrNotAuthorizedMissingPermission(permission.String())
-
 }
