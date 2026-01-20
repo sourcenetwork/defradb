@@ -35,6 +35,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
@@ -219,6 +221,17 @@ func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	return wrapDatastoreTxn(txn, db), nil
 }
 
+// WrapCorekvTxn wraps an existing corekv.Txn into a client.Txn.
+func (db *DB) WrapCorekvTxn(txn corekv.Txn) client.Txn {
+	return wrapCorekvTxn(txn, db)
+}
+
+// InitContext returns a new context with all caches initialized and linked to
+// the given transaction.
+func (db *DB) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	return InitContext(ctx, txn)
+}
+
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
@@ -375,6 +388,47 @@ func (db *DB) P2PBlockSyncTimeout() time.Duration {
 // PrintDump prints the entire database to console.
 func (db *DB) PrintDump(ctx context.Context) error {
 	return printStore(ctx, db.rootstore)
+}
+
+// prePopulateCaches ensures all caches are fully populated using a read-only
+// transaction, then copies the data to the target context's caches.
+func (db *DB) prePopulateCaches(targetCtx context.Context) error {
+	readTxn, err := db.NewTxn(true)
+	if err != nil {
+		return err
+	}
+	defer readTxn.Discard()
+
+	readCtx := context.Background()
+	readCtx = description.InitCollectionCache(readCtx)
+	readCtx = id.InitCollectionShortIDCache(readCtx)
+	readCtx = id.InitFieldShortIDCache(readCtx)
+	readCtx = datastore.CtxSetFromClientTxn(readCtx, readTxn)
+
+	cols, err := description.GetCollections(readCtx)
+	if err != nil {
+		return err
+	}
+
+	description.PopulateCacheFromData(targetCtx, cols)
+
+	for _, col := range cols {
+		collectionShortID, err := id.GetShortCollectionID(readCtx, col.CollectionID)
+		if err != nil {
+			return err
+		}
+
+		id.SetCollectionShortIDInCache(targetCtx, col.CollectionID, collectionShortID)
+
+		fieldIDs, err := id.GetAllFieldShortIDs(readCtx, collectionShortID)
+		if err != nil {
+			return err
+		}
+
+		id.SetFieldShortIDsInCache(targetCtx, collectionShortID, fieldIDs)
+	}
+
+	return nil
 }
 
 // Close is called when we are shutting down the database.

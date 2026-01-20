@@ -34,6 +34,12 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.Re
 	}
 	defer txn.Discard()
 
+	if err := db.prePopulateCaches(ctx); err != nil {
+		res := &client.RequestResult{}
+		res.GQL.Errors = append(res.GQL.Errors, err)
+		return res
+	}
+
 	options := &client.GQLOptions{}
 	for _, o := range opts {
 		o(options)

@@ -15,12 +15,14 @@ import (
 	"context"
 	"io"
 
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-car/v2"
 	"github.com/ipld/go-car/v2/storage"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -29,21 +31,35 @@ import (
 
 // generateCAR creates a CAR file containing the root block and all its linked blocks.
 func (p *P2P) generateCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte, error) {
-	rootLink, err := rootBlock.GenerateLink()
-	if err != nil {
-		return nil, err
+	return p.generateCARForBlocks(ctx, []*coreblock.Block{rootBlock})
+}
+
+// generateCARForBlocks creates a CAR file containing multiple root blocks and all their linked blocks.
+func (p *P2P) generateCARForBlocks(ctx context.Context, rootBlocks []*coreblock.Block) ([]byte, error) {
+	if len(rootBlocks) == 0 {
+		return nil, nil
 	}
 
 	bstore := p.db.Multistore().Blockstore()
 	linkSystem := makeLinkSystem(blockstore.NewIPLDStore(bstore))
 
 	blockCIDs := make(map[string]struct{})
-	if err := p.collectDAGBlocks(ctx, &linkSystem, rootLink.Cid, blockCIDs); err != nil {
-		return nil, err
+	rootCIDs := make([]cid.Cid, 0, len(rootBlocks))
+
+	for _, rootBlock := range rootBlocks {
+		rootLink, err := rootBlock.GenerateLink()
+		if err != nil {
+			return nil, err
+		}
+		rootCIDs = append(rootCIDs, rootLink.Cid)
+
+		if err := p.collectDAGBlocks(ctx, &linkSystem, rootLink.Cid, blockCIDs); err != nil {
+			return nil, err
+		}
 	}
 
 	var buf bytes.Buffer
-	carWriter, err := storage.NewWritable(&buf, []cid.Cid{rootLink.Cid}, car.WriteAsCarV1(true))
+	carWriter, err := storage.NewWritable(&buf, rootCIDs, car.WriteAsCarV1(true))
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +134,15 @@ func (p *P2P) collectDAGBlocks(
 	return nil
 }
 
-// importCAR extracts all blocks from a CAR file and stores them in the blockstore.
-// Returns the root block for further processing.
-func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, error) {
+// parsedCAR holds the parsed blocks from a CAR file, ready for batched import.
+type parsedCAR struct {
+	rootBlock     *coreblock.Block
+	regularBlocks []blocks.Block
+	encBlocks     []blocks.Block
+}
+
+// parseCAR extracts all blocks from a CAR file without creating a transaction.
+func parseCAR(carData []byte) (*parsedCAR, error) {
 	reader, err := car.NewBlockReader(bytes.NewReader(carData))
 	if err != nil {
 		return nil, err
@@ -131,8 +153,8 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 		return nil, ErrEmptyCARRoots
 	}
 
-	bstore := datastore.P2PBlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
-	encStore := datastore.EncstoreFrom(p.db.Rootstore())
+	var regularBlocks []blocks.Block
+	var encBlocks []blocks.Block
 	var rootBlock *coreblock.Block
 
 	for {
@@ -148,20 +170,14 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 		if err != nil {
 			_, encErr := coreblock.GetEncryptionBlockFromBytes(carBlock.RawData())
 			if encErr == nil {
-				if putErr := encStore.Put(ctx, carBlock); putErr != nil {
-					return nil, putErr
-				}
+				encBlocks = append(encBlocks, carBlock)
 			} else {
-				if putErr := bstore.Put(ctx, carBlock); putErr != nil {
-					return nil, putErr
-				}
+				regularBlocks = append(regularBlocks, carBlock)
 			}
 			continue
 		}
 
-		if putErr := bstore.Put(ctx, carBlock); putErr != nil {
-			return nil, putErr
-		}
+		regularBlocks = append(regularBlocks, carBlock)
 
 		if carBlock.Cid().Equals(roots[0]) {
 			rootBlock = decodedBlock
@@ -172,5 +188,60 @@ func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, 
 		return nil, ErrCARRootBlockNotFound
 	}
 
-	return rootBlock, nil
+	return &parsedCAR{
+		rootBlock:     rootBlock,
+		regularBlocks: regularBlocks,
+		encBlocks:     encBlocks,
+	}, nil
+}
+
+// importCARBatch imports multiple parsed CAR files in a single transaction.
+func (p *P2P) importCARBatch(ctx context.Context, parsedCARs []*parsedCAR) error {
+	if len(parsedCARs) == 0 {
+		return nil
+	}
+
+	var allRegularBlocks []blocks.Block
+	var allEncBlocks []blocks.Block
+
+	for _, pc := range parsedCARs {
+		allRegularBlocks = append(allRegularBlocks, pc.regularBlocks...)
+		allEncBlocks = append(allEncBlocks, pc.encBlocks...)
+	}
+
+	txn := p.db.Rootstore().NewTxn(false)
+	defer txn.Discard()
+
+	txnCtx := corekv.SetCtxTxn(ctx, txn)
+	bstore := datastore.P2PBlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+	encStore := datastore.EncstoreFrom(p.db.Rootstore())
+
+	if len(allRegularBlocks) > 0 {
+		if err := bstore.PutMany(txnCtx, allRegularBlocks); err != nil {
+			return err
+		}
+	}
+
+	if len(allEncBlocks) > 0 {
+		if err := encStore.PutMany(txnCtx, allEncBlocks); err != nil {
+			return err
+		}
+	}
+
+	return txn.Commit()
+}
+
+// importCAR extracts all blocks from a CAR file and stores them in the blockstore.
+func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, error) {
+	parsed, err := parseCAR(carData)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.importCARBatch(ctx, []*parsedCAR{parsed})
+	if err != nil {
+		return nil, err
+	}
+
+	return parsed.rootBlock, nil
 }

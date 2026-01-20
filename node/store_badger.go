@@ -35,11 +35,11 @@ func init() {
 		badgerOpts.ValueLogFileSize = options.badgerFileSize
 		badgerOpts.EncryptionKey = options.badgerEncryptionKey
 
-		badgerOpts.NumCompactors = 12
-		badgerOpts.NumLevelZeroTables = 15
-		badgerOpts.NumLevelZeroTablesStall = 30
-		badgerOpts.MemTableSize = 256 << 20
-		badgerOpts.BlockCacheSize = 1 << 30
+		badgerOpts.NumCompactors = 4
+		badgerOpts.NumLevelZeroTables = 30
+		badgerOpts.NumLevelZeroTablesStall = 60
+		badgerOpts.MemTableSize = 512 << 20
+		badgerOpts.BlockCacheSize = 2 << 30
 		badgerOpts.ValueThreshold = 1 << 10
 
 		if len(options.badgerEncryptionKey) > 0 {

@@ -348,6 +348,10 @@ func (c *collection) Create(
 	}
 	defer txn.Discard()
 
+	if err := c.db.prePopulateCaches(ctx); err != nil {
+		return err
+	}
+
 	err = c.create(ctx, doc, opts)
 	if err != nil {
 		return err
@@ -375,6 +379,10 @@ func (c *collection) CreateMany(
 		return err
 	}
 	defer txn.Discard()
+
+	if err := c.db.prePopulateCaches(ctx); err != nil {
+		return err
+	}
 
 	for _, doc := range docs {
 		err = c.create(ctx, doc, opts)
@@ -735,9 +743,11 @@ func (c *collection) save(
 		DocID:             doc.ID().String(),
 	}
 
-	// Prefetch all heads for this document
-	if err := coreblock.PrefetchDocHeads(ctx, txn.Headstore(), doc.ID().String()); err != nil {
-		return err
+	// Prefetch all heads for this document, skip for new document creation since there are no existing heads
+	if !isCreate {
+		if err := coreblock.PrefetchDocHeads(ctx, txn.Headstore(), doc.ID().String()); err != nil {
+			return err
+		}
 	}
 
 	links := make([]coreblock.DAGLink, 0)

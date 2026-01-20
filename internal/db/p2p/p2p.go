@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
+	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 	ipld "github.com/ipfs/go-ipld-format"
 
@@ -58,13 +59,23 @@ type (
 const (
 	networkRequestTimeout = 10 * time.Second
 	// syncWorkerCount is the number of workers processing sync requests.
-	syncWorkerCount = 200
+	syncWorkerCount = 64
 	// syncQueueSize is the maximum number of pending sync requests.
 	syncQueueSize = 50000
-	// publishQueueSize is the buffer size for async P2P publishing.
-	publishQueueSize = 10000
-	// publishWorkerCount is the number of workers processing publish requests.
-	publishWorkerCount = 4
+	// pubsubBatchSize is the number of pubsub messages to batch before publishing.
+	pubsubBatchSize = 100
+	// pubsubBatchTimeout is the maximum time to wait for a pubsub batch to fill.
+	pubsubBatchTimeout = 200 * time.Millisecond
+	// pubsubBatchWorkers is the number of parallel pubsub batch processors.
+	pubsubBatchWorkers = 8
+	// maxPubsubMessageSize is the maximum size of a pubsub message (libp2p default is 1MB).
+	maxPubsubMessageSize = 800 * 1024
+	// batchSyncSize is the number of sync operations to batch before committing.
+	batchSyncSize = 100
+	// batchSyncTimeout is the maximum time to wait for a sync batch to fill.
+	batchSyncTimeout = 200 * time.Millisecond
+	// batchSyncWorkers is the number of parallel sync batch processors.
+	batchSyncWorkers = 8
 )
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
@@ -77,6 +88,10 @@ type PushToReplicatorsHandler interface {
 type DB interface {
 	// NewTxn returns a new transaction on the root store that may be managed externally.
 	NewTxn(readOnly bool) (client.Txn, error)
+	// WrapCorekvTxn wraps an existing corekv.Txn into a client.Txn.
+	WrapCorekvTxn(txn corekv.Txn) client.Txn
+	// InitContext returns a new context with all caches initialized and linked to the given transaction.
+	InitContext(ctx context.Context, txn client.Txn) context.Context
 	// GetNodeIdentity returns the current node identity.
 	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
 	// GetNodeIdentityToken returns an identity token for the given audience.
@@ -86,6 +101,10 @@ type DB interface {
 	GetCollections(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error)
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
+	// MergeBatch merges multiple events in a single transaction for improved performance.
+	MergeBatch(ctx context.Context, evts []event.Merge) error
+	// MergeBatchWithTxn merges multiple events using an existing transaction from context.
+	MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error
 	// Events returns the event bus for the database.
 	Events() event.Bus
 	// RetryIntervals returns the replicator retry configuration.
@@ -134,6 +153,12 @@ type P2P struct {
 	// processQueue is a worker pool for processing sync requests.
 	processQueue *processQueue
 
+	// syncBatcher combines CAR import and merge in single transactions.
+	syncBatcher *syncBatcher
+
+	// pubsubBatcher batches pubsub publish operations for improved throughput.
+	pubsubBatcher *pubsubBatcher
+
 	// timeout duration for syncing block links.
 	syncBlockLinkTimeout time.Duration
 
@@ -143,17 +168,22 @@ type P2P struct {
 	// pushHandlers are called when documents are pushed to replicators
 	pushHandlers []PushToReplicatorsHandler
 
-	// publishQueue is a non-blocking channel for async P2P publishing.
-	publishQueue chan *publishRequest
-	// publishWg tracks active publish workers.
-	publishWg sync.WaitGroup
+	// collectionCache caches collection existence checks to reduce DB queries.
+	collectionCache   map[string]*cachedCollection
+	collectionCacheMu sync.RWMutex
 }
 
-// publishRequest represents a message to be published via P2P.
-type publishRequest struct {
-	topic string
-	data  []byte
+// cachedCollection stores a cached collection lookup result with expiry.
+type cachedCollection struct {
+	exists  bool
+	col     client.Collection
+	expires time.Time
 }
+
+const (
+	// collectionCacheTTL is how long to cache collection existence checks.
+	collectionCacheTTL = 30 * time.Second
+)
 
 // pushLogCommProcessor implements CommProcessor for push log functionality
 type pushLogCommProcessor struct {
@@ -203,8 +233,10 @@ func New(
 		retryIntervals:       db.RetryIntervals(),
 		processQueue:         newProcessQueue(syncWorkerCount, syncQueueSize),
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
-		publishQueue:         make(chan *publishRequest, publishQueueSize),
+		collectionCache:      make(map[string]*cachedCollection),
 	}
+	p.syncBatcher = newSyncBatcher(ctx, &p)
+	p.pubsubBatcher = newPubsubBatcher(ctx, &p, pubsubBatchSize, pubsubBatchTimeout)
 	p.replicatorProtocol = protocol.NewCommChannel(host, "rep", &pushLogCommProcessor{p2p: &p})
 
 	host.SetBlockAccessFunc(p.hasAccess)
@@ -262,13 +294,7 @@ func New(
 		p.AddPushToReplicatorsHandler(coord)
 	}
 
-	pPtr := &p
-	for i := 0; i < publishWorkerCount; i++ {
-		p.publishWg.Add(1)
-		go pPtr.publishWorker()
-	}
-
-	return pPtr, nil
+	return &p, nil
 }
 
 func (p *P2P) KMS() kms.Service {
@@ -451,6 +477,13 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 
 // hasCollection checks if the local node has the given collection.
 func (p *P2P) hasCollection(ctx context.Context, collectionID string) (bool, error) {
+	p.collectionCacheMu.RLock()
+	if cached, ok := p.collectionCache[collectionID]; ok && time.Now().Before(cached.expires) {
+		p.collectionCacheMu.RUnlock()
+		return cached.exists, nil
+	}
+	p.collectionCacheMu.RUnlock()
+
 	cols, err := p.db.GetCollections(
 		ctx,
 		client.CollectionFetchOptions{
@@ -460,7 +493,33 @@ func (p *P2P) hasCollection(ctx context.Context, collectionID string) (bool, err
 	if err != nil {
 		return false, err
 	}
-	return len(cols) > 0, nil
+
+	exists := len(cols) > 0
+	var col client.Collection
+	if exists {
+		col = cols[0]
+	}
+
+	p.collectionCacheMu.Lock()
+	p.collectionCache[collectionID] = &cachedCollection{
+		exists:  exists,
+		col:     col,
+		expires: time.Now().Add(collectionCacheTTL),
+	}
+	p.collectionCacheMu.Unlock()
+
+	return exists, nil
+}
+
+// getCachedCollection returns a cached collection if available and not expired.
+func (p *P2P) getCachedCollection(collectionID string) client.Collection {
+	p.collectionCacheMu.RLock()
+	defer p.collectionCacheMu.RUnlock()
+
+	if cached, ok := p.collectionCache[collectionID]; ok && time.Now().Before(cached.expires) && cached.exists {
+		return cached.col
+	}
+	return nil
 }
 
 // trySelfHasAccess checks if the local node has access to the given block.
@@ -473,18 +532,30 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		return true, nil
 	}
 
-	cols, err := p.db.GetCollections(
-		ctx,
-		client.CollectionFetchOptions{
-			CollectionID: immutable.Some(collectionID),
-		},
-	)
-	if err != nil {
-		return false, err
+	col := p.getCachedCollection(collectionID)
+	if col == nil {
+		cols, err := p.db.GetCollections(
+			ctx,
+			client.CollectionFetchOptions{
+				CollectionID: immutable.Some(collectionID),
+			},
+		)
+		if err != nil {
+			return false, err
+		}
+		if len(cols) == 0 {
+			return false, nil
+		}
+		col = cols[0]
+		p.collectionCacheMu.Lock()
+		p.collectionCache[collectionID] = &cachedCollection{
+			exists:  true,
+			col:     col,
+			expires: time.Now().Add(collectionCacheTTL),
+		}
+		p.collectionCacheMu.Unlock()
 	}
-	if len(cols) == 0 {
-		return false, nil
-	}
+
 	ident, err := p.db.GetNodeIdentity(ctx)
 	if err != nil {
 		return false, err
@@ -500,7 +571,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 		},
 		p.db.NodeACP(),
 		p.db.DocumentACP().Value(),
-		cols[0], // For now we assume there is only one collection.
+		col,
 		acpTypes.DocumentReadPerm,
 		string(block.Delta.GetDocID()),
 	)
@@ -524,6 +595,10 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	}
 	req.SenderID = from
 
+	if req.IsBatched() {
+		return nil, p.processBatchedPushlogRequest(p.ctx, req)
+	}
+
 	if err := p.processPushlogRequest(p.ctx, req, false); err != nil {
 		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 			log.Info("Context done during pushlog request processing", corelog.Any("Error", err))
@@ -533,6 +608,46 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	}
 
 	return nil, nil
+}
+
+// processBatchedPushlogRequest processes a batched push log request containing multiple documents.
+func (p *P2P) processBatchedPushlogRequest(ctx context.Context, req *protocol.PushLogRequest) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
+	log.Info("Processing batched pushlog request",
+		corelog.Int("DocumentCount", len(req.Documents)),
+		corelog.String("CollectionID", req.CollectionID))
+
+	if len(req.CAR) > 0 {
+		if _, err := p.importCAR(ctx, req.CAR); err != nil {
+			log.ErrorE("Failed to import batched CAR", err)
+		}
+	}
+
+	var lastErr error
+	for _, doc := range req.Documents {
+		docReq := &protocol.PushLogRequest{
+			DocID:        doc.DocID,
+			CID:          doc.CID,
+			CollectionID: req.CollectionID,
+			Creator:      req.Creator,
+			Block:        doc.Block,
+		}
+		docReq.SenderID = req.SenderID
+
+		if err := p.processPushlogRequest(ctx, docReq, false); err != nil {
+			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+				log.Info("Context done during batched pushlog request processing", corelog.Any("Error", err))
+				return err
+			}
+			log.ErrorE("Failed to process document in batch", err, corelog.String("DocID", doc.DocID))
+			lastErr = err
+		}
+	}
+
+	return lastErr
 }
 
 func (p *P2P) peerEventHandler(peerID string, topic string, eventType string) {
@@ -602,12 +717,8 @@ func (p *P2P) processPushlogRequest(
 			}
 		}
 
-		if len(req.CAR) > 0 {
-			_, err = p.importCAR(ctx, req.CAR)
-			if err != nil {
-				return err
-			}
-		} else {
+		// For non-CAR syncs, we still need to sync the DAG first
+		if len(req.CAR) == 0 {
 			err = p.syncDAG(ctx, block)
 			if err != nil {
 				return err
@@ -621,24 +732,16 @@ func (p *P2P) processPushlogRequest(
 			Cid:          headCID,
 			CollectionID: req.CollectionID,
 		}
-		err = p.db.Merge(ctx, mergeEvt)
-		if err != nil {
-			return err
-		}
 
-		// Notify bus subscribers and the network of peers that we have a new document available.
-		updateEvt := event.Update{
-			DocID:        req.DocID,
-			Cid:          headCID,
-			CollectionID: req.CollectionID,
-			Block:        req.Block,
-			IsRelay:      true,
-		}
-		p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
-		if err := p.SendUpdate(updateEvt); err != nil {
-			log.ErrorE("Failed to send update after sync", err, slog.Any("PeerID", p.host.ID()))
-		}
+		resultCh := p.syncBatcher.enqueue(req.CAR, mergeEvt, func(updateEvt event.Update) {
+			updateEvt.Block = req.Block
+			p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
+			if err := p.SendUpdate(updateEvt); err != nil {
+				log.ErrorE("Failed to send update after sync", err, slog.Any("PeerID", p.host.ID()))
+			}
+		})
 
+		go func() { <-resultCh }()
 		return nil
 	}
 
@@ -660,67 +763,10 @@ func (p *P2P) SendUpdate(evt event.Update) error {
 
 	// Retries are for replicators only and should not pollute the pubsub network.
 	if !evt.IsRetry {
-		req := &protocol.PushLogRequest{
-			DocID:        evt.DocID,
-			CID:          evt.Cid.Bytes(),
-			CollectionID: evt.CollectionID,
-			Creator:      p.host.ID(),
-			Block:        evt.Block,
-		}
-
-		// Generate CAR containing root block and all linked blocks
-		if !evt.IsRelay {
-			rootBlock, err := coreblock.GetFromBytes(evt.Block)
-			if err != nil {
-				return err
-			}
-			carData, err := p.generateCAR(p.ctx, rootBlock)
-			if err != nil {
-				return err
-			}
-			req.CAR = carData
-		}
-
-		b, err := cbor.Marshal(req)
-		if err != nil {
-			return err
-		}
-
-		if evt.DocID != "" {
-			p.tryPublish(evt.DocID, b)
-		}
-		p.tryPublish(evt.CollectionID, b)
+		p.pubsubBatcher.enqueue(evt)
 	}
 
 	return nil
-}
-
-// tryPublish attempts to enqueue a message for async publishing.
-// If the queue is full, the message is dropped to prevent backpressure.
-func (p *P2P) tryPublish(topic string, data []byte) {
-	select {
-	case p.publishQueue <- &publishRequest{topic: topic, data: data}:
-	default:
-		log.Error("P2P publish queue full, dropping message", corelog.String("topic", topic))
-	}
-}
-
-// publishWorker processes messages from the publish queue.
-func (p *P2P) publishWorker() {
-	defer p.publishWg.Done()
-	for {
-		select {
-		case <-p.ctx.Done():
-			return
-		case req, ok := <-p.publishQueue:
-			if !ok {
-				return
-			}
-			if err := p.host.PublishToTopicAsync(p.ctx, req.topic, req.data); err != nil {
-				log.Error("Failed to publish to topic", corelog.String("topic", req.topic), corelog.Any("error", err))
-			}
-		}
-	}
 }
 
 // syncRequest represents a sync operation to be processed by workers.
@@ -834,4 +880,447 @@ func (p *P2P) QueryDocIDsWithSETags(
 // isBranchableSync returns true if this is a branchable collection sync operation.
 func isBranchableSync(collectionID, docID string) bool {
 	return collectionID != "" && docID == ""
+}
+
+// syncRequestBatch represents a combined CAR import and merge operation.
+type syncRequestBatch struct {
+	carData  []byte
+	parsed   *parsedCAR
+	evt      event.Merge
+	updateFn func(event.Update)
+	resultCh chan error
+}
+
+// syncBatcher combines CAR import and merge operations into single transactions.
+type syncBatcher struct {
+	ctx       context.Context
+	cancel    context.CancelFunc
+	p2p       *P2P
+	queue     chan syncRequestBatch
+	wg        sync.WaitGroup
+	batchSize int
+	timeout   time.Duration
+}
+
+func newSyncBatcher(ctx context.Context, p2p *P2P) *syncBatcher {
+	ctx, cancel := context.WithCancel(ctx)
+	sb := &syncBatcher{
+		ctx:       ctx,
+		cancel:    cancel,
+		p2p:       p2p,
+		queue:     make(chan syncRequestBatch, batchSyncSize*batchSyncWorkers*20),
+		batchSize: batchSyncSize,
+		timeout:   batchSyncTimeout,
+	}
+	for i := 0; i < batchSyncWorkers; i++ {
+		sb.wg.Add(1)
+		go sb.processBatches()
+	}
+	return sb
+}
+
+// enqueue adds a sync request to the batch queue.
+func (sb *syncBatcher) enqueue(carData []byte, evt event.Merge, updateFn func(event.Update)) <-chan error {
+	resultCh := make(chan error, 1)
+	select {
+	case sb.queue <- syncRequestBatch{
+		carData:  carData,
+		evt:      evt,
+		updateFn: updateFn,
+		resultCh: resultCh,
+	}:
+	case <-sb.ctx.Done():
+		resultCh <- sb.ctx.Err()
+	}
+	return resultCh
+}
+
+func (sb *syncBatcher) processBatches() {
+	defer sb.wg.Done()
+
+	batch := make([]syncRequestBatch, 0, sb.batchSize)
+	timer := time.NewTimer(sb.timeout)
+	timer.Stop()
+	defer timer.Stop()
+
+	processBatch := func() {
+		if len(batch) == 0 {
+			return
+		}
+
+		var allRegularBlocks []blocks.Block
+		var allEncBlocks []blocks.Block
+
+		for i := range batch {
+			if len(batch[i].carData) > 0 {
+				parsed, err := parseCAR(batch[i].carData)
+				if err != nil {
+					batch[i].resultCh <- err
+					batch[i].parsed = nil
+					continue
+				}
+				batch[i].parsed = parsed
+				allRegularBlocks = append(allRegularBlocks, parsed.regularBlocks...)
+				allEncBlocks = append(allEncBlocks, parsed.encBlocks...)
+			}
+		}
+
+		txn := sb.p2p.db.Rootstore().NewTxn(false)
+		defer txn.Discard()
+
+		txnCtx := corekv.SetCtxTxn(sb.ctx, txn)
+
+		if len(allRegularBlocks) > 0 {
+			bstore := datastore.P2PBlockstoreFrom(sb.p2p.db.Rootstore(), immutable.None[int]())
+			if err := bstore.PutMany(txnCtx, allRegularBlocks); err != nil {
+				log.ErrorE("Batch CAR import failed", err)
+				for _, req := range batch {
+					if req.parsed != nil {
+						req.resultCh <- err
+					}
+				}
+				batch = batch[:0]
+				return
+			}
+		}
+
+		if len(allEncBlocks) > 0 {
+			encStore := datastore.EncstoreFrom(sb.p2p.db.Rootstore())
+			if err := encStore.PutMany(txnCtx, allEncBlocks); err != nil {
+				log.ErrorE("Batch encrypted block import failed", err)
+				for _, req := range batch {
+					if req.parsed != nil {
+						req.resultCh <- err
+					}
+				}
+				batch = batch[:0]
+				return
+			}
+		}
+
+		var mergeEvts []event.Merge
+		var validRequests []syncRequestBatch
+		for _, req := range batch {
+			if len(req.carData) == 0 || req.parsed != nil {
+				mergeEvts = append(mergeEvts, req.evt)
+				validRequests = append(validRequests, req)
+			}
+		}
+
+		if len(mergeEvts) > 0 {
+			wrappedTxn := sb.p2p.db.WrapCorekvTxn(txn)
+			wrappedCtx := sb.p2p.db.InitContext(txnCtx, wrappedTxn)
+			err := sb.p2p.db.MergeBatchWithTxn(wrappedCtx, mergeEvts)
+			if err != nil {
+				log.ErrorE("Batch merge with txn failed, falling back to individual processing", err)
+				for _, req := range validRequests {
+					req.resultCh <- err
+				}
+				batch = batch[:0]
+				return
+			}
+		}
+
+		if err := txn.Commit(); err != nil {
+			log.ErrorE("Batch sync commit failed", err)
+			for _, req := range validRequests {
+				req.resultCh <- err
+			}
+			batch = batch[:0]
+			return
+		}
+
+		for _, req := range validRequests {
+			req.resultCh <- nil
+			if req.updateFn != nil {
+				updateEvt := event.Update{
+					DocID:        req.evt.DocID,
+					Cid:          req.evt.Cid,
+					CollectionID: req.evt.CollectionID,
+					IsRelay:      true,
+				}
+				req.updateFn(updateEvt)
+			}
+		}
+
+		batch = batch[:0]
+	}
+
+	for {
+		select {
+		case <-sb.ctx.Done():
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
+			processBatch()
+			return
+
+		case req := <-sb.queue:
+			batch = append(batch, req)
+
+			if len(batch) == 1 {
+				timer.Reset(sb.timeout)
+			}
+
+			if len(batch) >= sb.batchSize {
+				if !timer.Stop() {
+					select {
+					case <-timer.C:
+					default:
+					}
+				}
+				processBatch()
+			}
+
+		case <-timer.C:
+			processBatch()
+		}
+	}
+}
+
+func (sb *syncBatcher) close() {
+	sb.cancel()
+	sb.wg.Wait()
+}
+
+// pubsubRequest represents an update event to be published via pubsub.
+type pubsubRequest struct {
+	evt event.Update
+}
+
+// pubsubBatcher batches pubsub publish operations for improved throughput.
+type pubsubBatcher struct {
+	ctx       context.Context
+	cancel    context.CancelFunc
+	p2p       *P2P
+	queue     chan pubsubRequest
+	wg        sync.WaitGroup
+	batchSize int
+	timeout   time.Duration
+}
+
+func newPubsubBatcher(ctx context.Context, p2p *P2P, batchSize int, timeout time.Duration) *pubsubBatcher {
+	ctx, cancel := context.WithCancel(ctx)
+	pb := &pubsubBatcher{
+		ctx:       ctx,
+		cancel:    cancel,
+		p2p:       p2p,
+		queue:     make(chan pubsubRequest, batchSize*pubsubBatchWorkers*20),
+		batchSize: batchSize,
+		timeout:   timeout,
+	}
+	for i := 0; i < pubsubBatchWorkers; i++ {
+		pb.wg.Add(1)
+		go pb.processBatches()
+	}
+	return pb
+}
+
+// enqueue adds an update event to be published asynchronously.
+func (pb *pubsubBatcher) enqueue(evt event.Update) {
+	select {
+	case pb.queue <- pubsubRequest{evt: evt}:
+	case <-pb.ctx.Done():
+	default:
+		log.Info("Pubsub queue full, dropping event", corelog.String("DocID", evt.DocID))
+	}
+}
+
+func (pb *pubsubBatcher) processBatches() {
+	defer pb.wg.Done()
+
+	batch := make([]pubsubRequest, 0, pb.batchSize)
+	timer := time.NewTimer(pb.timeout)
+	timer.Stop()
+	defer timer.Stop()
+
+	processBatch := func() {
+		if len(batch) == 0 {
+			return
+		}
+
+		activePeers, err := pb.p2p.host.ActivePeers()
+		if err != nil || len(activePeers) == 0 {
+			batch = batch[:0]
+			return
+		}
+
+		collectionBatches := make(map[string][]pubsubRequest)
+		for _, req := range batch {
+			collectionBatches[req.evt.CollectionID] = append(collectionBatches[req.evt.CollectionID], req)
+		}
+
+		for collectionID, collectionReqs := range collectionBatches {
+			pb.processCollectionBatch(collectionID, collectionReqs)
+		}
+
+		batch = batch[:0]
+	}
+
+	for {
+		select {
+		case <-pb.ctx.Done():
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
+			processBatch()
+			return
+
+		case req := <-pb.queue:
+			batch = append(batch, req)
+
+			if len(batch) == 1 {
+				timer.Reset(pb.timeout)
+			}
+
+			if len(batch) >= pb.batchSize {
+				if !timer.Stop() {
+					select {
+					case <-timer.C:
+					default:
+					}
+				}
+				processBatch()
+			}
+
+		case <-timer.C:
+			processBatch()
+		}
+	}
+}
+
+// processCollectionBatch handles a batch of documents for a single collection.
+func (pb *pubsubBatcher) processCollectionBatch(collectionID string, reqs []pubsubRequest) {
+	var newEvents []pubsubRequest
+	var relayEvents []pubsubRequest
+	for _, req := range reqs {
+		if req.evt.IsRelay {
+			relayEvents = append(relayEvents, req)
+		} else {
+			newEvents = append(newEvents, req)
+		}
+	}
+
+	if len(relayEvents) > 0 {
+		documents := make([]protocol.DocumentInfo, len(relayEvents))
+		for i, req := range relayEvents {
+			documents[i] = protocol.DocumentInfo{
+				DocID: req.evt.DocID,
+				CID:   req.evt.Cid.Bytes(),
+				Block: req.evt.Block,
+			}
+		}
+
+		pubsubReq := &protocol.PushLogRequest{
+			CollectionID: collectionID,
+			Creator:      pb.p2p.host.ID(),
+			Documents:    documents,
+		}
+
+		b, err := cbor.Marshal(pubsubReq)
+		if err != nil {
+			log.ErrorE("Failed to marshal relay batch request", err)
+		} else {
+			if err := pb.p2p.host.PublishToTopicAsync(pb.ctx, collectionID, b); err != nil {
+				log.ErrorE("Failed to publish relay batch to collection topic", err)
+			}
+		}
+	}
+
+	if len(newEvents) == 0 {
+		return
+	}
+
+	rootBlocks := make([]*coreblock.Block, 0, len(newEvents))
+	validEvents := make([]pubsubRequest, 0, len(newEvents))
+	for _, req := range newEvents {
+		rootBlock, err := coreblock.GetFromBytes(req.evt.Block)
+		if err != nil {
+			log.ErrorE("Failed to parse block for CAR generation", err)
+			continue
+		}
+		rootBlocks = append(rootBlocks, rootBlock)
+		validEvents = append(validEvents, req)
+	}
+
+	if len(rootBlocks) == 0 {
+		return
+	}
+
+	// Generate single CAR for all documents in this collection batch
+	carData, err := pb.p2p.generateCARForBlocks(pb.ctx, rootBlocks)
+	if err != nil {
+		log.ErrorE("Failed to generate batched CAR", err)
+		return
+	}
+
+	// Build document info list for batched request
+	documents := make([]protocol.DocumentInfo, len(validEvents))
+	for i, req := range validEvents {
+		documents[i] = protocol.DocumentInfo{
+			DocID: req.evt.DocID,
+			CID:   req.evt.Cid.Bytes(),
+			Block: req.evt.Block,
+		}
+	}
+
+	estimatedSize := len(carData)
+	for _, doc := range documents {
+		estimatedSize += len(doc.DocID) + len(doc.CID) + len(doc.Block) + 50
+	}
+
+	if estimatedSize > maxPubsubMessageSize && len(documents) > 1 {
+		mid := len(validEvents) / 2
+		pb.processCollectionBatch(collectionID, newEvents[:mid])
+		pb.processCollectionBatch(collectionID, newEvents[mid:])
+		return
+	}
+
+	pubsubReq := &protocol.PushLogRequest{
+		CollectionID: collectionID,
+		Creator:      pb.p2p.host.ID(),
+		CAR:          carData,
+		Documents:    documents,
+	}
+
+	b, err := cbor.Marshal(pubsubReq)
+	if err != nil {
+		log.ErrorE("Failed to marshal batched pubsub request", err)
+		return
+	}
+
+	if err := pb.p2p.host.PublishToTopicAsync(pb.ctx, collectionID, b); err != nil {
+		log.ErrorE("Failed to publish batched request to collection topic", err)
+	}
+
+	for _, req := range validEvents {
+		if req.evt.DocID != "" {
+			docReq := &protocol.PushLogRequest{
+				DocID:        req.evt.DocID,
+				CID:          req.evt.Cid.Bytes(),
+				CollectionID: collectionID,
+				Creator:      pb.p2p.host.ID(),
+				Block:        req.evt.Block,
+			}
+			docB, err := cbor.Marshal(docReq)
+			if err != nil {
+				log.ErrorE("Failed to marshal doc pubsub request", err)
+				continue
+			}
+			if err := pb.p2p.host.PublishToTopicAsync(pb.ctx, req.evt.DocID, docB); err != nil {
+				log.ErrorE("Failed to publish to doc topic", err)
+			}
+		}
+	}
+}
+
+func (pb *pubsubBatcher) close() {
+	pb.cancel()
+	pb.wg.Wait()
 }
