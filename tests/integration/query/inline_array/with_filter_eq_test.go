@@ -68,7 +68,7 @@ func TestQueryInlineBooleanArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {likedIndexes: {_ne: [true, false]}}) {
+					Users(filter: {likedIndexes: {_neq: [true, false]}}) {
 						name
 					}
 				}`,
@@ -138,7 +138,7 @@ func TestQueryInlineNullableBooleanArray_WithNeqFilter_ReturnsResults(t *testing
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {indexLikesDislikes: {_ne: [true, null, false]}}) {
+					Users(filter: {indexLikesDislikes: {_neq: [true, null, false]}}) {
 						name
 					}
 				}`,
@@ -208,7 +208,7 @@ func TestQueryInlineIntegerArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {favouriteIntegers: {_ne: [1, 2, 3]}}) {
+					Users(filter: {favouriteIntegers: {_neq: [1, 2, 3]}}) {
 						name
 					}
 				}`,
@@ -278,7 +278,7 @@ func TestQueryInlineNullableIntegerArray_WithNeqFilter_ReturnsResults(t *testing
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {testScores: {_ne: [90, null, 85]}}) {
+					Users(filter: {testScores: {_neq: [90, null, 85]}}) {
 						name
 					}
 				}`,
@@ -348,7 +348,7 @@ func TestQueryInlineFloatArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {favouriteFloats: {_ne: [3.14, 2.71, 1.41]}}) {
+					Users(filter: {favouriteFloats: {_neq: [3.14, 2.71, 1.41]}}) {
 						name
 					}
 				}`,
@@ -417,7 +417,7 @@ func TestQueryInlineNullableFloatArray_WithNeqFilter_ReturnsResults(t *testing.T
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {pageRatings: {_ne: [4.5, null, 3.2]}}) {
+					Users(filter: {pageRatings: {_neq: [4.5, null, 3.2]}}) {
 						name
 					}
 				}`,
@@ -487,7 +487,7 @@ func TestQueryInlineStringArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {preferredStrings: {_ne: ["apple", "banana", "cherry"]}}) {
+					Users(filter: {preferredStrings: {_neq: ["apple", "banana", "cherry"]}}) {
 						name
 					}
 				}`,
@@ -557,7 +557,7 @@ func TestQueryInlineNullableStringArray_WithNeqFilter_ReturnsResults(t *testing.
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {pageHeaders: {_ne: ["intro", null, "conclusion"]}}) {
+					Users(filter: {pageHeaders: {_neq: ["intro", null, "conclusion"]}}) {
 						name
 					}
 				}`,
