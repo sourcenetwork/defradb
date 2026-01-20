@@ -24,6 +24,7 @@ const (
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
 	ErrUnknownOperator = errors.New(errUnknownOperator)
+	ErrSliceTypeNotFound = errors.New("slice type not found")
 )
 
 func NewErrUnknownOperator(operator string) error {

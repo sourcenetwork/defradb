@@ -16,8 +16,6 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// Boolean! array tests
-
 func TestQueryInlineBooleanArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -87,8 +85,6 @@ func TestQueryInlineBooleanArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 
 	executeTestCase(t, test)
 }
-
-// Boolean (nullable) array tests
 
 func TestQueryInlineNullableBooleanArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
@@ -160,8 +156,6 @@ func TestQueryInlineNullableBooleanArray_WithNeqFilter_ReturnsResults(t *testing
 	executeTestCase(t, test)
 }
 
-// Int! array tests
-
 func TestQueryInlineIntegerArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -231,8 +225,6 @@ func TestQueryInlineIntegerArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 
 	executeTestCase(t, test)
 }
-
-// Int (nullable) array tests
 
 func TestQueryInlineNullableIntegerArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
@@ -304,8 +296,6 @@ func TestQueryInlineNullableIntegerArray_WithNeqFilter_ReturnsResults(t *testing
 	executeTestCase(t, test)
 }
 
-// Float! array tests
-
 func TestQueryInlineFloatArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -375,9 +365,6 @@ func TestQueryInlineFloatArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 
 	executeTestCase(t, test)
 }
-
-// Float (nullable) array tests
-
 func TestQueryInlineNullableFloatArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -448,8 +435,6 @@ func TestQueryInlineNullableFloatArray_WithNeqFilter_ReturnsResults(t *testing.T
 	executeTestCase(t, test)
 }
 
-// String! array tests
-
 func TestQueryInlineStringArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -519,8 +504,6 @@ func TestQueryInlineStringArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 
 	executeTestCase(t, test)
 }
-
-// String (nullable) array tests
 
 func TestQueryInlineNullableStringArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{

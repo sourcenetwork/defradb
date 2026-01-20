@@ -6,12 +6,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/connor/numbers"
-)
-
-var (
-	ErrSliceTypeNotFound = errors.New("slice type not found")
 )
 
 func equalAnyToAnySlice(a any, b []any) (bool, error) {
@@ -48,7 +43,7 @@ func equalAnyToAnySlice(a any, b []any) (bool, error) {
 	case []immutable.Option[string]:
 		return equalOptionSlice(aTyped, b), nil
 	case []immutable.Option[time.Time]:
-		return equalOptionSlice(aTyped, b), nil
+		return equalOptionSliceTime(aTyped, b), nil
 	default:
 		return false, ErrSliceTypeNotFound
 	}
@@ -214,4 +209,49 @@ func equalOptionSliceNumeric[T cmp.Ordered](a []immutable.Option[T], b any) bool
 	default:
 		return false
 	}
+}
+
+// equalOptionSliceTime compares immutable.Option[time.Time] slices using the Equal method
+// which correctly handles timezone differences.
+func equalOptionSliceTime(a []immutable.Option[time.Time], b any) bool {
+	switch bTyped := b.(type) {
+	case []immutable.Option[time.Time]:
+		if len(a) != len(bTyped) {
+			return false
+		}
+		for i, v := range a {
+			if !equalOptionTime(v, bTyped[i]) {
+				return false
+			}
+		}
+		return true
+	case []any:
+		if len(a) != len(bTyped) {
+			return false
+		}
+		for i, v := range a {
+			hasVal := v.HasValue()
+			if !hasVal && bTyped[i] == nil {
+				continue
+			} else if hasVal {
+				if bv, ok := bTyped[i].(time.Time); ok && v.Value().Equal(bv) {
+					continue
+				}
+			}
+			return false
+		}
+		return true
+	default:
+		return false
+	}
+}
+
+func equalOptionTime(a, b immutable.Option[time.Time]) bool {
+	if !a.HasValue() && !b.HasValue() {
+		return true
+	}
+	if a.HasValue() != b.HasValue() {
+		return false
+	}
+	return a.Value().Equal(b.Value())
 }
