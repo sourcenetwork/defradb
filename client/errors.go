@@ -270,24 +270,6 @@ func NewErrNotFound(kv errors.KV) error {
 	return errors.New(errNotFound, kv)
 }
 
-type ErrNotAuthorizedMissingPermission struct {
-	Permission string
-}
-
-func (e *ErrNotAuthorizedMissingPermission) Error() string {
-	return fmt.Sprintf(
-		"not authorized to perform operation: missing permission %q",
-		e.Permission,
-	)
-}
-
-// The following allows errors.Is(err, ErrNotAuthorizedToPerformOperation)
-func (e *ErrNotAuthorizedMissingPermission) Is(target error) bool {
-	return target == ErrNotAuthorizedToPerformOperation
-}
-
 func NewErrNotAuthorizedMissingPermission(permission string) error {
-	return &ErrNotAuthorizedMissingPermission{
-		Permission: permission,
-	}
+	return errors.New(ErrNotAuthorizedToPerformOperation.Error(), errors.NewKV("Permission", permission))
 }
