@@ -51,11 +51,11 @@ import (
 )
 
 const (
-	mutationTypeEnvName            = "DEFRA_MUTATION_TYPE"
-	viewTypeEnvName                = "DEFRA_VIEW_TYPE"
-	skipNetworkTestsEnvName        = "DEFRA_SKIP_NETWORK_TESTS"
-	vectorEmbeddingEnvName         = "DEFRA_VECTOR_EMBEDDING"
-	subscriptionTransportEnvName   = "DEFRA_SUBSCRIPTION_TRANSPORT"
+	mutationTypeEnvName          = "DEFRA_MUTATION_TYPE"
+	viewTypeEnvName              = "DEFRA_VIEW_TYPE"
+	skipNetworkTestsEnvName      = "DEFRA_SKIP_NETWORK_TESTS"
+	vectorEmbeddingEnvName       = "DEFRA_VECTOR_EMBEDDING"
+	subscriptionTransportEnvName = "DEFRA_SUBSCRIPTION_TRANSPORT"
 )
 
 // The MutationType that tests will run using.

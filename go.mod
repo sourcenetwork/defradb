@@ -21,6 +21,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ipfs/boxo v0.35.2
 	github.com/ipfs/go-block-format v0.2.3
@@ -214,7 +215,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect

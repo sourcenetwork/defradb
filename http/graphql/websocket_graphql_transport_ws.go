@@ -1,10 +1,12 @@
-package graphql
+package graphql //nolint:goheader
 
 import (
 	"encoding/json"
 	"fmt"
 
 	"github.com/gorilla/websocket"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // https://github.com/apollographql/subscriptions-transport-ws/blob/master/PROTOCOL.md
@@ -54,8 +56,8 @@ func (me graphqltransportwsMessageExchanger) NextMessage() (message, error) {
 	}
 
 	var graphqltransportwsMessage graphqltransportwsMessage
-	if err := jsonDecode(r, &graphqltransportwsMessage); err != nil {
-		return message{}, errInvalidMsg
+	if err := json.NewDecoder(r).Decode(&graphqltransportwsMessage); err != nil {
+		return message{}, errors.Join(ErrInvalidMsg, err)
 	}
 
 	return graphqltransportwsMessage.toMessage()

@@ -16,6 +16,7 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/defradb/client"
 )
 
@@ -75,6 +76,7 @@ func (h GET) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 	result := executer(r.Context(), request.Query, options...)
 	if result.Subscription != nil {
 		responseJSON(w, http.StatusNotAcceptable, errorResponse{ErrInvalidSubscriptionTransport})
+		return
 	}
 	responseJSON(w, http.StatusOK, result.GQL)
 }

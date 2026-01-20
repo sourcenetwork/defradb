@@ -46,10 +46,10 @@ func NewWrapper(ctx context.Context, node *node.Node, opts ...http.ClientOption)
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	serverCtx, cancel := context.WithCancel(ctx)
 	httpServer := httptest.NewUnstartedServer(handler)
 	httpServer.Config.BaseContext = func(_ net.Listener) context.Context {
-		return ctx
+		return serverCtx
 	}
 	httpServer.Start()
 

@@ -1,10 +1,12 @@
-package graphql
+package graphql //nolint:goheader
 
 import (
 	"encoding/json"
 	"fmt"
 
 	"github.com/gorilla/websocket"
+
+	"github.com/sourcenetwork/defradb/errors"
 )
 
 // https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md
@@ -58,8 +60,8 @@ func (me graphqlwsMessageExchanger) NextMessage() (message, error) {
 	}
 
 	var graphqlwsMessage graphqlwsMessage
-	if err := jsonDecode(r, &graphqlwsMessage); err != nil {
-		return message{}, errInvalidMsg
+	if err := json.NewDecoder(r).Decode(&graphqlwsMessage); err != nil {
+		return message{}, errors.Join(ErrInvalidMsg, err)
 	}
 
 	return graphqlwsMessage.toMessage()

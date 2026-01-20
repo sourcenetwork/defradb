@@ -214,18 +214,3 @@ func (s *Server) Address() string {
 	}
 	return "http://" + s.listener.Addr().String()
 }
-
-// InjectServerContext sets the server context on each handler calls.
-// func InjectServerContext(serverCtx context.Context) func(http.Handler) http.Handler {
-// 	return func(next http.Handler) http.Handler {
-// 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-// 			ctx := req.Context()
-// 			ctx = context.WithValue(ctx, ctxContextKey, serverCtx)
-// 			next.ServeHTTP(rw, req.WithContext(ctx))
-// 		})
-// 	}
-// }
-
-func applyOptsToHandler(options *ServerOptions, handler http.Handler) {
-
-}

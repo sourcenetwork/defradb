@@ -31,7 +31,6 @@ import (
 func CorsMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
 	return cors.Handler(cors.Options{
 		AllowOriginFunc: func(r *http.Request, origin string) bool {
-			fmt.Println("ORIGINS:", allowedOrigins)
 			if slices.Contains(allowedOrigins, "*") {
 				return true
 			}

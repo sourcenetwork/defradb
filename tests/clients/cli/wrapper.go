@@ -55,6 +55,8 @@ func NewWrapper(ctx context.Context, node *node.Node, sourceHubAddress string) (
 		return nil, err
 	}
 
+	// Create an independent context for the test server lifecycle
+	// (not derived from the caller's ctx)
 	ctx, cancel := context.WithCancel(context.Background())
 	httpServer := httptest.NewUnstartedServer(handler)
 	httpServer.Config.BaseContext = func(_ net.Listener) context.Context {

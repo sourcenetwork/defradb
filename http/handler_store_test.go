@@ -19,9 +19,10 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/http/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/http/graphql"
 )
 
 func TestExecRequest_WithValidQuery_OmitsErrors(t *testing.T) {

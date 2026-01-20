@@ -528,7 +528,14 @@ func (c *Client) execRequestWebsocket(
 		Subprotocols: []string{"graphql-ws"},
 	}
 
-	conn, _, err := dialer.DialContext(ctx, wsURL.String(), nil)
+	headers := http.Header{}
+	err := c.http.buildDefaultHeaders(ctx, headers)
+	if err != nil {
+		result.GQL.Errors = append(result.GQL.Errors, err)
+		return result
+	}
+
+	conn, _, err := dialer.DialContext(ctx, wsURL.String(), headers)
 	if err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
@@ -539,7 +546,7 @@ func (c *Client) execRequestWebsocket(
 	}
 	if err := conn.WriteJSON(initMsg); err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
-		conn.Close()
+		conn.Close() //nolint:errcheck
 		return result
 	}
 
@@ -547,19 +554,21 @@ func (c *Client) execRequestWebsocket(
 	var ackMsg map[string]any
 	if err := conn.ReadJSON(&ackMsg); err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
-		conn.Close()
+		conn.Close() //nolint:errcheck
 		return result
 	}
 	if ackMsg["type"] != "connection_ack" {
 		result.GQL.Errors = append(result.GQL.Errors, ErrInvalidGraphQLRequest)
-		conn.Close()
+		conn.Close() //nolint:errcheck
 		return result
 	}
 
 	// Read and discard keep-alive message if present
 	_ = conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
 	var kaMsg map[string]any
-	if err := conn.ReadJSON(&kaMsg); err == nil {
+
+	// this is intentionally empty branch
+	if err := conn.ReadJSON(&kaMsg); err == nil { //nolint:staticcheck
 		// ignore keep-alive messages
 	}
 	_ = conn.SetReadDeadline(time.Time{}) // Clear deadline
@@ -576,7 +585,7 @@ func (c *Client) execRequestWebsocket(
 	}
 	if err := conn.WriteJSON(startMsg); err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
-		conn.Close()
+		conn.Close() //nolint:errcheck
 		return result
 	}
 
@@ -593,8 +602,8 @@ func (c *Client) execWebsocketSubscription(ctx context.Context, conn *websocket.
 				"id":   "1",
 				"type": "stop",
 			}
-			conn.WriteJSON(stopMsg)
-			conn.Close()
+			conn.WriteJSON(stopMsg) //nolint:errcheck
+			conn.Close()            //nolint:errcheck
 			close(resCh)
 		}()
 

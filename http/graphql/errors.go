@@ -21,6 +21,11 @@ import (
 var (
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrBadFormattedVariables        = errors.New("variable formatting")
+	ErrReadTimeout                  = errors.New("read timeout")
+	ErrWsConnClosed                 = errors.New("websocket connection closed")
+	ErrInvalidMsg                   = errors.New("invalid message received")
+	ErrUnableToUpgrade              = errors.New("unable to upgrade")
+	ErrStreamingUnsupported         = errors.New("streaming unsupported")
 )
 
 type errorResponse struct {

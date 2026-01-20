@@ -1,4 +1,4 @@
-package graphql
+package graphql //nolint:goheader
 
 import "context"
 
@@ -55,12 +55,6 @@ func GetInitPayload(ctx context.Context) InitPayload {
 	}
 
 	return payload
-}
-
-// withCloseReason adds a close reason to the context that will be sent to the client
-// when the connection is closed.
-func withCloseReason(ctx context.Context, reason string) context.Context {
-	return context.WithValue(ctx, closeReason, reason)
 }
 
 // closeReasonForContext retrieves the close reason from the context, if any.

@@ -60,7 +60,7 @@ func (t SSE) Supports(r *http.Request) bool {
 	if err != nil {
 		return false
 	}
-	return r.Method == http.MethodPost && mediaType == "application/json"
+	return r.Method == http.MethodPost && mediaType == acceptApplicationJson
 }
 
 func (t SSE) Methods() []string {
@@ -71,8 +71,7 @@ func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 	ctx := r.Context()
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		err := errors.New("streaming unsupported")
-		responseJSON(w, http.StatusBadRequest, errorResponse{err})
+		responseJSON(w, http.StatusBadRequest, errorResponse{ErrStreamingUnsupported})
 		return
 	}
 
@@ -85,7 +84,7 @@ func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", acceptApplicationJson)
 
 	bodyString, err := getRequestBody(r)
 	if err != nil {
@@ -111,7 +110,7 @@ func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 	}
 
 	w.Header().Set("Content-Type", "text/event-stream")
-	fmt.Fprint(w, ":\n\n")
+	fmt.Fprint(w, ":\n\n") //nolint:errcheck
 	c.flush()
 
 	if t.KeepAlivePingInterval > 0 {
@@ -126,6 +125,15 @@ func (t SSE) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 	result := executer(r.Context(), request.Query, options...)
 	if len(result.GQL.Errors) > 0 {
 		writeResultWithSSE(w, result.GQL) // todo
+		return
+	}
+
+	// If this is not a subscription (result.Subscription is nil), write the single
+	// GraphQL payload and return immediately to avoid blocking on a nil channel.
+	if result.Subscription == nil {
+		writeResultWithSSE(w, result.GQL)
+		c.flush()
+		fmt.Fprint(w, "event: complete\n\n") //nolint:errcheck
 		return
 	}
 

@@ -77,8 +77,6 @@ type (
 	WebsocketCloseFunc func(ctx context.Context, closeCode int)
 )
 
-var errReadTimeout = errors.New("read timeout")
-
 type WebsocketError struct {
 	Err error
 
@@ -112,7 +110,7 @@ func (t Websocket) Do(w http.ResponseWriter, r *http.Request, exec Executor) {
 	ws, err := t.Upgrader.Upgrade(w, r, http.Header{})
 	if err != nil {
 		log.ErrorE("unable to upgrade to websocket", err)
-		responseJSON(w, http.StatusBadRequest, errorResponse{errors.New("unable to upgrade")})
+		responseJSON(w, http.StatusBadRequest, errorResponse{ErrUnableToUpgrade})
 		return
 	}
 
@@ -171,9 +169,6 @@ var (
 		graphqlwsSubprotocol,
 		graphqltransportwsSubprotocol,
 	}
-
-	errWsConnClosed = errors.New("websocket connection closed")
-	errInvalidMsg   = errors.New("invalid message received")
 )
 
 type (
@@ -223,6 +218,11 @@ func (t messageType) String() string {
 }
 
 func (t *Websocket) injectGraphQLWSAllowedOrigins(allowedOrigins []string) {
+	// If no allowed origins are configured, leave CheckOrigin nil to preserve
+	// gorilla/websocket's default same-origin policy.
+	if len(allowedOrigins) == 0 {
+		return
+	}
 	t.Upgrader.CheckOrigin = func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
 		if slices.Contains(allowedOrigins, "*") {
@@ -275,7 +275,7 @@ func (c *wsConnection) nextMessageWithTimeout(timeout time.Duration) (message, e
 	case err := <-errs:
 		return message{}, err
 	case <-time.After(timeout):
-		return message{}, errReadTimeout
+		return message{}, ErrReadTimeout
 	}
 }
 
@@ -290,12 +290,12 @@ func (c *wsConnection) init() bool {
 	}
 
 	if err != nil {
-		if err == errReadTimeout {
+		if errors.Is(err, ErrReadTimeout) {
 			c.close(websocket.CloseProtocolError, "connection initialisation timeout")
 			return false
 		}
 
-		if err == errInvalidMsg {
+		if errors.Is(err, ErrInvalidMsg) {
 			c.sendConnectionError("invalid json")
 		}
 
@@ -496,8 +496,8 @@ func (c *wsConnection) closeOnCancel(ctx context.Context) {
 
 func (c *wsConnection) subscribe(msg *message) {
 	var request Request
-	if err := jsonDecode(bytes.NewReader(msg.payload), &request); err != nil {
-		c.sendError(msg.id, errors.New("invalid json"))
+	if err := json.NewDecoder(bytes.NewReader(msg.payload)).Decode(&request); err != nil {
+		c.sendError(msg.id, err)
 		c.complete(msg.id)
 		return
 	}
@@ -647,7 +647,7 @@ func handleNextReaderError(err error) error {
 	// TODO: should we consider all closure scenarios here for the ws connection?
 	// for now we only list the error codes from the previous implementation
 	if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
-		return errWsConnClosed
+		return ErrWsConnClosed
 	}
 
 	return err

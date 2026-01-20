@@ -11,6 +11,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -44,19 +45,26 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 }
 
 func (c *httpClient) setDefaultHeaders(req *http.Request) error {
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
+	return c.buildDefaultHeaders(req.Context(), req.Header)
+}
 
-	txn, ok := datastore.CtxTryGetClientTxn(req.Context())
+// buildDefaultHeaders builds an http.Header with default headers for requests.
+// This is useful for WebSocket connections where we can't use setDefaultHeaders
+// which requires an http.Request.
+func (c *httpClient) buildDefaultHeaders(ctx context.Context, headers http.Header) error {
+	headers.Set("Accept", "application/json")
+	headers.Set("Content-Type", "application/json")
+
+	txn, ok := datastore.CtxTryGetClientTxn(ctx)
 	if ok {
-		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
+		headers.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
 	}
-	id := identity.FromContext(req.Context())
+	id := identity.FromContext(ctx)
 	if !id.HasValue() {
 		return nil
 	}
 	if tokenIdentity, ok := id.Value().(identity.TokenIdentity); ok {
-		req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, tokenIdentity.BearerToken()))
+		headers.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, tokenIdentity.BearerToken()))
 	}
 	return nil
 }

@@ -14,12 +14,12 @@ package graphql
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"mime"
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 )
@@ -35,13 +35,12 @@ func (h POST) Supports(r *http.Request) bool {
 		return false
 	}
 
-	fmt.Println(r.Header)
 	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if err != nil {
 		return false
 	}
 
-	return r.Method == http.MethodPost && mediaType == "application/json"
+	return r.Method == http.MethodPost && mediaType == acceptApplicationJson
 }
 
 // func getRequestBody(r *http.Request) (string, error) {
@@ -92,6 +91,7 @@ func (h POST) Do(w http.ResponseWriter, r *http.Request, executer Executor) {
 	result := executer(r.Context(), request.Query, options...)
 	if result.Subscription != nil {
 		responseJSON(w, http.StatusNotAcceptable, errorResponse{ErrInvalidSubscriptionTransport})
+		return
 	}
 	responseJSON(w, http.StatusOK, result.GQL)
 }
