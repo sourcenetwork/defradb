@@ -27,7 +27,7 @@ func TestView_SimpleWithDefaultValue_DoesNotSetFieldValue(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
