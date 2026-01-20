@@ -20,7 +20,7 @@ import (
 func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					_commits {
 						cid
@@ -75,7 +75,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					_commits {
 						cid
@@ -186,7 +186,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 						"age":	21
 					}`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					_commits(docID: "bae-45e90427-d499-598b-902a-6a3c65d0b504") {
 						cid		

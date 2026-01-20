@@ -593,10 +593,6 @@ type TransactionCommit struct {
 	ExpectedError string
 }
 
-// SubscriptionRequest represents a subscription request.
-// This is a type alias for backward compatibility.
-type SubscriptionRequest = action.SubscriptionRequest
-
 type IntrospectionRequest struct {
 	// NodeID is the node ID (index) of the node in which to introspect.
 	NodeID immutable.Option[int]
