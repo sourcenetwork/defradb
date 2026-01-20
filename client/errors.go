@@ -269,3 +269,34 @@ func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 func NewErrNotFound(kv errors.KV) error {
 	return errors.New(errNotFound, kv)
 }
+
+type ErrNotAuthorizedMissingPermission struct {
+	Permission   string
+	PolicyID     string
+	ResourceName string
+	ObjectID     string
+}
+
+func (e *ErrNotAuthorizedMissingPermission) Error() string {
+	return fmt.Sprintf(
+		"not authorized to perform operation: missing permission %q on %s/%s (policy %s)",
+		e.Permission,
+		e.ResourceName,
+		e.ObjectID,
+		e.PolicyID,
+	)
+}
+
+// The following allows errors.Is(err, ErrNotAuthorizedToPerformOperation)
+func (e *ErrNotAuthorizedMissingPermission) Is(target error) bool {
+	return target == ErrNotAuthorizedToPerformOperation
+}
+
+func NewErrNotAuthorizedMissingPermission(permission, policyID, resourceName, objectID string) error {
+	return &ErrNotAuthorizedMissingPermission{
+		Permission:   permission,
+		PolicyID:     policyID,
+		ResourceName: resourceName,
+		ObjectID:     objectID,
+	}
+}
