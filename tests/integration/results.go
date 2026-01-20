@@ -15,7 +15,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"testing"
 	"time"
 
 	"github.com/onsi/gomega"
@@ -236,35 +235,6 @@ func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
 func (matcher *docIDAt) String() string {
 	return fmt.Sprintf("DocIDAt(collectionIndex: %d, docIndex: %d): %s", matcher.collectionIndex,
 		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
-}
-
-// assertResultsEqual asserts that actual result is equal to the expected result.
-//
-// The comparison is relaxed when using client types other than goClientType.
-func assertResultsEqual(t testing.TB, client state.ClientType, expected any, actual any, msgAndArgs ...any) {
-	switch client {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
-		if !areResultsEqual(expected, actual) {
-			assert.EqualValues(t, expected, actual, msgAndArgs...)
-		}
-	default:
-		assert.EqualValues(t, expected, actual, msgAndArgs...)
-	}
-}
-
-// isResultsEqual checks that actual result is equal to the expected result and returns true if they are.
-//
-// The comparison is relaxed when using client types other than goClientType.
-func isResultsEqual(client state.ClientType, expected any, actual any) bool {
-	switch client {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
-		if !areResultsEqual(expected, actual) {
-			return assert.ObjectsAreEqualValues(expected, actual)
-		}
-		return true
-	default:
-		return assert.ObjectsAreEqualValues(expected, actual)
-	}
 }
 
 // areResultsAnyOf returns true if any of the expected results are of equal value.

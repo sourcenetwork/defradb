@@ -101,7 +101,10 @@ func AssertRequestResults(
 	}
 
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
-	resultantData := result.Data.(map[string]any)
+	resultantData, ok := result.Data.(map[string]any)
+	if !ok {
+		return false
+	}
 	log.InfoContext(s.Ctx, "", corelog.Any("RequestResults", result.Data))
 
 	if asserter != nil {
