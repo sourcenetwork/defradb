@@ -271,5 +271,5 @@ func NewErrNotFound(kv errors.KV) error {
 }
 
 func NewErrNotAuthorizedMissingPermission(permission string) error {
-	return errors.New(ErrNotAuthorizedToPerformOperation.Error(), errors.NewKV("Permission", permission))
+	return errors.WithStack(ErrNotAuthorizedToPerformOperation, errors.NewKV("Permission", permission))
 }
