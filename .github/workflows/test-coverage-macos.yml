@@ -72,41 +72,5 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_os_${{ matrix.os }}"
-          coverage-path: coverage.txt
-
-
-  upload-coverage:
-    name: Upload test code coverage job
-
-    needs:
-      - test-coverage-os
-
-    if: success() || failure()
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code into the directory
-        uses: actions/checkout@v4
-
-      - name: Download coverage reports
-        uses: actions/download-artifact@v4
-        with:
-          pattern: coverage_os_*
-          merge-multiple: false
-          path: coverage_reports
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          name: defradb-codecov
-          files: coverage_reports/**/*.txt
-          flags: all-tests
-          os: 'macos'
-          fail_ci_if_error: true
-          verbose: true
+      - name: Run tests
+        run: make test
