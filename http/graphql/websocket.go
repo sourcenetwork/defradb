@@ -242,7 +242,7 @@ func (t *Websocket) injectGraphQLWSSubprotocols() {
 		}()
 
 		for _, subprotocol := range supportedSubprotocols {
-			if !contains(t.Upgrader.Subprotocols, subprotocol) {
+			if !slices.Contains(t.Upgrader.Subprotocols, subprotocol) {
 				t.Upgrader.Subprotocols = append(t.Upgrader.Subprotocols, subprotocol)
 			}
 		}
@@ -487,10 +487,6 @@ func (c *wsConnection) ping(ctx context.Context) {
 
 func (c *wsConnection) closeOnCancel(ctx context.Context) {
 	<-ctx.Done()
-
-	if r := closeReasonForContext(ctx); r != "" {
-		c.sendConnectionError("%s", r)
-	}
 	c.close(websocket.CloseNormalClosure, "terminated")
 }
 
@@ -631,16 +627,6 @@ func (c *wsConnection) close(closeCode int, message string) {
 	if c.CloseFunc != nil {
 		c.CloseFunc(c.ctx, closeCode)
 	}
-}
-
-func contains(list []string, elem string) bool {
-	for _, e := range list {
-		if e == elem {
-			return true
-		}
-	}
-
-	return false
 }
 
 func handleNextReaderError(err error) error {

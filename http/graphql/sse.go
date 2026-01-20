@@ -195,7 +195,9 @@ func (c *sseConnection) flush() {
 func writeResultWithSSE(w io.Writer, result client.GQLResult) {
 	b, err := json.Marshal(result)
 	if err != nil {
-		panic(err)
+		log.ErrorE("failed to marshal SSE response", err)
+		fmt.Fprint(w, "event: error\ndata: {\"message\":\"internal server error\"}\n\n") //nolint:errcheck
+		return
 	}
 	fmt.Fprintf(w, "event: next\ndata: %s\n\n", b) //nolint:errcheck
 }
