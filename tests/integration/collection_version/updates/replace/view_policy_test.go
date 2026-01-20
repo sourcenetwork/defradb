@@ -57,7 +57,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name

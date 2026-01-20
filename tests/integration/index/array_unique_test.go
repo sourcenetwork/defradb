@@ -303,7 +303,7 @@ func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						User(filter: {numbers: {_all: {_ge: 10}}}) {
+						User(filter: {numbers: {_all: {_geq: 10}}}) {
 							name
 						}
 					}`,
@@ -361,7 +361,7 @@ func TestArrayUniqueIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						User(filter: {numbers: {_none: {_ge: 10}}}) {
+						User(filter: {numbers: {_none: {_geq: 10}}}) {
 							name
 						}
 					}`,

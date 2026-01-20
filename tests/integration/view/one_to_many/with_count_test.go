@@ -34,7 +34,7 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -99,7 +99,7 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -172,7 +172,7 @@ func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name

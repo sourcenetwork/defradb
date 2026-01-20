@@ -146,7 +146,7 @@ func DateTimeOperatorBlock() *gql.InputObject {
 				Description: gtOperatorDescription,
 				Type:        gql.DateTime,
 			},
-			"_ge": &gql.InputObjectFieldConfig{
+			"_geq": &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
 				Type:        gql.DateTime,
 			},
@@ -154,7 +154,7 @@ func DateTimeOperatorBlock() *gql.InputObject {
 				Description: ltOperatorDescription,
 				Type:        gql.DateTime,
 			},
-			"_le": &gql.InputObjectFieldConfig{
+			"_leq": &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
 				Type:        gql.DateTime,
 			},
@@ -188,7 +188,7 @@ func Float64OperatorBlock() *gql.InputObject {
 				Description: gtOperatorDescription,
 				Type:        Float64,
 			},
-			"_ge": &gql.InputObjectFieldConfig{
+			"_geq": &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
 				Type:        Float64,
 			},
@@ -196,7 +196,7 @@ func Float64OperatorBlock() *gql.InputObject {
 				Description: ltOperatorDescription,
 				Type:        Float64,
 			},
-			"_le": &gql.InputObjectFieldConfig{
+			"_leq": &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
 				Type:        Float64,
 			},
@@ -260,7 +260,7 @@ func NotNullFloat64OperatorBlock() *gql.InputObject {
 				Description: gtOperatorDescription,
 				Type:        Float64,
 			},
-			"_ge": &gql.InputObjectFieldConfig{
+			"_geq": &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
 				Type:        Float64,
 			},
@@ -268,7 +268,7 @@ func NotNullFloat64OperatorBlock() *gql.InputObject {
 				Description: ltOperatorDescription,
 				Type:        Float64,
 			},
-			"_le": &gql.InputObjectFieldConfig{
+			"_leq": &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
 				Type:        Float64,
 			},
@@ -332,7 +332,7 @@ func Float32OperatorBlock() *gql.InputObject {
 				Description: gtOperatorDescription,
 				Type:        Float32,
 			},
-			"_ge": &gql.InputObjectFieldConfig{
+			"_geq": &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
 				Type:        Float32,
 			},
@@ -340,7 +340,7 @@ func Float32OperatorBlock() *gql.InputObject {
 				Description: ltOperatorDescription,
 				Type:        Float32,
 			},
-			"_le": &gql.InputObjectFieldConfig{
+			"_leq": &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
 				Type:        Float32,
 			},
@@ -404,7 +404,7 @@ func NotNullFloat32OperatorBlock() *gql.InputObject {
 				Description: gtOperatorDescription,
 				Type:        Float32,
 			},
-			"_ge": &gql.InputObjectFieldConfig{
+			"_geq": &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
 				Type:        Float32,
 			},
@@ -412,7 +412,7 @@ func NotNullFloat32OperatorBlock() *gql.InputObject {
 				Description: ltOperatorDescription,
 				Type:        Float32,
 			},
-			"_le": &gql.InputObjectFieldConfig{
+			"_leq": &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
 				Type:        Float32,
 			},
@@ -476,7 +476,7 @@ func IntOperatorBlock() *gql.InputObject {
 				Description: gtOperatorDescription,
 				Type:        gql.Int,
 			},
-			"_ge": &gql.InputObjectFieldConfig{
+			"_geq": &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
 				Type:        gql.Int,
 			},
@@ -484,7 +484,7 @@ func IntOperatorBlock() *gql.InputObject {
 				Description: ltOperatorDescription,
 				Type:        gql.Int,
 			},
-			"_le": &gql.InputObjectFieldConfig{
+			"_leq": &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
 				Type:        gql.Int,
 			},
@@ -548,7 +548,7 @@ func NotNullIntOperatorBlock() *gql.InputObject {
 				Description: gtOperatorDescription,
 				Type:        gql.Int,
 			},
-			"_ge": &gql.InputObjectFieldConfig{
+			"_geq": &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
 				Type:        gql.Int,
 			},
@@ -556,7 +556,7 @@ func NotNullIntOperatorBlock() *gql.InputObject {
 				Description: ltOperatorDescription,
 				Type:        gql.Int,
 			},
-			"_le": &gql.InputObjectFieldConfig{
+			"_leq": &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
 				Type:        gql.Int,
 			},

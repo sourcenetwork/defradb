@@ -40,7 +40,6 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -84,17 +83,18 @@ const (
 	GQLRequestMutationType MutationType = "gql"
 )
 
-type ViewType string
+// ViewType is a type alias for backward compatibility.
+type ViewType = state.ViewType
 
 const (
-	CachelessViewType    ViewType = "cacheless"
-	MaterializedViewType ViewType = "materialized"
+	CachelessViewType    = state.CachelessViewType
+	MaterializedViewType = state.MaterializedViewType
 )
 
 var (
 	log          = corelog.NewLogger("tests.integration")
 	mutationType MutationType
-	viewType     ViewType
+	viewType     state.ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
 	// skipBackupTests will skip any tests that involve backup actions
@@ -126,7 +126,7 @@ func init() {
 	}
 
 	if value, ok := os.LookupEnv(viewTypeEnvName); ok {
-		viewType = ViewType(value)
+		viewType = state.ViewType(value)
 	} else {
 		viewType = CachelessViewType
 	}
@@ -290,6 +290,7 @@ func executeTestCase(
 		kms,
 		dbt,
 		clientType,
+		viewType,
 		documentACPType,
 		collectionNames,
 	)
@@ -392,12 +393,6 @@ func performAction(
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)
 
-	case CreateView:
-		createView(s, action)
-
-	case RefreshViews:
-		refreshViews(s, action)
-
 	case ConfigureMigration:
 		configureMigration(s, action)
 
@@ -436,15 +431,6 @@ func performAction(
 
 	case UpdateWithFilter:
 		updateWithFilter(s, action)
-
-	case CreateIndex:
-		createIndex(s, action)
-
-	case DropIndex:
-		dropIndex(s, action)
-
-	case GetIndexes:
-		getIndexes(s, action)
 
 	case CreateEncryptedIndex:
 		createEncryptedIndex(s, action)
@@ -630,7 +616,7 @@ func getCollectionNames(testCase TestCase) []string {
 
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 
-		case CreateView:
+		case *action.CreateView:
 			if action.ExpectedError != "" {
 				// If an error is expected then no collections should result from this action
 				continue
@@ -1063,100 +1049,6 @@ func refreshDocuments(
 	}
 }
 
-func getIndexes(
-	s *state.State,
-	action GetIndexes,
-) {
-	if len(s.Nodes) == 0 {
-		return
-	}
-
-	var expectedErrorRaised bool
-
-	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, nodeID := range nodeIDs {
-		collections := s.Nodes[nodeID].Collections
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := withRetryOnNode(
-			s.Nodes[nodeID],
-			func() error {
-				actualIndexes, err := collections[action.CollectionID].GetIndexes(ctx)
-				if err != nil {
-					return err
-				}
-
-				assertIndexesListsEqual(action.ExpectedIndexes,
-					actualIndexes, s.T)
-
-				return nil
-			},
-		)
-		expectedErrorRaised = expectedErrorRaised ||
-			AssertError(s.T, err, action.ExpectedError)
-	}
-
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-}
-
-func assertIndexesListsEqual(
-	expectedIndexes []client.IndexDescription,
-	actualIndexes []client.IndexDescription,
-	t testing.TB,
-) {
-	toNames := func(indexes []client.IndexDescription) []string {
-		names := make([]string, len(indexes))
-		for i, index := range indexes {
-			names[i] = index.Name
-		}
-		return names
-	}
-
-	require.ElementsMatch(t, toNames(expectedIndexes), toNames(actualIndexes))
-
-	toMap := func(indexes []client.IndexDescription) map[string]client.IndexDescription {
-		resultMap := map[string]client.IndexDescription{}
-		for _, index := range indexes {
-			resultMap[index.Name] = index
-		}
-		return resultMap
-	}
-
-	expectedMap := toMap(expectedIndexes)
-	actualMap := toMap(actualIndexes)
-	for key := range expectedMap {
-		assertIndexesEqual(expectedMap[key], actualMap[key], t)
-	}
-}
-
-func assertIndexesEqual(expectedIndex, actualIndex client.IndexDescription, t testing.TB) {
-	assert.Equal(t, expectedIndex.Name, actualIndex.Name, "index name mismatch")
-	assert.Equal(t, expectedIndex.ID, actualIndex.ID, "index id mismatch")
-
-	toNames := func(fields []client.IndexedFieldDescription) []string {
-		names := make([]string, len(fields))
-		for i, field := range fields {
-			names[i] = field.Name
-		}
-		return names
-	}
-
-	require.ElementsMatch(t, toNames(expectedIndex.Fields), toNames(actualIndex.Fields), "index fields' names mismatch")
-
-	toMap := func(fields []client.IndexedFieldDescription) map[string]client.IndexedFieldDescription {
-		resultMap := map[string]client.IndexedFieldDescription{}
-		for _, field := range fields {
-			resultMap[field.Name] = field
-		}
-		return resultMap
-	}
-
-	expectedMap := toMap(expectedIndex.Fields)
-	actualMap := toMap(actualIndex.Fields)
-	for key := range expectedMap {
-		assert.Equal(t, expectedMap[key], actualMap[key], "index fields' values mismatch")
-	}
-}
-
 func patchCollection(
 	s *state.State,
 	action PatchCollection,
@@ -1244,61 +1136,6 @@ func setActiveCollectionVersion(
 	}
 
 	refreshCollections(s)
-}
-
-func createView(
-	s *state.State,
-	action CreateView,
-) {
-	if viewType == MaterializedViewType {
-		typeIndex := strings.Index(action.SDL, "\ttype ")
-		subStrSquigglyIndex := strings.Index(action.SDL[typeIndex:], "{")
-		squigglyIndex := typeIndex + subStrSquigglyIndex
-		action.SDL = strings.Join([]string{
-			action.SDL[:squigglyIndex],
-			"@",
-			types.MaterializedDirectiveLabel,
-			action.SDL[squigglyIndex:],
-			"",
-		}, "")
-	}
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for i, node := range nodes {
-		transformCID := action.TransformCID
-		if transformCID.HasValue() {
-			transformCID = immutable.Some(replace(s, nodeIDs[i], transformCID.Value()))
-		}
-		results, err := node.AddView(s.Ctx, action.Query, action.SDL, transformCID)
-
-		for _, result := range results {
-			appendCollectionVersion(s, result.VersionID)
-		}
-
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
-}
-
-func appendCollectionVersion(s *state.State, versionID string) {
-	if slices.Contains(s.CollectionVersions, versionID) {
-		return
-	}
-
-	s.CollectionVersions = append(s.CollectionVersions, versionID)
-}
-
-func refreshViews(
-	s *state.State,
-	action RefreshViews,
-) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		err := node.RefreshViews(s.Ctx, action.FilterOptions)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
 }
 
 // createDoc creates a document using the chosen [mutationType] and caches it in the
@@ -1707,75 +1544,6 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 			immutable.None[state.Identity](),
 		)
 	}
-}
-
-// createIndex creates a secondary index using the collection api.
-func createIndex(
-	s *state.State,
-	action CreateIndex,
-) {
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
-		indexDesc := client.IndexCreateRequest{
-			Name: action.IndexName,
-		}
-		if action.FieldName != "" {
-			indexDesc.Fields = []client.IndexedFieldDescription{
-				{
-					Name: action.FieldName,
-				},
-			}
-		} else if len(action.Fields) > 0 {
-			for i := range action.Fields {
-				indexDesc.Fields = append(indexDesc.Fields, client.IndexedFieldDescription{
-					Name:       action.Fields[i].Name,
-					Descending: action.Fields[i].Descending,
-				})
-			}
-		}
-
-		indexDesc.Unique = action.Unique
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := withRetryOnNode(
-			node,
-			func() error {
-				_, err := collection.CreateIndex(ctx, indexDesc)
-				return err
-			},
-		)
-		if AssertError(s.T, err, action.ExpectedError) {
-			return
-		}
-	}
-
-	assertExpectedErrorRaised(s.T, action.ExpectedError, false)
-}
-
-// dropIndex drops the secondary index using the collection api.
-func dropIndex(
-	s *state.State,
-	action DropIndex,
-) {
-	var expectedErrorRaised bool
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
-
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := withRetryOnNode(
-			node,
-			func() error {
-				return collection.DropIndex(ctx, action.IndexName)
-			},
-		)
-		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
-	}
-
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
 func createEncryptedIndex(
@@ -2607,11 +2375,8 @@ func skipIfMutationTypeUnsupported(t testing.TB, supportedMutationTypes immutabl
 func skipIfViewCacheTypeUnsupported(t testing.TB, supportedViewTypes immutable.Option[[]ViewType]) {
 	if supportedViewTypes.HasValue() {
 		var isTypeSupported bool
-		for _, supportedViewType := range supportedViewTypes.Value() {
-			if supportedViewType == viewType {
-				isTypeSupported = true
-				break
-			}
+		if slices.Contains(supportedViewTypes.Value(), viewType) {
+			isTypeSupported = true
 		}
 
 		if !isTypeSupported {

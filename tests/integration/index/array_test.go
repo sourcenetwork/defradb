@@ -72,7 +72,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *testing.T
 
 func TestArrayIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {numbers: {_all: {_ge: 33}}}) {
+		User(filter: {numbers: {_all: {_geq: 33}}}) {
 			name
 		}
 	}`
@@ -125,7 +125,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *testing.T
 
 func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldNotUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {numbers: {_none: {_ge: 33}}}) {
+		User(filter: {numbers: {_none: {_geq: 33}}}) {
 			name
 		}
 	}`
@@ -1018,7 +1018,7 @@ func TestArrayIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						User(filter: {numbers: {_all: {_ge: 10}}}) {
+						User(filter: {numbers: {_all: {_geq: 10}}}) {
 							name
 						}
 					}`,
@@ -1076,7 +1076,7 @@ func TestArrayIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 			},
 			testUtils.Request{
 				Request: `query {
-						User(filter: {numbers: {_none: {_ge: 10}}}) {
+						User(filter: {numbers: {_none: {_geq: 10}}}) {
 							name
 						}
 					}`,

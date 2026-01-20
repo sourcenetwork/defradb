@@ -36,6 +36,14 @@ type StatefulMatcher interface {
 
 type DatabaseType string
 
+// ViewType is the type of view to use.
+type ViewType string
+
+const (
+	CachelessViewType    ViewType = "cacheless"
+	MaterializedViewType ViewType = "materialized"
+)
+
 // KMSType is the type of KMS to use.
 type KMSType string
 
@@ -204,6 +212,9 @@ type State struct {
 	// The type of client currently being tested.
 	ClientType ClientType
 
+	// The type of view currently being tested.
+	ViewType ViewType
+
 	// The type of Document ACP
 	DocumentACPType DocumentACPType
 
@@ -316,6 +327,7 @@ func NewState(
 	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
+	viewType ViewType,
 	documentACPType DocumentACPType,
 	collectionNames []string,
 ) *State {
@@ -325,6 +337,7 @@ func NewState(
 		KMS:                             kms,
 		DbType:                          dbt,
 		ClientType:                      clientType,
+		ViewType:                        viewType,
 		DocumentACPType:                 documentACPType,
 		DocumentACPOptions:              []node.DocumentACPOpt{},
 		Txns:                            []client.Txn{},
