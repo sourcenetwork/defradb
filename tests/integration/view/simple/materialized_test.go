@@ -47,6 +47,10 @@ func TestView_SimpleMaterialized_AutoUpdatesOnViewCreate(t *testing.T) {
 				`,
 			},
 			testUtils.Request{
+				// We are testing that the refresh occurs on view create, so we must disable
+				// the test framework's auto-refresh done within this Request's execution in
+				// order to test it.
+				DoNotRefreshViews: true,
 				Request: `query {
 							UserView {
 								name
