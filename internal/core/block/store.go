@@ -85,6 +85,28 @@ func AddDelta(
 		dagBlock.Encryption = &encLink
 	}
 
+	// In batch mode store block without signature and collect CID for batch signing
+	collector := BatchSigningCollectorFromContext(ctx)
+	if collector != nil {
+		link, err := putBlock(ctx, txn.Blockstore(), dagBlock)
+		if err != nil {
+			return cidlink.Link{}, nil, err
+		}
+		if !dagBlock.Delta.IsField() || dagBlock.Delta.GetPriority() == 1 {
+			collector.Add(link.Cid)
+		}
+		err = ProcessBlock(ctx, crdtData, block, link)
+		if err != nil {
+			return cidlink.Link{}, nil, err
+		}
+		b, err := dagBlock.Marshal()
+		if err != nil {
+			return cidlink.Link{}, nil, err
+		}
+		return link, b, err
+	}
+
+	// Normal signing mode
 	if EnabledSigningFromContext(ctx) {
 		err = signBlock(ctx, txn.Blockstore(), dagBlock)
 		if err != nil {
