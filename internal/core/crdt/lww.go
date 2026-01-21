@@ -122,32 +122,36 @@ func (l *LWW) Merge(ctx context.Context, delta Delta) error {
 }
 
 func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
-	curPrio, err := getPriority(ctx, l.store, l.key)
-	if err != nil {
-		return NewErrFailedToGetPriority(err)
-	}
-
-	// if the current priority is higher ignore put
-	// else if the current value is lexicographically
-	// greater than the new then ignore
 	key := l.key.WithValueFlag()
-	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
-	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
-		return err
-	}
-	if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
-		key = key.WithDeletedFlag()
-	}
-	if priority < curPrio {
-		return nil
-	} else if priority == curPrio {
-		curValue, err := l.store.Get(ctx, key)
+
+	// Skip all reads since we know there's no existing data to check against
+	if !IsNewDocCreateMode(ctx) {
+		curPrio, err := getPriority(ctx, l.store, l.key)
 		if err != nil {
-			return err
+			return NewErrFailedToGetPriority(err)
 		}
 
-		if bytes.Compare(curValue, val) >= 0 {
+		// if the current priority is higher ignore put
+		// else if the current value is lexicographically
+		// greater than the new then ignore
+		marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
+		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
+			return err
+		}
+		if bytes.Equal(marker, []byte{base.DeletedObjectMarker}) {
+			key = key.WithDeletedFlag()
+		}
+		if priority < curPrio {
 			return nil
+		} else if priority == curPrio {
+			curValue, err := l.store.Get(ctx, key)
+			if err != nil {
+				return err
+			}
+
+			if bytes.Compare(curValue, val) >= 0 {
+				return nil
+			}
 		}
 	}
 
@@ -156,12 +160,12 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 		// the field datastore key to exist.  Ommiting the key saves space and is
 		// consistent with what would be found if the user omitted the property on
 		// create.
-		err = l.store.Delete(ctx, key)
+		err := l.store.Delete(ctx, key)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = l.store.Set(ctx, key, val)
+		err := l.store.Set(ctx, key, val)
 		if err != nil {
 			return NewErrFailedToStoreValue(err)
 		}

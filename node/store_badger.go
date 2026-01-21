@@ -14,6 +14,7 @@ import (
 	"context"
 
 	badgerds "github.com/dgraph-io/badger/v4"
+	badgeropts "github.com/dgraph-io/badger/v4/options"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/badger"
@@ -39,15 +40,10 @@ func init() {
 		badgerOpts.NumLevelZeroTables = 30
 		badgerOpts.NumLevelZeroTablesStall = 60
 		badgerOpts.MemTableSize = 512 << 20
-		badgerOpts.BlockCacheSize = 2 << 30
+		badgerOpts.BlockCacheSize = 4 << 30
 		badgerOpts.ValueThreshold = 1 << 10
-
-		if len(options.badgerEncryptionKey) > 0 {
-			// Having a cache improves the performance.
-			// Otherwise, your reads would be very slow while encryption is enabled.
-			// https://dgraph.io/docs/badger/get-started/#encryption-mode
-			badgerOpts.IndexCacheSize = 512 << 20
-		}
+		badgerOpts.IndexCacheSize = 512 << 20
+		badgerOpts.Compression = badgeropts.None
 
 		return badger.NewDatastore(path, badgerOpts)
 	}

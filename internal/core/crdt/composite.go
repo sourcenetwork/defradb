@@ -135,10 +135,20 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 		return m.deleteWithPrefix(ctx, m.key.WithValueFlag().WithFieldID(""))
 	}
 
+	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
+
+	// Skip the read since we know there's no existing object marker
+	if IsNewDocCreateMode(ctx) {
+		err := m.store.Set(ctx, versionKey, []byte(dagDelta.CollectionVersionID))
+		if err != nil {
+			return err
+		}
+		return m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.ObjectMarker})
+	}
+
 	// We cannot rely on the dagDelta.Status here as it may have been deleted locally, this is not
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
 	// the local representation of the document.
-	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
 	objectMarker, err := m.store.Get(ctx, m.key.ToPrimaryDataStoreKey())
 	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
 	if err != nil && hasObjectMarker {
