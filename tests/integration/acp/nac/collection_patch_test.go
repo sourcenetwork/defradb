@@ -95,9 +95,9 @@ func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError_CLIClient(t *testing.T) {
+func TestNAC_GatesCollectionPatch_NoIdentity__CLIClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
-		// TO DO: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -138,7 +138,7 @@ func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError_CLIClient(t *tes
 
 func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
-		// TO DO: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -179,9 +179,9 @@ func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError_CLIClient(t *testing.T) {
+func TestNAC_GatesCollectionPatch_WrongIdentity_CLIClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
-		// TO DO: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
