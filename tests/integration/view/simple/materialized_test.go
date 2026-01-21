@@ -73,10 +73,7 @@ func TestView_SimpleMaterialized_DoesNotAutoUpdateOnViewCreate(t *testing.T) {
 func TestView_SimpleMaterialized_DoesNotAutoUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
-			// As the MaterializedViewType will auto refresh views immediately prior
-			// to executing requests, this test of materialized views actually only
-			// supports running with the CachelessViewType flag.
-			testUtils.CachelessViewType,
+			testUtils.MaterializedViewType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -110,6 +107,9 @@ func TestView_SimpleMaterialized_DoesNotAutoUpdate(t *testing.T) {
 				}`,
 			},
 			testUtils.Request{
+				// Disable the test framework's auto-refreshing of views for this test
+				// so that we may verify the behaviour when the views are not refreshed
+				DoNotRefreshViews: true,
 				Request: `query {
 							UserView {
 								name

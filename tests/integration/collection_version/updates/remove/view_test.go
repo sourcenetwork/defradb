@@ -167,6 +167,10 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 
 func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
+			// The expected error should only occur when using a materialized view.
+			testUtils.MaterializedViewType,
+		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
