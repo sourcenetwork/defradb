@@ -13,6 +13,7 @@ package test_acp_nac
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -52,7 +53,7 @@ func TestNAC_GatesCollectionList_NoIdentity_NotAuthorizedError(t *testing.T) {
 			// We haven't authorized non-identities. So, this should error.
 			&action.GetCollections{
 				Identity:      testUtils.NoIdentity(),
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-get"),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
 			},
 		},
 	}
@@ -73,7 +74,7 @@ func TestNAC_GatesCollectionList_WrongIdentity_NotAuthorizedError(t *testing.T) 
 			// Wrong user/identity will also not be authorized.
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-get"),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
 			},
 		},
 	}

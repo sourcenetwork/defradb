@@ -13,6 +13,7 @@ package test_acp_nac
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -87,7 +88,7 @@ func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-patch"),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm.String()),
 			},
 		},
 	}
@@ -95,7 +96,7 @@ func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesCollectionPatch_NoIdentity__CLIClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesCollectionPatch_NoIdentity_CLIClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -128,7 +129,7 @@ func TestNAC_GatesCollectionPatch_NoIdentity__CLIClient_NotAuthorizedError(t *te
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-get"),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
 			},
 		},
 	}
@@ -171,7 +172,7 @@ func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError(t *testing.T)
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-patch"),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm.String()),
 			},
 		},
 	}
@@ -212,7 +213,7 @@ func TestNAC_GatesCollectionPatch_WrongIdentity_CLIClient_NotAuthorizedError(t *
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-get"),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
 			},
 		},
 	}
