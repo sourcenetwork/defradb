@@ -212,7 +212,7 @@ func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError_CLIClient(t *
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-patch"),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-get"),
 			},
 		},
 	}
