@@ -67,6 +67,71 @@ func TestView_SimpleMaterialized_AutoUpdatesOnViewCreate(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
+	test := testUtils.TestCase{
+		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
+			testUtils.MaterializedViewType,
+		}),
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+					}
+				`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name":	"John"
+				}`,
+			},
+			&action.CreateView{
+				Query: `
+					User {
+						name
+					}
+				`,
+				SDL: `
+					type UserView {
+						name: String
+					}
+				`,
+			},
+			&action.RefreshViews{},
+			testUtils.CreateDoc{
+				Doc: `{
+					"name":	"Fred"
+				}`,
+			},
+			// Refresh the view after an earlier refresh (with data).  We had a bug here
+			// where RefreshViews would fail only if there was already data in the view cache.
+			&action.RefreshViews{},
+			testUtils.Request{
+				// It doesn't really matter if it refreshes again, but it is a bit wasteful,
+				// and it is nicer to be explicit for this test.
+				DoNotRefreshViews: true,
+				NonOrderedResults: true,
+				Request: `query {
+							UserView {
+								name
+							}
+						}`,
+				Results: map[string]any{
+					"UserView": []map[string]any{
+						{
+							"name": "John",
+						},
+						{
+							"name": "Fred",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
 
 func TestView_SimpleMaterialized_DoesNotAutoUpdate(t *testing.T) {
 	test := testUtils.TestCase{
