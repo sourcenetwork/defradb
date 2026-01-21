@@ -49,9 +49,9 @@ func (a *RefreshViews) Execute() {
 	}
 }
 
-// refreshViewsForCollections refreshes views for all collection names in state.
+// refreshViews refreshes views for all collection names in state.
 // This is used by the Request action when view type is materialized.
-func refreshViewsForCollections(s *state.State, node *state.NodeState, expectedError string) bool {
+func refreshViews(s *state.State, node *state.NodeState, expectedError string) bool {
 	if s.ViewType != state.MaterializedViewType {
 		return false
 	}

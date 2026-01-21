@@ -107,7 +107,7 @@ nodeLoop:
 
 		// Refresh views if needed (for materialized view tests)
 		if !expectedErrorRaised {
-			expectedErrorRaised = refreshViewsForCollections(a.s, node, a.ExpectedError)
+			expectedErrorRaised = refreshViews(a.s, node, a.ExpectedError)
 			if expectedErrorRaised {
 				continue nodeLoop
 			}
@@ -117,7 +117,7 @@ nodeLoop:
 		request := replace(a.s, nodeID, a.Request)
 		result := node.ExecRequest(ctx, request, options...)
 
-		expectedErrorRaised = AssertRequestResults(
+		expectedErrorRaised = assertRequestResults(
 			a.s,
 			&result.GQL,
 			a.Results,

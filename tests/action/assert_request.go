@@ -80,8 +80,8 @@ func (a *assertStack) String() string {
 	return b.String()
 }
 
-// AssertRequestResults asserts the results of a GQL request.
-func AssertRequestResults(
+// assertRequestResults asserts the results of a GQL request.
+func assertRequestResults(
 	s *state.State,
 	result *client.GQLResult,
 	expectedResults map[string]any,
