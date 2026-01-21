@@ -170,6 +170,92 @@ func DateTimeOperatorBlock() *gql.InputObject {
 	})
 }
 
+// NotNullDateTimeOperatorBlock filter block for DateTime! types.
+func NotNullDateTimeOperatorBlock() *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "NotNullDateTimeOperatorBlock",
+		Description: dateTimeOperatorBlockDescription,
+		Fields: gql.InputObjectConfigFieldMap{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.DateTime,
+			},
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.DateTime,
+			},
+			"_gt": &gql.InputObjectFieldConfig{
+				Description: gtOperatorDescription,
+				Type:        gql.DateTime,
+			},
+			"_ge": &gql.InputObjectFieldConfig{
+				Description: geOperatorDescription,
+				Type:        gql.DateTime,
+			},
+			"_lt": &gql.InputObjectFieldConfig{
+				Description: ltOperatorDescription,
+				Type:        gql.DateTime,
+			},
+			"_le": &gql.InputObjectFieldConfig{
+				Description: leOperatorDescription,
+				Type:        gql.DateTime,
+			},
+			"_in": &gql.InputObjectFieldConfig{
+				Description: inOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(gql.DateTime)),
+			},
+			"_nin": &gql.InputObjectFieldConfig{
+				Description: ninOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(gql.DateTime)),
+			},
+		},
+	})
+}
+
+// DateTimeListOperatorBlock filter block for [DateTime] types.
+func DateTimeListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "DateTimeListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [DateTime] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
+			},
+		},
+	})
+}
+
+// NotNullDateTimeListOperatorBlock filter block for [DateTime!] types.
+func NotNullDateTimeListOperatorBlock(op *gql.InputObject) *gql.InputObject {
+	return gql.NewInputObject(gql.InputObjectConfig{
+		Name:        "NotNullDateTimeListOperatorBlock",
+		Description: "These are the set of filter operators available for use when filtering on [DateTime!] values.",
+		Fields: gql.InputObjectConfigFieldMap{
+			"_any": &gql.InputObjectFieldConfig{
+				Description: anyOperatorDescription,
+				Type:        op,
+			},
+			"_all": &gql.InputObjectFieldConfig{
+				Description: allOperatorDescription,
+				Type:        op,
+			},
+			"_none": &gql.InputObjectFieldConfig{
+				Description: noneOperatorDescription,
+				Type:        op,
+			},
+		},
+	})
+}
+
 // Float64OperatorBlock filter block for Float types.
 func Float64OperatorBlock() *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{

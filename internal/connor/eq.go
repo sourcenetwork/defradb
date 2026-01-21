@@ -32,6 +32,9 @@ func eq(condition, data any, propExists bool) (bool, error) {
 
 	case immutable.Option[string]:
 		data = immutableValueOrNil(arr)
+
+	case immutable.Option[time.Time]:
+		data = immutableValueOrNil(arr)
 	}
 
 	switch cn := condition.(type) {

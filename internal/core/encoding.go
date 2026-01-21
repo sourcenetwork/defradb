@@ -112,6 +112,23 @@ func NormalizeFieldValue(fieldDesc client.CollectionFieldDescription, val any) (
 				return nil, err
 			}
 
+		case client.FieldKind_DATETIME_ARRAY:
+			timeArray := make([]time.Time, len(array))
+			for i, untypedValue := range array {
+				t, err := convertToTime(fmt.Sprintf("%s[%v]", fieldDesc.Name, i), untypedValue)
+				if err != nil {
+					return nil, err
+				}
+				timeArray[i] = t
+			}
+			val = timeArray
+
+		case client.FieldKind_NILLABLE_DATETIME_ARRAY:
+			val, err = convertNillableArrayWithConverter(fieldDesc.Name, array, convertToTime)
+			if err != nil {
+				return nil, err
+			}
+
 		case client.FieldKind_NILLABLE_JSON:
 			return convertToJSON(fieldDesc.Name, val)
 		}
@@ -238,6 +255,17 @@ func convertToFloat32(propertyName string, untypedValue any) (float32, error) {
 		return float32(value), nil
 	default:
 		return 0, client.NewErrUnexpectedType[string](propertyName, untypedValue)
+	}
+}
+
+func convertToTime(propertyName string, untypedValue any) (time.Time, error) {
+	switch value := untypedValue.(type) {
+	case time.Time:
+		return value, nil
+	case string:
+		return time.Parse(time.RFC3339, value)
+	default:
+		return time.Time{}, client.NewErrUnexpectedType[time.Time](propertyName, untypedValue)
 	}
 }
 
