@@ -117,9 +117,11 @@ func inlineArrayTypes() []gql.Type {
 		types.Float64,
 		gql.Int,
 		gql.String,
+		gql.DateTime,
 		gql.NewNonNull(gql.Boolean),
 		gql.NewNonNull(gql.Int),
 		gql.NewNonNull(gql.String),
+		gql.NewNonNull(gql.DateTime),
 		gql.NewNonNull(types.Float32),
 		gql.NewNonNull(types.Float64),
 	}
@@ -152,6 +154,7 @@ func defaultTypes(
 	notNullBooleanOpBlock := types.NotNullBooleanOperatorBlock()
 	notNullStringOpBlock := types.NotNullStringOperatorBlock()
 	notNullBlobOpBlock := types.NotNullBlobOperatorBlock(types.Blob)
+	notNullDateTimeOpBlock := types.NotNullDateTimeOperatorBlock()
 
 	return []gql.Type{
 		// Base Scalar types
@@ -190,6 +193,7 @@ func defaultTypes(
 		notNullBooleanOpBlock,
 		notNullStringOpBlock,
 		notNullBlobOpBlock,
+		notNullDateTimeOpBlock,
 
 		// Filter scalar list blocks
 		types.IntListOperatorBlock(intOpBlock),
@@ -197,6 +201,7 @@ func defaultTypes(
 		types.Float32ListOperatorBlock(float32OpBlock),
 		types.BooleanListOperatorBlock(booleanOpBlock),
 		types.StringListOperatorBlock(stringOpBlock),
+		types.DateTimeListOperatorBlock(dateTimeOpBlock),
 
 		// Filter non null scalar list blocks
 		types.NotNullIntListOperatorBlock(notNullIntOpBlock),
@@ -204,6 +209,7 @@ func defaultTypes(
 		types.NotNullFloat32ListOperatorBlock(notNullFloat32OpBlock),
 		types.NotNullBooleanListOperatorBlock(notNullBooleanOpBlock),
 		types.NotNullStringListOperatorBlock(notNullStringOpBlock),
+		types.NotNullDateTimeListOperatorBlock(notNullDateTimeOpBlock),
 
 		// aggregate input args
 		scalarAggregateBlock,
