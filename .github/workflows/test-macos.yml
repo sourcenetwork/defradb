@@ -1,4 +1,4 @@
-# Copyright 2025 Democratized Data Foundation
+# Copyright 2026 Democratized Data Foundation
 #
 # Use of this software is governed by the Business Source License
 # included in the file licenses/BSL.txt.
@@ -8,7 +8,12 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: Test Coverage macOS Workflow
+# Note:
+# - Unlike the [test-coverage.yml] workflow, this macOS job doesn't upload
+#   coverage to CodeCov or use custom runners.
+# - This workflow tests on macOS to ensure cross-platform compatibility.
+
+name: Test MacOS Workflow
 
 on:
   pull_request:
@@ -23,10 +28,12 @@ on:
       - master
       - develop
 
+# Cancel the workflow if its in progress when there is a new commit. This will reduce unecessary resource usage.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Default environment configuration settings.
 env:
   CGO_ENABLED: 1
 
@@ -48,29 +55,24 @@ env:
   DEFRA_VIEW_TYPE: cacheless
 
 
+# We run all runners via the bash shell to provide us with a consistent set of env variables and commands
 defaults:
   run:
     shell: bash
 
 
 jobs:
-  test-coverage-os:
-    name: Test coverage os job
+  test-macos:
+    name: Test macos job
 
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - macos-latest
-
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Run tests
-        run: make test
+      - name: Run integration tests
+        run: make test:names
