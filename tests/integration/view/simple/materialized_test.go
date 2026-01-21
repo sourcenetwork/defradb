@@ -97,7 +97,6 @@ func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
 					}
 				`,
 			},
-			&action.RefreshViews{},
 			testUtils.CreateDoc{
 				Doc: `{
 					"name":	"Fred"
