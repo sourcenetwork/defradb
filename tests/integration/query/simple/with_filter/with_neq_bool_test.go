@@ -18,77 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Users(filter: {Age: {_ge: 32}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "Bob",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Users(filter: {Age: {_ge: 31}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "Bob",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
+func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
@@ -96,7 +26,7 @@ func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Age": 21
+					"Verified": true
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -104,9 +34,103 @@ func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
 					"Name": "Bob"
 				}`,
 			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred",
+					"Verified": false
+				}`,
+			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {Age: {_ge: null}}) {
+					Users(filter: {Verified: {_neq: true}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Fred",
+						},
+						{
+							"Name": "Bob",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred",
+					"Verified": false
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {Verified: {_neq: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Fred",
+						},
+						{
+							"Name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
+	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Verified": true
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred",
+					"Verified": false
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {Verified: {_neq: false}}) {
 						Name
 					}
 				}`,

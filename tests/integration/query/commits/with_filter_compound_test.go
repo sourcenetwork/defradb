@@ -62,7 +62,7 @@ func TestQueryCommits_WithFilterFieldNameAndCondition_ReturnsOnlyNameCommit(t *t
 			},
 			&action.Request{
 				Request: `query {
-						_commits(filter: {_and: [{fieldName: {_ne: "_C"}}, {fieldName: {_ne: "age"}}]}) {
+						_commits(filter: {_and: [{fieldName: {_neq: "_C"}}, {fieldName: {_neq: "age"}}]}) {
 							fieldName
 						}
 					}`,

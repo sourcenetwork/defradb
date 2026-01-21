@@ -15,85 +15,31 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
-	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Verified": true
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred",
-					"Verified": false
-				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Users(filter: {Verified: {_ne: true}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "Fred",
-						},
-						{
-							"Name": "Bob",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
+func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Verified": true
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred",
-					"Verified": false
+					"Name": "Bob",
+					"HeightM": 1.82
 				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {Verified: {_ne: null}}) {
+					Users(filter: {HeightM: {_geq: 2.1}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"Name": "Fred",
-						},
 						{
 							"Name": "John",
 						},
@@ -106,31 +52,24 @@ func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
+func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Verified": true
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred",
-					"Verified": false
+					"Name": "Bob",
+					"HeightM": 1.82
 				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {Verified: {_ne: false}}) {
+					Users(filter: {HeightM: {_geq: 2.0999999999999}}) {
 						Name
 					}
 				}`,
@@ -139,11 +78,81 @@ func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
 						{
 							"Name": "John",
 						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_geq: 2}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 					},
 				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_geq: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
+					},
+				},
+				NonOrderedResults: true,
 			},
 		},
 	}

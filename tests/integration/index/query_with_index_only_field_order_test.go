@@ -102,7 +102,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGt_ShouldFetchInRevertedOrder(t
 func TestQueryWithIndex_IfIntFieldInDescOrderWithGe_ShouldFetchInRevertedOrder(t *testing.T) {
 	req := `
 		query {
-			User(filter: {age: {_ge: 22}}) {
+			User(filter: {age: {_geq: 22}}) {
 				name
 				age
 			}
@@ -262,7 +262,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLt_ShouldFetchInRevertedOrder(t
 func TestQueryWithIndex_IfIntFieldInDescOrderWithLe_ShouldFetchInRevertedOrder(t *testing.T) {
 	req := `
 		query {
-			User(filter: {age: {_le: 22}}) {
+			User(filter: {age: {_leq: 22}}) {
 				name
 				age
 			}
@@ -508,7 +508,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGt_ShouldFetchInRevertedOrder
 func TestQueryWithIndex_IfFloatFieldInDescOrderWithGe_ShouldFetchInRevertedOrder(t *testing.T) {
 	req := `
 		query {
-			User(filter: {iq: {_ge: 0.3}}) {
+			User(filter: {iq: {_geq: 0.3}}) {
 				name
 				iq
 			}
@@ -590,7 +590,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGe_ShouldFetchInRevertedOrder
 func TestQueryWithIndex_IfFloatFieldInDescOrderWithLe_ShouldFetchInRevertedOrder(t *testing.T) {
 	req := `
 		query {
-			User(filter: {iq: {_le: 0.3}}) {
+			User(filter: {iq: {_leq: 0.3}}) {
 				name
 				iq
 			}

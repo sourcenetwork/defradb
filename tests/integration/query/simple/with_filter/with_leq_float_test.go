@@ -15,102 +15,26 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
-func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
+func TestQuerySimpleWithFloatLEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56-05:00"
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"Age": 32,
-					"CreatedAt": "2019-07-23T03:46:56-05:00"
+					"HeightM": 1.82
 				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_le: "2017-07-23T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "John",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56-05:00"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob",
-					"Age": 32,
-					"CreatedAt": "2019-07-23T03:46:56-05:00"
-				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Users(filter: {CreatedAt: {_le: "2018-07-23T03:46:56-05:00"}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "John",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21,
-					"CreatedAt": "2017-07-23T03:46:56-05:00"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob",
-					"Age": 32
-				}`,
-			},
-			&action.Request{
-				Request: `query {
-					Users(filter: {CreatedAt: {_le: null}}) {
+					Users(filter: {HeightM: {_leq: 1.82}}) {
 						Name
 					}
 				}`,
@@ -128,50 +52,100 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimple_WithNilDateTimeLEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
+func TestQuerySimpleWithFloatLEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"Name":      "John",
-					"Age":       int64(21),
-					"CreatedAt": "2017-07-23T03:46:56-05:00",
-				},
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
 			},
 			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"Name":      "Bob",
-					"Age":       int64(32),
-					"CreatedAt": "2016-07-23T03:46:56-05:00",
-				},
-			},
-			testUtils.CreateDoc{
-				DocMap: map[string]any{
-					"Name": "Fred",
-					"Age":  44,
-				},
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_le: "2017-07-23T03:46:56-05:00"}}) {
+					Users(filter: {HeightM: {_leq: 1.820000000001}}) {
 						Name
-						Age
-						CreatedAt
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name":      "John",
-							"Age":       int64(21),
-							"CreatedAt": testUtils.MustParseTime("2017-07-23T03:46:56-05:00"),
+							"Name": "Bob",
 						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_leq: 2}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name":      "Bob",
-							"Age":       int64(32),
-							"CreatedAt": testUtils.MustParseTime("2016-07-23T03:46:56-05:00"),
+							"Name": "Bob",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloatLEFilterBlockWithNullValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_leq: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
 						},
 					},
 				},

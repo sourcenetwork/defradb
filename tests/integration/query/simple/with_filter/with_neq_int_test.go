@@ -17,24 +17,24 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
+func TestQuerySimpleWithIntNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"HeightM": 2.1
+					"Age": 21
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"HeightM": 3.2
+					"Age": 32
 				}`,
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ne: 2.1}}) {
+					Users(filter: {Age: {_neq: 21}}) {
 						Name
 					}
 				}`,
@@ -52,19 +52,19 @@ func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
+func TestQuerySimpleWithIntNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"HeightM": 2.1
+					"Age": 21
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"HeightM": 3.2
+					"Age": 32
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -74,7 +74,7 @@ func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					Users(filter: {HeightM: {_ne: null}}) {
+					Users(filter: {Age: {_neq: null}}) {
 						Name
 					}
 				}`,

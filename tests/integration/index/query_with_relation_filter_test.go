@@ -500,7 +500,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_Shoul
 						devices: {model: {_eq: "Walkman"}}
 					}) {
 						name
-						devices(filter: {manufacturer: {_ne: "Sony"}}) {
+						devices(filter: {manufacturer: {_neq: "Sony"}}) {
 							model
 							manufacturer
 						}
@@ -800,7 +800,7 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIndex(t *testing.T) {
 	req := `query {
 		Device(filter: {
-			_ownerID: {_ne: null}
+			_ownerID: {_neq: null}
 		}) {
 			model
 		}
