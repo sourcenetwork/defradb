@@ -63,19 +63,19 @@ const (
 	// syncQueueSize is the maximum number of pending sync requests.
 	syncQueueSize = 50000
 	// pubsubBatchSize is the number of pubsub messages to batch before publishing.
-	pubsubBatchSize = 100
+	pubsubBatchSize = 50
 	// pubsubBatchTimeout is the maximum time to wait for a pubsub batch to fill.
-	pubsubBatchTimeout = 200 * time.Millisecond
+	pubsubBatchTimeout = 100 * time.Millisecond
 	// pubsubBatchWorkers is the number of parallel pubsub batch processors.
-	pubsubBatchWorkers = 8
+	pubsubBatchWorkers = 4
 	// maxPubsubMessageSize is the maximum size of a pubsub message (libp2p default is 1MB).
 	maxPubsubMessageSize = 800 * 1024
 	// batchSyncSize is the number of sync operations to batch before committing.
-	batchSyncSize = 100
+	batchSyncSize = 50
 	// batchSyncTimeout is the maximum time to wait for a sync batch to fill.
-	batchSyncTimeout = 200 * time.Millisecond
+	batchSyncTimeout = 100 * time.Millisecond
 	// batchSyncWorkers is the number of parallel sync batch processors.
-	batchSyncWorkers = 8
+	batchSyncWorkers = 32
 )
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
@@ -908,7 +908,7 @@ func newSyncBatcher(ctx context.Context, p2p *P2P) *syncBatcher {
 		ctx:       ctx,
 		cancel:    cancel,
 		p2p:       p2p,
-		queue:     make(chan syncRequestBatch, batchSyncSize*batchSyncWorkers*20),
+		queue:     make(chan syncRequestBatch, batchSyncSize*batchSyncWorkers*100),
 		batchSize: batchSyncSize,
 		timeout:   batchSyncTimeout,
 	}
@@ -1108,7 +1108,7 @@ func newPubsubBatcher(ctx context.Context, p2p *P2P, batchSize int, timeout time
 		ctx:       ctx,
 		cancel:    cancel,
 		p2p:       p2p,
-		queue:     make(chan pubsubRequest, batchSize*pubsubBatchWorkers*20),
+		queue:     make(chan pubsubRequest, batchSize*pubsubBatchWorkers*100),
 		batchSize: batchSize,
 		timeout:   timeout,
 	}
