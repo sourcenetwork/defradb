@@ -50,7 +50,7 @@ func TestDebugExplainRequestWithView(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name

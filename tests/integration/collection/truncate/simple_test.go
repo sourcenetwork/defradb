@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package simple
+package truncate
 
 import (
 	"testing"
@@ -17,48 +17,18 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestView_SimpleWithAlias(t *testing.T) {
+func TestCollectionTruncate(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
-					type User {
+					type Users {
 						name: String
 					}
 				`,
 			},
-			&action.CreateView{
-				Query: `
-					User {
-						fullname: name
-					}
-				`,
-				SDL: `
-					type UserView @materialized(if: false) {
-						fullname: String
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name":	"John"
-				}`,
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						UserView {
-							fullname
-						}
-					}
-				`,
-				Results: map[string]any{
-					"UserView": []map[string]any{
-						{
-							"fullname": "John",
-						},
-					},
-				},
+			&action.Truncate{
+				CollectionIndex: 0,
 			},
 		},
 	}

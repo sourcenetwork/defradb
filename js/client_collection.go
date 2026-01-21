@@ -50,6 +50,7 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 		"createEncryptedIndex": goji.Async(c.createEncryptedIndex),
 		"deleteEncryptedIndex": goji.Async(c.deleteEncryptedIndex),
 		"listEncryptedIndexes": goji.Async(c.listEncryptedIndexes),
+		"truncate":             goji.Async(c.truncate),
 	})
 }
 
@@ -363,4 +364,13 @@ func (c *clientCollection) listEncryptedIndexes(this js.Value, args []js.Value) 
 		return js.Undefined(), err
 	}
 	return goji.MarshalJS(desc)
+}
+
+func (c *clientCollection) truncate(this js.Value, args []js.Value) (js.Value, error) {
+	ctx, err := contextArg(args, 0, c.txns)
+	if err != nil {
+		return js.Undefined(), err
+	}
+	err = c.col.Truncate(ctx)
+	return js.Undefined(), err
 }

@@ -40,7 +40,6 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -84,17 +83,18 @@ const (
 	GQLRequestMutationType MutationType = "gql"
 )
 
-type ViewType string
+// ViewType is a type alias for backward compatibility.
+type ViewType = state.ViewType
 
 const (
-	CachelessViewType    ViewType = "cacheless"
-	MaterializedViewType ViewType = "materialized"
+	CachelessViewType    = state.CachelessViewType
+	MaterializedViewType = state.MaterializedViewType
 )
 
 var (
 	log          = corelog.NewLogger("tests.integration")
 	mutationType MutationType
-	viewType     ViewType
+	viewType     state.ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
 	// skipBackupTests will skip any tests that involve backup actions
@@ -126,7 +126,7 @@ func init() {
 	}
 
 	if value, ok := os.LookupEnv(viewTypeEnvName); ok {
-		viewType = ViewType(value)
+		viewType = state.ViewType(value)
 	} else {
 		viewType = CachelessViewType
 	}
@@ -290,6 +290,7 @@ func executeTestCase(
 		kms,
 		dbt,
 		clientType,
+		viewType,
 		documentACPType,
 		collectionNames,
 	)
@@ -391,12 +392,6 @@ func performAction(
 
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)
-
-	case CreateView:
-		createView(s, action)
-
-	case RefreshViews:
-		refreshViews(s, action)
 
 	case ConfigureMigration:
 		configureMigration(s, action)
@@ -621,7 +616,7 @@ func getCollectionNames(testCase TestCase) []string {
 
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 
-		case CreateView:
+		case *action.CreateView:
 			if action.ExpectedError != "" {
 				// If an error is expected then no collections should result from this action
 				continue
@@ -1141,61 +1136,6 @@ func setActiveCollectionVersion(
 	}
 
 	refreshCollections(s)
-}
-
-func createView(
-	s *state.State,
-	action CreateView,
-) {
-	if viewType == MaterializedViewType {
-		typeIndex := strings.Index(action.SDL, "\ttype ")
-		subStrSquigglyIndex := strings.Index(action.SDL[typeIndex:], "{")
-		squigglyIndex := typeIndex + subStrSquigglyIndex
-		action.SDL = strings.Join([]string{
-			action.SDL[:squigglyIndex],
-			"@",
-			types.MaterializedDirectiveLabel,
-			action.SDL[squigglyIndex:],
-			"",
-		}, "")
-	}
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for i, node := range nodes {
-		transformCID := action.TransformCID
-		if transformCID.HasValue() {
-			transformCID = immutable.Some(replace(s, nodeIDs[i], transformCID.Value()))
-		}
-		results, err := node.AddView(s.Ctx, action.Query, action.SDL, transformCID)
-
-		for _, result := range results {
-			appendCollectionVersion(s, result.VersionID)
-		}
-
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
-}
-
-func appendCollectionVersion(s *state.State, versionID string) {
-	if slices.Contains(s.CollectionVersions, versionID) {
-		return
-	}
-
-	s.CollectionVersions = append(s.CollectionVersions, versionID)
-}
-
-func refreshViews(
-	s *state.State,
-	action RefreshViews,
-) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		err := node.RefreshViews(s.Ctx, action.FilterOptions)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
 }
 
 // createDoc creates a document using the chosen [mutationType] and caches it in the
@@ -2435,11 +2375,8 @@ func skipIfMutationTypeUnsupported(t testing.TB, supportedMutationTypes immutabl
 func skipIfViewCacheTypeUnsupported(t testing.TB, supportedViewTypes immutable.Option[[]ViewType]) {
 	if supportedViewTypes.HasValue() {
 		var isTypeSupported bool
-		for _, supportedViewType := range supportedViewTypes.Value() {
-			if supportedViewType == viewType {
-				isTypeSupported = true
-				break
-			}
+		if slices.Contains(supportedViewTypes.Value(), viewType) {
+			isTypeSupported = true
 		}
 
 		if !isTypeSupported {

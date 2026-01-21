@@ -90,6 +90,7 @@ const (
 	NodeNACRelationDeletePerm
 	NodeCollectionPatchPerm
 	NodeCollectionGetPerm
+	NodeCollectionTruncatePerm
 	NodeDocumentReadPerm
 	NodeDocumentUpdatePerm
 	NodeDocumentDeletePerm
@@ -129,6 +130,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"nac-relation-delete",
 	"collection-patch",
 	"collection-get",
+	"collection-truncate",
 	"document-read",
 	"document-update",
 	"document-delete",
@@ -191,6 +193,8 @@ resources:
   - name: collection-patch
     expr: admin
   - name: collection-get
+    expr: admin
+  - name: collection-truncate
     expr: admin
 
   - name: document-read

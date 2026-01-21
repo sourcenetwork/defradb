@@ -445,3 +445,35 @@ func SetActiveCollection(nodePtr C.uintptr_t, options C.CollectionOptions, ident
 	}
 	return returnC(returnGoC(0, "", ""))
 }
+
+//export CollectionTruncate
+func CollectionTruncate(
+	nodePtr C.uintptr_t,
+	options C.CollectionOptions,
+	identityPtr C.uintptr_t,
+) C.Result {
+	ctx := context.Background()
+	colOptions := parseCollectionOptions(options)
+
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	col, err := getCollection(store, ctx, colOptions)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	err = col.Truncate(ctx)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	return returnC(returnGoC(0, "", ""))
+}
