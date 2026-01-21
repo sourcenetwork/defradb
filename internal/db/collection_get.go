@@ -55,7 +55,7 @@ func (c *collection) Get(
 		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	doc, err := c.get(ctx, primaryKey, nil, showDeleted)
+	doc, err := c.get(ctx, primaryKey, c.Version().Fields, showDeleted)
 	if err != nil {
 		return nil, err
 	}
