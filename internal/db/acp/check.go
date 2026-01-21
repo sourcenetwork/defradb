@@ -155,7 +155,7 @@ func CheckDocAccessWithIdentityFunc(
 	return hasAccess, nil
 }
 
-// CheckNodeOperationAccess returns an [client.NewErrNotAuthorizedMissingPermission]
+// CheckNodeOperationAccess returns an [client.ErrNotAuthorizedToPerformOperation]
 // error if the requesting user does not have the required permission to perform an operation.
 // If something else goes wrong, it returns a different error, otherwise returns nil only if
 // the check passes and the requesting user is authorized to perform the operation.
