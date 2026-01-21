@@ -40,6 +40,10 @@ func (p *P2P) generateCARForBlocks(ctx context.Context, rootBlocks []*coreblock.
 		return nil, nil
 	}
 
+	txn := p.db.Rootstore().NewTxn(true)
+	defer txn.Discard()
+	txnCtx := corekv.SetCtxTxn(ctx, txn)
+
 	bstore := p.db.Multistore().Blockstore()
 	linkSystem := makeLinkSystem(blockstore.NewIPLDStore(bstore))
 
@@ -53,7 +57,7 @@ func (p *P2P) generateCARForBlocks(ctx context.Context, rootBlocks []*coreblock.
 		}
 		rootCIDs = append(rootCIDs, rootLink.Cid)
 
-		if err := p.collectDAGBlocks(ctx, &linkSystem, rootLink.Cid, blockCIDs); err != nil {
+		if err := p.collectDAGBlocks(txnCtx, &linkSystem, rootLink.Cid, blockCIDs); err != nil {
 			return nil, err
 		}
 	}
@@ -73,9 +77,9 @@ func (p *P2P) generateCARForBlocks(ctx context.Context, rootBlocks []*coreblock.
 		}
 
 		var blockBytes []byte
-		block, err := bstore.Get(ctx, c)
+		block, err := bstore.Get(txnCtx, c)
 		if err != nil {
-			encBlock, encErr := encStore.Get(ctx, c)
+			encBlock, encErr := encStore.Get(txnCtx, c)
 			if encErr != nil {
 				return nil, err
 			}
@@ -84,7 +88,7 @@ func (p *P2P) generateCARForBlocks(ctx context.Context, rootBlocks []*coreblock.
 			blockBytes = block.RawData()
 		}
 
-		if err := carWriter.Put(ctx, c.KeyString(), blockBytes); err != nil {
+		if err := carWriter.Put(txnCtx, c.KeyString(), blockBytes); err != nil {
 			return nil, err
 		}
 	}
