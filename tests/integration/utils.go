@@ -2186,3 +2186,7 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 		}
 	}
 }
+
+func FormatExpectedErrorWithPermission(permission string) string {
+	return fmt.Sprintf("%s. Permission: %s", client.ErrNotAuthorizedToPerformOperation, permission)
+}

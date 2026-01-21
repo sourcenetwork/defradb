@@ -15,6 +15,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 func TestNAC_GatesCollectionPatch_AuthorizedIdentity_AllowAccess(t *testing.T) {
@@ -52,6 +54,15 @@ func TestNAC_GatesCollectionPatch_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		// TO DO: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// See: https://github.com/sourcenetwork/defradb/issues/4383
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.GoClientType,
+				state.HTTPClientType,
+				state.CClientType,
+			},
+		),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -76,7 +87,48 @@ func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-patch"),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError_CLIClient(t *testing.T) {
+	test := testUtils.TestCase{
+		// TO DO: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// See: https://github.com/sourcenetwork/defradb/issues/4383
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.CLIClientType,
+			},
+		),
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
+			&action.AddSchema{
+				Identity: testUtils.ClientIdentity(1),
+				Schema: `
+					type Users {}
+				`,
+			},
+
+			// We haven't authorized non-identities. So, this should error.
+			testUtils.PatchCollection{
+				Identity: testUtils.NoIdentity(),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+					]
+				`,
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-get"),
 			},
 		},
 	}
@@ -86,6 +138,15 @@ func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		// TO DO: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// See: https://github.com/sourcenetwork/defradb/issues/4383
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.GoClientType,
+				state.HTTPClientType,
+				state.CClientType,
+			},
+		),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -110,7 +171,48 @@ func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError(t *testing.T)
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-patch"),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError_CLIClient(t *testing.T) {
+	test := testUtils.TestCase{
+		// TO DO: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// See: https://github.com/sourcenetwork/defradb/issues/4383
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.CLIClientType,
+			},
+		),
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
+			&action.AddSchema{
+				Identity: testUtils.ClientIdentity(1),
+				Schema: `
+					type Users {}
+				`,
+			},
+
+			// Wrong user/identity will also not be authorized.
+			testUtils.PatchCollection{
+				Identity: testUtils.ClientIdentity(2),
+				Patch: `
+					[
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
+					]
+				`,
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-patch"),
 			},
 		},
 	}

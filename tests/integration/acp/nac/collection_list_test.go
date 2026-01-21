@@ -52,7 +52,7 @@ func TestNAC_GatesCollectionList_NoIdentity_NotAuthorizedError(t *testing.T) {
 			// We haven't authorized non-identities. So, this should error.
 			&action.GetCollections{
 				Identity:      testUtils.NoIdentity(),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-get"),
 			},
 		},
 	}
@@ -73,7 +73,7 @@ func TestNAC_GatesCollectionList_WrongIdentity_NotAuthorizedError(t *testing.T) 
 			// Wrong user/identity will also not be authorized.
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission("collection-get"),
 			},
 		},
 	}
