@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -33,7 +34,7 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithEqualValue(t *testing.T) {
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_gt: "2017-07-20T03:46:56-05:00"}}) {
 						Name
@@ -70,7 +71,7 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithGreaterValue(t *testing.T) {
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_gt: "2017-07-22T03:46:56-05:00"}}) {
 						Name
@@ -107,7 +108,7 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithLesserValue(t *testing.T) {
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_gt: "2017-07-25T03:46:56-05:00"}}) {
 						Name
@@ -137,7 +138,7 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithNilValue(t *testing.T) {
 					"Name": "Bob"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_gt: null}}) {
 						Name
@@ -180,7 +181,7 @@ func TestQuerySimple_WithNilDateTimeGTAndNonNilFilterBlock_ShouldSucceed(t *test
 					"Age":  44,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_gt: "2016-07-23T03:46:56-05:00"}}) {
 						Name

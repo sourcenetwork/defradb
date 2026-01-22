@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 
 	"github.com/sourcenetwork/immutable"
@@ -33,7 +34,7 @@ func TestQuerySimple_WithFragments_Succeeds(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					firstUser: Users(limit: 1) {
 						...UserInfo
@@ -83,7 +84,7 @@ func TestQuerySimple_WithNestedFragments_Succeeds(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						...UserWithNameAndAge
@@ -131,7 +132,7 @@ func TestQuerySimple_WithFragmentSpreadAndSelect_Succeeds(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -176,7 +177,7 @@ func TestQuerySimple_WithMissingFragment_ReturnsError(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						...UserInfo
@@ -205,7 +206,7 @@ func TestQuerySimple_WithFragmentWithInvalidField_ReturnsError(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						...UserInvalid
@@ -237,7 +238,7 @@ func TestQuerySimple_WithFragmentWithAggregate_Succeeds(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					...UserCount
 				}
@@ -269,7 +270,7 @@ func TestQuerySimple_WithFragmentWithVariables_Succeeds(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Variables: immutable.Some(map[string]any{
 					"filter": map[string]any{
 						"Age": map[string]any{
@@ -314,7 +315,7 @@ func TestQuerySimple_WithInlineFragment_Succeeds(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						... on Users {

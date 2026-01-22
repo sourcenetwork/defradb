@@ -33,7 +33,7 @@ func TestMutationDeletion_WithDeletedField(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						delete_User(docID: "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd") {
 							_deleted

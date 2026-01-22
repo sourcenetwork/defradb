@@ -170,7 +170,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 5),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						_docID

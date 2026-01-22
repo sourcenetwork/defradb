@@ -42,7 +42,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
 							cid: "bafyreicxlkbypv4hjc2trunobsugx63no47322xfjjazj3v5y6hqeck3d4"
@@ -89,7 +89,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
 							cid: "bafyreibc2flc7hsmj3qfw77niwtbdh54thycppxizgvqdwn2l3zpcymbpq"
@@ -136,7 +136,7 @@ func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
 							cid: "bafyreibyobeiqifhovshswbvezcuug6l76bz7ejm5zec47pzsmmmldz5we"

@@ -32,7 +32,7 @@ func TestMutationCreateFieldKinds_WithFloat(t *testing.T) {
 					"points": 1.2,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						points
@@ -67,7 +67,7 @@ func TestMutationCreateFieldKinds_WithFloat32(t *testing.T) {
 					"points": 1.2,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						points
@@ -102,7 +102,7 @@ func TestMutationCreateFieldKinds_WithFloat64(t *testing.T) {
 					"points": 1.2,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						points

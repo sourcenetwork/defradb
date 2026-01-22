@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldSimpleWithFilter(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (filter: {name: {_eq: "John"}}) {
 						name
@@ -75,7 +75,7 @@ func TestSchemaUpdatesAddFieldSimpleWithFilterOnPopulatedDatabase(t *testing.T) 
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (filter: {name: {_eq: "John"}}) {
 						name

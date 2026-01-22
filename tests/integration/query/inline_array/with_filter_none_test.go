@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +32,7 @@ func TestQueryInlineStringArrayWithNoneFilter(t *testing.T) {
 					"pageHeaders": [null, "second"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {pageHeaders: {_none: {_eq: null}}}) {
 						name
@@ -66,7 +67,7 @@ func TestQueryInlineNonNullStringArrayWithNoneFilter(t *testing.T) {
 					"preferredStrings": ["", "second"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {preferredStrings: {_none: {_eq: ""}}}) {
 						name
@@ -101,7 +102,7 @@ func TestQueryInlineIntArrayWithNoneFilter(t *testing.T) {
 					"testScores": [null, 60]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {testScores: {_none: {_eq: null}}}) {
 						name
@@ -136,7 +137,7 @@ func TestQueryInlineNonNullIntArrayWithNoneFilter(t *testing.T) {
 					"testScores": [0, 60]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {testScores: {_none: {_gt: 70}}}) {
 						name
@@ -171,7 +172,7 @@ func TestQueryInlineFloatArrayWithNoneFilter(t *testing.T) {
 					"pageRatings": [null, 60]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {pageRatings: {_none: {_eq: null}}}) {
 						name
@@ -206,7 +207,7 @@ func TestQueryInlineNonNullFloatArrayWithNoneFilter(t *testing.T) {
 					"pageRatings": [0, 60]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {pageRatings: {_none: {_gt: 70}}}) {
 						name
@@ -241,7 +242,7 @@ func TestQueryInlineBooleanArrayWithNoneFilter(t *testing.T) {
 					"indexLikesDislikes": [null, true]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {indexLikesDislikes: {_none: {_eq: null}}}) {
 						name
@@ -276,7 +277,7 @@ func TestQueryInlineNonNullBooleanArrayWithNoneFilter(t *testing.T) {
 					"likedIndexes": [true, true]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {likedIndexes: {_none: {_neq: true}}}) {
 						name

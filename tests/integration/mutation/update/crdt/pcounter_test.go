@@ -46,7 +46,7 @@ func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 				}`,
 				ExpectedError: "value cannot be negative",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -97,7 +97,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.
 					"points": 10
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -157,7 +157,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 					"points": 1
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -208,7 +208,7 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testin
 					"points": 10.2
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -260,7 +260,7 @@ func TestPCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *test
 					"points": 10.2
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -311,7 +311,7 @@ func TestPCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *test
 					"points": 10.2
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -359,7 +359,7 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T
 					"points": 1000
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

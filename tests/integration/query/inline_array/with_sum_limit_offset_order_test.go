@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 					"favouriteIntegers": [-1, 2, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -57,7 +58,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 					"favouriteIntegers": [-1, 2, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -89,7 +90,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 					"testScores": [2, null, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -121,7 +122,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 					"testScores": [null, 2, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -153,7 +154,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 					"favouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -185,7 +186,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 					"favouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -217,7 +218,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 					"pageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -249,7 +250,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t 
 					"pageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

@@ -36,7 +36,7 @@ func TestCollectionTruncateAdd_RemovesDocument(t *testing.T) {
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -71,7 +71,7 @@ func TestCollectionTruncateAdd_RemovesBlocks(t *testing.T) {
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (filter: {fieldName: {_eq: "_C"}}) {
 							cid
@@ -105,7 +105,7 @@ func TestCollectionTruncateAdd_CreatesDocWithSameDocIDAsOriginal(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_docID
@@ -128,7 +128,7 @@ func TestCollectionTruncateAdd_CreatesDocWithSameDocIDAsOriginal(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that there is only one User, and that it has the same docID as the
 				// original, truncated, document.
 				Request: `query {
@@ -168,7 +168,7 @@ func TestCollectionTruncateAdd_CreatesDocWithSameCIDAsOriginal(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
@@ -191,7 +191,7 @@ func TestCollectionTruncateAdd_CreatesDocWithSameCIDAsOriginal(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that new document composite commit has the same cid as the
 				// original, truncated, document.
 				Request: `query {
@@ -238,7 +238,7 @@ func TestCollectionTruncateAdd_CreatesDocWithBlocksAtHeight1(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Query the commits api and make sure that the document has been created with
 				// blocks at height 1.
 				Request: `

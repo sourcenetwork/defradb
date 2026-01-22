@@ -1,0 +1,160 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package action
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/state"
+)
+
+// ResultAsserter is an interface that can be implemented to provide custom result
+// assertions.
+type ResultAsserter interface {
+	// Assert will be called with the test and the result of the request.
+	Assert(t testing.TB, result map[string]any)
+}
+
+// ResultAsserterFunc is a function that can be used to implement the ResultAsserter
+type ResultAsserterFunc func(testing.TB, map[string]any) (bool, string)
+
+func (f ResultAsserterFunc) Assert(t testing.TB, result map[string]any) {
+	f(t, result)
+}
+
+// Request represents a standard Defra (GQL) request.
+type Request struct {
+	stateful
+
+	// NodeID may hold the ID (index) of a node to execute this request on.
+	//
+	// If a value is not provided the request will be executed against all nodes,
+	// in which case the expected results must all match across all nodes.
+	NodeID immutable.Option[int]
+
+	// The identity of this request. Optional.
+	//
+	// If an Identity is not provided then can only operate over public document(s).
+	//
+	// If an Identity is provided and the collection has a policy, then can
+	// operate over private document(s) that are owned by this Identity.
+	//
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	Identity immutable.Option[state.Identity]
+
+	// Used to identify the transaction for this to run against. Optional.
+	TransactionID immutable.Option[int]
+
+	// Materialized views are automatically refreshed immediately before executing this Request, unless
+	// this property is set to true.
+	DoNotRefreshViews bool
+
+	// OperationName sets the operation name option for the request.
+	OperationName immutable.Option[string]
+
+	// Variables sets the variables option for the request.
+	Variables immutable.Option[map[string]any]
+
+	// The request to execute.
+	Request string
+
+	// The expected (data) results of the issued request.
+	Results map[string]any
+
+	// NonOrderedResults specifies that the results set doesn't need to care about the ordering of the items.
+	NonOrderedResults bool
+
+	// Asserter is an optional custom result asserter.
+	Asserter ResultAsserter
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+var _ Action = (*Request)(nil)
+var _ Stateful = (*Request)(nil)
+
+// Execute executes the request action.
+func (a *Request) Execute() {
+	var expectedErrorRaised bool
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+
+nodeLoop:
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+		txn := a.getTransaction(node)
+		ctx := getContextWithIdentity(db.InitContext(a.s.Ctx, txn), a.s, a.Identity, nodeID)
+
+		var options []client.RequestOption
+		if a.OperationName.HasValue() {
+			options = append(options, client.WithOperationName(a.OperationName.Value()))
+		}
+		if a.Variables.HasValue() {
+			options = append(options, client.WithVariables(a.Variables.Value()))
+		}
+
+		if !a.DoNotRefreshViews && !expectedErrorRaised {
+			expectedErrorRaised = refreshViews(a.s, node, a.ExpectedError)
+			if expectedErrorRaised {
+				continue nodeLoop
+			}
+		}
+
+		request := replace(a.s, nodeID, a.Request)
+		result := node.ExecRequest(ctx, request, options...)
+
+		expectedErrorRaised = assertRequestResults(
+			a.s,
+			&result.GQL,
+			a.Results,
+			a.ExpectedError,
+			a.Asserter,
+			nodeID,
+			!a.NonOrderedResults,
+		)
+	}
+
+	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+}
+
+// getTransaction returns the transaction for this request, creating one if needed.
+func (a *Request) getTransaction(db client.TxnStore) client.Txn {
+	if !a.TransactionID.HasValue() {
+		return nil
+	}
+
+	transactionID := a.TransactionID.Value()
+
+	if transactionID >= len(a.s.Txns) {
+		// Extend the txn slice so this txn can fit and be accessed by TransactionId
+		a.s.Txns = append(a.s.Txns, make([]client.Txn, transactionID-len(a.s.Txns)+1)...)
+	}
+
+	if a.s.Txns[transactionID] == nil {
+		txn, err := db.NewTxn(false)
+		if assertError(a.s.T, err, a.ExpectedError) {
+			txn.Discard()
+			return nil
+		}
+
+		a.s.Txns[transactionID] = txn
+	}
+
+	return a.s.Txns[transactionID]
+}

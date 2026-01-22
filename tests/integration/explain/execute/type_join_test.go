@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -27,7 +28,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						OnlyEmail: contact {
@@ -85,7 +86,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						OnlyEmail: contact {
@@ -168,7 +169,7 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -232,7 +233,7 @@ func TestExecuteExplain_WithOneToOneJoinFromSecondarySide_ShouldIncludeIndex(t *
 
 			// Query from ContactAddress (secondary side) to AuthorContact (primary side).
 			// This should use the unique index on AuthorContact._addressID to find the related contact.
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					ContactAddress {
 						city

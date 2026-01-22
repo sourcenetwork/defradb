@@ -37,7 +37,7 @@ func TestQuerySimpleWithVersionAndCid(t *testing.T) {
 					"Name": "Chris",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq") {
 						Name

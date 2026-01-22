@@ -72,7 +72,7 @@ func TestSchemaMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T) {
 					},
 				),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -86,7 +86,7 @@ func TestSchemaMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 35}}) {
 						name
@@ -174,7 +174,7 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApp
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -188,7 +188,7 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApp
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 35}}) {
 						name
@@ -265,7 +265,7 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationInOldPatch_ShouldApplyMigrat
 			testUtils.PatchCollection{
 				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "score", "Kind": "Int"} }]`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -279,7 +279,7 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationInOldPatch_ShouldApplyMigrat
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 35}}) {
 						name

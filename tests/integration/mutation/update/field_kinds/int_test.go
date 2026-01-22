@@ -37,7 +37,7 @@ func TestMutationUpdate_IfIntFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"age": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

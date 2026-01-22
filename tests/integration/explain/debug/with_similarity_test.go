@@ -51,7 +51,7 @@ func TestDebugExplainRequestWith_WithSimilarity(t *testing.T) {
 				},
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					User {

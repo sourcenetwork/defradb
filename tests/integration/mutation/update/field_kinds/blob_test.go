@@ -39,7 +39,7 @@ func TestMutationUpdate_WithBlobField(t *testing.T) {
 					"data": "00FF"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -81,7 +81,7 @@ func TestMutationUpdate_IfBlobFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"data": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

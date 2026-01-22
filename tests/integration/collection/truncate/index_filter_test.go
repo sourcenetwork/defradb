@@ -36,7 +36,7 @@ func TestCollectionTruncateIndexFilter_RemovesDocument(t *testing.T) {
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {name: {_eq: "John"}}) {
 						name
@@ -71,7 +71,7 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_RemovesDocument(t *testin
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {name: {_eq: "John"}}) {
 						name
@@ -114,7 +114,7 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_AllowsRecreationOfDocumen
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {name: {_eq: "John"}}) {
 						name

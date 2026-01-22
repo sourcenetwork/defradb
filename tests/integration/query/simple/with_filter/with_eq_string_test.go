@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +32,7 @@ func TestQuerySimpleWithStringFilterBlock(t *testing.T) {
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_eq: "John"}}) {
 						Name
@@ -73,7 +74,7 @@ func TestQuerySimpleWithStringEqualsNilFilterBlock(t *testing.T) {
 					"Age": 60
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_eq: null}}) {
 						Name
@@ -110,7 +111,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect_SelectSameFieldAsFilterWithMa
 						"Age": 32
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {Name: {_eq: "John"}}) {
 							Name
@@ -144,7 +145,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect_SelectDifferentFieldThanFilte
 						"Age": 32
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {Name: {_eq: "John"}}) {
 							Age
@@ -172,7 +173,7 @@ func TestQuerySimpleWithStringFilterBlockAndSelect_SelectMultipleFieldsButNoMatc
 						"Age": 21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {Name: {_eq: "Bob"}}) {
 							Name

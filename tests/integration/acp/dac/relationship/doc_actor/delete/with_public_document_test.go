@@ -83,7 +83,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Can read as it is a public document
 
 				Request: `

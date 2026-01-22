@@ -36,7 +36,7 @@ func TestMutationUpsert_WithDateTimeField_WithUTCNow_ShouldBeEqual(t *testing.T)
 				}`,
 			},
 			// Perform mutations to update using UTC_NOW
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					john: upsert_Users(
 						filter: {name: {_eq: "John"}},

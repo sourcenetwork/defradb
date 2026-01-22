@@ -34,7 +34,7 @@ func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(
 							cid: "bafyreignwrgxxwvuijnrjssobtd4qdzjdho2u2myumzthtcuukoo4txxjy"

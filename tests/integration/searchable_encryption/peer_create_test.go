@@ -15,9 +15,10 @@ import (
 
 	"github.com/onsi/gomega"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestEncryptedIndexCreatePeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *testing.T) {
@@ -36,7 +37,7 @@ func TestEncryptedIndexCreatePeer_SchemaWithEncryptedIndex_ShouldGenerateGQL(t *
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -73,7 +74,7 @@ func TestEncryptedIndexCreatePeer_AfterCreateRequest_ShouldGenerateGQL(t *testin
 			testUtils.CreateEncryptedIndex{
 				FieldName: "age",
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {

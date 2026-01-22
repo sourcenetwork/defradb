@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -91,7 +92,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 						"verified": true
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author (groupBy: [age]) {
 							age
@@ -228,7 +229,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 					"_authorID": testUtils.NewDocIndex(1, 2),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author (groupBy: [age]) {
 							age
@@ -368,7 +369,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 						"verified": true
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author (groupBy: [age], filter: {age: {_gt: 300}}) {
 							age

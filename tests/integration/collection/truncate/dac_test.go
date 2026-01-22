@@ -81,7 +81,7 @@ func TestCollectionTruncateDAC_RemovedPrivateDocumentRetainsPermissions(t *testi
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Query the collection without an identity, no documents have been
 				// returned as `John` is still owned by the identity that created it
 				// before truncation.
@@ -135,7 +135,7 @@ func TestCollectionTruncateDAC_RemovedPublicDocumentRetainsPermissions(t *testin
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Query the collection without an identity, no documents have been
 				// returned as `John` is now owned by the identity that created it
 				// *after* truncation, as the original, public, document was never
@@ -149,7 +149,7 @@ func TestCollectionTruncateDAC_RemovedPublicDocumentRetainsPermissions(t *testin
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Query the document with the new identity and show that it is
 				// available to the new owner.
 				Identity: testUtils.ClientIdentity(1),

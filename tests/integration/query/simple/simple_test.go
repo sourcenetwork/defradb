@@ -26,7 +26,7 @@ func TestQuerySimple(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_docID
@@ -59,7 +59,7 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						username: Name
@@ -96,7 +96,7 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 					"Age": 27
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -125,7 +125,7 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 func TestQuerySimpleWithUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -148,7 +148,7 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 					"Name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -182,7 +182,7 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 			testUtils.CreateDoc{
 				Doc: `{ }`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -243,7 +243,7 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 					"name": "Andy",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
                     User {
                         _docID
@@ -265,7 +265,7 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 				CollectionID: 1,
 				DocID:        0,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
                     User {
                         _docID

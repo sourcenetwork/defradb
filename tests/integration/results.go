@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -15,19 +15,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"testing"
 	"time"
 
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
-	"github.com/onsi/gomega/types"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/immutable"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -41,39 +37,21 @@ func init() {
 	})
 }
 
-// TestState is read-only interface for test state. It allows passing the state to custom matchers
-// without allowing them to modify the state.
-type TestState interface {
-	// GetClientType returns the client type of the test.
-	GetClientType() state.ClientType
-	// GetCurrentNodeID returns the node id that is currently being asserted.
-	GetCurrentNodeID() int
-	// GetIdentity returns the identity for the given node index.
-	GetIdentity(state.Identity) acpIdentity.Identity
-	// GetDocID returns the document ID for the given collection index and document index.
-	GetDocID(collectionIndex, docIndex int) client.DocID
-}
+// TestState is a type alias for state.TestState.
+type TestState = state.TestState
+
+// TestStateMatcher is a type alias for state.TestStateMatcher.
+type TestStateMatcher = state.TestStateMatcher
+
+// StatefulMatcher is a type alias for state.StatefulMatcher.
+type StatefulMatcher = state.StatefulMatcher
 
 type testStateMatcher struct {
-	s TestState
+	s state.TestState
 }
 
-func (matcher *testStateMatcher) SetTestState(s TestState) {
+func (matcher *testStateMatcher) SetTestState(s state.TestState) {
 	matcher.s = s
-}
-
-// TestStateMatcher is a matcher that requires access to the test state.
-type TestStateMatcher interface {
-	types.GomegaMatcher
-	// SetTestState sets the test state.
-	SetTestState(s TestState)
-}
-
-// StatefulMatcher is a matcher that requires state to be reset between tests.
-type StatefulMatcher interface {
-	types.GomegaMatcher
-	// ResetMatcherState resets the state of the matcher.
-	ResetMatcherState()
 }
 
 // AnyOf may be used as `Results` field where the value may
@@ -257,35 +235,6 @@ func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
 func (matcher *docIDAt) String() string {
 	return fmt.Sprintf("DocIDAt(collectionIndex: %d, docIndex: %d): %s", matcher.collectionIndex,
 		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
-}
-
-// assertResultsEqual asserts that actual result is equal to the expected result.
-//
-// The comparison is relaxed when using client types other than goClientType.
-func assertResultsEqual(t testing.TB, client state.ClientType, expected any, actual any, msgAndArgs ...any) {
-	switch client {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
-		if !areResultsEqual(expected, actual) {
-			assert.EqualValues(t, expected, actual, msgAndArgs...)
-		}
-	default:
-		assert.EqualValues(t, expected, actual, msgAndArgs...)
-	}
-}
-
-// isResultsEqual checks that actual result is equal to the expected result and returns true if they are.
-//
-// The comparison is relaxed when using client types other than goClientType.
-func isResultsEqual(client state.ClientType, expected any, actual any) bool {
-	switch client {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
-		if !areResultsEqual(expected, actual) {
-			return assert.ObjectsAreEqualValues(expected, actual)
-		}
-		return true
-	default:
-		return assert.ObjectsAreEqualValues(expected, actual)
-	}
 }
 
 // areResultsAnyOf returns true if any of the expected results are of equal value.

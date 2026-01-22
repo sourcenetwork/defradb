@@ -59,7 +59,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Both Saadi and Gulistan should be synced to all nodes and linked correctly
 				Request: `query {
 					Book {

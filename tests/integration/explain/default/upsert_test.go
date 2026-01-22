@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -39,7 +40,7 @@ func TestDefaultExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					upsert_Author(
@@ -55,7 +56,7 @@ func TestDefaultExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 
 				ExpectedPatterns: upsertPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "upsertNode",
 						IncludeChildNodes: false,

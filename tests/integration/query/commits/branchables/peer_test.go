@@ -57,7 +57,7 @@ func TestQueryCommitsBranchables_SyncsAcrossPeerConnection(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid
@@ -158,7 +158,7 @@ func TestQueryCommitsBranchables_SyncsMultipleAcrossPeerConnection(t *testing.T)
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid

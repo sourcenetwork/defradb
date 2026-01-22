@@ -32,7 +32,7 @@ func TestMutationDeletion_WithFilter(t *testing.T) {
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(filter: {name: {_eq: "Shahzad"}}) {
 						name
@@ -81,7 +81,7 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 					"age": 3
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(filter: {name: {_eq: "Shahzad"}}) {
 						age
@@ -130,7 +130,7 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(filter: {}) {
 						name
@@ -172,7 +172,7 @@ func TestMutationDeletion_WithFilterNoMatch(t *testing.T) {
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(filter: {name: {_eq: "Lone"}}) {
 						name
@@ -198,7 +198,7 @@ func TestMutationDeletion_WithFilterOnEmptyCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(filter: {name: {_eq: "Lone"}}) {
 						name

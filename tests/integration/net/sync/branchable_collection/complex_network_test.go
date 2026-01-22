@@ -110,7 +110,7 @@ func TestBranchableCollectionSync_WithMultipleDocsInComplexLinkedNetwork_ShouldS
 				NodeID: 0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					User {
@@ -200,7 +200,7 @@ func TestBranchableCollectionSync_WithMultipleDocumentHeadsReceivedFromPeers_Sho
 				NodeID: 0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					User {
@@ -340,7 +340,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeers_ShouldHaveIdenticalDAG(
 				NodeID: 3,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {fieldName: {_eq: null}}) {
 						cid
@@ -497,7 +497,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 					"origin": "all",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {fieldName: {_eq: null}}) {
 						cid
@@ -530,7 +530,7 @@ func TestBranchableCollectionSync_WithDocumentsFromPeersAndNewHeadAfterSync_Shou
 				},
 			},
 			// Make sure the new collection block for the new doc has all previous heads as links
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {fieldName: {_eq: null}}, order: {height: DESC}, limit: 1) {
 						heads {

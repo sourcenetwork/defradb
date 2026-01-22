@@ -44,7 +44,7 @@ func TestView_SimpleWithAlias(t *testing.T) {
 					"name":	"John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

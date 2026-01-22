@@ -96,7 +96,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithoutIdentity_Shou
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Author(filter: {
@@ -131,7 +131,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithIdentity_ShouldF
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -179,7 +179,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithWrongIdentity_Sh
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -215,7 +215,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithoutIdentity_Shou
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book(filter: {
@@ -248,7 +248,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithIdentity_ShouldF
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -295,7 +295,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithWrongIdentity_Sh
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {

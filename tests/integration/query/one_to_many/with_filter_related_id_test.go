@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -91,7 +92,7 @@ func TestQueryFromManySideWithEqFilterOnRelatedType(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {author: {_docID: {_eq: "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"}}}) {
 						name
@@ -187,7 +188,7 @@ func TestQueryFromManySideWithFilterOnRelatedObjectID(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_authorID: {_eq: "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"}}) {
 						name
@@ -283,7 +284,7 @@ func TestQueryFromManySideWithSameFiltersInDifferentWayOnRelatedType(t *testing.
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(
 						filter: {
@@ -384,7 +385,7 @@ func TestQueryFromSingleSideWithEqFilterOnRelatedType(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {published: {_docID: {_eq: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"}}}) {
 						name
@@ -479,7 +480,7 @@ func TestQueryFromSingleSideWithFilterOnRelatedObjectID_Error(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {_publishedID: {_eq: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"}}) {
 						name

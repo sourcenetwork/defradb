@@ -44,7 +44,7 @@ func TestQuerySimpleWithIntGreaterThanAndIntLessThanFilter(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_and: [{Age: {_gt: 20}}, {Age: {_lt: 50}}]}) {
 						Name
@@ -92,7 +92,7 @@ func TestQuerySimple_WithInlineIntArray_GreaterThanAndLessThanFilter_Succeeds(t 
 					"FavoriteNumbers": [30, 40, 50]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_and: [
 						{FavoriteNumbers: {_all: {_geq: 0}}},

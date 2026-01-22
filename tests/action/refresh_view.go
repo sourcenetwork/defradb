@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // RefreshViews action will execute a call to `store.RefreshViews` using the provided options.
@@ -46,4 +47,24 @@ func (a *RefreshViews) Execute() {
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
+}
+
+// refreshViews refreshes views for all collection names in state.
+// This is used by the Request action when view type is materialized.
+func refreshViews(s *state.State, node *state.NodeState, expectedError string) bool {
+	if s.ViewType != state.MaterializedViewType {
+		return false
+	}
+	for _, colName := range s.CollectionNames {
+		err := node.RefreshViews(
+			s.Ctx,
+			client.CollectionFetchOptions{
+				Name: immutable.Some(colName),
+			},
+		)
+		if assertError(s.T, err, expectedError) {
+			return true
+		}
+	}
+	return false
 }

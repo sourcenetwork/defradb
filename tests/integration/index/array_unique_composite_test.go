@@ -54,7 +54,7 @@ func TestArrayUniqueCompositeIndex_WithUniqueCombinations_Succeed(t *testing.T) 
 					"nfts2": [1, 3]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -62,7 +62,7 @@ func TestArrayUniqueCompositeIndex_WithUniqueCombinations_Succeed(t *testing.T) 
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -177,7 +177,7 @@ func TestArrayUniqueCompositeIndex_IfDocsHaveNilValues_Succeed(t *testing.T) {
 					"nfts2": [2, 4, null, 5, 6, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {nfts1: {_any: {_eq: null}}, nfts2: {_any: {_eq: null}}}) {
 							name

@@ -82,7 +82,7 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 					"_reviewedByID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name

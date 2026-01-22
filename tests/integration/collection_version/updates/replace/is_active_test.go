@@ -36,7 +36,7 @@ func TestColVersionUpdateReplaceIsActive_False(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_docID
@@ -80,7 +80,7 @@ func TestColVersionUpdateReplaceIsActive_FalseThenTrue(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_docID

@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -37,7 +38,7 @@ func TestQuerySimple_WithMaxFilter_Succeeds(t *testing.T) {
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max(Users: {field: Age, filter: {Age: {_lt: 32}}})
 				}`,

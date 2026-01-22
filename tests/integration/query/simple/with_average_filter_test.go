@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -37,7 +38,7 @@ func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_avg(Users: {field: Age, filter: {Age: {_gt: 26}}})
 				}`,
@@ -75,7 +76,7 @@ func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
 					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_avg(Users: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56-05:00"}}})
 				}`,

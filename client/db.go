@@ -228,6 +228,9 @@ type Store interface {
 	// Use AddLens to store a lens and obtain its CID before calling AddView.
 	// The transform will execute after the query has run. It is not limited to just transforming
 	// the input documents - it may also yield new ones, or filter out those passed in from the underlying query.
+	//
+	// If the view being added is materialized, the results will be generated and cached during this call.  This
+	// may take some time if the dataset is large.
 	AddView(
 		ctx context.Context,
 		gqlQuery string,

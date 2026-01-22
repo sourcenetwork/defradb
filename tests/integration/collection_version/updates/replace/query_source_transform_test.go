@@ -90,7 +90,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					"lastName":  "S"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

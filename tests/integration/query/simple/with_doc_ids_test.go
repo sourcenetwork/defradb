@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestQueryWithDocIDsFilter_SingleTargetNotFound(t *testing.T) {
 						"Age": 21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(docID: ["bae-52b9170d-b77a-5887-b877-cbdbb99b009g"]) {
 							Name
@@ -51,7 +52,7 @@ func TestQueryWithDocIDsFilter_SingleTargetFound(t *testing.T) {
 						"Age": 21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"]) {
 							Name
@@ -88,7 +89,7 @@ func TestQuerySimpleWithDocIDsFilter_OneFoundFromMultipleTargets(t *testing.T) {
 						"Age": 32
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"]) {
 							Name
@@ -131,7 +132,7 @@ func TestQuerySimpleWithDocIDsFilter_AllFoundFromMultipleTargets(t *testing.T) {
 						"Age": 32
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-0000ef46-9bf6-5a83-9bbf-da288687c830"]) {
 							Name
@@ -167,7 +168,7 @@ func TestQuerySimpleReturnsNothinGivenEmptyDocIDsFilter(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(docID: []) {
 						Name
