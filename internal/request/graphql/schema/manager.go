@@ -15,11 +15,11 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/astprinter"
 	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
 
+	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/core"
 	gql "github.com/sourcenetwork/graphql-go"
 	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
 	"github.com/sourcenetwork/graphql-go/language/source"
