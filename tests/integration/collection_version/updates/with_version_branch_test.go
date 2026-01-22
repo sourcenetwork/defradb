@@ -62,7 +62,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 				// The email field is not queriable
 				ExpectedError: `Cannot query field "email" on type "Users".`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				// The second schema version is present in the system, with the email field
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID: immutable.Some(schemaVersion2ID),
@@ -109,7 +109,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				// The third schema version is present in the system, with the phone field
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID: immutable.Some(schemaVersion3ID),
@@ -144,7 +144,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -238,7 +238,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				// The fourth schema version is present in the system, with the phone and discordName field
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID: immutable.Some(schemaVersion4ID),
@@ -278,7 +278,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -388,7 +388,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 				// The phone field is not queriable
 				ExpectedError: `Cannot query field "phone" on type "Users".`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -487,7 +487,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				// The fourth schema version is present in the system, with the email and discordName field
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID: immutable.Some(schemaVersion4ID),
@@ -527,7 +527,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -600,7 +600,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID: immutable.Some(schemaVersion1ID),
 				},

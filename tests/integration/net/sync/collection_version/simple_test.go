@@ -42,7 +42,7 @@ func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 				VersionIDs: []string{"bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				NodeID: immutable.Some(0),
 				ExpectedResults: []client.CollectionVersion{
 					{
@@ -64,7 +64,7 @@ func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},

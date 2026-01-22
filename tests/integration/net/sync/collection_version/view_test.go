@@ -73,7 +73,7 @@ func TestSyncColVersion_WithView(t *testing.T) {
 				NodeID:     1,
 				VersionIDs: []string{"{{.CollectionVersionID1}}"},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},

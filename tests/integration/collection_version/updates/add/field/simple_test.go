@@ -51,7 +51,7 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID: immutable.Some(schemaVersion2ID),
 				},
@@ -143,7 +143,7 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID: immutable.Some(schemaVersion2ID),
 				},

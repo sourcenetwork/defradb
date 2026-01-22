@@ -39,7 +39,7 @@ func TestBranchableCollection_AddNewField_ShouldUpdateCollectionDefinition(t *te
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("User"),
 				},

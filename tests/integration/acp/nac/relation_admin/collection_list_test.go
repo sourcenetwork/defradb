@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,7 +29,7 @@ func TestNAC_AdminRelation_CanCollectionList(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				ExpectedError: "not authorized to perform operation",
 			},
@@ -42,7 +43,7 @@ func TestNAC_AdminRelation_CanCollectionList(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:        testUtils.ClientIdentity(2),
 				ExpectedResults: []client.CollectionVersion{},
 			},

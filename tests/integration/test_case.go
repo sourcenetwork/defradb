@@ -181,11 +181,6 @@ type PatchCollection struct {
 	ExpectedError string
 }
 
-// GetCollections is an action that fetches collections using the provided options.
-//
-// ID, RootID and CollectionVersionID will only be asserted on if an expected value is provided.
-type GetCollections = action.GetCollections
-
 // SetActiveCollectionVersion is an action that will set the active collection version to the
 // given value.
 type SetActiveCollectionVersion struct {
