@@ -377,9 +377,16 @@ test\:changes:
 test\:js:
 	GOOS=js GOARCH=wasm gotestsum --format testname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
 
-.PHONY: test\:introspectionjs
-test\:introspectionjs:
-	go test -tags npx -run ^TestIntrospectionResult$$ ./internal/request/graphql/schema
+.PHONY: test\:npx
+test\:npx:
+	@npx_files=$$(grep -rl --include='*_test.go' -E '^//go:build.*\bnpx\b|^// \+build.*\bnpx\b' .); \
+	if [ -z "$$npx_files" ]; then \
+		echo "No npx-tagged tests found"; \
+		exit 0; \
+	fi; \
+	packages=$$(echo "$$npx_files" | xargs -n1 dirname | sort -u | sed 's|^\./||' | sed 's|^|./|'); \
+	test_pattern=$$(echo "$$npx_files" | xargs grep -h -E '^func (Test[A-Za-z0-9_]+)' | sed -E 's/^func (Test[A-Za-z0-9_]+).*/\1/' | paste -sd '|' -); \
+	echo "$$packages" | xargs gotestsum --format pkgname -- -tags=npx -run "^($$test_pattern)$$"
 
 .PHONY: validate\:codecov
 validate\:codecov:
