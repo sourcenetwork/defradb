@@ -11,18 +11,12 @@
 package cli
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wundergraph/graphql-go-tools/v2/pkg/astprinter"
-	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
-
-	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -53,7 +47,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 			// Either we use stdin or we concat all the file
 			// arguments
 			if len(args) == 1 && args[0] == "-" {
-				sdlByteBuf, err := io.ReadAll(os.Stdin)
+				sdlByteBuf, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
 					return err
 				}
@@ -75,6 +69,28 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 					fileInputBuf.Write(fileBuf)
 				}
 				sdlBuf = fileInputBuf.String()
+			}
+
+			var outWriter io.Writer
+			if outputFile == "-" {
+				outWriter = cmd.OutOrStdout()
+			} else {
+				// check if the file exists, if so check for the overwrite
+				// flag
+				ofinfo, err := os.Stat(outputFile)
+				if err != nil && !errors.Is(err, os.ErrNotExist) {
+					return err
+				}
+				if ofinfo != nil && !yesOverwrite {
+					return errors.New("output file path already exists. If you want to overwrite use -y")
+				}
+
+				f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+				if err != nil {
+					return err
+				}
+				defer f.Close() //nolint:errcheck
+				outWriter = f
 			}
 
 			schemaManager, err := schema.NewSchemaManager(searchableEncryption)
@@ -101,55 +117,7 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 				return errors.Join(ErrGeneratingSDL, err)
 			}
 
-			params := gql.Params{Schema: *schemaManager.Schema(), RequestString: introspectionQueryRequest}
-			r := gql.Do(params)
-			if len(r.Errors) != 0 {
-				// for simplicity we're just going to return the
-				// first error, if there are more, they'll be caught on
-				// follow up invocations.
-				return errors.Join(ErrGeneratingSDL, r.Errors[0])
-			}
-
-			respJson, err := json.Marshal(r.Data)
-			if err != nil {
-				return err
-			}
-			respBuf := bytes.NewBuffer(respJson)
-
-			converter := introspection.JsonConverter{}
-			doc, err := converter.GraphQLDocument(respBuf)
-			if err != nil {
-				return err
-			}
-
-			var outWriter io.Writer
-			if outputFile == "-" {
-				outWriter = os.Stdout
-			} else {
-				// check if the file exists, if so check for the overwrite
-				// flag
-				ofinfo, err := os.Stat(outputFile)
-				if err != nil && !errors.Is(err, os.ErrNotExist) {
-					return err
-				}
-				if ofinfo != nil && !yesOverwrite {
-					return errors.New("output file path already exists. If you want to overwrite use -y")
-				}
-
-				f, err := os.OpenFile(outputFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-				if err != nil {
-					return err
-				}
-				defer f.Close() //nolint:errcheck
-				outWriter = f
-			}
-
-			err = astprinter.PrintIndent(doc, []byte("    "), outWriter)
-			if err != nil {
-				return errors.Join(ErrWritingOutput, err)
-			}
-
-			return nil
+			return schemaManager.WriteSDL(outWriter)
 		},
 	}
 
@@ -176,5 +144,3 @@ func MakeSDLGenerateCommand(ctx context.Context) *cobra.Command {
 
 	return cmd
 }
-
-var introspectionQueryRequest = "query IntrospectionQuery{__schema{queryType{name}mutationType{name}subscriptionType{name}types{...FullType}directives{name description locations args{...InputValue}}}}fragment FullType on __Type{kind name description fields(includeDeprecated:true){name description args{...InputValue}type{...TypeRef}isDeprecated deprecationReason}inputFields{...InputValue}interfaces{...TypeRef}enumValues(includeDeprecated:true){name description isDeprecated deprecationReason}possibleTypes{...TypeRef}}fragment InputValue on __InputValue{name description type{...TypeRef}defaultValue}fragment TypeRef on __Type{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name}}}}}}}}}}" //nolint:lll
