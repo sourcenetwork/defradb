@@ -15,14 +15,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/testo/multiplier"
 
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/action"
 )
-
-var log = corelog.NewLogger("tests.multiplier")
 
 func init() {
 	multiplier.Register(&secondaryIndex{})

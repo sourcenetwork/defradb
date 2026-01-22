@@ -10,7 +10,12 @@
 
 package multiplier
 
-import m "github.com/sourcenetwork/testo/multiplier"
+import (
+	"github.com/sourcenetwork/corelog"
+	m "github.com/sourcenetwork/testo/multiplier"
+)
 
 type Multiplier = m.Multiplier
 type Name = m.Name
+
+var log = corelog.NewLogger("tests.multiplier")
