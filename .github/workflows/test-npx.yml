@@ -24,9 +24,9 @@ on:
       - develop
 
 jobs:
-  # This job runs the JS tests to ensure they are able to build and run.
+  # This job runs the tests that depend on npx to ensure they are able to build and run.
   test-js:
-    name: Test JS build job
+    name: Test NPX/JS build job
     runs-on: ubuntu-latest
 
     steps:
@@ -36,5 +36,5 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      - name: Test Introspection JS Client
-        run: make test:introspectionjs
+      - name: Run NPX/JS dependent tests
+        run: make test:npx

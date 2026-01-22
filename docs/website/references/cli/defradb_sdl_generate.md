@@ -1,18 +1,46 @@
-## defradb
+## defradb sdl generate
 
-DefraDB Edge Database
+Generate full GraphQL formatted schema.
 
 ### Synopsis
 
-DefraDB is the edge database to power the user-centric future.
+Generates the fully formatted GraphQL schema from a given user type definition(s).
 
-Start a DefraDB node, interact with a local or remote node, and much more.
+		Accepts multiple input files as well as "-" to use stdin.
+		
 
+```
+defradb sdl generate --output schema.graphql <input schema files...> [flags]
+```
+
+### Examples
+
+```
+Generate SDL:  
+  defradb sdl generate foo.graphql
+
+Generate Multiple SDLs:  
+  defradb sdl generate foo.graphql bar.graphql
+
+Generate SDL and overwrite output:  
+  defradb sdl generate foo.graphql bar.graphql --output schema.graphql -y
+
+Generate SDL with Searchable Encryption type definitions:  
+  defradb sdl generate foo.graphql -s
+```
 
 ### Options
 
 ```
-  -h, --help                        help for defradb
+  -h, --help                            help for generate
+  -s, --include-searchable-encryption   Include the schema type definitions to support Searchable Encryption
+  -o, --output string                   The output file to write the generated schema. Accepts '-' to write to stdout (default "schema.gen.graphql")
+  -y, --overwrite                       Overwrite any existing matching output file paths
+```
+
+### Options inherited from parent commands
+
+```
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
       --keyring-namespace string    Service name to use when using the system backend (default "defradb")
       --keyring-path string         Path to store encrypted keys when using the file backend (default "keys")
@@ -32,12 +60,5 @@ Start a DefraDB node, interact with a local or remote node, and much more.
 
 ### SEE ALSO
 
-* [defradb client](defradb_client.md)	 - Interact with a DefraDB node
-* [defradb identity](defradb_identity.md)	 - Interact with identity features of DefraDB instance
-* [defradb keyring](defradb_keyring.md)	 - Manage DefraDB private keys
 * [defradb sdl](defradb_sdl.md)	 - Utilities to interact with the DefraDB SDL
-* [defradb server-dump](defradb_server-dump.md)	 - Dumps the state of the entire database
-* [defradb start](defradb_start.md)	 - Start a DefraDB node
-* [defradb version](defradb_version.md)	 - Display the version information of DefraDB and its components
-* [defradb wizard](defradb_wizard.md)	 - Runs the DefraDB setup wizard
 

@@ -791,7 +791,7 @@ func BlobOperatorBlock(blobScalarType *gql.Scalar) *gql.InputObject {
 func NotNullBlobOperatorBlock(blobScalarType *gql.Scalar) *gql.InputObject {
 	return gql.NewInputObject(gql.InputObjectConfig{
 		Name:        "NotNullBlobOperatorBlock",
-		Description: notNullStringOperatorBlockDescription,
+		Description: notNullBlobOperatorBlockDescription,
 		Fields: gql.InputObjectConfigFieldMap{
 			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
