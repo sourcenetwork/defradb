@@ -15,10 +15,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryInlineBooleanArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -54,6 +57,8 @@ func TestQueryInlineBooleanArray_WithEqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineBooleanArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -89,6 +94,8 @@ func TestQueryInlineBooleanArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineNullableBooleanArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -124,6 +131,8 @@ func TestQueryInlineNullableBooleanArray_WithEqFilter_ReturnsResults(t *testing.
 
 func TestQueryInlineNullableBooleanArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -159,6 +168,8 @@ func TestQueryInlineNullableBooleanArray_WithNeqFilter_ReturnsResults(t *testing
 
 func TestQueryInlineIntegerArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -194,6 +205,8 @@ func TestQueryInlineIntegerArray_WithEqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -229,6 +242,8 @@ func TestQueryInlineIntegerArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineNullableIntegerArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -264,6 +279,8 @@ func TestQueryInlineNullableIntegerArray_WithEqFilter_ReturnsResults(t *testing.
 
 func TestQueryInlineNullableIntegerArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -299,6 +316,8 @@ func TestQueryInlineNullableIntegerArray_WithNeqFilter_ReturnsResults(t *testing
 
 func TestQueryInlineFloatArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -334,6 +353,8 @@ func TestQueryInlineFloatArray_WithEqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -368,6 +389,8 @@ func TestQueryInlineFloatArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 }
 func TestQueryInlineNullableFloatArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -403,6 +426,8 @@ func TestQueryInlineNullableFloatArray_WithEqFilter_ReturnsResults(t *testing.T)
 
 func TestQueryInlineNullableFloatArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -438,6 +463,8 @@ func TestQueryInlineNullableFloatArray_WithNeqFilter_ReturnsResults(t *testing.T
 
 func TestQueryInlineStringArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -473,6 +500,8 @@ func TestQueryInlineStringArray_WithEqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineStringArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -508,6 +537,8 @@ func TestQueryInlineStringArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 
 func TestQueryInlineNullableStringArray_WithEqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
@@ -543,6 +574,8 @@ func TestQueryInlineNullableStringArray_WithEqFilter_ReturnsResults(t *testing.T
 
 func TestQueryInlineNullableStringArray_WithNeqFilter_ReturnsResults(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
