@@ -59,10 +59,6 @@ type GetCollections struct {
 var _ Action = (*GetCollections)(nil)
 var _ Stateful = (*GetCollections)(nil)
 
-// ReplaceMapFunc is a callback for template replacement (lens IDs).
-// Wired up from tests/integration/utils.go.
-var ReplaceMapFunc func(s *state.State, nodeID int, inputSet []string) map[string]string
-
 // Execute executes the get collections action.
 func (a *GetCollections) Execute() {
 	// Collect transform strings from expected results for lens ID replacement
@@ -75,8 +71,8 @@ func (a *GetCollections) Execute() {
 
 	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
 	// This will need to change if patches want to replace more than just lens IDs.
-	if ReplaceMapFunc != nil && len(transformSet) > 0 {
-		transformMap := ReplaceMapFunc(a.s, 0, transformSet)
+	if len(transformSet) > 0 {
+		transformMap := replaceMap(a.s, 0, transformSet)
 
 		for i, col := range a.ExpectedResults {
 			if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
