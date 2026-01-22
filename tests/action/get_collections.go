@@ -93,7 +93,7 @@ func (a *GetCollections) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		txn := a.getTransaction(node)
+		txn := getTransaction(a.s, node, a.TransactionID, a.ExpectedError)
 		ctx := db.InitContext(a.s.Ctx, txn)
 		ctx = getContextWithIdentity(ctx, a.s, a.Identity, nodeID)
 
@@ -112,28 +112,32 @@ func (a *GetCollections) Execute() {
 	}
 }
 
-// getTransaction returns the transaction for this action, creating one if needed.
-func (a *GetCollections) getTransaction(db client.TxnStore) client.Txn {
-	if !a.TransactionID.HasValue() {
+// getTransaction returns the transaction, creating one if needed.
+func getTransaction(
+	s *state.State,
+	db client.TxnStore,
+	transactionSpecifier immutable.Option[int],
+	expectedError string,
+) client.Txn {
+	if !transactionSpecifier.HasValue() {
 		return nil
 	}
 
-	transactionID := a.TransactionID.Value()
-
-	if transactionID >= len(a.s.Txns) {
+	transactionID := transactionSpecifier.Value()
+	if transactionID >= len(s.Txns) {
 		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		a.s.Txns = append(a.s.Txns, make([]client.Txn, transactionID-len(a.s.Txns)+1)...)
+		s.Txns = append(s.Txns, make([]client.Txn, transactionID-len(s.Txns)+1)...)
 	}
 
-	if a.s.Txns[transactionID] == nil {
+	if s.Txns[transactionID] == nil {
 		txn, err := db.NewTxn(false)
-		if assertError(a.s.T, err, a.ExpectedError) {
+		if assertError(s.T, err, expectedError) {
 			txn.Discard()
 			return nil
 		}
 
-		a.s.Txns[transactionID] = txn
+		s.Txns[transactionID] = txn
 	}
 
-	return a.s.Txns[transactionID]
+	return s.Txns[transactionID]
 }
