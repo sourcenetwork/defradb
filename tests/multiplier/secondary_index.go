@@ -162,15 +162,23 @@ func extractTypeNames(schema string) []string {
 	return names
 }
 
-// countSingleRelationsTo counts how many single (non-array) relation fields a type has pointing to targetType.
-func countSingleRelationsTo(schema, sourceType, targetType string) int {
-	typeBlockPattern := regexp.MustCompile(`type\s+` + sourceType + `\s*\{([^}]*)\}`)
+// extractTypeBody returns the body (fields) of a type definition.
+// Returns empty string if the type is not found.
+func extractTypeBody(schema, typeName string) string {
+	typeBlockPattern := regexp.MustCompile(`type\s+` + typeName + `\s*\{([^}]*)\}`)
 	match := typeBlockPattern.FindStringSubmatch(schema)
 	if len(match) < 2 {
+		return ""
+	}
+	return match[1]
+}
+
+// countSingleRelationsTo counts how many single (non-array) relation fields a type has pointing to targetType.
+func countSingleRelationsTo(schema, sourceType, targetType string) int {
+	typeBody := extractTypeBody(schema, sourceType)
+	if typeBody == "" {
 		return 0
 	}
-	typeBody := match[1]
-
 	singleRelPattern := regexp.MustCompile(`\w+:\s*` + targetType + `[^!\w\[]`)
 	return len(singleRelPattern.FindAllString(typeBody, -1))
 }
@@ -207,26 +215,20 @@ func findOneToOneFKFields(schema string, typeNames []string) map[string]bool {
 	result := make(map[string]bool)
 
 	for _, typeName := range typeNames {
-		// Get all single relation fields in this type
-		typeBlockPattern := regexp.MustCompile(`type\s+` + typeName + `\s*\{([^}]*)\}`)
-		match := typeBlockPattern.FindStringSubmatch(schema)
-		if len(match) < 2 {
+		typeBody := extractTypeBody(schema, typeName)
+		if typeBody == "" {
 			continue
 		}
-		typeBody := match[1]
 
-		// For each other type (including self), check if it's a one-to-one relation
 		for _, otherType := range typeNames {
 			if !isOneToOneRelation(schema, typeName, otherType) {
 				continue
 			}
 
-			// Find all single relation field names pointing to otherType
 			fieldPattern := regexp.MustCompile(`(\w+):\s*` + otherType + `[^!\w\[]`)
 			fieldMatches := fieldPattern.FindAllStringSubmatch(typeBody, -1)
 			for _, fm := range fieldMatches {
 				if len(fm) > 1 {
-					// Add the FK field name (e.g., "_authorID" for field "author")
 					result[request.ToFieldID(fm[1])] = true
 				}
 			}
@@ -241,20 +243,17 @@ func findOneToOneFKFields(schema string, typeNames []string) map[string]bool {
 func addIndexesToSchema(schema string) string {
 	result := schema
 
-	// Build set of one-to-one FK field names to skip (e.g., "_authorID" for one-to-one "author: Author")
 	typeNames := extractTypeNames(schema)
 	oneToOneFKFields := findOneToOneFKFields(schema, typeNames)
 
-	// Add @index to scalar types, but skip one-to-one FK fields
 	for i := range scalarTypes {
 		pattern := scalarPatterns[i]
 		// Add @index after the type (before any other directives)
 		// Example: "name: String @crdt(...)\n" -> "name: String @index @crdt(...)\n"
 		result = pattern.ReplaceAllStringFunc(result, func(match string) string {
-			// Extract field name from match (format: "fieldName: Type...")
 			fieldName := extractFieldName(match)
 			if oneToOneFKFields[fieldName] {
-				return match // Skip one-to-one FK fields
+				return match
 			}
 			return pattern.ReplaceAllString(match, "${1}${2} @index${3}${4}")
 		})
@@ -280,8 +279,6 @@ func addRelationIndexesForType(result, originalSchema, typeName string, allTypes
 				continue
 			}
 
-			// Match single relation fields to otherType (not arrays)
-			// Pattern: fieldName: OtherType (followed by space, @, newline, or end)
 			pattern := regexp.MustCompile(`(\w+:\s*)(` + otherType + `)(\s|@|\n|$)`)
 			typeBlock = pattern.ReplaceAllStringFunc(typeBlock, func(match string) string {
 				if strings.Contains(match, "@index") {
