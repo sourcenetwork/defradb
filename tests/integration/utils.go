@@ -385,9 +385,6 @@ func performAction(
 	case PatchCollection:
 		patchCollection(s, action)
 
-	case GetCollections:
-		getCollections(s, action)
-
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)
 
@@ -1058,53 +1055,6 @@ func patchCollection(
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(s)
-}
-
-func getCollections(
-	s *state.State,
-	action GetCollections,
-) {
-	transformSet := []string{}
-	for _, col := range action.ExpectedResults {
-		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
-			transformSet = append(transformSet, col.PreviousVersion.Value().Transform.Value())
-		}
-	}
-
-	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
-	// This will need to change if patches want to replace more than just lens IDs.
-	transformMap := replaceMap(s, 0, transformSet)
-
-	for i, col := range action.ExpectedResults {
-		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
-			action.ExpectedResults[i].PreviousVersion = immutable.Some(
-				client.CollectionSource{
-					SourceCollectionID: action.ExpectedResults[i].PreviousVersion.Value().SourceCollectionID,
-					Transform:          immutable.Some(transformMap[col.PreviousVersion.Value().Transform.Value()]),
-				},
-			)
-		}
-	}
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		txn := getTransaction(s, node, action.TransactionID, "")
-		ctx := db.InitContext(s.Ctx, txn)
-		ctx = getContextWithIdentity(ctx, s, action.Identity, nodeID)
-		results, err := node.GetCollections(ctx, action.FilterOptions)
-		resultDescriptions := make([]client.CollectionVersion, len(results))
-		for i, col := range results {
-			resultDescriptions[i] = col.Version()
-		}
-
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-		if !expectedErrorRaised {
-			assertCollectionVersions(s, action.ExpectedResults, resultDescriptions)
-		}
-	}
 }
 
 func setActiveCollectionVersion(

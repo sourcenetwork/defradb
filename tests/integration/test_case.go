@@ -184,38 +184,7 @@ type PatchCollection struct {
 // GetCollections is an action that fetches collections using the provided options.
 //
 // ID, RootID and CollectionVersionID will only be asserted on if an expected value is provided.
-type GetCollections struct {
-	// NodeID may hold the ID (index) of a node to get collections from.
-	//
-	// If a value is not provided collections will be gotten from all nodes.
-	NodeID immutable.Option[int]
-
-	// Used to identify the transaction for this to run against. Optional.
-	TransactionID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The expected results.
-	//
-	// Each item will be compared individually, if CollectionID, VersionID, or FieldIDs on the
-	// expected item are default they will not be compared with the actual.
-	//
-	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
-	// to allow their ommission in most cases).
-	ExpectedResults []client.CollectionVersion
-
-	// An optional set of fetch options for the collections.
-	FilterOptions client.CollectionFetchOptions
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
+type GetCollections = action.GetCollections
 
 // SetActiveCollectionVersion is an action that will set the active collection version to the
 // given value.
