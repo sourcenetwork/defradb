@@ -345,9 +345,9 @@ test\:coverage:
 	@$(MAKE) clean:coverage
 	mkdir $(COVERAGE_DIRECTORY)
 ifeq ($(path),)
-	gotestsum --format testname -- ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	gotestsum --format pkgname-and-test-fails -- ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
 else
-	gotestsum --format testname -- $(path) $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	gotestsum --format pkgname-and-test-fails -- $(path) $(TEST_FLAGS) $(COVERAGE_FLAGS)
 endif
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
