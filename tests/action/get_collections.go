@@ -90,8 +90,7 @@ func (a *GetCollections) Execute() {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		txn, err := a.s.GetTransaction(node, a.TransactionID)
-		if err != nil {
-			assertError(a.s.T, err, a.ExpectedError)
+		if assertError(a.s.T, err, a.ExpectedError) {
 			return
 		}
 		ctx := db.InitContext(a.s.Ctx, txn)
