@@ -89,7 +89,11 @@ func (a *GetCollections) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		txn := getTransaction(a.s, node, a.TransactionID, a.ExpectedError)
+		txn, err := a.s.GetTransaction(node, a.TransactionID)
+		if err != nil {
+			assertError(a.s.T, err, a.ExpectedError)
+			return
+		}
 		ctx := db.InitContext(a.s.Ctx, txn)
 		ctx = getContextWithIdentity(ctx, a.s, a.Identity, nodeID)
 
@@ -106,34 +110,4 @@ func (a *GetCollections) Execute() {
 			assertCollectionVersions(a.s, a.ExpectedResults, resultDescriptions)
 		}
 	}
-}
-
-// getTransaction returns the transaction, creating one if needed.
-func getTransaction(
-	s *state.State,
-	db client.TxnStore,
-	transactionSpecifier immutable.Option[int],
-	expectedError string,
-) client.Txn {
-	if !transactionSpecifier.HasValue() {
-		return nil
-	}
-
-	transactionID := transactionSpecifier.Value()
-	if transactionID >= len(s.Txns) {
-		// Extend the txn slice so this txn can fit and be accessed by TransactionId
-		s.Txns = append(s.Txns, make([]client.Txn, transactionID-len(s.Txns)+1)...)
-	}
-
-	if s.Txns[transactionID] == nil {
-		txn, err := db.NewTxn(false)
-		if assertError(s.T, err, expectedError) {
-			txn.Discard()
-			return nil
-		}
-
-		s.Txns[transactionID] = txn
-	}
-
-	return s.Txns[transactionID]
 }
