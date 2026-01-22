@@ -50,7 +50,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *testing.T
 					"numbers": [33, 44, 55]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -60,7 +60,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *testing.T
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
@@ -103,7 +103,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *testing.T
 					"numbers": [33, 44, 55]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -113,7 +113,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *testing.T
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
@@ -156,7 +156,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldNotUseIndex(t *testi
 					"numbers": [33, 44, 55]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -166,7 +166,7 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldNotUseIndex(t *testi
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// index is not used for _none operator as it might be even less optimal than full scan
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
@@ -211,7 +211,7 @@ func TestArrayIndexUpdate_IfUpdateRearrangesArrayElements_ShouldFetch(t *testing
 					"numbers": [50, 30, 40]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -221,7 +221,7 @@ func TestArrayIndexUpdate_IfUpdateRearrangesArrayElements_ShouldFetch(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
@@ -265,13 +265,13 @@ func TestArrayIndexUpdate_IfUpdateRemovesSoughtElement_ShouldNotFetch(t *testing
 					"numbers": [50, 40]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
@@ -315,7 +315,7 @@ func TestArrayIndexUpdate_IfUpdateAddsSoughtElement_ShouldFetch(t *testing.T) {
 					"numbers": [80, 30, 60]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -325,7 +325,7 @@ func TestArrayIndexUpdate_IfUpdateAddsSoughtElement_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -363,7 +363,7 @@ func TestArrayIndexDelete_IfUpdateRemovesSoughtElement_ShouldNotFetch(t *testing
 				}`,
 			},
 			testUtils.DeleteDoc{DocID: 0},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -404,7 +404,7 @@ func TestArrayIndex_Bool_ShouldUseIndex(t *testing.T) {
 					"booleans": [false, false]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -412,7 +412,7 @@ func TestArrayIndex_Bool_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
@@ -449,7 +449,7 @@ func TestArrayIndex_OptionalBool_ShouldUseIndex(t *testing.T) {
 					"booleans": [false, false]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -457,7 +457,7 @@ func TestArrayIndex_OptionalBool_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(2).WithIndexFetches(1),
 			},
@@ -494,7 +494,7 @@ func TestArrayIndex_OptionalInt_ShouldUseIndex(t *testing.T) {
 					"numbers": [2, 8]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -502,7 +502,7 @@ func TestArrayIndex_OptionalInt_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -539,7 +539,7 @@ func TestArrayIndex_Float_ShouldUseIndex(t *testing.T) {
 					"rates": [1.5, 1.2]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -547,7 +547,7 @@ func TestArrayIndex_Float_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -584,7 +584,7 @@ func TestArrayIndex_OptionalFloat_ShouldUseIndex(t *testing.T) {
 					"rates": [1.5, 1.2]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -592,7 +592,7 @@ func TestArrayIndex_OptionalFloat_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -629,7 +629,7 @@ func TestArrayIndex_OptionalString_ShouldUseIndex(t *testing.T) {
 					"hobbies": ["movies", "music"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -637,7 +637,7 @@ func TestArrayIndex_OptionalString_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -674,7 +674,7 @@ func TestArrayIndex_WithAnyAndInOperator_Succeed(t *testing.T) {
 					"numbers": [2, 8]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -682,7 +682,7 @@ func TestArrayIndex_WithAnyAndInOperator_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -720,7 +720,7 @@ func TestArrayIndex_WithAllAndInOperator_Succeed(t *testing.T) {
 					"numbers": [3, 5, 8]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_all: {_in: [3, 4, 5]}}}) {
 						name
@@ -766,7 +766,7 @@ func TestArrayIndex_WithNoneAndInOperator_Succeed(t *testing.T) {
 					"numbers": [3, 5, 8]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_none: {_in: [4, 5]}}}) {
 						name
@@ -812,7 +812,7 @@ func TestArrayIndex_WithNoneAndNinOperator_Succeed(t *testing.T) {
 					"numbers": [3, 5, 8]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_none: {_nin: [3, 4, 5]}}}) {
 						name
@@ -858,7 +858,7 @@ func TestArrayIndex_WithAllAndNinOperator_Succeed(t *testing.T) {
 					"numbers": [3, 5, 8]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_all: {_nin: [4, 5]}}}) {
 						name
@@ -904,7 +904,7 @@ func TestArrayIndex_WithAnyAndNinOperator_Succeed(t *testing.T) {
 					"numbers": [3, 5, 8]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_nin: [3, 4, 5]}}}) {
 						name
@@ -951,7 +951,7 @@ func TestArrayIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 					"numbers": [33, 44, 55]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {numbers: {_any: {_eq: 2}}}) {
 							name
@@ -963,7 +963,7 @@ func TestArrayIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {numbers: {_any: {_eq: null}}}) {
 							name
@@ -1016,7 +1016,7 @@ func TestArrayIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 					"numbers": [null, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {numbers: {_all: {_geq: 10}}}) {
 							name
@@ -1028,7 +1028,7 @@ func TestArrayIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {numbers: {_all: {_eq: null}}}) {
 							name
@@ -1074,7 +1074,7 @@ func TestArrayIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 					"numbers": [33, 44, 55]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {numbers: {_none: {_geq: 10}}}) {
 							name
@@ -1086,7 +1086,7 @@ func TestArrayIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {numbers: {_none: {_eq: null}}}) {
 							name

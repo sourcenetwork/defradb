@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +32,7 @@ func TestQueryInlineStringArray_WithAllFilter_Succeeds(t *testing.T) {
 					"pageHeaders": [null, "second"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {pageHeaders: {_all: {_neq: null}}}) {
 						name
@@ -66,7 +67,7 @@ func TestQueryInlineNotNullStringArray_WithAllFilter_Succeeds(t *testing.T) {
 					"preferredStrings": ["", "second"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {preferredStrings: {_all: {_neq: ""}}}) {
 						name
@@ -101,7 +102,7 @@ func TestQueryInlineIntArray_WithAllFilter_Succeeds(t *testing.T) {
 					"testScores": [null, 60]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {testScores: {_all: {_neq: null}}}) {
 						name
@@ -136,7 +137,7 @@ func TestQueryInlineNotNullIntArray_WithAllFilter_Succeeds(t *testing.T) {
 					"testScores": [0, 60]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {testScores: {_all: {_lt: 70}}}) {
 						name
@@ -171,7 +172,7 @@ func TestQueryInlineFloatArray_WithAllFilter_Succeeds(t *testing.T) {
 					"pageRatings": [null, 60]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {pageRatings: {_all: {_neq: null}}}) {
 						name
@@ -206,7 +207,7 @@ func TestQueryInlineNotNullFloatArray_WithAllFilter_Succeeds(t *testing.T) {
 					"pageRatings": [0, 60]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {pageRatings: {_all: {_lt: 70}}}) {
 						name
@@ -241,7 +242,7 @@ func TestQueryInlineBooleanArray_WithAllFilter_Succeeds(t *testing.T) {
 					"indexLikesDislikes": [null, true]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {indexLikesDislikes: {_all: {_neq: null}}}) {
 						name
@@ -276,7 +277,7 @@ func TestQueryInlineNotNullBooleanArray_WithAllFilter_Succeeds(t *testing.T) {
 					"likedIndexes": [true, true]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {likedIndexes: {_all: {_eq: true}}}) {
 						name
@@ -305,7 +306,7 @@ func TestQueryInlineStringArray_WithAllFilterAndNullValue_Succeeds(t *testing.T)
 					"pageHeaders": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {pageHeaders: {_all: {_eq: null}}}) {
 						name

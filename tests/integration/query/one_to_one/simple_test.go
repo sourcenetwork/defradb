@@ -36,7 +36,7 @@ func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
 						"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Book {
 							name
@@ -85,7 +85,7 @@ func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
 						"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -166,7 +166,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -243,7 +243,7 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -285,7 +285,7 @@ func TestQueryOneToOneWithNilChild(t *testing.T) {
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -317,7 +317,7 @@ func TestQueryOneToOneWithNilParent(t *testing.T) {
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -370,7 +370,7 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -421,7 +421,7 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

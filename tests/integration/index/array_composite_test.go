@@ -62,7 +62,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -73,7 +73,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -128,7 +128,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -139,7 +139,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// all "Shahzad" users have in total 5 numbers
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
@@ -195,7 +195,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t 
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -206,7 +206,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t 
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// all "Shahzad" users have in total 5 numbers
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
@@ -268,7 +268,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -280,7 +280,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// all "Shahzad" users have in total 5 numbers
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
@@ -342,7 +342,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -354,7 +354,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -425,7 +425,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 					"numbers3": [600, 800]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -473,7 +473,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 					"hobbies": ["books", "movies", "books", "movies"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_eq: 30}}}) {
 						name
@@ -483,7 +483,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 					"User": []map[string]any{{"name": "John"}},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_eq: 40}}}) {
 						name
@@ -497,7 +497,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_eq: 50}}}) {
 						name
@@ -508,7 +508,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_gt: 0}}, hobbies: {_any: {_eq: "sports"}}}) {
 						name
@@ -519,7 +519,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_gt: 0}}, hobbies: {_any: {_eq: "books"}}}) {
 						name
@@ -533,7 +533,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_gt: 0}}, hobbies: {_any: {_eq: "movies"}}}) {
 						name
@@ -576,7 +576,7 @@ func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testin
 				}`,
 			},
 			testUtils.DeleteDoc{DocID: 1},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_eq: 30}}}) {
 						name
@@ -586,7 +586,7 @@ func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testin
 					"User": []map[string]any{{"name": "John"}},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_gt: 0}}, hobbies: {_any: {_eq: "sports"}}}) {
 						name

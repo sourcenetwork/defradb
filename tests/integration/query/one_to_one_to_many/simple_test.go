@@ -59,7 +59,7 @@ func TestQueryOneToOneToMany(t *testing.T) {
 					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query  {
 							Observation {
 								name
@@ -133,7 +133,7 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query  {
 							Indicator {
 								name
@@ -209,7 +209,7 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query  {
 							Observation {
 								name
@@ -283,7 +283,7 @@ func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query  {
 							Indicator {
 								name

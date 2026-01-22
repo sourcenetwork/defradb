@@ -99,7 +99,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Any identity can read
 
 				Request: `
@@ -123,7 +123,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // Any identity can read
 
 				Request: `
@@ -161,7 +161,7 @@ resources:
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Can not read anymore
 
 				Request: `
@@ -179,7 +179,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // Can not read anymore
 
 				Request: `
@@ -312,7 +312,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Any identity can read
 
 				Request: `
@@ -336,7 +336,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // Any identity can read
 
 				Request: `
@@ -360,7 +360,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(4), // Any identity can read
 
 				Request: `
@@ -384,7 +384,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(5), // Any identity can read
 
 				Request: `
@@ -422,7 +422,7 @@ resources:
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // Can not read anymore, because it gained access implicitly.
 
 				Request: `
@@ -440,7 +440,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(5), // Can not read anymore, because it gained access implicitly.
 
 				Request: `
@@ -458,7 +458,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Can still read because it was given access explictly.
 
 				Request: `
@@ -482,7 +482,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(4), // Can still read because it was given access explictly.
 
 				Request: `
@@ -593,7 +593,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(), // Can read even without identity
 
 				Request: `
@@ -631,7 +631,7 @@ resources:
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(), // Can not read anymore
 
 				Request: `

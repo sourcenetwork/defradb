@@ -28,7 +28,7 @@ func TestEncryptedIndexCreate_IfP2PIsDisabled_CanNotDoSEQuery(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						encrypted_User(filter: {age: {_eq: 21}}) {

@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 
 	"github.com/sourcenetwork/immutable"
@@ -42,7 +43,7 @@ func TestMutationUpdateOneToOneNoChild(t *testing.T) {
 					unknownID,
 				),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -88,7 +89,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 					bookID,
 				),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -109,7 +110,7 @@ func TestMutationUpdateOneToOne(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Author {

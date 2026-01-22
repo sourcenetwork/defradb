@@ -126,36 +126,6 @@ jobs:
             "
           coverage-path: coverage.txt
 
-
-  # This job runs the tests on other operating systems using default configurations.
-  test-coverage-os:
-    name: Test coverage os job
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - macos-latest
-          # TODO: https://github.com/sourcenetwork/defradb/issues/2080
-          # Uncomment the line below to re-enable the windows build once this todo is resolved.
-          # - windows-latest
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout code into the directory
-        uses: actions/checkout@v6
-
-      - name: Setup defradb
-        uses: ./.github/composites/setup-defradb
-
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_os_${{ matrix.os }}"
-          coverage-path: coverage.txt
-
-
   # The document acp matrix job tests the combinations of source-hub acp and client types on linux.
   test-coverage-document-acp:
     name: Test coverage document acp job
@@ -372,7 +342,6 @@ jobs:
 
     needs:
       - test-coverage-basic        # 24 test(s)
-      - test-coverage-os           #  1 test(s) [excluding windows]
       - test-coverage-document-acp #  3 test(s)
       - test-coverage-lens         #  2 test(s)
       - test-coverage-view         #  1 test(s)

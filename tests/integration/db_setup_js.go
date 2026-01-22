@@ -11,12 +11,13 @@
 package tests
 
 import (
+	"github.com/sourcenetwork/immutable"
+	"github.com/stretchr/testify/require"
+
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
-	"github.com/stretchr/testify/require"
 )
 
 // setupNode returns the database implementation for the current

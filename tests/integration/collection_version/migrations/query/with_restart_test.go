@@ -61,7 +61,7 @@ func TestSchemaMigrationQueryWithRestart(t *testing.T) {
 				},
 			},
 			testUtils.Restart{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -123,7 +123,7 @@ func TestSchemaMigrationQueryWithRestartAndMigrationBeforePatchCollection(t *tes
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

@@ -1,0 +1,79 @@
+# Copyright 2026 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+# Note:
+# - Unlike the [test-coverage.yml] workflow, this macOS job doesn't upload
+#   coverage to CodeCov or use custom runners.
+# - This workflow tests on macOS to ensure cross-platform compatibility.
+
+name: Test MacOS Workflow
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - master
+      - develop
+
+# Cancel the workflow if its in progress when there is a new commit. This will reduce unecessary resource usage.
+concurrency:
+  group: ${{ github.workflow }}-\
+    ${{ github.ref_protected && github.run_id || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Default environment configuration settings.
+env:
+  CGO_ENABLED: 1
+
+  DEFRA_CLIENT_GO: true
+  DEFRA_CLIENT_HTTP: false
+  DEFRA_CLIENT_CLI: false
+  DEFRA_CLIENT_C: false
+
+  DEFRA_BADGER_MEMORY: true
+  DEFRA_BADGER_FILE: false
+
+  DEFRA_BADGER_ENCRYPTION: false
+
+  DEFRA_VECTOR_EMBEDDING: false
+
+  DEFRA_MUTATION_TYPE: collection-save
+  DEFRA_LENS_TYPE: wasm-time
+  DEFRA_DOCUMENT_ACP_TYPE: local
+  DEFRA_VIEW_TYPE: cacheless
+
+
+# We run all runners via the bash shell to provide us with a consistent set of env variables and commands
+defaults:
+  run:
+    shell: bash
+
+
+jobs:
+  test-macos:
+    name: Test macos job
+
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v6
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Run integration tests
+        run: make test:names

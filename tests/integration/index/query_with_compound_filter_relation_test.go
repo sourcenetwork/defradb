@@ -32,7 +32,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_NoData(t *testing.T) {
 					programs: [Program]
 				  }`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Program(
 						filter: {
@@ -69,7 +69,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_NoData(t *testing.T) {
 					programs: [Program]
 				  }`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Program(
 						filter: {
@@ -106,7 +106,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_NoData(t *testing.T) {
 					programs: [Program]
 				  }`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Program(
 						filter: {
@@ -182,7 +182,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationAndFilter_Data(t *testing.T) {
 					"name": "Zanzi"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Program(
 						filter: {
@@ -265,7 +265,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationOrFilter_Data(t *testing.T) {
                     "name": "Zanzi"
                 }`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Program(
 						filter: {
@@ -346,7 +346,7 @@ func TestIndex_QueryWithIndexOnOneToManyRelationNotFilter_Data(t *testing.T) {
                     "name": "Zanzi"
                 }`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Program(
 						filter: {

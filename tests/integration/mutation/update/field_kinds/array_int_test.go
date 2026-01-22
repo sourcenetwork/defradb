@@ -39,7 +39,7 @@ func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 					"favouriteIntegers": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -83,7 +83,7 @@ func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 					"favouriteIntegers": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -127,7 +127,7 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 					"favouriteIntegers": [8, 5, 3, 2, 1]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -171,7 +171,7 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 					"favouriteIntegers": [-1, 2, -3, 5, -8]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -215,7 +215,7 @@ func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T)
 					"favouriteIntegers": [1, 2, 3]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -259,7 +259,7 @@ func TestMutationUpdate_WithArrayOfIntsToLargerSizePositiveValues(t *testing.T) 
 					"favouriteIntegers": [1, 2, 3, 5, 8, 13, 21]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

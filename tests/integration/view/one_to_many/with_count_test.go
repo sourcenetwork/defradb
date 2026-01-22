@@ -69,7 +69,7 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 					"_authorID": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							AuthorView {
 								name
@@ -133,7 +133,7 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {
@@ -191,7 +191,7 @@ func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 					"name":	"Harper Lee"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {

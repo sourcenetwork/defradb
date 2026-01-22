@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -41,7 +42,7 @@ func TestDefaultExplainRequest_WithMinOnOneToManyJoinedField_Succeeds(t *testing
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -55,7 +56,7 @@ func TestDefaultExplainRequest_WithMinOnOneToManyJoinedField_Succeeds(t *testing
 
 				ExpectedPatterns: minTypeIndexJoinPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "minNode",
 						IncludeChildNodes: false,
@@ -118,7 +119,7 @@ func TestDefaultExplainRequest_WithMinOnOneToManyJoinedFieldWithFilter_Succeeds(
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -138,7 +139,7 @@ func TestDefaultExplainRequest_WithMinOnOneToManyJoinedFieldWithFilter_Succeeds(
 
 				ExpectedPatterns: minTypeIndexJoinPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "minNode",
 						IncludeChildNodes: false,
@@ -209,7 +210,7 @@ func TestDefaultExplainRequest_WithMinOnOneToManyJoinedFieldWithManySources_Succ
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -244,7 +245,7 @@ func TestDefaultExplainRequest_WithMinOnOneToManyJoinedFieldWithManySources_Succ
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "minNode",
 						IncludeChildNodes: false,

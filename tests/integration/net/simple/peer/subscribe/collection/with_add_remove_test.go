@@ -56,7 +56,7 @@ func TestP2PCollectionAddAndRemoveSingle(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// John has not been synced, as it was removed from the subscription set
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -120,7 +120,7 @@ func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// John the User has not been synced, as Users was removed from the subscription set.
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -132,7 +132,7 @@ func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Gillian the Giraffe has still been synced, as it was not removed from the subscription set.
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -186,7 +186,7 @@ func TestP2PCollectionAddSingleAndRemoveErroneous(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// John has been synced, as the unsubscribe errored and should not have affected
 				// the subscription to collection 0.
 				Request: `query {
@@ -239,7 +239,7 @@ func TestP2PCollectionAddSingleAndRemoveNone(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// John has been synced, as nothing was removed from the subscription set
 				Request: `query {
 					Users {

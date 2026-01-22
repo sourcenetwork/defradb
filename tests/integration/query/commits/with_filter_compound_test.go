@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -26,7 +27,7 @@ func TestQueryCommits_WithFilterFieldNameOrCondition_ReturnsMatchingCommits(t *t
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {_or: [{fieldName: {_eq: "age"}}, {fieldName: {_eq: "name"}}]}) {
 							fieldName
@@ -59,7 +60,7 @@ func TestQueryCommits_WithFilterFieldNameAndCondition_ReturnsOnlyNameCommit(t *t
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {_and: [{fieldName: {_neq: "_C"}}, {fieldName: {_neq: "age"}}]}) {
 							fieldName

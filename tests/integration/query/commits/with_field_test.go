@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -27,7 +28,7 @@ func TestQueryCommitsWithField(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (filter: {fieldName: {_eq: "age"}}) {
 							cid
@@ -58,7 +59,7 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (filter: {fieldName: {_eq: "1"}}) {
 							cid
@@ -85,7 +86,7 @@ func TestQueryCommitsWithCompositeField(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
@@ -118,7 +119,7 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedCollectionVersionID(t *test
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
@@ -150,7 +151,7 @@ func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {fieldName: {_neq: "_C"}}) {
 							fieldName
@@ -184,7 +185,7 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (
 							filter: {fieldName: {_eq: "age"}}, 
@@ -218,7 +219,7 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (
 							filter: {fieldName: {_eq: "name"}}, 
@@ -248,7 +249,7 @@ func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (
 							filter: {fieldName: {_eq: "NOT_A_FIELD"}}, 

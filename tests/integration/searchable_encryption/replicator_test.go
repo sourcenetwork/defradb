@@ -68,7 +68,7 @@ func TestSEReplicator_IfDocCreatedWhileReplicatorIsOffline_ShouldRetry(t *testin
 				NodeID: immutable.Some(1),
 			},
 			testUtils.WaitForSESync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					encrypted_Users(filter: {name: {_eq: "John"}}) {

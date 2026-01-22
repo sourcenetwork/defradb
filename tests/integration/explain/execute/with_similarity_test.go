@@ -33,7 +33,7 @@ func TestExecuteExplainRequest_WithSimilarity(t *testing.T) {
 					"pointsList": []float64{2, 4, 1},
 				},
 			},
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					User {
 						name

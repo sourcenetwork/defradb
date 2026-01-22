@@ -52,7 +52,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_AuthorizedIdentity_AllowAccess(t *tes
 				Filter:       `{name: {_eq: "Shahzad"}}`,
 				Updater:      `{"name": "Lone"}`,
 			},
-			testUtils.Request{ // Should now be updated
+			&action.Request{ // Should now be updated
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -101,7 +101,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_NotAuthorizedError(t *test
 				Updater:       `{"name": "Lone"}`,
 				ExpectedError: "not authorized to perform operation",
 			},
-			testUtils.Request{ // Should not be updated
+			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -150,7 +150,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_NotAuthorizedError(t *t
 				Updater:       `{"name": "Lone"}`,
 				ExpectedError: "not authorized to perform operation",
 			},
-			testUtils.Request{ // Should not be updated
+			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{

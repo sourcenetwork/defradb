@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +32,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockContainsString(t *testin
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nlike: "%Stormborn%"}}) {
 						Name
@@ -66,7 +67,7 @@ func TestQuerySimple_WithNotCaseInsensitiveLikeString_ShouldMatchString(t *testi
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nilike: "%stormborn%"}}) {
 						Name
@@ -101,7 +102,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockAsPrefixString(t *testin
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nlike: "Viserys%"}}) {
 						Name
@@ -136,7 +137,7 @@ func TestQuerySimple_WithNotCaseInsensitiveLikeString_ShouldMatchPrefixString(t 
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nilike: "viserys%"}}) {
 						Name
@@ -171,7 +172,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockAsSuffixString(t *testin
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nlike: "%Andals"}}) {
 						Name
@@ -206,7 +207,7 @@ func TestQuerySimple_WithNotCaseInsensitiveLikeString_ShouldMatchSuffixString(t 
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nilike: "%andals"}}) {
 						Name
@@ -241,7 +242,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockExactString(t *testing.T
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nlike: "Daenerys Stormborn of House Targaryen, the First of Her Name"}}) {
 						Name
@@ -276,7 +277,7 @@ func TestQuerySimple_WithNotCaseInsensitiveLikeString_MatchExactString(t *testin
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nilike: "daenerys stormborn of house targaryen, the first of her name"}}) {
 						Name
@@ -311,7 +312,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockContainsStringMuplitpleR
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nlike: "%Targaryen%"}}) {
 						Name
@@ -342,7 +343,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasStartAndEnd(t *testin
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nlike: "Daenerys%Name"}}) {
 						Name
@@ -377,7 +378,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasBoth(t *testing.T) {
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_and: [{Name: {_nlike: "%Baratheon%"}}, {Name: {_nlike: "%Stormborn%"}}]}) {
 						Name
@@ -412,7 +413,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockHasEither(t *testing.T) 
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_or: [{Name: {_nlike: "%Baratheon%"}}, {Name: {_nlike: "%Stormborn%"}}]}) {
 						Name
@@ -456,7 +457,7 @@ func TestQuerySimpleWithNotLikeStringContainsFilterBlockPropNotSet(t *testing.T)
 					"HeightM": 1.92
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Name: {_nlike: "%King%"}}) {
 						Name

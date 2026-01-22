@@ -38,7 +38,7 @@ func TestQueryCommitsBranchables(t *testing.T) {
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid
@@ -91,7 +91,7 @@ func TestQueryCommitsBranchables_WithAllFields(t *testing.T) {
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid

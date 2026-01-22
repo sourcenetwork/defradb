@@ -34,7 +34,7 @@ func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
                     query {
                         Users {
@@ -76,7 +76,7 @@ func TestDocSignature_WithEnabledSigning_ShouldQueryCommitsWithoutSignature(t *t
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
                     query {
                         Users {

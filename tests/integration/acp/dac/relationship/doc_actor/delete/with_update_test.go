@@ -122,7 +122,7 @@ resources:
 			},
 
 			// Ensure the other identity can read and update the document.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can also read.
 
 				Request: `
@@ -159,7 +159,7 @@ resources:
 			},
 
 			// The other identity can neither update nor read the other document anymore.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 
 				Request: `
@@ -193,7 +193,7 @@ resources:
 			},
 
 			// Ensure document was not accidentally updated using owner identity.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
@@ -323,7 +323,7 @@ resources:
 			},
 
 			// Ensure the other identity can read and update the document.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can also read.
 
 				Request: `
@@ -360,7 +360,7 @@ resources:
 			},
 
 			// The other identity can neither update nor read the other document anymore.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 
 				Request: `
@@ -394,7 +394,7 @@ resources:
 			},
 
 			// Ensure document was not accidentally updated using owner identity.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 
 				Request: `

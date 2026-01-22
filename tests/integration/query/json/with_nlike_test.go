@@ -57,7 +57,7 @@ func TestQueryJSON_WithNotLikeFilter_ShouldFilter(t *testing.T) {
 					"custom": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_nlike: "%Stormborn%"}}) {
 						custom

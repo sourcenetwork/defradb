@@ -14,6 +14,7 @@ import (
 	"math"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 
@@ -23,7 +24,7 @@ import (
 func TestQuerySimple_WithMaxOnUndefinedObject_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max
 				}`,
@@ -38,7 +39,7 @@ func TestQuerySimple_WithMaxOnUndefinedObject_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithMaxOnUndefinedField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max(Users: {})
 				}`,
@@ -53,7 +54,7 @@ func TestQuerySimple_WithMaxOnUndefinedField_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithMaxOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max(Users: {field: Age})
 				}`,
@@ -82,7 +83,7 @@ func TestQuerySimple_WithMax_Succeeds(t *testing.T) {
 					"Age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max(Users: {field: Age})
 				}`,
@@ -116,7 +117,7 @@ func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 					"Age":  int64(math.MaxInt64),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max(Users: {field: Age})
 				}`,
@@ -133,7 +134,7 @@ func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 func TestQuerySimple_WithAliasedMaxOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					maximum: _max(Users: {field: Age})
 				}`,

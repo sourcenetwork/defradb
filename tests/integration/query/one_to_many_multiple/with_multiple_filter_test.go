@@ -115,7 +115,7 @@ func TestQueryOneToManyMultipleWithMultipleManyFilters(t *testing.T) {
 					"score":     4,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {name: {_eq: "John Grisham"}, books: {score: {_eq: 1}}, articles: {rating: {_eq: 3}}}) {
 						name

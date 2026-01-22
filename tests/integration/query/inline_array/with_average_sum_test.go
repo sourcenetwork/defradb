@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -29,7 +30,7 @@ func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
 					"favouriteIntegers": [-1, 0, 9, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [name]) {
 						name

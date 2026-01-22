@@ -44,7 +44,7 @@ func TestView_Simple(t *testing.T) {
 					"name":	"John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							UserView {
 								name
@@ -96,7 +96,7 @@ func TestView_SimpleMultipleDocs(t *testing.T) {
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							UserView {
 								name
@@ -148,7 +148,7 @@ func TestView_SimpleWithFieldSubset_ErrorsSelectingExcludedField(t *testing.T) {
 					"name":	"John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {
@@ -194,7 +194,7 @@ func TestView_SimpleWithExtraFieldInViewSDL(t *testing.T) {
 					"name":	"John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							UserView {
 								name
@@ -244,7 +244,7 @@ func TestView_SimpleWithExtraFieldInViewQuery(t *testing.T) {
 					"name":	"John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {
@@ -305,7 +305,7 @@ func TestView_SimpleViewOfView(t *testing.T) {
 					"name":	"John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserViewView {

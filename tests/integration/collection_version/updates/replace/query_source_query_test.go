@@ -64,7 +64,7 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					View {
 						name
@@ -132,7 +132,7 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					View {
 						name

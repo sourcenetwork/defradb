@@ -68,7 +68,7 @@ func TestQueryJSON_WithAllFilterWithAllTypes_ShouldFilter(t *testing.T) {
 					"custom": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_all: {_neq: null}}}) {
 						name
@@ -127,7 +127,7 @@ func TestQueryJSON_WithAllFilterAndNestedArray_ShouldFilter(t *testing.T) {
 					"custom": [1, "1"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_all: {_eq: 1}}}) {
 						name

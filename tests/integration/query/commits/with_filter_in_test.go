@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -26,7 +27,7 @@ func TestQueryCommits_WithFilterFieldNameIn_ReturnsMatchingCommits(t *testing.T)
 					"age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {fieldName: {_in: ["age", "name"]}}) {
 						fieldName
@@ -55,7 +56,7 @@ func TestQueryCommits_WithFilterFieldNameInComposite_ReturnsCompositeCommit(t *t
 					"age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {fieldName: {_in: ["_C"]}}) {
 						fieldName
@@ -83,7 +84,7 @@ func TestQueryCommits_WithFilterFieldNameInEmpty_ReturnsNoCommits(t *testing.T) 
 					"age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {fieldName: {_in: []}}) {
 						fieldName
@@ -109,7 +110,7 @@ func TestQueryCommits_WithFilterFieldNameNotIn_ExcludesMatchingCommits(t *testin
 					"age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {fieldName: {_nin: ["_C", "age"]}}) {
 						fieldName
@@ -137,7 +138,7 @@ func TestQueryCommits_WithFilterFieldNameNotInComposite_ExcludesCompositeCommit(
 					"age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {fieldName: {_nin: ["_C"]}}) {
 						fieldName
@@ -166,7 +167,7 @@ func TestQueryCommits_WithFilterFieldNameNotInEmpty_ReturnsAllCommits(t *testing
 					"age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {fieldName: {_nin: []}}) {
 						fieldName
@@ -196,7 +197,7 @@ func TestQueryCommits_WithFilterFieldNameInAndCondition_ReturnsFilteredCommits(t
 					"age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {_and: [{fieldName: {_in: ["age", "name"]}}, {fieldName: {_neq: "age"}}]}) {
 						fieldName
@@ -224,7 +225,7 @@ func TestQueryCommits_WithFilterFieldNameNotInOrCondition_ReturnsFilteredCommits
 					"age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits(filter: {_or: [{fieldName: {_nin: ["_C", "name"]}}, {fieldName: {_eq: "_C"}}]}) {
 						fieldName
