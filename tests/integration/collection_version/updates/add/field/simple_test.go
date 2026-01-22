@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
@@ -26,8 +25,6 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 	schemaVersion2ID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
 	test := testUtils.TestCase{
-		// exclude the secondary-index multiplier as it would modify the schema being tested
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -130,8 +127,6 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 	schemaVersion2ID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
 	test := testUtils.TestCase{
-		// exclude the secondary-index multiplier as it would modify the schema being tested
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

@@ -17,13 +17,10 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestCollectionVersion_WithDefaultFieldValues(t *testing.T) {
 	test := testUtils.TestCase{
-		// exclude the secondary-index multiplier as it would modify the schema being tested
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

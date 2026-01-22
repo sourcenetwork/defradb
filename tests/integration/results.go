@@ -414,7 +414,7 @@ func assertCollectionVersions(
 		require.Equal(s.T, expected.IsBranchable, actual.IsBranchable, "version %d: is branchable mismatch", i)
 		require.Equal(s.T, expected.IsActive, actual.IsActive, "version %d: is active mismatch", i)
 
-		if expected.Indexes != nil || len(actual.Indexes) != 0 {
+		if expected.Indexes != nil {
 			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
 			// This is to save each test action from having to bother declaring an empty slice (if there are no indexes)
 			require.Equal(s.T, expected.Indexes, actual.Indexes, "version %d: indexes mismatch", i)

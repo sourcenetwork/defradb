@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
@@ -27,8 +26,6 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 	schemaVersion3ID := "bafyreifwalt5gom7ldime4phszmbxymn5jrtkx33ujw7ovvjmdzpat5yzm"
 
 	test := testUtils.TestCase{
-		// exclude the secondary-index multiplier as it would modify the schema being tested
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -193,8 +190,6 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 	schemaVersion4ID := "bafyreibuscrpd27xb2zelovaid6souccvac5rkl4xrvjowe3jpfhormr6e"
 
 	test := testUtils.TestCase{
-		// exclude the secondary-index multiplier as it would modify the schema being tested
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -341,8 +336,6 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 	schemaVersion3ID := "bafyreifwalt5gom7ldime4phszmbxymn5jrtkx33ujw7ovvjmdzpat5yzm"
 
 	test := testUtils.TestCase{
-		// exclude the secondary-index multiplier as it would modify the schema being tested
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -442,8 +435,6 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 	schemaVersion4ID := "bafyreibuscrpd27xb2zelovaid6souccvac5rkl4xrvjowe3jpfhormr6e"
 
 	test := testUtils.TestCase{
-		// exclude the secondary-index multiplier as it would modify the schema being tested
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -592,8 +583,6 @@ func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T
 	schemaVersion1ID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 
 	test := testUtils.TestCase{
-		// exclude the secondary-index multiplier as it would modify the schema being tested
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
