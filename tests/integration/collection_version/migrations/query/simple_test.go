@@ -36,7 +36,7 @@ func TestSchemaMigrationQuery(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -107,7 +107,7 @@ func TestSchemaMigrationQueryMultipleDocs(t *testing.T) {
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -196,7 +196,7 @@ func TestSchemaMigrationQueryWithMigrationRegisteredBeforePatchCollection(t *tes
 					},
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -240,14 +240,14 @@ func TestSchemaMigrationQueryMigratesToIntermediaryVersion(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -312,14 +312,14 @@ func TestSchemaMigrationQueryMigratesFromIntermediaryVersion(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -384,14 +384,14 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersions(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -505,14 +505,14 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatches(t *test
 					},
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -593,14 +593,14 @@ func TestSchemaMigrationQueryMigratesAcrossMultipleVersionsBeforePatchesWrongOrd
 					},
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": "String"} }
@@ -652,7 +652,7 @@ func TestSchemaMigrationQueryWithUnknownSchemaMigration(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -713,7 +713,7 @@ func TestSchemaMigrationQueryMigrationMutatesExistingScalarField(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -775,7 +775,7 @@ func TestSchemaMigrationQueryMigrationMutatesExistingInlineArrayField(t *testing
 					"mobile": [644, 832, 8325]
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -839,7 +839,7 @@ func TestSchemaMigrationQueryMigrationRemovesExistingField(t *testing.T) {
 					"age": 40
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -901,7 +901,7 @@ func TestSchemaMigrationQueryMigrationPreservesExistingFieldWhenFieldNotRequeste
 					"age": 40
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -978,7 +978,7 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcFieldNotRequeste
 					"age": 40
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "yearsLived", "Kind": "Int"} }
@@ -1041,7 +1041,7 @@ func TestSchemaMigrationQueryMigrationCopiesExistingFieldWhenSrcAndDstFieldNotRe
 					"age": 40
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "yearsLived", "Kind": "Int"} }

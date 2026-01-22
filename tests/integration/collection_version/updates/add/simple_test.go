@@ -27,7 +27,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/-", "value": {"Name": "books"} }
@@ -60,7 +60,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingSchemaProp(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/-", "value": {"Foo": "Bar"} }
@@ -83,7 +83,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedCollectionProp(t *testing.
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Foo/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -116,7 +116,7 @@ func TestSchemaUpdatesAddSimpleErrorsAddingUnsupportedSchemaProp(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Foo/-", "value": {"Name": "email", "Kind": 11} }

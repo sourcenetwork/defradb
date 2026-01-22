@@ -36,7 +36,7 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -117,7 +117,7 @@ func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }

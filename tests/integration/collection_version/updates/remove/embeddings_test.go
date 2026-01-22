@@ -30,7 +30,7 @@ func TestColVersionUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

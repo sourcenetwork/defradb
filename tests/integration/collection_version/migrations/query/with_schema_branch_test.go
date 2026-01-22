@@ -33,7 +33,7 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
@@ -63,7 +63,7 @@ func TestSchemaMigrationQuery_WithBranchingSchema(t *testing.T) {
 				// Set the active schema version back to the first
 				VersionID: schemaVersion1ID,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3
 				Patch: `
 					[

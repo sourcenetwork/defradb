@@ -28,7 +28,7 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2" }
@@ -70,7 +70,7 @@ func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields" }
@@ -103,7 +103,7 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2/Name" }
@@ -127,7 +127,7 @@ func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2/Kind" }
@@ -151,7 +151,7 @@ func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2/Typ" }

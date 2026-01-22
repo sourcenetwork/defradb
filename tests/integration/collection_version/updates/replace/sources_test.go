@@ -25,7 +25,7 @@ func TestColVersionUpdateReplaceSources_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -51,7 +51,7 @@ func TestColVersionUpdateReplaceSourcesWithQuerySource_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

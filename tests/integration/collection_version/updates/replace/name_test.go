@@ -32,7 +32,7 @@ func TestColVersionUpdateReplaceName_GivenExistingName(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -60,7 +60,7 @@ func TestColVersionUpdateReplaceName_GivenInactiveCollection_Errors(t *testing.T
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "String"} },
@@ -68,7 +68,7 @@ func TestColVersionUpdateReplaceName_GivenInactiveCollection_Errors(t *testing.T
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

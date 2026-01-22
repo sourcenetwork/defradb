@@ -29,7 +29,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32Array(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 22} }
@@ -62,7 +62,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 22} }
@@ -111,7 +111,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32ArraySubstitutionWithCreate(t *
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": "[Float32]"} }

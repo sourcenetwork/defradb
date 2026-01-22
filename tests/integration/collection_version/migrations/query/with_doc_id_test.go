@@ -43,7 +43,7 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -150,7 +150,7 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 					"name": "Dave"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }

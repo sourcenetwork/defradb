@@ -190,7 +190,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Book/Fields/-", "value": {

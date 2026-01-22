@@ -36,7 +36,7 @@ func TestColVersionUpdateCopyName(t *testing.T) {
 					type Books {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Books/Fields/-", "value": {"Name": "name", "Kind": "String"} },

@@ -30,7 +30,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndCollection_Errors(t 
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -76,7 +76,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

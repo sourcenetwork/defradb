@@ -35,7 +35,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch first node only
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -62,7 +62,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 					},
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch second node with different patch
 				NodeID: immutable.Some(1),
 				Patch: `

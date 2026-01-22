@@ -43,7 +43,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					"name": "Islam",
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -77,7 +77,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					"name": "Islam",
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				NodeID: immutable.Some(1),
 				Patch: `
 					[

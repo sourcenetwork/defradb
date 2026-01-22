@@ -27,7 +27,7 @@ func TestSchemaUpdatesAddFieldSimpleWithFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -68,7 +68,7 @@ func TestSchemaUpdatesAddFieldSimpleWithFilterOnPopulatedDatabase(t *testing.T) 
 			// We want to make sure that this works across database versions, so we tell
 			// the change detector to split here.
 			testUtils.SetupComplete{},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
