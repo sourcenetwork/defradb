@@ -31,7 +31,7 @@ func TestIndexP2P_IfPeerCreatedDoc_ListeningPeerShouldIndexIt(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID: 0,
 				FieldName:    "name",
 			},
@@ -83,7 +83,7 @@ func TestIndexP2P_IfPeerUpdateDoc_ListeningPeerShouldUpdateIndex(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID: 0,
 				FieldName:    "name",
 			},
@@ -143,7 +143,7 @@ func TestIndexP2P_IfPeerDeleteDoc_ListeningPeerShouldDeleteIndex(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID: 0,
 				FieldName:    "name",
 			},

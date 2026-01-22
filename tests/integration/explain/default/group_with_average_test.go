@@ -71,7 +71,7 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 									"orderBy":        nil,
 									"filter": dataMap{
 										"age": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -92,7 +92,7 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 									"fieldName": "_group",
 									"filter": dataMap{
 										"age": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -109,7 +109,7 @@ func TestDefaultExplainRequestWithGroupByWithAverageOnAnInnerField(t *testing.T)
 									"fieldName":      "_group",
 									"filter": dataMap{
 										"age": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},

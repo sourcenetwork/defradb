@@ -48,7 +48,7 @@ func TestNAC_GatesIndexDrop_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.DropIndex{
+			&action.DropIndex{
 				Identity:  testUtils.ClientIdentity(1),
 				IndexName: "User_name_ASC",
 			},
@@ -79,7 +79,7 @@ func TestNAC_GatesIndexDrop_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.DropIndex{
+			&action.DropIndex{
 				Identity:      testUtils.NoIdentity(),
 				IndexName:     "User_name_ASC",
 				ExpectedError: "not authorized to perform operation",
@@ -111,7 +111,7 @@ func TestNAC_GatesIndexDrop_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.DropIndex{
+			&action.DropIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				IndexName:     "User_name_ASC",
 				ExpectedError: "not authorized to perform operation",

@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,33 +8,27 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package test_acp_dac_add_policy
+package truncate
 
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestACP_AddPolicy_OneResourceThatIsEmpty_Error(t *testing.T) {
+func TestCollectionTruncate(t *testing.T) {
 	test := testUtils.TestCase{
-
 		Actions: []any{
-			testUtils.AddDACPolicy{
-				Identity: testUtils.ClientIdentity(1),
-
-				Policy: `
-                    name: a policy
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                `,
-
-				ExpectedError: "BAD_INPUT",
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.Truncate{
+				CollectionIndex: 0,
 			},
 		},
 	}

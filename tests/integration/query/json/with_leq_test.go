@@ -17,7 +17,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryJSON_WithGreaterEqualFilterWithEqualValue_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithEqualValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -42,14 +42,14 @@ func TestQueryJSON_WithGreaterEqualFilterWithEqualValue_ShouldFilter(t *testing.
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: 32}}) {
+					Users(filter: {Custom: {_leq: 21}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "David",
+							"Name": "John",
 						},
 					},
 				},
@@ -60,7 +60,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithEqualValue_ShouldFilter(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryJSON_WithGreaterEqualFilterWithGreaterValue_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -85,14 +85,14 @@ func TestQueryJSON_WithGreaterEqualFilterWithGreaterValue_ShouldFilter(t *testin
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: 31}}) {
+					Users(filter: {Custom: {_leq: 31}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "David",
+							"Name": "John",
 						},
 					},
 				},
@@ -103,7 +103,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithGreaterValue_ShouldFilter(t *testin
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryJSON_WithGreaterEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -127,7 +127,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithNullValue_ShouldFilter(t *testing.T
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: null}}) {
+					Users(filter: {Custom: {_leq: null}}) {
 						Name
 					}
 				}`,
@@ -136,12 +136,8 @@ func TestQueryJSON_WithGreaterEqualFilterWithNullValue_ShouldFilter(t *testing.T
 						{
 							"Name": "David",
 						},
-						{
-							"Name": "John",
-						},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}
@@ -149,7 +145,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithNullValue_ShouldFilter(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryJSON_WithGreaterEqualFilterWithNestedEqualValue_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithNestedEqualValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -174,14 +170,14 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedEqualValue_ShouldFilter(t *te
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_ge: 32}}}) {
+					Users(filter: {Custom: {age: {_leq: 21}}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "David",
+							"Name": "John",
 						},
 					},
 				},
@@ -192,7 +188,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedEqualValue_ShouldFilter(t *te
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryJSON_WithGreaterEqualFilterWithNestedGreaterValue_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithNestedLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -217,14 +213,14 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedGreaterValue_ShouldFilter(t *
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_ge: 31}}}) {
+					Users(filter: {Custom: {age: {_leq: 31}}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "David",
+							"Name": "John",
 						},
 					},
 				},
@@ -235,7 +231,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedGreaterValue_ShouldFilter(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithNestedNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -259,7 +255,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *tes
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {age: {_ge: null}}}) {
+					Users(filter: {Custom: {age: {_leq: null}}}) {
 						Name
 					}
 				}`,
@@ -268,12 +264,8 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *tes
 						{
 							"Name": "David",
 						},
-						{
-							"Name": "John",
-						},
 					},
 				},
-				NonOrderedResults: true,
 			},
 		},
 	}
@@ -281,7 +273,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *tes
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryJSON_WithGreaterEqualFilterWithBoolValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -306,7 +298,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithBoolValue_ReturnsError(t *testing.T
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: true}}) {
+					Users(filter: {Custom: {_leq: true}}) {
 						Name
 					}
 				}`,
@@ -318,7 +310,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithBoolValue_ReturnsError(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryJSON_WithGreaterEqualFilterWithStringValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -343,7 +335,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithStringValue_ReturnsError(t *testing
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: ""}}) {
+					Users(filter: {Custom: {_leq: ""}}) {
 						Name
 					}
 				}`,
@@ -355,7 +347,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithStringValue_ReturnsError(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryJSON_WithGreaterEqualFilterWithObjectValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithObjectValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -380,7 +372,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithObjectValue_ReturnsError(t *testing
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: {one: 1}}}) {
+					Users(filter: {Custom: {_leq: {one: 1}}}) {
 						Name
 					}
 				}`,
@@ -392,7 +384,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithObjectValue_ReturnsError(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryJSON_WithGreaterEqualFilterWithArrayValue_ReturnsError(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithArrayValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -417,7 +409,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithArrayValue_ReturnsError(t *testing.
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: [1, 2]}}) {
+					Users(filter: {Custom: {_leq: [1, 2]}}) {
 						Name
 					}
 				}`,
@@ -429,7 +421,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithArrayValue_ReturnsError(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryJSON_WithGreaterEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
+func TestQueryJSON_WithLesserEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -472,7 +464,7 @@ func TestQueryJSON_WithGreaterEqualFilterWithAllTypes_ShouldFilter(t *testing.T)
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Custom: {_ge: 32}}) {
+					Users(filter: {Custom: {_leq: 32}}) {
 						Name
 					}
 				}`,

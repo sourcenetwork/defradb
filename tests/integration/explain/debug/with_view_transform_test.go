@@ -67,7 +67,7 @@ func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name

@@ -260,8 +260,8 @@ func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJo
 				Request: `query @explain {
 					Author {
 						name
-						_count(books: {filter: {rating: {_ne: null}}})
-						books(filter: {rating: {_ne: null}}){
+						_count(books: {filter: {rating: {_neq: null}}})
+						books(filter: {rating: {_neq: null}}){
 							name
 						}
 					}
@@ -303,7 +303,7 @@ func TestDefaultExplainRequestOneToManyWithCountAndChildFilterDoesNotShareJoinFi
 					Author {
 						name
 						_count(books: {})
-						books(filter: {rating: {_ne: null}}){
+						books(filter: {rating: {_neq: null}}){
 							name
 						}
 					}

@@ -44,6 +44,9 @@ type documentFetcher struct {
 	// When the next document is requested, this value should be yielded
 	// before resuming iteration through the kvResultsIter.
 	nextKV immutable.Option[keyValue]
+
+	// keysOnly indicates that we only need keys(DocID) and not values.
+	keysOnly bool
 }
 
 var _ fetcher = (*documentFetcher)(nil)
@@ -63,10 +66,17 @@ func newDocumentFetcher(
 		prefix = prefix.WithDeletedFlag()
 	}
 
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+	iterOptions := datastore.IterOptions{
 		Start: prefix,
 		End:   prefix.PrefixEnd(),
-	})
+	}
+
+	keysOnly := len(fieldsByID) == 0
+	if keysOnly {
+		iterOptions.KeysOnly = true
+	}
+
+	iter, err := txn.Datastore().Iterator(ctx, iterOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +86,7 @@ func newDocumentFetcher(
 		iter:       iter,
 		status:     status,
 		execInfo:   execInfo,
+		keysOnly:   keysOnly,
 	}, nil
 }
 
@@ -107,9 +118,12 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 			return immutable.None[string](), err
 		}
 
-		value, err := f.iter.Value()
-		if err != nil {
-			return immutable.None[string](), err
+		var value []byte
+		if !f.keysOnly {
+			value, err = f.iter.Value()
+			if err != nil {
+				return immutable.None[string](), err
+			}
 		}
 
 		previousKV := f.currentKV
@@ -153,9 +167,12 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 			return immutable.None[EncodedDocument](), err
 		}
 
-		value, err := f.iter.Value()
-		if err != nil {
-			return immutable.None[EncodedDocument](), err
+		var value []byte
+		if !f.keysOnly {
+			value, err = f.iter.Value()
+			if err != nil {
+				return immutable.None[EncodedDocument](), err
+			}
 		}
 
 		kv := keyValue{

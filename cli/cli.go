@@ -159,6 +159,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeCollectionDescribeCommand(ctx),
 		MakeCollectionPatchCommand(ctx),
 		MakeCollectionSetActiveCommand(ctx),
+		MakeCollectionTruncateCommand(ctx),
 	)
 
 	block := MakeBlockCommand(ctx)

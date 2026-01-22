@@ -55,7 +55,7 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name: "User_name_ASC",
@@ -92,7 +92,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				IndexName: "some_index",
 				FieldName: "name",
 			},
@@ -113,7 +113,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name: "some_index",
@@ -143,7 +143,7 @@ func TestIndexCreate_IfInvalidIndexName_ReturnError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID:  0,
 				IndexName:     "!",
 				FieldName:     "Name",

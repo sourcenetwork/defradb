@@ -16,80 +16,29 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithBoolNotEqualsTrueFilterBlock(t *testing.T) {
+func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Verified": true
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred",
-					"Verified": false
+					"Name": "Bob",
+					"HeightM": 1.82
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Verified: {_ne: true}}) {
+					Users(filter: {HeightM: {_geq: 2.1}}) {
 						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"Name": "Fred",
-						},
-						{
-							"Name": "Bob",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Verified": true
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred",
-					"Verified": false
-				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users(filter: {Verified: {_ne: null}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"Name": "Fred",
-						},
 						{
 							"Name": "John",
 						},
@@ -102,29 +51,24 @@ func TestQuerySimpleWithBoolNotEqualsNilFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
+func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Verified": true
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Fred",
-					"Verified": false
+					"Name": "Bob",
+					"HeightM": 1.82
 				}`,
 			},
 			testUtils.Request{
 				Request: `query {
-					Users(filter: {Verified: {_ne: false}}) {
+					Users(filter: {HeightM: {_geq: 2.0999999999999}}) {
 						Name
 					}
 				}`,
@@ -133,11 +77,81 @@ func TestQuerySimpleWithBoolNotEqualsFalseFilterBlock(t *testing.T) {
 						{
 							"Name": "John",
 						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_geq: 2}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
 						{
-							"Name": "Bob",
+							"Name": "John",
 						},
 					},
 				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob"
+				}`,
+			},
+			testUtils.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_geq: null}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
+						},
+					},
+				},
+				NonOrderedResults: true,
 			},
 		},
 	}

@@ -56,6 +56,8 @@ func NewViewCacheKeyFromRaw(raw []byte) (ViewCacheKey, error) {
 		return ViewCacheKey{}, nil
 	}
 
+	raw, _ = bytes.CutPrefix(raw, []byte(COLLECTION_VIEW_ITEMS+"/"))
+
 	components := bytes.Split(raw, []byte("/"))
 	if len(components) > 2 {
 		return ViewCacheKey{}, ErrInvalidKey
