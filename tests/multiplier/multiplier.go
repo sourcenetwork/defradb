@@ -12,6 +12,7 @@ package multiplier
 
 import (
 	"github.com/sourcenetwork/corelog"
+
 	m "github.com/sourcenetwork/testo/multiplier"
 )
 
