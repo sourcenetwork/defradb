@@ -131,6 +131,24 @@ func NewTxnFromExisting(
 	}
 }
 
+// NewBlindWriteTxnFrom returns a new Txn with a blind-write blockstore.
+func NewBlindWriteTxnFrom(
+	rootstore corekv.TxnStore,
+	lockSet *lock.LockSet,
+	id uint64,
+	readonly bool,
+	chunkSize immutable.Option[int],
+) *BasicTxn {
+	rootTxn := rootstore.NewTxn(readonly)
+	multistore := NewBlindWriteMultistore(rootTxn, lockSet, chunkSize)
+	return &BasicTxn{
+		Multistore: multistore,
+		txn:        rootTxn,
+		id:         id,
+		ts:         time.Now(),
+	}
+}
+
 func (t *BasicTxn) ID() uint64 {
 	return t.id
 }

@@ -116,3 +116,26 @@ func (bs *p2pBlockStore) PutMany(ctx context.Context, blocks []blocks.Block) err
 	}
 	return nil
 }
+
+// blindWriteBlockstore is a blockstore wrapper that skips existence checks on Put.
+type blindWriteBlockstore struct {
+	*bstore
+}
+
+var _ Blockstore = (*blindWriteBlockstore)(nil)
+
+// Put stores a block without checking if it already exists.
+func (bs *blindWriteBlockstore) Put(ctx context.Context, block blocks.Block) error {
+	return bs.store.Set(ctx, block.Cid().Bytes(), block.RawData())
+}
+
+// PutMany stores multiple blocks without checking if they already exist.
+func (bs *blindWriteBlockstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
+	for _, b := range blocks {
+		err := bs.store.Set(ctx, b.Cid().Bytes(), b.RawData())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

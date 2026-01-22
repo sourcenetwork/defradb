@@ -239,6 +239,13 @@ func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 	return wrapDatastoreTxn(txn, db), nil
 }
 
+// NewBlindWriteTxn creates a new transaction with a blind-write blockstore.
+func (db *DB) NewBlindWriteTxn() (client.Txn, error) {
+	txnId := db.previousTxnID.Add(1)
+	txn := datastore.NewBlindWriteTxnFrom(db.rootstore, db.lockSet, txnId, false, db.blockStoreChunkSize)
+	return wrapDatastoreTxn(txn, db), nil
+}
+
 // publishDocUpdateEvent publishes an update event for a document.
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.

@@ -955,6 +955,11 @@ func (w *CWrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	return retTxn, nil
 }
 
+func (w *CWrapper) NewBlindWriteTxn() (client.Txn, error) {
+	// Fallback to NewTxn
+	return w.NewTxn(false)
+}
+
 func (w *CWrapper) Close() {
 	C.NodeClose(C.uintptr_t(w.handle))
 }

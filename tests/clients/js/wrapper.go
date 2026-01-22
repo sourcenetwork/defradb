@@ -435,6 +435,11 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	return &Transaction{w, txn}, nil
 }
 
+func (w *Wrapper) NewBlindWriteTxn() (client.Txn, error) {
+	// Fallback to NewTxn
+	return w.NewTxn(false)
+}
+
 func (w *Wrapper) Close() {
 	_ = w.node.Close(context.Background())
 }

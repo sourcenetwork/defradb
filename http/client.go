@@ -89,6 +89,24 @@ func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	return &Transaction{&Client{c.http}, txRes.ID}, nil
 }
 
+func (c *Client) NewBlindWriteTxn() (client.Txn, error) {
+	methodURL := c.http.apiURL.JoinPath("tx", "blind-write")
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var txRes CreateTxResponse
+	if err := c.http.requestJson(req, &txRes); err != nil {
+		return nil, err
+	}
+	return &Transaction{&Client{c.http}, txRes.ID}, nil
+}
+
+func (c *Client) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	// No need to initialize context for HTTP client
+	return ctx
+}
+
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	methodURL := c.http.apiURL.JoinPath("backup", "import")
 

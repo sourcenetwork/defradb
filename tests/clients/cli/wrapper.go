@@ -612,6 +612,11 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	return &Transaction{w, tx}, nil
 }
 
+func (w *Wrapper) NewBlindWriteTxn() (client.Txn, error) {
+	// Fallback to NewTxn
+	return w.NewTxn(false)
+}
+
 func (w *Wrapper) Close() {
 	w.serverCancel()
 	w.httpServer.Close()

@@ -41,6 +41,17 @@ type TxnStore interface {
 	// It may be used with other functions in the client package. It is threadsafe and multiple threads/Go routines
 	// can safely operate on it concurrently.
 	NewConcurrentTxn(readOnly bool) (Txn, error)
+
+	// NewBlindWriteTxn returns a new write-only transaction with a blind-write blockstore.
+	//
+	// Use this for write-heavy workloads where blocks are always new.
+	// It skips the Has() check before Set(). Not threadsafe.
+	NewBlindWriteTxn() (Txn, error)
+
+	// InitContext returns a new context with all caches initialized and linked to
+	// the given transaction. This must be called after creating a transaction
+	// to ensure subsequent operations use the correct transaction.
+	InitContext(ctx context.Context, txn Txn) context.Context
 }
 
 type Store interface {
