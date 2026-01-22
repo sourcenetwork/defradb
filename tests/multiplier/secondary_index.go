@@ -45,7 +45,7 @@ func (m *secondaryIndex) Name() Name {
 //
 // Returns true if the action set contains index-related actions, explain queries,
 // or schemas with existing @index directives. Index tests should not be modified,
-// and explain tests verify query plan structure which changes with indexes.
+// and explain tests verifying query produce different results with indexes.
 func (m *secondaryIndex) ShouldSkip(actions action.Actions) bool {
 	if hasIndexActions(actions) {
 		return true
