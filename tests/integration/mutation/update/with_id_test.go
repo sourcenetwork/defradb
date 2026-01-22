@@ -41,7 +41,7 @@ func TestMutationUpdate_WithId(t *testing.T) {
 					"points": 66.6
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(docID: "bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202", input: {points: 59}) {
 						name
@@ -81,7 +81,7 @@ func TestMutationUpdate_WithNonExistantId(t *testing.T) {
 					"points": 42.1
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(docID: "bae-does-not-exist", input: {points: 59}) {
 						_docID

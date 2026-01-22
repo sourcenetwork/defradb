@@ -52,7 +52,7 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 					"custom": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_eq: {tree:"oak",age:450}}}) {
 						name
@@ -108,7 +108,7 @@ func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_and: [
 						{custom: {tree: {_eq: "maple"}}},
@@ -164,7 +164,7 @@ func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_eq: {level_1: {level_2: {level_3: [true, false]}}}}}) {
 						name
@@ -205,7 +205,7 @@ func TestQueryJSON_WithEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 					"custom": {}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_eq: null}}) {
 						name
@@ -264,7 +264,7 @@ func TestQueryJSON_WithEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 					"Custom": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_eq: {one: 1}}}) {
 						Name

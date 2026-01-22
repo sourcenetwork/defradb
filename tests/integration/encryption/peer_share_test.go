@@ -47,7 +47,7 @@ func TestDocEncryptionPeer_IfDocIsPublic_ShouldFetchKeyAndDecrypt(t *testing.T) 
 				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -96,7 +96,7 @@ func TestDocEncryptionPeer_IfPublicDocHasEncryptedField_ShouldFetchKeyAndDecrypt
 				EncryptedFields: []string{"age"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -148,7 +148,7 @@ func TestDocEncryptionPeer_IfEncryptedPublicDocHasEncryptedField_ShouldFetchKeys
 				EncryptedFields: []string{"age"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -200,7 +200,7 @@ func TestDocEncryptionPeer_IfAllFieldsOfEncryptedPublicDocAreIndividuallyEncrypt
 				EncryptedFields: []string{"name", "age"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -251,7 +251,7 @@ func TestDocEncryptionPeer_IfAllFieldsOfPublicDocAreIndividuallyEncrypted_Should
 				EncryptedFields: []string{"name", "age"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -310,7 +310,7 @@ func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecry
 				Doc:    `{"age": 2}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -369,7 +369,7 @@ func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_Should
 				Doc:    `{"age": 2}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -424,7 +424,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrec
 				Doc:    `{"name": ""}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -442,7 +442,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrec
 				Doc:    `{"name": "John"}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -493,7 +493,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsStringToNull_ShouldDecryptAndCorre
 				Doc:    `{"name": null}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -511,7 +511,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsStringToNull_ShouldDecryptAndCorre
 				Doc:    `{"name": "John"}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {

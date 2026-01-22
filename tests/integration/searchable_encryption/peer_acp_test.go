@@ -107,7 +107,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSESync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Request: `
@@ -125,7 +125,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.NodeIdentity(0),
 				Request: `
@@ -140,7 +140,7 @@ func TestDocEncryptionPeer_WithACP_ReplicatorShouldNotHaveAccess(t *testing.T) {
 					"User": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.NodeIdentity(0),
 				Request: `

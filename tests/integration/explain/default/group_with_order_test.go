@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -41,7 +42,7 @@ func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -57,7 +58,7 @@ func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 
 				ExpectedPatterns: groupOrderPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -94,7 +95,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -110,7 +111,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 
 				ExpectedPatterns: groupOrderPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -147,7 +148,7 @@ func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -163,7 +164,7 @@ func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t
 
 				ExpectedPatterns: groupOrderPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,

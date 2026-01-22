@@ -46,7 +46,7 @@ func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 					"published": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -111,7 +111,7 @@ func TestQueryOneToOne_WithVersionOnOuterAfterJoin(t *testing.T) {
 					"published": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {

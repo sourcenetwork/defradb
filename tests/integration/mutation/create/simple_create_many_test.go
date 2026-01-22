@@ -40,7 +40,7 @@ func TestMutationCreateMany(t *testing.T) {
 					}
 				]`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

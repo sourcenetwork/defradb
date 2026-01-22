@@ -65,7 +65,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldDescending_ShouldOrder(t
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Author": []map[string]any{
@@ -80,7 +80,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldDescending_ShouldOrder(t
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -138,7 +138,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscending_ShouldOrder(t 
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Author": []map[string]any{
@@ -153,7 +153,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscending_ShouldOrder(t 
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -211,7 +211,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscendingWithLimit_Shoul
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Author": []map[string]any{
@@ -224,7 +224,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscendingWithLimit_Shoul
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -299,7 +299,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthors_ShouldOrderEachAuthorsBoo
 					"author": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Author": []map[string]any{
@@ -320,7 +320,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthors_ShouldOrderEachAuthorsBoo
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// index fetches 8: 4 for ordering all books for each author
 				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(8),
@@ -396,7 +396,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthorsAndIndexOnRelation_ShouldO
 					"author": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Author": []map[string]any{
@@ -417,7 +417,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthorsAndIndexOnRelation_ShouldO
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// index fetches 4: relation ID index fetches 2 books per author, then sorts in memory
 				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(4),
@@ -493,7 +493,7 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Author": []map[string]any{
@@ -512,7 +512,7 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 6 indexFetches: sub-filter uses rating index (3 books match filter rating _geq: 4.0) for 2 authors,
 				// DESC instructs the index to iterate in reverse order, so no in-memory sort needed
@@ -589,7 +589,7 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 					"author": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Author": []map[string]any{
@@ -603,7 +603,7 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 5 indexFetch: parent filter uses rating index via inverted join (1 book matches _ge: 4.0)
 				// For the matched author full index scan is done to get all 4 books

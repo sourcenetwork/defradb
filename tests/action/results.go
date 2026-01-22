@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -48,6 +48,11 @@ func assertError(t testing.TB, err error, expectedError string) bool {
 }
 
 func assertExpectedErrorRaised(t testing.TB, expectedError string, wasRaised bool) {
+	AssertExpectedErrorRaised(t, expectedError, wasRaised)
+}
+
+// AssertExpectedErrorRaised asserts that an expected error was raised.
+func AssertExpectedErrorRaised(t testing.TB, expectedError string, wasRaised bool) {
 	if expectedError != "" && !wasRaised {
 		assert.Fail(t, "Expected an error however none was raised.")
 	}

@@ -57,7 +57,7 @@ func TestQueryJSON_WithLikeFilter_ShouldFilter(t *testing.T) {
 					"custom": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_like: "Daenerys%Name"}}) {
 						custom

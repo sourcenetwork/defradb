@@ -37,7 +37,7 @@ func TestMutationDeletion_WithIDs(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(docID: ["bae-390b4419-fe1c-506b-98bd-20847cdab2d9", "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd"]) {
 						_docID
@@ -81,7 +81,7 @@ func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(docID: []) {
 						_docID
@@ -91,7 +91,7 @@ func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 					"delete_User": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Make sure no documents have been deleted
 				Request: `query {
 						User {
@@ -126,7 +126,7 @@ func TestMutationDeletion_WithIDsSingleUnknownID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(docID: ["bae-6a6482a8-24e1-5c73-a237-ca569e41507e"]) {
 						_docID
@@ -152,7 +152,7 @@ func TestMutationDeletion_WithIDsMultipleUnknownID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(docID: ["bae-028383cc-d6ba-5df7-959f-2bdce3536a05", "bae-028383cc-d6ba-5df7-959f-2bdce3536a03"]) {
 						_docID
@@ -183,7 +183,7 @@ func TestMutationDeletion_WithIDsKnownAndUnknown(t *testing.T) {
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(docID: ["bae-390b4419-fe1c-506b-98bd-20847cdab2d9", "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd"]) {
 						_docID

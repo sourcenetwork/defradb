@@ -51,7 +51,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -70,7 +70,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -144,7 +144,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -168,7 +168,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -258,7 +258,7 @@ func TestP2PCreate_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
                 }`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
                     Users {
                         Age
@@ -322,7 +322,7 @@ func TestP2PCreate_WithP2PCollectionOnLastNodeInNodeChain_ShouldPropagateUpdate(
                 }`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(4),
 				Request: `query {
                     Users {
@@ -364,7 +364,7 @@ func TestP2PCreate_WithP2PCollectionAndSubscription_ShouldSucceed(t *testing.T) 
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				NodeID: immutable.Some(1),
 				Request: `subscription {
 					Users {

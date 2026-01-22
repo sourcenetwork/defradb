@@ -172,7 +172,7 @@ func TestAddLens_WithPatchCollection_TransformsDocuments(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

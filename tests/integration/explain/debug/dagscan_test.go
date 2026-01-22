@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -37,7 +38,7 @@ func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					_commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9", filter: {fieldName: {_eq: "name"}}) {
@@ -61,7 +62,7 @@ func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					_commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9") {

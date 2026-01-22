@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldKindDateTime(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -74,7 +74,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeWithCreate(t *testing.T) {
 					"foo": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -119,7 +119,7 @@ func TestSchemaUpdatesAddFieldKindDateTimeSubstitutionWithCreate(t *testing.T) {
 					"foo": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

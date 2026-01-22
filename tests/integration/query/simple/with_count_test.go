@@ -13,13 +13,14 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_count
 				}`,
@@ -34,7 +35,7 @@ func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
 func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_count(Users: {})
 				}`,
@@ -63,7 +64,7 @@ func TestQuerySimpleWithCount(t *testing.T) {
 					"Age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_count(Users: {})
 				}`,
@@ -80,7 +81,7 @@ func TestQuerySimpleWithCount(t *testing.T) {
 func TestQuerySimple_WithAliasedCount_OnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					number: _count(Users: {})
 				}`,

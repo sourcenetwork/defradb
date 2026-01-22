@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldKindBlob(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -74,7 +74,7 @@ func TestSchemaUpdatesAddFieldKindBlobWithCreate(t *testing.T) {
 					"foo": "00ff"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -119,7 +119,7 @@ func TestSchemaUpdatesAddFieldKindBlobSubstitutionWithCreate(t *testing.T) {
 					"foo": "00ff"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

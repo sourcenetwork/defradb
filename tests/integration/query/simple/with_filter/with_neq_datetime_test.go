@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -33,7 +34,7 @@ func TestQuerySimpleWithDateTimeNotEqualsFilterBlock(t *testing.T) {
 					"CreatedAt": "2011-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_neq: "2017-07-23T03:46:56-05:00"}}) {
 						Name
@@ -76,7 +77,7 @@ func TestQuerySimpleWithDateTimeNotEqualsNilFilterBlock(t *testing.T) {
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_neq: null}}) {
 						Name
@@ -122,7 +123,7 @@ func TestQuerySimple_WithNilDateTimeNotEqualAndNonNilFilterBlock_ShouldSucceed(t
 					"Age":  44,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {CreatedAt: {_neq: "2016-07-23T03:46:56-05:00"}}) {
 						Name

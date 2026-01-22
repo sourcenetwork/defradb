@@ -52,7 +52,7 @@ func TestQueryJSON_WithNotEqualFilterWithObject_ShouldFilter(t *testing.T) {
 					"custom": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_neq: {tree:"oak",age:450}}}) {
 						name
@@ -107,7 +107,7 @@ func TestQueryJSON_WithNotEqualFilterWithNestedObjects_ShouldFilter(t *testing.T
 					}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_neq: {level_1: {level_2: {level_3: [true, false]}}}}}) {
 						name
@@ -148,7 +148,7 @@ func TestQueryJSON_WithNotEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 					"custom": {}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_neq: null}}) {
 						name
@@ -200,7 +200,7 @@ func TestQueryJSON_WithNeFilterAgainstNumberField_ShouldFilter(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {custom: {age: {_neq: 48}}}) {
 						name
@@ -253,7 +253,7 @@ func TestQueryJSON_WithNeFilterAgainstStringField_ShouldFilter(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {custom: {city: {_neq: "Istanbul"}}}) {
 						name
@@ -305,7 +305,7 @@ func TestQueryJSON_WithNeFilterAgainstBooleanField_ShouldFilter(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {custom: {verified: {_neq: true}}}) {
 						name
@@ -357,7 +357,7 @@ func TestQueryJSON_WithNeFilterAgainstNullField_ShouldFilter(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {custom: {age: {_neq: null}}}) {
 						name

@@ -42,7 +42,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 				// left empty to test default values
 				DocMap: map[string]any{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						age
@@ -92,7 +92,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsUTCNowDefaultValu
 				// left empty to test default values
 				DocMap: map[string]any{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						created
@@ -143,7 +143,7 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 					"image":    nil,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						age
@@ -210,7 +210,7 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 					"image":    "aabb33",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						age
@@ -331,7 +331,7 @@ func TestMutationCreate_WithDefaultJSONIntValue_ShouldBeSet(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						metadata
@@ -367,7 +367,7 @@ func TestMutationCreate_WithDefaultJSONFloatValue_ShouldBeSet(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						metadata
@@ -403,7 +403,7 @@ func TestMutationCreate_WithDefaultJSONBoolValue_ShouldBeSet(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						metadata
@@ -457,7 +457,7 @@ func TestMutationCreate_WithDefaultJSONObjectValues_ShouldBeSet(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						metadata
@@ -493,7 +493,7 @@ func TestMutationCreate_WithDefaultJSONDeepObjectValue_ShouldBeSet(t *testing.T)
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						metadata
@@ -526,7 +526,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsTwoEqualUTCNowDef
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					bob: create_User(input: { name: "Bob" }) {
 						created

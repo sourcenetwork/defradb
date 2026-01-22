@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package tests
+package action
 
 import (
 	"reflect"
@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 var (
@@ -65,8 +64,11 @@ var (
 		"operationNode":  {},
 		"similarityNode": {},
 	}
+
+	log = corelog.NewLogger("tests.action")
 )
 
+// PlanNodeTargetCase is used to target specific plan nodes in explain output.
 type PlanNodeTargetCase struct {
 	// Name of the plan node, whose attribute(s) we are targetting to be asserted.
 	TargetNodeName string
@@ -81,7 +83,10 @@ type PlanNodeTargetCase struct {
 	ExpectedAttributes any
 }
 
+// ExplainRequest represents an explain query request.
 type ExplainRequest struct {
+	stateful
+
 	// NodeID is the node ID (index) of the node in which to explain.
 	NodeID immutable.Option[int]
 
@@ -111,96 +116,91 @@ type ExplainRequest struct {
 	ExpectedError string
 }
 
-func executeExplainRequest(
-	s *state.State,
-	action ExplainRequest,
-) {
+var _ Action = (*ExplainRequest)(nil)
+var _ Stateful = (*ExplainRequest)(nil)
+
+// Execute executes the explain request action.
+func (a *ExplainRequest) Execute() {
 	// Must have a non-empty request.
-	if action.Request == "" {
-		require.Fail(s.T, "Explain test must have a non-empty request.")
+	if a.Request == "" {
+		require.Fail(a.s.T, "Explain test must have a non-empty request.")
 	}
 
 	// If no expected results are provided, then it's invalid use of this explain testing setup.
-	if action.ExpectedError == "" &&
-		action.ExpectedPatterns == nil &&
-		action.ExpectedTargets == nil &&
-		action.ExpectedFullGraph == nil {
-		require.Fail(s.T, "Atleast one expected explain parameter must be provided.")
+	if a.ExpectedError == "" &&
+		a.ExpectedPatterns == nil &&
+		a.ExpectedTargets == nil &&
+		a.ExpectedFullGraph == nil {
+		require.Fail(a.s.T, "Atleast one expected explain parameter must be provided.")
 	}
 
 	// If we expect an error, then all other expected results should be empty (they shouldn't be provided).
-	if action.ExpectedError != "" &&
-		(action.ExpectedFullGraph != nil ||
-			action.ExpectedPatterns != nil ||
-			action.ExpectedTargets != nil) {
-		require.Fail(s.T, "Expected error should not have other expected results with it.")
+	if a.ExpectedError != "" &&
+		(a.ExpectedFullGraph != nil ||
+			a.ExpectedPatterns != nil ||
+			a.ExpectedTargets != nil) {
+		require.Fail(a.s.T, "Expected error should not have other expected results with it.")
 	}
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	_, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for _, node := range nodes {
 		result := node.ExecRequest(
-			s.Ctx,
-			action.Request,
+			a.s.Ctx,
+			a.Request,
 		)
-		assertExplainRequestResults(s, &result.GQL, action)
+		a.assertExplainRequestResults(&result.GQL)
 	}
 }
 
-func assertExplainRequestResults(
-	s *state.State,
-	actualResult *client.GQLResult,
-	action ExplainRequest,
-) {
+func (a *ExplainRequest) assertExplainRequestResults(actualResult *client.GQLResult) {
 	// Check expected error matches actual error. If it does we are done.
-	if AssertErrors(
-		s.T,
-		actualResult.Errors,
-		action.ExpectedError,
-	) {
+	if assertErrors(a.s.T, actualResult.Errors, a.ExpectedError) {
 		return
-	} else if action.ExpectedError != "" { // If didn't find a match but did expected an error, then fail.
-		assert.Fail(s.T, "Expected an error however none was raised.")
+	} else if a.ExpectedError != "" { // If didn't find a match but did expected an error, then fail.
+		assert.Fail(a.s.T, "Expected an error however none was raised.")
 	}
 
 	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
-	resultantData := actualResult.Data.(map[string]any)
-	log.InfoContext(s.Ctx, "", corelog.Any("FullExplainGraphResult", actualResult.Data))
+	resultantData, ok := actualResult.Data.(map[string]any)
+	if !ok {
+		return
+	}
+	log.InfoContext(a.s.Ctx, "", corelog.Any("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
 	// that is returned, if doesn't match we would like to still see a diff comparison (handy while debugging).
-	if action.ExpectedFullGraph != nil {
+	if a.ExpectedFullGraph != nil {
 		assertResultsEqual(
-			s.T,
-			s.ClientType,
-			action.ExpectedFullGraph,
+			a.s.T,
+			a.s.ClientType,
+			a.ExpectedFullGraph,
 			resultantData,
 		)
 	}
 
 	// Ensure the complete high-level pattern matches, inother words check that all the
 	// explain graph nodes are in the correct expected ordering.
-	if action.ExpectedPatterns != nil {
+	if a.ExpectedPatterns != nil {
 		// Trim away all attributes (non-plan nodes) from the returned full explain graph result.
-		actualResultWithoutAttributes := trimExplainAttributes(s.T, resultantData)
+		actualResultWithoutAttributes := trimExplainAttributes(a.s.T, resultantData)
 		assertResultsEqual(
-			s.T,
-			s.ClientType,
-			action.ExpectedPatterns,
+			a.s.T,
+			a.s.ClientType,
+			a.ExpectedPatterns,
 			actualResultWithoutAttributes,
 		)
 	}
 
 	// Match the targeted node's attributes (subset assertions), with the expected attributes.
 	// Note: This does not check if the node is in correct location or not.
-	if action.ExpectedTargets != nil {
-		for _, target := range action.ExpectedTargets {
-			assertExplainTargetCase(s, target, resultantData)
+	if a.ExpectedTargets != nil {
+		for _, target := range a.ExpectedTargets {
+			a.assertExplainTargetCase(target, resultantData)
 		}
 	}
 }
 
-func assertExplainTargetCase(
-	s *state.State,
+func (a *ExplainRequest) assertExplainTargetCase(
 	targetCase PlanNodeTargetCase,
 	actualResults map[string]any,
 ) {
@@ -214,24 +214,56 @@ func assertExplainTargetCase(
 
 		if !isFound {
 			assert.Fail(
-				s.T,
+				a.s.T,
 				"Expected target ["+targetCase.TargetNodeName+"], was not found in the explain graph.",
 			)
 		}
 
 		assertResultsEqual(
-			s.T,
-			s.ClientType,
+			a.s.T,
+			a.s.ClientType,
 			targetCase.ExpectedAttributes,
 			foundActualTarget,
 		)
 	}
 }
 
+// assertErrors asserts whether the expected error is present in the given errors slice.
+// Returns true if the expected error was found.
+func assertErrors(t testing.TB, errs []error, expectedError string) bool {
+	if expectedError == "" {
+		require.Empty(t, errs)
+	} else {
+		for _, e := range errs {
+			errorString := e.Error()
+			if errorString == expectedError || contains(errorString, expectedError) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// contains checks if s contains substr.
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
+		(len(s) > 0 && len(substr) > 0 && searchString(s, substr) >= 0))
+}
+
+// searchString returns the index of substr in s, or -1 if not found.
+func searchString(s, substr string) int {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return i
+		}
+	}
+	return -1
+}
+
 // findTargetNode returns true if the targetName is found in the explain graph after skipping given number of
 // occurances, 0 means first occurance. The function also returns total occurances it encountered so far. The
 // returned count of 'matches' should always be <= occurance argument.
-
+//
 // Note: The traversal of the map must be in a deterministic and ordered manner, so we skip the same nodes items
 // with every run and the occurances to skip logic behaves consistently.
 func findTargetNode(
@@ -372,7 +404,11 @@ func trimExplainAttributes(
 	t testing.TB,
 	actualResult any,
 ) map[string]any {
-	trimmedMap := copyMap(actualResult.(map[string]any))
+	resultMap, ok := actualResult.(map[string]any)
+	if !ok {
+		return nil
+	}
+	trimmedMap := copyMap(resultMap)
 
 	for key, value := range trimmedMap {
 		if !isPlanNode(key) {

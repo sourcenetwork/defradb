@@ -13,6 +13,7 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -51,7 +52,7 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {author: {verified: DESC}}) {
 						name
@@ -124,7 +125,7 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {author: {verified: ASC}}) {
 						name
@@ -197,7 +198,7 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {author: {age: DESC}}) {
 						name
@@ -258,7 +259,7 @@ func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *t
 					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {author: {age: ASC}}) {
 						name
@@ -319,7 +320,7 @@ func TestQueryOneToOne_WithAliasedChildIntOrderAscending_ShouldOrder(t *testing.
 					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {_alias: {writer: {age: ASC}}}) {
 						name
@@ -389,7 +390,7 @@ func TestQueryOneToOne_WithChildAliasedIntOrderAscending_ShouldOrder(t *testing.
 					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {author: {_alias: {authorAge: ASC}}}) {
 						name

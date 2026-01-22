@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -39,7 +40,7 @@ func TestDefaultExplainRequestWithOnlyLimit(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(limit: 2) {
@@ -49,7 +50,7 @@ func TestDefaultExplainRequestWithOnlyLimit(t *testing.T) {
 
 				ExpectedPatterns: limitPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "limitNode",
 						IncludeChildNodes: false,
@@ -72,7 +73,7 @@ func TestDefaultExplainRequestWithOnlyOffset(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(offset: 2) {
@@ -82,7 +83,7 @@ func TestDefaultExplainRequestWithOnlyOffset(t *testing.T) {
 
 				ExpectedPatterns: limitPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "limitNode",
 						IncludeChildNodes: false,
@@ -105,7 +106,7 @@ func TestDefaultExplainRequestWithLimitAndOffset(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(limit: 3, offset: 1) {
@@ -115,7 +116,7 @@ func TestDefaultExplainRequestWithLimitAndOffset(t *testing.T) {
 
 				ExpectedPatterns: limitPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "limitNode",
 						IncludeChildNodes: false,

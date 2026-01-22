@@ -35,7 +35,7 @@ func TestSchemaUpdatesReplaceField(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -44,7 +44,7 @@ func TestSchemaUpdatesReplaceField(t *testing.T) {
 				}`,
 				ExpectedError: "Cannot query field \"email\" on type \"Users\".",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

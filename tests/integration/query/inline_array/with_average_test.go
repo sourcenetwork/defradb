@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 					"favouriteIntegers": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -56,7 +57,7 @@ func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 					"favouriteIntegers": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -87,7 +88,7 @@ func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 					"favouriteIntegers": [0, 0, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -118,7 +119,7 @@ func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 					"favouriteIntegers": [-1, 0, 9, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -149,7 +150,7 @@ func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.
 					"testScores": [-1, null, 13, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -180,7 +181,7 @@ func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 					"favouriteFloats": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -211,7 +212,7 @@ func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 					"favouriteFloats": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -242,7 +243,7 @@ func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 					"favouriteFloats": [0, 0, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -274,7 +275,7 @@ func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 					"favouriteFloats": [-0.1, 0, 0.9, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -305,7 +306,7 @@ func TestQueryInlineNillableFloatArrayWithAverageAndPopulatedArray(t *testing.T)
 					"pageRatings": [-0.1, 0, 0.9, 0, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

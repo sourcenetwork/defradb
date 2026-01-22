@@ -43,7 +43,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						create_Users(input:{}) {
 							name
@@ -51,7 +51,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "create_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						update_Users(input:{}) {
 							name
@@ -59,7 +59,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "update_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -67,7 +67,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 				}`,
 				ExpectedError: `Cannot query field "Users" on type "Query".`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					Users {
 						name
@@ -104,7 +104,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 			testUtils.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						create_Users(input:{}) {
 							name
@@ -112,7 +112,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "create_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						update_Users(input:{}) {
 							name
@@ -120,7 +120,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "update_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -128,7 +128,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 				}`,
 				ExpectedError: `Cannot query field "Users" on type "Query".`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					Users {
 						name
@@ -392,7 +392,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -472,7 +472,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

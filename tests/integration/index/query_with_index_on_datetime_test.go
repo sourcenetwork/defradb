@@ -44,7 +44,7 @@ func TestQueryWithIndex_WithEqFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -52,7 +52,7 @@ func TestQueryWithIndex_WithEqFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -102,7 +102,7 @@ func TestQueryWithIndex_WithGtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 						"birthday": "2001-08-25T03:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -111,7 +111,7 @@ func TestQueryWithIndex_WithGtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -155,7 +155,7 @@ func TestQueryWithIndex_WithGeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 						"birthday": "2001-01-01T00:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -164,7 +164,7 @@ func TestQueryWithIndex_WithGeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -202,7 +202,7 @@ func TestQueryWithIndex_WithLtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -210,7 +210,7 @@ func TestQueryWithIndex_WithLtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -254,7 +254,7 @@ func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 						"birthday": "2001-01-01T00:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -263,7 +263,7 @@ func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -295,7 +295,7 @@ func TestQueryWithIndex_WithNeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {birthday: {_neq: "2000-07-23T03:00:00-00:00"}}) {
 						name

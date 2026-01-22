@@ -36,7 +36,7 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArray(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -76,7 +76,7 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArrayWithCreate(t *testing.T) {
 					"foo": [true, false, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -121,7 +121,7 @@ func TestSchemaUpdatesAddFieldKindNillableBoolArraySubstitutionWithCreate(t *tes
 					"foo": [true, false, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

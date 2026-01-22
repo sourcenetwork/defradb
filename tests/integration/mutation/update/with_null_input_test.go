@@ -32,7 +32,7 @@ func TestMutationUpdate_WithNullFilter_Succeeds(t *testing.T) {
 					"name": "Bob",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(filter: null, input: {name: "Alice"}) {
 						name
@@ -67,7 +67,7 @@ func TestMutationUpdate_WithNullDocID_Succeeds(t *testing.T) {
 					"name": "Bob",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(docID: null, input: {name: "Alice"}) {
 						name
@@ -102,7 +102,7 @@ func TestMutationUpdate_WithNullDocIDs_Succeeds(t *testing.T) {
 					"name": "Bob",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(docID: null, input: {name: "Alice"}) {
 						name

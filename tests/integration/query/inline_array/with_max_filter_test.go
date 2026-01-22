@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestQueryInlineIntegerArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -56,7 +57,7 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithFilter_Succeeds(t *testing.T
 					"testScores": [-1, 2, null, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -87,7 +88,7 @@ func TestQueryInlineFloatArray_WithMaxWithFilter_Succeeds(t *testing.T) {
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -118,7 +119,7 @@ func TestQueryInlineNillableFloatArray_WithMaxWithFilter_Succeeds(t *testing.T) 
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

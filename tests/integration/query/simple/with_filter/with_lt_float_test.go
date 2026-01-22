@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +32,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterValue(t *testing.T) {
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {HeightM: {_lt: 1.820000000001}}) {
 						Name
@@ -66,7 +67,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithGreaterIntValue(t *testing.T
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {HeightM: {_lt: 2}}) {
 						Name
@@ -101,7 +102,7 @@ func TestQuerySimpleWithFloatLessThanFilterBlockWithNullValue(t *testing.T) {
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {HeightM: {_lt: null}}) {
 						Name

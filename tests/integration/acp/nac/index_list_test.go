@@ -13,11 +13,12 @@ package test_acp_nac
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestNAC_GatesIndexList_AuthorizedIdentity_AllowAccess(t *testing.T) {

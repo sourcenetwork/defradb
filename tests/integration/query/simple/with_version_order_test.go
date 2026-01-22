@@ -37,7 +37,7 @@ func TestQuerySimpleWithVersionAndOrder(t *testing.T) {
 					"name": "Chris",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {name: ASC}) {
 						name

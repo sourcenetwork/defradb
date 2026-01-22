@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldKindString(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -74,7 +74,7 @@ func TestSchemaUpdatesAddFieldKindStringWithCreate(t *testing.T) {
 					"foo": "bar"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -119,7 +119,7 @@ func TestSchemaUpdatesAddFieldKindStringSubstitutionWithCreate(t *testing.T) {
 					"foo": "bar"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

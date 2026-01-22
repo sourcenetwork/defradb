@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 
 	"github.com/sourcenetwork/immutable"
@@ -33,7 +34,7 @@ func TestQuerySimpleWithNonNullVariable(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Variables: immutable.Some(map[string]any{
 					"age": 50,
 					"ord": "ASC",
@@ -75,7 +76,7 @@ func TestQuerySimpleWithVariableDefaultValue(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query($age: Int = 50, $ord: Ordering = ASC) {
 					Users(filter: {Age: {_lt: $age}}, order: {Age: $ord}) {
 						Name
@@ -113,7 +114,7 @@ func TestQuerySimpleWithNonNullVariable_ReturnsErrorWhenNull(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query($age: Int!) {
 					Users(filter: {Age: {_lt: $age}}) {
 						Name
@@ -142,7 +143,7 @@ func TestQuerySimpleWithVariableDefaultValueOverride(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Variables: immutable.Some(map[string]any{
 					"age": int64(30),
 				}),
@@ -180,7 +181,7 @@ func TestQuerySimpleWithOrderVariable(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Variables: immutable.Some(map[string]any{
 					"order": []map[string]any{
 						{"Name": "DESC"},
@@ -224,7 +225,7 @@ func TestQuerySimpleWithAggregateCountVariable(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Variables: immutable.Some(map[string]any{
 					"usersCount": map[string]any{
 						"filter": map[string]any{

@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldKindFloat32Array(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -74,7 +74,7 @@ func TestSchemaUpdatesAddFieldKindFloat32ArrayWithCreate(t *testing.T) {
 					"foo": [3.1, -8.1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -119,7 +119,7 @@ func TestSchemaUpdatesAddFieldKindFloat32ArraySubstitutionWithCreate(t *testing.
 					"foo": [3.1, -8.1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

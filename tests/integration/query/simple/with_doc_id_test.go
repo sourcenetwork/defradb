@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestQuerySimpleWithDocIDFilter_TargetNotFound(t *testing.T) {
 						"Age": 21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(docID: "bae-52b9170d-b77a-5887-b877-cbdbb99b009g") {
 							Name
@@ -51,7 +52,7 @@ func TestQuerySimpleWithDocIDFilter_SingleDocumentTargetFound(t *testing.T) {
 						"Age": 21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(docID: "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b") {
 							Name
@@ -88,7 +89,7 @@ func TestQuerySimpleWithDocIDFilter_MultipleDocumentsTargetFound(t *testing.T) {
 						"Age": 32
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(docID: "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b") {
 							Name

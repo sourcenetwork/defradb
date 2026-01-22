@@ -63,7 +63,7 @@ func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {
@@ -126,7 +126,7 @@ func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {
@@ -192,7 +192,7 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {
@@ -255,7 +255,7 @@ func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {
@@ -319,7 +319,7 @@ func TestSimple_WithSevenDummyTypesBeforeAndOneAfter(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {

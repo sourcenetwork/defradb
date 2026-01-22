@@ -13,6 +13,7 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -51,7 +52,7 @@ func TestOnetoOneSubTypeDscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(
 						filter: {author: {age: {_gt: 5}}},
@@ -115,7 +116,7 @@ func TestOnetoOneSubTypeAscOrderByQueryWithFilterHavinghNoSubTypeSelections(t *t
 					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(
 						filter: {author: {age: {_gt: 5}}},

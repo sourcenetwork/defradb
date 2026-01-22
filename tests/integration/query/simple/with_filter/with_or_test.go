@@ -44,7 +44,7 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_or: [{Age: {_eq: 55}}, {Age: {_eq: 19}}]}) {
 						Name
@@ -91,7 +91,7 @@ func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T)
 					"FavoriteNumbers": [30, 40]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_or: [
 						{FavoriteNumbers: {_any: {_leq: 100}}},

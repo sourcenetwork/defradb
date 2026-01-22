@@ -60,7 +60,7 @@ func TestP2PPeerReplicatorWithDeleteShowDeleted(t *testing.T) {
 				DocID:  0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(showDeleted: true) {
 						_deleted

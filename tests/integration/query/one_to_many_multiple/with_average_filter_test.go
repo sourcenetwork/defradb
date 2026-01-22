@@ -115,7 +115,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"score":     4,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -240,7 +240,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"score":     4,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name

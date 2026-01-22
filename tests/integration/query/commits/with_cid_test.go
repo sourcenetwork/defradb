@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -34,7 +35,7 @@ func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(
 							cid: "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu"
@@ -73,7 +74,7 @@ func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.
 					"name": "Johnn"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(
 							cid: "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm"
@@ -106,7 +107,7 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(cid: "fhbnjfahfhfhanfhga") {
 							cid
@@ -136,7 +137,7 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(cid: "bafybeidfhbnjfahfhfhanfhga") {
 							cid
@@ -166,7 +167,7 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
 							cid

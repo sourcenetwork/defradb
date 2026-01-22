@@ -50,7 +50,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithoutIdentity_ShouldNotFetch(t *te
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						Users {
@@ -102,7 +102,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithIdentity_ShouldFetch(t *testing.
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query  {
@@ -160,7 +160,7 @@ func TestACPWithIndex_UponQueryingPrivateDocWithWrongIdentity_ShouldNotFetch(t *
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query  {

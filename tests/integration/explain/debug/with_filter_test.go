@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -23,7 +24,7 @@ func TestDebugExplainRequestWithStringEqualFilter(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {name: {_eq: "Lone"}}) {
@@ -46,7 +47,7 @@ func TestDebugExplainRequestWithIntegerEqualFilter(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {age: {_eq: 26}}) {
@@ -69,7 +70,7 @@ func TestDebugExplainRequestWithGreaterThanFilter(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {age: {_gt: 20}}) {
@@ -92,7 +93,7 @@ func TestDebugExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {_and: [{age: {_gt: 20}}, {age: {_lt: 50}}]}) {
@@ -115,7 +116,7 @@ func TestDebugExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {_or: [{age: {_eq: 55}}, {age: {_eq: 19}}]}) {
@@ -138,7 +139,7 @@ func TestDebugExplainRequestWithMatchInsideList(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {age: {_in: [19, 40, 55]}}) {

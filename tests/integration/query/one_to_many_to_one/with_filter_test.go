@@ -13,6 +13,7 @@ package one_to_many_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -94,7 +95,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author (filter: {book: {publisher: {yearOpened: {_gt: 2021}}}}) {
 						name
@@ -131,7 +132,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -173,7 +174,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -223,7 +224,7 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author (filter: {book: {publisher: {yearOpened: { _geq: 2020}}}}){
 						name
@@ -321,7 +322,7 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 6),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author (filter: {_and: [
 						{age: {_gt: 50}},
@@ -345,7 +346,7 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author (filter: {_and: [
 						{_not: {age: {_geq: 70}}},
@@ -377,7 +378,7 @@ func TestOneToManyToOneWithCompoundOperatorInSubFilterAndRelation(t *testing.T) 
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author (filter: {_and: [
 						{age: {_gt: 20}},
