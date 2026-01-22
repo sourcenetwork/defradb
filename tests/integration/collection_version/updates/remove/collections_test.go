@@ -68,7 +68,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 				}`,
 				ExpectedError: `Cannot query field "Users" on type "Query".`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					Users {
 						name
@@ -129,7 +129,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 				}`,
 				ExpectedError: `Cannot query field "Users" on type "Query".`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					Users {
 						name

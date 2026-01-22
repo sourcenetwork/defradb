@@ -364,7 +364,7 @@ func TestP2PCreate_WithP2PCollectionAndSubscription_ShouldSucceed(t *testing.T) 
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				NodeID: immutable.Some(1),
 				Request: `subscription {
 					Users {

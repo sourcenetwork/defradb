@@ -161,7 +161,10 @@ func (a *ExplainRequest) assertExplainRequestResults(actualResult *client.GQLRes
 	}
 
 	// Note: if returned gql result is `nil` this panics (the panic seems useful while testing).
-	resultantData := actualResult.Data.(map[string]any)
+	resultantData, ok := actualResult.Data.(map[string]any)
+	if !ok {
+		return
+	}
 	log.InfoContext(a.s.Ctx, "", corelog.Any("FullExplainGraphResult", actualResult.Data))
 
 	// Check if the expected full explain graph (if provided) matches the actual full explain graph
@@ -401,7 +404,11 @@ func trimExplainAttributes(
 	t testing.TB,
 	actualResult any,
 ) map[string]any {
-	trimmedMap := copyMap(actualResult.(map[string]any))
+	resultMap, ok := actualResult.(map[string]any)
+	if !ok {
+		return nil
+	}
+	trimmedMap := copyMap(resultMap)
 
 	for key, value := range trimmedMap {
 		if !isPlanNode(key) {

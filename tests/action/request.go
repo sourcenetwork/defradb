@@ -58,6 +58,10 @@ type Request struct {
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
 
+	// Materialized views are automatically refreshed immediately before executing this Request, unless
+	// this property is set to true.
+	DoNotRefreshViews bool
+
 	// OperationName sets the operation name option for the request.
 	OperationName immutable.Option[string]
 
@@ -105,19 +109,17 @@ nodeLoop:
 			options = append(options, client.WithVariables(a.Variables.Value()))
 		}
 
-		// Refresh views if needed (for materialized view tests)
-		if !expectedErrorRaised {
-			expectedErrorRaised = refreshViewsForCollections(a.s, node, a.ExpectedError)
+		if !a.DoNotRefreshViews && !expectedErrorRaised {
+			expectedErrorRaised = refreshViews(a.s, node, a.ExpectedError)
 			if expectedErrorRaised {
 				continue nodeLoop
 			}
 		}
 
-		// Replace any template placeholders with the appropriate data.
 		request := replace(a.s, nodeID, a.Request)
 		result := node.ExecRequest(ctx, request, options...)
 
-		expectedErrorRaised = AssertRequestResults(
+		expectedErrorRaised = assertRequestResults(
 			a.s,
 			&result.GQL,
 			a.Results,
@@ -145,7 +147,6 @@ func (a *Request) getTransaction(db client.TxnStore) client.Txn {
 	}
 
 	if a.s.Txns[transactionID] == nil {
-		// Create a new transaction if one does not already exist.
 		txn, err := db.NewTxn(false)
 		if assertError(a.s.T, err, a.ExpectedError) {
 			txn.Discard()

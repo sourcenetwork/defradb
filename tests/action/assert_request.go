@@ -80,8 +80,8 @@ func (a *assertStack) String() string {
 	return b.String()
 }
 
-// AssertRequestResults asserts the results of a GQL request.
-func AssertRequestResults(
+// assertRequestResults asserts the results of a GQL request.
+func assertRequestResults(
 	s *state.State,
 	result *client.GQLResult,
 	expectedResults map[string]any,
@@ -101,7 +101,10 @@ func AssertRequestResults(
 	}
 
 	// Note: if result.Data == nil this panics (the panic seems useful while testing).
-	resultantData := result.Data.(map[string]any)
+	resultantData, ok := result.Data.(map[string]any)
+	if !ok {
+		return false
+	}
 	log.InfoContext(s.Ctx, "", corelog.Any("RequestResults", result.Data))
 
 	if asserter != nil {

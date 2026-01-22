@@ -72,7 +72,7 @@ func (a *SubscriptionRequest) Execute() {
 				for i, r := range a.Results {
 					// This assert should be executed from the main test routine
 					// so that failures will be properly handled.
-					expectedErrorRaised := AssertRequestResults(
+					expectedErrorRaised := assertRequestResults(
 						a.s,
 						results[i],
 						r,
