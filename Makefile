@@ -379,7 +379,7 @@ test\:js:
 
 .PHONY: test\:introspectionjs
 test\:introspectionjs:
-	go test -tags nodejs -run ^TestIntrospectionResult$$ ./internal/request/graphql/schema
+	go test -tags npx -run ^TestIntrospectionResult$$ ./internal/request/graphql/schema
 
 .PHONY: validate\:codecov
 validate\:codecov:

@@ -8,8 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build nodejs
-// +build nodejs
+//go:build npx
+// +build npx
 
 package schema
 
@@ -91,6 +91,7 @@ func runWriteSDLTest(t *testing.T, sdl string, fixtureName string) {
 	ctx = description.ContextWithCollectionCache(ctx, cache)
 
 	_, err = manager.Generator.Generate(ctx, collections)
+	require.NoError(t, err)
 
 	outBuf := bytes.NewBuffer(nil)
 	err = manager.WriteSDL(outBuf)

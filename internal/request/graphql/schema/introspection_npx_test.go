@@ -8,8 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build nodejs
-// +build nodejs
+//go:build npx
+// +build npx
 
 package schema
 
