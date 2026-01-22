@@ -73,6 +73,13 @@ func eq(condition, data any, propExists bool) (bool, error) {
 	case time.Time:
 		return ctime.Equal(cn, data), nil
 
+	case []any:
+		equal, err := equalAnyToAnySlice(data, cn)
+		if err != nil {
+			return reflect.DeepEqual(condition, data), nil
+		}
+		return equal, nil
+
 	default:
 		return reflect.DeepEqual(condition, data), nil
 	}

@@ -23,7 +23,8 @@ const (
 // This list is incomplete and undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrUnknownOperator = errors.New(errUnknownOperator)
+	ErrUnknownOperator   = errors.New(errUnknownOperator)
+	ErrSliceTypeNotFound = errors.New("slice type not found")
 )
 
 func NewErrUnknownOperator(operator string) error {
