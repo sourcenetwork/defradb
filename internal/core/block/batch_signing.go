@@ -11,6 +11,7 @@
 package coreblock
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"sort"
@@ -61,7 +62,6 @@ func ContextWithBatchSigning(ctx context.Context, collector *BatchCIDCollector) 
 }
 
 // BatchSigningCollectorFromContext returns the batch CID collector if batch signing is enabled.
-// Returns nil if batch signing is not enabled.
 func BatchSigningCollectorFromContext(ctx context.Context) *BatchCIDCollector {
 	val := ctx.Value(batchSigningContextKey{})
 	if val == nil {
@@ -85,20 +85,24 @@ func ComputeMerkleRoot(cids []cid.Cid) []byte {
 	sortedCids := make([]cid.Cid, len(cids))
 	copy(sortedCids, cids)
 	sort.Slice(sortedCids, func(i, j int) bool {
-		return sortedCids[i].String() < sortedCids[j].String()
+		return bytes.Compare(sortedCids[i].Bytes(), sortedCids[j].Bytes()) < 0
 	})
 
-	hashes := make([][]byte, len(sortedCids))
+	n := len(sortedCids)
+	hashes := make([][]byte, n)
 	for i, c := range sortedCids {
 		hash := sha256.Sum256(c.Bytes())
 		hashes[i] = hash[:]
 	}
 
+	combined := make([]byte, 64)
 	for len(hashes) > 1 {
-		var newHashes [][]byte
+		newLen := (len(hashes) + 1) / 2
+		newHashes := make([][]byte, 0, newLen)
 		for i := 0; i < len(hashes); i += 2 {
 			if i+1 < len(hashes) {
-				combined := append(hashes[i], hashes[i+1]...)
+				copy(combined[:32], hashes[i])
+				copy(combined[32:], hashes[i+1])
 				hash := sha256.Sum256(combined)
 				newHashes = append(newHashes, hash[:])
 			} else {
