@@ -202,6 +202,23 @@ type Device {
 	assert.Contains(t, result, "owner: User @index")
 }
 
+func TestAddIndexesToSchema_WithNonNullRelation_IndexesManySide(t *testing.T) {
+	schema := `type User {
+	name: String
+	devices: [Device]
+}
+
+type Device {
+	model: String
+	owner: User!
+}`
+	result := addIndexesToSchema(schema)
+
+	assert.Contains(t, result, "name: String @index")
+	assert.Contains(t, result, "model: String @index")
+	assert.Contains(t, result, "owner: User! @index")
+}
+
 func TestAddIndexesToSchema_WithOneToOne_DoesNotAddIndex(t *testing.T) {
 	// One-to-one relations are NOT indexed because DefraDB automatically
 	// creates a unique index to maintain the one-to-one invariant
@@ -223,6 +240,27 @@ type Address {
 	assert.NotContains(t, result, "user: User @index")
 	assert.Contains(t, result, "address: Address")
 	assert.NotContains(t, result, "address: Address @index")
+}
+
+func TestAddIndexesToSchema_WithNonNullOneToOne_DoesNotAddIndex(t *testing.T) {
+	schema := `type User {
+	name: String
+	address: Address!
+}
+
+type Address {
+	city: String
+	user: User! @primary
+}`
+	result := addIndexesToSchema(schema)
+
+	assert.Contains(t, result, "name: String @index")
+	assert.Contains(t, result, "city: String @index")
+
+	assert.Contains(t, result, "user: User! @primary")
+	assert.NotContains(t, result, "user: User! @index")
+	assert.Contains(t, result, "address: Address!")
+	assert.NotContains(t, result, "address: Address! @index")
 }
 
 func TestAddIndexesToSchema_WithExplicitFKFieldForOneToOne_DoesNotIndex(t *testing.T) {

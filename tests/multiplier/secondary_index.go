@@ -179,7 +179,7 @@ func countSingleRelationsTo(schema, sourceType, targetType string) int {
 	if typeBody == "" {
 		return 0
 	}
-	singleRelPattern := regexp.MustCompile(`\w+:\s*` + targetType + `[^!\w\[]`)
+	singleRelPattern := regexp.MustCompile(`\w+:\s*` + targetType + `!?(\s|@|\n|$)`)
 	return len(singleRelPattern.FindAllString(typeBody, -1))
 }
 
@@ -225,7 +225,7 @@ func findOneToOneFKFields(schema string, typeNames []string) map[string]bool {
 				continue
 			}
 
-			fieldPattern := regexp.MustCompile(`(\w+):\s*` + otherType + `[^!\w\[]`)
+			fieldPattern := regexp.MustCompile(`(\w+):\s*` + otherType + `!?(\s|@|\n|$)`)
 			fieldMatches := fieldPattern.FindAllStringSubmatch(typeBody, -1)
 			for _, fm := range fieldMatches {
 				if len(fm) > 1 {
@@ -279,7 +279,7 @@ func addRelationIndexesForType(result, originalSchema, typeName string, allTypes
 				continue
 			}
 
-			pattern := regexp.MustCompile(`(\w+:\s*)(` + otherType + `)(\s|@|\n|$)`)
+			pattern := regexp.MustCompile(`(\w+:\s*)(` + otherType + `!?)(\s|@|\n|$)`)
 			typeBlock = pattern.ReplaceAllStringFunc(typeBlock, func(match string) string {
 				if strings.Contains(match, "@index") {
 					return match
