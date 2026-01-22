@@ -1882,7 +1882,7 @@ input NotNullFloat64OperatorBlock {
 
 """
 
-These are the set of filter operators available for use when filtering on String!
+These are the set of filter operators available for use when filtering on Blob!
  values.
 
 """
