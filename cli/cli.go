@@ -199,11 +199,17 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeIdentityNewCommand(ctx),
 	)
 
+	sdl := MakeSDLCommand(ctx)
+	sdl.AddCommand(
+		MakeSDLGenerateCommand(ctx),
+	)
+
 	root := MakeRootCommand(ctx)
 	root.AddCommand(
 		client,
 		keyring,
 		identity,
+		sdl,
 		MakeStartCommand(ctx),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(ctx),

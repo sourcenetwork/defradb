@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
+	"github.com/sourcenetwork/testo/multiplier"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -81,6 +82,14 @@ type TestCase struct {
 	// IdentityTypes is a map of identity to key type.
 	// Use it to customize the key type that is used for identity and signing.
 	IdentityTypes map[state.Identity]crypto.KeyType
+
+	// The test will be skipped if the current active set of multipliers
+	// does not contain all of the given multiplier names.
+	MultiplierIncludes []multiplier.Name
+
+	// The test will be skipped if the current active set of multipliers
+	// contains any of the given multiplier names.
+	MultiplierExcludes []multiplier.Name
 }
 
 // KMS contains the configuration for KMS to be used in the test

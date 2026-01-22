@@ -20,7 +20,7 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
 // func TestQueryOneToManyWithUnknownCidAndDocID(t *testing.T) {
-// 	test := testUtils.RequestTestCase{
+// 	test := &action.Request{TestCase{
 // 		Request: `query {
 // 					Book (
 // 							cid: "bafybeicgwjdyqyuntdop5ytpsfrqg5a4t2r25pfv6prfppl5ta5k5altca",

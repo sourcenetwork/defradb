@@ -336,18 +336,48 @@ jobs:
           coverage-artifact-name: "coverage_js"
           coverage-path: coverage.txt
 
+  # This job runs tests with secondary indexes automatically added to schemas,
+  # to ensure query results are consistent regardless of whether indexes are present.
+  test-coverage-secondary-index:
+    name: Test coverage secondary index job
+
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+
+    env:
+      DEFRA_MULTIPLIERS: secondary-index
+
+    steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
+      - name: Checkout code into the directory
+        uses: actions/checkout@v6
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_secondary_index"
+          coverage-path: coverage.txt
+
   ## This job gathers all the coverage reports and uploads them to code-cov
   upload-coverage:
     name: Upload test code coverage job
 
     needs:
-      - test-coverage-basic        # 24 test(s)
-      - test-coverage-document-acp #  3 test(s)
-      - test-coverage-lens         #  2 test(s)
-      - test-coverage-view         #  1 test(s)
-      - test-coverage-encryption   #  1 test(s)
-      - test-coverage-telemetry    #  1 test(s)
-      - test-coverage-js           #  1 test(s)
+      - test-coverage-basic           # 24 test(s)
+      - test-coverage-document-acp    #  3 test(s)
+      - test-coverage-lens            #  2 test(s)
+      - test-coverage-view            #  1 test(s)
+      - test-coverage-encryption      #  1 test(s)
+      - test-coverage-telemetry       #  1 test(s)
+      - test-coverage-js              #  1 test(s)
+      - test-coverage-secondary-index #  1 test(s)
 
     # Important to know:
     # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.

@@ -19,7 +19,6 @@ import (
 
 func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
@@ -148,7 +147,6 @@ resources:
 
 func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing.T) {
 	test := testUtils.TestCase{
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
