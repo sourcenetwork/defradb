@@ -377,6 +377,10 @@ test\:changes:
 test\:js:
 	GOOS=js GOARCH=wasm gotestsum --format testname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
 
+# This test scans all the test files to find ones that include the npx build tag
+# then runs only those tests and their respective packages
+# Note: simply include `-tags npx` isnt sufficient since go test still includes
+# all the other tests and packages that arent tagged.
 .PHONY: test\:npx
 test\:npx:
 	@npx_files=$$(grep -rl --include='*_test.go' -E '^//go:build.*\bnpx\b|^// \+build.*\bnpx\b' .); \
