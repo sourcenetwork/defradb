@@ -347,31 +347,6 @@ func performAction(
 	}
 
 	switch action := act.(type) {
-	case action.Request:
-		a := &action
-		a.SetState(s)
-		a.Execute()
-
-	case action.ExplainRequest:
-		a := &action
-		a.SetState(s)
-		a.Execute()
-
-	case action.SubscriptionRequest:
-		a := &action
-		a.SetState(s)
-		a.Execute()
-
-	case action.CreateView:
-		a := &action
-		a.SetState(s)
-		a.Execute()
-
-	case action.RefreshViews:
-		a := &action
-		a.SetState(s)
-		a.Execute()
-
 	case action.Action:
 		action.Execute()
 
