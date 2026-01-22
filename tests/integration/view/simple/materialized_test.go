@@ -71,6 +71,7 @@ func TestView_SimpleMaterialized_AutoUpdatesOnViewCreate(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
 func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
@@ -109,7 +110,7 @@ func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
 			// Refresh the view after an earlier refresh (with data).  We had a bug here
 			// where RefreshViews would fail only if there was already data in the view cache.
 			&action.RefreshViews{},
-			testUtils.Request{
+			&action.Request{
 				// It doesn't really matter if it refreshes again, but it is a bit wasteful,
 				// and it is nicer to be explicit for this test.
 				DoNotRefreshViews: true,
