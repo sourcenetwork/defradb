@@ -572,6 +572,10 @@ type Request struct {
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
 
+	// Materialized views are automatically refreshed immediately before executing this Request, unless
+	// this property is set to true.
+	DoNotRefreshViews bool
+
 	// OperationName sets the operation name option for the request.
 	OperationName immutable.Option[string]
 

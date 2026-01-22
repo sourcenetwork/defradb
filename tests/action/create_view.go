@@ -11,6 +11,7 @@
 package action
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/immutable"
@@ -52,27 +53,43 @@ var _ Stateful = (*CreateView)(nil)
 func (a *CreateView) Execute() {
 	sdl := a.SDL
 
-	if a.s.ViewType == state.MaterializedViewType {
-		typeIndex := strings.Index(sdl, "\ttype ")
-		if typeIndex == -1 {
-			a.s.T.Fatal("materialized view SDL must contain '\ttype ' declaration")
-			return
+	switch {
+	case strings.Contains(sdl, "@materialized(if: false)"):
+		if a.s.ViewType == state.MaterializedViewType {
+			sdl = strings.ReplaceAll(sdl, "@materialized(if: false)", "@materialized(if: true)")
 		}
 
-		subStrSquigglyIndex := strings.Index(sdl[typeIndex:], "{")
-		if subStrSquigglyIndex == -1 {
-			a.s.T.Fatal("materialized view SDL type declaration must contain '{'")
-			return
+	case strings.Contains(sdl, "@materialized(if: true)"):
+		if a.s.ViewType == state.CachelessViewType {
+			sdl = strings.ReplaceAll(sdl, "@materialized(if: true)", "@materialized(if: false)")
 		}
 
-		squigglyIndex := typeIndex + subStrSquigglyIndex
-		sdl = strings.Join([]string{
-			sdl[:squigglyIndex],
-			"@",
-			types.MaterializedDirectiveLabel,
-			sdl[squigglyIndex:],
-			"",
-		}, "")
+	default:
+		if a.s.ViewType == state.MaterializedViewType {
+			typeIndex := strings.Index(sdl, "\ttype ")
+			if typeIndex == -1 {
+				a.s.T.Fatal("materialized view SDL must contain '\ttype ' declaration")
+				return
+			}
+
+			subStrSquigglyIndex := strings.Index(sdl[typeIndex:], "{")
+			if subStrSquigglyIndex == -1 {
+				a.s.T.Fatal("materialized view SDL type declaration must contain '{'")
+				return
+			}
+
+			squigglyIndex := typeIndex + subStrSquigglyIndex
+			sdl = strings.Join([]string{
+				sdl[:squigglyIndex],
+				"@",
+				types.MaterializedDirectiveLabel,
+				"(if: ",
+				fmt.Sprint(a.s.ViewType == state.MaterializedViewType),
+				") ",
+				sdl[squigglyIndex:],
+				"",
+			}, "")
+		}
 	}
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)

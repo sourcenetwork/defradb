@@ -1828,7 +1828,7 @@ nodeLoop:
 			options = append(options, client.WithVariables(action.Variables.Value()))
 		}
 
-		if !expectedErrorRaised && viewType == MaterializedViewType {
+		if !action.DoNotRefreshViews && !expectedErrorRaised && viewType == MaterializedViewType {
 			for _, colName := range s.CollectionNames {
 				// Refresh the views in the order in which they were declared, this way
 				// any views of views should be based off of refreshed data, assuming they were declared in
