@@ -17,15 +17,16 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestMutationCreateOneToMany_AliasedRelationNameWithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -42,11 +43,11 @@ func TestMutationCreateOneToMany_AliasedRelationNameWithInvalidField_Error(t *te
 
 func TestMutationCreateOneToMany_AliasedRelationNameNonExistingRelationSingleSide_NoIDFieldError(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{

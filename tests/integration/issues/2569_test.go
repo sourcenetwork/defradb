@@ -124,12 +124,12 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 			},
 		),
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// We limit the test to Collection mutation calls, as the test framework
 				// will make a `Get` call before submitting the document, which is where the error
 				// will surface (not the update itelf)
-				testUtils.CollectionSaveMutationType,
-				testUtils.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
 			},
 		),
 		Actions: []any{

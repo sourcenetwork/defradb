@@ -17,16 +17,17 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{
@@ -165,10 +166,10 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdate(t *testing
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{

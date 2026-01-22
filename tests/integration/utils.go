@@ -60,33 +60,6 @@ const (
 	vectorEmbeddingEnvName  = "DEFRA_VECTOR_EMBEDDING"
 )
 
-// The MutationType that tests will run using.
-//
-// For example if set to [CollectionSaveMutationType], all supporting
-// actions (such as [UpdateDoc]) will execute via [Collection.Save].
-//
-// Defaults to CollectionSaveMutationType.
-type MutationType string
-
-const (
-	// CollectionSaveMutationType will cause all supporting actions
-	// to run their mutations via [Collection.Save].
-	CollectionSaveMutationType MutationType = "collection-save"
-
-	// CollectionNamedMutationType will cause all supporting actions
-	// to run their mutations via their corresponding named [Collection]
-	// call.
-	//
-	// For example, CreateDoc will call [Collection.Create], and
-	// UpdateDoc will call [Collection.Update].
-	CollectionNamedMutationType MutationType = "collection-named"
-
-	// GQLRequestMutationType will cause all supporting actions to
-	// run their mutations using GQL requests, typically these will
-	// include a `id` parameter to target the specified document.
-	GQLRequestMutationType MutationType = "gql"
-)
-
 // ViewType is a type alias for backward compatibility.
 type ViewType = state.ViewType
 
@@ -96,9 +69,8 @@ const (
 )
 
 var (
-	log          = corelog.NewLogger("tests.integration")
-	mutationType MutationType
-	viewType     state.ViewType
+	log      = corelog.NewLogger("tests.integration")
+	viewType state.ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
 	// skipBackupTests will skip any tests that involve backup actions
@@ -121,12 +93,12 @@ func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
 	// that don't have the flag defined
 	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
-		mutationType = MutationType(value)
+		state.ActiveMutationType = state.MutationType(value)
 	} else {
 		// Default to testing mutations via Collection.Save - it should be simpler and
 		// faster. We assume this is desirable when not explicitly testing any particular
 		// mutation type.
-		mutationType = CollectionSaveMutationType
+		state.ActiveMutationType = state.CollectionSaveMutationType
 	}
 
 	if value, ok := os.LookupEnv(viewTypeEnvName); ok {
@@ -268,7 +240,7 @@ func executeTestCase(
 	logAttrs := []slog.Attr{
 		corelog.Any("database", dbt),
 		corelog.Any("client", clientType),
-		corelog.Any("mutationType", mutationType),
+		corelog.Any("mutationType", state.ActiveMutationType),
 		corelog.String("databaseDir", databaseDir),
 		corelog.Bool("badgerEncryption", badgerEncryption),
 		corelog.Bool("skipNetworkTests", skipNetworkTests),
@@ -1115,7 +1087,7 @@ func setActiveCollectionVersion(
 	refreshCollections(s)
 }
 
-// createDoc creates a document using the chosen [mutationType] and caches it in the
+// createDoc creates a document using the chosen [state.ActiveMutationType] and caches it in the
 // test state object.
 func createDoc(
 	s *state.State,
@@ -1126,15 +1098,15 @@ func createDoc(
 	}
 
 	var mutation func(*state.State, CreateDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
-	switch mutationType {
-	case CollectionSaveMutationType:
+	switch state.ActiveMutationType {
+	case state.CollectionSaveMutationType:
 		mutation = createDocViaColSave
-	case CollectionNamedMutationType:
+	case state.CollectionNamedMutationType:
 		mutation = createDocViaColCreate
-	case GQLRequestMutationType:
+	case state.GQLRequestMutationType:
 		mutation = createDocViaGQL
 	default:
-		s.T.Fatalf("invalid mutationType: %v", mutationType)
+		s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
 	}
 
 	var expectedErrorRaised bool
@@ -1366,21 +1338,21 @@ func deleteDoc(
 	}
 }
 
-// updateDoc updates a document using the chosen [mutationType].
+// updateDoc updates a document using the chosen [state.ActiveMutationType].
 func updateDoc(
 	s *state.State,
 	action UpdateDoc,
 ) {
 	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection) error
-	switch mutationType {
-	case CollectionSaveMutationType:
+	switch state.ActiveMutationType {
+	case state.CollectionSaveMutationType:
 		mutation = updateDocViaColSave
-	case CollectionNamedMutationType:
+	case state.CollectionNamedMutationType:
 		mutation = updateDocViaColUpdate
-	case GQLRequestMutationType:
+	case state.GQLRequestMutationType:
 		mutation = updateDocViaGQL
 	default:
-		s.T.Fatalf("invalid mutationType: %v", mutationType)
+		s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
 	}
 
 	var expectedErrorRaised bool
@@ -1965,18 +1937,18 @@ func assertBackupContent(t testing.TB, expectedContent, filepath string) {
 
 // skipIfMutationTypeUnsupported skips the current test if the given supportedMutationTypes option has value
 // and the active mutation type is not contained within that value set.
-func skipIfMutationTypeUnsupported(t testing.TB, supportedMutationTypes immutable.Option[[]MutationType]) {
+func skipIfMutationTypeUnsupported(t testing.TB, supportedMutationTypes immutable.Option[[]state.MutationType]) {
 	if supportedMutationTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedMutationType := range supportedMutationTypes.Value() {
-			if supportedMutationType == mutationType {
+			if supportedMutationType == state.ActiveMutationType {
 				isTypeSupported = true
 				break
 			}
 		}
 
 		if !isTypeSupported {
-			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
+			t.Skipf("test does not support given mutation type. Type: %s", state.ActiveMutationType)
 		}
 	}
 }

@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_OwnerGivesReadAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
@@ -408,9 +409,9 @@ func TestACP_OwnerGivesOnlyReadAccessToAnotherActor_OtherActorCanReadButNotUpdat
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+			[]state.MutationType{
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{

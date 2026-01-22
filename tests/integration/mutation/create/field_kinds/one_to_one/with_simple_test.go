@@ -15,17 +15,18 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
 
 func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -138,9 +139,9 @@ func TestMutationCreateOneToOne(t *testing.T) {
 
 func TestMutationCreateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionSaveMutationType,
-			testUtils.CollectionNamedMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -165,8 +166,8 @@ func TestMutationCreateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 
 func TestMutationCreateOneToOneSecondarySide_GQL(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{

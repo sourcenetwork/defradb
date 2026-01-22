@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -248,13 +249,13 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 
 func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// This test will fail if using the collection save
 			// method because it does not create two unique docs
 			// and instead calls update on the second doc with
 			// matching fields
-			testUtils.CollectionNamedMutationType,
-			testUtils.GQLRequestMutationType,
+			state.CollectionNamedMutationType,
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -282,13 +283,13 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsErr
 
 func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueIndex_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// This test will fail if using the collection save
 			// method because it does not create two unique docs
 			// and instead calls update on the second doc with
 			// matching fields
-			testUtils.CollectionNamedMutationType,
-			testUtils.GQLRequestMutationType,
+			state.CollectionNamedMutationType,
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{

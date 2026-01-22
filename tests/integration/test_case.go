@@ -38,7 +38,7 @@ type TestCase struct {
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between mutation types, or we need to temporarily document a bug.
-	SupportedMutationTypes immutable.Option[[]MutationType]
+	SupportedMutationTypes immutable.Option[[]state.MutationType]
 
 	// If provided a value, SupportedClientTypes will limit the client types under test to those
 	// within this set.  If no active clients pass this filter the test will be skipped.
@@ -214,7 +214,7 @@ type SetActiveCollectionVersion struct {
 }
 
 // CreateDoc will attempt to create the given document in the given collection
-// using the set [MutationType].
+// using the set [state.MutationType].
 type CreateDoc struct {
 	// NodeID may hold the ID (index) of a node to apply this create to.
 	//
@@ -316,7 +316,7 @@ type DeleteDoc struct {
 	ExpectedError string
 }
 
-// UpdateDoc will attempt to update the given document using the set [MutationType].
+// UpdateDoc will attempt to update the given document using the set [state.MutationType].
 type UpdateDoc struct {
 	// NodeID may hold the ID (index) of a node to apply this update to.
 	//

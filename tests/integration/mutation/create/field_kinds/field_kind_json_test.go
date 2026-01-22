@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -304,11 +305,11 @@ func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 // This test confirms that our JSON value encoding is determinstic.
 func TestMutationCreate_WithDuplicateJSONField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// Save will not produce an error on duplicate
 			// because it will just update the previous doc
-			testUtils.GQLRequestMutationType,
-			testUtils.CollectionNamedMutationType,
+			state.GQLRequestMutationType,
+			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{

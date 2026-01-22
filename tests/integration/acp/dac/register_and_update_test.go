@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_CreateWithoutIdentityAndUpdateWithoutIdentity_CanUpdate(t *testing.T) {
@@ -312,10 +313,10 @@ resources:
 func TestACP_CreateWithIdentityAndUpdateWithoutIdentity_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return no error when wrong identity is used so test that separately.
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 
 		Actions: []any{
@@ -415,10 +416,10 @@ resources:
 func TestACP_CreateWithIdentityAndUpdateWithWrongIdentity_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return no error when wrong identity is used so test that separately.
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 
 		Actions: []any{
@@ -522,9 +523,9 @@ resources:
 func TestACP_CreateWithIdentityAndUpdateWithoutIdentityGQL_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return no error when wrong identity is used so test that separately.
-			testUtils.GQLRequestMutationType,
+			state.GQLRequestMutationType,
 		}),
 
 		Actions: []any{
@@ -626,9 +627,9 @@ resources:
 func TestACP_CreateWithIdentityAndUpdateWithWrongIdentityGQL_CanNotUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return no error when wrong identity is used so test that separately.
-			testUtils.GQLRequestMutationType,
+			state.GQLRequestMutationType,
 		}),
 
 		Actions: []any{

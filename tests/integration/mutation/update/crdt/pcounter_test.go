@@ -129,12 +129,12 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 			state.CLIClientType,
 			state.HTTPClientType,
 		}),
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a type error in this case
 			// because we are testing the internal overflow behaviour with
 			// a int64 but the GQL Int type is an int32.
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{

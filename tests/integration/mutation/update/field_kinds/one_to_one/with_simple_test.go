@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -141,9 +142,9 @@ func TestMutationUpdateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 	authorID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
 
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionSaveMutationType,
-			testUtils.CollectionNamedMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -178,8 +179,8 @@ func TestMutationUpdateOneToOneSecondarySide_GQL(t *testing.T) {
 	authorID := "bae-53eff350-ad8e-532c-b72d-f95c4f47909c"
 
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -255,9 +256,9 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_CollectionApi(
 	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionSaveMutationType,
-			testUtils.CollectionNamedMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -299,8 +300,8 @@ func TestMutationUpdateOneToOne_RelationIDToLinkFromSecondarySide_GQL(t *testing
 	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{

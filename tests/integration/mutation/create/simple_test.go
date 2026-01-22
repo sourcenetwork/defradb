@@ -17,15 +17,16 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -106,11 +107,11 @@ func TestMutationCreate(t *testing.T) {
 
 func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// Collection.Save would treat the second create as an update, and so
 			// is excluded from this test.
-			testUtils.CollectionNamedMutationType,
-			testUtils.GQLRequestMutationType,
+			state.CollectionNamedMutationType,
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{

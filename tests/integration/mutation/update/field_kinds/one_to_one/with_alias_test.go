@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testing.T) {
@@ -64,9 +65,9 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_Collect
 	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionSaveMutationType,
-			testUtils.CollectionNamedMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -109,8 +110,8 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_GQL(t *
 	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
 			testUtils.CreateDoc{
