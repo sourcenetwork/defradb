@@ -20,8 +20,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/cli/test/action"
 	_ "github.com/sourcenetwork/defradb/cli/test/multiplier"
-	_ "github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/cli/test/state"
+	_ "github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func init() {

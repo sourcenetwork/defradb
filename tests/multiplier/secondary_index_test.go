@@ -465,10 +465,12 @@ func TestApply_WithIndexActions_StillModifiesSchema(t *testing.T) {
 
 	result := m.Apply(actions)
 
-	schemaAdd := result[0].(*action.AddSchema)
+	schemaAdd, ok := result[0].(*action.AddSchema)
+	assert.True(t, ok)
 	assert.Contains(t, schemaAdd.Schema, "@index")
 
-	createIndex := result[1].(*action.CreateIndex)
+	createIndex, ok := result[1].(*action.CreateIndex)
+	assert.True(t, ok)
 	assert.Equal(t, 0, createIndex.CollectionID)
 	assert.Equal(t, "name", createIndex.FieldName)
 }
@@ -501,7 +503,8 @@ func TestApply_WithoutIndex_ModifiesSchema(t *testing.T) {
 
 	assert.NotEqual(t, actions, result)
 
-	schemaAdd := result[0].(*action.AddSchema)
+	schemaAdd, ok := result[0].(*action.AddSchema)
+	assert.True(t, ok)
 	assert.Contains(t, schemaAdd.Schema, "name: String @index")
 	assert.Contains(t, schemaAdd.Schema, "age: Int @index")
 }
