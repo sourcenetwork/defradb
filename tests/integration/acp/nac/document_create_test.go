@@ -64,6 +64,7 @@ func TestNAC_GatesDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 				state.GoClientType,
 				state.HTTPClientType,
 				state.CClientType,
+				state.JSClientType,
 			},
 		),
 		Actions: []any{
@@ -148,6 +149,7 @@ func TestNAC_GatesDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				state.GoClientType,
 				state.HTTPClientType,
 				state.CClientType,
+				state.JSClientType,
 			},
 		),
 		Actions: []any{

@@ -76,6 +76,7 @@ func TestNAC_GatesDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) {
 				state.GoClientType,
 				state.HTTPClientType,
 				state.CClientType,
+				state.JSClientType,
 			},
 		),
 		Actions: []any{
@@ -188,6 +189,7 @@ func TestNAC_GatesDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				state.GoClientType,
 				state.HTTPClientType,
 				state.CClientType,
+				state.JSClientType,
 			},
 		),
 		Actions: []any{

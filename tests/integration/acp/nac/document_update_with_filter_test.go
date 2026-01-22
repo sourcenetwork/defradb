@@ -77,6 +77,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_NotAuthorizedError(t *test
 				state.GoClientType,
 				state.HTTPClientType,
 				state.CClientType,
+				state.JSClientType,
 			},
 		),
 		Actions: []any{
@@ -191,6 +192,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_NotAuthorizedError(t *t
 				state.GoClientType,
 				state.HTTPClientType,
 				state.CClientType,
+				state.JSClientType,
 			},
 		),
 		Actions: []any{
