@@ -19,7 +19,9 @@ import (
 // OptionWithIdentity is an interface for options that provide and can set an identity.
 // T is the concrete options type (for fluent API support).
 type OptionWithIdentity[T any] interface {
+	// GetIdentity returns the identity associated with this option, if any.
 	GetIdentity() immutable.Option[identity.Identity]
+	// SetIdentity sets the identity for this option and returns the option for chaining.
 	SetIdentity(id identity.Identity) T
 }
 

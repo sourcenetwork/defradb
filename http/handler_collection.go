@@ -385,8 +385,11 @@ func (h *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *ht
 
 func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
+	ctx := req.Context()
 
-	err := col.Truncate(req.Context())
+	truncateOpt := options.WithIdentity(options.CollectionTruncate(), identity.FromContext(ctx))
+
+	err := col.Truncate(ctx, truncateOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
