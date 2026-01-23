@@ -49,7 +49,7 @@ func TestColVersionUpdateCopyName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("Books"),
 				},

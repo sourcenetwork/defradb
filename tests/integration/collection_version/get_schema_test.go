@@ -23,7 +23,7 @@ import (
 func TestGetSchema_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID: immutable.Some("does not exist"),
 				},
@@ -38,7 +38,7 @@ func TestGetSchema_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
 func TestGetSchema_GivenNoSchemaReturnsEmptySet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -50,7 +50,7 @@ func TestGetSchema_GivenNoSchemaReturnsEmptySet(t *testing.T) {
 func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					CollectionID: immutable.Some("does not exist"),
 				},
@@ -65,7 +65,7 @@ func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
 func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("does not exist"),
 				},
@@ -98,7 +98,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -177,7 +177,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 					CollectionID:    immutable.Some(usersSchemaVersion1ID),
@@ -247,7 +247,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name:            immutable.Some("Users"),
 					IncludeInactive: immutable.Some(true),

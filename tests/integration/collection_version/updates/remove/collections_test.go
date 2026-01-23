@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
@@ -40,7 +41,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			&action.Request{
@@ -101,7 +102,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
 			},
 			&action.Request{
@@ -241,7 +242,7 @@ func TestColVersionUpdateCopyCollectionAddFieldRemoveOriginalCollection(t *testi
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -291,7 +292,7 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_SamePatch(t *testing.T
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -341,6 +342,8 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_DifferentPatches(t *te
 
 func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -369,7 +372,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -441,7 +444,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -635,7 +638,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *te
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},

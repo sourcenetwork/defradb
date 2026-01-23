@@ -54,7 +54,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -155,7 +155,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

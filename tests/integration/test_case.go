@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/gen"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -80,6 +81,14 @@ type TestCase struct {
 	// IdentityTypes is a map of identity to key type.
 	// Use it to customize the key type that is used for identity and signing.
 	IdentityTypes map[state.Identity]crypto.KeyType
+
+	// The test will be skipped if the current active set of multipliers
+	// does not contain all of the given multiplier names.
+	MultiplierIncludes []multiplier.Name
+
+	// The test will be skipped if the current active set of multipliers
+	// contains any of the given multiplier names.
+	MultiplierExcludes []multiplier.Name
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -146,42 +155,6 @@ type Start struct {
 	//
 	// False by default.
 	EnableNAC bool
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// GetCollections is an action that fetches collections using the provided options.
-//
-// ID, RootID and CollectionVersionID will only be asserted on if an expected value is provided.
-type GetCollections struct {
-	// NodeID may hold the ID (index) of a node to get collections from.
-	//
-	// If a value is not provided collections will be gotten from all nodes.
-	NodeID immutable.Option[int]
-
-	// Used to identify the transaction for this to run against. Optional.
-	TransactionID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The expected results.
-	//
-	// Each item will be compared individually, if CollectionID, VersionID, or FieldIDs on the
-	// expected item are default they will not be compared with the actual.
-	//
-	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
-	// to allow their ommission in most cases).
-	ExpectedResults []client.CollectionVersion
-
-	// An optional set of fetch options for the collections.
-	FilterOptions client.CollectionFetchOptions
 
 	// Any error expected from the action. Optional.
 	//

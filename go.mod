@@ -55,7 +55,7 @@ require (
 	github.com/sourcenetwork/immutable v0.3.0
 	github.com/sourcenetwork/lens/host-go v0.9.4
 	github.com/sourcenetwork/sourcehub v0.3.3-0.20251204195821-6e21a42984ba
-	github.com/sourcenetwork/testo v0.1.0
+	github.com/sourcenetwork/testo v0.2.0
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.20.1

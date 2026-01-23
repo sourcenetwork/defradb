@@ -195,7 +195,7 @@ func TestColVersionUpdate_AddVectorEmbedding_ShouldSucceed(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -556,7 +556,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingURL_ShouldSucceed(t *test
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

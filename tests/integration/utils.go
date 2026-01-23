@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/testo/multiplier"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -43,9 +44,14 @@ import (
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
+	_ "github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
+
+func init() {
+	multiplier.Init("DEFRA_MULTIPLIERS")
+}
 
 const (
 	mutationTypeEnvName     = "DEFRA_MUTATION_TYPE"
@@ -169,6 +175,7 @@ func ExecuteTestCase(
 	testCase TestCase,
 ) {
 	flattenActions(&testCase)
+	applyMultipliers(t, &testCase)
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
@@ -381,9 +388,6 @@ func performAction(
 
 	case GetAllP2PDocuments:
 		getAllP2PDocuments(s, action)
-
-	case GetCollections:
-		getCollections(s, action)
 
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)
@@ -717,6 +721,37 @@ func flattenActions(testCase *TestCase) {
 	testCase.Actions = newActions
 }
 
+// applyMultipliers applies the active multipliers to the test actions.
+// It converts actions that implement action.Action to action.Actions,
+// checks if any multiplier wants to skip based on the actions,
+// applies the multipliers, and maps the modified actions back to the original slice.
+//
+// Note: This implementation assumes multipliers only modify actions in-place and do not
+// add or remove actions. If a multiplier changes the action count, the mapping will break.
+func applyMultipliers(t testing.TB, testCase *TestCase) {
+	actions := make(action.Actions, 0, len(testCase.Actions))
+	actionIndices := make([]int, 0, len(testCase.Actions))
+
+	for i, a := range testCase.Actions {
+		if act, ok := a.(action.Action); ok {
+			actions = append(actions, act)
+			actionIndices = append(actionIndices, i)
+		}
+	}
+
+	if len(actions) == 0 {
+		return
+	}
+
+	multiplier.Skip(t, actions, testCase.MultiplierIncludes, testCase.MultiplierExcludes)
+
+	modified := multiplier.Apply(actions)
+
+	for i, idx := range actionIndices {
+		testCase.Actions[idx] = modified[i]
+	}
+}
+
 // getActionRange returns the index of the first action to be run, and the last.
 //
 // Not all processes will run all actions - if this is a change detector run they
@@ -1031,53 +1066,6 @@ func refreshDocuments(
 					s.T.Fatalf("Failed to get existing commits for doc %s: %v", doc.ID(), result.GQL.Errors)
 				}
 			}
-		}
-	}
-}
-
-func getCollections(
-	s *state.State,
-	action GetCollections,
-) {
-	transformSet := []string{}
-	for _, col := range action.ExpectedResults {
-		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
-			transformSet = append(transformSet, col.PreviousVersion.Value().Transform.Value())
-		}
-	}
-
-	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
-	// This will need to change if patches want to replace more than just lens IDs.
-	transformMap := replaceMap(s, 0, transformSet)
-
-	for i, col := range action.ExpectedResults {
-		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
-			action.ExpectedResults[i].PreviousVersion = immutable.Some(
-				client.CollectionSource{
-					SourceCollectionID: action.ExpectedResults[i].PreviousVersion.Value().SourceCollectionID,
-					Transform:          immutable.Some(transformMap[col.PreviousVersion.Value().Transform.Value()]),
-				},
-			)
-		}
-	}
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		txn := getTransaction(s, node, action.TransactionID, "")
-		ctx := db.InitContext(s.Ctx, txn)
-		ctx = getContextWithIdentity(ctx, s, action.Identity, nodeID)
-		results, err := node.GetCollections(ctx, action.FilterOptions)
-		resultDescriptions := make([]client.CollectionVersion, len(results))
-		for i, col := range results {
-			resultDescriptions[i] = col.Version()
-		}
-
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-		if !expectedErrorRaised {
-			assertCollectionVersions(s, action.ExpectedResults, resultDescriptions)
 		}
 	}
 }

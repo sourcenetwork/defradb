@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryJSON_WithNotEqualFilterWithObject_ShouldFilter(t *testing.T) {
@@ -127,6 +128,8 @@ func TestQueryJSON_WithNotEqualFilterWithNestedObjects_ShouldFilter(t *testing.T
 
 func TestQueryJSON_WithNotEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -221,6 +224,8 @@ func TestQueryJSON_WithNeFilterAgainstNumberField_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNeFilterAgainstStringField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -273,6 +278,8 @@ func TestQueryJSON_WithNeFilterAgainstStringField_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNeFilterAgainstBooleanField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

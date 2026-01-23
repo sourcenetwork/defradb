@@ -52,7 +52,7 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("UserView"),
 				},
@@ -101,7 +101,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("UserView"),
 				},
@@ -153,7 +153,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("UserView"),
 				},
@@ -246,7 +246,7 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("Users"),
 				},
@@ -301,7 +301,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("Users"),
 				},

@@ -50,7 +50,7 @@ func TestSyncColVersion_WithPatchVersionOfUnknownCollection(t *testing.T) {
 				NodeID:     1,
 				VersionIDs: []string{"bafyreics7adsddesun4kqqotr6g6c6ld2t7djlwcbrm4ftbhru3ayindy4"},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -137,7 +137,7 @@ func TestSyncColVersion_WithPatchVersionOfKnownCollection(t *testing.T) {
 				NodeID:     1,
 				VersionIDs: []string{"bafyreics7adsddesun4kqqotr6g6c6ld2t7djlwcbrm4ftbhru3ayindy4"},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
