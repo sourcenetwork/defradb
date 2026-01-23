@@ -29,7 +29,7 @@ func TestView_SimpleMaterialized_AutoUpdatesOnViewCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
@@ -85,7 +85,7 @@ func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
@@ -102,7 +102,7 @@ func TestView_SimpleMaterialized_RefreshesAfterEarlierRefresh(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"Fred"
 				}`,
@@ -150,7 +150,7 @@ func TestView_SimpleMaterialized_DoesNotAutoUpdate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John"
 				}`,
@@ -168,7 +168,7 @@ func TestView_SimpleMaterialized_DoesNotAutoUpdate(t *testing.T) {
 				`,
 			},
 			&action.RefreshViews{},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"Fred"
 				}`,

@@ -28,7 +28,7 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -37,7 +37,7 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
@@ -46,7 +46,7 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": null
@@ -81,7 +81,7 @@ func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
@@ -90,7 +90,7 @@ func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -99,7 +99,7 @@ func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {
@@ -140,7 +140,7 @@ func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -152,7 +152,7 @@ func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
@@ -193,13 +193,13 @@ func TestQueryJSON_WithEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": null
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {}
@@ -234,31 +234,31 @@ func TestQueryJSON_WithEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Shahzad",
 					"Custom": "32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Andy",
 					"Custom": [1, 2]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Fred",
 					"Custom": {"one": 1}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32

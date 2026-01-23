@@ -27,7 +27,7 @@ func TestCollectionTruncateIndexFilter_RemovesDocument(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -62,7 +62,7 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_RemovesDocument(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -97,7 +97,7 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_AllowsRecreationOfDocumen
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -106,7 +106,7 @@ func TestCollectionTruncateIndexFilter_WithUniqueIndex_AllowsRecreationOfDocumen
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// If the unique index had not been deleted, then this create would
 				// error, as the unique index would have been violated.

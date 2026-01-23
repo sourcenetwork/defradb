@@ -31,7 +31,7 @@ func TestMutationCreate_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": {"tree": "maple", "age": 250}
@@ -73,7 +73,7 @@ func TestMutationCreate_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": ["maple", 250]
@@ -112,7 +112,7 @@ func TestMutationCreate_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": [
@@ -157,7 +157,7 @@ func TestMutationCreate_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": 250
@@ -196,7 +196,7 @@ func TestMutationCreate_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": "hello"
@@ -235,7 +235,7 @@ func TestMutationCreate_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": true
@@ -274,7 +274,7 @@ func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": null
@@ -320,13 +320,13 @@ func TestMutationCreate_WithDuplicateJSONField_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": {"one": 1, "two": 2, "three": [0, 1, 2]}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": {"three": [0, 1, 2], "two": 2, "one": 1}

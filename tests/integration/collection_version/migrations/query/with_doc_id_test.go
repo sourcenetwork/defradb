@@ -32,13 +32,13 @@ func TestSchemaMigrationQueryByDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-d1536ab3-c3d8-5c3d-9622-087ee707fd99
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,
@@ -114,37 +114,37 @@ func TestSchemaMigrationQueryMultipleQueriesByDocID(t *testing.T) {
 			// We want 6 documents, and 6 queries, as lens pool is limited to 5
 			// and we want to make sure that lenses are being correctly returned
 			// to the pool for reuse after.
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-d1536ab3-c3d8-5c3d-9622-087ee707fd99
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-235c64e3-abf7-549c-9aff-971c8afdfa3f
 				Doc: `{
 					"name": "Fred"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-eadc6f5f-a52b-57de-ad6c-e76315fff6bd
 				Doc: `{
 					"name": "Chris"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-aa68c022-519a-50cf-8a91-2ff6d4349c90
 				Doc: `{
 					"name": "Islam"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-81418211-7e0c-5e0c-8505-6288318c7248
 				Doc: `{
 					"name": "Dave"

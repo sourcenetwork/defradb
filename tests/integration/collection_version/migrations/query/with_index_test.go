@@ -41,13 +41,13 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 					"age":  40,
@@ -119,25 +119,25 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigrate
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
@@ -206,25 +206,25 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
@@ -296,25 +296,25 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
@@ -386,25 +386,25 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexD
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
@@ -480,25 +480,25 @@ func setupDistantVersions() []any {
 				}
 			`,
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			DocMap: map[string]any{
 				"name": "Andy",
 				"age":  20,
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			DocMap: map[string]any{
 				"name": "John",
 				"age":  30,
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			DocMap: map[string]any{
 				"name": "Fred",
 				"age":  25,
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			DocMap: map[string]any{
 				"name": "Islam",
 				"age":  32,
@@ -793,25 +793,25 @@ func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Should
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
@@ -882,25 +882,25 @@ func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
@@ -963,13 +963,13 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 					"age":  25,
@@ -1120,7 +1120,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  20,

@@ -20,7 +20,7 @@ import (
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, 5, 1, 0, 7]
@@ -52,7 +52,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, 5, 1, 0, 7]
@@ -84,7 +84,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [2, null, 5, 1, 0, 7]
@@ -116,7 +116,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [null, 2, 5, 1, 0, 7]
@@ -148,7 +148,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
@@ -180,7 +180,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
@@ -212,7 +212,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
@@ -244,7 +244,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]

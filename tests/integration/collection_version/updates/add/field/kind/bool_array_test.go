@@ -67,7 +67,7 @@ func TestSchemaUpdatesAddFieldKindBoolArrayWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -112,7 +112,7 @@ func TestSchemaUpdatesAddFieldKindBoolArraySubstitutionWithCreate(t *testing.T) 
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",

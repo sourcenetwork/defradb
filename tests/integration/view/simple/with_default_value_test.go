@@ -40,7 +40,7 @@ func TestView_SimpleWithDefaultValue_DoesNotSetFieldValue(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"Alice"
 				}`,

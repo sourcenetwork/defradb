@@ -75,7 +75,7 @@ func TestUpdateWithEmptyFilter_ReturnsError(t *testing.T) {
 func TestUpdateWithInvalidJSON_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -97,7 +97,7 @@ func TestUpdateWithInvalidJSON_ReturnsError(t *testing.T) {
 func TestUpdateWithInvalidUpdater_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -119,7 +119,7 @@ func TestUpdateWithInvalidUpdater_ReturnsError(t *testing.T) {
 func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -153,7 +153,7 @@ func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 func TestUpdateWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",

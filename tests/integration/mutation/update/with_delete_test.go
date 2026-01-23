@@ -34,7 +34,7 @@ func TestUpdateSave_DeletedDoc_DoesNothing(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John"
 				}`,

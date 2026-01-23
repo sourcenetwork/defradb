@@ -32,19 +32,19 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *testing.T
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 10, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 50, 30]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
@@ -85,19 +85,19 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *testing.T
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 10, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 50]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
@@ -138,19 +138,19 @@ func TestArrayIndex_WithFilterOnIndexedArrayUsingNone_ShouldNotUseIndex(t *testi
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 10, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 50]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
@@ -192,13 +192,13 @@ func TestArrayIndexUpdate_IfUpdateRearrangesArrayElements_ShouldFetch(t *testing
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 10, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 50, 30]
@@ -246,13 +246,13 @@ func TestArrayIndexUpdate_IfUpdateRemovesSoughtElement_ShouldNotFetch(t *testing
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 10, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 50, 30]
@@ -296,13 +296,13 @@ func TestArrayIndexUpdate_IfUpdateAddsSoughtElement_ShouldFetch(t *testing.T) {
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 10, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [40, 50]
@@ -350,13 +350,13 @@ func TestArrayIndexDelete_IfUpdateRemovesSoughtElement_ShouldNotFetch(t *testing
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 10, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [40, 50]
@@ -392,13 +392,13 @@ func TestArrayIndex_Bool_ShouldUseIndex(t *testing.T) {
 						booleans: [Boolean!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"booleans": [true, false, true]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"booleans": [false, false]
@@ -437,13 +437,13 @@ func TestArrayIndex_OptionalBool_ShouldUseIndex(t *testing.T) {
 						booleans: [Boolean] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"booleans": [true, false, true]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"booleans": [false, false]
@@ -482,13 +482,13 @@ func TestArrayIndex_OptionalInt_ShouldUseIndex(t *testing.T) {
 						numbers: [Int] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [4, 3, 7]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 8]
@@ -527,13 +527,13 @@ func TestArrayIndex_Float_ShouldUseIndex(t *testing.T) {
 						rates: [Float!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"rates": [0.5, 1.0, 1.25]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"rates": [1.5, 1.2]
@@ -572,13 +572,13 @@ func TestArrayIndex_OptionalFloat_ShouldUseIndex(t *testing.T) {
 						rates: [Float] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"rates": [0.5, 1.0, 1.25]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"rates": [1.5, 1.2]
@@ -617,13 +617,13 @@ func TestArrayIndex_OptionalString_ShouldUseIndex(t *testing.T) {
 						hobbies: [String] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"hobbies": ["games", "books", "music"]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"hobbies": ["movies", "music"]
@@ -662,13 +662,13 @@ func TestArrayIndex_WithAnyAndInOperator_Succeed(t *testing.T) {
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [1, 4, 7]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 8]
@@ -702,19 +702,19 @@ func TestArrayIndex_WithAllAndInOperator_Succeed(t *testing.T) {
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [3, 4]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 8]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [3, 5, 8]
@@ -748,19 +748,19 @@ func TestArrayIndex_WithNoneAndInOperator_Succeed(t *testing.T) {
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [3, 4]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 8]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [3, 5, 8]
@@ -794,19 +794,19 @@ func TestArrayIndex_WithNoneAndNinOperator_Succeed(t *testing.T) {
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [3, 4]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 8]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [3, 5, 8]
@@ -840,19 +840,19 @@ func TestArrayIndex_WithAllAndNinOperator_Succeed(t *testing.T) {
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [3, 4]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 8]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [3, 5, 8]
@@ -886,19 +886,19 @@ func TestArrayIndex_WithAnyAndNinOperator_Succeed(t *testing.T) {
 						numbers: [Int!] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [3, 4]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 8]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [3, 5, 8]
@@ -933,19 +933,19 @@ func TestArrayIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 						numbers: [Int] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, null, 2, 3, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [10, 20, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
@@ -992,25 +992,25 @@ func TestArrayIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 						numbers: [Int] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, null, 2, 3, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [10, 20, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"numbers": [null, null]
@@ -1056,19 +1056,19 @@ func TestArrayIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 						numbers: [Int] @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, null, 2, 3, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [10, 20, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
