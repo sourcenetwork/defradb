@@ -20,8 +20,6 @@ import (
 
 func TestQueryJSON_WithGreaterEqualFilterWithEqualValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -65,8 +63,6 @@ func TestQueryJSON_WithGreaterEqualFilterWithEqualValue_ShouldFilter(t *testing.
 
 func TestQueryJSON_WithGreaterEqualFilterWithGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
