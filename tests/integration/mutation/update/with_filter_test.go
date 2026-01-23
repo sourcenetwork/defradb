@@ -34,7 +34,7 @@ func TestMutationUpdate_WithBooleanFilter_ResultFilteredOut(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// The update will result in a record that no longer matches the filter
 				Request: `mutation {
 					update_Users(filter: {verified: {_eq: true}}, input: {verified: false}) {
@@ -87,7 +87,7 @@ func TestMutationUpdate_WithBooleanFilter(t *testing.T) {
 					"points": 33
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(filter: {verified: {_eq: true}}, input: {points: 59}) {
 						name

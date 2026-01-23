@@ -46,7 +46,7 @@ func TestP2POneToOneReplicatorWithRestart(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age

@@ -771,7 +771,7 @@ func (w *CWrapper) GetCollectionByName(
 	name client.CollectionName,
 	opts ...*options.GetCollectionByNameOptions,
 ) (client.Collection, error) {
-	cols, err := w.GetCollections(ctx, options.GetCollections().SetName(name))
+	cols, err := w.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
 	if err != nil {
 		return nil, err
 	}
@@ -791,8 +791,8 @@ func getCollectionsOptionsToCOptions(opts *options.GetCollectionsOptions) C.Coll
 	var includeInactive C.int = 0
 
 	if opts != nil {
-		if opts.Name.HasValue() {
-			name = opts.Name.Value()
+		if opts.CollectionName.HasValue() {
+			name = opts.CollectionName.Value()
 		}
 		if opts.VersionID.HasValue() {
 			version = opts.VersionID.Value()

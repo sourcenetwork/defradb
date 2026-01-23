@@ -51,7 +51,7 @@ func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -84,7 +84,7 @@ func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {

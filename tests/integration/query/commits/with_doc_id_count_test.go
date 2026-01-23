@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -27,7 +28,7 @@ func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
 							cid
@@ -74,7 +75,7 @@ func TestQueryCommits_WithDocUpdatesAndLinkHeadCount(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
 							fieldName

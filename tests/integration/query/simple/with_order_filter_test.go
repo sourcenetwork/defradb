@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -43,7 +44,7 @@ func TestQuerySimpleWithNumericGreaterThanFilterAndNumericOrderDescending(t *tes
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Age: {_gt: 30}}, order: {Age: DESC}) {
 						Name

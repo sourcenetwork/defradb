@@ -34,7 +34,7 @@ func TestMutationCreate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 					"numbers": [27, 28]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

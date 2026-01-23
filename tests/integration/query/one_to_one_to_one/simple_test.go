@@ -79,7 +79,7 @@ func TestQueryOneToOneToOne(t *testing.T) {
 					"_printedID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Publisher {
 						name
@@ -183,7 +183,7 @@ func TestQueryOneToOneToOneSecondaryThenPrimary(t *testing.T) {
 					"_authorID":    testUtils.NewDocIndex(2, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Publisher {
 						name
@@ -287,7 +287,7 @@ func TestQueryOneToOneToOnePrimaryThenSecondary(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Publisher {
 						name
@@ -390,7 +390,7 @@ func TestQueryOneToOneToOneSecondary(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Publisher {
 						name

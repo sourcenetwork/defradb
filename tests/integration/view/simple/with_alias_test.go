@@ -27,7 +27,7 @@ func TestView_SimpleWithAlias(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						fullname: name
@@ -44,7 +44,7 @@ func TestView_SimpleWithAlias(t *testing.T) {
 					"name":	"John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

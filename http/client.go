@@ -229,8 +229,8 @@ func (c *Client) RefreshViews(ctx context.Context, opts ...*options.RefreshViews
 	params := url.Values{}
 	if len(opts) > 0 && opts[0] != nil {
 		opt := opts[0]
-		if opt.Name.HasValue() {
-			params.Add("name", opt.Name.Value())
+		if opt.CollectionName.HasValue() {
+			params.Add("name", opt.CollectionName.Value())
 		}
 		if opt.VersionID.HasValue() {
 			params.Add("version_id", opt.VersionID.Value())
@@ -320,7 +320,7 @@ func (c *Client) GetCollectionByName(
 		ctx = withOptIdentity(ctx, opts[0])
 	}
 
-	cols, err := c.GetCollections(ctx, options.GetCollections().SetName(name))
+	cols, err := c.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
 	if err != nil {
 		return nil, err
 	}
@@ -345,8 +345,8 @@ func (c *Client) GetCollections(
 	params := url.Values{}
 	if len(opts) > 0 && opts[0] != nil {
 		opt := opts[0]
-		if opt.Name.HasValue() {
-			params.Add("name", opt.Name.Value())
+		if opt.CollectionName.HasValue() {
+			params.Add("name", opt.CollectionName.Value())
 		}
 		if opt.VersionID.HasValue() {
 			params.Add("version_id", opt.VersionID.Value())

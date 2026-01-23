@@ -88,7 +88,7 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 				},
 				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -96,7 +96,7 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},

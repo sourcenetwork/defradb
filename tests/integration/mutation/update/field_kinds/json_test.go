@@ -37,7 +37,7 @@ func TestMutationUpdate_IfJSONFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"custom": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

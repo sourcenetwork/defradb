@@ -36,7 +36,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloatArray(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -76,7 +76,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloatArrayWithCreate(t *testing.T) {
 					"foo": [3.14, -5.77, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -125,7 +125,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloatArraySubstitutionWithCreate(t *te
 					"foo": [3.14, -5.77, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

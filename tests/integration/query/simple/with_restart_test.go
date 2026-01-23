@@ -36,7 +36,7 @@ func TestQuerySimpleWithRestart(t *testing.T) {
 				}`,
 			},
 			testUtils.Restart{},
-			testUtils.Request{
+			&action.Request{
 				Request: ` query {
 					Users {
 						name

@@ -81,7 +81,7 @@ func ViewRefresh(nodePtr C.uintptr_t,
 		opt.SetCollectionID(collectionID)
 	}
 	if viewName != "" {
-		opt.SetName(viewName)
+		opt.SetCollectionName(viewName)
 	}
 	if cOptions.getInactive != 0 {
 		opt.SetIncludeInactive(true)

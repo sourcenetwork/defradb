@@ -50,7 +50,7 @@ func TestQuerySimple_WithGroupAverageAliasFilter_FiltersResults(t *testing.T) {
 					"Score": 0
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name], filter: {_alias: {averageScore: {_eq: 20}}}) {
 						Name
@@ -105,7 +105,7 @@ func TestQuerySimple_WithGroupSumAliasFilter_FiltersResults(t *testing.T) {
 					"Score": 0
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name], filter: {_alias: {totalScore: {_eq: 40}}}) {
 						Name
@@ -160,7 +160,7 @@ func TestQuerySimple_WithGroupMinAliasFilter_FiltersResults(t *testing.T) {
 					"Score": 0
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name], filter: {_alias: {minScore: {_eq: 0}}}) {
 						Name
@@ -215,7 +215,7 @@ func TestQuerySimple_WithGroupMaxAliasFilter_FiltersResults(t *testing.T) {
 					"Score": 0
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name], filter: {_alias: {maxScore: {_eq: 40}}}) {
 						Name
@@ -276,7 +276,7 @@ func TestQuerySimple_WithGroupCountAliasFilter_FiltersResults(t *testing.T) {
 					"Score": 5
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name], filter: {_alias: {scores: {_eq: 3}}}) {
 						Name

@@ -50,7 +50,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNod
 
 			// Empty user can not access the private document.
 			// Note: There is no error here because it's blocked by DAC not NAC.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(),
 				Request: `
 					query {
@@ -101,7 +101,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNon
 
 			// Empty user can not access the private document.
 			// Note: There is no error here because it's blocked by DAC not NAC.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(),
 				Request: `
 					query {
@@ -151,7 +151,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessEmptyUser_PublicDocument_CanAccess(t 
 			},
 
 			// Empty user can access the public document as NAC is not enabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.NoIdentity(),
 				Request: `
 					query {

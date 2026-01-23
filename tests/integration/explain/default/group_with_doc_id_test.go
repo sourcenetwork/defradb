@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -23,7 +24,7 @@ func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -39,7 +40,7 @@ func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 
 				ExpectedPatterns: groupPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -76,7 +77,7 @@ func TestDefaultExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -96,7 +97,7 @@ func TestDefaultExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 
 				ExpectedPatterns: groupPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,

@@ -13,6 +13,7 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 
 	"github.com/sourcenetwork/immutable"
@@ -52,7 +53,7 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -87,7 +88,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -108,7 +109,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Author {

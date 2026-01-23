@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -37,7 +38,7 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithFilter_
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -84,7 +85,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMaxWithFilter_Suc
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -148,7 +149,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -204,7 +205,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMaxWith
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -260,7 +261,7 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMaxWithDiffere
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age

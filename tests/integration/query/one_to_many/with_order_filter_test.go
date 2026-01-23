@@ -13,7 +13,9 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendingOnChild(
@@ -61,7 +63,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {age: {_gt: 63}}) {
 						name
@@ -99,6 +101,8 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 
 func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChild(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 0,
@@ -140,7 +144,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChi
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {published: {rating: {_gt: 4.1}}}) {
 						name

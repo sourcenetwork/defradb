@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -34,7 +34,35 @@ type StatefulMatcher interface {
 	ResetMatcherState()
 }
 
+// TestState is read-only interface for test state. It allows passing the state to custom matchers
+// without allowing them to modify the state.
+type TestState interface {
+	// GetClientType returns the client type of the test.
+	GetClientType() ClientType
+	// GetCurrentNodeID returns the node id that is currently being asserted.
+	GetCurrentNodeID() int
+	// GetIdentity returns the identity for the given node index.
+	GetIdentity(Identity) acpIdentity.Identity
+	// GetDocID returns the document ID for the given collection index and document index.
+	GetDocID(collectionIndex, docIndex int) client.DocID
+}
+
+// TestStateMatcher is a matcher that requires access to the test state.
+type TestStateMatcher interface {
+	types.GomegaMatcher
+	// SetTestState sets the test state.
+	SetTestState(s TestState)
+}
+
 type DatabaseType string
+
+// ViewType is the type of view to use.
+type ViewType string
+
+const (
+	CachelessViewType    ViewType = "cacheless"
+	MaterializedViewType ViewType = "materialized"
+)
 
 // KMSType is the type of KMS to use.
 type KMSType string
@@ -204,6 +232,9 @@ type State struct {
 	// The type of client currently being tested.
 	ClientType ClientType
 
+	// The type of view currently being tested.
+	ViewType ViewType
+
 	// The type of Document ACP
 	DocumentACPType DocumentACPType
 
@@ -316,6 +347,7 @@ func NewState(
 	kms KMSType,
 	dbt DatabaseType,
 	clientType ClientType,
+	viewType ViewType,
 	documentACPType DocumentACPType,
 	collectionNames []string,
 ) *State {
@@ -325,6 +357,7 @@ func NewState(
 		KMS:                             kms,
 		DbType:                          dbt,
 		ClientType:                      clientType,
+		ViewType:                        viewType,
 		DocumentACPType:                 documentACPType,
 		DocumentACPOptions:              nil,
 		Txns:                            []client.Txn{},

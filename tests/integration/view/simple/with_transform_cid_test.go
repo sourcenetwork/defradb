@@ -44,7 +44,7 @@ func TestView_WithTransformCID_CanReuseExistingLens(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -62,7 +62,7 @@ func TestView_WithTransformCID_CanReuseExistingLens(t *testing.T) {
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {
@@ -94,7 +94,7 @@ func TestView_WithInvalidTransformCID_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name

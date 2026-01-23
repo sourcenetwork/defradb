@@ -56,7 +56,7 @@ func TestBranchableCollectionSync_OneNodeEmptyAnotherWithDocs_ShouldCopyAll(t *t
 				NodeID: 1,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -130,7 +130,7 @@ func TestBranchableCollectionSync_WithDifferentDocsOnBothNodes_ShouldSync(t *tes
 				NodeID: 0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name
@@ -177,7 +177,7 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 				NodeID: 1,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -201,7 +201,7 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 				},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -216,7 +216,7 @@ func TestBranchableCollectionSync_ShouldNotSubscribe(t *testing.T) {
 				NodeID: 1,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {

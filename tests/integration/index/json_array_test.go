@@ -96,7 +96,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -104,7 +104,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -169,7 +169,7 @@ func TestJSONArrayIndex_WithAnyEqFilter_ShouldNotConsiderThem(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -177,7 +177,7 @@ func TestJSONArrayIndex_WithAnyEqFilter_ShouldNotConsiderThem(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -226,7 +226,7 @@ func TestJSONArrayIndex_WithAnyAndComparisonFilter_ShouldNotConsiderThem(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -234,7 +234,7 @@ func TestJSONArrayIndex_WithAnyAndComparisonFilter_ShouldNotConsiderThem(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -299,7 +299,7 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -310,7 +310,7 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// We don't use index for _none operator
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
@@ -384,7 +384,7 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -395,7 +395,7 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// We don't use index for _none operator
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
@@ -469,7 +469,7 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -477,7 +477,7 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 4 docs have the value 4 in the numbers array
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
@@ -535,7 +535,7 @@ func TestJSONArrayIndex_WithAllEqAndComparisonFilter_ShouldFetchCorrectlyUsingIn
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -543,7 +543,7 @@ func TestJSONArrayIndex_WithAllEqAndComparisonFilter_ShouldFetchCorrectlyUsingIn
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},

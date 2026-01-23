@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,7 +29,7 @@ func TestNAC_GatesCollectionList_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:        testUtils.ClientIdentity(1),
 				ExpectedResults: []client.CollectionVersion{},
 			},
@@ -49,7 +50,7 @@ func TestNAC_GatesCollectionList_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.NoIdentity(),
 				ExpectedError: "not authorized to perform operation",
 			},
@@ -70,7 +71,7 @@ func TestNAC_GatesCollectionList_WrongIdentity_NotAuthorizedError(t *testing.T) 
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				ExpectedError: "not authorized to perform operation",
 			},

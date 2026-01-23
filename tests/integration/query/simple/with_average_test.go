@@ -13,13 +13,14 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_avg
 				}`,
@@ -34,7 +35,7 @@ func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_avg(Users: {})
 				}`,
@@ -49,7 +50,7 @@ func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_avg(Users: {field: Age})
 				}`,
@@ -78,7 +79,7 @@ func TestQuerySimpleWithAverage(t *testing.T) {
 					"Age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_avg(Users: {field: Age})
 				}`,
@@ -95,7 +96,7 @@ func TestQuerySimpleWithAverage(t *testing.T) {
 func TestQuerySimple_WithAliasedAverage_OnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					average: _avg(Users: {field: Age})
 				}`,

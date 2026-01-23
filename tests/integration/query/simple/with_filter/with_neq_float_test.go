@@ -13,34 +13,35 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithStringNotEqualsFilterBlock(t *testing.T) {
+func TestQuerySimpleWithFloatNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Age": 21
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"Age": 32
+					"HeightM": 3.2
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(filter: {Name: {_ne: "John"}}) {
-						Age
+					Users(filter: {HeightM: {_neq: 2.1}}) {
+						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(32),
+							"Name": "Bob",
 						},
 					},
 				},
@@ -51,39 +52,39 @@ func TestQuerySimpleWithStringNotEqualsFilterBlock(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithStringNotEqualsNilFilterBlock(t *testing.T) {
+func TestQuerySimpleWithFloatNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Age": 21
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"Age": 32
+					"HeightM": 3.2
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
-					"Age": 36
+					"Name": "Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(filter: {Name: {_ne: null}}) {
-						Age
+					Users(filter: {HeightM: {_neq: null}}) {
+						Name
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(32),
+							"Name": "Bob",
 						},
 						{
-							"Age": int64(21),
+							"Name": "John",
 						},
 					},
 				},

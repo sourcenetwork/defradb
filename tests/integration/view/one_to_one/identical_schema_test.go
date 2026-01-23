@@ -34,7 +34,7 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					LeftHand {
 						name
@@ -66,7 +66,7 @@ func TestView_OneToOneSameSchema(t *testing.T) {
 					"_holdingID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						HandView {
@@ -109,7 +109,7 @@ func TestView_OneToOneEmbeddedSchemaIsNotLostOnNextUpdate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name

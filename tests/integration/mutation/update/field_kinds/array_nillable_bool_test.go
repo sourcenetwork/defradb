@@ -41,7 +41,7 @@ func TestMutationUpdate_WithArrayOfNillableBooleans(t *testing.T) {
 					"likedIndexes": [true, true, false, true, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

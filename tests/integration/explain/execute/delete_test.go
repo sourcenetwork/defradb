@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -26,7 +27,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					delete_ContactAddress(docID: ["bae-78bc4454-19a6-58ed-9e18-f0ca175dd12c"]) {
 						city
@@ -76,7 +77,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					delete_Author(filter: {name: {_like: "%Funke%"}}) {
 						name

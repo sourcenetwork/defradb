@@ -78,7 +78,7 @@ func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionN
 	case len(collectionNames) > 0:
 		// if specific collections are chosen get them by name
 		for _, name := range collectionNames {
-			opt := options.WithIdentity(options.GetCollections().SetName(name), identity.FromContext(ctx))
+			opt := options.WithIdentity(options.GetCollections().SetCollectionName(name), identity.FromContext(ctx))
 			cols, err := clientTxn.GetCollections(ctx, opt)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
@@ -260,7 +260,7 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 	if len(collectionNames) > 0 {
 		// if specific collections are chosen get them by name
 		for _, name := range collectionNames {
-			opt := options.WithIdentity(options.GetCollections().SetName(name), identity.FromContext(ctx))
+			opt := options.WithIdentity(options.GetCollections().SetCollectionName(name), identity.FromContext(ctx))
 			cols, err := clientTxn.GetCollections(ctx, opt)
 			if err != nil {
 				return NewErrReplicatorCollections(err)

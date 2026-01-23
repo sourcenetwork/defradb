@@ -13,7 +13,9 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing.T) {
@@ -91,7 +93,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 						"verified": true
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author (groupBy: [age]) {
 							age
@@ -155,6 +157,8 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				CollectionID: 1,
@@ -228,7 +232,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 					"_authorID": testUtils.NewDocIndex(1, 2),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author (groupBy: [age]) {
 							age
@@ -368,7 +372,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 						"verified": true
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author (groupBy: [age], filter: {age: {_gt: 300}}) {
 							age

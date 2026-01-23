@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -25,14 +25,13 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
-	"github.com/onsi/gomega"
-	"github.com/onsi/gomega/matchers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/testo/multiplier"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -41,14 +40,18 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/gen"
+	_ "github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
+
+func init() {
+	multiplier.Init("DEFRA_MULTIPLIERS")
+}
 
 const (
 	mutationTypeEnvName     = "DEFRA_MUTATION_TYPE"
@@ -84,17 +87,18 @@ const (
 	GQLRequestMutationType MutationType = "gql"
 )
 
-type ViewType string
+// ViewType is a type alias for backward compatibility.
+type ViewType = state.ViewType
 
 const (
-	CachelessViewType    ViewType = "cacheless"
-	MaterializedViewType ViewType = "materialized"
+	CachelessViewType    = state.CachelessViewType
+	MaterializedViewType = state.MaterializedViewType
 )
 
 var (
 	log          = corelog.NewLogger("tests.integration")
 	mutationType MutationType
-	viewType     ViewType
+	viewType     state.ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
 	// skipBackupTests will skip any tests that involve backup actions
@@ -126,7 +130,7 @@ func init() {
 	}
 
 	if value, ok := os.LookupEnv(viewTypeEnvName); ok {
-		viewType = ViewType(value)
+		viewType = state.ViewType(value)
 	} else {
 		viewType = CachelessViewType
 	}
@@ -171,6 +175,7 @@ func ExecuteTestCase(
 	testCase TestCase,
 ) {
 	flattenActions(&testCase)
+	applyMultipliers(t, &testCase)
 	collectionNames := getCollectionNames(testCase)
 	changeDetector.PreTestChecks(t, collectionNames)
 	skipIfMutationTypeUnsupported(t, testCase.SupportedMutationTypes)
@@ -290,6 +295,7 @@ func executeTestCase(
 		kms,
 		dbt,
 		clientType,
+		viewType,
 		documentACPType,
 		collectionNames,
 	)
@@ -386,17 +392,8 @@ func performAction(
 	case PatchCollection:
 		patchCollection(s, action)
 
-	case GetCollections:
-		getCollections(s, action)
-
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)
-
-	case CreateView:
-		createView(s, action)
-
-	case RefreshViews:
-		refreshViews(s, action)
 
 	case ConfigureMigration:
 		configureMigration(s, action)
@@ -457,15 +454,6 @@ func performAction(
 
 	case TransactionCommit:
 		commitTransaction(s, action)
-
-	case SubscriptionRequest:
-		executeSubscriptionRequest(s, action)
-
-	case Request:
-		executeRequest(s, action)
-
-	case ExplainRequest:
-		executeExplainRequest(s, action)
 
 	case IntrospectionRequest:
 		assertIntrospectionResults(s, action)
@@ -621,7 +609,7 @@ func getCollectionNames(testCase TestCase) []string {
 
 			nextIndex = getCollectionNamesFromSchema(collectionIndexByName, action.Schema, nextIndex)
 
-		case CreateView:
+		case *action.CreateView:
 			if action.ExpectedError != "" {
 				// If an error is expected then no collections should result from this action
 				continue
@@ -734,6 +722,37 @@ func flattenActions(testCase *TestCase) {
 		}
 	}
 	testCase.Actions = newActions
+}
+
+// applyMultipliers applies the active multipliers to the test actions.
+// It converts actions that implement action.Action to action.Actions,
+// checks if any multiplier wants to skip based on the actions,
+// applies the multipliers, and maps the modified actions back to the original slice.
+//
+// Note: This implementation assumes multipliers only modify actions in-place and do not
+// add or remove actions. If a multiplier changes the action count, the mapping will break.
+func applyMultipliers(t testing.TB, testCase *TestCase) {
+	actions := make(action.Actions, 0, len(testCase.Actions))
+	actionIndices := make([]int, 0, len(testCase.Actions))
+
+	for i, a := range testCase.Actions {
+		if act, ok := a.(action.Action); ok {
+			actions = append(actions, act)
+			actionIndices = append(actionIndices, i)
+		}
+	}
+
+	if len(actions) == 0 {
+		return
+	}
+
+	multiplier.Skip(t, actions, testCase.MultiplierIncludes, testCase.MultiplierExcludes)
+
+	modified := multiplier.Apply(actions)
+
+	for i, idx := range actionIndices {
+		testCase.Actions[idx] = modified[i]
+	}
 }
 
 // getActionRange returns the index of the first action to be run, and the last.
@@ -1094,62 +1113,6 @@ func patchCollection(
 	refreshCollections(s)
 }
 
-func getCollections(
-	s *state.State,
-	action GetCollections,
-) {
-	transformSet := []string{}
-	for _, col := range action.ExpectedResults {
-		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
-			transformSet = append(transformSet, col.PreviousVersion.Value().Transform.Value())
-		}
-	}
-
-	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
-	// This will need to change if patches want to replace more than just lens IDs.
-	transformMap := replaceMap(s, 0, transformSet)
-
-	for i, col := range action.ExpectedResults {
-		if col.PreviousVersion.HasValue() && col.PreviousVersion.Value().Transform.HasValue() {
-			action.ExpectedResults[i].PreviousVersion = immutable.Some(
-				client.CollectionSource{
-					SourceCollectionID: action.ExpectedResults[i].PreviousVersion.Value().SourceCollectionID,
-					Transform:          immutable.Some(transformMap[col.PreviousVersion.Value().Transform.Value()]),
-				},
-			)
-		}
-	}
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		txn := getTransaction(s, node, action.TransactionID, "")
-		ctx := db.InitContext(s.Ctx, txn)
-		ctx = getContextWithIdentity(ctx, s, action.Identity, nodeID)
-
-		opts := action.FilterOptions
-		if opts == nil {
-			opts = options.GetCollections()
-		}
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
-		if identOption.HasValue() {
-			opts.SetIdentity(identOption.Value())
-		}
-		results, err := node.GetCollections(ctx, opts)
-		resultDescriptions := make([]client.CollectionVersion, len(results))
-		for i, col := range results {
-			resultDescriptions[i] = col.Version()
-		}
-
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-		if !expectedErrorRaised {
-			assertCollectionVersions(s, action.ExpectedResults, resultDescriptions)
-		}
-	}
-}
-
 func setActiveCollectionVersion(
 	s *state.State,
 	action SetActiveCollectionVersion,
@@ -1174,61 +1137,6 @@ func setActiveCollectionVersion(
 	}
 
 	refreshCollections(s)
-}
-
-func createView(
-	s *state.State,
-	action CreateView,
-) {
-	if viewType == MaterializedViewType {
-		typeIndex := strings.Index(action.SDL, "\ttype ")
-		subStrSquigglyIndex := strings.Index(action.SDL[typeIndex:], "{")
-		squigglyIndex := typeIndex + subStrSquigglyIndex
-		action.SDL = strings.Join([]string{
-			action.SDL[:squigglyIndex],
-			"@",
-			types.MaterializedDirectiveLabel,
-			action.SDL[squigglyIndex:],
-			"",
-		}, "")
-	}
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for i, node := range nodes {
-		transformCID := action.TransformCID
-		if transformCID.HasValue() {
-			transformCID = immutable.Some(replace(s, nodeIDs[i], transformCID.Value()))
-		}
-		results, err := node.AddView(s.Ctx, action.Query, action.SDL, transformCID)
-
-		for _, result := range results {
-			appendCollectionVersion(s, result.VersionID)
-		}
-
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
-}
-
-func appendCollectionVersion(s *state.State, versionID string) {
-	if slices.Contains(s.CollectionVersions, versionID) {
-		return
-	}
-
-	s.CollectionVersions = append(s.CollectionVersions, versionID)
-}
-
-func refreshViews(
-	s *state.State,
-	action RefreshViews,
-) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		err := node.RefreshViews(s.Ctx, action.FilterOptions)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
 }
 
 // createDoc creates a document using the chosen [mutationType] and caches it in the
@@ -1947,118 +1855,6 @@ func commitTransaction(
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 }
 
-// executeRequest executes the given request.
-func executeRequest(
-	s *state.State,
-	action Request,
-) {
-	var expectedErrorRaised bool
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-nodeLoop:
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		txn := getTransaction(s, node, action.TransactionID, action.ExpectedError)
-		ctx := getContextWithIdentity(db.InitContext(s.Ctx, txn), s, action.Identity, nodeID)
-
-		reqOption := options.ExecRequest()
-		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
-		if identOption.HasValue() {
-			reqOption.SetIdentity(identOption.Value())
-		}
-		if action.OperationName.HasValue() {
-			reqOption.SetOperationName(action.OperationName.Value())
-		}
-		if action.Variables.HasValue() {
-			reqOption.SetVariables(action.Variables.Value())
-		}
-
-		if !expectedErrorRaised && viewType == MaterializedViewType {
-			for _, colName := range s.CollectionNames {
-				// Refresh the views in the order in which they were declared, this way
-				// any views of views should be based off of refreshed data, assuming they were declared in
-				// an intuitive order.
-				err := node.RefreshViews(
-					s.Ctx,
-					options.RefreshViews().SetName(colName),
-				)
-				expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
-				if expectedErrorRaised {
-					continue nodeLoop
-				}
-			}
-		}
-		// Replace any template placeholders with the appropriate data.
-		request := replace(s, nodeID, action.Request)
-		result := node.ExecRequest(ctx, request, reqOption)
-
-		expectedErrorRaised = assertRequestResults(
-			s,
-			&result.GQL,
-			action.Results,
-			action.ExpectedError,
-			action.Asserter,
-			nodeID,
-			!action.NonOrderedResults,
-		)
-	}
-
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-}
-
-// executeSubscriptionRequest executes the given subscription request, returning
-// a channel that will receive a single event once the subscription has been completed.
-//
-// The returned channel will receive a function that asserts that
-// the subscription received all its expected results and no more.
-// It should be called from the main test routine to ensure that
-// failures are recorded properly. It will only yield once, once
-// the subscription has terminated.
-func executeSubscriptionRequest(
-	s *state.State,
-	action SubscriptionRequest,
-) {
-	subscriptionAssert := make(chan func())
-
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
-		result := node.ExecRequest(s.Ctx, action.Request)
-		if AssertErrors(s.T, result.GQL.Errors, action.ExpectedError) {
-			return
-		}
-
-		go func() {
-			var results []*client.GQLResult
-			for len(results) < len(action.Results) {
-				select {
-				case s := <-result.Subscription:
-					results = append(results, &s)
-				case <-time.After(subscriptionTimeout):
-				}
-			}
-
-			subscriptionAssert <- func() {
-				for i, r := range action.Results {
-					// This assert should be executed from the main test routine
-					// so that failures will be properly handled.
-					expectedErrorRaised := assertRequestResults(
-						s,
-						results[i],
-						r,
-						action.ExpectedError,
-						nil,
-						0,
-						true,
-					)
-
-					assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-				}
-			}
-		}()
-	}
-
-	s.SubscriptionResultsChans = append(s.SubscriptionResultsChans, subscriptionAssert)
-}
-
 // Asserts as to whether an error has been raised as expected (or not). If an expected
 // error has been raised it will return true, returns false in all other cases.
 func AssertError(t testing.TB, err error, expectedError string) bool {
@@ -2103,274 +1899,16 @@ func AssertErrors(
 	return false
 }
 
-func assertRequestResults(
-	s *state.State,
-	result *client.GQLResult,
-	expectedResults map[string]any,
-	expectedError string,
-	asserter ResultAsserter,
-	nodeID int,
-	ordered bool,
-) bool {
-	s.CurrentNodeID = nodeID
-	// we skip assertion benchmark because you don't specify expected result for benchmark.
-	if AssertErrors(s.T, result.Errors, expectedError) || s.IsBench {
-		return true
-	}
-
-	if expectedResults == nil && result.Data == nil {
-		return true
-	}
-
-	// Note: if result.Data == nil this panics (the panic seems useful while testing).
-	resultantData := result.Data.(map[string]any)
-	log.InfoContext(s.Ctx, "", corelog.Any("RequestResults", result.Data))
-
-	if asserter != nil {
-		asserter.Assert(s.T, resultantData)
-		return true
-	}
-
-	// merge all keys so we can check for missing values
-	keys := make(map[string]struct{})
-	for key := range resultantData {
-		keys[key] = struct{}{}
-	}
-	for key := range expectedResults {
-		keys[key] = struct{}{}
-	}
-
-	stack := &assertStack{}
-	for key := range keys {
-		stack.pushMap(key)
-		expect, ok := expectedResults[key]
-		require.True(s.T, ok, "expected key not found: %s", key)
-
-		actual, ok := resultantData[key]
-		require.True(s.T, ok, "result key not found: %s", key)
-
-		switch exp := expect.(type) {
-		case []map[string]any:
-			actualDocs := ConvertToArrayOfMaps(s.T, actual)
-			ok := assertRequestResultDocs(
-				s,
-				nodeID,
-				exp,
-				actualDocs,
-				stack,
-				ordered,
-			)
-			if !ordered {
-				require.True(s.T, ok, "non-ordered expected results: %v not matching actual: %v", exp, actualDocs)
-			}
-
-		case gomega.OmegaMatcher:
-			execGomegaMatcher(exp, s, actual, stack)
-
-		default:
-			assertResultsEqual(
-				s.T,
-				s.ClientType,
-				expect,
-				actual,
-				fmt.Sprintf("node: %v, path: %s", nodeID, stack),
-			)
-		}
-		stack.pop()
-	}
-
-	return false
-}
-
-// assertRequestResultDocs returns true if the assertion was successful
-//
-// The returned boolean only matters if the assertion is NOT for an ordered set.
-func assertRequestResultDocs(
-	s *state.State,
-	nodeID int,
-	expectedResults []map[string]any,
-	actualResults []map[string]any,
-	stack *assertStack,
-	ordered bool,
-) bool {
-	// compare results
-	if !ordered {
-		if len(expectedResults) != len(actualResults) {
-			return false
-		}
-		matchedExpectedDocs := make(map[int]struct{}, len(actualResults))
-	actualLoop:
-		for _, actualDoc := range actualResults {
-			found := false
-			for expectedDocIndex, expectedDoc := range expectedResults {
-				if _, ok := matchedExpectedDocs[expectedDocIndex]; ok {
-					// no need to run the process again if this doc was already matched.
-					continue
-				}
-				if len(expectedDoc) != len(actualDoc) {
-					continue
-				}
-				isEqual := assertRequestResultDoc(s, nodeID, actualDoc, expectedDoc, stack, ordered)
-				if isEqual {
-					found = true
-					matchedExpectedDocs[expectedDocIndex] = struct{}{}
-					continue actualLoop
-				}
-			}
-			if !found {
-				return false
-			}
-		}
-
-		return true
-	}
-
-	require.Equal(s.T, len(expectedResults), len(actualResults), "number of results don't match for %s", stack)
-
-	for actualDocIndex, actualDoc := range actualResults {
-		stack.pushArray(actualDocIndex)
-		expectedDoc := expectedResults[actualDocIndex]
-
-		require.Equal(
-			s.T,
-			len(expectedDoc),
-			len(actualDoc),
-			fmt.Sprintf(
-				"number of properties don't match for %s",
-				stack,
-			),
-		)
-
-		assertRequestResultDoc(s, nodeID, actualDoc, expectedDoc, stack, ordered)
-
-		stack.pop()
-	}
-	return true
-}
-
-// assertRequestResultDoc return true if the assertion was successful.
-//
-// The returned boolean only matters for non ordered assertions.
-func assertRequestResultDoc(
-	s *state.State,
-	nodeID int,
-	actualDoc map[string]any,
-	expectedDoc map[string]any,
-	stack *assertStack,
-	ordered bool,
-) bool {
-	for field, actualValue := range actualDoc {
-		stack.pushMap(field)
-
-		switch expectedValue := expectedDoc[field].(type) {
-		case gomega.OmegaMatcher:
-			if ordered {
-				execGomegaMatcher(expectedValue, s, actualValue, stack)
-			} else {
-				ok := checkGomegaMatcher(expectedValue, s, actualValue)
-				if !ok {
-					stack.pop()
-					return false
-				}
-			}
-
-		case DocIndex:
-			expectedDocID := s.DocIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
-			if ordered {
-				assertResultsEqual(
-					s.T,
-					s.ClientType,
-					expectedDocID,
-					actualValue,
-					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
-				)
-			} else {
-				ok := isResultsEqual(
-					s.ClientType,
-					expectedDocID,
-					actualValue,
-				)
-				if !ok {
-					stack.pop()
-					return false
-				}
-			}
-		case []map[string]any:
-			actualValueMap := ConvertToArrayOfMaps(s.T, actualValue)
-
-			ok := assertRequestResultDocs(
-				s,
-				nodeID,
-				expectedValue,
-				actualValueMap,
-				stack,
-				ordered,
-			)
-			if !ok && !ordered {
-				stack.pop()
-				return false
-			}
-
-		case map[string]any:
-			actualMap, ok := actualValue.(map[string]any)
-			if ordered {
-				require.True(s.T, ok, "expected value to be a map %v. Path: %s", actualValue, stack)
-			} else if !ok {
-				return false
-			}
-
-			ok = assertRequestResultDoc(s, nodeID, actualMap, expectedValue, stack, ordered)
-			if !ok && !ordered {
-				stack.pop()
-				return false
-			}
-
-		default:
-			if ordered {
-				assertResultsEqual(
-					s.T,
-					s.ClientType,
-					expectedValue,
-					actualValue,
-					fmt.Sprintf("node: %v, path: %s", nodeID, stack),
-				)
-			} else {
-				ok := isResultsEqual(
-					s.ClientType,
-					expectedValue,
-					actualValue,
-				)
-				if !ok {
-					stack.pop()
-					return false
-				}
-			}
-		}
-		stack.pop()
-	}
-	return true
-}
-
+// ConvertToArrayOfMaps converts an interface value to an array of maps.
+// This is a wrapper around the action package function for backward compatibility.
 func ConvertToArrayOfMaps(t testing.TB, value any) []map[string]any {
-	valueArrayMap, ok := value.([]map[string]any)
-	if ok {
-		return valueArrayMap
-	}
-	valueArray, ok := value.([]any)
-	require.True(t, ok, "expected value to be an array of maps %v", value)
-
-	valueArrayMap = make([]map[string]any, len(valueArray))
-	for i, v := range valueArray {
-		valueArrayMap[i], ok = v.(map[string]any)
-		require.True(t, ok, "expected value to be an array of maps %v", value)
-	}
-	return valueArrayMap
+	return action.ConvertToArrayOfMaps(t, value)
 }
 
+// assertExpectedErrorRaised asserts that an expected error was raised.
+// This is a wrapper around the action package function for backward compatibility.
 func assertExpectedErrorRaised(t testing.TB, expectedError string, wasRaised bool) {
-	if expectedError != "" && !wasRaised {
-		assert.Fail(t, "Expected an error however none was raised.")
-	}
+	action.AssertExpectedErrorRaised(t, expectedError, wasRaised)
 }
 
 func assertIntrospectionResults(
@@ -2517,11 +2055,8 @@ func skipIfMutationTypeUnsupported(t testing.TB, supportedMutationTypes immutabl
 func skipIfViewCacheTypeUnsupported(t testing.TB, supportedViewTypes immutable.Option[[]ViewType]) {
 	if supportedViewTypes.HasValue() {
 		var isTypeSupported bool
-		for _, supportedViewType := range supportedViewTypes.Value() {
-			if supportedViewType == viewType {
-				isTypeSupported = true
-				break
-			}
+		if slices.Contains(supportedViewTypes.Value(), viewType) {
+			isTypeSupported = true
 		}
 
 		if !isTypeSupported {
@@ -2698,93 +2233,6 @@ func performGetNodeIdentityAction(s *state.State, action GetNodeIdentity) {
 	expectedRawIdent := expectedIdent.ToPublicRawIdentity()
 	expectedRawIdentOpt := immutable.Some(expectedRawIdent)
 	require.Equal(s.T, expectedRawIdentOpt, actualIdent, "raw identity at %d mismatch", action.NodeID)
-}
-
-// execGomegaMatcher executes the given gomega matcher and asserts the result.
-func execGomegaMatcher(exp gomega.OmegaMatcher, s *state.State, actual any, stack *assertStack) {
-	traverseGomegaMatchers(exp, s, func(m TestStateMatcher) { m.SetTestState(s) })
-
-	success, err := exp.Match(actual)
-	if err != nil {
-		assert.Fail(s.T, "the matcher exited with error", "Error: %s. Path: %s", err, stack)
-	}
-
-	if !success {
-		assert.Fail(s.T, exp.FailureMessage(actual), "Path: %s", stack)
-	}
-
-	traverseGomegaMatchers(exp, s, func(m state.StatefulMatcher) {
-		if !slices.Contains(s.StatefulMatchers, m) {
-			s.StatefulMatchers = append(s.StatefulMatchers, m)
-		}
-	})
-}
-
-// checkGomegaMatcher executes the given gomega matcher and returns true if successful.
-func checkGomegaMatcher(exp gomega.OmegaMatcher, s *state.State, actual any) bool {
-	traverseGomegaMatchers(exp, s, func(m TestStateMatcher) { m.SetTestState(s) })
-
-	success, err := exp.Match(actual)
-	if err != nil || !success {
-		return false
-	}
-
-	traverseGomegaMatchers(exp, s, func(m state.StatefulMatcher) {
-		if !slices.Contains(s.StatefulMatchers, m) {
-			s.StatefulMatchers = append(s.StatefulMatchers, m)
-		}
-	})
-
-	return true
-}
-
-// traverseGomegaMatchers traverses the given gomega matcher and calls the given function
-// for each matcher found with the type T.
-func traverseGomegaMatchers[T gomega.OmegaMatcher](exp gomega.OmegaMatcher, s *state.State, f func(T)) {
-	if m, ok := exp.(T); ok {
-		f(m)
-		return
-	}
-
-	var elements []any
-	var matchersList []gomega.OmegaMatcher
-
-	switch exp := exp.(type) {
-	case *matchers.AndMatcher:
-		matchersList = exp.Matchers
-	case *matchers.OrMatcher:
-		matchersList = exp.Matchers
-	case *matchers.NotMatcher:
-		matchersList = []gomega.OmegaMatcher{exp.Matcher}
-	case *matchers.ConsistOfMatcher:
-		elements = exp.Elements
-	case *matchers.ContainElementMatcher:
-		elements = []any{exp.Element}
-	case *matchers.BeElementOfMatcher:
-		elements = exp.Elements
-	case *matchers.HaveExactElementsMatcher:
-		elements = exp.Elements
-	case *matchers.ContainElementsMatcher:
-		elements = exp.Elements
-	case *matchers.HaveEachMatcher:
-		elements = []any{exp.Element}
-	case *matchers.WithTransformMatcher:
-		matchersList = []gomega.OmegaMatcher{exp.Matcher}
-	}
-
-	if len(matchersList) > 0 {
-		for _, m := range matchersList {
-			traverseGomegaMatchers(m, s, f)
-		}
-	}
-
-	if len(elements) > 0 {
-		for _, el := range elements {
-			if m, ok := el.(gomega.OmegaMatcher); ok {
-				traverseGomegaMatchers(m, s, f)
-			}
-		}
-	}
 }
 
 // resetMatchers resets the state of all stateful matchers.

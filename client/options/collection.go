@@ -311,3 +311,25 @@ func (o *CollectionExistsOptions) SetIdentity(id identity.Identity) *CollectionE
 func (o *CollectionExistsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
+
+// CollectionTruncateOptions contains options for Truncate operation.
+type CollectionTruncateOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// CollectionTruncate creates a new CollectionTruncateOptions instance.
+func CollectionTruncate() *CollectionTruncateOptions {
+	return &CollectionTruncateOptions{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (o *CollectionTruncateOptions) SetIdentity(id identity.Identity) *CollectionTruncateOptions {
+	o.Identity = immutable.Some(id)
+	return o
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *CollectionTruncateOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}

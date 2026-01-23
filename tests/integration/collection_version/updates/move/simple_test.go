@@ -51,7 +51,7 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					"name": "Johnnn"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that Users is still Users
 				Request: `query {
 					Users {
@@ -66,7 +66,7 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that the version ID remains the same
 				Request: `query {
 					_commits (filter: {fieldName: {_eq: "_C"}}) {

@@ -8,8 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build nodejs
-// +build nodejs
+//go:build npx
+// +build npx
 
 package schema
 
@@ -47,11 +47,8 @@ func TestIntrospectionResult(t *testing.T) {
 	_, err = manager.Generator.Generate(ctx, collections)
 	require.NoError(t, err)
 
-	request, err := os.ReadFile("introspection_query.gql")
-	require.NoError(t, err)
-
 	schema := manager.Schema()
-	params := gql.Params{Schema: *schema, RequestString: string(request)}
+	params := gql.Params{Schema: *schema, RequestString: introspectionQueryRequest}
 	r := gql.Do(params)
 
 	require.Empty(t, r.Errors)
@@ -65,12 +62,7 @@ func TestIntrospectionResult(t *testing.T) {
 
 	cmd := exec.Command("npx", "-y", "graphql-introspection-json-to-sdl", resultFileName)
 	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Log("hi")
-		t.Log(string(output))
-		t.Log(err)
-		t.FailNow()
-	}
+	require.NoError(t, err)
 
 	// this check is mostlyy redundent relative to the err check above, but im leaving it in all the same
 	require.False(t, strings.HasPrefix(string(output), "Error:"))

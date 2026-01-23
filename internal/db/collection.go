@@ -92,7 +92,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 		return nil, ErrCollectionNameEmpty
 	}
 
-	cols, err := db.getCollections(ctx, options.GetCollections().SetName(name))
+	cols, err := db.getCollections(ctx, options.GetCollections().SetCollectionName(name))
 	if err != nil {
 		return nil, err
 	}
@@ -120,8 +120,8 @@ func (db *DB) getCollections(
 
 	var cols []client.CollectionVersion
 	switch {
-	case opts.Name.HasValue() && !opts.IncludeInactive.Value():
-		col, err := description.GetCollectionByName(ctx, opts.Name.Value())
+	case opts.CollectionName.HasValue() && !opts.IncludeInactive.Value():
+		col, err := description.GetCollectionByName(ctx, opts.CollectionName.Value())
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return nil, err
 		}
@@ -172,8 +172,8 @@ func (db *DB) getCollections(
 			}
 		}
 
-		if opts.Name.HasValue() {
-			if col.Name != opts.Name.Value() {
+		if opts.CollectionName.HasValue() {
+			if col.Name != opts.CollectionName.Value() {
 				continue
 			}
 		}

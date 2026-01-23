@@ -53,7 +53,7 @@ func TestDocEncryption_WithEncryptionSecondaryRelations_ShouldStoreEncryptedComm
 				},
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {

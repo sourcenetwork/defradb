@@ -70,7 +70,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -149,7 +149,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
@@ -232,7 +232,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
@@ -315,7 +315,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -390,7 +390,7 @@ resources:
  				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 
 				Request: `

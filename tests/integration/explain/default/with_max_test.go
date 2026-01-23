@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -39,7 +40,7 @@ func TestDefaultExplainRequest_WithMaxOnInlineArrayField_ChildFieldWillBeEmpty(t
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Book {
@@ -50,7 +51,7 @@ func TestDefaultExplainRequest_WithMaxOnInlineArrayField_ChildFieldWillBeEmpty(t
 
 				ExpectedPatterns: maxPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "maxNode",
 						IncludeChildNodes: false,

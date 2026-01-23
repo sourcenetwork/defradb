@@ -51,7 +51,7 @@ func TestNAC_GatesDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				CollectionID: 0,
 				DocID:        0,
 			},
-			testUtils.Request{ // Should now be deleted
+			&action.Request{ // Should now be deleted
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -99,7 +99,7 @@ func TestNAC_GatesDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) {
 				DocID:         0,
 				ExpectedError: "not authorized to perform operation",
 			},
-			testUtils.Request{ // Should not be deleted.
+			&action.Request{ // Should not be deleted.
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -147,7 +147,7 @@ func TestNAC_GatesDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				DocID:         0,
 				ExpectedError: "not authorized to perform operation",
 			},
-			testUtils.Request{ // Should not be deleted
+			&action.Request{ // Should not be deleted
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{

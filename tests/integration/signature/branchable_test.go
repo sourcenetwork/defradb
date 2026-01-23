@@ -46,7 +46,7 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							fieldName

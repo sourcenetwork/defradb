@@ -45,7 +45,7 @@ func TestSchemaMigrationDoesNotErrorGivenUnknownSchemaRoots(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: options.GetCollections().SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
@@ -105,7 +105,7 @@ func TestSchemaMigrationGetMigrationsReturnsMultiple(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: options.GetCollections().SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
@@ -178,7 +178,7 @@ func TestSchemaMigrationReplacesExistingMigationBasedOnSourceID(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: options.GetCollections().SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{

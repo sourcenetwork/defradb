@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 					"likedIndexes": [true, true, false, true]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -56,7 +57,7 @@ func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 					"indexLikesDislikes": [true, true, false, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -87,7 +88,7 @@ func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -118,7 +119,7 @@ func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 					"testScores": [-1, 2, 1, null, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -149,7 +150,7 @@ func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *
 					"favouriteIntegers": [-1, 2, -1, 1, 0, -2]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -180,7 +181,7 @@ func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -211,7 +212,7 @@ func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -242,7 +243,7 @@ func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -273,7 +274,7 @@ func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
 					"pageHeaders": ["", "the previous", null, "empty string"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

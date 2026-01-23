@@ -60,7 +60,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -137,12 +137,12 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
-						_count(published: {filter: {rating: {_ne: null}}})
-						published(filter: {rating: {_ne: null}}){
+						_count(published: {filter: {rating: {_neq: null}}})
+						published(filter: {rating: {_neq: null}}){
 							name
 						}
 					}
@@ -245,7 +245,7 @@ func TestQueryOneToMany_WithCountWithJSONFilterAndChildFilter_Succeeds(t *testin
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_count(Author: {filter: {
 						metadata: {yearOfBirth: {_eq: 1958}},

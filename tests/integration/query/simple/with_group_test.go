@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +32,7 @@ func TestQuerySimpleWithGroupByEmpty(t *testing.T) {
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: []) {
 						_group {
@@ -88,7 +89,7 @@ func TestQuerySimpleWithGroupByNumber(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -142,7 +143,7 @@ func TestQuerySimpleWithGroupByDateTime(t *testing.T) {
 					"CreatedAt": "2013-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [CreatedAt]) {
 						CreatedAt
@@ -196,7 +197,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupString(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -271,7 +272,7 @@ func TestQuerySimpleWithGroupByWithoutGroupedFieldSelectedWithInnerGroup(t *test
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -346,7 +347,7 @@ func TestQuerySimpleWithGroupByString(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -432,7 +433,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBoolean(t *testing.T) {
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -544,7 +545,7 @@ func TestQuerySimpleWithGroupByStringThenBoolean(t *testing.T) {
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name, Verified]) {
 						Name
@@ -643,7 +644,7 @@ func TestQuerySimpleWithGroupByBooleanThenNumber(t *testing.T) {
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Verified, Name]) {
 						Name
@@ -723,7 +724,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefined(t *testing.T) {
 					"Name": "Alice"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -766,7 +767,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 					"Name": "Alice"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -809,7 +810,7 @@ func TestQuerySimpleWithGroupByNumberOnUndefinedWithChildren(t *testing.T) {
 func TestQuerySimpleErrorsWithNonGroupFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age

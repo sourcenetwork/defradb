@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -15,20 +15,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"testing"
 	"time"
 
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/format"
-	"github.com/onsi/gomega/types"
-
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/immutable"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -41,39 +35,21 @@ func init() {
 	})
 }
 
-// TestState is read-only interface for test state. It allows passing the state to custom matchers
-// without allowing them to modify the state.
-type TestState interface {
-	// GetClientType returns the client type of the test.
-	GetClientType() state.ClientType
-	// GetCurrentNodeID returns the node id that is currently being asserted.
-	GetCurrentNodeID() int
-	// GetIdentity returns the identity for the given node index.
-	GetIdentity(state.Identity) acpIdentity.Identity
-	// GetDocID returns the document ID for the given collection index and document index.
-	GetDocID(collectionIndex, docIndex int) client.DocID
-}
+// TestState is a type alias for state.TestState.
+type TestState = state.TestState
+
+// TestStateMatcher is a type alias for state.TestStateMatcher.
+type TestStateMatcher = state.TestStateMatcher
+
+// StatefulMatcher is a type alias for state.StatefulMatcher.
+type StatefulMatcher = state.StatefulMatcher
 
 type testStateMatcher struct {
-	s TestState
+	s state.TestState
 }
 
-func (matcher *testStateMatcher) SetTestState(s TestState) {
+func (matcher *testStateMatcher) SetTestState(s state.TestState) {
 	matcher.s = s
-}
-
-// TestStateMatcher is a matcher that requires access to the test state.
-type TestStateMatcher interface {
-	types.GomegaMatcher
-	// SetTestState sets the test state.
-	SetTestState(s TestState)
-}
-
-// StatefulMatcher is a matcher that requires state to be reset between tests.
-type StatefulMatcher interface {
-	types.GomegaMatcher
-	// ResetMatcherState resets the state of the matcher.
-	ResetMatcherState()
 }
 
 // AnyOf may be used as `Results` field where the value may
@@ -259,35 +235,6 @@ func (matcher *docIDAt) String() string {
 		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
 }
 
-// assertResultsEqual asserts that actual result is equal to the expected result.
-//
-// The comparison is relaxed when using client types other than goClientType.
-func assertResultsEqual(t testing.TB, client state.ClientType, expected any, actual any, msgAndArgs ...any) {
-	switch client {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
-		if !areResultsEqual(expected, actual) {
-			assert.EqualValues(t, expected, actual, msgAndArgs...)
-		}
-	default:
-		assert.EqualValues(t, expected, actual, msgAndArgs...)
-	}
-}
-
-// isResultsEqual checks that actual result is equal to the expected result and returns true if they are.
-//
-// The comparison is relaxed when using client types other than goClientType.
-func isResultsEqual(client state.ClientType, expected any, actual any) bool {
-	switch client {
-	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
-		if !areResultsEqual(expected, actual) {
-			return assert.ObjectsAreEqualValues(expected, actual)
-		}
-		return true
-	default:
-		return assert.ObjectsAreEqualValues(expected, actual)
-	}
-}
-
 // areResultsAnyOf returns true if any of the expected results are of equal value.
 //
 // Values of type json.Number and immutable.Option will be reduced to their underlying types.
@@ -434,107 +381,6 @@ func areResultArraysEqual[S any](expected []S, actual any) bool {
 		}
 	}
 	return true
-}
-
-func assertCollectionVersions(
-	s *state.State,
-	expected []client.CollectionVersion,
-	actual []client.CollectionVersion,
-) {
-	require.Equal(s.T, len(expected), len(actual), "collection versions count mismatch")
-
-	for i, expected := range expected {
-		actual := actual[i]
-		require.Equal(s.T, expected.Name, actual.Name, "version name mismatch")
-
-		if expected.CollectionSet.HasValue() {
-			require.Equal(s.T, expected.CollectionSet.Value().CollectionSetID,
-				actual.CollectionSet.Value().CollectionSetID, "collection set ID mismatch")
-			require.Equal(s.T, expected.CollectionSet.Value().RelativeID,
-				actual.CollectionSet.Value().RelativeID, "collection set relative ID mismatch")
-		}
-
-		if expected.VersionID != "" {
-			require.Equal(s.T, expected.VersionID, actual.VersionID, "version %d: version ID mismatch", i)
-		}
-		if expected.CollectionID != "" {
-			require.Equal(s.T, expected.CollectionID, actual.CollectionID, "version %d: collection ID mismatch", i)
-		}
-
-		require.Equal(s.T, expected.IsMaterialized, actual.IsMaterialized, "version %d: is materialized mismatch", i)
-		require.Equal(s.T, expected.IsBranchable, actual.IsBranchable, "version %d: is branchable mismatch", i)
-		require.Equal(s.T, expected.IsActive, actual.IsActive, "version %d: is active mismatch", i)
-
-		if expected.Indexes != nil || len(actual.Indexes) != 0 {
-			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
-			// This is to save each test action from having to bother declaring an empty slice (if there are no indexes)
-			require.Equal(s.T, expected.Indexes, actual.Indexes, "version %d: indexes mismatch", i)
-		}
-
-		require.Equal(s.T, expected.PreviousVersion.HasValue(), actual.PreviousVersion.HasValue(),
-			"version %d: previous version existence mismatch", i)
-		if expected.PreviousVersion.HasValue() {
-			require.Equal(
-				s.T,
-				expected.PreviousVersion.Value().SourceCollectionID,
-				actual.PreviousVersion.Value().SourceCollectionID,
-				"version %d: previous version source collection ID mismatch", i,
-			)
-			require.Equal(
-				s.T,
-				expected.PreviousVersion.Value().Transform.HasValue(),
-				actual.PreviousVersion.Value().Transform.HasValue(),
-				"version %d: previous version transform existence mismatch", i,
-			)
-
-			if expected.PreviousVersion.Value().Transform.HasValue() {
-				// Dont bother asserting this by default, the transform object is too complex to bother with in most cases.
-				require.Equal(
-					s.T,
-					expected.PreviousVersion.Value().Transform.Value(),
-					actual.PreviousVersion.Value().Transform.Value(),
-					"version %d: previous version transform value mismatch", i,
-				)
-			}
-		}
-
-		if expected.Query.HasValue() {
-			// Dont bother asserting this by default, the query object is to complex to bother with in most cases.
-			require.Equal(s.T, expected.Query, actual.Query, "version %d: query mismatch", i)
-		}
-
-		if expected.Fields != nil {
-			require.Equal(s.T, len(expected.Fields), len(actual.Fields), "version %d: fields count mismatch", i)
-			for j := range expected.Fields {
-				expectedField := expected.Fields[j]
-				actualField := actual.Fields[j]
-
-				require.Equal(s.T, expectedField.Name, actualField.Name,
-					"version %d, field %d: field name mismatch", i, j)
-				if expectedField.FieldID != "" {
-					require.Equal(s.T, expectedField.FieldID, actualField.FieldID,
-						"version %d, field %d: field ID mismatch", i, j)
-				}
-				require.Equal(s.T, expectedField.IsPrimary, actualField.IsPrimary,
-					"version %d, field %d: field is primary mismatch", i, j)
-				require.Equal(s.T, expectedField.Kind, actualField.Kind,
-					"version %d, field %d: field kind mismatch", i, j)
-				require.Equal(s.T, expectedField.Typ, actualField.Typ,
-					"version %d, field %d: field type mismatch", i, j)
-				require.Equal(s.T, expectedField.DefaultValue, actualField.DefaultValue,
-					"version %d, field %d: field default value mismatch", i, j)
-				require.Equal(s.T, expectedField.RelationName, actualField.RelationName,
-					"version %d, field %d: field relation name mismatch", i, j)
-				require.Equal(s.T, expectedField.Size, actualField.Size,
-					"version %d, field %d: field size mismatch", i, j)
-			}
-		}
-
-		if expected.VectorEmbeddings != nil {
-			require.Equal(s.T, expected.VectorEmbeddings, actual.VectorEmbeddings,
-				"version %d: vector embeddings mismatch", i)
-		}
-	}
 }
 
 // CurrentTimestampMatcher is a matcher that checks if the actual value is a

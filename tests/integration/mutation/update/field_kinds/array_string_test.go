@@ -39,7 +39,7 @@ func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 					"preferredStrings": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -83,7 +83,7 @@ func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 					"preferredStrings": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -127,7 +127,7 @@ func TestMutationUpdate_WithArrayOfStringsToSameSize(t *testing.T) {
 					"preferredStrings": ["zeroth", "the previous", "the first", "null string"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -171,7 +171,7 @@ func TestMutationUpdate_WithArrayOfStringsToSmallerSize(t *testing.T) {
 					"preferredStrings": ["", "the first"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -215,7 +215,7 @@ func TestMutationUpdate_WithArrayOfStringsToLargerSize(t *testing.T) {
 					"preferredStrings": ["", "the previous", "the first", "empty string", "blank string", "hitchi"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

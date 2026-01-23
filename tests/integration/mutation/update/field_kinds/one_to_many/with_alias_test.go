@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -286,7 +287,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySide(t *testing.
 					author2ID,
 				),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
  					Author {
  						name
@@ -313,7 +314,7 @@ func TestMutationUpdateOneToMany_AliasRelationNameToLinkFromManySide(t *testing.
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

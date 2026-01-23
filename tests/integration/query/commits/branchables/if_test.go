@@ -43,7 +43,7 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid
@@ -95,7 +95,7 @@ func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid

@@ -51,7 +51,7 @@ func TestMutationCreateOneToOne_WithExplicitNullOnPrimarySide(t *testing.T) {
 					"author": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {

@@ -51,7 +51,7 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -84,7 +84,7 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {
@@ -144,7 +144,7 @@ func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -167,7 +167,7 @@ func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 					"name":	"Ferdowsi"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {

@@ -27,7 +27,7 @@ func TestView_SimpleWithDefaultValue_DoesNotSetFieldValue(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -45,7 +45,7 @@ func TestView_SimpleWithDefaultValue_DoesNotSetFieldValue(t *testing.T) {
 					"name":	"Alice"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

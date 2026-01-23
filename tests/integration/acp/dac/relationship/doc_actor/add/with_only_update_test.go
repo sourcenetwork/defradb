@@ -94,7 +94,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
@@ -156,7 +156,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can now also read.
 
 				Request: `

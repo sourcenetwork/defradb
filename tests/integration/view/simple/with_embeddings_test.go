@@ -27,7 +27,7 @@ func TestView_SimpleWithEmbeddings_DoesNotGenerateEmbedding(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -45,7 +45,7 @@ func TestView_SimpleWithEmbeddings_DoesNotGenerateEmbedding(t *testing.T) {
 					"name":	"Alice"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

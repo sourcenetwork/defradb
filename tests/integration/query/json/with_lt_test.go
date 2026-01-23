@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryJSON_WithLesserThanFilterBlockWithGreaterValue_ShouldFilter(t *testing.T) {
@@ -40,7 +41,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithGreaterValue_ShouldFilter(t *tes
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_lt: 20}}) {
 						Name
@@ -85,7 +86,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithLesserValue_ShouldFilter(t *test
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_lt: 19}}) {
 						Name
@@ -124,7 +125,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNullFilterValue_ShouldFilter(t *
 					"Name": "Bob"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_lt: null}}) {
 						Name
@@ -163,7 +164,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedGreaterValue_ShouldFilter(
 					"Custom": {"age": 19}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {age: {_lt: 20}}}) {
 						Name
@@ -210,7 +211,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedLesserValue_ShouldFilter(t
 					"Custom": {"age": 19}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {age: {_lt: 19}}}) {
 						Name
@@ -249,7 +250,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedNullFilterValue_ShouldFilt
 					"Name": "Bob"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {age: {_lt: null}}}) {
 						Name
@@ -267,6 +268,8 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedNullFilterValue_ShouldFilt
 
 func TestQueryJSON_WithLesserThanFilterBlockWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -288,7 +291,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithBoolValue_ReturnsError(t *testin
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_lt: false}}) {
 						Name
@@ -305,6 +308,8 @@ func TestQueryJSON_WithLesserThanFilterBlockWithBoolValue_ReturnsError(t *testin
 
 func TestQueryJSON_WithLesserThanFilterBlockWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -326,7 +331,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithStringValue_ReturnsError(t *test
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_lt: ""}}) {
 						Name
@@ -364,7 +369,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithObjectValue_ReturnsError(t *test
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_lt: {one: 1}}}) {
 						Name
@@ -381,6 +386,8 @@ func TestQueryJSON_WithLesserThanFilterBlockWithObjectValue_ReturnsError(t *test
 
 func TestQueryJSON_WithLesserThanFilterBlockWithArrayValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -402,7 +409,7 @@ func TestQueryJSON_WithLesserThanFilterBlockWithArrayValue_ReturnsError(t *testi
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_lt: [1,2]}}) {
 						Name
@@ -458,7 +465,7 @@ func TestQueryJSON_WithLesserThanFilterWithAllTypes_ShouldFilter(t *testing.T) {
 					"Custom": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_lt: 33}}) {
 						Name

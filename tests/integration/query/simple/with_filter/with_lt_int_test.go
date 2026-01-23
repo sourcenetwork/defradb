@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,7 +32,7 @@ func TestQuerySimpleWithIntLessThanFilterBlockWithGreaterValue(t *testing.T) {
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Age: {_lt: 22}}) {
 						Name
@@ -65,7 +66,7 @@ func TestQuerySimpleWithIntLessThanFilterBlockWithNullValue(t *testing.T) {
 					"Name": "Bob"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Age: {_lt: null}}) {
 						Name

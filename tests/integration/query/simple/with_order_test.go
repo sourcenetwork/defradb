@@ -38,7 +38,7 @@ func TestQuerySimpleWithEmptyOrder(t *testing.T) {
 					"Age": 55
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {}) {
 						Name
@@ -96,7 +96,7 @@ func TestQuerySimpleWithNumericOrderAscending(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {Age: ASC}) {
 						Name
@@ -163,7 +163,7 @@ func TestQuerySimpleWithFloat32OrderAscending(t *testing.T) {
 					"Points": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {Points: ASC}) {
 						Name
@@ -230,7 +230,7 @@ func TestQuerySimpleWithFloat64OrderAscending(t *testing.T) {
 					"HeightM": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {HeightM: ASC}) {
 						Name
@@ -297,7 +297,7 @@ func TestQuerySimpleWithBlobOrderAscending(t *testing.T) {
 					"Raw":  "19",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {Raw: ASC}) {
 						Name
@@ -362,7 +362,7 @@ func TestQuerySimpleWithDateTimeOrderAscending(t *testing.T) {
 					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {CreatedAt: ASC}) {
 						Name
@@ -423,7 +423,7 @@ func TestQuerySimpleWithNumericOrderDescending(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {Age: DESC}) {
 						Name
@@ -490,7 +490,7 @@ func TestQuerySimpleWithFloat32OrderDescending(t *testing.T) {
 					"Points": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {Points: DESC}) {
 						Name
@@ -557,7 +557,7 @@ func TestQuerySimpleWitFloat64OrderDescending(t *testing.T) {
 					"HeightM": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {HeightM: DESC}) {
 						Name
@@ -624,7 +624,7 @@ func TestQuerySimpleWithBlobOrderDescending(t *testing.T) {
 					"Raw":  "19",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {Raw: DESC}) {
 						Name
@@ -689,7 +689,7 @@ func TestQuerySimpleWithDateTimeOrderDescending(t *testing.T) {
 					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {CreatedAt: DESC}) {
 						Name
@@ -754,7 +754,7 @@ func TestQuerySimpleWithNumericOrderDescendingAndBooleanOrderAscending(t *testin
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: [{Age: DESC}, {Verified: ASC}]) {
 						Name
@@ -820,7 +820,7 @@ func TestQuerySimple_WithMultipleOrderFieldsASCAndASC_ShouldOrderCorrectly(t *te
 					"Age": 24
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: [{Name: ASC}, {Age: ASC}]) {
 						Name
@@ -881,7 +881,7 @@ func TestQuerySimple_WithMultipleOrderFieldsACSAndDESC_ShouldOrderCorrectly(t *t
 					"Age": 24
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: [{Name: ASC}, {Age: DESC}]) {
 						Name
@@ -942,7 +942,7 @@ func TestQuerySimple_WithMultipleOrderFieldsDESCAndASC_ShouldOrderCorrectly(t *t
 					"Age": 24
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: [{Name: DESC}, {Age: ASC}]) {
 						Name
@@ -1003,7 +1003,7 @@ func TestQuerySimple_WithMultipleOrderFieldsDECSAndDESC_ShouldOrderCorrectly(t *
 					"Age": 24
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: [{Name: DESC}, {Age: DESC}]) {
 						Name
@@ -1040,7 +1040,7 @@ func TestQuerySimple_WithMultipleOrderFieldsDECSAndDESC_ShouldOrderCorrectly(t *
 func TestQuerySimple_WithInvalidOrderEnum_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {Age: INVALID}) {
 						Name
@@ -1059,7 +1059,7 @@ func TestQuerySimple_WithInvalidOrderEnum_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {Age: ASC, Name: DESC}) {
 						Name
@@ -1077,7 +1077,7 @@ func TestQuerySimple_WithMultipleOrderFields_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithMultipleOrderFieldsNestedWithinMultpleFields_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: [{Age: ASC}, {Age: ASC, Name: DESC}]) {
 						Name
@@ -1119,7 +1119,7 @@ func TestQuerySimple_WithAliasOrder_ShouldOrderResults(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {UserAge: ASC}}) {
 						Name
@@ -1180,7 +1180,7 @@ func TestQuerySimple_WithAliasOrderOnNonAliasedField_ShouldOrderResults(t *testi
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {Age: ASC}}) {
 						Name
@@ -1241,7 +1241,7 @@ func TestQuerySimple_WithAliasOrderOnNonExistantField_ShouldError(t *testing.T) 
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {UserAge: ASC}}) {
 						Name
@@ -1283,7 +1283,7 @@ func TestQuerySimple_WithInvalidAliasOrder_ShouldError(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {UserAge: invalid}}) {
 						Name
@@ -1325,7 +1325,7 @@ func TestQuerySimple_WithEmptyAliasOrder_ShouldDoNothing(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {}}) {
 						Name
@@ -1387,7 +1387,7 @@ func TestQuerySimple_WithNullAliasOrder_ShouldDoNothing(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: null}) {
 						Name
@@ -1449,7 +1449,7 @@ func TestQuerySimple_WithIntAliasOrder_ShouldError(t *testing.T) {
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: 1}) {
 						Name
@@ -1495,7 +1495,7 @@ func TestQuerySimple_WithCompoundAliasOrder_ShouldOrderResults(t *testing.T) {
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: [{_alias: {userAge: DESC}}, {_alias: {isVerified: ASC}}]) {
 						Name

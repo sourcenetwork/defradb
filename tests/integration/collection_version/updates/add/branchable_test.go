@@ -40,8 +40,8 @@ func TestBranchableCollection_AddNewField_ShouldUpdateCollectionDefinition(t *te
 					]
 				`,
 			},
-			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetName("User"),
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetCollectionName("User"),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "User",
@@ -120,7 +120,7 @@ func TestBranchableCollection_AddNewFieldWithMultipleDocs_ShouldAddField(t *test
 					"email": "islam@gmail.com"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					User {

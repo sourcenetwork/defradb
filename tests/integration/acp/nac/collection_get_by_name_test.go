@@ -38,9 +38,9 @@ func TestNAC_GatesCollectionGetByName_AuthorizedIdentity_AllowAccess(t *testing.
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(1),
-				FilterOptions: options.GetCollections().SetName("Users").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -72,9 +72,9 @@ func TestNAC_GatesCollectionGetByName_NoIdentity_NotAuthorizedError(t *testing.T
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.NoIdentity(),
-				FilterOptions: options.GetCollections().SetName("Users").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
 				ExpectedError: "not authorized to perform operation",
 			},
 		},
@@ -94,9 +94,9 @@ func TestNAC_GatesCollectionGetByName_WrongIdentity_NotAuthorizedError(t *testin
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				FilterOptions: options.GetCollections().SetName("Users").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
 				ExpectedError: "not authorized to perform operation",
 			},
 		},

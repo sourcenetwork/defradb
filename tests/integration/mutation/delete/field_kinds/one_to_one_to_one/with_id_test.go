@@ -13,6 +13,7 @@ package one_to_one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -49,7 +50,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 						"address": "Online"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						delete_Author(docID: "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897") {
 							_docID
@@ -102,7 +103,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 						"address": "Online"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						delete_Author(docID: "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897") {
 							AliasOfKey: _docID
@@ -172,7 +173,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 						"age": 49
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						delete_Author(docID: "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897") {
 							Key: _docID

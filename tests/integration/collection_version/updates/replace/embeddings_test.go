@@ -143,7 +143,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

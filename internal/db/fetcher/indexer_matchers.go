@@ -376,7 +376,7 @@ func createComparingMatcher(condition *fieldFilterCond) valueMatcher {
 	// difference of types
 	if v, ok := condition.val.JSON(); ok {
 		// we have a separate branch for null matcher because default matching behavior
-		// is what we need: for filter `_ne: null` it will match all non-null values
+		// is what we need: for filter `_neq: null` it will match all non-null values
 		if v.IsNull() {
 			return &jsonNullMatcher{matchNull: condition.op == opEq}
 		}
@@ -406,7 +406,7 @@ func createComparingMatcher(condition *fieldFilterCond) valueMatcher {
 	matcher := createScalarComparingMatcher(condition)
 
 	// for _ne filter on regular (non-JSON) fields the index should also accept nil values
-	// there won't be `_ne: null` because nil check is done before this function is called
+	// there won't be `_neq: null` because nil check is done before this function is called
 	if condition.op == opNe {
 		matcher = newCompositeMatcher(&nilMatcher{matchNil: true}, matcher)
 	}

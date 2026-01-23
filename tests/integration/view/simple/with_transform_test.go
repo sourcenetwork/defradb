@@ -46,7 +46,7 @@ func TestView_SimpleWithTransform(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -71,7 +71,7 @@ func TestView_SimpleWithTransform(t *testing.T) {
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {
@@ -132,7 +132,7 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -156,7 +156,7 @@ func TestView_SimpleWithMultipleTransforms(t *testing.T) {
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {
@@ -214,7 +214,7 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -232,7 +232,7 @@ func TestView_SimpleWithTransformReturningMoreDocsThanInput(t *testing.T) {
 					"name":	"John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {
@@ -284,7 +284,7 @@ func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -316,7 +316,7 @@ func TestView_SimpleWithTransformReturningFewerDocsThanInput(t *testing.T) {
 					"valid": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

@@ -49,7 +49,7 @@ func parseCollectionOptionsToGetCollectionsOptions(opts C.CollectionOptions) *op
 		opt.SetCollectionID(collectionID)
 	}
 	if name != "" {
-		opt.SetName(name)
+		opt.SetCollectionName(name)
 	}
 	if getInactive {
 		opt.SetIncludeInactive(getInactive)
@@ -444,5 +444,37 @@ func SetActiveCollection(nodePtr C.uintptr_t, options C.CollectionOptions, ident
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+	return returnC(returnGoC(0, "", ""))
+}
+
+//export CollectionTruncate
+func CollectionTruncate(
+	nodePtr C.uintptr_t,
+	options C.CollectionOptions,
+	identityPtr C.uintptr_t,
+) C.Result {
+	ctx := context.Background()
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(options)
+
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	store, err := getStoreFromPointer(nodePtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	col, err := getCollection(store, ctx, colOptions)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	err = col.Truncate(ctx)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	return returnC(returnGoC(0, "", ""))
 }

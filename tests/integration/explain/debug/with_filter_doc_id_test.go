@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -23,7 +24,7 @@ func TestDebugExplainRequestWithDocIDFilter(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(docID: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
@@ -46,7 +47,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(docID: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
@@ -69,7 +70,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *test
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(
@@ -97,7 +98,7 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T)
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(
@@ -125,7 +126,7 @@ func TestDebugExplainRequestWithMatchingIDFilter(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(

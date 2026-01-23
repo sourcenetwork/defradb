@@ -13,27 +13,28 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithIntLEFilterBlockWithEqualValue(t *testing.T) {
+func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Age": 21
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"Age": 32
+					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(filter: {Age: {_le: 21}}) {
+					Users(filter: {HeightM: {_geq: 2.1}}) {
 						Name
 					}
 				}`,
@@ -51,24 +52,24 @@ func TestQuerySimpleWithIntLEFilterBlockWithEqualValue(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithIntLEFilterBlockWithGreaterValue(t *testing.T) {
+func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Age": 21
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
-					"Age": 32
+					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(filter: {Age: {_le: 22}}) {
+					Users(filter: {HeightM: {_geq: 2.0999999999999}}) {
 						Name
 					}
 				}`,
@@ -86,13 +87,48 @@ func TestQuerySimpleWithIntLEFilterBlockWithGreaterValue(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithIntLEFilterBlockWithNullValue(t *testing.T) {
+func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
 				Doc: `{
 					"Name": "John",
-					"Age": 21
+					"HeightM": 2.1
+				}`,
+			},
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Bob",
+					"HeightM": 1.82
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users(filter: {HeightM: {_geq: 2}}) {
+						Name
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"HeightM": 2.1
 				}`,
 			},
 			testUtils.CreateDoc{
@@ -100,9 +136,9 @@ func TestQuerySimpleWithIntLEFilterBlockWithNullValue(t *testing.T) {
 					"Name": "Bob"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(filter: {Age: {_le: null}}) {
+					Users(filter: {HeightM: {_geq: null}}) {
 						Name
 					}
 				}`,
@@ -111,8 +147,12 @@ func TestQuerySimpleWithIntLEFilterBlockWithNullValue(t *testing.T) {
 						{
 							"Name": "Bob",
 						},
+						{
+							"Name": "John",
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

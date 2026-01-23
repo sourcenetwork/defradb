@@ -50,7 +50,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNodeOwner_DoesNotOwnTheDocument_Can
 			// Eventhough this is the node owner who can DAC bypass, when NAC is turned off, DAC will
 			// take effect and block bypassing.
 			// Note: There is no error here because it's blocked by DAC not NAC.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -101,7 +101,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNodeOwner_OwnsTheDocument_CanAccess
 			},
 
 			// Since this identity is the node and document owner, it can access.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -154,7 +154,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNodeOwner_PublicDocument_CanAccess(
 			},
 
 			// Public document so anyone can access if NAC is temporarily disabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {

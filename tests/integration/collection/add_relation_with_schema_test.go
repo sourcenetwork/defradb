@@ -55,7 +55,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -137,7 +137,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 					"publisher": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -225,7 +225,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 					"author": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -295,7 +295,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithMixedBatchHavingRelationToEx
 					"publisher": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -373,7 +373,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithChainedOneToManyRelationsAcr
 					"author": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

@@ -54,7 +54,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -108,7 +108,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -185,7 +185,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 				NodeID: immutable.Some(1),
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -267,7 +267,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAft
 				NodeID: immutable.Some(1),
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age

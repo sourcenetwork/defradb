@@ -50,8 +50,8 @@ func TestColVersionUpdateCopyName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetName("Books"),
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetCollectionName("Books"),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Books",

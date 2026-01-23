@@ -246,8 +246,8 @@ type RefreshViewsOptions struct {
 	CollectionID immutable.Option[string]
 	// CollectionSetID is the collection set ID to filter by.
 	CollectionSetID immutable.Option[string]
-	// Name is the name of the collection to filter by.
-	Name immutable.Option[string]
+	// CollectionName is the name of the collection to filter by.
+	CollectionName immutable.Option[string]
 	// IncludeInactive indicates whether to include inactive collections.
 	IncludeInactive immutable.Option[bool]
 }
@@ -286,9 +286,9 @@ func (o *RefreshViewsOptions) SetCollectionSetID(collectionSetID string) *Refres
 	return o
 }
 
-// SetName sets the name filter.
-func (o *RefreshViewsOptions) SetName(name string) *RefreshViewsOptions {
-	o.Name = immutable.Some(name)
+// SetCollectionName sets the name filter.
+func (o *RefreshViewsOptions) SetCollectionName(name string) *RefreshViewsOptions {
+	o.CollectionName = immutable.Some(name)
 	return o
 }
 
@@ -313,8 +313,8 @@ func (o *RefreshViewsOptions) ToGetCollectionsOptions() *GetCollectionsOptions {
 	if o.CollectionSetID.HasValue() {
 		opts.SetCollectionSetID(o.CollectionSetID.Value())
 	}
-	if o.Name.HasValue() {
-		opts.SetName(o.Name.Value())
+	if o.CollectionName.HasValue() {
+		opts.SetCollectionName(o.CollectionName.Value())
 	}
 	if o.IncludeInactive.HasValue() {
 		opts.SetIncludeInactive(o.IncludeInactive.Value())
@@ -355,7 +355,7 @@ type GetCollectionsOptions struct {
 	// If provided, only collections with this CollectionSetID will be returned.
 	CollectionSetID immutable.Option[string]
 	// If provided, only collections with this name will be returned.
-	Name immutable.Option[string]
+	CollectionName immutable.Option[string]
 	// If IncludeInactive is true, then inactive collections will also be returned.
 	IncludeInactive immutable.Option[bool]
 }
@@ -394,9 +394,9 @@ func (o *GetCollectionsOptions) SetCollectionSetID(collectionSetID string) *GetC
 	return o
 }
 
-// SetName sets the name filter.
-func (o *GetCollectionsOptions) SetName(name string) *GetCollectionsOptions {
-	o.Name = immutable.Some(name)
+// SetCollectionName sets the name filter.
+func (o *GetCollectionsOptions) SetCollectionName(name string) *GetCollectionsOptions {
+	o.CollectionName = immutable.Some(name)
 	return o
 }
 

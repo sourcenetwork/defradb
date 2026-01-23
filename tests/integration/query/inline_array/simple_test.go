@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -27,7 +28,7 @@ func TestQueryInlineArrayWithBooleans_Null(t *testing.T) {
 						"likedIndexes": null
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 			 			Users {
 			 				name
@@ -57,7 +58,7 @@ func TestQueryInlineArrayWithBooleans_EmptyList(t *testing.T) {
 						"likedIndexes": []
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -87,7 +88,7 @@ func TestQueryInlineArrayWithBooleans_NotEmpty(t *testing.T) {
 						"likedIndexes": [true, true, false, true]
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -118,7 +119,7 @@ func TestQueryInlineArrayWithNillableBooleans(t *testing.T) {
 					"indexLikesDislikes": [true, true, false, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -153,7 +154,7 @@ func TestQueryInlineArrayWithIntegers_Missing(t *testing.T) {
 						"name": "John"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -184,7 +185,7 @@ func TestQueryInlineArrayWithIntegers_Null(t *testing.T) {
 						"favouriteIntegers": null
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -215,7 +216,7 @@ func TestQueryInlineArrayWithIntegers_EmptyList(t *testing.T) {
 						"favouriteIntegers": []
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -246,7 +247,7 @@ func TestQueryInlineArrayWithIntegers_NotEmptyList(t *testing.T) {
 						"favouriteIntegers": [1, 2, 3, 5, 8]
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -277,7 +278,7 @@ func TestQueryInlineArrayWithNegativeIntegers_NotEmptyList(t *testing.T) {
 						"favouriteIntegers": [-1, -2, -3, -5, -8]
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -308,7 +309,7 @@ func TestQueryInlineArrayWithMixIntegers_NotEmptyList(t *testing.T) {
 						"favouriteIntegers": [-1, 2, -1, 1, 0]
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -338,7 +339,7 @@ func TestQueryInlineArrayWithNillableInts(t *testing.T) {
 					"testScores": [-1, null, -1, 2, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -375,7 +376,7 @@ func TestQueryInlineArrayWithFloats_Null(t *testing.T) {
 						"favouriteFloats": null
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -406,7 +407,7 @@ func TestQueryInlineArrayWithFloats_EmptyList(t *testing.T) {
 						"favouriteFloats": []
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -437,7 +438,7 @@ func TestQueryInlineArrayWithFloats_NotEmpty(t *testing.T) {
 						"favouriteFloats": [3.1425, 0.00000000001, 10]
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -468,7 +469,7 @@ func TestQueryInlineArrayWithNillableFloats(t *testing.T) {
 					"pageRatings": [3.1425, null, -0.00000000001, 10]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -504,7 +505,7 @@ func TestQueryInlineArrayWithStrings_Null(t *testing.T) {
 						"preferredStrings": null
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -535,7 +536,7 @@ func TestQueryInlineArrayWithStrings_EmptyList(t *testing.T) {
 						"preferredStrings": []
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -566,7 +567,7 @@ func TestQueryInlineArrayWithStrings_NotEmpty(t *testing.T) {
 						"preferredStrings": ["", "the previous", "the first", "empty string"]
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users {
 							name
@@ -597,7 +598,7 @@ func TestQueryInlineArrayWithNillableString(t *testing.T) {
 					"pageHeaders": ["", "the previous", "the first", "empty string", null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

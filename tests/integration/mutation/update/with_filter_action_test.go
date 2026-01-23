@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -131,7 +132,7 @@ func TestUpdateWithPatch_DoesNothing(t *testing.T) {
 				Updater:              `[{"name": "Eric"}, {"name": "Sam"}]`,
 				SkipLocalUpdateEvent: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query{
 					Users {
 						name
@@ -164,7 +165,7 @@ func TestUpdateWithFilter_Succeeds(t *testing.T) {
 				Filter:       `{name: {_eq: "John"}}`,
 				Updater:      `{"name": "Eric"}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query{
 					Users {
 						name

@@ -116,7 +116,7 @@ resources:
 
 			testUtils.WaitForSync{},
 
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is hidden on all nodes to an unauthorized actor
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
@@ -151,7 +151,7 @@ resources:
 				ExpectedExistence: true, // Making the same relation through any node should be a no-op
 			},
 
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is now accessible on all nodes to the newly authorized actor.
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
@@ -170,7 +170,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is still accessible on all nodes to the owner.
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
@@ -209,7 +209,7 @@ resources:
 				ExpectedRecordFound: false, // Making the same relation through any node should be a no-op
 			},
 
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is now inaccessible on all nodes to the actor we revoked access from.
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
@@ -225,7 +225,7 @@ resources:
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is still accessible on all nodes to the owner.
 				Identity: testUtils.ClientIdentity(1),
 				Request: `

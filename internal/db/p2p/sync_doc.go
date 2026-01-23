@@ -60,7 +60,7 @@ type docSyncItem struct {
 func (p *P2P) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
 	cols, err := p.db.GetCollections(
 		ctx,
-		options.GetCollections().SetName(collectionName),
+		options.GetCollections().SetCollectionName(collectionName),
 	)
 	if err != nil {
 		return err

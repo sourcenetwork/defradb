@@ -52,7 +52,7 @@ func TestSyncColVersion_WithView(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				NodeID: immutable.Some(0),
 				Query: `
 					Users {
@@ -74,7 +74,7 @@ func TestSyncColVersion_WithView(t *testing.T) {
 				NodeID:     1,
 				VersionIDs: []string{"{{.CollectionVersionID1}}"},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: options.GetCollections().SetIncludeInactive(true),
 				NodeID:        immutable.Some(1),
 				ExpectedResults: []client.CollectionVersion{
@@ -152,7 +152,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				NodeID: immutable.Some(0),
 				Query: `
 					Users {
@@ -183,7 +183,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					UserView {
 						fullName

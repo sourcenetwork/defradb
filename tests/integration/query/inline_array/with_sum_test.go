@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestQueryInlineIntegerArrayWithSumAndNullArray(t *testing.T) {
 					"favouriteIntegers": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -56,7 +57,7 @@ func TestQueryInlineIntegerArrayWithSumAndEmptyArray(t *testing.T) {
 					"favouriteIntegers": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -87,7 +88,7 @@ func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -118,7 +119,7 @@ func TestQueryInlineNillableIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 					"testScores": [-1, 2, null, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -149,7 +150,7 @@ func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
 					"favouriteFloats": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -180,7 +181,7 @@ func TestQueryInlineFloatArrayWithSumAndEmptyArray(t *testing.T) {
 					"favouriteFloats": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -211,7 +212,7 @@ func TestQueryInlineFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -242,7 +243,7 @@ func TestQueryInlineNillableFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

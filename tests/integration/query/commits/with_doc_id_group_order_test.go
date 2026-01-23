@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -34,7 +35,7 @@ func TestQueryCommitsOrderedAndGroupedByDocID(t *testing.T) {
 						"age":	25
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
 					_commits(groupBy: [docID], order: {docID: DESC}) {
 						docID

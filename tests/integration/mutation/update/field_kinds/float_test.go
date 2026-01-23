@@ -37,7 +37,7 @@ func TestMutationUpdate_IfFloatFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"rate": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
