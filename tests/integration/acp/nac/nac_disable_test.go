@@ -104,7 +104,7 @@ func TestNAC_DisableWithIdentityOnNodeThatHasNACConfiguredAndEnabled_Successful(
 
 			// Can not do this request without identity before disabling.
 			testUtils.GetNACStatus{
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACDisablePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm.String()),
 			},
 
 			testUtils.DisableNAC{
