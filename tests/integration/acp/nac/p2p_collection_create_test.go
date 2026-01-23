@@ -159,7 +159,7 @@ func TestNAC_GatesP2PCollectionCreate_WrongIdentity_NotAuthorizedError(t *testin
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionCreatePerm.String()),
 			},
 		},
 	}
