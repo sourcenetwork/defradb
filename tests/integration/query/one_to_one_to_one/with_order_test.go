@@ -79,7 +79,7 @@ func TestQueryOneToOneToOneWithNestedOrder(t *testing.T) {
 					"_printedID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Publisher(order: {printed: {author: {name: ASC}}}) {
 						name

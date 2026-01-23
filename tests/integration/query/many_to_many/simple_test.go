@@ -78,7 +78,7 @@ func TestManyToMany_QueryFromJoinCollection_ShouldSucceed(t *testing.T) {
 			},
 
 			// Query course-to-students direction
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Enrollment(
 						filter: {course: {name: {_eq: "Math"}}}
@@ -96,7 +96,7 @@ func TestManyToMany_QueryFromJoinCollection_ShouldSucceed(t *testing.T) {
 			},
 
 			// Query student-to-courses direction
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Enrollment(
 						filter: {student: {name: {_eq: "Alice"}}}

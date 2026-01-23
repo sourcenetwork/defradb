@@ -70,7 +70,7 @@ func TestJSONUniqueIndex_WithRandomValues_ShouldGuaranteeUniquenessAndBeAbelToUs
 				}`,
 				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -78,7 +78,7 @@ func TestJSONUniqueIndex_WithRandomValues_ShouldGuaranteeUniquenessAndBeAbelToUs
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -126,7 +126,7 @@ func TestJSONUniqueIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 					"custom": {"height": 172, "BMI": 22}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -134,11 +134,11 @@ func TestJSONUniqueIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req1),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -146,7 +146,7 @@ func TestJSONUniqueIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req2),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},

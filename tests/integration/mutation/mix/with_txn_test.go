@@ -30,7 +30,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
 					create_User(input: {name: "John", age: 27}) {
@@ -45,7 +45,7 @@ func TestMutationWithTxnDeletesUserGivenSameTransaction(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
 					delete_User(docID: "bae-bb8ed746-4570-5651-ac69-39a21f733211") {
@@ -77,7 +77,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
 					create_User(input: {name: "John", age: 27}) {
@@ -92,7 +92,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
 					delete_User(docID: "bae-bb8ed746-4570-5651-ac69-39a21f733211") {
@@ -103,7 +103,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 					"delete_User": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `query {
 					User {
@@ -122,7 +122,7 @@ func TestMutationWithTxnDoesNotDeletesUserGivenDifferentTransactions(t *testing.
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -158,7 +158,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 					"age": 27
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
 					update_User(input: {age: 28}) {
@@ -173,7 +173,7 @@ func TestMutationWithTxnDoesUpdateUserGivenSameTransactions(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `query {
 					User {
@@ -215,7 +215,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 					"age": 27
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
 					update_User(input: {age: 28}) {
@@ -234,7 +234,7 @@ func TestMutationWithTxnDoesNotUpdateUserGivenDifferentTransactions(t *testing.T
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -277,7 +277,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 					"age": 27
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
 					update_User(input: {age: 28}) {
@@ -296,7 +296,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(1),
 				Request: `mutation {
 					update_User(input: {age: 29}) {
@@ -322,7 +322,7 @@ func TestMutationWithTxnDoesNotAllowUpdateInSecondTransactionUser(t *testing.T) 
 				TransactionID: 1,
 				ExpectedError: "transaction conflict. Please retry",
 			},
-			testUtils.Request{
+			&action.Request{
 				// Query after transactions have been commited:
 				Request: `query {
 					User {

@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -27,7 +28,7 @@ func TestQueryOneToMany_WithCount_NothingToCount(t *testing.T) {
 						"verified": true
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -92,7 +93,7 @@ func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
 						"verified": false
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -162,7 +163,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {_alias: {publishedCount: {_gt: 0}}}) {
 						name
@@ -232,7 +233,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {_alias: {publishedCount: {_gt: 1}}}) {
 						name

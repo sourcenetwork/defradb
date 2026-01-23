@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -27,7 +28,7 @@ func TestQueryCommitsWithDepth1(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(depth: 1) {
 							cid
@@ -71,7 +72,7 @@ func TestQueryCommitsWithDepth1WithUpdate(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(depth: 1) {
 							cid
@@ -128,7 +129,7 @@ func TestQueryCommitsWithDepth2WithUpdate(t *testing.T) {
 					"age":	23
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(depth: 2) {
 							cid
@@ -189,7 +190,7 @@ func TestQueryCommitsWithDepth1AndMultipleDocs(t *testing.T) {
 						"age":	25
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(depth: 1) {
 							cid
@@ -240,7 +241,7 @@ func TestQueryCommits_WithFilterFieldNameAndDepth_ReturnsCommitsAtAllHeights(t *
 			testUtils.UpdateDoc{
 				Doc: `{"age": 23}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {fieldName: {_eq: "age"}}, depth: 2) {
 							fieldName

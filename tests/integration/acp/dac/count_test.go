@@ -13,6 +13,7 @@ package test_acp_dac
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,7 +23,7 @@ func TestACP_QueryCountDocumentsWithoutIdentity(t *testing.T) {
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_count(Employee: {})
@@ -44,7 +45,7 @@ func TestACP_QueryCountRelatedObjectsWithoutIdentity(t *testing.T) {
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Company {
@@ -73,7 +74,7 @@ func TestACP_QueryCountDocumentsWithIdentity(t *testing.T) {
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -96,7 +97,7 @@ func TestACP_QueryCountRelatedObjectsWithIdentity(t *testing.T) {
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -128,7 +129,7 @@ func TestACP_QueryCountDocumentsWithWrongIdentity(t *testing.T) {
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -151,7 +152,7 @@ func TestACP_QueryCountRelatedObjectsWithWrongIdentity(t *testing.T) {
 		Actions: []any{
 			getSetupEmployeeCompanyActions(),
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {

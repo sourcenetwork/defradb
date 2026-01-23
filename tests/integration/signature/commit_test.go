@@ -64,7 +64,7 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 					"age":  21,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {
@@ -145,7 +145,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 					"name": "John Doe Junior"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits(order: {height: DESC}) {
@@ -234,7 +234,7 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 				},
 			},
 			testUtils.DeleteDoc{},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits(order: {height: DESC}, filter: {fieldName: {_eq: "_C"}}) {
@@ -297,7 +297,7 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 					"age":  21,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {
@@ -382,7 +382,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 					"name": "John Doe"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits(filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}) {
@@ -442,7 +442,7 @@ func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
 					"age":  21,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {

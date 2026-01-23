@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *te
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (groupBy: [Name]) {
 						Name
@@ -43,7 +44,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *te
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -82,7 +83,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *t
 					"Age": -19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -129,7 +130,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -193,7 +194,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -270,7 +271,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t
 					"Name": "Alice"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -317,7 +318,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 					"HeightM": 2.04
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -381,7 +382,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -481,7 +482,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name

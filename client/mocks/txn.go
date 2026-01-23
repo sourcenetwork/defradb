@@ -1241,7 +1241,7 @@ func (_c *Txn_DeleteReplicator_Call) RunAndReturn(run func(ctx context.Context, 
 }
 
 // DisableNAC provides a mock function for the type Txn
-func (_mock *Txn) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
+func (_mock *Txn) DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, opts)
@@ -1255,7 +1255,7 @@ func (_mock *Txn) DisableNAC(ctx context.Context, opts ...*options.ReEnableNACOp
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.ReEnableNACOptions) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.DisableNACOptions) error); ok {
 		r0 = returnFunc(ctx, opts...)
 	} else {
 		r0 = ret.Error(0)
@@ -1270,22 +1270,22 @@ type Txn_DisableNAC_Call struct {
 
 // DisableNAC is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...*options.NACOptions
+//   - opts ...*options.DisableNACOptions
 func (_e *Txn_Expecter) DisableNAC(ctx interface{}, opts ...interface{}) *Txn_DisableNAC_Call {
 	return &Txn_DisableNAC_Call{Call: _e.mock.On("DisableNAC",
 		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_DisableNAC_Call) Run(run func(ctx context.Context, opts ...*options.ReEnableNACOptions)) *Txn_DisableNAC_Call {
+func (_c *Txn_DisableNAC_Call) Run(run func(ctx context.Context, opts ...*options.DisableNACOptions)) *Txn_DisableNAC_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 []*options.ReEnableNACOptions
-		var variadicArgs []*options.ReEnableNACOptions
+		var arg1 []*options.DisableNACOptions
+		var variadicArgs []*options.DisableNACOptions
 		if len(args) > 1 {
-			variadicArgs = args[1].([]*options.ReEnableNACOptions)
+			variadicArgs = args[1].([]*options.DisableNACOptions)
 		}
 		arg1 = variadicArgs
 		run(
@@ -1301,7 +1301,7 @@ func (_c *Txn_DisableNAC_Call) Return(err error) *Txn_DisableNAC_Call {
 	return _c
 }
 
-func (_c *Txn_DisableNAC_Call) RunAndReturn(run func(ctx context.Context, opts ...*options.ReEnableNACOptions) error) *Txn_DisableNAC_Call {
+func (_c *Txn_DisableNAC_Call) RunAndReturn(run func(ctx context.Context, opts ...*options.DisableNACOptions) error) *Txn_DisableNAC_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1882,7 +1882,7 @@ func (_c *Txn_GetCollections_Call) RunAndReturn(run func(ctx context.Context, op
 }
 
 // GetNACStatus provides a mock function for the type Txn
-func (_mock *Txn) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error) {
+func (_mock *Txn) GetNACStatus(ctx context.Context, opts ...*options.GetNACStatusOptions) (client.NACStatusResult, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, opts)
@@ -1897,15 +1897,15 @@ func (_mock *Txn) GetNACStatus(ctx context.Context, opts ...*options.ReEnableNAC
 
 	var r0 client.NACStatusResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.ReEnableNACOptions) (client.NACStatusResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.GetNACStatusOptions) (client.NACStatusResult, error)); ok {
 		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.ReEnableNACOptions) client.NACStatusResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.GetNACStatusOptions) client.NACStatusResult); ok {
 		r0 = returnFunc(ctx, opts...)
 	} else {
 		r0 = ret.Get(0).(client.NACStatusResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...*options.ReEnableNACOptions) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...*options.GetNACStatusOptions) error); ok {
 		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -1920,22 +1920,22 @@ type Txn_GetNACStatus_Call struct {
 
 // GetNACStatus is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...*options.NACOptions
+//   - opts ...*options.GetNACStatusOptions
 func (_e *Txn_Expecter) GetNACStatus(ctx interface{}, opts ...interface{}) *Txn_GetNACStatus_Call {
 	return &Txn_GetNACStatus_Call{Call: _e.mock.On("GetNACStatus",
 		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_GetNACStatus_Call) Run(run func(ctx context.Context, opts ...*options.ReEnableNACOptions)) *Txn_GetNACStatus_Call {
+func (_c *Txn_GetNACStatus_Call) Run(run func(ctx context.Context, opts ...*options.GetNACStatusOptions)) *Txn_GetNACStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 []*options.ReEnableNACOptions
-		var variadicArgs []*options.ReEnableNACOptions
+		var arg1 []*options.GetNACStatusOptions
+		var variadicArgs []*options.GetNACStatusOptions
 		if len(args) > 1 {
-			variadicArgs = args[1].([]*options.ReEnableNACOptions)
+			variadicArgs = args[1].([]*options.GetNACStatusOptions)
 		}
 		arg1 = variadicArgs
 		run(
@@ -1951,7 +1951,7 @@ func (_c *Txn_GetNACStatus_Call) Return(nACStatusResult client.NACStatusResult, 
 	return _c
 }
 
-func (_c *Txn_GetNACStatus_Call) RunAndReturn(run func(ctx context.Context, opts ...*options.ReEnableNACOptions) (client.NACStatusResult, error)) *Txn_GetNACStatus_Call {
+func (_c *Txn_GetNACStatus_Call) RunAndReturn(run func(ctx context.Context, opts ...*options.GetNACStatusOptions) (client.NACStatusResult, error)) *Txn_GetNACStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2398,7 +2398,7 @@ type Txn_ReEnableNAC_Call struct {
 
 // ReEnableNAC is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...*options.NACOptions
+//   - opts ...*options.ReEnableNACOptions
 func (_e *Txn_Expecter) ReEnableNAC(ctx interface{}, opts ...interface{}) *Txn_ReEnableNAC_Call {
 	return &Txn_ReEnableNAC_Call{Call: _e.mock.On("ReEnableNAC",
 		append([]interface{}{ctx}, opts...)...)}

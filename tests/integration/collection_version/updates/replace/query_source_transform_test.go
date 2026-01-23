@@ -58,7 +58,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						firstName
@@ -90,7 +90,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					"lastName":  "S"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

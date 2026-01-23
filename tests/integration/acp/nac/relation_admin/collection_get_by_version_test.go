@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,7 +29,7 @@ func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
 				ExpectedError: "not authorized to perform operation",
@@ -43,7 +44,7 @@ func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
 				ExpectedError: "key not found", // Note: it is authorized, just key not found.

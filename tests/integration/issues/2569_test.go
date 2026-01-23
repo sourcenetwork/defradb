@@ -54,7 +54,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 					"points": %g
 				}`, math.MaxFloat64/10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -99,7 +99,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 					"points": %g
 				}`, -math.MaxFloat64/10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

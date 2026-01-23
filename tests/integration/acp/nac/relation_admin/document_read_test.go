@@ -39,7 +39,7 @@ func TestNAC_AdminRelation_CanDocumentRead(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.Request{
+			&action.Request{
 				Identity:      testUtils.ClientIdentity(2),
 				Request:       `query{ User { name } }`,
 				ExpectedError: "not authorized to perform operation",
@@ -54,7 +54,7 @@ func TestNAC_AdminRelation_CanDocumentRead(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{

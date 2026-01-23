@@ -34,7 +34,7 @@ func TestQueryCommitsBranchables_WithFieldNameFilter(t *testing.T) {
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(
 							filter: {fieldName: {_eq: null}}

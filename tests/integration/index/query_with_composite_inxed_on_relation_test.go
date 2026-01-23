@@ -77,7 +77,7 @@ func TestQueryWithCompositeIndexOnManyToOne_WithMultipleIndexedChildNodes_Should
 					"manufacturer": testUtils.NewDocIndex(2, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						devices {

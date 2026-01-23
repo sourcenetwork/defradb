@@ -212,7 +212,7 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 
 	opt := options.WithIdentity(options.GetCollections(), identity.FromContext(ctx))
 	if req.URL.Query().Has("name") {
-		opt.SetName(req.URL.Query().Get("name"))
+		opt.SetCollectionName(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
 		opt.SetVersionID(req.URL.Query().Get("version_id"))
@@ -248,7 +248,7 @@ func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 
 	opt := options.RefreshViews()
 	if req.URL.Query().Has("name") {
-		opt.SetName(req.URL.Query().Get("name"))
+		opt.SetCollectionName(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
 		opt.SetVersionID(req.URL.Query().Get("version_id"))

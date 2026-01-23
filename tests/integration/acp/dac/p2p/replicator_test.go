@@ -130,7 +130,7 @@ resources:
 				},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is accessible on all nodes to authorized actors
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
@@ -148,7 +148,7 @@ resources:
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is hidden on all nodes to unidentified actors
 				Request: `
 					query {
@@ -161,7 +161,7 @@ resources:
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is hidden on all nodes to unauthorized actors
 				Identity: testUtils.ClientIdentity(2),
 				Request: `

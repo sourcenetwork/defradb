@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -59,7 +60,7 @@ func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -150,7 +151,7 @@ func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -233,7 +234,7 @@ func TestQueryOneToManyWithCountWithLimit(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name

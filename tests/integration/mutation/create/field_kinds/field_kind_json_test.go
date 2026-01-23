@@ -36,7 +36,7 @@ func TestMutationCreate_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 					"custom": {"tree": "maple", "age": 250}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -78,7 +78,7 @@ func TestMutationCreate_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing
 					"custom": ["maple", 250]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -120,7 +120,7 @@ func TestMutationCreate_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -162,7 +162,7 @@ func TestMutationCreate_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 					"custom": 250
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -201,7 +201,7 @@ func TestMutationCreate_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 					"custom": "hello"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -240,7 +240,7 @@ func TestMutationCreate_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 					"custom": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -279,7 +279,7 @@ func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 					"custom": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

@@ -13,10 +13,11 @@ package field
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *testing.T) {
@@ -53,7 +54,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -91,7 +92,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedAfterPatch(t *t
 						"name":	"John"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {name: {_eq: "John"}}) {
 						name
@@ -154,7 +155,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -178,7 +179,7 @@ func TestSchemaUpdatesAddFieldSimple_WithExistingIndexDocsCreatedBeforePatch(t *
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {name: {_eq: "John"}}) {
 						name

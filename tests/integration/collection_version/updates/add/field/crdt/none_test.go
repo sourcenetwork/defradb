@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldCRDTDefault(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -67,7 +67,7 @@ func TestSchemaUpdatesAddFieldCRDTNone(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

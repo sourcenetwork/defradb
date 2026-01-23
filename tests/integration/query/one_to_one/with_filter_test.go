@@ -39,7 +39,7 @@ func TestQueryOneToOneWithNumericFilterOnParent(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -93,7 +93,7 @@ func TestQueryOneToOneWithStringFilterOnChild(t *testing.T) {
 					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {name: {_eq: "Painted House"}}) {
 						name
@@ -147,7 +147,7 @@ func TestQueryOneToOneWithBooleanFilterOnChild(t *testing.T) {
 					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {author: {verified: {_eq: true}}}) {
 						name
@@ -215,7 +215,7 @@ func TestQueryOneToOneWithFilterThroughChildBackToParent(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {author: {published: {rating: {_eq: 4.9}}}}) {
 						name
@@ -267,7 +267,7 @@ func TestQueryOneToOneWithBooleanFilterOnChildWithNoSubTypeSelection(t *testing.
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {author: {verified: {_eq: true}}}) {
 						name
@@ -343,10 +343,10 @@ func TestQueryOneToOneWithCompoundAndFilterThatIncludesRelation(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 2),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_and: [
-						{rating: {_ge: 4.0}},
+						{rating: {_geq: 4.0}},
 						{author: {verified: {_eq: true}}}
 					]}) {
 						name
@@ -438,16 +438,16 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 3),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_or: [
 						{_and: [
-							{rating: {_ge: 4.0}},
-							{author: {age: {_le: 45}}}
+							{rating: {_geq: 4.0}},
+							{author: {age: {_leq: 45}}}
 						]},
 						{_and: [
-							{rating: {_le: 3.5}},
-							{author: {age: {_ge: 35}}}
+							{rating: {_leq: 3.5}},
+							{author: {age: {_geq: 35}}}
 						]}
 					]}) {
 						name
@@ -465,7 +465,7 @@ func TestQueryOneToOneWithCompoundOrFilterThatIncludesRelation(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_or: [
 						{_not: {author: {age: {_lt: 65}}} },
@@ -546,7 +546,7 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 					"_publishedID": testUtils.NewDocIndex(0, 2),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_or: [
 						{rating: {_gt: 4.0}},
@@ -570,10 +570,10 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(filter: {_and: [
-						{rating: {_ge: 4.0}},
+						{rating: {_geq: 4.0}},
 						{author: {age: {_eq: 45}}}
 					]}) {
 						name
@@ -589,11 +589,11 @@ func TestQueryOneToOne_WithCompoundFiltersThatIncludesRelation_ShouldReturnResul
 					},
 				},
 			},
-			testUtils.Request{
-				// This is the same as {_not: {_and: [{rating: {_ge: 4.0}}, {author: {age: {_eq: 45}}}]}}
+			&action.Request{
+				// This is the same as {_not: {_and: [{rating: {_geq: 4.0}}, {author: {age: {_eq: 45}}}]}}
 				Request: `query {
 					Book(filter: {_not: {
-						rating: {_ge: 4.0},
+						rating: {_geq: 4.0},
 						author: {age: {_eq: 45}}
 					}}) {
 						name

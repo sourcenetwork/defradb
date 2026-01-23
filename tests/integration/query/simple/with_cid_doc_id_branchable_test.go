@@ -42,7 +42,7 @@ func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 					"name": "Freddddd"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// This is the cid of the collection-commit when the second doc (John) is created.
 				// Without the docID param both John and Fred should be returned.
 				Request: `query {

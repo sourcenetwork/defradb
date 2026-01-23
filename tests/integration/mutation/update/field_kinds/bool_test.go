@@ -37,7 +37,7 @@ func TestMutationUpdate_IfBoolFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"valid": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

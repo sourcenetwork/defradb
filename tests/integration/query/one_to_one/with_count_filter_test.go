@@ -87,7 +87,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 					"_publishedID": testUtils.NewDocIndex(0, 3),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_count(Book: {filter: {_or: [
 						{_not: {author: {age: {_lt: 65}}} },

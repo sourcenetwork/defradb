@@ -13,6 +13,7 @@ package backup
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -32,7 +33,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -58,7 +59,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						Book {
@@ -118,7 +119,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -140,7 +141,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						Book {

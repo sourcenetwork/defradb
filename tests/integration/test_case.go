@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -11,16 +11,16 @@
 package tests
 
 import (
-	"testing"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
+	"github.com/sourcenetwork/testo/multiplier"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/gen"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -82,6 +82,14 @@ type TestCase struct {
 	// IdentityTypes is a map of identity to key type.
 	// Use it to customize the key type that is used for identity and signing.
 	IdentityTypes map[state.Identity]crypto.KeyType
+
+	// The test will be skipped if the current active set of multipliers
+	// does not contain all of the given multiplier names.
+	MultiplierIncludes []multiplier.Name
+
+	// The test will be skipped if the current active set of multipliers
+	// contains any of the given multiplier names.
+	MultiplierExcludes []multiplier.Name
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -182,42 +190,6 @@ type PatchCollection struct {
 	ExpectedError string
 }
 
-// GetCollections is an action that fetches collections using the provided options.
-//
-// ID, RootID and CollectionVersionID will only be asserted on if an expected value is provided.
-type GetCollections struct {
-	// NodeID may hold the ID (index) of a node to get collections from.
-	//
-	// If a value is not provided collections will be gotten from all nodes.
-	NodeID immutable.Option[int]
-
-	// Used to identify the transaction for this to run against. Optional.
-	TransactionID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The expected results.
-	//
-	// Each item will be compared individually, if CollectionID, VersionID, or FieldIDs on the
-	// expected item are default they will not be compared with the actual.
-	//
-	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
-	// to allow their ommission in most cases).
-	ExpectedResults []client.CollectionVersion
-
-	// An optional set of fetch options for the collections.
-	FilterOptions *options.GetCollectionsOptions
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
 // SetActiveCollectionVersion is an action that will set the active collection version to the
 // given value.
 type SetActiveCollectionVersion struct {
@@ -233,47 +205,6 @@ type SetActiveCollectionVersion struct {
 
 	// VersionID to set as active collection version.
 	VersionID string
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// CreateView is an action that will create a new View.
-type CreateView struct {
-	// NodeID may hold the ID (index) of a node to create this View on.
-	//
-	// If a value is not provided the view will be created on all nodes.
-	NodeID immutable.Option[int]
-
-	// The query that this View is to be based off of. Required.
-	Query string
-
-	// The SDL containing all types used by the view output.
-	SDL string
-
-	// An optional CID of an existing lens transform.
-	// Use AddLens action first to store the lens and get its CID.
-	TransformCID immutable.Option[string]
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// RefreshViews action will execute a call to `store.RefreshViews` using the provided options.
-type RefreshViews struct {
-	// NodeID may hold the ID (index) of a node to create this View on.
-	//
-	// If a value is not provided the view will be created on all nodes.
-	NodeID immutable.Option[int]
-
-	// The set of options for refreshing views.
-	FilterOptions *options.RefreshViewsOptions
 
 	// Any error expected from the action. Optional.
 	//
@@ -337,15 +268,8 @@ type CreateDoc struct {
 //
 // The targeted document must have been defined in an action prior to the action that this index
 // is hosted upon.
-type DocIndex struct {
-	// CollectionIndex is the index of the collection holding the document to target.
-	CollectionIndex int
-
-	// Index is the index within the target collection at which the document exists.
-	//
-	// This is dependent on the order in which test [CreateDoc] actions were defined.
-	Index int
-}
+// This is a type alias for backward compatibility.
+type DocIndex = action.DocIndex
 
 // NewDocIndex creates a new [DocIndex] instance allowing relation fields to be set without worrying
 // about the specific document id.
@@ -563,18 +487,12 @@ type DeleteEncryptedIndex struct {
 }
 
 // ResultAsserter is an interface that can be implemented to provide custom result
-// assertions.
-type ResultAsserter interface {
-	// Assert will be called with the test and the result of the request.
-	Assert(t testing.TB, result map[string]any)
-}
+// assertions. This is a type alias for backward compatibility.
+type ResultAsserter = action.ResultAsserter
 
-// ResultAsserterFunc is a function that can be used to implement the ResultAsserter
-type ResultAsserterFunc func(testing.TB, map[string]any) (bool, string)
-
-func (f ResultAsserterFunc) Assert(t testing.TB, result map[string]any) {
-	f(t, result)
-}
+// ResultAsserterFunc is a function that can be used to implement the ResultAsserter.
+// This is a type alias for backward compatibility.
+type ResultAsserterFunc = action.ResultAsserterFunc
 
 // Benchmark is an action that will run another test action for benchmark test.
 // It will run benchmarks for a base case and optimized case and assert that
@@ -590,53 +508,6 @@ type Benchmark struct {
 	FocusClients []state.ClientType
 	// Factor is the factor by which the optimized case should be better than the base case.
 	Factor float64
-}
-
-// Request represents a standard Defra (GQL) request.
-type Request struct {
-	// NodeID may hold the ID (index) of a node to execute this request on.
-	//
-	// If a value is not provided the request will be executed against all nodes,
-	// in which case the expected results must all match across all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If an Identity is not provided then can only operate over public document(s).
-	//
-	// If an Identity is provided and the collection has a policy, then can
-	// operate over private document(s) that are owned by this Identity.
-	//
-	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
-	// Default value is `NoIdentity()`.
-	Identity immutable.Option[state.Identity]
-
-	// Used to identify the transaction for this to run against. Optional.
-	TransactionID immutable.Option[int]
-
-	// OperationName sets the operation name option for the request.
-	OperationName immutable.Option[string]
-
-	// Variables sets the variables option for the request.
-	Variables immutable.Option[map[string]any]
-
-	// The request to execute.
-	Request string
-
-	// The expected (data) results of the issued request.
-	Results map[string]any
-
-	// NonOrderedResults specifies that the results set doesn't need to care about the ordering of the items.
-	NonOrderedResults bool
-
-	// Asserter is an optional custom result asserter.
-	Asserter ResultAsserter
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
 }
 
 // GenerateDocs is an action that will trigger generation of documents.
@@ -687,27 +558,6 @@ type CreatePredefinedDocs struct {
 type TransactionCommit struct {
 	// Used to identify the transaction to commit.
 	TransactionID int
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// SubscriptionRequest represents a subscription request.
-//
-// The subscription will remain active until shortly after all actions have been processed.
-// The results of the subscription will then be asserted upon.
-type SubscriptionRequest struct {
-	// NodeID is the node ID (index) of the node in which to subscribe to.
-	NodeID immutable.Option[int]
-
-	// The subscription request to submit.
-	Request string
-
-	// The expected (data) results yielded through the subscription across its lifetime.
-	Results []map[string]any
 
 	// Any error expected from the action. Optional.
 	//

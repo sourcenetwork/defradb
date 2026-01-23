@@ -61,7 +61,7 @@ func TestQueryOneToManyWithSameFieldName_SingleSide(t *testing.T) {
 						"name": "John Grisham"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Book {
 							name
@@ -103,7 +103,7 @@ func TestQueryOneToManyWithSameFieldName_MultiSide(t *testing.T) {
 						"name": "John Grisham"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name

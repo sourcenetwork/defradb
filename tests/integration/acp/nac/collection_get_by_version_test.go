@@ -14,6 +14,8 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client/options"
+
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -28,7 +30,7 @@ func TestNAC_GatesCollectionGetByVersion_AuthorizedIdentity_AllowAccess(t *testi
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(1),
 				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
 				ExpectedError: "key not found", // Note: it is authorized, just key not found.
@@ -50,7 +52,7 @@ func TestNAC_GatesCollectionGetByVersion_NoIdentity_NotAuthorizedError(t *testin
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.NoIdentity(),
 				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
 				ExpectedError: "not authorized to perform operation",
@@ -72,7 +74,7 @@ func TestNAC_GatesCollectionGetByVersion_WrongIdentity_NotAuthorizedError(t *tes
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
 				ExpectedError: "not authorized to perform operation",

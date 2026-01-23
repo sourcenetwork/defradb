@@ -44,7 +44,7 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *te
 				FieldName:    "name",
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						Users {
@@ -84,7 +84,7 @@ func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_NoError(t *testing.
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						Users {

@@ -13,13 +13,14 @@ package subscription
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					_commits {
 						cid
@@ -74,7 +75,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					_commits {
 						cid
@@ -108,7 +109,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
@@ -137,7 +138,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
@@ -185,7 +186,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 						"age":	21
 					}`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					_commits(docID: "bae-45e90427-d499-598b-902a-6a3c65d0b504") {
 						cid		
@@ -204,7 +205,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 				},
 			},
 			// this mutation must be ignored by the subscription
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
@@ -219,7 +220,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 				},
 			},
 			// this mutation will be included in the subscription
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_User(docID: "bae-45e90427-d499-598b-902a-6a3c65d0b504", input: {verified: false}) {
 						_docID

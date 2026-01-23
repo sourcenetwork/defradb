@@ -32,7 +32,7 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						fullName: name
@@ -64,7 +64,7 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							AuthorView {
 								fullName
@@ -107,7 +107,7 @@ func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -139,7 +139,7 @@ func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {

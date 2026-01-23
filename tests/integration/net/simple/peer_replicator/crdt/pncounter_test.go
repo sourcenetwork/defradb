@@ -56,7 +56,7 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -75,7 +75,7 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -90,7 +90,7 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(2),
 				Request: `query {
 					Users {
@@ -157,7 +157,7 @@ func TestP2PPeerReplicatorWithUpdate_PNCounter_NoError(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						points

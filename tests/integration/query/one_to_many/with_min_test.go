@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -59,7 +60,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {_alias: {minRating: {_gt: 0}}}) {
 						name
@@ -129,7 +130,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchOne(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {_alias: {minRating: {_lt: 4.7}}}) {
 						name

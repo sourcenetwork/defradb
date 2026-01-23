@@ -57,7 +57,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -94,8 +94,8 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					"name": "Fred",
 				},
 			},
-			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetName("UserView"),
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetCollectionName("UserView"),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "UserView",
@@ -104,7 +104,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenFalseAndView(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name

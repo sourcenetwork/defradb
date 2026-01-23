@@ -494,3 +494,15 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 	_, err := c.cmd.execute(ctx, args)
 	return err
 }
+
+func (c *Collection) Truncate(ctx context.Context, opts ...*options.CollectionTruncateOptions) error {
+	args := []string{"client", "collection", "truncate"}
+	args = append(args, "--name", c.Version().Name)
+
+	if len(opts) > 0 && opts[0] != nil {
+		args = appendIdentityArg(args, opts[0].GetIdentity())
+	}
+
+	_, err := c.cmd.execute(ctx, args)
+	return err
+}

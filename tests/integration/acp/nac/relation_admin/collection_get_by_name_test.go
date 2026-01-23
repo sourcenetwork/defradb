@@ -38,9 +38,9 @@ func TestNAC_AdminRelation_CanCollectionGetByName(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				FilterOptions: options.GetCollections().SetName("Users").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
 				ExpectedError: "not authorized to perform operation",
 			},
 
@@ -53,9 +53,9 @@ func TestNAC_AdminRelation_CanCollectionGetByName(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				FilterOptions: options.GetCollections().SetName("Users").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

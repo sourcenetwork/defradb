@@ -36,7 +36,7 @@ func TestSchemaUpdatesAddFieldKindNillableStringArray(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -76,7 +76,7 @@ func TestSchemaUpdatesAddFieldKindNillableStringArrayWithCreate(t *testing.T) {
 					"foo": ["hello", "پدر سگ", null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -125,7 +125,7 @@ func TestSchemaUpdatesAddFieldKindNillableStringArraySubstitutionWithCreate(t *t
 					"foo": ["hello", "پدر سگ", null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

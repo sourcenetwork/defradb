@@ -41,7 +41,7 @@ func (p *P2P) AddP2PCollections(
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			options.WithIdentity(options.GetCollections(), ident).SetName(col),
+			options.WithIdentity(options.GetCollections(), ident).SetCollectionName(col),
 		)
 		if err != nil {
 			return err
@@ -90,7 +90,7 @@ func (p *P2P) RemoveP2PCollections(
 	for _, col := range collectionNames {
 		storeCol, err := clientTxn.GetCollections(
 			ctx,
-			options.WithIdentity(options.GetCollections(), ident).SetName(col),
+			options.WithIdentity(options.GetCollections(), ident).SetCollectionName(col),
 		)
 		if err != nil {
 			return err

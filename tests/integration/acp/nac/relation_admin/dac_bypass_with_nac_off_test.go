@@ -47,7 +47,7 @@ func TestNAC_Disabled_AdminRelation_DoesNotOwnTheDocument_CanNotAccessAndCanNotD
 
 			// This user, can not access the document when NAC is turned off, as DAC access gates it.
 			// Note: no error here because DAC access is being used to gate here, not NAC.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -80,7 +80,7 @@ func TestNAC_Disabled_AdminRelation_DoesNotOwnTheDocument_CanNotAccessAndCanNotD
 			// Note: This is a very important edge case to test. This user, still should not be able to bypass
 			// or access the document even though they have dac-bypass permission (because NAC is disabled).
 			// So, they have to go through DAC, hence can't access the document they don't own.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -130,7 +130,7 @@ func TestNAC_Disabled_AdminRelation_OwnThePrivateDocument_CanAccessButNotDACBypa
 			},
 
 			// This user, can access the document as it has DAC ownership and NAC is disabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -166,7 +166,7 @@ func TestNAC_Disabled_AdminRelation_OwnThePrivateDocument_CanAccessButNotDACBypa
 
 			// This user, still should not be able to dac-bypass the document (because NAC is disabled).
 			// However, since they do own the document and go through DAC, they continue to have access.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -219,7 +219,7 @@ func TestNAC_Disabled_AdminRelation_PublicDocument_CanAccessButNotDACBypass(t *t
 			},
 
 			// This user, can access the document as it is a public document and NAC is disabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -255,7 +255,7 @@ func TestNAC_Disabled_AdminRelation_PublicDocument_CanAccessButNotDACBypass(t *t
 
 			// This user, still should not be able to dac-bypass (because NAC is disabled).
 			// However, since this is a puclic document not gated be DAC, they continue to have access.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {

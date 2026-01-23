@@ -43,7 +43,7 @@ func TestQuerySimple_WithDeletedField(t *testing.T) {
 			testUtils.DeleteDoc{
 				DocID: 1,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(showDeleted: true) {
 							_deleted

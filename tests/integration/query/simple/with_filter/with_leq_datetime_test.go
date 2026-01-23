@@ -13,7 +13,9 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
@@ -33,9 +35,9 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithEqualValue(t *testing.T) {
 					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_le: "2017-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_leq: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -70,9 +72,9 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithGreaterValue(t *testing.T) {
 					"CreatedAt": "2019-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_le: "2018-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_leq: "2018-07-23T03:46:56-05:00"}}) {
 						Name
 					}
 				}`,
@@ -106,9 +108,9 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_le: null}}) {
+					Users(filter: {CreatedAt: {_leq: null}}) {
 						Name
 					}
 				}`,
@@ -128,6 +130,8 @@ func TestQuerySimpleWithDateTimeLEFilterBlockWithNullValue(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeLEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.CreateDoc{
 				DocMap: map[string]any{
@@ -149,9 +153,9 @@ func TestQuerySimple_WithNilDateTimeLEAndNonNilFilterBlock_ShouldSucceed(t *test
 					"Age":  44,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(filter: {CreatedAt: {_le: "2017-07-23T03:46:56-05:00"}}) {
+					Users(filter: {CreatedAt: {_leq: "2017-07-23T03:46:56-05:00"}}) {
 						Name
 						Age
 						CreatedAt

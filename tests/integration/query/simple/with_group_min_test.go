@@ -13,6 +13,7 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndMinOfUndefined_Retu
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (groupBy: [Name]) {
 						Name
@@ -43,7 +44,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndMinOfUndefined_Retu
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -82,7 +83,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMin_Suc
 					"Age": -19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -129,7 +130,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildNilMin_Succeed
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -193,7 +194,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfInt_Succ
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -270,7 +271,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildEmptyFloatMin_
 					"Name": "Alice"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -317,7 +318,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildFloatMin_Succe
 					"HeightM": 2.04
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -381,7 +382,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfFloat_Su
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -481,7 +482,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfMinOfFlo
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name

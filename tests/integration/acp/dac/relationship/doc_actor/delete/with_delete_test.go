@@ -127,7 +127,7 @@ resources:
 			},
 
 			// Now the other identity can read both and delete both of those documents
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can read.
 
 				Request: `
@@ -176,7 +176,7 @@ resources:
 			},
 
 			// The other identity can neither delete nor read the other document anymore.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 
 				Request: `
@@ -204,7 +204,7 @@ resources:
 			},
 
 			// Ensure document was not accidentally deleted using owner identity.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 
 				Request: `

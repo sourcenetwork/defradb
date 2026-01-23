@@ -1169,6 +1169,72 @@ func (_c *Collection_Save_Call) RunAndReturn(run func(ctx context.Context, doc *
 	return _c
 }
 
+// Truncate provides a mock function for the type Collection
+func (_mock *Collection) Truncate(ctx context.Context, opts ...*options.CollectionTruncateOptions) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for Truncate")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.CollectionTruncateOptions) error); ok {
+		r0 = returnFunc(ctx, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Collection_Truncate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Truncate'
+type Collection_Truncate_Call struct {
+	*mock.Call
+}
+
+// Truncate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts ...*options.CollectionTruncateOptions
+func (_e *Collection_Expecter) Truncate(ctx interface{}, opts ...interface{}) *Collection_Truncate_Call {
+	return &Collection_Truncate_Call{Call: _e.mock.On("Truncate",
+		append([]interface{}{ctx}, opts...)...)}
+}
+
+func (_c *Collection_Truncate_Call) Run(run func(ctx context.Context, opts ...*options.CollectionTruncateOptions)) *Collection_Truncate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []*options.CollectionTruncateOptions
+		var variadicArgs []*options.CollectionTruncateOptions
+		if len(args) > 1 {
+			variadicArgs = args[1].([]*options.CollectionTruncateOptions)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_Truncate_Call) Return(err error) *Collection_Truncate_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Collection_Truncate_Call) RunAndReturn(run func(ctx context.Context, opts ...*options.CollectionTruncateOptions) error) *Collection_Truncate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function for the type Collection
 func (_mock *Collection) Update(ctx context.Context, docs *client.Document, opts ...*options.CollectionUpdateOptions) error {
 	var tmpRet mock.Arguments

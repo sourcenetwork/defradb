@@ -56,7 +56,7 @@ func MakeCollectionCommand(ctx context.Context) *cobra.Command {
 				opt.SetCollectionID(collectionID)
 			}
 			if name != "" {
-				opt.SetName(name)
+				opt.SetCollectionName(name)
 			}
 			if getInactive {
 				opt.SetIncludeInactive(getInactive)

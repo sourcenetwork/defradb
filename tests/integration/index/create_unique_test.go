@@ -97,7 +97,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 					}`,
 				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {name: {_eq: "John"}}) {
 						name

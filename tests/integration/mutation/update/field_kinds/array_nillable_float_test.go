@@ -41,7 +41,7 @@ func TestMutationUpdate_WithArrayOfNillableFloats(t *testing.T) {
 					"favouriteFloats": [3.1425, -0.00000000001, null, 10]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

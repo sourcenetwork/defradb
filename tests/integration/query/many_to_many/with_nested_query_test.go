@@ -79,7 +79,7 @@ func TestManyToMany_QueryFromSecondary_Succeeds(t *testing.T) {
 			},
 
 			// Query Alice and access her course names
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Student(filter: {name: {_eq: "Alice"}}) {
 						name

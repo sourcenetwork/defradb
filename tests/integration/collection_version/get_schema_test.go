@@ -24,7 +24,7 @@ import (
 func TestGetSchema_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: options.GetCollections().SetVersionID("does not exist"),
 				ExpectedError: "key not found",
 			},
@@ -37,7 +37,7 @@ func TestGetSchema_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
 func TestGetSchema_GivenNoSchemaReturnsEmptySet(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -49,7 +49,7 @@ func TestGetSchema_GivenNoSchemaReturnsEmptySet(t *testing.T) {
 func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions:   options.GetCollections().SetCollectionID("does not exist"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
@@ -62,8 +62,8 @@ func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
 func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.GetCollections{
-				FilterOptions:   options.GetCollections().SetName("does not exist"),
+			&action.GetCollections{
+				FilterOptions:   options.GetCollections().SetCollectionName("does not exist"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -93,7 +93,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: options.GetCollections().SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
@@ -170,7 +170,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: options.GetCollections().SetIncludeInactive(true).SetCollectionID(usersSchemaVersion1ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
@@ -237,8 +237,8 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
-				FilterOptions: options.GetCollections().SetName("Users").SetIncludeInactive(true),
+			&action.GetCollections{
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

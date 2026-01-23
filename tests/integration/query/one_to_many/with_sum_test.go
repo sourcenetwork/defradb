@@ -60,7 +60,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {_alias: {totalRating: {_gt: 0}}}) {
 						name
@@ -130,7 +130,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {_alias: {totalRating: {_gt: 5}}}) {
 						name
@@ -211,7 +211,7 @@ func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T)
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {_alias: {totalRating: {_gt: 5}}}) {
 						name

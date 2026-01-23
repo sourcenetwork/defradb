@@ -193,11 +193,11 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 							"age": nil,
 						},
 					},
-					testUtils.Request{
+					&action.Request{
 						Request: tc.req,
 						Results: tc.result,
 					},
-					testUtils.Request{
+					&action.Request{
 						Request:  makeExplainQuery(tc.req),
 						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
 					},
@@ -222,7 +222,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 			name: "With _le and _gt filters",
 			req: `query {
 				User(filter: {
-					age: {_le: 35},
+					age: {_leq: 35},
 					custom: {val: {_gt: 4}}
 				}) {
 					name
@@ -257,8 +257,8 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 			name: "With _ne and _ge filters",
 			req: `query {
 				User(filter: {
-					_and: [{ age: {_ne: 35} }, { age: {_ne: 40} }],
-					custom: {val: {_ge: 5}} 
+					_and: [{ age: {_neq: 35} }, { age: {_neq: 40} }],
+					custom: {val: {_geq: 5}} 
 				}) {
 					name
 				}
@@ -356,11 +356,11 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 							"age": nil,
 						},
 					},
-					testUtils.Request{
+					&action.Request{
 						Request: tc.req,
 						Results: tc.result,
 					},
-					testUtils.Request{
+					&action.Request{
 						Request:  makeExplainQuery(tc.req),
 						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
 					},
@@ -548,11 +548,11 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 							"age": nil,
 						},
 					},
-					testUtils.Request{
+					&action.Request{
 						Request: tc.req,
 						Results: tc.result,
 					},
-					testUtils.Request{
+					&action.Request{
 						Request:  makeExplainQuery(tc.req),
 						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
 					},
@@ -740,11 +740,11 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 							"age": nil,
 						},
 					},
-					testUtils.Request{
+					&action.Request{
 						Request: tc.req,
 						Results: tc.result,
 					},
-					testUtils.Request{
+					&action.Request{
 						Request:  makeExplainQuery(tc.req),
 						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
 					},
@@ -932,11 +932,11 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"tags": []any{"colleague"},
 						},
 					},
-					testUtils.Request{
+					&action.Request{
 						Request: tc.req,
 						Results: tc.result,
 					},
-					testUtils.Request{
+					&action.Request{
 						Request:  makeExplainQuery(tc.req),
 						Asserter: testUtils.NewExplainAsserter().WithIndexFetches(tc.indexFetches),
 					},

@@ -51,7 +51,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_NotAuthorizedEr
 			},
 
 			// Document owner but can not access, because NAC takes precedence.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -102,7 +102,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_NotAuthor
 			},
 
 			// Not authorized user, can not access because NAC is enabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3),
 				Request: `
 					query {
@@ -153,7 +153,7 @@ func TestNAC_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_AllowAccess(t *t
 			},
 
 			// Not authorized user, can not access even public document, because NAC is enabled.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {

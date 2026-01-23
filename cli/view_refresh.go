@@ -43,7 +43,7 @@ items from that cache.`,
 				opt.SetCollectionID(collectionID)
 			}
 			if name != "" {
-				opt.SetName(name)
+				opt.SetCollectionName(name)
 			}
 			if getInactive {
 				opt.SetIncludeInactive(getInactive)

@@ -391,8 +391,8 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...*options.RefreshView
 	args := []string{"client", "view", "refresh"}
 	if len(opts) > 0 && opts[0] != nil {
 		opt := opts[0]
-		if opt.Name.HasValue() {
-			args = append(args, "--name", opt.Name.Value())
+		if opt.CollectionName.HasValue() {
+			args = append(args, "--name", opt.CollectionName.Value())
 		}
 		if opt.VersionID.HasValue() {
 			args = append(args, "--version-id", opt.VersionID.Value())
@@ -473,7 +473,7 @@ func (w *Wrapper) GetCollectionByName(
 	name client.CollectionName,
 	opts ...*options.GetCollectionByNameOptions,
 ) (client.Collection, error) {
-	cols, err := w.GetCollections(ctx, options.GetCollections().SetName(name))
+	cols, err := w.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
 	if err != nil {
 		return nil, err
 	}
@@ -489,8 +489,8 @@ func (w *Wrapper) GetCollections(
 	args := []string{"client", "collection", "describe"}
 	if len(opts) > 0 && opts[0] != nil {
 		opt := opts[0]
-		if opt.Name.HasValue() {
-			args = append(args, "--name", opt.Name.Value())
+		if opt.CollectionName.HasValue() {
+			args = append(args, "--name", opt.CollectionName.Value())
 		}
 		if opt.VersionID.HasValue() {
 			args = append(args, "--version-id", opt.VersionID.Value())

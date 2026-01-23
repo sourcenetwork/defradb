@@ -113,7 +113,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // The other actor can read
 
 				Request: `
@@ -150,7 +150,7 @@ resources:
 			},
 
 			// The other actor can no longer read.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3),
 
 				Request: `
@@ -268,7 +268,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // The other actor can read
 
 				Request: `
@@ -318,7 +318,7 @@ resources:
 				ExpectedError: "failed to add document actor relationship with acp",
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(4), // The other actor can ofcourse still not read.
 
 				Request: `
@@ -450,7 +450,7 @@ resources:
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1), // The owner can still read
 
 				Request: `

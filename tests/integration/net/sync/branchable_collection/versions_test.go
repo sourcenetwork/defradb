@@ -112,7 +112,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 				CollectionID: 0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					User {
@@ -145,7 +145,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {

@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -39,7 +40,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					update_Author(
@@ -58,7 +59,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 
 				ExpectedPatterns: updatePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
@@ -104,7 +105,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					update_Author(
@@ -122,7 +123,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 
 				ExpectedPatterns: updatePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
@@ -164,7 +165,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					update_Author(
@@ -179,7 +180,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 
 				ExpectedPatterns: updatePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
@@ -219,7 +220,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					update_Author(
@@ -242,7 +243,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 
 				ExpectedPatterns: updatePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,

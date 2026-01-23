@@ -13,10 +13,11 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
+func TestQuerySimpleWithIntNotEqualsFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -31,9 +32,9 @@ func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(filter: {Age: {_ge: 32}}) {
+					Users(filter: {Age: {_neq: 21}}) {
 						Name
 					}
 				}`,
@@ -51,7 +52,7 @@ func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
+func TestQuerySimpleWithIntNotEqualsNilFilterBlock(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{
@@ -66,9 +67,14 @@ func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			testUtils.CreateDoc{
+				Doc: `{
+					"Name": "Fred"
+				}`,
+			},
+			&action.Request{
 				Request: `query {
-					Users(filter: {Age: {_ge: 31}}) {
+					Users(filter: {Age: {_neq: null}}) {
 						Name
 					}
 				}`,
@@ -77,45 +83,12 @@ func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 						{
 							"Name": "Bob",
 						},
-					},
-				},
-			},
-		},
-	}
-
-	executeTestCase(t, test)
-}
-
-func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
-	test := testUtils.TestCase{
-		Actions: []any{
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "John",
-					"Age": 21
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"Name": "Bob"
-				}`,
-			},
-			testUtils.Request{
-				Request: `query {
-					Users(filter: {Age: {_ge: null}}) {
-						Name
-					}
-				}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
 						{
 							"Name": "John",
 						},
-						{
-							"Name": "Bob",
-						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

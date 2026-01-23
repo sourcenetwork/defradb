@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -34,7 +35,7 @@ func TestQueryInlineIntegerArray_WithMinAndOrder_Succeeds(t *testing.T) {
 			},
 
 			// Test descending order
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
 						total: _min(testScores: {}, pageRatings: {})
@@ -53,7 +54,7 @@ func TestQueryInlineIntegerArray_WithMinAndOrder_Succeeds(t *testing.T) {
 			},
 
 			// Test ascending order
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
 						total: _min(testScores: {}, pageRatings: {})
@@ -94,7 +95,7 @@ func TestQueryInlineIntegerArray_WithNullAndMinAndOrder_Succeeds(t *testing.T) {
 			},
 
 			// Test descending order
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
 						total: _min(testScores: {}, pageRatings: {})
@@ -113,7 +114,7 @@ func TestQueryInlineIntegerArray_WithNullAndMinAndOrder_Succeeds(t *testing.T) {
 			},
 
 			// Test ascending order
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
 						total: _min(testScores: {}, pageRatings: {})
