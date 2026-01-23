@@ -112,7 +112,7 @@ func TestNAC_GatesDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) {
 				DocID:         0,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentDeletePerm.String()),
 			},
-			testUtils.Request{ // Should not be deleted.
+			&action.Request{ // Should not be deleted.
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -225,7 +225,7 @@ func TestNAC_GatesDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				DocID:         0,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentDeletePerm.String()),
 			},
-			testUtils.Request{ // Should not be deleted
+			&action.Request{ // Should not be deleted
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{

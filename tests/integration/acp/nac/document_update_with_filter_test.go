@@ -114,7 +114,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_NotAuthorizedError(t *test
 				Updater:       `{"name": "Lone"}`,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentUpdatePerm.String()),
 			},
-			testUtils.Request{ // Should not be updated
+			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -229,7 +229,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_NotAuthorizedError(t *t
 				Updater:       `{"name": "Lone"}`,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentUpdatePerm.String()),
 			},
-			testUtils.Request{ // Should not be updated
+			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{

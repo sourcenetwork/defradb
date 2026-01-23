@@ -88,7 +88,7 @@ func TestNAC_GatesDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Doc:           `{ "name": "Shahzad" }`,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentUpdatePerm.String()),
 			},
-			testUtils.Request{ // Should not be created
+			&action.Request{ // Should not be created
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results:  map[string]any{"User": []map[string]any{}},
@@ -173,7 +173,7 @@ func TestNAC_GatesDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				Doc:           `{ "name": "Shahzad" }`,
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentUpdatePerm.String()),
 			},
-			testUtils.Request{ // Should not be created
+			&action.Request{ // Should not be created
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results:  map[string]any{"User": []map[string]any{}},
