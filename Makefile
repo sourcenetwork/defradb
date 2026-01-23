@@ -80,9 +80,12 @@ DEFAULT_TEST_DIRECTORIES=./...
 default:
 	@go run $(BUILD_FLAGS) cmd/defradb/main.go
 
+WASMER_INSTALL_PATH ?= /usr/local/lib
+
 .PHONY: install
 install:
-	@go install $(BUILD_FLAGS) ./cmd/defradb
+	@bash tools/scripts/install_libwasmer.sh $(WASMER_INSTALL_PATH)
+	@CGO_LDFLAGS="-Wl,-rpath,$(WASMER_INSTALL_PATH)" go install $(BUILD_FLAGS) ./cmd/defradb
 
 install-wizard: install
 	@defradb wizard
@@ -102,9 +105,13 @@ endif
 .PHONY: build
 build:
 ifeq ($(path),)
-	@go build $(BUILD_FLAGS) -o build/defradb cmd/defradb/main.go
+	@mkdir -p build
+	@bash tools/scripts/install_libwasmer.sh $(PWD)/build
+	@CGO_LDFLAGS="-Wl,-rpath,\$$ORIGIN" go build $(BUILD_FLAGS) -o build/defradb cmd/defradb/main.go
 else
-	@go build $(BUILD_FLAGS) -o $(path) cmd/defradb/main.go
+	@dir=$$(dirname $(path)); \
+	bash tools/scripts/install_libwasmer.sh $$dir; \
+	CGO_LDFLAGS="-Wl,-rpath,\$$ORIGIN" go build $(BUILD_FLAGS) -o $(path) cmd/defradb/main.go
 endif
 
 # Usage: make cross-build platforms="{platforms}"
