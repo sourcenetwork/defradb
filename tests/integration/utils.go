@@ -12,7 +12,6 @@ package tests
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -394,9 +393,6 @@ func performAction(
 	case GetNACStatus:
 		getNACStatus(s, action)
 
-	case CreateDoc:
-		createDoc(s, action)
-
 	case DeleteDoc:
 		deleteDoc(s, action)
 
@@ -478,7 +474,10 @@ func createGenerateDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutabl
 		if err != nil {
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID})
+
+		a := &action.CreateDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID}
+		a.SetState(s)
+		a.Execute()
 	}
 }
 
@@ -753,7 +752,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddSchema, CreateDoc, UpdateDoc, Restart:
+		case *action.AddSchema, *action.CreateDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -996,7 +995,7 @@ func refreshDocuments(
 		// We need to add the existing documents in the order in which the test case lists them
 		// otherwise they cannot be referenced correctly by other actions.
 		switch action := testCase.Actions[i].(type) {
-		case CreateDoc:
+		case *action.CreateDoc:
 			nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
@@ -1087,209 +1086,13 @@ func setActiveCollectionVersion(
 	refreshCollections(s)
 }
 
-// createDoc creates a document using the chosen [state.ActiveMutationType] and caches it in the
-// test state object.
-func createDoc(
-	s *state.State,
-	action CreateDoc,
-) {
-	if action.DocMap != nil {
-		substituteRelations(s, action)
-	}
-
-	var mutation func(*state.State, CreateDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
-	switch state.ActiveMutationType {
-	case state.CollectionSaveMutationType:
-		mutation = createDocViaColSave
-	case state.CollectionNamedMutationType:
-		mutation = createDocViaColCreate
-	case state.GQLRequestMutationType:
-		mutation = createDocViaGQL
-	default:
-		s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
-	}
-
-	var expectedErrorRaised bool
-	var docIDs []client.DocID
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
-		err := withRetryOnNode(
-			node,
-			func() error {
-				var err error
-				docIDs, err = mutation(
-					s,
-					action,
-					node,
-					nodeID,
-					collection,
-				)
-				return err
-			},
-		)
-		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
-	}
-
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-	if action.CollectionID >= len(s.DocIDs) {
-		// Expand the slice if required, so that the document can be accessed by collection index
-		s.DocIDs = append(s.DocIDs, make([][]client.DocID, action.CollectionID-len(s.DocIDs)+1)...)
-	}
-	s.DocIDs[action.CollectionID] = append(s.DocIDs[action.CollectionID], docIDs...)
-
-	docIDMap := make(map[string]struct{})
-	for _, docID := range docIDs {
-		docIDMap[docID.String()] = struct{}{}
-	}
-
-	if action.ExpectedError == "" {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, docIDMap, action.Identity)
-	}
-}
-
-func createDocViaColSave(
-	s *state.State,
-	action CreateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-) ([]client.DocID, error) {
-	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
-
-	docs, err := parseCreateDocs(ctx, action, collection)
-	if err != nil {
-		return nil, err
-	}
-	docIDs := make([]client.DocID, len(docs))
-	for i, doc := range docs {
-		err := collection.Save(ctx, doc, makeDocCreateOptions(&action)...)
-		if err != nil {
-			return nil, err
-		}
-		docIDs[i] = doc.ID()
-	}
-	return docIDs, nil
-}
-
-func makeContextForDocCreate(s *state.State, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
-	ctx = getContextWithIdentity(ctx, s, action.Identity, nodeIndex)
-	return ctx
-}
-
-func makeDocCreateOptions(action *CreateDoc) []client.DocCreateOption {
-	return []client.DocCreateOption{
-		client.CreateDocEncrypted(action.IsDocEncrypted),
-		client.CreateDocWithEncryptedFields(action.EncryptedFields),
-	}
-}
-
-func createDocViaColCreate(
-	s *state.State,
-	action CreateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-) ([]client.DocID, error) {
-	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
-
-	docs, err := parseCreateDocs(ctx, action, collection)
-	if err != nil {
-		return nil, err
-	}
-
-	switch {
-	case len(docs) > 1:
-		err := collection.CreateMany(ctx, docs, makeDocCreateOptions(&action)...)
-		if err != nil {
-			return nil, err
-		}
-
-	default:
-		err := collection.Create(ctx, docs[0], makeDocCreateOptions(&action)...)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	docIDs := make([]client.DocID, len(docs))
-	for i, doc := range docs {
-		docIDs[i] = doc.ID()
-	}
-	return docIDs, nil
-}
-
-func createDocViaGQL(
-	s *state.State,
-	action CreateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-) ([]client.DocID, error) {
-	var input string
-
-	paramName := request.Input
-
-	var err error
-	if action.DocMap != nil {
-		input, err = valueToGQL(action.DocMap)
-	} else if client.IsJSONArray([]byte(action.Doc)) {
-		var docMaps []map[string]any
-		err = json.Unmarshal([]byte(action.Doc), &docMaps)
-		require.NoError(s.T, err)
-		input, err = arrayToGQL(docMaps)
-	} else {
-		input, err = jsonToGQL(action.Doc)
-	}
-	require.NoError(s.T, err)
-
-	params := paramName + ": " + input
-
-	if action.IsDocEncrypted {
-		params = params + ", " + request.EncryptDocArgName + ": true"
-	}
-	if len(action.EncryptedFields) > 0 {
-		params = params + ", " + request.EncryptFieldsArgName + ": [" +
-			strings.Join(action.EncryptedFields, ", ") + "]"
-	}
-
-	key := fmt.Sprintf("create_%s", collection.Name())
-	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
-
-	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := getContextWithIdentity(db.InitContext(s.Ctx, txn), s, action.Identity, nodeIndex)
-
-	result := node.ExecRequest(ctx, req)
-	if len(result.GQL.Errors) > 0 {
-		return nil, result.GQL.Errors[0]
-	}
-
-	resultData := result.GQL.Data.(map[string]any)
-	resultDocs := ConvertToArrayOfMaps(s.T, resultData[key])
-
-	docIDs := make([]client.DocID, len(resultDocs))
-	for i, docMap := range resultDocs {
-		docIDString := docMap[request.DocIDFieldName].(string)
-		docID, err := client.NewDocIDFromString(docIDString)
-		require.NoError(s.T, err)
-		docIDs[i] = docID
-	}
-
-	return docIDs, nil
-}
-
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
 // it will substitute the [DocIndex] for the corresponding document ID found in the state.
 //
 // If a document at that index is not found it will panic.
 func substituteRelations(
 	s *state.State,
-	action CreateDoc,
+	action *action.CreateDoc,
 ) {
 	for k, v := range action.DocMap {
 		index, isIndex := v.(DocIndex)
@@ -2101,7 +1904,11 @@ func CBORValue(value any) []byte {
 }
 
 // parseCreateDocs parses and returns documents from a CreateDoc action.
-func parseCreateDocs(ctx context.Context, action CreateDoc, collection client.Collection) ([]*client.Document, error) {
+func parseCreateDocs(
+	ctx context.Context,
+	action *action.CreateDoc,
+	collection client.Collection,
+) ([]*client.Document, error) {
 	switch {
 	case action.DocMap != nil:
 		val, err := client.NewDocFromMap(ctx, action.DocMap, collection.Version())
