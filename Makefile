@@ -251,6 +251,7 @@ tidy:
 clean:
 	go clean cmd/defradb/main.go
 	rm -f build/defradb
+	rm -f build/libwasmer.so build/libwasmer.dylib
 
 .PHONY: clean\:test
 clean\:test:

@@ -28,8 +28,8 @@ elif [ "$HOST_OS" == "darwin" ]; then
 fi
 
 if [ -z "$WASMER_ARCH" ]; then
-    echo "Warning: Unsupported OS/Arch for auto-installing libwasmer: $HOST_OS/$HOST_ARCH"
-    exit 0
+    echo "Error: Unsupported OS/Arch for libwasmer: $HOST_OS/$HOST_ARCH"
+    exit 1
 fi
 
 LIB_PATH="$WASMER_DIR/wasmer/packaged/lib/$WASMER_ARCH"
@@ -51,7 +51,11 @@ if [ ! -d "$DEST_DIR" ]; then
 fi
 
 if [ -f "$DEST_DIR/$LIB_NAME" ]; then
-    rm -f "$DEST_DIR/$LIB_NAME"
+    rm -f "$DEST_DIR/$LIB_NAME" || {
+        echo "Failed to remove existing $LIB_NAME. Permission denied?"
+        echo "Try running with sudo."
+        exit 1
+    }
 fi
 
 cp "$LIB_PATH/$LIB_NAME" "$DEST_DIR/" || {
