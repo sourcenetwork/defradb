@@ -800,8 +800,10 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 
 // makeFieldFilterCondition creates a fieldFilterCond based on the given operator and filter value on
 // the given indexed field.
-// If jsonPath is not empty, it means that the indexed field is a JSON field and the filter value
-// should be treated as a JSON value.
+// For JSON fields, the filter value handling depends on the path and value:
+// - Direct null filter (empty path, null value): uses scalar nil to match index encoding
+// - Nested null filter (non-empty path, null value): uses JSON null with path
+// - Non-null filters: uses JSON encoding regardless of path depth
 func makeFieldFilterCondition(
 	op string,
 	jsonPath client.JSONPath,
@@ -815,7 +817,7 @@ func makeFieldFilterCondition(
 	}
 
 	var err error
-	if len(jsonPath) > 0 {
+	if isJSONFilterCondition(indexedField.Kind, jsonPath, filterVal) {
 		err = setJSONFilterCondition(&cond, filterVal, jsonPath)
 	} else if filterVal == nil {
 		cond.val, err = client.NewNormalNil(cond.kind)
@@ -868,6 +870,14 @@ func getNestedOperatorConditionIfJSON(
 			condMap = filterVal.(map[connor.FilterKey]any)
 		}
 	}
+}
+
+// isJSONFilterCondition returns true if the field is JSON and has a path or filter value.
+// Path can be empty if the filter is on the field itself, not on a nested property.
+// If the filter value is nil and path is empty, it means we are filtering for null values
+// on the entire JSON field, which can be handled as a scalar nil value.
+func isJSONFilterCondition(kind client.FieldKind, jsonPath client.JSONPath, filterVal any) bool {
+	return kind == client.FieldKind_NILLABLE_JSON && (len(jsonPath) > 0 || filterVal != nil)
 }
 
 // setJSONFilterCondition sets up the given condition struct based on the filter value and JSON path so that
