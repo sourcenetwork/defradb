@@ -70,3 +70,6 @@ crash.log
 
 # Ignore .env files containing sensitive information.
 .env
+
+# GSD planning directory (local only).
+.planning/
