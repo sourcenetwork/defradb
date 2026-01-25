@@ -73,3 +73,6 @@ crash.log
 
 # Ignore direnv environment files (developer-local).
 .envrc
+
+# GSD planning directory (local only).
+.planning/
