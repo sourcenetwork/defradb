@@ -56,7 +56,6 @@ func TestNAC_GatesCollectionTruncate_NoIdentity_NotAuthorizedError(t *testing.T)
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.GoClientType,
-				state.CClientType,
 				state.JSClientType,
 			},
 		),
@@ -94,6 +93,7 @@ func TestNAC_GatesCollectionTruncate_NoIdentity_CLIandHTTPClient_NotAuthorizedEr
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
+				state.CClientType,
 				state.HTTPClientType,
 				state.CLIClientType,
 			},
@@ -132,7 +132,6 @@ func TestNAC_GatesCollectionTruncate_WrongIdentity_NotAuthorizedError(t *testing
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.GoClientType,
-				state.CClientType,
 				state.JSClientType,
 			},
 		),
@@ -169,6 +168,7 @@ func TestNAC_GatesCollectionTruncate_WrongIdentity_CLIandHTTPClient_NotAuthorize
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
+				state.CClientType,
 				state.HTTPClientType,
 				state.CLIClientType,
 			},

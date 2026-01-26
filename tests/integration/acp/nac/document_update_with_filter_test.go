@@ -75,7 +75,6 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_NotAuthorizedError(t *test
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.GoClientType,
-				state.CClientType,
 				state.JSClientType,
 			},
 		),
@@ -126,12 +125,13 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_NotAuthorizedError(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_CLIandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
+				state.CClientType,
 				state.HTTPClientType,
 				state.CLIClientType,
 			},
@@ -190,7 +190,6 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_NotAuthorizedError(t *t
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.GoClientType,
-				state.CClientType,
 				state.JSClientType,
 			},
 		),
@@ -241,12 +240,13 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_NotAuthorizedError(t *t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_CLIClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
+				state.CClientType,
 				state.HTTPClientType,
 				state.CLIClientType,
 			},
