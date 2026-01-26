@@ -368,12 +368,14 @@ func probeSourceHub(grpcAddr, cometRpcAddr, valAddr string) bool {
 		return false
 	}
 
+	// probe rpc service
 	height := int64(1)
 	_, err = client.CometBFTRPCClient().Block(context.Background(), &height)
 	if err != nil {
 		return false
 	}
 
+	// probe grpc service
 	_, err = client.AuthQueryClient().Account(context.Background(), &types.QueryAccountRequest{
 		Address: valAddr,
 	})
