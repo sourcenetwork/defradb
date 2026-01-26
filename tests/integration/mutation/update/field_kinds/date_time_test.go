@@ -28,7 +28,7 @@ func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"created_at": "2011-07-23T01:11:11-05:00"
@@ -72,13 +72,13 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred",
 					"created_at": "2021-07-23T02:22:22-05:00"
@@ -121,7 +121,7 @@ func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
@@ -164,7 +164,7 @@ func TestMutationUpdate_WithDateTimeField_WithUTCNow(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"created_at": "2011-07-23T01:11:11-05:00"
@@ -208,13 +208,13 @@ func TestMutationUpdate_WithDateTimeField_WithUTCNow_ShouldBeEqual(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Chris",
 					"created_at": "2012-07-23T01:11:11-05:00"

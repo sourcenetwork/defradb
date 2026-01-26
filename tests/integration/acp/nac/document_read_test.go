@@ -33,7 +33,7 @@ func TestNAC_GatesDocumentRead_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -69,7 +69,7 @@ func TestNAC_GatesDocumentRead_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -102,7 +102,7 @@ func TestNAC_GatesDocumentRead_WrongIdentity_NotAuthorizedError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,

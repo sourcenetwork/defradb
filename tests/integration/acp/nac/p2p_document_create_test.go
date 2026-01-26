@@ -51,7 +51,7 @@ func TestNAC_GatesP2PDocumentCreate_AuthorizedIdentity_AllowAccess(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -107,7 +107,7 @@ func TestNAC_GatesP2PDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -164,7 +164,7 @@ func TestNAC_GatesP2PDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",

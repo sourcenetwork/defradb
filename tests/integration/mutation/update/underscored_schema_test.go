@@ -28,7 +28,7 @@ func TestMutationUpdateUnderscoredSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,

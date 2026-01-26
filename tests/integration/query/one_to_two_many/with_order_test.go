@@ -39,7 +39,7 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 				`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -47,7 +47,7 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -55,7 +55,7 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Painted House",
@@ -64,7 +64,7 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 					"_reviewedByID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "A Time for Mercy",
@@ -73,7 +73,7 @@ func TestQueryOneToTwoManyWithOrder(t *testing.T) {
 					"_reviewedByID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Theif Lord",

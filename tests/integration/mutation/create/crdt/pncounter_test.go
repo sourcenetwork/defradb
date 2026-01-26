@@ -28,7 +28,7 @@ func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10
@@ -67,7 +67,7 @@ func TestPNCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10.1
@@ -106,7 +106,7 @@ func TestPNCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10.1

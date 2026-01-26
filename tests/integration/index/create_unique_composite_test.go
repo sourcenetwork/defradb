@@ -30,7 +30,7 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -39,7 +39,7 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 						"email": "email@gmail.com"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -76,7 +76,7 @@ func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnEr
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -85,7 +85,7 @@ func TestUniqueCompositeIndexCreate_UponAddingDocWithExistingFieldValue_ReturnEr
 						"email": "email@gmail.com"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -113,7 +113,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -122,7 +122,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 						"email": "some@gmail.com"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -131,7 +131,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 						"email": "another@gmail.com"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -182,7 +182,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreOrdered_Succeed(t *testing.T
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -191,7 +191,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreOrdered_Succeed(t *testing.T
 						"email": "some@gmail.com"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -200,7 +200,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreOrdered_Succeed(t *testing.T
 						"email": "another@gmail.com"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
