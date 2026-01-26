@@ -416,7 +416,7 @@ func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, rel
 	// In groupBy queries with _group filters, the docMap may not contain the relation field,
 	// so we check existence before accessing to avoid a panic.
 	indexes, ok := docMap.IndexesByName[relField.Name]
-	if !ok || len(indexes) == 0 {
+	if !ok {
 		return nil
 	}
 	subInd := indexes[0]
