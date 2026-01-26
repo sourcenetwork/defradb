@@ -32,7 +32,7 @@ func TestMutationDeletion_WithIDsAndTxn(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"age":  26,

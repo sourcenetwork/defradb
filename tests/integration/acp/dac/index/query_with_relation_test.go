@@ -44,7 +44,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 					author: Author
 				}`,
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			CollectionID: 0,
 			// bae-9e70648f-c722-5875-97f5-574ec6f703e9
 			Doc: `{
@@ -53,7 +53,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				"verified": true
 			}`,
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			Identity:     testUtils.ClientIdentity(1),
 			CollectionID: 0,
 			// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
@@ -63,7 +63,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				"verified": false
 			}`,
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			CollectionID: 1,
 			DocMap: map[string]any{
 				"name":      "Painted House",
@@ -71,7 +71,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				"_authorID": testUtils.NewDocIndex(0, 0),
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			Identity:     testUtils.ClientIdentity(1),
 			CollectionID: 1,
 			DocMap: map[string]any{
@@ -80,7 +80,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				"_authorID": testUtils.NewDocIndex(0, 0),
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			Identity:     testUtils.ClientIdentity(1),
 			CollectionID: 1,
 			DocMap: map[string]any{

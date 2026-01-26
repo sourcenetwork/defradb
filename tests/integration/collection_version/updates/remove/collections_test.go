@@ -153,7 +153,7 @@ func TestColVersionUpdateRemoveCollectionWithData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -185,7 +185,7 @@ func TestColVersionUpdateRemoveCollectionWithSoftDeletedData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -467,7 +467,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// It is important that this test creates and queries a document as it is possible
 				// for the code to be written in a way that erroneously deletes the field short ids
 				// for fields that existed for non-deleted versions.

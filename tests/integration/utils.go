@@ -12,7 +12,6 @@ package tests
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -60,33 +59,6 @@ const (
 	vectorEmbeddingEnvName  = "DEFRA_VECTOR_EMBEDDING"
 )
 
-// The MutationType that tests will run using.
-//
-// For example if set to [CollectionSaveMutationType], all supporting
-// actions (such as [UpdateDoc]) will execute via [Collection.Save].
-//
-// Defaults to CollectionSaveMutationType.
-type MutationType string
-
-const (
-	// CollectionSaveMutationType will cause all supporting actions
-	// to run their mutations via [Collection.Save].
-	CollectionSaveMutationType MutationType = "collection-save"
-
-	// CollectionNamedMutationType will cause all supporting actions
-	// to run their mutations via their corresponding named [Collection]
-	// call.
-	//
-	// For example, CreateDoc will call [Collection.Create], and
-	// UpdateDoc will call [Collection.Update].
-	CollectionNamedMutationType MutationType = "collection-named"
-
-	// GQLRequestMutationType will cause all supporting actions to
-	// run their mutations using GQL requests, typically these will
-	// include a `id` parameter to target the specified document.
-	GQLRequestMutationType MutationType = "gql"
-)
-
 // ViewType is a type alias for backward compatibility.
 type ViewType = state.ViewType
 
@@ -96,9 +68,8 @@ const (
 )
 
 var (
-	log          = corelog.NewLogger("tests.integration")
-	mutationType MutationType
-	viewType     state.ViewType
+	log      = corelog.NewLogger("tests.integration")
+	viewType state.ViewType
 	// skipNetworkTests will skip any tests that involve network actions
 	skipNetworkTests = false
 	// skipBackupTests will skip any tests that involve backup actions
@@ -121,12 +92,12 @@ func init() {
 	// We use environment variables instead of flags `go test ./...` throws for all packages
 	// that don't have the flag defined
 	if value, ok := os.LookupEnv(mutationTypeEnvName); ok {
-		mutationType = MutationType(value)
+		state.ActiveMutationType = state.MutationType(value)
 	} else {
 		// Default to testing mutations via Collection.Save - it should be simpler and
 		// faster. We assume this is desirable when not explicitly testing any particular
 		// mutation type.
-		mutationType = CollectionSaveMutationType
+		state.ActiveMutationType = state.CollectionSaveMutationType
 	}
 
 	if value, ok := os.LookupEnv(viewTypeEnvName); ok {
@@ -268,7 +239,7 @@ func executeTestCase(
 	logAttrs := []slog.Attr{
 		corelog.Any("database", dbt),
 		corelog.Any("client", clientType),
-		corelog.Any("mutationType", mutationType),
+		corelog.Any("mutationType", state.ActiveMutationType),
 		corelog.String("databaseDir", databaseDir),
 		corelog.Bool("badgerEncryption", badgerEncryption),
 		corelog.Bool("skipNetworkTests", skipNetworkTests),
@@ -422,9 +393,6 @@ func performAction(
 	case GetNACStatus:
 		getNACStatus(s, action)
 
-	case CreateDoc:
-		createDoc(s, action)
-
 	case DeleteDoc:
 		deleteDoc(s, action)
 
@@ -506,7 +474,10 @@ func createGenerateDocs(s *state.State, docs []gen.GeneratedDoc, nodeID immutabl
 		if err != nil {
 			s.T.Fatalf("Failed to generate docs %s", err)
 		}
-		createDoc(s, CreateDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID})
+
+		a := &action.CreateDoc{CollectionID: nameToInd[doc.Col.Name], Doc: docJSON, NodeID: nodeID}
+		a.SetState(s)
+		a.Execute()
 	}
 }
 
@@ -781,7 +752,7 @@ ActionLoop:
 			// We don't care about anything else if this has been explicitly provided
 			break ActionLoop
 
-		case *action.AddSchema, CreateDoc, UpdateDoc, Restart:
+		case *action.AddSchema, *action.CreateDoc, UpdateDoc, Restart:
 			continue
 
 		default:
@@ -1024,7 +995,7 @@ func refreshDocuments(
 		// We need to add the existing documents in the order in which the test case lists them
 		// otherwise they cannot be referenced correctly by other actions.
 		switch action := testCase.Actions[i].(type) {
-		case CreateDoc:
+		case *action.CreateDoc:
 			nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 			// Just use the collection from the first relevant node, as all will be the same for this
 			// purpose.
@@ -1115,209 +1086,13 @@ func setActiveCollectionVersion(
 	refreshCollections(s)
 }
 
-// createDoc creates a document using the chosen [mutationType] and caches it in the
-// test state object.
-func createDoc(
-	s *state.State,
-	action CreateDoc,
-) {
-	if action.DocMap != nil {
-		substituteRelations(s, action)
-	}
-
-	var mutation func(*state.State, CreateDoc, client.TxnStore, int, client.Collection) ([]client.DocID, error)
-	switch mutationType {
-	case CollectionSaveMutationType:
-		mutation = createDocViaColSave
-	case CollectionNamedMutationType:
-		mutation = createDocViaColCreate
-	case GQLRequestMutationType:
-		mutation = createDocViaGQL
-	default:
-		s.T.Fatalf("invalid mutationType: %v", mutationType)
-	}
-
-	var expectedErrorRaised bool
-	var docIDs []client.DocID
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		collection := s.Nodes[nodeID].Collections[action.CollectionID]
-		err := withRetryOnNode(
-			node,
-			func() error {
-				var err error
-				docIDs, err = mutation(
-					s,
-					action,
-					node,
-					nodeID,
-					collection,
-				)
-				return err
-			},
-		)
-		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
-	}
-
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-	if action.CollectionID >= len(s.DocIDs) {
-		// Expand the slice if required, so that the document can be accessed by collection index
-		s.DocIDs = append(s.DocIDs, make([][]client.DocID, action.CollectionID-len(s.DocIDs)+1)...)
-	}
-	s.DocIDs[action.CollectionID] = append(s.DocIDs[action.CollectionID], docIDs...)
-
-	docIDMap := make(map[string]struct{})
-	for _, docID := range docIDs {
-		docIDMap[docID.String()] = struct{}{}
-	}
-
-	if action.ExpectedError == "" {
-		waitForUpdateEvents(s, action.NodeID, action.CollectionID, docIDMap, action.Identity)
-	}
-}
-
-func createDocViaColSave(
-	s *state.State,
-	action CreateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-) ([]client.DocID, error) {
-	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
-
-	docs, err := parseCreateDocs(ctx, action, collection)
-	if err != nil {
-		return nil, err
-	}
-	docIDs := make([]client.DocID, len(docs))
-	for i, doc := range docs {
-		err := collection.Save(ctx, doc, makeDocCreateOptions(&action)...)
-		if err != nil {
-			return nil, err
-		}
-		docIDs[i] = doc.ID()
-	}
-	return docIDs, nil
-}
-
-func makeContextForDocCreate(s *state.State, ctx context.Context, nodeIndex int, action *CreateDoc) context.Context {
-	ctx = getContextWithIdentity(ctx, s, action.Identity, nodeIndex)
-	return ctx
-}
-
-func makeDocCreateOptions(action *CreateDoc) []client.DocCreateOption {
-	return []client.DocCreateOption{
-		client.CreateDocEncrypted(action.IsDocEncrypted),
-		client.CreateDocWithEncryptedFields(action.EncryptedFields),
-	}
-}
-
-func createDocViaColCreate(
-	s *state.State,
-	action CreateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-) ([]client.DocID, error) {
-	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := makeContextForDocCreate(s, db.InitContext(s.Ctx, txn), nodeIndex, &action)
-
-	docs, err := parseCreateDocs(ctx, action, collection)
-	if err != nil {
-		return nil, err
-	}
-
-	switch {
-	case len(docs) > 1:
-		err := collection.CreateMany(ctx, docs, makeDocCreateOptions(&action)...)
-		if err != nil {
-			return nil, err
-		}
-
-	default:
-		err := collection.Create(ctx, docs[0], makeDocCreateOptions(&action)...)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	docIDs := make([]client.DocID, len(docs))
-	for i, doc := range docs {
-		docIDs[i] = doc.ID()
-	}
-	return docIDs, nil
-}
-
-func createDocViaGQL(
-	s *state.State,
-	action CreateDoc,
-	node client.TxnStore,
-	nodeIndex int,
-	collection client.Collection,
-) ([]client.DocID, error) {
-	var input string
-
-	paramName := request.Input
-
-	var err error
-	if action.DocMap != nil {
-		input, err = valueToGQL(action.DocMap)
-	} else if client.IsJSONArray([]byte(action.Doc)) {
-		var docMaps []map[string]any
-		err = json.Unmarshal([]byte(action.Doc), &docMaps)
-		require.NoError(s.T, err)
-		input, err = arrayToGQL(docMaps)
-	} else {
-		input, err = jsonToGQL(action.Doc)
-	}
-	require.NoError(s.T, err)
-
-	params := paramName + ": " + input
-
-	if action.IsDocEncrypted {
-		params = params + ", " + request.EncryptDocArgName + ": true"
-	}
-	if len(action.EncryptedFields) > 0 {
-		params = params + ", " + request.EncryptFieldsArgName + ": [" +
-			strings.Join(action.EncryptedFields, ", ") + "]"
-	}
-
-	key := fmt.Sprintf("create_%s", collection.Name())
-	req := fmt.Sprintf(`mutation { %s(%s) { _docID } }`, key, params)
-
-	txn := getTransaction(s, node, immutable.None[int](), action.ExpectedError)
-	ctx := getContextWithIdentity(db.InitContext(s.Ctx, txn), s, action.Identity, nodeIndex)
-
-	result := node.ExecRequest(ctx, req)
-	if len(result.GQL.Errors) > 0 {
-		return nil, result.GQL.Errors[0]
-	}
-
-	resultData := result.GQL.Data.(map[string]any)
-	resultDocs := ConvertToArrayOfMaps(s.T, resultData[key])
-
-	docIDs := make([]client.DocID, len(resultDocs))
-	for i, docMap := range resultDocs {
-		docIDString := docMap[request.DocIDFieldName].(string)
-		docID, err := client.NewDocIDFromString(docIDString)
-		require.NoError(s.T, err)
-		docIDs[i] = docID
-	}
-
-	return docIDs, nil
-}
-
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
 // it will substitute the [DocIndex] for the corresponding document ID found in the state.
 //
 // If a document at that index is not found it will panic.
 func substituteRelations(
 	s *state.State,
-	action CreateDoc,
+	action *action.CreateDoc,
 ) {
 	for k, v := range action.DocMap {
 		index, isIndex := v.(DocIndex)
@@ -1366,21 +1141,21 @@ func deleteDoc(
 	}
 }
 
-// updateDoc updates a document using the chosen [mutationType].
+// updateDoc updates a document using the chosen [state.ActiveMutationType].
 func updateDoc(
 	s *state.State,
 	action UpdateDoc,
 ) {
 	var mutation func(*state.State, UpdateDoc, client.TxnStore, int, client.Collection) error
-	switch mutationType {
-	case CollectionSaveMutationType:
+	switch state.ActiveMutationType {
+	case state.CollectionSaveMutationType:
 		mutation = updateDocViaColSave
-	case CollectionNamedMutationType:
+	case state.CollectionNamedMutationType:
 		mutation = updateDocViaColUpdate
-	case GQLRequestMutationType:
+	case state.GQLRequestMutationType:
 		mutation = updateDocViaGQL
 	default:
-		s.T.Fatalf("invalid mutationType: %v", mutationType)
+		s.T.Fatalf("invalid mutationType: %v", state.ActiveMutationType)
 	}
 
 	var expectedErrorRaised bool
@@ -1965,18 +1740,18 @@ func assertBackupContent(t testing.TB, expectedContent, filepath string) {
 
 // skipIfMutationTypeUnsupported skips the current test if the given supportedMutationTypes option has value
 // and the active mutation type is not contained within that value set.
-func skipIfMutationTypeUnsupported(t testing.TB, supportedMutationTypes immutable.Option[[]MutationType]) {
+func skipIfMutationTypeUnsupported(t testing.TB, supportedMutationTypes immutable.Option[[]state.MutationType]) {
 	if supportedMutationTypes.HasValue() {
 		var isTypeSupported bool
 		for _, supportedMutationType := range supportedMutationTypes.Value() {
-			if supportedMutationType == mutationType {
+			if supportedMutationType == state.ActiveMutationType {
 				isTypeSupported = true
 				break
 			}
 		}
 
 		if !isTypeSupported {
-			t.Skipf("test does not support given mutation type. Type: %s", mutationType)
+			t.Skipf("test does not support given mutation type. Type: %s", state.ActiveMutationType)
 		}
 	}
 }
@@ -2129,7 +1904,11 @@ func CBORValue(value any) []byte {
 }
 
 // parseCreateDocs parses and returns documents from a CreateDoc action.
-func parseCreateDocs(ctx context.Context, action CreateDoc, collection client.Collection) ([]*client.Document, error) {
+func parseCreateDocs(
+	ctx context.Context,
+	action *action.CreateDoc,
+	collection client.Collection,
+) ([]*client.Document, error) {
 	switch {
 	case action.DocMap != nil:
 		val, err := client.NewDocFromMap(ctx, action.DocMap, collection.Version())

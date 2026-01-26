@@ -20,13 +20,13 @@ import (
 func TestQuerySimple_WithAliasEqualsFilterBlock_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
@@ -57,13 +57,13 @@ func TestQuerySimple_WithAliasEqualsFilterBlock_ShouldFilter(t *testing.T) {
 func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
@@ -99,13 +99,13 @@ func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 func TestQuerySimple_WithNullAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
@@ -131,13 +131,13 @@ func TestQuerySimple_WithNullAlias_ShouldFilterAll(t *testing.T) {
 func TestQuerySimple_WithNonObjectAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
@@ -163,13 +163,13 @@ func TestQuerySimple_WithNonObjectAlias_ShouldFilterAll(t *testing.T) {
 func TestQuerySimple_WithNonExistantAlias_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
@@ -193,13 +193,13 @@ func TestQuerySimple_WithNonExistantAlias_ShouldReturnError(t *testing.T) {
 func TestQuerySimple_WithNonAliasedField_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
@@ -230,13 +230,13 @@ func TestQuerySimple_WithNonAliasedField_ShouldMatchFilter(t *testing.T) {
 func TestQuerySimple_WithCompoundAlias_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
@@ -272,13 +272,13 @@ func TestQuerySimple_WithCompoundAlias_ShouldMatchFilter(t *testing.T) {
 func TestQuerySimple_WithAliasWithCompound_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
