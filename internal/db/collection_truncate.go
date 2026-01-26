@@ -451,6 +451,14 @@ func deleteBlocks(ctx context.Context, head cid.Cid) error {
 				toDelete[link.Cid] = struct{}{}
 			}
 		}
+
+		if decodedBlock.Encryption != nil {
+			toDelete[decodedBlock.Encryption.Cid] = struct{}{}
+		}
+
+		if decodedBlock.Signature != nil {
+			toDelete[decodedBlock.Signature.Cid] = struct{}{}
+		}
 	}
 
 	return nil
