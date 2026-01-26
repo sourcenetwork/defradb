@@ -1152,19 +1152,19 @@ func TestQueryWithIndex_WithGeqNullFilterOnIntField_ShouldNotUseIndex(t *testing
 						age: Int @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  48,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"age":  42,
@@ -1205,19 +1205,19 @@ func TestQueryWithIndex_WithLeqNullFilterOnIntField_ShouldUseIndex(t *testing.T)
 						age: Int @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  48,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"age":  42,
@@ -1255,19 +1255,19 @@ func TestQueryWithIndex_WithGeqNullFilterOnFloatField_ShouldNotUseIndex(t *testi
 						rating: Float @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":   "John",
 					"rating": 4.5,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":   "Andy",
 					"rating": nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":   "Shahzad",
 					"rating": 4.2,
@@ -1308,19 +1308,19 @@ func TestQueryWithIndex_WithLeqNullFilterOnFloatField_ShouldUseIndex(t *testing.
 						rating: Float @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":   "John",
 					"rating": 4.5,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":   "Andy",
 					"rating": nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":   "Shahzad",
 					"rating": 4.2,
@@ -1358,19 +1358,19 @@ func TestQueryWithIndex_WithGeqNullFilterOnDateTimeField_ShouldNotUseIndex(t *te
 						birthdate: DateTime @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":      "John",
 					"birthdate": "2020-01-01T00:00:00Z",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":      "Andy",
 					"birthdate": nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":      "Shahzad",
 					"birthdate": "2024-01-01T00:00:00Z",
@@ -1411,19 +1411,19 @@ func TestQueryWithIndex_WithLeqNullFilterOnDateTimeField_ShouldUseIndex(t *testi
 						birthdate: DateTime @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":      "John",
 					"birthdate": "2020-01-01T00:00:00Z",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":      "Andy",
 					"birthdate": nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":      "Shahzad",
 					"birthdate": "2024-01-01T00:00:00Z",

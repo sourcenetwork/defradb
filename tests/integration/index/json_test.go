@@ -1735,25 +1735,25 @@ func TestJSONIndex_WithGeqNullFilterOnTopLevelJSONField_ShouldNotUseIndex(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "David",
 					"custom": {"age": 32}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": null
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy"
 				}`,
@@ -1797,24 +1797,24 @@ func TestJSONIndex_WithGeqNullFilterOnNestedJSONPath_ShouldNotUseIndex(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "David",
 					"custom": {"age": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"height": 180}
@@ -1859,31 +1859,31 @@ func TestJSONIndex_WithLeqNullFilterOnTopLevelJSONField_ShouldUseIndex(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "David",
 					"custom": {"age": 32}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"age": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": null
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy"
 				}`,
@@ -1928,24 +1928,24 @@ func TestJSONIndex_WithLeqNullFilterOnNestedJSONPath_ShouldNotUseIndex(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "David",
 					"custom": {"age": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"height": 180}
