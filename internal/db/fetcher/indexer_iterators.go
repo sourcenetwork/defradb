@@ -762,6 +762,15 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 						return true
 					}
 
+					// For _geq: null, every value is >= null, so the index provides no benefit -
+					// we need all documents anyway. Fall back to a full scan.
+					// For _leq: null on nested JSON paths, documents where the JSON field is entirely
+					// missing or null should also match. If path is specified though, the index
+					// has no efficient way of distinguishing between them. Fall back to scan.
+					if filterVal == nil && (op == opGe || (op == opLe && len(jsonPath) > 0)) {
+						return true
+					}
+
 					cond, err := makeFieldFilterCondition(op, jsonPath, indexedField, filterVal)
 
 					if err != nil {
