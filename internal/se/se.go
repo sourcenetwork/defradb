@@ -30,6 +30,12 @@ import (
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
+// unsafeDatastore is used to access a
+// non-locking datastore from the multistore.
+type unsafeDatastore interface {
+	Unsafe() corekv.ReaderWriter
+}
+
 // storeArtifacts stores SE artifacts directly in the datastore.
 func storeArtifacts(
 	ctx context.Context,
@@ -50,7 +56,7 @@ func storeArtifacts(
 			DocID:             artifact.DocID,
 		}
 
-		if err := ds.Set(ctx, key, []byte{}); err != nil {
+		if err := ds.(unsafeDatastore).Unsafe().Set(ctx, key.Bytes(), []byte{}); err != nil {
 			return err
 		}
 	}
@@ -81,9 +87,8 @@ func fetchDocIDs(
 			IndexID:           query.IndexID,
 			SearchTag:         query.SearchTag,
 		}
-
-		iter, err := ds.Iterator(ctx, datastore.IterOptions{
-			Prefix: key,
+		iter, err := ds.(unsafeDatastore).Unsafe().Iterator(ctx, corekv.IterOptions{
+			Prefix: key.Bytes(),
 		})
 		if err != nil {
 			return nil, err
