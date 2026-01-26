@@ -2,8 +2,31 @@
 # Run Go integration tests against Rust FFI and generate failure reports
 # Usage: ./scripts/run-rust-ffi-tests.sh <package> [output_dir]
 # Example: ./scripts/run-rust-ffi-tests.sh query/simple ./reports
+#
+# Required environment variable:
+#   DEFRA_RS_PATH - path to defradb.rs repo (e.g., /path/to/defradb.rs)
 
 set -e
+
+# Check for required env var
+if [ -z "$DEFRA_RS_PATH" ]; then
+    echo "Error: DEFRA_RS_PATH environment variable must be set"
+    echo "Example: export DEFRA_RS_PATH=/path/to/defradb.rs"
+    exit 1
+fi
+
+# Verify the path exists
+if [ ! -d "$DEFRA_RS_PATH/crates/ffi" ]; then
+    echo "Error: $DEFRA_RS_PATH/crates/ffi not found"
+    echo "Make sure DEFRA_RS_PATH points to the defradb.rs repo root"
+    exit 1
+fi
+
+# Set CGO flags
+export CGO_CFLAGS="-I$DEFRA_RS_PATH/crates/ffi"
+export CGO_LDFLAGS="-L$DEFRA_RS_PATH/target/release"
+export CGO_ENABLED=1
+export DEFRA_CLIENT_RUST_FFI=true
 
 PACKAGE="${1:-query/simple}"
 OUTPUT_DIR="${2:-./reports}"
@@ -13,10 +36,11 @@ REPORT_FILE="${OUTPUT_DIR}/${PACKAGE//\//_}_${TIMESTAMP}.md"
 mkdir -p "$OUTPUT_DIR"
 
 echo "Running tests for: ./tests/integration/${PACKAGE}/..."
+echo "Using Rust FFI from: $DEFRA_RS_PATH"
 echo "Output: ${REPORT_FILE}"
 
 # Run tests and capture output
-RAW_OUTPUT=$(DEFRA_CLIENT_RUST_FFI=true CGO_ENABLED=1 go test "./tests/integration/${PACKAGE}/..." -v -count=1 2>&1) || true
+RAW_OUTPUT=$(go test "./tests/integration/${PACKAGE}/..." -v -count=1 2>&1) || true
 
 # Count results
 TOTAL=$(echo "$RAW_OUTPUT" | grep -cE "^(---|===) (RUN|PASS|FAIL)" || echo 0)
