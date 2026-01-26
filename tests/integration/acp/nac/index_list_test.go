@@ -101,7 +101,7 @@ func TestNAC_GatesIndexList_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
-a
+
 func TestNAC_GatesIndexList_NoIdentity_CLIandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
