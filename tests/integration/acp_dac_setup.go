@@ -26,6 +26,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -255,14 +256,14 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 loop:
 	for {
 		// use an exponential backoff timer to adjust polling
-		timer := time.After(time.Duration(10*i) * time.Millisecond)
+		timer := time.After(time.Duration(i) * (10 * time.Millisecond))
 		i++
 		select {
 		case <-timeout:
 			s.T.Logf("time out waiting for sourcehub to start")
 			return nil, fmt.Errorf("error setting up SourceHub: connection not ready after deadline")
 		case <-timer:
-			ok := probeSourceHub(gRpcAddress, rpcAddress)
+			ok := probeSourceHub(gRpcAddress, rpcAddress, validatorAddress)
 			if ok {
 				elapsed := time.Since(startTs)
 				s.T.Logf("sourcehub ready to receive connections: after %v", elapsed)
@@ -304,7 +305,7 @@ func getFreePort() (int, func(), error) {
 // A function to unbind from the port is returned - this unlock function may be called
 // multiple times without issue.
 func crossLock(port uint16) (func(), error) {
-	timeout := time.After(20 * time.Second)
+	timeout := time.After(30 * time.Second)
 	for {
 		select {
 		case <-timeout:
@@ -353,7 +354,7 @@ func (b *testBuffer) Void() {
 // probeSourceHub is a rediness probe which tries to connect to SourceHub's
 // RPC endpoint to determine if it is ready to receive connections
 // Returns true if the probe succeeded
-func probeSourceHub(grpcAddr, cometRpcAddr string) bool {
+func probeSourceHub(grpcAddr, cometRpcAddr, valAddr string) bool {
 	client, err := sdk.NewClient(
 		sdk.WithGRPCAddr(grpcAddr),
 		sdk.WithCometRPCAddr(cometRpcAddr),
@@ -372,5 +373,9 @@ func probeSourceHub(grpcAddr, cometRpcAddr string) bool {
 	if err != nil {
 		return false
 	}
-	return true
+
+	_, err = client.AuthQueryClient().Account(context.Background(), &types.QueryAccountRequest{
+		Address: valAddr,
+	})
+	return err == nil
 }
