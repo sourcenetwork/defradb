@@ -358,14 +358,11 @@ func probeSourceHub(grpcAddr, cometRpcAddr string) bool {
 		sdk.WithGRPCAddr(grpcAddr),
 		sdk.WithCometRPCAddr(cometRpcAddr),
 	)
-	defer func() {
-		recover()
-	}()
-	defer client.Close()
 
 	if err != nil {
 		return false
 	}
+	defer client.Close()
 
 	height := int64(1)
 	_, err = client.CometBFTRPCClient().Block(context.Background(), &height)
