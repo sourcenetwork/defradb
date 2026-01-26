@@ -103,11 +103,17 @@ endif
 # 	- make build
 # 	- make build path="path/to/defradb-binary"
 BUILD_PATH = $(if $(path),$(path),build/defradb)
+WASMER_LIB_NAME = libwasmer.so
+ifeq ($(OS_GENERAL),Darwin)
+	WASMER_LIB_NAME = libwasmer.dylib
+endif
 
 .PHONY: build
 build:
 	@mkdir -p $(dir $(BUILD_PATH))
-	@bash tools/scripts/install_libwasmer.sh $(dir $(BUILD_PATH))
+	@if [ ! -f "$(dir $(BUILD_PATH))$(WASMER_LIB_NAME)" ] || [ "$(dir $(BUILD_PATH))$(WASMER_LIB_NAME)" -ot go.sum ]; then \
+		bash tools/scripts/install_libwasmer.sh $(dir $(BUILD_PATH)); \
+	fi
 	@CGO_LDFLAGS="-Wl,-rpath,\$$ORIGIN" go build $(BUILD_FLAGS) -o $(BUILD_PATH) cmd/defradb/main.go
 
 # Usage: make cross-build platforms="{platforms}"
