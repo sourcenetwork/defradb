@@ -8,6 +8,17 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
+# Note:
+# - Unlike the [test-limited-resources.yml] workflow the coverage jobs in this
+# workflow run on faster custom runners.
+# - The coverage jobs in this workflow are required to pass within the PRs.
+# - All the coverage jobs will generate their respective coverage reports and
+#  save them as artifacts.
+# - The [upload-coverage] job is responsible for gathering all the saved artifacts
+#  and then uploading them to code-cov.
+# - The [upload-coverage] job is not required on the PRs as sometimes the uploading
+#  can fail if code-cov api service is down, etc.
+
 name: Test Coverage Workflow
 
 on:
@@ -60,8 +71,8 @@ defaults:
 jobs:
   # The basic matrix job tests the combination of client, database and mutation types using
   # the default config settings for other options, all running on linux.
-  test-basic:
-    name: Test job
+  test-coverage-basic:
+    name: Test coverage job
 
     strategy:
       fail-fast: false
@@ -91,7 +102,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -115,39 +126,9 @@ jobs:
             "
           coverage-path: coverage.txt
 
-
-  # This job runs the tests on other operating systems using default configurations.
-  test-os:
-    name: Test os job
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - macos-latest
-          # TODO: https://github.com/sourcenetwork/defradb/issues/2080
-          # Uncomment the line below to re-enable the windows build once this todo is resolved.
-          # - windows-latest
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - name: Checkout code into the directory
-        uses: actions/checkout@v4
-
-      - name: Setup defradb
-        uses: ./.github/composites/setup-defradb
-
-      - name: Test coverage & save coverage report in an artifact
-        uses: ./.github/composites/test-coverage-with-artifact
-        with:
-          coverage-artifact-name: "coverage_os_${{ matrix.os }}"
-          coverage-path: coverage.txt
-
-
   # The document acp matrix job tests the combinations of source-hub acp and client types on linux.
-  test-document-acp:
-    name: Test document acp job
+  test-coverage-document-acp:
+    name: Test coverage document acp job
 
     strategy:
       fail-fast: false
@@ -172,7 +153,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -200,8 +181,8 @@ jobs:
 
 
   # The lens matrix job tests the wazero and wasmer lens on linux.
-  test-lens:
-    name: Test lens job
+  test-coverage-lens:
+    name: Test coverage lens job
 
     strategy:
       fail-fast: false
@@ -221,7 +202,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -234,8 +215,8 @@ jobs:
 
 
   # This job runs the materialized view tests using default configuration, on linux.
-  test-view:
-    name: Test view job
+  test-coverage-view:
+    name: Test coverage view job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
       spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
@@ -250,7 +231,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -263,8 +244,8 @@ jobs:
 
 
   # This job runs the database with encryption tests using default configuration, on linux.
-  test-encryption:
-    name: Test encryption job
+  test-coverage-encryption:
+    name: Test coverage encryption job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
       spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
@@ -279,7 +260,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -291,8 +272,8 @@ jobs:
           coverage-path: coverage.txt
 
   # This job runs the database with telemetry tests using default configuration, on linux.
-  test-telemetry:
-    name: Test telemetry job
+  test-coverage-telemetry:
+    name: Test coverage telemetry job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
       spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
@@ -307,7 +288,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -319,8 +300,8 @@ jobs:
           coverage-path: coverage.txt
 
   # This job runs the database js tests using default configuration, on linux.
-  test-js:
-    name: Test JS job
+  test-coverage-js:
+    name: Test coverage JS job
 
     runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
       spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
@@ -335,7 +316,7 @@ jobs:
           metrics: cpu,network,memory,disk,io
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
@@ -355,19 +336,48 @@ jobs:
           coverage-artifact-name: "coverage_js"
           coverage-path: coverage.txt
 
+  # This job runs tests with secondary indexes automatically added to schemas,
+  # to ensure query results are consistent regardless of whether indexes are present.
+  test-coverage-secondary-index:
+    name: Test coverage secondary index job
+
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+
+    env:
+      DEFRA_MULTIPLIERS: secondary-index
+
+    steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
+      - name: Checkout code into the directory
+        uses: actions/checkout@v6
+
+      - name: Setup defradb
+        uses: ./.github/composites/setup-defradb
+
+      - name: Test coverage & save coverage report in an artifact
+        uses: ./.github/composites/test-coverage-with-artifact
+        with:
+          coverage-artifact-name: "coverage_secondary_index"
+          coverage-path: coverage.txt
+
   ## This job gathers all the coverage reports and uploads them to code-cov
   upload-coverage:
     name: Upload test code coverage job
 
     needs:
-      - test-basic        # 18 test(s)
-      - test-os           #  1 test(s) [excluding windows]
-      - test-document-acp #  3 test(s)
-      - test-lens         #  2 test(s)
-      - test-view         #  1 test(s)
-      - test-encryption   #  1 test(s)
-      - test-telemetry    #  1 test(s)
-      - test-js           #  1 test(s)
+      - test-coverage-basic           # 24 test(s)
+      - test-coverage-document-acp    #  3 test(s)
+      - test-coverage-lens            #  2 test(s)
+      - test-coverage-view            #  1 test(s)
+      - test-coverage-encryption      #  1 test(s)
+      - test-coverage-telemetry       #  1 test(s)
+      - test-coverage-js              #  1 test(s)
+      - test-coverage-secondary-index #  1 test(s)
 
     # Important to know:
     # - We didn't use `if: always()` here, so this job doesn't run if we manually canceled.
@@ -378,10 +388,10 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download coverage reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: coverage_*
           # Note: https://github.com/actions/download-artifact/blob/main/docs/MIGRATION.md
@@ -389,7 +399,7 @@ jobs:
           path: coverage_reports
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: defradb-codecov

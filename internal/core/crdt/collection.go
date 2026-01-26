@@ -17,8 +17,8 @@ import (
 )
 
 type CollectionDelta struct {
-	Priority        uint64
-	SchemaVersionID string
+	Priority            uint64
+	CollectionVersionID string
 }
 
 var _ Delta = (*CollectionDelta)(nil)
@@ -26,8 +26,8 @@ var _ Delta = (*CollectionDelta)(nil)
 func (d *CollectionDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type CollectionDelta struct {
-		priority  		Int
-		schemaVersionID String
+		priority  			Int
+		collectionVersionID String
 	}`)
 }
 
@@ -40,19 +40,19 @@ func (d *CollectionDelta) SetPriority(priority uint64) {
 }
 
 type Collection struct {
-	headstorePrefix keys.HeadstoreKey
-	schemaVersionID string
+	headstorePrefix     keys.HeadstoreKey
+	collectionVersionID string
 }
 
 var _ ReplicatedData = (*Collection)(nil)
 
 func NewCollection(
-	schemaVersionID string,
+	collectionVersionID string,
 	key keys.HeadstoreColKey,
 ) *Collection {
 	return &Collection{
-		schemaVersionID: schemaVersionID,
-		headstorePrefix: key,
+		collectionVersionID: collectionVersionID,
+		headstorePrefix:     key,
 	}
 }
 
@@ -62,7 +62,7 @@ func (c *Collection) HeadstorePrefix() keys.HeadstoreKey {
 
 func (c *Collection) Delta() *CollectionDelta {
 	return &CollectionDelta{
-		SchemaVersionID: c.schemaVersionID,
+		CollectionVersionID: c.collectionVersionID,
 	}
 }
 

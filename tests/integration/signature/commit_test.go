@@ -26,7 +26,7 @@ import (
 
 func makeFieldBlock(fieldName string, value any) coreblock.Block {
 	const docID = "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790"
-	const schemaVersionID = "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq"
+	const collectionVersionID = "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq"
 
 	fieldVal, err := cbor.Marshal(value)
 	if err != nil {
@@ -34,11 +34,11 @@ func makeFieldBlock(fieldName string, value any) coreblock.Block {
 	}
 
 	delta := &crdt.LWWDelta{
-		Data:            fieldVal,
-		DocID:           []byte(docID),
-		FieldName:       fieldName,
-		SchemaVersionID: schemaVersionID,
-		Priority:        1,
+		Data:                fieldVal,
+		DocID:               []byte(docID),
+		FieldName:           fieldName,
+		CollectionVersionID: collectionVersionID,
+		Priority:            1,
 	}
 
 	block := coreblock.New(crdt.NewCRDT(delta), nil)
@@ -58,13 +58,13 @@ func TestSignature_WithCommitQuery_ShouldIncludeSignatureData(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {
@@ -130,7 +130,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 						name: String
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -145,7 +145,7 @@ func TestSignature_WithUpdatedDocsAndCommitQuery_ShouldSignOnlyFirstFieldBlocks(
 					"name": "John Doe Junior"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits(order: {height: DESC}) {
@@ -228,13 +228,13 @@ func TestSignature_WithDeletedDocAndCommitQuery_ShouldIncludeSignatureData(t *te
 						name: String
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
 			testUtils.DeleteDoc{},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits(order: {height: DESC}, filter: {fieldName: {_eq: "_C"}}) {
@@ -291,13 +291,13 @@ func TestSignature_WithEd25519KeyType_ShouldIncludeSignatureData(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {
@@ -364,7 +364,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(0),
 				Doc: `{
 					"name": "John",
@@ -382,7 +382,7 @@ func TestSignature_WithClientIdentity_ShouldUseItForSigning(t *testing.T) {
 					"name": "John Doe"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits(filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}) {
@@ -436,13 +436,13 @@ func TestSignature_WithCommitQuery_ShouldBeHexEncoded(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  21,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						_commits {

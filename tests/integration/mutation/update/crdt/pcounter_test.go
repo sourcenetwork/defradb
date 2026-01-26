@@ -33,7 +33,7 @@ func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -46,7 +46,7 @@ func TestPCounterUpdate_IntKindWithNegativeIncrement_ShouldError(t *testing.T) {
 				}`,
 				ExpectedError: "value cannot be negative",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -79,7 +79,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -97,7 +97,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.
 					"points": 10
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -129,12 +129,12 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 			state.CLIClientType,
 			state.HTTPClientType,
 		}),
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a type error in this case
 			// because we are testing the internal overflow behaviour with
 			// a int64 but the GQL Int type is an int32.
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -145,7 +145,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %d
@@ -157,7 +157,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 					"points": 1
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -190,7 +190,7 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -208,7 +208,7 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testin
 					"points": 10.2
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -242,7 +242,7 @@ func TestPCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -260,7 +260,7 @@ func TestPCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *test
 					"points": 10.2
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -293,7 +293,7 @@ func TestPCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -311,7 +311,7 @@ func TestPCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *test
 					"points": 10.2
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -347,7 +347,7 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g
@@ -359,7 +359,7 @@ func TestPCounterUpdate_FloatKindWithPositiveIncrementOverflow_NoOp(t *testing.T
 					"points": 1000
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

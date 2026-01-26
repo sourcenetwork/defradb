@@ -42,7 +42,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Doc with both embedding fields
 				Doc: `{
 					"name": "John",
@@ -56,7 +56,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 					"about": "He loves tacos."
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Doc with only one embedding field
 				Doc: `{
 					"name": "Johnny"
@@ -69,7 +69,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {
@@ -120,7 +120,7 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Doc with both embedding fields
 				Doc: `{
 					"name": "John",
@@ -133,7 +133,7 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 					"name_v": [1, 2, 3]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {
@@ -176,7 +176,7 @@ func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_Sho
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Doc with both embedding fields
 				Doc: `{
 					"name": "John",
@@ -190,7 +190,7 @@ func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_Sho
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {

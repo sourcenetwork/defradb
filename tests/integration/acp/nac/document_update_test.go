@@ -36,7 +36,7 @@ func TestNAC_GatesDocumentUpdate_AuthorizedIdentity_AllowAccess(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
@@ -52,7 +52,7 @@ func TestNAC_GatesDocumentUpdate_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				DocID:        0,
 				Doc:          `{ "name": "Lone" }`,
 			},
-			testUtils.Request{ // Should now be updated
+			&action.Request{ // Should now be updated
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -84,7 +84,7 @@ func TestNAC_GatesDocumentUpdate_NoIdentity_NotAuthorizedError(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
@@ -101,7 +101,7 @@ func TestNAC_GatesDocumentUpdate_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Doc:           `{ "name": "Lone" }`,
 				ExpectedError: "not authorized to perform operation",
 			},
-			testUtils.Request{ // Should not be updated
+			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -133,7 +133,7 @@ func TestNAC_GatesDocumentUpdate_WrongIdentity_NotAuthorizedError(t *testing.T) 
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
@@ -150,7 +150,7 @@ func TestNAC_GatesDocumentUpdate_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				Doc:           `{ "name": "Lone" }`,
 				ExpectedError: "not authorized to perform operation",
 			},
-			testUtils.Request{ // Should not be updated
+			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{

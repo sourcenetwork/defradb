@@ -29,7 +29,7 @@ func TestMutationCreateWithNonNullVariable(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Variables: immutable.Some(map[string]any{
 					"user": map[string]any{
 						"name": "Bob",
@@ -64,7 +64,7 @@ func TestMutationCreateWithDefaultVariable(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation($user: [UsersMutationInputArg!] = {name: "Bob"}) {
 					create_Users(input: $user) {
 						name
@@ -94,7 +94,7 @@ func TestMutationCreate_WithVariableInJSONObject_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Variables: immutable.Some(map[string]any{
 					"message": "hello",
 				}),
@@ -129,7 +129,7 @@ func TestMutationCreate_WithJSONVariable_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Variables: immutable.Some(map[string]any{
 					"embed": map[string]any{
 						"bar": 1,

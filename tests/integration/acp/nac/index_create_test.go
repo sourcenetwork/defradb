@@ -13,10 +13,11 @@ package test_acp_nac
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestNAC_GatesIndexCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
@@ -48,7 +49,7 @@ func TestNAC_GatesIndexCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				FieldName:    "name",
@@ -80,7 +81,7 @@ func TestNAC_GatesIndexCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -113,7 +114,7 @@ func TestNAC_GatesIndexCreate_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",

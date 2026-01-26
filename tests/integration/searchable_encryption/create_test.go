@@ -29,7 +29,7 @@ func TestEncryptedIndexCreate_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -37,7 +37,7 @@ func TestEncryptedIndexCreate_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -71,7 +71,7 @@ func TestEncryptedIndexCreate_AfterCreateRequest_ShouldNotHinderQuerying(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -82,7 +82,7 @@ func TestEncryptedIndexCreate_AfterCreateRequest_ShouldNotHinderQuerying(t *test
 			testUtils.CreateEncryptedIndex{
 				FieldName: "age",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {

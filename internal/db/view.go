@@ -95,6 +95,17 @@ func (db *DB) addView(
 		return nil, err
 	}
 
+	for _, view := range returnDescriptions {
+		if view.Query.HasValue() && view.IsMaterialized {
+			err := db.refreshViews(ctx, client.CollectionFetchOptions{
+				VersionID: immutable.Some(view.VersionID),
+			})
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	return returnDescriptions, nil
 }
 

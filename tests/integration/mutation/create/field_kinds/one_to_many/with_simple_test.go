@@ -13,24 +13,26 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
 
 func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"notName": "Painted House",
-					"author_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_authorID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 				ExpectedError: "the given field does not exist. Name: notName",
 			},
@@ -41,20 +43,20 @@ func TestMutationCreateOneToMany_WithInvalidField_Error(t *testing.T) {
 
 func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John Grisham",
-					"published_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
-				ExpectedError: "the given field does not exist. Name: published_id",
+				ExpectedError: "the given field does not exist. Name: _publishedID",
 			},
 		},
 	}
@@ -66,14 +68,14 @@ func TestMutationCreateOneToMany_NonExistingRelationSingleSide_NoIDFieldError(t 
 func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
-					"author_id": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
+					"_authorID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -95,20 +97,20 @@ func TestMutationCreateOneToMany_NonExistingRelationManySide_CreatedDoc(t *testi
 func TestMutationCreateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -130,7 +132,7 @@ func TestMutationCreateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

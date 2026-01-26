@@ -48,7 +48,7 @@ func TestDocSignature_WithPeersAndSecp256k1KeyType_ShouldSync(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
@@ -56,7 +56,7 @@ func TestDocSignature_WithPeersAndSecp256k1KeyType_ShouldSync(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -105,7 +105,7 @@ func TestDocSignature_WithPeersAndEd25519KeyType_ShouldSync(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
@@ -113,7 +113,7 @@ func TestDocSignature_WithPeersAndEd25519KeyType_ShouldSync(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -166,14 +166,14 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name":	"Fred",
@@ -182,7 +182,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 			},
 			testUtils.WaitForSync{},
 			// both nodes should have the same results
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name
@@ -202,7 +202,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypes_ShouldSync(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							signature {
@@ -265,7 +265,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
@@ -288,7 +288,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 			},
 			testUtils.WaitForSync{},
 			// both nodes should have the same results
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name
@@ -306,7 +306,7 @@ func TestDocSignature_WithPeersAnDifferentKeyTypesUpdatingSameDoc_ShouldSync(t *
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}) {
 							signature {

@@ -40,7 +40,7 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
@@ -51,7 +51,7 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid

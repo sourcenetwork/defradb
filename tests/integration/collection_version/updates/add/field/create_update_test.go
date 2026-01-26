@@ -18,8 +18,8 @@ import (
 )
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoin(t *testing.T) {
-	initialSchemaVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
-	updatedSchemaVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
+	initialCollectionVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
+	updatedCollectionVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -30,7 +30,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John"
@@ -38,12 +38,12 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 			},
 			// We want to make sure that this works across database versions, so we tell
 			// the change detector to split here.
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
 						_version {
-							schemaVersionId
+							collectionVersionId
 							fieldName
 						}
 					}
@@ -54,8 +54,8 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 							"name": "John",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": initialSchemaVersionID,
-									"fieldName":       "_C",
+									"collectionVersionId": initialCollectionVersionID,
+									"fieldName":           "_C",
 								},
 							},
 						},
@@ -76,13 +76,13 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 					"email": "ih8oraclelicensing@netscape.net"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
 						email
 						_version {
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -94,11 +94,11 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 							"_version": []map[string]any{
 								{
 									// Update commit
-									"schemaVersionId": updatedSchemaVersionID,
+									"collectionVersionId": updatedCollectionVersionID,
 								},
 								{
 									// Create commit
-									"schemaVersionId": initialSchemaVersionID,
+									"collectionVersionId": initialCollectionVersionID,
 								},
 							},
 						},
@@ -111,8 +111,8 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndVersionJoi
 }
 
 func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuery(t *testing.T) {
-	initialSchemaVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
-	updatedSchemaVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
+	initialCollectionVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
+	updatedCollectionVersionID := "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -123,7 +123,7 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John"
@@ -143,21 +143,21 @@ func TestSchemaUpdatesAddFieldWithCreateWithUpdateAfterSchemaUpdateAndCommitQuer
 					"email": "ih8oraclelicensing@netscape.net"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_commits (filter: {fieldName: {_eq: "_C"}}) {
-						schemaVersionId
+						collectionVersionId
 					}
 				}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
 							// Update commit
-							"schemaVersionId": updatedSchemaVersionID,
+							"collectionVersionId": updatedCollectionVersionID,
 						},
 						{
 							// Create commit
-							"schemaVersionId": initialSchemaVersionID,
+							"collectionVersionId": initialCollectionVersionID,
 						},
 					},
 				},

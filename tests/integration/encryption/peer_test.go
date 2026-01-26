@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -33,13 +34,13 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `
 					query {
@@ -59,7 +60,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
-							"cid":       "bafyreidxqtu7lxotzahlnu5lxqewy4kvwskiqx7lgfcrlv66kbgbcdbyue",
+							"cid":       "bafyreiagmkic4btj532gyc7kcf2h24toepdz6gwbqwnmlc2inueku7vlqi",
 							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, ""),
 							"docID":     john21DocID,
 							"fieldName": "age",
@@ -67,7 +68,7 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       "bafyreiaatouuapteh55x7o7mo2nes3bmj3u4d2wmi4i2zepfmmdmd74sjy",
+							"cid":       "bafyreihnbwvr4yay445skacvd26o25w2vnuqdtorfiw62pniogipawz5sm",
 							"delta":     encrypt(testUtils.CBORValue("John"), john21DocID, ""),
 							"docID":     john21DocID,
 							"fieldName": "name",
@@ -75,18 +76,18 @@ func TestDocEncryptionPeer_UponSync_ShouldSyncEncryptedDAG(t *testing.T) {
 							"links":     []map[string]any{},
 						},
 						{
-							"cid":       "bafyreif4w2sctatv6q4juyytwfge2z4e5fe5z27xtz6q5qm4h542vqdgtm",
+							"cid":       "bafyreig4u7rsynyozwdt7dqyux7rq6epl3g7bljackbzhkyqbnipn5beua",
 							"delta":     nil,
 							"docID":     john21DocID,
 							"fieldName": "_C",
 							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":       "bafyreiaatouuapteh55x7o7mo2nes3bmj3u4d2wmi4i2zepfmmdmd74sjy",
+									"cid":       "bafyreihnbwvr4yay445skacvd26o25w2vnuqdtorfiw62pniogipawz5sm",
 									"fieldName": "name",
 								},
 								{
-									"cid":       "bafyreidxqtu7lxotzahlnu5lxqewy4kvwskiqx7lgfcrlv66kbgbcdbyue",
+									"cid":       "bafyreiagmkic4btj532gyc7kcf2h24toepdz6gwbqwnmlc2inueku7vlqi",
 									"fieldName": "age",
 								},
 							},
@@ -116,7 +117,7 @@ func TestDocEncryptionPeer_IfPeerDidNotReceiveKey_ShouldNotFetch(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
@@ -125,7 +126,7 @@ func TestDocEncryptionPeer_IfPeerDidNotReceiveKey_ShouldNotFetch(t *testing.T) {
 			// Do not wait for the key sync and request the document as soon as the dag has synced
 			// The document will be returned if the key-sync has taken place already, if not, the set will
 			// be empty.
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {

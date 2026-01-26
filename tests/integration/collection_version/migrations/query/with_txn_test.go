@@ -32,7 +32,7 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -47,8 +47,8 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 			testUtils.ConfigureMigration{
 				TransactionID: immutable.Some(0),
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
-					DestinationSchemaVersionID: "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
+					SourceCollectionVersionID:      "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
+					DestinationCollectionVersionID: "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -62,7 +62,7 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -95,7 +95,7 @@ func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -110,8 +110,8 @@ func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 			testUtils.ConfigureMigration{
 				TransactionID: immutable.Some(0),
 				LensConfig: client.LensConfig{
-					SourceSchemaVersionID:      "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
-					DestinationSchemaVersionID: "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
+					SourceCollectionVersionID:      "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
+					DestinationCollectionVersionID: "bafyreigqfjat435ghyt66tdaucp7oi2mke5jafx3jw3rozanopihr2vf44",
 					Lens: model.Lens{
 						Lenses: []model.LensModule{
 							{
@@ -128,7 +128,7 @@ func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 			testUtils.TransactionCommit{
 				TransactionID: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				TransactionID: immutable.Some(1),
 				Request: `query {
 					Users {

@@ -26,7 +26,7 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 					custom: JSON
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -35,7 +35,7 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
@@ -44,13 +44,13 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_count(Users: {filter: {custom: {tree: {_eq: "oak"}}}})
 				}`,

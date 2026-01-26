@@ -59,7 +59,7 @@ func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
 
 func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
 	dstFound := true
-	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationSchemaVersionID)
+	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationCollectionVersionID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			dstFound = false
@@ -69,7 +69,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	}
 
 	srcFound := true
-	sourceCol, err := description.GetCollectionByID(ctx, cfg.SourceSchemaVersionID)
+	sourceCol, err := description.GetCollectionByID(ctx, cfg.SourceCollectionVersionID)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			srcFound = false
@@ -80,7 +80,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 
 	if !srcFound {
 		sourceCol = client.CollectionVersion{
-			VersionID:      cfg.SourceSchemaVersionID,
+			VersionID:      cfg.SourceCollectionVersionID,
 			CollectionID:   client.OrphanCollectionID,
 			IsMaterialized: true,
 			IsPlaceholder:  true,
@@ -95,7 +95,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	if !dstFound {
 		dstCol = client.CollectionVersion{
 			Name:           sourceCol.Name,
-			VersionID:      cfg.DestinationSchemaVersionID,
+			VersionID:      cfg.DestinationCollectionVersionID,
 			IsMaterialized: true,
 			IsPlaceholder:  true,
 			CollectionID:   sourceCol.CollectionID,
@@ -103,7 +103,8 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	}
 
 	if dstCol.PreviousVersion.HasValue() && dstCol.PreviousVersion.Value().SourceCollectionID != sourceCol.VersionID {
-		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceSchemaVersionID, cfg.DestinationSchemaVersionID)
+		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceCollectionVersionID,
+			cfg.DestinationCollectionVersionID)
 	}
 
 	id, err := db.getLensStore(ctx).Add(ctx, cfg.Lens)

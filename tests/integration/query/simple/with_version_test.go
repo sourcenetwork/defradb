@@ -20,13 +20,13 @@ import (
 func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -50,14 +50,14 @@ func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 							"Age":  int64(21),
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
+									"cid": "bafyreidzdrrjkjch3icknknh6tfmwitc352v54bds4h5ftblghwhsojgru",
 									"links": []map[string]any{
 										{
-											"cid":       "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
+											"cid":       "bafyreiapiprlzrtsh7bkf4ru36q7g5nm2nz5unke2kkl4uyofd3scxmlye",
 											"fieldName": "Name",
 										},
 										{
-											"cid":       "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
+											"cid":       "bafyreie7qecbfvigblfgobuyt7hrejf7k2isscppzr75hwfkm5brntauva",
 											"fieldName": "Age",
 										},
 									},
@@ -81,13 +81,13 @@ func TestQuery_CreateDocWithNestedLatestCommit(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -147,7 +147,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -158,7 +158,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 					"Age": 22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -226,22 +226,22 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
-	schemaVersionID := testUtils.NewUniqueValue()
+func TestQuerySimpleWithEmbeddedLatestCommitWithCollectionVersionID(t *testing.T) {
+	collectionVersionID := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
 						_version {
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -251,7 +251,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
 							"Name": "John",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": schemaVersionID,
+									"collectionVersionId": collectionVersionID,
 								},
 							},
 						},
@@ -269,13 +269,13 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -311,13 +311,13 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -380,7 +380,7 @@ func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -391,7 +391,7 @@ func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.
 					"Age": 22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -486,13 +486,13 @@ func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -546,7 +546,7 @@ func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
 
 func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 	docID := testUtils.NewSameValue()
-	schemaVersionID := testUtils.NewUniqueValue()
+	collectionVersionID := testUtils.NewUniqueValue()
 	docCreateCompositeCid := testUtils.NewUniqueValue()
 	ageCreateCid := testUtils.NewUniqueValue()
 	nameCreateCid := testUtils.NewUniqueValue()
@@ -556,14 +556,14 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -578,7 +578,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 								cid
 								fieldName
 							}
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -604,7 +604,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 											"fieldName": "Age",
 										},
 									},
-									"schemaVersionId": schemaVersionID,
+									"collectionVersionId": collectionVersionID,
 								},
 							},
 						},
@@ -619,7 +619,7 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 
 func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 	docID := testUtils.NewSameValue()
-	schemaVersionID := testUtils.NewSameValue()
+	collectionVersionID := testUtils.NewSameValue()
 	docUpdateCompositeCid := testUtils.NewUniqueValue()
 	docCreateCompositeCid := testUtils.NewSameValue()
 	ageUpdateCid := testUtils.NewUniqueValue()
@@ -631,7 +631,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"Name": "John",
@@ -643,7 +643,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 				DocID:        0,
 				Doc:          `{"Age": 22}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -662,7 +662,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 							heads {
 								cid
 							}
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -690,7 +690,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 											"cid": docCreateCompositeCid,
 										},
 									},
-									"schemaVersionId": schemaVersionID,
+									"collectionVersionId": collectionVersionID,
 								},
 								{
 									"cid":       docCreateCompositeCid,
@@ -708,8 +708,8 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 											"fieldName": "Age",
 										},
 									},
-									"heads":           []map[string]any{},
-									"schemaVersionId": schemaVersionID,
+									"heads":               []map[string]any{},
+									"collectionVersionId": collectionVersionID,
 								},
 							},
 						},

@@ -36,7 +36,7 @@ type AddSchema struct {
 
 	// Optionally, the expected results.
 	//
-	// Each item will be compared individually, if ID, RootID, SchemaVersionID or Fields on the
+	// Each item will be compared individually, if ID, RootID, CollectionVersionID or Fields on the
 	// expected item are default they will not be compared with the actual.
 	//
 	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order

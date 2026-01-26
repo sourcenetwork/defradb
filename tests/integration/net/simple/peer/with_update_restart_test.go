@@ -33,7 +33,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -59,7 +59,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age

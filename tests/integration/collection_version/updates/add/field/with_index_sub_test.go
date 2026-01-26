@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -67,7 +67,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameWithSameNameDefinedInValu
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -123,7 +123,7 @@ func TestSchemaUpdatesAddFieldSimple_FieldIndexedByNameMultipleTimes(t *testing.
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

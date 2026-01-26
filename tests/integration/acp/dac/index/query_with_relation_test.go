@@ -44,7 +44,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 					author: Author
 				}`,
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			CollectionID: 0,
 			// bae-9e70648f-c722-5875-97f5-574ec6f703e9
 			Doc: `{
@@ -53,7 +53,7 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				"verified": true
 			}`,
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			Identity:     testUtils.ClientIdentity(1),
 			CollectionID: 0,
 			// bae-b769708d-f552-5c3d-a402-ccfd7ac7fb04
@@ -63,30 +63,30 @@ func createAuthorBooksSchemaWithPolicyAndCreateDocs() []any {
 				"verified": false
 			}`,
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			CollectionID: 1,
 			DocMap: map[string]any{
 				"name":      "Painted House",
 				"rating":    4.9,
-				"author_id": testUtils.NewDocIndex(0, 0),
+				"_authorID": testUtils.NewDocIndex(0, 0),
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			Identity:     testUtils.ClientIdentity(1),
 			CollectionID: 1,
 			DocMap: map[string]any{
 				"name":      "A Time for Mercy",
 				"rating":    4.5,
-				"author_id": testUtils.NewDocIndex(0, 0),
+				"_authorID": testUtils.NewDocIndex(0, 0),
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			Identity:     testUtils.ClientIdentity(1),
 			CollectionID: 1,
 			DocMap: map[string]any{
 				"name":      "Theif Lord",
 				"rating":    4.8,
-				"author_id": testUtils.NewDocIndex(0, 1),
+				"_authorID": testUtils.NewDocIndex(0, 1),
 			},
 		},
 	}
@@ -96,7 +96,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithoutIdentity_Shou
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Author(filter: {
@@ -131,7 +131,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithIdentity_ShouldF
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -179,7 +179,7 @@ func TestACPWithIndex_UponQueryingPrivateOneToManyRelatedDocWithWrongIdentity_Sh
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {
@@ -215,7 +215,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithoutIdentity_Shou
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book(filter: {
@@ -248,7 +248,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithIdentity_ShouldF
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
 					query {
@@ -295,7 +295,7 @@ func TestACPWithIndex_UponQueryingPrivateManyToOneRelatedDocWithWrongIdentity_Sh
 	test := testUtils.TestCase{
 		Actions: []any{
 			createAuthorBooksSchemaWithPolicyAndCreateDocs(),
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 				Request: `
 					query {

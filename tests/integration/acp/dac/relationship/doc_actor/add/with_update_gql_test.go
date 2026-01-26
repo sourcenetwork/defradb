@@ -17,15 +17,16 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used so test that separately.
-				testUtils.GQLRequestMutationType,
+				state.GQLRequestMutationType,
 			}),
 
 		Actions: []any{
@@ -34,55 +35,38 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationsh
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: reader + updater + deleter
+    name: read
+  - expr: updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -97,7 +81,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationsh
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -110,7 +94,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationsh
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
@@ -181,9 +165,9 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_GQL_OtherActorCanUpdate(t *tes
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used so test that separately.
-				testUtils.GQLRequestMutationType,
+				state.GQLRequestMutationType,
 			}),
 
 		Actions: []any{
@@ -192,55 +176,38 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_GQL_OtherActorCanUpdate(t *tes
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: reader + updater + deleter
+    name: read
+  - expr: updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -255,7 +222,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_GQL_OtherActorCanUpdate(t *tes
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -268,7 +235,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_GQL_OtherActorCanUpdate(t *tes
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
@@ -330,7 +297,7 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_GQL_OtherActorCanUpdate(t *tes
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can now also read.
 
 				Request: `

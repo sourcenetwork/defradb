@@ -67,7 +67,7 @@ func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -80,7 +80,7 @@ func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 				`,
 				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: debug) {
 					UserView {
 						fullName

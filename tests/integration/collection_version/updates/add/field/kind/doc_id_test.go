@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldKindDocID(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -67,14 +67,14 @@ func TestSchemaUpdatesAddFieldKindDocIDWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
 					"foo": "bae-aad433b7-fe14-5a31-a5da-94735bedcd4f"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -112,14 +112,14 @@ func TestSchemaUpdatesAddFieldKindDocIDSubstitutionWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
 					"foo": "bae-aad433b7-fe14-5a31-a5da-94735bedcd4f"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

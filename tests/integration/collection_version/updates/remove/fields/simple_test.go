@@ -15,10 +15,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestSchemaUpdatesRemoveField(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -35,7 +38,7 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -44,7 +47,7 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 				}`,
 				ExpectedError: "Cannot query field \"name\" on type \"Users\".",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						email
@@ -61,6 +64,8 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 
 func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -77,7 +82,7 @@ func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_docID

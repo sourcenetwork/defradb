@@ -36,6 +36,7 @@ type ViewCacheKey struct {
 }
 
 var _ Key = (*ViewCacheKey)(nil)
+var _ CollectionedKey = ViewCacheKey{}
 
 func NewViewCacheColPrefix(collectionShortID uint32) ViewCacheKey {
 	return ViewCacheKey{
@@ -54,6 +55,8 @@ func NewViewCacheKeyFromRaw(raw []byte) (ViewCacheKey, error) {
 	if len(raw) == 0 {
 		return ViewCacheKey{}, nil
 	}
+
+	raw, _ = bytes.CutPrefix(raw, []byte(COLLECTION_VIEW_ITEMS+"/"))
 
 	components := bytes.Split(raw, []byte("/"))
 	if len(components) > 2 {
@@ -115,4 +118,8 @@ func (k ViewCacheKey) PrettyPrint() string {
 	}
 
 	return result
+}
+
+func (k ViewCacheKey) GetCollectionShortID() uint32 {
+	return k.CollectionShortID
 }

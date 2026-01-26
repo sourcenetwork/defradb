@@ -88,7 +88,7 @@ func SaveCollection(
 		}
 	}
 
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	cache.Add(desc)
 
 	return nil
@@ -98,7 +98,7 @@ func GetCollectionByID(
 	ctx context.Context,
 	id string,
 ) (client.CollectionVersion, error) {
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	col, ok := cache.CollectionsByVersionID[id]
 	if ok {
 		return col, nil
@@ -129,7 +129,7 @@ func GetCollectionByName(
 	ctx context.Context,
 	name string,
 ) (client.CollectionVersion, error) {
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	col, ok := cache.ActiveCollectionsByName[name]
 	if ok {
 		return col, nil
@@ -157,7 +157,7 @@ func GetActiveCollectionByCollectionID(
 	ctx context.Context,
 	collectionID string,
 ) (client.CollectionVersion, error) {
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	col, ok := cache.ActiveCollectionsByID[collectionID]
 	if ok {
 		return col, nil
@@ -184,7 +184,7 @@ func GetCollectionsByCollectionID(
 	ctx context.Context,
 	collectionID string,
 ) ([]client.CollectionVersion, error) {
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	if cache.IsFullyPopulated {
 		if col, ok := cache.CollectionsByID[collectionID]; ok {
 			return col, nil
@@ -223,7 +223,7 @@ func GetCollectionsByCollectionID(
 func GetCollections(
 	ctx context.Context,
 ) ([]client.CollectionVersion, error) {
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	if cache.IsFullyPopulated {
 		return cache.Collections, nil
 	}
@@ -280,7 +280,7 @@ func GetCollections(
 func GetActiveCollections(
 	ctx context.Context,
 ) ([]client.CollectionVersion, error) {
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	if cache.IsActiveCollectionsPopulated {
 		return cache.ActiveCollections, nil
 	}
@@ -338,7 +338,7 @@ func HasCollectionByName(
 	ctx context.Context,
 	name string,
 ) (bool, error) {
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	if cache.IsActiveCollectionsPopulated {
 		_, ok := cache.ActiveCollectionsByName[name]
 		return ok, nil
@@ -353,7 +353,7 @@ func GetCollectionVersionIDs(
 	ctx context.Context,
 	collectionID string,
 ) ([]string, error) {
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	if cache.IsFullyPopulated {
 		result := []string{}
 		if cols, ok := cache.CollectionsByID[collectionID]; ok {
@@ -469,7 +469,7 @@ func DeleteCollection(
 		return err
 	}
 
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	cache.Delete(version)
 
 	txn := datastore.CtxMustGetTxn(ctx)

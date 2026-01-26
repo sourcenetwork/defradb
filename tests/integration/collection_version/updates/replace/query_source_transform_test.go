@@ -58,7 +58,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						firstName
@@ -83,14 +83,14 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Set the `name` field only
 				Doc: `{
 					"firstName": "John",
 					"lastName":  "S"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

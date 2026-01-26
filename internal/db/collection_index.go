@@ -137,6 +137,12 @@ func (c *collection) deleteIndexedDocWithID(
 	if err != nil {
 		return err
 	}
+	if doc == nil {
+		// If the document cannot be fetched (e.g., due to ACP restrictions),
+		// skip index deletion. The caller (Delete) will handle the authorization
+		// error in applyDelete.
+		return nil
+	}
 	return c.deleteIndexedDoc(ctx, doc)
 }
 
@@ -535,7 +541,7 @@ func checkExistingFieldsAndAdjustRelFieldNames(
 			return NewErrNonExistingFieldForIndex(fields[i].Name)
 		}
 		if field.Kind.IsObject() {
-			fields[i].Name = fields[i].Name + request.RelatedObjectID
+			fields[i].Name = request.ToFieldID(fields[i].Name)
 		}
 	}
 	return nil

@@ -158,10 +158,11 @@ func (c *Client) PatchCollection(
 	return err
 }
 
-func (c *Client) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+func (c *Client) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
 	methodURL := c.http.apiURL.JoinPath("collections", "default")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(),
+		strings.NewReader(collectionVersionID))
 	if err != nil {
 		return err
 	}

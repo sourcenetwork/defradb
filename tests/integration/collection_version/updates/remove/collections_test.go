@@ -13,10 +13,12 @@ package remove
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
@@ -39,10 +41,10 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						create_Users(input:{}) {
 							name
@@ -50,7 +52,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "create_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						update_Users(input:{}) {
 							name
@@ -58,7 +60,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "update_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -66,7 +68,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 				}`,
 				ExpectedError: `Cannot query field "Users" on type "Query".`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					Users {
 						name
@@ -100,10 +102,10 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						create_Users(input:{}) {
 							name
@@ -111,7 +113,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "create_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						update_Users(input:{}) {
 							name
@@ -119,7 +121,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "update_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -127,7 +129,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 				}`,
 				ExpectedError: `Cannot query field "Users" on type "Query".`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					Users {
 						name
@@ -151,7 +153,7 @@ func TestColVersionUpdateRemoveCollectionWithData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -183,7 +185,7 @@ func TestColVersionUpdateRemoveCollectionWithSoftDeletedData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -240,7 +242,7 @@ func TestColVersionUpdateCopyCollectionAddFieldRemoveOriginalCollection(t *testi
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -290,7 +292,7 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_SamePatch(t *testing.T
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -340,6 +342,8 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_DifferentPatches(t *te
 
 func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -368,7 +372,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -391,7 +395,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -440,7 +444,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -463,7 +467,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// It is important that this test creates and queries a document as it is possible
 				// for the code to be written in a way that erroneously deletes the field short ids
 				// for fields that existed for non-deleted versions.
@@ -471,7 +475,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -634,7 +638,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *te
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},

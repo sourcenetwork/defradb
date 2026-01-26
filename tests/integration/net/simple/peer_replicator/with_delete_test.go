@@ -34,7 +34,7 @@ func TestP2PPeerReplicatorWithDeleteShowDeleted(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -60,7 +60,7 @@ func TestP2PPeerReplicatorWithDeleteShowDeleted(t *testing.T) {
 				DocID:  0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(showDeleted: true) {
 						_deleted
