@@ -123,7 +123,7 @@ func TestNAC_GatesDocumentCreate_NoIdentity_CLIandHTTPClient_NotAuthorizedError(
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				Doc:           `{ "name": "Shahzad" }`,
@@ -208,7 +208,7 @@ func TestNAC_GatesDocumentCreate_WrongIdentity_CLIandHTTPClient_NotAuthorizedErr
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				Doc:           `{ "name": "Shahzad" }`,

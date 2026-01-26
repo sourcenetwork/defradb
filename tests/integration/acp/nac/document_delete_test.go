@@ -151,7 +151,7 @@ func TestNAC_GatesDocumentDelete_NoIdentity_CLIandHTTPClient_NotAuthorizedError(
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
@@ -264,7 +264,7 @@ func TestNAC_GatesDocumentDelete_WrongIdentity_CLIandHTTPClient_NotAuthorizedErr
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{

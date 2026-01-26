@@ -153,7 +153,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_CLIandHTTPClient_NotAuthor
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
@@ -268,7 +268,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_CLIClient_NotAuthorized
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{

@@ -27,7 +27,6 @@ func TestNAC_AdminRelation_CanDocumentDelete(t *testing.T) {
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.GoClientType,
-				state.CClientType,
 				state.JSClientType,
 			},
 		),
@@ -86,12 +85,13 @@ func TestNAC_AdminRelation_CanDocumentDelete(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_AdminRelation_CLIandHTTPClient_CanDocumentDelete(t *testing.T) {
+func TestNAC_AdminRelation_CLIandCandHTTPClient_CanDocumentDelete(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
+				state.CClientType,
 				state.HTTPClientType,
 				state.CLIClientType,
 			},
