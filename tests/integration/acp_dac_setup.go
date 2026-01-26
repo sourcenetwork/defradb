@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/sourcehub/sdk"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	toml "github.com/pelletier/go-toml"
@@ -234,40 +235,11 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 	}
 	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
 	sourceHubCmd := exec.Command("sourcehubd", args...)
-	var bf testBuffer
-	bf.Lines = make(chan string, 100)
-	sourceHubCmd.Stdout = &bf
-	sourceHubCmd.Stderr = &bf
 
 	err = sourceHubCmd.Start()
 	if err != nil {
 		return nil, err
 	}
-
-	timeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-
-cmdReaderLoop:
-	for {
-		select {
-		case <-timeout.Done():
-			break cmdReaderLoop
-		case line := <-bf.Lines:
-			if strings.Contains(line, "starting gRPC server...") {
-				// The Comet RPC server is spun up before the gRPC one, so we
-				// can safely unlock here.
-				unlock()
-			}
-			// This is guaranteed to be logged after the gRPC server has been spun up
-			// so we can be sure that the lock has been unlocked.
-			if strings.Contains(line, "committed state") {
-				break cmdReaderLoop
-			}
-		}
-	}
-
-	cancel()
-	// Void the buffer so that it doesn't fill up and block the process under test
-	bf.Void()
 
 	s.T.Cleanup(
 		func() {
@@ -275,6 +247,29 @@ cmdReaderLoop:
 			require.NoError(s.T, err)
 		},
 	)
+
+	// wait until SourceHub is ready for connections
+	timeout := time.After(5 * time.Second)
+	i := 1
+	startTs := time.Now()
+loop:
+	for {
+		// use an exponential backoff timer to adjust polling
+		timer := time.After(time.Duration(10*i) * time.Millisecond)
+		i++
+		select {
+		case <-timeout:
+			s.T.Logf("time out waiting for sourcehub to start")
+			return nil, fmt.Errorf("error setting up SourceHub: connection not ready after deadline")
+		case <-timer:
+			ok := probeSourceHub(gRpcAddress, rpcAddress)
+			if ok {
+				elapsed := time.Since(startTs)
+				s.T.Logf("sourcehub ready to receive connections: after %v", elapsed)
+				break loop
+			}
+		}
+	}
 
 	signer, err := keyring.NewTxSignerFromKeyringKey(kr, validatorName)
 	if err != nil {
@@ -353,4 +348,29 @@ func (b *testBuffer) Write(p []byte) (n int, err error) {
 
 func (b *testBuffer) Void() {
 	b.void.Swap(true)
+}
+
+// probeSourceHub is a rediness probe which tries to connect to SourceHub's
+// RPC endpoint to determine if it is ready to receive connections
+// Returns true if the probe succeeded
+func probeSourceHub(grpcAddr, cometRpcAddr string) bool {
+	client, err := sdk.NewClient(
+		sdk.WithGRPCAddr(grpcAddr),
+		sdk.WithCometRPCAddr(cometRpcAddr),
+	)
+	defer func() {
+		recover()
+	}()
+	defer client.Close()
+
+	if err != nil {
+		return false
+	}
+
+	height := int64(1)
+	_, err = client.CometBFTRPCClient().Block(context.Background(), &height)
+	if err != nil {
+		return false
+	}
+	return true
 }
