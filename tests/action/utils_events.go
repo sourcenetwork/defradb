@@ -69,6 +69,8 @@ func waitForUpdateEvents(
 						require.Fail(s.T, "subscription closed waiting for update event", "Node %d", i)
 					}
 					evt, _ = msg.Data.(event.Update)
+
+					node.CompositesLock.Lock()
 					// We keep track of the list of cids for all documents in the test
 					// in case we want to use them in subsequent test actions without having
 					// to know in advance what the CID will be.
@@ -76,6 +78,7 @@ func waitForUpdateEvents(
 						node.Composites = make(map[string][]cid.Cid)
 					}
 					node.Composites[evt.DocID] = append(node.Composites[evt.DocID], evt.Cid)
+					node.CompositesLock.Unlock()
 
 					if !evt.IsRelay {
 						break relayCheck
@@ -112,11 +115,13 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	}
 	docIndex := -1
 	if collectionID != -1 {
+		s.DocIDsLock.RLock()
 		for i, docID := range s.DocIDs[collectionID] {
 			if docID.String() == evt.DocID {
 				docIndex = i
 			}
 		}
+		s.DocIDsLock.RUnlock()
 	}
 
 	node := s.Nodes[nodeID]

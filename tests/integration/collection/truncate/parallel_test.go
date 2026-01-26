@@ -41,16 +41,19 @@ func TestCollectionTruncateParallel_DeletesAllPreviouslyExistingDocuments(t *tes
 			&action.Parallel{
 				Children: []action.Action{
 					&action.CreateDoc{
+						DoNotWaitForEvent: true,
 						DocMap: map[string]any{
 							"name": "Fred",
 						},
 					},
 					&action.CreateDoc{
+						DoNotWaitForEvent: true,
 						DocMap: map[string]any{
 							"name": "Shahzad",
 						},
 					},
 					&action.CreateDoc{
+						DoNotWaitForEvent: true,
 						DocMap: map[string]any{
 							"name": "Chris",
 						},

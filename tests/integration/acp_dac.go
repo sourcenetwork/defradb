@@ -319,7 +319,9 @@ func getCollectionAndDocInfo(s *state.State, collectionID, docInd, nodeID int) (
 		collectionName = collection.Version().Name
 
 		if docInd != -1 {
+			s.DocIDsLock.RLock()
 			docID = s.DocIDs[collectionID][docInd].String()
+			s.DocIDsLock.RUnlock()
 		}
 	}
 	return collectionName, docID
