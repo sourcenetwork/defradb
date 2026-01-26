@@ -102,17 +102,13 @@ endif
 # Usage:
 # 	- make build
 # 	- make build path="path/to/defradb-binary"
+BUILD_PATH = $(if $(path),$(path),build/defradb)
+
 .PHONY: build
 build:
-ifeq ($(path),)
-	@mkdir -p build
-	@bash tools/scripts/install_libwasmer.sh $(PWD)/build
-	@CGO_LDFLAGS="-Wl,-rpath,\$$ORIGIN" go build $(BUILD_FLAGS) -o build/defradb cmd/defradb/main.go
-else
-	@dir=$$(dirname $(path)); \
-	bash tools/scripts/install_libwasmer.sh $$dir; \
-	CGO_LDFLAGS="-Wl,-rpath,\$$ORIGIN" go build $(BUILD_FLAGS) -o $(path) cmd/defradb/main.go
-endif
+	@mkdir -p $(dir $(BUILD_PATH))
+	@bash tools/scripts/install_libwasmer.sh $(dir $(BUILD_PATH))
+	@CGO_LDFLAGS="-Wl,-rpath,\$$ORIGIN" go build $(BUILD_FLAGS) -o $(BUILD_PATH) cmd/defradb/main.go
 
 # Usage: make cross-build platforms="{platforms}"
 # platforms is specified as a comma-separated list with no whitespace, e.g. "linux/amd64,linux/arm,linux/arm64"
