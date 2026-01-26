@@ -99,13 +99,16 @@ ifneq ($(OS_GENERAL),Linux)
 	@echo "Direct installation of Defradb's man pages is not supported on your system."
 endif
 
-# Usage:
-# 	- make build
-# 	- make build path="path/to/defradb-binary"
+# Target OS for cross-platform support
+GOOS ?= $(shell go env GOOS)
+
 BUILD_PATH = $(if $(path),$(path),build/defradb)
 WASMER_LIB_NAME = libwasmer.so
-ifeq ($(OS_GENERAL),Darwin)
+RPATH_TOKEN = \$$ORIGIN
+
+ifeq ($(GOOS),darwin)
 	WASMER_LIB_NAME = libwasmer.dylib
+	RPATH_TOKEN = @loader_path
 endif
 
 .PHONY: build
@@ -114,7 +117,7 @@ build:
 	@if [ ! -f "$(dir $(BUILD_PATH))$(WASMER_LIB_NAME)" ] || [ "$(dir $(BUILD_PATH))$(WASMER_LIB_NAME)" -ot go.sum ]; then \
 		bash tools/scripts/install_libwasmer.sh $(dir $(BUILD_PATH)); \
 	fi
-	@CGO_LDFLAGS="-Wl,-rpath,\$$ORIGIN" go build $(BUILD_FLAGS) -o $(BUILD_PATH) cmd/defradb/main.go
+	@CGO_LDFLAGS="-Wl,-rpath,$(RPATH_TOKEN)" go build $(BUILD_FLAGS) -o $(BUILD_PATH) cmd/defradb/main.go
 
 # Usage: make cross-build platforms="{platforms}"
 # platforms is specified as a comma-separated list with no whitespace, e.g. "linux/amd64,linux/arm,linux/arm64"
