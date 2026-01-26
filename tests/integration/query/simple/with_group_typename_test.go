@@ -20,7 +20,7 @@ import (
 func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -50,7 +50,7 @@ func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,

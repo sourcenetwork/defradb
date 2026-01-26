@@ -179,7 +179,7 @@ func TestSyncColVersion_WithView_CanBeActivatedAndQueried(t *testing.T) {
 				NodeID:    immutable.Some(1),
 				VersionID: "{{.CollectionVersionID1}}",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},

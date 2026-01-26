@@ -21,7 +21,7 @@ import (
 func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
@@ -40,15 +40,15 @@ func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 31}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "John and the sourcerers' stone",
@@ -87,15 +87,15 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 				}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 31}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "John and the sourcerers' stone",
@@ -135,15 +135,15 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 				}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 31}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "John and the sourcerers' stone",
@@ -151,7 +151,7 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 					"favourite": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc:          `{"name": "Game of chains"}`,
 			},

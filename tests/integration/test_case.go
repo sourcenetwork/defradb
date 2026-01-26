@@ -38,7 +38,7 @@ type TestCase struct {
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between mutation types, or we need to temporarily document a bug.
-	SupportedMutationTypes immutable.Option[[]MutationType]
+	SupportedMutationTypes immutable.Option[[]state.MutationType]
 
 	// If provided a value, SupportedClientTypes will limit the client types under test to those
 	// within this set.  If no active clients pass this filter the test will be skipped.
@@ -213,53 +213,6 @@ type SetActiveCollectionVersion struct {
 	ExpectedError string
 }
 
-// CreateDoc will attempt to create the given document in the given collection
-// using the set [MutationType].
-type CreateDoc struct {
-	// NodeID may hold the ID (index) of a node to apply this create to.
-	//
-	// If a value is not provided the document will be created in all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If an Identity is not provided the created document(s) will be public.
-	//
-	// If an Identity is provided and the collection has a policy, then the
-	// created document(s) will be owned by this Identity.
-	//
-	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
-	// Default value is `NoIdentity()`.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// Specifies whether the document should be encrypted.
-	IsDocEncrypted bool
-
-	// Individual fields of the document to encrypt.
-	EncryptedFields []string
-
-	// The collection in which this document should be created.
-	CollectionID int
-
-	// The document to create, in JSON string format.
-	//
-	// If [DocMap] is provided this value will be ignored.
-	Doc string
-
-	// The document to create, in map format.
-	//
-	// If this is provided [Doc] will be ignored.
-	DocMap map[string]any
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
 // DocIndex represents a relation field value, it allows relation fields to be set without worrying
 // about the specific document id.
 //
@@ -316,7 +269,7 @@ type DeleteDoc struct {
 	ExpectedError string
 }
 
-// UpdateDoc will attempt to update the given document using the set [MutationType].
+// UpdateDoc will attempt to update the given document using the set [state.MutationType].
 type UpdateDoc struct {
 	// NodeID may hold the ID (index) of a node to apply this update to.
 	//

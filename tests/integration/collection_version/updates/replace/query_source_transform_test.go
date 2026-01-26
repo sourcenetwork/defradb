@@ -83,7 +83,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Set the `name` field only
 				Doc: `{
 					"firstName": "John",

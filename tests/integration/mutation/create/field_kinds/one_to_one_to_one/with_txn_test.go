@@ -22,7 +22,7 @@ import (
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
 				Doc: `{
@@ -30,7 +30,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				// "_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
 				Doc: `{
@@ -177,7 +177,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsForward(t *testing.
 func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
 				Doc: `{
@@ -185,7 +185,7 @@ func TestTransactionalCreationAndLinkingOfRelationalDocumentsBackward(t *testing
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				// "_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
 				Doc: `{
