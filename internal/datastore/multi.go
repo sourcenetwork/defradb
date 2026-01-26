@@ -136,6 +136,12 @@ func BlindWriteBlockstoreFrom(rootstore corekv.ReaderWriter, chunkSize immutable
 	}
 }
 
+// CARImportBlockstoreFrom creates a blockstore optimized for CAR imports.
+func CARImportBlockstoreFrom(rootstore corekv.ReaderWriter) Blockstore {
+	store := namespace.Wrap(rootstore, []byte{blockStoreKey})
+	return &carImportBlockstore{bstore: newBlockstore(store)}
+}
+
 func SystemstoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
 	return namespace.Wrap(rootstore, []byte{systemStoreKey})
 }

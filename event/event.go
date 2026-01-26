@@ -66,6 +66,8 @@ const (
 	PurgeName = Name("purge")
 	// TopicPeerEventName is the name of the topic peer join/leave event.
 	TopicPeerEventName = Name("topic-peer-event")
+	// P2PNoPeersName is the name of the event fired when no peers are available for pubsub.
+	P2PNoPeersName = Name("p2p-no-peers")
 )
 
 // PubSub is an event that is published when
@@ -182,4 +184,11 @@ type TopicPeerEvent struct {
 	Topic string
 	// EventType is the type of event: "JOINED" or "LEFT".
 	EventType string
+}
+
+// P2PNoPeers is an event that is published when no peers are available for pubsub publishing.
+// Applications should subscribe to this event and trigger reconnection logic.
+type P2PNoPeers struct {
+	// DroppedBatchSize is the number of messages that were dropped due to no peers.
+	DroppedBatchSize int
 }

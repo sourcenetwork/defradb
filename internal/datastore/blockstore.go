@@ -17,9 +17,13 @@ import (
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 )
+
+// mergedCacheSize is the number of merged CID entries to cache.
+const mergedCacheSize = 100000
 
 // Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
 type Blockstore interface {
@@ -32,9 +36,11 @@ type Blockstore interface {
 }
 
 func newBlockstore(store corekv.ReaderWriter) *bstore {
+	mergedCache, _ := lru.New[string, struct{}](mergedCacheSize)
 	return &bstore{
-		Blockstore: blockstore.NewBlockstore(store),
-		store:      store,
+		Blockstore:  blockstore.NewBlockstore(store),
+		store:       store,
+		mergedCache: mergedCache,
 	}
 }
 
@@ -42,6 +48,8 @@ type bstore struct {
 	*blockstore.Blockstore
 
 	store corekv.ReaderWriter
+	// mergedCache caches CIDs that are known to be merged.
+	mergedCache *lru.Cache[string, struct{}]
 }
 
 var _ Blockstore = (*bstore)(nil)
@@ -60,6 +68,12 @@ func newToMergeKey(cid []byte) []byte {
 }
 
 func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
+	cidStr := cid.String()
+	if bs.mergedCache != nil {
+		if _, ok := bs.mergedCache.Get(cidStr); ok {
+			return true, nil
+		}
+	}
 	hasBlock, err := bs.Has(ctx, cid)
 	if err != nil {
 		return false, err
@@ -71,11 +85,22 @@ func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return !notMerged, nil
+	merged := !notMerged
+	if merged && bs.mergedCache != nil {
+		bs.mergedCache.Add(cidStr, struct{}{})
+	}
+	return merged, nil
 }
 
 func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
-	return bs.store.Delete(ctx, newToMergeKey(cid.Bytes()))
+	err := bs.store.Delete(ctx, newToMergeKey(cid.Bytes()))
+	if err != nil {
+		return err
+	}
+	if bs.mergedCache != nil {
+		bs.mergedCache.Add(cid.String(), struct{}{})
+	}
+	return nil
 }
 
 type p2pBlockStore struct {
@@ -139,3 +164,35 @@ func (bs *blindWriteBlockstore) PutMany(ctx context.Context, blocks []blocks.Blo
 	}
 	return nil
 }
+
+// carImportBlockstore is optimized for CAR imports.
+type carImportBlockstore struct {
+	*bstore
+}
+
+var _ Blockstore = (*carImportBlockstore)(nil)
+
+// Put stores a block without checking if it already exists.
+func (bs *carImportBlockstore) Put(ctx context.Context, block blocks.Block) error {
+	err := bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), []byte{objectMarker})
+	if err != nil {
+		return err
+	}
+	return bs.store.Set(ctx, block.Cid().Bytes(), block.RawData())
+}
+
+// PutMany stores multiple blocks without checking if they already exist.
+func (bs *carImportBlockstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
+	for _, b := range blocks {
+		err := bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), []byte{objectMarker})
+		if err != nil {
+			return err
+		}
+		err = bs.store.Set(ctx, b.Cid().Bytes(), b.RawData())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+

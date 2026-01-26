@@ -19,23 +19,26 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-car/v2"
 	"github.com/ipld/go-car/v2/storage"
-	"github.com/ipld/go-ipld-prime/linking"
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/corekv/blockstore"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/immutable"
 )
 
-// generateCAR creates a CAR file containing the root block and all its linked blocks.
-func (p *P2P) generateCAR(ctx context.Context, rootBlock *coreblock.Block) ([]byte, error) {
-	return p.generateCARForBlocks(ctx, []*coreblock.Block{rootBlock})
+// collectedBlock holds a CID and its raw bytes to avoid double-reading from Badger.
+type collectedBlock struct {
+	cid      cid.Cid
+	rawBytes []byte
 }
 
-// generateCARForBlocks creates a CAR file containing multiple root blocks and all their linked blocks.
-func (p *P2P) generateCARForBlocks(ctx context.Context, rootBlocks []*coreblock.Block) ([]byte, error) {
+// rootBlockWithBytes holds a parsed block along with its raw bytes to avoid re-reading from Badger.
+type rootBlockWithBytes struct {
+	block    *coreblock.Block
+	rawBytes []byte
+}
+
+// generateCARForBlocksWithBytes creates a CAR file containing multiple root blocks and all their linked blocks.
+func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []rootBlockWithBytes) ([]byte, error) {
 	if len(rootBlocks) == 0 {
 		return nil, nil
 	}
@@ -43,22 +46,70 @@ func (p *P2P) generateCARForBlocks(ctx context.Context, rootBlocks []*coreblock.
 	txn := p.db.Rootstore().NewTxn(true)
 	defer txn.Discard()
 	txnCtx := corekv.SetCtxTxn(ctx, txn)
-
 	bstore := p.db.Multistore().Blockstore()
-	linkSystem := makeLinkSystem(blockstore.NewIPLDStore(bstore))
-
-	blockCIDs := make(map[string]struct{})
+	encStore := datastore.EncstoreFrom(p.db.Rootstore())
+	collectedBlocks := make(map[string]*collectedBlock)
 	rootCIDs := make([]cid.Cid, 0, len(rootBlocks))
 
-	for _, rootBlock := range rootBlocks {
-		rootLink, err := rootBlock.GenerateLink()
+	for _, rb := range rootBlocks {
+		rootLink, err := rb.block.GenerateLink()
 		if err != nil {
 			return nil, err
 		}
 		rootCIDs = append(rootCIDs, rootLink.Cid)
-
-		if err := p.collectDAGBlocks(txnCtx, &linkSystem, rootLink.Cid, blockCIDs); err != nil {
-			return nil, err
+		if rb.rawBytes != nil {
+			cidStr := rootLink.Cid.String()
+			collectedBlocks[cidStr] = &collectedBlock{
+				cid:      rootLink.Cid,
+				rawBytes: rb.rawBytes,
+			}
+			if rb.block.Signature != nil {
+				sigCID := rb.block.Signature.Cid
+				if _, seen := collectedBlocks[sigCID.String()]; !seen {
+					if cachedBytes, ok := coreblock.GetGlobalBlockCache().Get(sigCID); ok {
+						collectedBlocks[sigCID.String()] = &collectedBlock{
+							cid:      sigCID,
+							rawBytes: cachedBytes,
+						}
+					} else {
+						sigBlk, sigErr := bstore.Get(txnCtx, sigCID)
+						if sigErr == nil {
+							collectedBlocks[sigCID.String()] = &collectedBlock{
+								cid:      sigCID,
+								rawBytes: sigBlk.RawData(),
+							}
+						}
+					}
+				}
+			}
+			if rb.block.Encryption != nil {
+				encCID := rb.block.Encryption.Cid
+				if _, seen := collectedBlocks[encCID.String()]; !seen {
+					if cachedBytes, ok := coreblock.GetGlobalBlockCache().Get(encCID); ok {
+						collectedBlocks[encCID.String()] = &collectedBlock{
+							cid:      encCID,
+							rawBytes: cachedBytes,
+						}
+					} else {
+						encBlk, encErr := encStore.Get(txnCtx, encCID)
+						if encErr == nil {
+							collectedBlocks[encCID.String()] = &collectedBlock{
+								cid:      encCID,
+								rawBytes: encBlk.RawData(),
+							}
+						}
+					}
+				}
+			}
+			for _, dagLink := range rb.block.Links {
+				if err := p.collectDAGBlocksWithBytes(txnCtx, bstore, encStore, dagLink.Link.Cid, collectedBlocks); err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			if err := p.collectDAGBlocksWithBytes(txnCtx, bstore, encStore, rootLink.Cid, collectedBlocks); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -68,27 +119,8 @@ func (p *P2P) generateCARForBlocks(ctx context.Context, rootBlocks []*coreblock.
 		return nil, err
 	}
 
-	encStore := datastore.EncstoreFrom(p.db.Rootstore())
-
-	for cidStr := range blockCIDs {
-		c, err := cid.Decode(cidStr)
-		if err != nil {
-			return nil, err
-		}
-
-		var blockBytes []byte
-		block, err := bstore.Get(txnCtx, c)
-		if err != nil {
-			encBlock, encErr := encStore.Get(txnCtx, c)
-			if encErr != nil {
-				return nil, err
-			}
-			blockBytes = encBlock.RawData()
-		} else {
-			blockBytes = block.RawData()
-		}
-
-		if err := carWriter.Put(txnCtx, c.KeyString(), blockBytes); err != nil {
+	for _, cb := range collectedBlocks {
+		if err := carWriter.Put(txnCtx, cb.cid.KeyString(), cb.rawBytes); err != nil {
 			return nil, err
 		}
 	}
@@ -96,41 +128,87 @@ func (p *P2P) generateCARForBlocks(ctx context.Context, rootBlocks []*coreblock.
 	return buf.Bytes(), nil
 }
 
-// collectDAGBlocks recursively collects all block CIDs in the DAG by following Links.
-func (p *P2P) collectDAGBlocks(
+// collectDAGBlocksWithBytes recursively collects all blocks in the DAG with their raw bytes.
+func (p *P2P) collectDAGBlocksWithBytes(
 	ctx context.Context,
-	linkSystem *linking.LinkSystem,
+	bstore datastore.Blockstore,
+	encStore datastore.Blockstore,
 	blockCID cid.Cid,
-	visited map[string]struct{},
+	collected map[string]*collectedBlock,
 ) error {
 	cidStr := blockCID.String()
-	if _, seen := visited[cidStr]; seen {
+	if _, seen := collected[cidStr]; seen {
 		return nil
 	}
-	visited[cidStr] = struct{}{}
 
-	node, err := linkSystem.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCID}, coreblock.BlockSchemaPrototype)
-	if err != nil {
-		return err
+	var rawBytes []byte
+	if cachedBytes, ok := coreblock.GetGlobalBlockCache().Get(blockCID); ok {
+		rawBytes = cachedBytes
+	} else {
+		blk, err := bstore.Get(ctx, blockCID)
+		if err != nil {
+			encBlk, encErr := encStore.Get(ctx, blockCID)
+			if encErr != nil {
+				return err
+			}
+			rawBytes = encBlk.RawData()
+		} else {
+			rawBytes = blk.RawData()
+		}
 	}
 
-	block, err := coreblock.GetFromNode(node)
-	if err != nil {
-		return err
+	collected[cidStr] = &collectedBlock{
+		cid:      blockCID,
+		rawBytes: rawBytes,
 	}
 
-	// Include Signature block if present
+	block, err := coreblock.GetFromBytes(rawBytes)
+	if err != nil {
+		return nil
+	}
+
 	if block.Signature != nil {
-		visited[block.Signature.Cid.String()] = struct{}{}
+		sigCID := block.Signature.Cid
+		if _, seen := collected[sigCID.String()]; !seen {
+			if cachedBytes, ok := coreblock.GetGlobalBlockCache().Get(sigCID); ok {
+				collected[sigCID.String()] = &collectedBlock{
+					cid:      sigCID,
+					rawBytes: cachedBytes,
+				}
+			} else {
+				sigBlk, sigErr := bstore.Get(ctx, sigCID)
+				if sigErr == nil {
+					collected[sigCID.String()] = &collectedBlock{
+						cid:      sigCID,
+						rawBytes: sigBlk.RawData(),
+					}
+				}
+			}
+		}
 	}
 
-	// Include Encryption block if present
 	if block.Encryption != nil {
-		visited[block.Encryption.Cid.String()] = struct{}{}
+		encCID := block.Encryption.Cid
+		if _, seen := collected[encCID.String()]; !seen {
+			if cachedBytes, ok := coreblock.GetGlobalBlockCache().Get(encCID); ok {
+				collected[encCID.String()] = &collectedBlock{
+					cid:      encCID,
+					rawBytes: cachedBytes,
+				}
+			} else {
+				encBlk, encErr := encStore.Get(ctx, encCID)
+				if encErr == nil {
+					collected[encCID.String()] = &collectedBlock{
+						cid:      encCID,
+						rawBytes: encBlk.RawData(),
+					}
+				}
+			}
+		}
 	}
 
 	for _, dagLink := range block.Links {
-		if err := p.collectDAGBlocks(ctx, linkSystem, dagLink.Link.Cid, visited); err != nil {
+		if err := p.collectDAGBlocksWithBytes(ctx, bstore, encStore, dagLink.Link.Cid, collected); err != nil {
 			return err
 		}
 	}
@@ -217,7 +295,7 @@ func (p *P2P) importCARBatch(ctx context.Context, parsedCARs []*parsedCAR) error
 	defer txn.Discard()
 
 	txnCtx := corekv.SetCtxTxn(ctx, txn)
-	bstore := datastore.P2PBlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
+	bstore := datastore.CARImportBlockstoreFrom(p.db.Rootstore())
 	encStore := datastore.EncstoreFrom(p.db.Rootstore())
 
 	if len(allRegularBlocks) > 0 {

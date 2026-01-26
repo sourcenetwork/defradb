@@ -35,15 +35,28 @@ func init() {
 		badgerOpts.InMemory = options.badgerInMemory
 		badgerOpts.ValueLogFileSize = options.badgerFileSize
 		badgerOpts.EncryptionKey = options.badgerEncryptionKey
-
-		badgerOpts.NumCompactors = 4
-		badgerOpts.NumLevelZeroTables = 30
-		badgerOpts.NumLevelZeroTablesStall = 60
-		badgerOpts.MemTableSize = 512 << 20
-		badgerOpts.BlockCacheSize = 4 << 30
-		badgerOpts.ValueThreshold = 1 << 10
-		badgerOpts.IndexCacheSize = 512 << 20
 		badgerOpts.Compression = badgeropts.None
+		badgerOpts.SyncWrites = false
+		badgerOpts.ValueThreshold = 1 << 10
+
+		if options.badgerMemTableSize > 0 {
+			badgerOpts.MemTableSize = options.badgerMemTableSize
+		}
+		if options.badgerBlockCacheSize > 0 {
+			badgerOpts.BlockCacheSize = options.badgerBlockCacheSize
+		}
+		if options.badgerIndexCacheSize > 0 {
+			badgerOpts.IndexCacheSize = options.badgerIndexCacheSize
+		}
+		if options.badgerNumCompactors > 0 {
+			badgerOpts.NumCompactors = options.badgerNumCompactors
+		}
+		if options.badgerNumLevelZeroTables > 0 {
+			badgerOpts.NumLevelZeroTables = options.badgerNumLevelZeroTables
+		}
+		if options.badgerNumLevelZeroTablesStall > 0 {
+			badgerOpts.NumLevelZeroTablesStall = options.badgerNumLevelZeroTablesStall
+		}
 
 		return badger.NewDatastore(path, badgerOpts)
 	}
@@ -84,5 +97,47 @@ func WithBadgerFileSize(size int64) StoreOpt {
 func WithBadgerEncryptionKey(encryptionKey []byte) StoreOpt {
 	return func(o *StoreOptions) {
 		o.badgerEncryptionKey = encryptionKey
+	}
+}
+
+// WithBadgerBlockCacheSize sets the badger block cache size.
+func WithBadgerBlockCacheSize(size int64) StoreOpt {
+	return func(o *StoreOptions) {
+		o.badgerBlockCacheSize = size
+	}
+}
+
+// WithBadgerMemTableSize sets the badger memtable size.
+func WithBadgerMemTableSize(size int64) StoreOpt {
+	return func(o *StoreOptions) {
+		o.badgerMemTableSize = size
+	}
+}
+
+// WithBadgerIndexCacheSize sets the badger index cache size.
+func WithBadgerIndexCacheSize(size int64) StoreOpt {
+	return func(o *StoreOptions) {
+		o.badgerIndexCacheSize = size
+	}
+}
+
+// WithBadgerNumCompactors sets the number of compaction workers.
+func WithBadgerNumCompactors(num int) StoreOpt {
+	return func(o *StoreOptions) {
+		o.badgerNumCompactors = num
+	}
+}
+
+// WithBadgerNumLevelZeroTables sets the number of level zero tables before compaction starts.
+func WithBadgerNumLevelZeroTables(num int) StoreOpt {
+	return func(o *StoreOptions) {
+		o.badgerNumLevelZeroTables = num
+	}
+}
+
+// WithBadgerNumLevelZeroTablesStall sets the number of level zero tables that triggers write stalls.
+func WithBadgerNumLevelZeroTablesStall(num int) StoreOpt {
+	return func(o *StoreOptions) {
+		o.badgerNumLevelZeroTablesStall = num
 	}
 }

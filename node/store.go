@@ -41,11 +41,17 @@ var storePurgeFuncs = map[StoreType]func(ctx context.Context, options *StoreOpti
 
 // StoreOptions contains store configuration values.
 type StoreOptions struct {
-	store               StoreType
-	path                string
-	badgerFileSize      int64
-	badgerEncryptionKey []byte
-	badgerInMemory      bool
+	store                         StoreType
+	path                          string
+	badgerFileSize                int64
+	badgerEncryptionKey           []byte
+	badgerInMemory                bool
+	badgerBlockCacheSize          int64
+	badgerMemTableSize            int64
+	badgerIndexCacheSize          int64
+	badgerNumCompactors           int
+	badgerNumLevelZeroTables      int
+	badgerNumLevelZeroTablesStall int
 }
 
 // GetDefaultStorePath is a helper function that returns '$HOME/.defradb', but which

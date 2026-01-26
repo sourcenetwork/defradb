@@ -66,25 +66,8 @@ func (p *P2P) loadBlockLinks(
 	bstore datastore.Blockstore,
 ) error {
 	stack := make([]*coreblock.Block, 0, 64)
-	stack = append(stack, block)
 
-	for len(stack) > 0 {
-		current := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
-
-		link, err := current.GenerateLink()
-		if err != nil {
-			return err
-		}
-
-		merged, err := bstore.IsMerged(ctx, link.Cid)
-		if err != nil {
-			return err
-		}
-		if merged {
-			continue
-		}
-
+	processBlock := func(current *coreblock.Block) error {
 		// TODO: this part is not tested yet because there is not easy way of doing it at the moment.
 		// https://github.com/sourcenetwork/defradb/issues/3525
 		if current.Signature != nil {
@@ -133,6 +116,30 @@ func (p *P2P) loadBlockLinks(
 					return res.Error
 				}
 			}
+		}
+		return nil
+	}
+
+	if err := processBlock(block); err != nil {
+		return err
+	}
+
+	for len(stack) > 0 {
+		current := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		link, err := current.GenerateLink()
+		if err != nil {
+			return err
+		}
+		merged, err := bstore.IsMerged(ctx, link.Cid)
+		if err != nil {
+			return err
+		}
+		if merged {
+			continue
+		}
+		if err := processBlock(current); err != nil {
+			return err
 		}
 	}
 

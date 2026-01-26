@@ -965,6 +965,10 @@ func syncIndexedDoc(
 	docID client.DocID,
 	col *collection,
 ) error {
+	if len(col.indexes) == 0 {
+		return nil
+	}
+
 	oldDoc, err := col.Get(oldCtx, docID, false)
 	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
 	if !isNewDoc && err != nil {

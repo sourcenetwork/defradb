@@ -30,6 +30,12 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
+// blockMarshaler is implemented by blocks that can be marshaled to bytes.
+type blockMarshaler interface {
+	GenerateNode() ipld.Node
+	Marshal() ([]byte, error)
+}
+
 func putBlock(
 	ctx context.Context,
 	store datastore.Blockstore,
@@ -41,8 +47,13 @@ func putBlock(
 	if err != nil {
 		return cidlink.Link{}, NewErrWritingBlock(err)
 	}
-
-	return link.(cidlink.Link), nil //nolint:forcetypeassert
+	cidLink := link.(cidlink.Link) //nolint:forcetypeassert
+	if marshaler, ok := block.(blockMarshaler); ok {
+		if bytes, err := marshaler.Marshal(); err == nil {
+			GetGlobalBlockCache().Put(cidLink.Cid, bytes)
+		}
+	}
+	return cidLink, nil
 }
 
 // AddDelta adds a new delta to the existing DAG.

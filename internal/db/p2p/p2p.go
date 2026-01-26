@@ -58,24 +58,24 @@ type (
 
 const (
 	networkRequestTimeout = 10 * time.Second
-	// syncWorkerCount is the number of workers processing sync requests.
-	syncWorkerCount = 64
-	// syncQueueSize is the maximum number of pending sync requests.
-	syncQueueSize = 50000
 	// pubsubBatchSize is the number of pubsub messages to batch before publishing.
 	pubsubBatchSize = 50
 	// pubsubBatchTimeout is the maximum time to wait for a pubsub batch to fill.
-	pubsubBatchTimeout = 100 * time.Millisecond
+	pubsubBatchTimeout = 200 * time.Millisecond
 	// pubsubBatchWorkers is the number of parallel pubsub batch processors.
-	pubsubBatchWorkers = 4
+	pubsubBatchWorkers = 16
 	// maxPubsubMessageSize is the maximum size of a pubsub message (libp2p default is 1MB).
-	maxPubsubMessageSize = 800 * 1024
+	maxPubsubMessageSize = 1000 * 1024
+	// syncWorkerCount is the number of workers processing sync requests.
+	syncWorkerCount = 16
+	// syncQueueSize is the maximum number of pending sync requests.
+	syncQueueSize = 500000
 	// batchSyncSize is the number of sync operations to batch before committing.
-	batchSyncSize = 50
+	batchSyncSize = 100
 	// batchSyncTimeout is the maximum time to wait for a sync batch to fill.
-	batchSyncTimeout = 100 * time.Millisecond
+	batchSyncTimeout = 50 * time.Millisecond
 	// batchSyncWorkers is the number of parallel sync batch processors.
-	batchSyncWorkers = 32
+	batchSyncWorkers = 16
 )
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
@@ -295,6 +295,13 @@ func New(
 	}
 
 	return &p, nil
+}
+
+// Close shuts down the P2P system gracefully.
+func (p *P2P) Close() {
+	p.processQueue.close()
+	p.syncBatcher.close()
+	p.pubsubBatcher.close()
 }
 
 func (p *P2P) KMS() kms.Service {
@@ -620,6 +627,14 @@ func (p *P2P) processBatchedPushlogRequest(ctx context.Context, req *protocol.Pu
 		corelog.Int("DocumentCount", len(req.Documents)),
 		corelog.String("CollectionID", req.CollectionID))
 
+	hasCollection, err := p.hasCollection(ctx, req.CollectionID)
+	if err != nil {
+		return err
+	}
+	if !hasCollection {
+		return nil
+	}
+
 	if len(req.CAR) > 0 {
 		if _, err := p.importCAR(ctx, req.CAR); err != nil {
 			log.ErrorE("Failed to import batched CAR", err)
@@ -688,7 +703,11 @@ func (p *P2P) processPushlogRequest(
 	}
 
 	processSync := func() error {
-		isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
+		txn := p.db.Rootstore().NewTxn(true)
+		defer txn.Discard()
+		txnCtx := corekv.SetCtxTxn(ctx, txn)
+
+		isMerged, err := p.db.Multistore().Blockstore().IsMerged(txnCtx, headCID)
 		if err != nil {
 			return err
 		}
@@ -697,7 +716,7 @@ func (p *P2P) processPushlogRequest(
 		}
 
 		// Check if we have the collection
-		hasCollection, err := p.hasCollection(ctx, req.CollectionID)
+		hasCollection, err := p.hasCollection(txnCtx, req.CollectionID)
 		if err != nil {
 			return err
 		}
@@ -708,7 +727,7 @@ func (p *P2P) processPushlogRequest(
 		// No need to check access if the message is for replication as the node sending
 		// will have done so deliberately.
 		if !isReplicator {
-			mightHaveAccess, err := p.trySelfHasAccess(ctx, block, req.CollectionID)
+			mightHaveAccess, err := p.trySelfHasAccess(txnCtx, block, req.CollectionID)
 			if err != nil {
 				return err
 			}
@@ -719,9 +738,15 @@ func (p *P2P) processPushlogRequest(
 
 		// For non-CAR syncs, we still need to sync the DAG first
 		if len(req.CAR) == 0 {
-			err = p.syncDAG(ctx, block)
+			hasBlock, err := p.db.Multistore().Blockstore().Has(ctx, headCID)
 			if err != nil {
 				return err
+			}
+			if !hasBlock {
+				err = p.syncDAG(ctx, block)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
@@ -733,15 +758,13 @@ func (p *P2P) processPushlogRequest(
 			CollectionID: req.CollectionID,
 		}
 
-		resultCh := p.syncBatcher.enqueue(req.CAR, mergeEvt, func(updateEvt event.Update) {
+		p.syncBatcher.enqueue(req.CAR, mergeEvt, func(updateEvt event.Update) {
 			updateEvt.Block = req.Block
 			p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
 			if err := p.SendUpdate(updateEvt); err != nil {
 				log.ErrorE("Failed to send update after sync", err, slog.Any("PeerID", p.host.ID()))
 			}
 		})
-
-		go func() { <-resultCh }()
 		return nil
 	}
 
@@ -1144,6 +1167,9 @@ func (pb *pubsubBatcher) processBatches() {
 
 		activePeers, err := pb.p2p.host.ActivePeers()
 		if err != nil || len(activePeers) == 0 {
+			pb.p2p.db.Events().Publish(event.NewMessage(event.P2PNoPeersName, event.P2PNoPeers{
+				DroppedBatchSize: len(batch),
+			}))
 			batch = batch[:0]
 			return
 		}
@@ -1237,36 +1263,57 @@ func (pb *pubsubBatcher) processCollectionBatch(collectionID string, reqs []pubs
 		return
 	}
 
-	rootBlocks := make([]*coreblock.Block, 0, len(newEvents))
-	validEvents := make([]pubsubRequest, 0, len(newEvents))
+	currentBatch := make([]pubsubRequest, 0, len(newEvents))
+	currentSize := 0
 	for _, req := range newEvents {
-		rootBlock, err := coreblock.GetFromBytes(req.evt.Block)
-		if err != nil {
-			log.ErrorE("Failed to parse block for CAR generation", err)
-			continue
+		docSize := len(req.evt.DocID) + len(req.evt.Cid.Bytes()) + len(req.evt.Block) + 50
+		if currentSize+docSize > maxPubsubMessageSize && len(currentBatch) > 0 {
+			pb.publishBatch(collectionID, currentBatch)
+			currentBatch = currentBatch[:0]
+			currentSize = 0
 		}
-		rootBlocks = append(rootBlocks, rootBlock)
-		validEvents = append(validEvents, req)
+		currentBatch = append(currentBatch, req)
+		currentSize += docSize
 	}
 
-	if len(rootBlocks) == 0 {
+	if len(currentBatch) > 0 {
+		pb.publishBatch(collectionID, currentBatch)
+	}
+}
+
+// publishBatch publishes a batch of documents to the collection topic.
+func (pb *pubsubBatcher) publishBatch(collectionID string, batch []pubsubRequest) {
+	if len(batch) == 0 {
 		return
 	}
 
-	// Generate single CAR for all documents in this collection batch
-	carData, err := pb.p2p.generateCARForBlocks(pb.ctx, rootBlocks)
-	if err != nil {
-		log.ErrorE("Failed to generate batched CAR", err)
-		return
-	}
+	rootBlocks := make([]rootBlockWithBytes, 0, len(batch))
+	documents := make([]protocol.DocumentInfo, len(batch))
 
-	// Build document info list for batched request
-	documents := make([]protocol.DocumentInfo, len(validEvents))
-	for i, req := range validEvents {
+	for i, req := range batch {
 		documents[i] = protocol.DocumentInfo{
 			DocID: req.evt.DocID,
 			CID:   req.evt.Cid.Bytes(),
 			Block: req.evt.Block,
+		}
+
+		block, err := coreblock.GetFromBytes(req.evt.Block)
+		if err != nil {
+			log.ErrorE("Failed to parse block for CAR generation", err)
+			continue
+		}
+		rootBlocks = append(rootBlocks, rootBlockWithBytes{
+			block:    block,
+			rawBytes: req.evt.Block,
+		})
+	}
+
+	var carData []byte
+	if len(rootBlocks) > 0 {
+		var err error
+		carData, err = pb.p2p.generateCARForBlocksWithBytes(pb.ctx, rootBlocks)
+		if err != nil {
+			log.ErrorE("Failed to generate CAR for batch", err)
 		}
 	}
 
@@ -1275,10 +1322,10 @@ func (pb *pubsubBatcher) processCollectionBatch(collectionID string, reqs []pubs
 		estimatedSize += len(doc.DocID) + len(doc.CID) + len(doc.Block) + 50
 	}
 
-	if estimatedSize > maxPubsubMessageSize && len(documents) > 1 {
-		mid := len(validEvents) / 2
-		pb.processCollectionBatch(collectionID, newEvents[:mid])
-		pb.processCollectionBatch(collectionID, newEvents[mid:])
+	if estimatedSize > maxPubsubMessageSize && len(batch) > 1 {
+		mid := len(batch) / 2
+		pb.publishBatch(collectionID, batch[:mid])
+		pb.publishBatch(collectionID, batch[mid:])
 		return
 	}
 
@@ -1299,7 +1346,7 @@ func (pb *pubsubBatcher) processCollectionBatch(collectionID string, reqs []pubs
 		log.ErrorE("Failed to publish batched request to collection topic", err)
 	}
 
-	for _, req := range validEvents {
+	for _, req := range batch {
 		if req.evt.DocID != "" {
 			docReq := &protocol.PushLogRequest{
 				DocID:        req.evt.DocID,
