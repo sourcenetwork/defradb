@@ -17,18 +17,20 @@ import (
 )
 
 const (
-	clientGoEnvName   = "DEFRA_CLIENT_GO"
-	clientHttpEnvName = "DEFRA_CLIENT_HTTP"
-	clientCliEnvName  = "DEFRA_CLIENT_CLI"
-	clientCEnvName    = "DEFRA_CLIENT_C"
+	clientGoEnvName      = "DEFRA_CLIENT_GO"
+	clientHttpEnvName    = "DEFRA_CLIENT_HTTP"
+	clientCliEnvName     = "DEFRA_CLIENT_CLI"
+	clientCEnvName       = "DEFRA_CLIENT_C"
+	clientRustFFIEnvName = "DEFRA_CLIENT_RUST_FFI"
 )
 
 var (
-	httpClient bool
-	goClient   bool
-	cliClient  bool
-	jsClient   bool
-	cClient    bool
+	httpClient    bool
+	goClient      bool
+	cliClient     bool
+	jsClient      bool
+	cClient       bool
+	rustFFIClient bool
 )
 
 func init() {
@@ -38,8 +40,9 @@ func init() {
 	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
 	cliClient, _ = strconv.ParseBool(os.Getenv(clientCliEnvName))
 	cClient, _ = strconv.ParseBool(os.Getenv(clientCEnvName))
+	rustFFIClient, _ = strconv.ParseBool(os.Getenv(clientRustFFIEnvName))
 
-	if !goClient && !httpClient && !cliClient && !cClient {
+	if !goClient && !httpClient && !cliClient && !cClient && !rustFFIClient {
 		// Default is to test go client type.
 		goClient = true
 	}

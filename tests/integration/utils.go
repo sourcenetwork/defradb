@@ -175,6 +175,9 @@ func ExecuteTestCase(
 	if cClient {
 		clients = append(clients, state.CClientType)
 	}
+	if rustFFIClient {
+		clients = append(clients, state.RustFFIClientType)
+	}
 
 	var databases []state.DatabaseType
 	if badgerInMemory {

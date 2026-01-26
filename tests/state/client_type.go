@@ -29,4 +29,7 @@ const (
 	// CClientType enables running the test suite using
 	// the C implementation of the client.TxnStore interface.
 	CClientType ClientType = "c"
+	// RustFFIClientType enables running the test suite using
+	// the Rust FFI implementation of the client.TxnStore interface.
+	RustFFIClientType ClientType = "rust-ffi"
 )

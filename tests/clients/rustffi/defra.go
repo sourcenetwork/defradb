@@ -1,0 +1,1050 @@
+// Package rustffi provides Go bindings for the DefraDB Rust FFI.
+//
+// This package wraps the C FFI exposed by the Rust `ffi` crate,
+// providing a Go-native interface for integration testing.
+//
+// Build requirements:
+//   - Rust library must be built first: cargo build --release -p ffi
+//   - CGO must be enabled: CGO_ENABLED=1
+package rustffi
+
+/*
+#cgo CFLAGS: -I/Users/johnzampolin/go/src/github.com/sourcenetwork/defradb.rs/crates/ffi
+#cgo LDFLAGS: -L/Users/johnzampolin/go/src/github.com/sourcenetwork/defradb.rs/target/release -lffi -ldl -lpthread -lm
+
+#include "defra.h"
+#include <stdlib.h>
+*/
+import "C"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"sync"
+	"unsafe"
+)
+
+var (
+	// initOnce ensures Init is only called once
+	initOnce sync.Once
+
+	// ErrNotInitialized is returned when FFI functions are called before Init
+	ErrNotInitialized = errors.New("ffi: not initialized - call Init() first")
+)
+
+// Init initializes the FFI library.
+// Must be called before any other FFI functions.
+// Safe to call multiple times.
+func Init() {
+	initOnce.Do(func() {
+		C.defra_init()
+	})
+}
+
+// Version returns the library version string.
+func Version() string {
+	cstr := C.defra_version()
+	if cstr == nil {
+		return ""
+	}
+	defer C.defra_free_string(cstr)
+	return C.GoString(cstr)
+}
+
+// Node represents a DefraDB node handle.
+type Node struct {
+	ptr C.uintptr_t
+}
+
+// NodeOptions configures node creation.
+type NodeOptions struct {
+	// DBPath is the path to the database directory.
+	// If empty, an in-memory database is used.
+	DBPath string
+
+	// InMemory forces in-memory storage even if DBPath is set.
+	InMemory bool
+}
+
+// NewNode creates a new DefraDB node.
+// The node must be closed with Close() when done.
+func NewNode(opts NodeOptions) (*Node, error) {
+	var cOpts C.struct_NodeInitOptions
+
+	if opts.DBPath != "" {
+		cDBPath := C.CString(opts.DBPath)
+		defer C.free(unsafe.Pointer(cDBPath))
+		cOpts.db_path = cDBPath
+	}
+
+	if opts.InMemory || opts.DBPath == "" {
+		cOpts.in_memory = 1
+	} else {
+		cOpts.in_memory = 0
+	}
+
+	result := C.new_node(cOpts)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: new_node failed: %s", err)
+	}
+
+	return &Node{ptr: result.node_ptr}, nil
+}
+
+// Close closes the node and releases resources.
+// After calling Close, the node handle is no longer valid.
+func (n *Node) Close() error {
+	result := C.node_close(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: node_close failed: %s", err)
+	}
+
+	return nil
+}
+
+// AddSchema adds a GraphQL SDL schema to the database.
+// Returns the JSON response containing created collection versions.
+func (n *Node) AddSchema(sdl string) (string, error) {
+	cSDL := C.CString(sdl)
+	defer C.free(unsafe.Pointer(cSDL))
+
+	result := C.add_schema(n.ptr, cSDL)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: add_schema failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// GetCollections returns all collections in the database as JSON.
+func (n *Node) GetCollections() (string, error) {
+	result := C.get_collections(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: get_collections failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// QueryResult represents a GraphQL query response.
+type QueryResult struct {
+	Data   json.RawMessage `json:"data,omitempty"`
+	Errors []QueryError    `json:"errors,omitempty"`
+}
+
+// QueryError represents a GraphQL error.
+type QueryError struct {
+	Message   string          `json:"message"`
+	Locations []ErrorLocation `json:"locations,omitempty"`
+	Path      []interface{}   `json:"path,omitempty"`
+}
+
+// ErrorLocation indicates where an error occurred in the query.
+type ErrorLocation struct {
+	Line   int `json:"line"`
+	Column int `json:"column"`
+}
+
+// ExecRequest executes a GraphQL query or mutation.
+// Returns the raw JSON response string.
+func (n *Node) ExecRequest(query string, operationName string, variables string) (string, error) {
+	cQuery := C.CString(query)
+	defer C.free(unsafe.Pointer(cQuery))
+
+	var cOpName *C.char
+	if operationName != "" {
+		cOpName = C.CString(operationName)
+		defer C.free(unsafe.Pointer(cOpName))
+	}
+
+	var cVars *C.char
+	if variables != "" {
+		cVars = C.CString(variables)
+		defer C.free(unsafe.Pointer(cVars))
+	}
+
+	result := C.exec_request(n.ptr, cQuery, cOpName, cVars)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: exec_request failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// Query executes a GraphQL query and returns a parsed result.
+func (n *Node) Query(query string) (*QueryResult, error) {
+	return n.QueryWithVars(query, "", nil)
+}
+
+// QueryWithVars executes a GraphQL query with variables.
+func (n *Node) QueryWithVars(query string, operationName string, variables map[string]interface{}) (*QueryResult, error) {
+	var varsJSON string
+	if variables != nil {
+		varsBytes, err := json.Marshal(variables)
+		if err != nil {
+			return nil, fmt.Errorf("ffi: failed to marshal variables: %w", err)
+		}
+		varsJSON = string(varsBytes)
+	}
+
+	responseJSON, err := n.ExecRequest(query, operationName, varsJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	var result QueryResult
+	if err := json.Unmarshal([]byte(responseJSON), &result); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse response: %w", err)
+	}
+
+	return &result, nil
+}
+
+// Mutate executes a GraphQL mutation and returns a parsed result.
+func (n *Node) Mutate(mutation string) (*QueryResult, error) {
+	return n.Query(mutation)
+}
+
+// Transaction represents an active database transaction.
+type Transaction struct {
+	node *Node
+	id   string
+}
+
+// BeginTxn starts a new transaction.
+// If readonly is true, the transaction cannot perform write operations.
+// The transaction must be committed or rolled back when done.
+func (n *Node) BeginTxn(readonly bool) (*Transaction, error) {
+	var readonlyInt C.int32_t
+	if readonly {
+		readonlyInt = 1
+	}
+
+	result := C.begin_txn(n.ptr, readonlyInt)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: begin_txn failed: %s", err)
+	}
+
+	txnID := C.GoString(result.txn_id)
+	C.defra_free_string(result.txn_id)
+
+	return &Transaction{node: n, id: txnID}, nil
+}
+
+// ID returns the transaction ID.
+func (t *Transaction) ID() string {
+	return t.id
+}
+
+// Commit commits the transaction, making all changes permanent.
+// After commit, the transaction is no longer valid.
+func (t *Transaction) Commit() error {
+	cTxnID := C.CString(t.id)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	result := C.commit_txn(t.node.ptr, cTxnID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: commit_txn failed: %s", err)
+	}
+
+	return nil
+}
+
+// Rollback discards all changes made in the transaction.
+// After rollback, the transaction is no longer valid.
+func (t *Transaction) Rollback() error {
+	cTxnID := C.CString(t.id)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	result := C.rollback_txn(t.node.ptr, cTxnID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: rollback_txn failed: %s", err)
+	}
+
+	return nil
+}
+
+// ExecRequest executes a GraphQL query or mutation within the transaction.
+func (t *Transaction) ExecRequest(query string, operationName string, variables string) (string, error) {
+	cTxnID := C.CString(t.id)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	cQuery := C.CString(query)
+	defer C.free(unsafe.Pointer(cQuery))
+
+	var cOpName *C.char
+	if operationName != "" {
+		cOpName = C.CString(operationName)
+		defer C.free(unsafe.Pointer(cOpName))
+	}
+
+	var cVars *C.char
+	if variables != "" {
+		cVars = C.CString(variables)
+		defer C.free(unsafe.Pointer(cVars))
+	}
+
+	result := C.exec_request_in_txn(t.node.ptr, cTxnID, cQuery, cOpName, cVars)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: exec_request_in_txn failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// Query executes a GraphQL query within the transaction.
+func (t *Transaction) Query(query string) (*QueryResult, error) {
+	responseJSON, err := t.ExecRequest(query, "", "")
+	if err != nil {
+		return nil, err
+	}
+
+	var result QueryResult
+	if err := json.Unmarshal([]byte(responseJSON), &result); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse response: %w", err)
+	}
+
+	return &result, nil
+}
+
+// Mutate executes a GraphQL mutation within the transaction.
+func (t *Transaction) Mutate(mutation string) (*QueryResult, error) {
+	return t.Query(mutation)
+}
+
+// ============================================================================
+// Collection Functions
+// ============================================================================
+
+// GetCollectionByName returns a collection by its name.
+// Returns the collection's schema as JSON if found.
+func (n *Node) GetCollectionByName(name string) (string, error) {
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+
+	result := C.get_collection_by_name(n.ptr, cName)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: get_collection_by_name failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// HasCollection checks if a collection exists by name.
+func (n *Node) HasCollection(name string) (bool, error) {
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+
+	result := C.has_collection(n.ptr, cName)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return false, fmt.Errorf("ffi: has_collection failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value == "true", nil
+}
+
+// DeleteCollection deletes a collection and all its documents.
+func (n *Node) DeleteCollection(name string) error {
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+
+	result := C.delete_collection(n.ptr, cName)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: delete_collection failed: %s", err)
+	}
+
+	C.defra_free_string(result.value)
+	return nil
+}
+
+// FindCollectionByID finds a collection by its collection ID (schema version ID).
+// Returns the collection's schema as JSON if found, or "null" if not found.
+func (n *Node) FindCollectionByID(collectionID string) (string, error) {
+	cID := C.CString(collectionID)
+	defer C.free(unsafe.Pointer(cID))
+
+	result := C.find_collection_by_id(n.ptr, cID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: find_collection_by_id failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// SetActiveCollectionVersion activates the collection with the given version ID.
+func (n *Node) SetActiveCollectionVersion(versionID string) error {
+	cVersionID := C.CString(versionID)
+	defer C.free(unsafe.Pointer(cVersionID))
+
+	result := C.set_active_collection_version(n.ptr, cVersionID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: set_active_collection_version failed: %s", err)
+	}
+
+	C.defra_free_string(result.value)
+	return nil
+}
+
+// PatchCollection applies a JSON patch to a collection's schema.
+// Returns the updated collection schema as JSON.
+func (n *Node) PatchCollection(collectionName string, patch string) (string, error) {
+	cName := C.CString(collectionName)
+	defer C.free(unsafe.Pointer(cName))
+
+	cPatch := C.CString(patch)
+	defer C.free(unsafe.Pointer(cPatch))
+
+	result := C.patch_collection(n.ptr, cName, cPatch)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: patch_collection failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// GetCollectionByVersionID returns a collection by its version ID.
+// Returns the collection's schema as JSON if found, or "null" if not found.
+func (n *Node) GetCollectionByVersionID(versionID string) (string, error) {
+	cVersionID := C.CString(versionID)
+	defer C.free(unsafe.Pointer(cVersionID))
+
+	result := C.get_collection_by_version_id(n.ptr, cVersionID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: get_collection_by_version_id failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// AddView creates a new Defra View from a GQL query and SDL schema.
+// The transform parameter is optional (pass empty string for none).
+// Note: Not yet implemented - see issue #178.
+func (n *Node) AddView(gqlQuery string, sdl string, transform string) (string, error) {
+	cQuery := C.CString(gqlQuery)
+	defer C.free(unsafe.Pointer(cQuery))
+
+	cSDL := C.CString(sdl)
+	defer C.free(unsafe.Pointer(cSDL))
+
+	var cTransform *C.char
+	if transform != "" {
+		cTransform = C.CString(transform)
+		defer C.free(unsafe.Pointer(cTransform))
+	}
+
+	result := C.add_view(n.ptr, cQuery, cSDL, cTransform)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: add_view failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// RefreshViews refreshes the caches of all views matching the given options.
+// Pass empty string for options to refresh all views.
+// Note: Not yet implemented - see issue #178.
+func (n *Node) RefreshViews(options string) error {
+	var cOptions *C.char
+	if options != "" {
+		cOptions = C.CString(options)
+		defer C.free(unsafe.Pointer(cOptions))
+	}
+
+	result := C.refresh_views(n.ptr, cOptions)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: refresh_views failed: %s", err)
+	}
+
+	C.defra_free_string(result.value)
+	return nil
+}
+
+// SetMigration sets the migration for collection versions.
+// The config parameter should be a JSON string containing LensConfig.
+// Note: Not yet implemented - see issue #179.
+func (n *Node) SetMigration(config string) (string, error) {
+	cConfig := C.CString(config)
+	defer C.free(unsafe.Pointer(cConfig))
+
+	result := C.set_migration(n.ptr, cConfig)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: set_migration failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// ============================================================================
+// Index Functions
+// ============================================================================
+
+// IndexField describes a field within an index.
+type IndexField struct {
+	Name       string `json:"Name"`
+	Descending bool   `json:"Descending,omitempty"`
+}
+
+// IndexDescription describes a secondary index on a collection.
+type IndexDescription struct {
+	Name   string       `json:"Name"`
+	ID     uint32       `json:"ID,omitempty"`
+	Fields []IndexField `json:"Fields"`
+	Unique bool         `json:"Unique,omitempty"`
+}
+
+// CreateIndex creates a new index on a collection.
+// Returns the created index description with assigned ID.
+func (n *Node) CreateIndex(collectionName string, indexName string, fields []IndexField, unique bool) (*IndexDescription, error) {
+	cCollName := C.CString(collectionName)
+	defer C.free(unsafe.Pointer(cCollName))
+
+	indexInput := IndexDescription{
+		Name:   indexName,
+		Fields: fields,
+		Unique: unique,
+	}
+	indexJSON, err := json.Marshal(indexInput)
+	if err != nil {
+		return nil, fmt.Errorf("ffi: failed to marshal index: %w", err)
+	}
+
+	cIndexJSON := C.CString(string(indexJSON))
+	defer C.free(unsafe.Pointer(cIndexJSON))
+
+	result := C.create_index(n.ptr, cCollName, cIndexJSON)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: create_index failed: %s", errMsg)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var index IndexDescription
+	if err := json.Unmarshal([]byte(value), &index); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse index: %w", err)
+	}
+
+	return &index, nil
+}
+
+// DropIndex drops an index from a collection.
+func (n *Node) DropIndex(collectionName string, indexName string) error {
+	cCollName := C.CString(collectionName)
+	defer C.free(unsafe.Pointer(cCollName))
+
+	cIndexName := C.CString(indexName)
+	defer C.free(unsafe.Pointer(cIndexName))
+
+	result := C.drop_index(n.ptr, cCollName, cIndexName)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: drop_index failed: %s", errMsg)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// GetIndexes returns all indexes for a collection.
+func (n *Node) GetIndexes(collectionName string) ([]IndexDescription, error) {
+	cCollName := C.CString(collectionName)
+	defer C.free(unsafe.Pointer(cCollName))
+
+	result := C.get_indexes(n.ptr, cCollName)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: get_indexes failed: %s", errMsg)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var indexes []IndexDescription
+	if err := json.Unmarshal([]byte(value), &indexes); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse indexes: %w", err)
+	}
+
+	return indexes, nil
+}
+
+// GetAllIndexes returns all indexes across all collections.
+func (n *Node) GetAllIndexes() (map[string][]IndexDescription, error) {
+	result := C.get_all_indexes(n.ptr)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: get_all_indexes failed: %s", errMsg)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var indexes map[string][]IndexDescription
+	if err := json.Unmarshal([]byte(value), &indexes); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse indexes: %w", err)
+	}
+
+	return indexes, nil
+}
+
+// ============================================================================
+// NAC (Node Access Control) Functions
+// ============================================================================
+
+// NACStatus represents the NAC status response.
+type NACStatus struct {
+	Status            string  `json:"status"`
+	ConfiguredEnabled bool    `json:"configured_enabled"`
+	DevMode           bool    `json:"dev_mode"`
+	Owner             *string `json:"owner,omitempty"`
+}
+
+// GetNACStatus returns the current NAC status.
+func (n *Node) GetNACStatus() (*NACStatus, error) {
+	result := C.get_nac_status(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: get_nac_status failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var status NACStatus
+	if err := json.Unmarshal([]byte(value), &status); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse NAC status: %w", err)
+	}
+
+	return &status, nil
+}
+
+// EnableNAC enables NAC with the given owner DID.
+func (n *Node) EnableNAC(ownerDID string) error {
+	cOwnerDID := C.CString(ownerDID)
+	defer C.free(unsafe.Pointer(cOwnerDID))
+
+	result := C.enable_nac(n.ptr, cOwnerDID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: enable_nac failed: %s", err)
+	}
+
+	return nil
+}
+
+// DisableNAC temporarily disables NAC.
+// The requestor must be an admin.
+func (n *Node) DisableNAC(requestorDID string) error {
+	cRequestorDID := C.CString(requestorDID)
+	defer C.free(unsafe.Pointer(cRequestorDID))
+
+	result := C.disable_nac(n.ptr, cRequestorDID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: disable_nac failed: %s", err)
+	}
+
+	return nil
+}
+
+// ReEnableNAC re-enables NAC after temporary disable.
+// The requestor must be an admin.
+func (n *Node) ReEnableNAC(requestorDID string) error {
+	cRequestorDID := C.CString(requestorDID)
+	defer C.free(unsafe.Pointer(cRequestorDID))
+
+	result := C.re_enable_nac(n.ptr, cRequestorDID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: re_enable_nac failed: %s", err)
+	}
+
+	return nil
+}
+
+// AddNACActorRelationship grants admin to target.
+// Returns true if added, false if already exists.
+func (n *Node) AddNACActorRelationship(requestorDID, targetDID string) (bool, error) {
+	cRequestorDID := C.CString(requestorDID)
+	defer C.free(unsafe.Pointer(cRequestorDID))
+
+	cTargetDID := C.CString(targetDID)
+	defer C.free(unsafe.Pointer(cTargetDID))
+
+	result := C.add_nac_actor_relationship(n.ptr, cRequestorDID, cTargetDID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return false, fmt.Errorf("ffi: add_nac_actor_relationship failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var response struct {
+		Added bool `json:"added"`
+	}
+	if err := json.Unmarshal([]byte(value), &response); err != nil {
+		return false, fmt.Errorf("ffi: failed to parse response: %w", err)
+	}
+
+	return response.Added, nil
+}
+
+// DeleteNACActorRelationship revokes admin from target.
+// Returns true if deleted, false if didn't exist.
+func (n *Node) DeleteNACActorRelationship(requestorDID, targetDID string) (bool, error) {
+	cRequestorDID := C.CString(requestorDID)
+	defer C.free(unsafe.Pointer(cRequestorDID))
+
+	cTargetDID := C.CString(targetDID)
+	defer C.free(unsafe.Pointer(cTargetDID))
+
+	result := C.delete_nac_actor_relationship(n.ptr, cRequestorDID, cTargetDID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return false, fmt.Errorf("ffi: delete_nac_actor_relationship failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var response struct {
+		Deleted bool `json:"deleted"`
+	}
+	if err := json.Unmarshal([]byte(value), &response); err != nil {
+		return false, fmt.Errorf("ffi: failed to parse response: %w", err)
+	}
+
+	return response.Deleted, nil
+}
+
+// ============================================================================
+// DAC (Document Access Control) Functions
+// ============================================================================
+
+// AddDACActorRelationship shares document access with target.
+// Relation can be "reader", "updater", or "deleter".
+// Returns true if added, false if already exists.
+func (n *Node) AddDACActorRelationship(requestorDID, targetDID, collectionID, docID, relation string) (bool, error) {
+	cRequestorDID := C.CString(requestorDID)
+	defer C.free(unsafe.Pointer(cRequestorDID))
+
+	cTargetDID := C.CString(targetDID)
+	defer C.free(unsafe.Pointer(cTargetDID))
+
+	cCollectionID := C.CString(collectionID)
+	defer C.free(unsafe.Pointer(cCollectionID))
+
+	cDocID := C.CString(docID)
+	defer C.free(unsafe.Pointer(cDocID))
+
+	cRelation := C.CString(relation)
+	defer C.free(unsafe.Pointer(cRelation))
+
+	result := C.add_dac_actor_relationship(n.ptr, cRequestorDID, cTargetDID, cCollectionID, cDocID, cRelation)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return false, fmt.Errorf("ffi: add_dac_actor_relationship failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var response struct {
+		Added bool `json:"added"`
+	}
+	if err := json.Unmarshal([]byte(value), &response); err != nil {
+		return false, fmt.Errorf("ffi: failed to parse response: %w", err)
+	}
+
+	return response.Added, nil
+}
+
+// DeleteDACActorRelationship revokes document access from target.
+// Returns true if deleted, false if didn't exist.
+func (n *Node) DeleteDACActorRelationship(requestorDID, targetDID, collectionID, docID, relation string) (bool, error) {
+	cRequestorDID := C.CString(requestorDID)
+	defer C.free(unsafe.Pointer(cRequestorDID))
+
+	cTargetDID := C.CString(targetDID)
+	defer C.free(unsafe.Pointer(cTargetDID))
+
+	cCollectionID := C.CString(collectionID)
+	defer C.free(unsafe.Pointer(cCollectionID))
+
+	cDocID := C.CString(docID)
+	defer C.free(unsafe.Pointer(cDocID))
+
+	cRelation := C.CString(relation)
+	defer C.free(unsafe.Pointer(cRelation))
+
+	result := C.delete_dac_actor_relationship(n.ptr, cRequestorDID, cTargetDID, cCollectionID, cDocID, cRelation)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return false, fmt.Errorf("ffi: delete_dac_actor_relationship failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var response struct {
+		Deleted bool `json:"deleted"`
+	}
+	if err := json.Unmarshal([]byte(value), &response); err != nil {
+		return false, fmt.Errorf("ffi: failed to parse response: %w", err)
+	}
+
+	return response.Deleted, nil
+}
+
+// ============================================================================
+// Identity Functions
+// ============================================================================
+
+// GetNodeIdentity returns the node's DID if configured.
+func (n *Node) GetNodeIdentity() (string, error) {
+	result := C.get_node_identity(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: get_node_identity failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var response struct {
+		DID string `json:"did"`
+	}
+	if err := json.Unmarshal([]byte(value), &response); err != nil {
+		return "", fmt.Errorf("ffi: failed to parse response: %w", err)
+	}
+
+	return response.DID, nil
+}
+
+// ============================================================================
+// Subscription Functions
+// ============================================================================
+
+// Subscription represents an active subscription to database events.
+type Subscription struct {
+	node   *Node
+	handle C.uintptr_t
+}
+
+// SubscriptionEvent represents an event received from a subscription.
+type SubscriptionEvent struct {
+	Type         string `json:"type"`
+	DocID        string `json:"doc_id,omitempty"`
+	CID          string `json:"cid,omitempty"`
+	CollectionID string `json:"collection_id,omitempty"`
+	IsRetry      bool   `json:"is_retry,omitempty"`
+	IsRelay      bool   `json:"is_relay,omitempty"`
+}
+
+// PollResult represents the result of polling a subscription.
+type PollResult struct {
+	// HasEvent is true if an event was received.
+	HasEvent bool
+	// Event contains the event data when HasEvent is true.
+	Event *SubscriptionEvent
+	// DroppedCount indicates how many events were dropped due to buffer overflow.
+	DroppedCount uint64
+	// IsClosed is true if the subscription has been closed.
+	IsClosed bool
+}
+
+// ErrSubscriptionClosed is returned when polling a closed subscription.
+var ErrSubscriptionClosed = errors.New("ffi: subscription closed")
+
+// ErrNoEvent is returned when polling returns no event.
+var ErrNoEvent = errors.New("ffi: no event available")
+
+// Subscribe creates a subscription to database events.
+// The optional collectionFilter limits events to a specific collection.
+// The subscription must be closed with Close() when done.
+func (n *Node) Subscribe(collectionFilter string) (*Subscription, error) {
+	var cFilter *C.char
+	if collectionFilter != "" {
+		cFilter = C.CString(collectionFilter)
+		defer C.free(unsafe.Pointer(cFilter))
+	}
+
+	result := C.create_subscription(n.ptr, cFilter)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: create_subscription failed: %s", err)
+	}
+
+	return &Subscription{
+		node:   n,
+		handle: result.subscription_handle,
+	}, nil
+}
+
+// Poll checks for the next event without blocking.
+// Returns a PollResult indicating the status and any event data.
+func (s *Subscription) Poll() (*PollResult, error) {
+	result := C.poll_subscription(s.handle)
+
+	switch result.status {
+	case 0: // Event available
+		value := C.GoString(result.value)
+		C.defra_free_string(result.value)
+
+		var event SubscriptionEvent
+		if err := json.Unmarshal([]byte(value), &event); err != nil {
+			return nil, fmt.Errorf("ffi: failed to parse event: %w", err)
+		}
+
+		return &PollResult{
+			HasEvent:     true,
+			Event:        &event,
+			DroppedCount: uint64(result.dropped_count),
+		}, nil
+
+	case 1: // Error
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: poll_subscription failed: %s", err)
+
+	case 2: // No event available
+		return &PollResult{
+			HasEvent:     false,
+			DroppedCount: uint64(result.dropped_count),
+		}, nil
+
+	case 3: // Subscription closed
+		return &PollResult{
+			HasEvent: false,
+			IsClosed: true,
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("ffi: unknown poll status: %d", result.status)
+	}
+}
+
+// Close closes the subscription and releases resources.
+// After calling Close, the subscription handle is no longer valid.
+func (s *Subscription) Close() error {
+	result := C.close_subscription(s.handle)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: close_subscription failed: %s", err)
+	}
+
+	return nil
+}

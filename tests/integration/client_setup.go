@@ -23,16 +23,21 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/clients/cli"
 	"github.com/sourcenetwork/defradb/tests/clients/http"
+	"github.com/sourcenetwork/defradb/tests/clients/rustffi"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func init() {
-	if !goClient && !httpClient && !cliClient && !cClient {
+	if !goClient && !httpClient && !cliClient && !cClient && !rustFFIClient {
 		// Default is to test go client type.
 		goClient = true
 	}
 	if cClient {
 		skipNetworkTests = false
+		skipBackupTests = true
+	}
+	if rustFFIClient {
+		skipNetworkTests = true
 		skipBackupTests = true
 	}
 }
@@ -57,6 +62,9 @@ func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 
 	case state.CClientType:
 		return cbindings.NewCWrapper(nodeObj)
+
+	case state.RustFFIClientType:
+		return rustffi.NewWrapper()
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
