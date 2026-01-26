@@ -22,7 +22,7 @@ import (
 func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
@@ -31,7 +31,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 					"address": "Manning Publications"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
@@ -91,7 +91,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
 func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
@@ -101,7 +101,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
@@ -154,7 +154,7 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
@@ -164,7 +164,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
@@ -249,7 +249,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-e06e5f77-ef19-570a-a866-511e12ed423e",
@@ -259,7 +259,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 					"_publisherID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0cd9a444-adb8-59c5-85e1-f95311ee9f85",
@@ -338,7 +338,7 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *te
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
@@ -348,7 +348,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 					"_publisherID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",
@@ -402,7 +402,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideForwardDirection(t *testing.T)
 func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// books
 				CollectionID: 0,
 				// "_docID": "bae-2bc16473-47d5-5458-9099-c09ef0361303",
@@ -412,7 +412,7 @@ func TestTxnDeletionOfRelatedDocFromNonPrimarySideBackwardDirection(t *testing.T
 					"_publisherID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// publishers
 				CollectionID: 2,
 				// "_docID": "bae-0c752d75-5819-599f-ba18-31ee6f177d91",

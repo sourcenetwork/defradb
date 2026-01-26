@@ -30,7 +30,7 @@ func TestACP_DeleteDocActorRelationshipWithCollectionThatHasNoPolicy_NotAllowedE
 				`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,

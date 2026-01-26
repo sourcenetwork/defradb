@@ -92,7 +92,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			&action.AddSchema{
 				Schema: schemas,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Bob",
@@ -315,7 +315,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				// bae-89136f56-3779-5656-b8a6-f76a1c262f37
@@ -323,7 +323,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 					"name": "John and the sourcerers' stone"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
 				Doc: `{

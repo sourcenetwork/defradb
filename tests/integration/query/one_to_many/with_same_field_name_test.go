@@ -48,14 +48,14 @@ func executeSameFieldNameTestCase(t *testing.T, test testUtils.TestCase) {
 func TestQueryOneToManyWithSameFieldName_SingleSide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
 						"_relationship1ID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham"
@@ -90,14 +90,14 @@ func TestQueryOneToManyWithSameFieldName_SingleSide(t *testing.T) {
 func TestQueryOneToManyWithSameFieldName_MultiSide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
 						"_relationship1ID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham"

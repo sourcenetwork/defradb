@@ -82,7 +82,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
@@ -91,7 +91,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -152,7 +152,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
@@ -161,7 +161,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -226,7 +226,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
@@ -235,7 +235,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -300,7 +300,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
@@ -309,7 +309,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{

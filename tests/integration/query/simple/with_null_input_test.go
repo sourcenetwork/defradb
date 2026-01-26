@@ -20,7 +20,7 @@ import (
 func TestQuerySimple_WithNullFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -48,7 +48,7 @@ func TestQuerySimple_WithNullFilter_Succeeds(t *testing.T) {
 func TestQuerySimple_WithNullFilterFields_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": null
 				}`,
@@ -76,7 +76,7 @@ func TestQuerySimple_WithNullFilterFields_Succeeds(t *testing.T) {
 func TestQuerySimple_WithNullOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -104,7 +104,7 @@ func TestQuerySimple_WithNullOrder_Succeeds(t *testing.T) {
 func TestQuerySimple_WithNullOrderFields_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -132,7 +132,7 @@ func TestQuerySimple_WithNullOrderFields_Succeeds(t *testing.T) {
 func TestQuerySimple_WithNullLimit_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -160,7 +160,7 @@ func TestQuerySimple_WithNullLimit_Succeed(t *testing.T) {
 func TestQuerySimple_WithNullOffset_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -188,7 +188,7 @@ func TestQuerySimple_WithNullOffset_Succeeds(t *testing.T) {
 func TestQuerySimple_WithNullDocID_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -216,7 +216,7 @@ func TestQuerySimple_WithNullDocID_Succeeds(t *testing.T) {
 func TestQuerySimple_WithNullDocIDs_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -244,7 +244,7 @@ func TestQuerySimple_WithNullDocIDs_Succeeds(t *testing.T) {
 func TestQuerySimple_WithNullCID_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -272,7 +272,7 @@ func TestQuerySimple_WithNullCID_Succeeds(t *testing.T) {
 func TestQuerySimple_WithNullGroupBy_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -300,7 +300,7 @@ func TestQuerySimple_WithNullGroupBy_Succeeds(t *testing.T) {
 func TestQuerySimple_WithNullShowDeleted_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -328,7 +328,7 @@ func TestQuerySimple_WithNullShowDeleted_Succeeds(t *testing.T) {
 func TestQuerySimple_WithFilterWithNullOr_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -373,7 +373,7 @@ func TestQuerySimple_WithFilterWithNullOrElement_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithFilterWithNullOrField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": null
 				}`,
@@ -401,7 +401,7 @@ func TestQuerySimple_WithFilterWithNullOrField_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithFilterWithNullAnd_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -446,7 +446,7 @@ func TestQuerySimple_WithFilterWithNullAndElement_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithFilterWithNullAndField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": null
 				}`,
@@ -474,7 +474,7 @@ func TestQuerySimple_WithFilterWithNullAndField_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithFilterWithNullNot_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -502,7 +502,7 @@ func TestQuerySimple_WithFilterWithNullNot_Succeeds(t *testing.T) {
 func TestQuerySimple_WithFilterWithNullNotField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,

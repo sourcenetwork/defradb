@@ -29,7 +29,7 @@ func TestCompositeIndexCreate_WhenCreated_CanRetrieve(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -37,7 +37,7 @@ func TestCompositeIndexCreate_WhenCreated_CanRetrieve(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{

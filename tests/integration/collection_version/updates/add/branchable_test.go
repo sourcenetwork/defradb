@@ -87,13 +87,13 @@ func TestBranchableCollection_AddNewFieldWithMultipleDocs_ShouldAddField(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name": "Islam",
@@ -107,7 +107,7 @@ func TestBranchableCollection_AddNewFieldWithMultipleDocs_ShouldAddField(t *test
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":  "Andy",

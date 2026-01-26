@@ -110,7 +110,7 @@ func TestQueryWithIndex_IfSeveralDocsWithEqFilter_ShouldFetchAll(t *testing.T) {
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Islam",
@@ -373,25 +373,25 @@ func TestQueryWithIndex_WithInFilterOnFloat_ShouldFetch(t *testing.T) {
 						rate: Float @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"rate": 20.0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"rate": 20.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred",
 					"rate": 20.2
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"rate": 20.3
@@ -435,7 +435,7 @@ func TestQueryWithIndex_IfSeveralDocsWithInFilter_ShouldFetchAll(t *testing.T) {
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Islam",
@@ -675,13 +675,13 @@ func TestQueryWithIndex_EmptyFilterOnIndexedField_ShouldSucceed(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"age": 33
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 21
@@ -738,19 +738,19 @@ func TestQueryWithIndex_WithFilterOn2Relations_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Apple",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"model":           "iPhone",
@@ -758,7 +758,7 @@ func TestQueryWithIndex_WithFilterOn2Relations_ShouldFilter(t *testing.T) {
 					"_manufacturerID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"model":           "MacBook",
@@ -812,19 +812,19 @@ func TestQueryWithIndex_WithNeFilterAgainstIntField_ShouldFetchNilValues(t *test
 						age: Int @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  48,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"age":  42,
@@ -881,19 +881,19 @@ func TestQueryWithIndex_WithNeFilterAgainstFloatField_ShouldFetchNilValues(t *te
 						rating: Float @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":   "John",
 					"rating": 4.5,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":   "Andy",
 					"rating": nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":   "Shahzad",
 					"rating": 4.2,
@@ -950,19 +950,19 @@ func TestQueryWithIndex_WithNeFilterAgainstStringField_ShouldFetchNilValues(t *t
 						city: String @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"city": "Istanbul",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"city": nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"city": "Lucerne",
@@ -1019,19 +1019,19 @@ func TestQueryWithIndex_WithNeFilterAgainstDateTimeField_ShouldFetchNilValues(t 
 						birthdate: DateTime @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":      "John",
 					"birthdate": "2020-01-01T00:00:00Z",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":      "Andy",
 					"birthdate": nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":      "Shahzad",
 					"birthdate": "2024-01-01T00:00:00Z",
@@ -1088,19 +1088,19 @@ func TestQueryWithIndex_WithNeFilterAgainstBooleanField_ShouldFetchNilValues(t *
 						verified: Boolean @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":     "John",
 					"verified": true,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":     "Andy",
 					"verified": nil,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":     "Shahzad",
 					"verified": false,

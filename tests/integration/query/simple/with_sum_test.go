@@ -67,13 +67,13 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 func TestQuerySimpleWithSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30

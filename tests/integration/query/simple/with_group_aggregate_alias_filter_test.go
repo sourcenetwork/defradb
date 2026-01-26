@@ -26,25 +26,25 @@ func TestQuerySimple_WithGroupAverageAliasFilter_FiltersResults(t *testing.T) {
 					Score: Int
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Score": 10
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Score": 20
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 0
@@ -81,25 +81,25 @@ func TestQuerySimple_WithGroupSumAliasFilter_FiltersResults(t *testing.T) {
 					Score: Int
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Score": 10
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Score": 20
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 0
@@ -136,25 +136,25 @@ func TestQuerySimple_WithGroupMinAliasFilter_FiltersResults(t *testing.T) {
 					Score: Int
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Score": 10
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Score": 20
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 0
@@ -191,25 +191,25 @@ func TestQuerySimple_WithGroupMaxAliasFilter_FiltersResults(t *testing.T) {
 					Score: Int
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Score": 10
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Score": 20
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 0
@@ -246,31 +246,31 @@ func TestQuerySimple_WithGroupCountAliasFilter_FiltersResults(t *testing.T) {
 					Score: Int
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Score": 10
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Score": 20
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Score": 5

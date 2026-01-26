@@ -27,7 +27,7 @@ func TestMutationUpdate_IfStringFieldSetToNull_ShouldBeNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,

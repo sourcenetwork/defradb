@@ -44,24 +44,24 @@ func TestQueryWithCompositeIndexOnManyToOne_WithMultipleIndexedChildNodes_Should
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name": "Apple",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name": "Sony",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "MacBook Pro",
@@ -69,7 +69,7 @@ func TestQueryWithCompositeIndexOnManyToOne_WithMultipleIndexedChildNodes_Should
 					"manufacturer": testUtils.NewDocIndex(2, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "PlayStation 5",

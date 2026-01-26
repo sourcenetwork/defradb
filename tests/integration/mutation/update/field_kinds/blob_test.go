@@ -28,7 +28,7 @@ func TestMutationUpdate_WithBlobField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"data": "00FE"
@@ -71,7 +71,7 @@ func TestMutationUpdate_IfBlobFieldSetToNull_ShouldBeNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"data": "00FE"
 				}`,

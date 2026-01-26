@@ -33,7 +33,7 @@ func TestP2PUpdate_WithPNCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Shahzad on all nodes
 				Doc: `{
 					"name": "Shahzad",
@@ -91,7 +91,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousUpdate_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",

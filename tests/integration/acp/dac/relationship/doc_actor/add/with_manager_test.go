@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) {
@@ -74,7 +75,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -244,7 +245,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -441,7 +442,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -559,10 +560,10 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{
@@ -619,7 +620,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -816,10 +817,10 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{
@@ -874,7 +875,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -982,10 +983,10 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{
@@ -1040,7 +1041,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -1185,7 +1186,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,

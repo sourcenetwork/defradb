@@ -35,14 +35,14 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -101,14 +101,14 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -173,14 +173,14 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -253,14 +253,14 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -341,14 +341,14 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",

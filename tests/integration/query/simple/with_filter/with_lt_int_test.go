@@ -20,13 +20,13 @@ import (
 func TestQuerySimpleWithIntLessThanFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
@@ -55,13 +55,13 @@ func TestQuerySimpleWithIntLessThanFilterBlockWithGreaterValue(t *testing.T) {
 func TestQuerySimpleWithIntLessThanFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob"
 				}`,

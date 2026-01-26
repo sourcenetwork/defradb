@@ -29,13 +29,13 @@ func TestQueryJSON_WithGreaterEqualFilterWithEqualValue_ShouldFilter(t *testing.
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32
@@ -72,13 +72,13 @@ func TestQueryJSON_WithGreaterEqualFilterWithGreaterValue_ShouldFilter(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32
@@ -115,13 +115,13 @@ func TestQueryJSON_WithGreaterEqualFilterWithNullValue_ShouldFilter(t *testing.T
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David"
 				}`,
@@ -161,13 +161,13 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedEqualValue_ShouldFilter(t *te
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": {"age": 32}
@@ -204,13 +204,13 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedGreaterValue_ShouldFilter(t *
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": {"age": 32}
@@ -247,13 +247,13 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David"
 				}`,
@@ -302,13 +302,13 @@ func TestQueryJSON_WithGreaterEqualFilterWithBoolValue_ReturnsError(t *testing.T
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32
@@ -339,13 +339,13 @@ func TestQueryJSON_WithGreaterEqualFilterWithStringValue_ReturnsError(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32
@@ -376,13 +376,13 @@ func TestQueryJSON_WithGreaterEqualFilterWithObjectValue_ReturnsError(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32
@@ -413,13 +413,13 @@ func TestQueryJSON_WithGreaterEqualFilterWithArrayValue_ReturnsError(t *testing.
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32
@@ -452,31 +452,31 @@ func TestQueryJSON_WithGreaterEqualFilterWithAllTypes_ShouldFilter(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Shahzad",
 					"Custom": "32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Andy",
 					"Custom": [1, 2]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Fred",
 					"Custom": {"one": 1}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32

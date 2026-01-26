@@ -29,13 +29,13 @@ func TestQueryJSON_WithLesserThanFilterBlockWithGreaterValue_ShouldFilter(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Custom": 19
@@ -74,13 +74,13 @@ func TestQueryJSON_WithLesserThanFilterBlockWithLesserValue_ShouldFilter(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Custom": 19
@@ -114,13 +114,13 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNullFilterValue_ShouldFilter(t *
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob"
 				}`,
@@ -152,13 +152,13 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedGreaterValue_ShouldFilter(
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Custom": {"age": 19}
@@ -199,13 +199,13 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedLesserValue_ShouldFilter(t
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Custom": {"age": 19}
@@ -239,13 +239,13 @@ func TestQueryJSON_WithLesserThanFilterBlockWithNestedNullFilterValue_ShouldFilt
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob"
 				}`,
@@ -277,13 +277,13 @@ func TestQueryJSON_WithLesserThanFilterBlockWithBoolValue_ReturnsError(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Custom": 19
@@ -315,13 +315,13 @@ func TestQueryJSON_WithLesserThanFilterBlockWithStringValue_ReturnsError(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Custom": 19
@@ -353,13 +353,13 @@ func TestQueryJSON_WithLesserThanFilterBlockWithObjectValue_ReturnsError(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Custom": 19
@@ -393,13 +393,13 @@ func TestQueryJSON_WithLesserThanFilterBlockWithArrayValue_ReturnsError(t *testi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Custom": 19
@@ -431,31 +431,31 @@ func TestQueryJSON_WithLesserThanFilterWithAllTypes_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Shahzad",
 					"Custom": "32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Andy",
 					"Custom": [1, 2]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Fred",
 					"Custom": {"one": 1}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32

@@ -43,7 +43,7 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -52,7 +52,7 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Addo",
@@ -179,7 +179,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 	docID := "bae-45e90427-d499-598b-902a-6a3c65d0b504"
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
