@@ -113,7 +113,7 @@ func TestNAC_AdminRelation_CLIandHTTPClient_CanDocumentUpdate(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc: `{
