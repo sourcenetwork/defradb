@@ -444,12 +444,8 @@ func extractOrBranches(conditions map[connor.FilterKey]any) []map[connor.FilterK
 	return nil
 }
 
-// canAllBranchesUseIndex checks if all OR branches can produce index conditions.
+// canAllBranchesUseIndex checks if all OR branches can use the index.
 // This catches cases where a branch uses operators like _not that prevent index usage.
-// Note: hasOrWithMultipleFields already ensures all branches reference indexed fields,
-// but this check catches operators that are skipped during condition extraction.
-// This is an all-or-nothing check - if ANY branch can't use the index, we must fall back
-// to a full scan to ensure correct results.
 func (f *indexFetcher) canAllBranchesUseIndex(branches []map[connor.FilterKey]any) bool {
 	for _, branch := range branches {
 		branchFilter := &mapper.Filter{
