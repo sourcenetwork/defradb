@@ -173,6 +173,8 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 	execute(t, test)
 }
 
+// TODO This test includes results due to a bug with the commit subscriptions.
+// https://github.com/sourcenetwork/defradb/issues/4434
 func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *testing.T) {
 	updateCid := testUtils.NewSameValue()
 
