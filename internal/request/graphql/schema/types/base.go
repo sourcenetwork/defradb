@@ -188,7 +188,7 @@ func NotNullDateTimeOperatorBlock() *gql.InputObject {
 				Description: gtOperatorDescription,
 				Type:        gql.DateTime,
 			},
-			"_ge": &gql.InputObjectFieldConfig{
+			"_geq": &gql.InputObjectFieldConfig{
 				Description: geOperatorDescription,
 				Type:        gql.DateTime,
 			},
@@ -196,7 +196,7 @@ func NotNullDateTimeOperatorBlock() *gql.InputObject {
 				Description: ltOperatorDescription,
 				Type:        gql.DateTime,
 			},
-			"_le": &gql.InputObjectFieldConfig{
+			"_leq": &gql.InputObjectFieldConfig{
 				Description: leOperatorDescription,
 				Type:        gql.DateTime,
 			},
@@ -230,6 +230,14 @@ func DateTimeListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 				Description: noneOperatorDescription,
 				Type:        op,
 			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(gql.DateTime),
+			},
+			"_neq": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(gql.DateTime),
+			},
 		},
 	})
 }
@@ -251,6 +259,14 @@ func NotNullDateTimeListOperatorBlock(op *gql.InputObject) *gql.InputObject {
 			"_none": &gql.InputObjectFieldConfig{
 				Description: noneOperatorDescription,
 				Type:        op,
+			},
+			"_eq": &gql.InputObjectFieldConfig{
+				Description: eqOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(gql.DateTime)),
+			},
+			"_neq": &gql.InputObjectFieldConfig{
+				Description: neOperatorDescription,
+				Type:        gql.NewList(gql.NewNonNull(gql.DateTime)),
 			},
 		},
 	})

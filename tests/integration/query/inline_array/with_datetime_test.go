@@ -47,13 +47,13 @@ func executeTestCaseDateTime(t *testing.T, test testUtils.TestCase) {
 func TestQueryInlineArrayWithDateTime_Null(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Birthday Party",
 					"scheduledTimes": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events {
 						name
@@ -78,13 +78,13 @@ func TestQueryInlineArrayWithDateTime_Null(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_EmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Meeting",
 					"scheduledTimes": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events {
 						name
@@ -109,13 +109,13 @@ func TestQueryInlineArrayWithDateTime_EmptyList(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_NotEmpty(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Conference",
 					"scheduledTimes": ["2024-01-15T09:00:00Z", "2024-01-15T14:00:00Z", "2024-01-16T10:00:00Z"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events {
 						name
@@ -144,13 +144,13 @@ func TestQueryInlineArrayWithDateTime_NotEmpty(t *testing.T) {
 func TestQueryInlineArrayWithNillableDateTime(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Workshop",
 					"optionalTimes": ["2024-02-20T10:00:00Z", null, "2024-02-21T15:00:00Z"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events {
 						name
@@ -179,13 +179,13 @@ func TestQueryInlineArrayWithNillableDateTime(t *testing.T) {
 func TestQueryInlineArrayWithNillableDateTime_AllNull(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Pending",
 					"optionalTimes": [null, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events {
 						name
@@ -216,19 +216,19 @@ func TestQueryInlineArrayWithNillableDateTime_AllNull(t *testing.T) {
 func TestQueryInlineArrayWithNillableDateTime_FilterAny(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Mixed Event",
 					"optionalTimes": ["2024-03-15T10:00:00Z", null, "2024-03-16T10:00:00Z"]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Empty Event",
 					"optionalTimes": [null, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events(filter: {optionalTimes: {_any: {_eq: "2024-03-15T10:00:00Z"}}}) {
 						name
@@ -251,19 +251,19 @@ func TestQueryInlineArrayWithNillableDateTime_FilterAny(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_FilterAny(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Morning Event",
 					"scheduledTimes": ["2024-01-15T09:00:00Z", "2024-01-15T10:00:00Z"]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Evening Event",
 					"scheduledTimes": ["2024-01-15T18:00:00Z", "2024-01-15T19:00:00Z"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events(filter: {scheduledTimes: {_any: {_eq: "2024-01-15T09:00:00Z"}}}) {
 						name
@@ -286,19 +286,19 @@ func TestQueryInlineArrayWithDateTime_FilterAny(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_FilterAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Waitlisted",
 					"scheduledTimes": ["2024-01-15T09:00:00Z", "2024-01-16T09:00:00Z"]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Confirmed",
 					"scheduledTimes": ["2024-01-15T09:00:00Z", "2024-01-15T10:00:00Z"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events(filter: {scheduledTimes: {_all: {_eq: "2024-01-15T09:00:00Z"}}}) {
 						name
@@ -308,9 +308,9 @@ func TestQueryInlineArrayWithDateTime_FilterAll(t *testing.T) {
 					"Events": []map[string]any{},
 				},
 			},
-			testUtils.Request{ // _ge matches both docs since all their times are >= the target
+			&action.Request{ // _ge matches both docs since all their times are >= the target
 				Request: `query {
-					Events(filter: {scheduledTimes: {_all: {_ge: "2024-01-15T09:00:00Z"}}}) {
+					Events(filter: {scheduledTimes: {_all: {_geq: "2024-01-15T09:00:00Z"}}}) {
 						name
 					}
 				}`,
@@ -334,19 +334,19 @@ func TestQueryInlineArrayWithDateTime_FilterAll(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_FilterNone(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Future Event",
 					"scheduledTimes": ["2024-02-01T00:00:00Z"]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Past Event",
 					"scheduledTimes": ["2023-01-01T00:00:00Z"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events(filter: {scheduledTimes: {_none: {_lt: "2024-01-01T00:00:00Z"}}}) {
 						name
@@ -377,13 +377,13 @@ func TestQueryInlineArrayWithDateTime_Index(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Indexed Event",
 					"scheduledTimes": ["2024-06-01T12:00:00Z"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events(filter: {scheduledTimes: {_any: {_eq: "2024-06-01T12:00:00Z"}}}) {
 						name
@@ -406,7 +406,7 @@ func TestQueryInlineArrayWithDateTime_Index(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_Update(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Rescheduled Event",
 					"scheduledTimes": ["2024-01-01T00:00:00Z"]
@@ -417,7 +417,7 @@ func TestQueryInlineArrayWithDateTime_Update(t *testing.T) {
 					"scheduledTimes": ["2024-02-01T00:00:00Z", "2024-03-01T00:00:00Z"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Events {
 						name
@@ -445,7 +445,7 @@ func TestQueryInlineArrayWithDateTime_Update(t *testing.T) {
 func TestQueryInlineArrayWithDateTime_ErrorMalformed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bad Date",
 					"scheduledTimes": ["not-a-date"]
