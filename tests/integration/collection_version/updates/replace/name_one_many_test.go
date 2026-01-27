@@ -45,7 +45,7 @@ func TestColVersionUpdateReplaceNameOneToMany(t *testing.T) {
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

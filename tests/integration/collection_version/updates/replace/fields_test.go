@@ -25,7 +25,7 @@ func TestColVersionUpdateReplaceFields_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -52,7 +52,7 @@ func TestColVersionUpdateReplaceDefaultValue_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

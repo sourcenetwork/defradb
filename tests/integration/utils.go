@@ -360,9 +360,6 @@ func performAction(
 	case GetAllP2PDocuments:
 		getAllP2PDocuments(s, action)
 
-	case PatchCollection:
-		patchCollection(s, action)
-
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)
 
@@ -1042,28 +1039,6 @@ func refreshDocuments(
 			}
 		}
 	}
-}
-
-func patchCollection(
-	s *state.State,
-	action PatchCollection,
-) {
-	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
-	// This will need to change if patches want to replace more than just lens IDs.
-	patch := replace(s, 0, action.Patch)
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := node.PatchCollection(ctx, patch, action.Lens)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
-
-	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(s)
 }
 
 func setActiveCollectionVersion(

@@ -72,7 +72,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 				`,
 				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

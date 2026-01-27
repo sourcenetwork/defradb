@@ -27,7 +27,7 @@ func TestColVersionUpdate_ReplaceFieldSizeContraint_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
