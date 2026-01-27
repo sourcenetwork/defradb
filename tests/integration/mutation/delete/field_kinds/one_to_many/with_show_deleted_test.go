@@ -36,44 +36,44 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 			&action.AddSchema{
 				Schema: schemas,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John",
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "John and the philosopher are stoned",
 					"rating":    9.9,
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "John has a chamber of secrets",
 					"rating":    9.9,
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
-					delete_Book(docID: "bae-87bfb5a3-2e27-577d-9012-602b1b8a2cf9") {
+					delete_Book(docID: "bae-227565a8-81b1-5c96-90e2-30dbe75ad5bd") {
 							_docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-87bfb5a3-2e27-577d-9012-602b1b8a2cf9",
+							"_docID": "bae-227565a8-81b1-5c96-90e2-30dbe75ad5bd",
 						},
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author(showDeleted: true) {
 							_deleted

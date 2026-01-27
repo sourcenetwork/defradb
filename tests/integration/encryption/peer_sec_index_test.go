@@ -41,32 +41,32 @@ func TestDocEncryptionPeer_IfEncryptedDocHasIndexedField_ShouldIndexAfterDecrypt
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 						"name":	"Shahzad",
 						"age":	25
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            islam33Doc,
 				IsDocEncrypted: true,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 						"name":	"Andy",
 						"age":	21
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query @explain(type: execute) {
 						User(filter: {age: {_eq: 21}}) {
@@ -75,7 +75,7 @@ func TestDocEncryptionPeer_IfEncryptedDocHasIndexedField_ShouldIndexAfterDecrypt
 					}`,
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {age: {_eq: 21}}) {
@@ -121,32 +121,32 @@ func TestDocEncryptionPeer_IfDocDocHasEncryptedIndexedField_ShouldIndexAfterDecr
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 						"name":	"Shahzad",
 						"age":	25
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:          immutable.Some(0),
 				Doc:             islam33Doc,
 				EncryptedFields: []string{"age"},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 						"name":	"Andy",
 						"age":	21
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:          immutable.Some(0),
 				Doc:             john21Doc,
 				EncryptedFields: []string{"age"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query @explain(type: execute) {
 						User(filter: {age: {_eq: 21}}) {

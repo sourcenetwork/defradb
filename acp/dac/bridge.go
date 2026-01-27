@@ -16,8 +16,6 @@ import (
 
 	protoTypes "github.com/cosmos/gogoproto/types"
 
-	"github.com/valyala/fastjson"
-
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/acp"
@@ -50,9 +48,6 @@ func (a *bridgeDocumentACP) AddPolicy(ctx context.Context, creator identity.Iden
 	}
 
 	marshalType := acpTypes.PolicyMarshalType_YAML
-	if isJSON := fastjson.Validate(policy) == nil; isJSON { // Detect JSON format.
-		marshalType = acpTypes.PolicyMarshalType_JSON
-	}
 
 	policyID, err := a.clientACP.AddPolicy(
 		ctx,

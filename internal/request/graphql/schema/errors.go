@@ -72,6 +72,9 @@ var (
 	ErrPolicyInvalidResourceProp = errors.New(errPolicyInvalidResourceProp)
 	ErrFieldTypeNotSpecified     = errors.New(errFieldTypeNotSpecified)
 	ErrInvalidTypeForConstraint  = errors.New(errInvalidTypeForConstraint)
+	ErrWritingSDL                = errors.New("writing SDL")
+	ErrParsingSDL                = errors.New("parsing SDL")
+	ErrGeneratingSDL             = errors.New("generating SDL")
 )
 
 func NewErrDuplicateField(objectName, fieldName string) error {

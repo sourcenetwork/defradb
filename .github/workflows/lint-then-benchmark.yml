@@ -51,24 +51,24 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Setting up Go explicitly is required for v3.0.0+ of golangci/golangci-lint-action.
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           check-latest: true
           cache: false
 
       - name: Run the golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
 
         with:
           # Required: the version of golangci-lint is required.
           # Note: The version should not pick the patch version as the latest patch
           #  version is what will always be used.
-          version: v1.51
+          version: v2.3
 
           # Optional: working directory, useful for monorepos or if we wanted to run this
           #  on a non-root directory.
@@ -193,7 +193,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run the full bechmarking suite
         if: needs.decide-benchmark-type.outputs.benchmark-type == 'FULL'
@@ -215,7 +215,7 @@ jobs:
         if: |
           github.event_name == 'push' &&
           github.ref_name == 'develop'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bench-artifact-${{ github.sha }}
           path: bench-artifact-${{ github.sha }}.txt
@@ -306,7 +306,7 @@ jobs:
 
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v5.1.1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

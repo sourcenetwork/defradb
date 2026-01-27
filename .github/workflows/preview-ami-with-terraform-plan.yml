@@ -49,7 +49,7 @@ jobs:
       - name: Stop and notify the use of unprivileged flow or missing tokens
         if: env.AWS_ACCESS_KEY_ID == '' || env.AWS_SECRET_ACCESS_KEY == ''
         # Note: Fail this step, as we don't want unprivileged access doing these changes.
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             let unprivileged_warning =
@@ -64,7 +64,7 @@ jobs:
             core.setFailed(unprivileged_warning)
 
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Terraform action setup
         uses: hashicorp/setup-terraform@v3
@@ -93,7 +93,7 @@ jobs:
         continue-on-error: true
 
       - name: Comment results on pull request
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           TERRAFORM_PLAN_OUTPUT: "Terraform Plan Output:\n${{ steps.terraform-plan.outputs.stdout }}\n"
 

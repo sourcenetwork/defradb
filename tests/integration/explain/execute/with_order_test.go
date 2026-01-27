@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -27,7 +28,7 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(order: {age: ASC}) {
 						name
@@ -75,7 +76,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 			explainUtils.SchemaForExplainTests,
 
 			// Authors
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -84,7 +85,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -93,7 +94,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -102,7 +103,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -111,7 +112,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(order: [{age: ASC}, {name: DESC}]) {
 						name
@@ -163,7 +164,7 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -223,7 +224,7 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(order: {age: ASC}) {
 						name
@@ -287,7 +288,7 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(
 						order: {

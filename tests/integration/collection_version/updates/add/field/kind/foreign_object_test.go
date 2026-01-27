@@ -27,7 +27,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 16} }
@@ -50,7 +50,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_UnknownSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
@@ -75,16 +75,16 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldMissingKind(t *testing.T)
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
 							"Name": "foo", "Kind": "Users"
 						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id"} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "_fooID"} }
 					]
 				`,
-				ExpectedError: "relational id field of invalid kind. Field: foo_id, Expected: ID, Actual: 0",
+				ExpectedError: "relational id field of invalid kind. Field: _fooID, Expected: ID, Actual: 0",
 			},
 		},
 	}
@@ -101,16 +101,16 @@ func TestSchemaUpdatesAddFieldKindForeignObject_IDFieldInvalidKind(t *testing.T)
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
 							"Name": "foo", "Kind": "Users"
 						}},
-						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo_id", "Kind": 2} }
+						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "_fooID", "Kind": 2} }
 					]
 				`,
-				ExpectedError: "relational id field of invalid kind. Field: foo_id, Expected: ID, Actual: Boolean",
+				ExpectedError: "relational id field of invalid kind. Field: _fooID, Expected: ID, Actual: Boolean",
 			},
 		},
 	}
@@ -127,30 +127,30 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
 							"Name": "foo", "Kind": "Users", "RelationName": "users_users", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
-							"Name": "foo_id", "Kind": 1, "RelationName": "users_users", "IsPrimary": true
+							"Name": "_fooID", "Kind": 1, "RelationName": "users_users", "IsPrimary": true
 						}}
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Keenan",
 					"foo":  testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -173,6 +173,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -192,14 +193,14 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToOneRelationI
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
 							"Name": "published", "Kind": "Book", "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
-							"Name": "published_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+							"Name": "_publishedID", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
 							"Name": "author", "Kind": "Author", "RelationName": "author_book"
@@ -207,20 +208,20 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToOneRelationI
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title": "The Great Gatsby",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "F. Scott Fitzgerald",
 					"published": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -240,7 +241,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToOneRelationI
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						title
@@ -278,7 +279,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
@@ -288,32 +289,32 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 							"Name": "author", "Kind": "Author", "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
-							"Name": "author_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+							"Name": "_authorID", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
 						}}
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "F. Scott Fitzgerald",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "The Great Gatsby",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Tender Is the Night",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -334,7 +335,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						title

@@ -39,55 +39,38 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: reader + updater + deleter
+    name: read
+  - expr: updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -108,7 +91,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				TargetNodeID: 1,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(0),
@@ -122,7 +105,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 
 			testUtils.WaitForSync{},
 
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is hidden on all nodes to an unauthorized actor
 				Identity: testUtils.ClientIdentity(2),
 
@@ -171,7 +154,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				ExpectedExistence: true, // Making the same relation through any node should be a no-op
 			},
 
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is now accessible on all nodes to the newly authorized actor.
 				Identity: testUtils.ClientIdentity(2),
 
@@ -192,7 +175,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is still accessible on all nodes to the owner.
 				Identity: testUtils.ClientIdentity(1),
 
@@ -245,7 +228,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				ExpectedRecordFound: false, // Making the same relation through any node should be a no-op
 			},
 
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is now inaccessible on all nodes to the actor we revoked access from.
 				Identity: testUtils.ClientIdentity(2),
 
@@ -262,7 +245,7 @@ func TestACP_P2PReplicatorWithPermissionedCollectionCreateDocActorRelationship_S
 				},
 			},
 
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is still accessible on all nodes to the owner.
 				Identity: testUtils.ClientIdentity(1),
 

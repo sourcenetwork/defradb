@@ -52,7 +52,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 			},
 			testUtils.Benchmark{
 				Reps: benchReps,
-				BaseCase: testUtils.Request{Request: `
+				BaseCase: &action.Request{Request: `
 					query {
 						User(filter: {age: {_eq: 33}}) {
 							name
@@ -61,7 +61,7 @@ func TestQueryPerformance_Simple(t *testing.T) {
 						}
 					}`,
 				},
-				OptimizedCase: testUtils.Request{Request: `
+				OptimizedCase: &action.Request{Request: `
 					query {
 						IndexedUser(filter: {age: {_eq: 33}}) {
 							name
@@ -112,7 +112,7 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 			},
 			testUtils.Benchmark{
 				Reps: benchReps,
-				BaseCase: testUtils.Request{Request: `
+				BaseCase: &action.Request{Request: `
 					query {
 						User(filter: {points: {_eq: 33}}) {
 							name
@@ -121,7 +121,7 @@ func TestQueryPerformance_WithFloat32(t *testing.T) {
 						}
 					}`,
 				},
-				OptimizedCase: testUtils.Request{Request: `
+				OptimizedCase: &action.Request{Request: `
 					query {
 						IndexedUser(filter: {points: {_eq: 33}}) {
 							name

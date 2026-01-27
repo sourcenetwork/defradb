@@ -42,6 +42,7 @@ type DataStoreKey struct {
 }
 
 var _ Walkable = (*DataStoreKey)(nil)
+var _ CollectionedKey = DataStoreKey{}
 
 // Creates a new DataStoreKey from a string as best as it can,
 // splitting the input using '/' as a field deliminator.  It assumes
@@ -295,4 +296,8 @@ func EncodeDataStoreKey(key *DataStoreKey) []byte {
 	}
 
 	return result
+}
+
+func (k DataStoreKey) GetCollectionShortID() uint32 {
+	return k.CollectionShortID
 }

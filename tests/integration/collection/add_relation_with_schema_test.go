@@ -35,31 +35,31 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John Grisham",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "Painted House",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "A Time for Mercy",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
-						author_id
+						_authorID
 						author {
 							name
 						}
@@ -69,20 +69,21 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 					"Book": []map[string]any{
 						{
 							"name":      "A Time for Mercy",
-							"author_id": testUtils.NewDocIndex(0, 0),
+							"_authorID": testUtils.NewDocIndex(0, 0),
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
 						},
 						{
 							"name":      "Painted House",
-							"author_id": testUtils.NewDocIndex(0, 0),
+							"_authorID": testUtils.NewDocIndex(0, 0),
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -116,19 +117,19 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John Grisham",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Penguin Books",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -136,15 +137,15 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 					"publisher": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
-						author_id
+						_authorID
 						author {
 							name
 						}
-						publisher_id
+						_publisherID
 						publisher {
 							name
 						}
@@ -154,11 +155,11 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithAddSchemaCreatingOneToManyRe
 					"Book": []map[string]any{
 						{
 							"name":      "Painted House",
-							"author_id": testUtils.NewDocIndex(0, 0),
+							"_authorID": testUtils.NewDocIndex(0, 0),
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
-							"publisher_id": testUtils.NewDocIndex(1, 0),
+							"_publisherID": testUtils.NewDocIndex(1, 0),
 							"publisher": map[string]any{
 								"name": "Penguin Books",
 							},
@@ -189,14 +190,14 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
 							"Name": "author", "Kind": "Author", "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
-							"Name": "author_id", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
+							"Name": "_authorID", "Kind": 1, "RelationName": "author_book", "IsPrimary": true
 						}},
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
 							"Name": "books", "Kind": "[Book]", "RelationName": "author_book"
@@ -204,27 +205,27 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "John Grisham",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":   "Painted House",
 					"author": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":   "A Time to Kill",
 					"author": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -244,6 +245,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -273,19 +275,19 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithMixedBatchHavingRelationToEx
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John Grisham",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Penguin Books",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -293,7 +295,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithMixedBatchHavingRelationToEx
 					"publisher": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -351,27 +353,27 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithChainedOneToManyRelationsAcr
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "Penguin Books",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "John Grisham",
 					"publisher": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":   "Painted House",
 					"author": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

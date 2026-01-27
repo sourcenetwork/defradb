@@ -20,7 +20,7 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
 // func TestQueryOneToManyWithUnknownCidAndDocID(t *testing.T) {
-// 	test := testUtils.RequestTestCase{
+// 	test := &action.Request{TestCase{
 // 		Request: `query {
 // 					Book (
 // 							cid: "bafybeicgwjdyqyuntdop5ytpsfrqg5a4t2r25pfv6prfppl5ta5k5altca",
@@ -38,7 +38,7 @@ import (
 // 				`{
 // 					"name": "Painted House",
 // 					"rating": 4.9,
-// 					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+// 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 // 				}`,
 // 			},
 // 			//authors
@@ -82,16 +82,16 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
-				// bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7
+				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -100,11 +100,11 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
-							cid: "bafyreicmgsatxmz7cksel6m3kws6p6xpr4l7u7hyticxwre6febzgmcupa"
-							docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
+							cid: "bafyreial4br7zz2teyhegjcijy2hw6i3oirvxyjxdbrjjnhxmhkphd3l2q"
+							docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 						) {
 						name
 						author {
@@ -152,16 +152,16 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
-				// bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25
+				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -176,11 +176,11 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 					"age": 22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
-							cid: "bafyreicmgsatxmz7cksel6m3kws6p6xpr4l7u7hyticxwre6febzgmcupa",
-							docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
+							cid: "bafyreial4br7zz2teyhegjcijy2hw6i3oirvxyjxdbrjjnhxmhkphd3l2q",
+							docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 						) {
 						name
 						author {
@@ -226,16 +226,16 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
-				// bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25
+				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -250,11 +250,11 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 					"rating": 4.5
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreicmgsatxmz7cksel6m3kws6p6xpr4l7u7hyticxwre6febzgmcupa",
-						docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
+						cid: "bafyreial4br7zz2teyhegjcijy2hw6i3oirvxyjxdbrjjnhxmhkphd3l2q",
+						docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 					) {
 						name
 						rating
@@ -300,16 +300,16 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
-				// bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7
+				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -324,11 +324,11 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 					"rating": 4.5
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreifxvqatsma2slodnnxylgbgp75tqpbfuviwz4d2a75y7gwlozevmq",
-						docID: "bae-f2fa23d1-e9da-5e35-9446-90a80db3c7b7"
+						cid: "bafyreifxbqpzvepc2rseagci6beohmv3qr3knjnfddzk7oqru5su7bdtpi",
+						docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 					) {
 						name
 						rating

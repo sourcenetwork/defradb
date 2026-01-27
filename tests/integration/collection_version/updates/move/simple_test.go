@@ -18,7 +18,7 @@ import (
 )
 
 func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
-	schemaVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
+	collectionVersionID := "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"
 
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -29,13 +29,13 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// This just moves an object to a new key in a temporary dictionary, it doesn't actually do
 				// anything
 				Patch: `
@@ -51,7 +51,7 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					"name": "Johnnn"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that Users is still Users
 				Request: `query {
 					Users {
@@ -66,22 +66,22 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that the version ID remains the same
 				Request: `query {
 					_commits (filter: {fieldName: {_eq: "_C"}}) {
-						schemaVersionId
+						collectionVersionId
 					}
 				}`,
 				Results: map[string]any{
 					"_commits": []map[string]any{
 						{
 							// Update commit
-							"schemaVersionId": schemaVersionID,
+							"collectionVersionId": collectionVersionID,
 						},
 						{
 							// Create commit
-							"schemaVersionId": schemaVersionID,
+							"collectionVersionId": collectionVersionID,
 						},
 					},
 				},

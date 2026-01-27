@@ -24,31 +24,19 @@ func TestACP_AddPolicy_UnusedRelation_ValidID(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-
-                `,
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - name: read
+  - name: update
+  relations:
+  - name: reader
+    types:
+    - actor
+`,
 			},
 		},
 	}

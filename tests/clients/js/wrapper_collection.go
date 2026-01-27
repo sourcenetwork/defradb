@@ -302,3 +302,8 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 	_, err := execute(ctx, c.client, "deleteEncryptedIndex", fieldName)
 	return err
 }
+
+func (c *Collection) Truncate(ctx context.Context) error {
+	_, err := execute(ctx, c.client, "truncate")
+	return err
+}

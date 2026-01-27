@@ -13,20 +13,21 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithMinWithOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Age": 30,
 					"HeightM": 1.8
 				}`,
 			}, // Min: 1.8
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Age": 25,
 					"HeightM": 1.6
@@ -34,7 +35,7 @@ func TestQuerySimpleWithMinWithOrder_Succeeds(t *testing.T) {
 			}, // Min: 1.6
 
 			// Test descending order by computed total
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
 						total: _min(HeightM: {}, Age: {})
@@ -53,7 +54,7 @@ func TestQuerySimpleWithMinWithOrder_Succeeds(t *testing.T) {
 			},
 
 			// Test ascending order by computed total
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
 						total: _min(HeightM: {}, Age: {})

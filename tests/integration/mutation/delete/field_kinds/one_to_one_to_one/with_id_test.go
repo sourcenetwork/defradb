@@ -13,34 +13,35 @@ package one_to_one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Books
 				CollectionID: 0,
-				// bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd
+				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
 				Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
-						"publisher_id": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
+						"_publisherID": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Authors
 				CollectionID: 1,
-				// bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2
+				// bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897
 				Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
 						"verified": true,
-						"wrote_id": "bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd"
+						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Publishers
 				CollectionID: 2,
 				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
@@ -49,16 +50,16 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 						"address": "Online"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
-						delete_Author(docID: "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2") {
+						delete_Author(docID: "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897") {
 							_docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Author": []map[string]any{
 						{
-							"_docID": "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2",
+							"_docID": "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897",
 						},
 					},
 				},
@@ -72,28 +73,28 @@ func TestRelationalDeletionOfADocumentUsingSingleKey_Success(t *testing.T) {
 func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Books
 				CollectionID: 0,
-				// bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd
+				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
 				Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
-						"publisher_id": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
+						"_publisherID": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Authors
 				CollectionID: 1,
-				// bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2
+				// bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897
 				Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
 						"verified": true,
-						"wrote_id": "bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd"
+						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Publishers
 				CollectionID: 2,
 				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
@@ -102,16 +103,16 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 						"address": "Online"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
-						delete_Author(docID: "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2") {
+						delete_Author(docID: "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897") {
 							AliasOfKey: _docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Author": []map[string]any{
 						{
-							"AliasOfKey": "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2",
+							"AliasOfKey": "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897",
 						},
 					},
 				},
@@ -125,28 +126,28 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithAlias_Success(t *testing
 func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_Success(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Books
 				CollectionID: 0,
-				// bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd
+				// bae-320cb3e1-4dff-51e8-bccd-b1852b616031
 				Doc: `{
 						"name": "100 Go Mistakes to Avoid.",
 						"rating": 4.8,
-						"publisher_id": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
+						"_publisherID": "bae-180f2922-98e3-53cf-8012-a2b28192b8bb"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Authors
 				CollectionID: 1,
-				// bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2
+				// bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897
 				Doc: `{
 						"name": "Teiva Harsanyi",
 						"age": 48,
 						"verified": true,
-						"wrote_id": "bae-e6d4607e-6cc4-5fe0-a01d-6fcb10b0edbd"
+						"_wroteID": "bae-320cb3e1-4dff-51e8-bccd-b1852b616031"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Publishers
 				CollectionID: 2,
 				// bae-180f2922-98e3-53cf-8012-a2b28192b8bb
@@ -155,7 +156,7 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 						"address": "Online"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Publishers
 				CollectionID: 2,
 				// bae-df73d5f3-1d99-5269-ac5a-ea75c4b18815
@@ -172,16 +173,16 @@ func TestRelationalDeletionOfADocumentUsingSingleKeyWithMultiDocumentsWithAlias_
 						"age": 49
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
-						delete_Author(docID: "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2") {
+						delete_Author(docID: "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897") {
 							Key: _docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Author": []map[string]any{
 						{
-							"Key": "bae-62c3758d-8e8b-5613-b9d1-d74985a5bfc2",
+							"Key": "bae-2a512f5c-a48d-55b1-8a72-b5d01b9bd897",
 						},
 					},
 				},

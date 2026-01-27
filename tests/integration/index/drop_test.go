@@ -29,7 +29,7 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -37,10 +37,10 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.DropIndex{
+			&action.DropIndex{
 				IndexName: "User_name_ASC",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -74,7 +74,7 @@ func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -82,10 +82,10 @@ func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.DropIndex{
+			&action.DropIndex{
 				IndexName: "User_age_ASC",
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -97,10 +97,10 @@ func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
 					},
 				},
 			},
-			testUtils.DropIndex{
+			&action.DropIndex{
 				IndexName: "User_name_ASC",
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -121,7 +121,7 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -129,12 +129,12 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.DropIndex{
+			&action.DropIndex{
 				CollectionID:  0,
 				IndexName:     "non_existing_index",
 				ExpectedError: "index with name doesn't exists. Name: non_existing_index",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
