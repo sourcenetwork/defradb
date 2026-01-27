@@ -27,6 +27,7 @@ func TestNAC_GatesP2PReplicatorDelete_AuthorizedIdentity_AllowAccess(t *testing.
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -65,6 +66,7 @@ func TestNAC_GatesP2PReplicatorDelete_NoIdentity_NotAuthorizedError(t *testing.T
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -104,6 +106,7 @@ func TestNAC_GatesP2PReplicatorDelete_WrongIdentity_NotAuthorizedError(t *testin
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

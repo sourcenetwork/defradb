@@ -28,6 +28,7 @@ func TestNAC_GatesP2PCollectionCreate_AuthorizedIdentity_AllowAccess(t *testing.
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -76,6 +77,7 @@ func TestNAC_GatesP2PCollectionCreate_NoIdentity_NotAuthorizedError(t *testing.T
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -125,6 +127,7 @@ func TestNAC_GatesP2PCollectionCreate_WrongIdentity_NotAuthorizedError(t *testin
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

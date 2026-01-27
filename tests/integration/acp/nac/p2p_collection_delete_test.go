@@ -28,6 +28,7 @@ func TestNAC_GatesP2PCollectionDelete_AuthorizedIdentity_AllowAccess(t *testing.
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -81,6 +82,7 @@ func TestNAC_GatesP2PCollectionDelete_NoIdentity_NotAuthorizedError(t *testing.T
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -135,6 +137,7 @@ func TestNAC_GatesP2PCollectionDelete_WrongIdentity_NotAuthorizedError(t *testin
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

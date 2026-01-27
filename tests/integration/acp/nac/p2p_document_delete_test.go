@@ -30,6 +30,7 @@ func TestNAC_GatesP2PDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T)
 				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
 				// We have to fix the c-binding identity passing issue to support c-client.
 				// state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -95,6 +96,7 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
 				// We have to fix the c-binding identity passing issue to support c-client.
 				// state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -161,6 +163,7 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
 				// We have to fix the c-binding identity passing issue to support c-client.
 				// state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

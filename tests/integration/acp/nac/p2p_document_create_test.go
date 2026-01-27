@@ -28,6 +28,7 @@ func TestNAC_GatesP2PDocumentCreate_AuthorizedIdentity_AllowAccess(t *testing.T)
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -84,6 +85,7 @@ func TestNAC_GatesP2PDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) 
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -141,6 +143,7 @@ func TestNAC_GatesP2PDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

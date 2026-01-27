@@ -28,6 +28,7 @@ func TestNAC_AdminRelation_CanP2PDocumentDelete(t *testing.T) {
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

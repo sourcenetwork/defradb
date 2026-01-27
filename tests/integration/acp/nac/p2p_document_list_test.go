@@ -28,6 +28,7 @@ func TestNAC_GatesP2PDocumentList_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -91,6 +92,7 @@ func TestNAC_GatesP2PDocumentList_NoIdentity_NotAuthorizedError(t *testing.T) {
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -152,6 +154,7 @@ func TestNAC_GatesP2PDocumentList_WrongIdentity_NotAuthorizedError(t *testing.T)
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

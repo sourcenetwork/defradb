@@ -56,6 +56,22 @@ func NewWrapper() (*Wrapper, error) {
 	}, nil
 }
 
+// NewWrapperWithP2P creates a new Rust FFI client wrapper with P2P enabled.
+// listenAddr should be a multiaddr like "/ip4/127.0.0.1/tcp/0"
+func NewWrapperWithP2P(listenAddr string) (*Wrapper, error) {
+	Init() // Initialize FFI library
+
+	node, err := NewNodeWithP2P(NodeOptions{InMemory: true}, listenAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create FFI node with P2P: %w", err)
+	}
+
+	return &Wrapper{
+		node:   node,
+		events: newEventBus(),
+	}, nil
+}
+
 // extractCollectionNameFromPatch extracts the collection name from a JSON patch path.
 // Patch format: [{"op": "add", "path": "/CollectionName/Fields/-", "value": {...}}]
 // All operations must target the same collection.

@@ -27,6 +27,7 @@ func TestNAC_AdminRelation_CanP2PReplicatorDelete(t *testing.T) {
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
