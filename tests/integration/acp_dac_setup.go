@@ -13,17 +13,10 @@
 package tests
 
 import (
+	"bytes"
 	"context"
-	"encoding/hex"
 	"fmt"
-	"io"
-	"math/rand"
-	"net"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
-	"sync/atomic"
+	"testing"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -32,11 +25,19 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/sourcehub/sdk"
 
-	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	toml "github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
 
 	"github.com/sourcenetwork/immutable"
+
+	cdc "github.com/cosmos/cosmos-sdk/codec"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptocdc "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	cosmoskeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
+	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cosmostypes "github.com/cosmos/cosmos-sdk/types"
+	tclog "github.com/testcontainers/testcontainers-go/log"
 )
 
 func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, error) {
@@ -56,15 +57,67 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		// runtime of the test suite when SourceHub ACP is selected.
 		s.T.Skipf("test has no document ACP elements when testing with SourceHub ACP")
 	}
+	const chainID string = "sourcehub-dev"
 
-	const moniker string = "foo"
-	const chainID string = "sourcehub-test"
-	const validatorName string = "test-validator"
-	const keyringBackend string = "test"
-	directory := s.T.TempDir()
+	testLogger := tclog.TestLogger(s.T)
+	ctx := context.Background()
+	img := fmt.Sprintf("ghcr.io/sourcenetwork/sourcehub:refactor-df-defra") // TODO
+	container, err := testcontainers.Run(ctx,
+		img,
+		testcontainers.WithExposedPorts("26657/tcp"),
+		testcontainers.WithExposedPorts("9090/tcp"),
+		testcontainers.WithLogger(testLogger),
+		testcontainers.WithEnv(map[string]string{
+			"STANDALONE": "1",
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	s.T.Cleanup(func() {
+		logs, err := container.Logs(context.Background())
+		require.NoError(s.T, err)
+		buf := bytes.Buffer{}
+		buf.ReadFrom(logs)
+		s.T.Logf("container logs: %v", buf.String())
+		testcontainers.TerminateContainer(container)
+	})
+	grpcEndpoint, err := container.PortEndpoint(ctx, "9090", "")
+	if err != nil {
+		return nil, err
+	}
+	rpcEndpoint, err := container.PortEndpoint(ctx, "26657", "tcp")
+	if err != nil {
+		return nil, err
+	}
+
+	s.T.Logf(
+		"sourcehub endpoints: grpc=%v, rpc=%v", grpcEndpoint, rpcEndpoint,
+	)
+
+	faucetMnemonic := "comic very pond victory suit tube ginger antique life then core warm loyal deliver iron fashion erupt husband weekend monster sunny artist empty uphold"
+
+	faucetAddr := "source12d9hjf0639k995venpv675sju9ltsvf8u5c9jt"
+	s.SourcehubAddress = faucetAddr
+	err = waitForSourceHub(s.T, container, grpcEndpoint, rpcEndpoint, faucetAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	registry := cdctypes.NewInterfaceRegistry()
+	cryptocdc.RegisterInterfaces(registry)
+	codec := cdc.NewProtoCodec(registry)
+	kb := cosmoskeyring.NewInMemory(codec)
+	rec, err := kb.NewAccount("key", faucetMnemonic, "", cosmostypes.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
+	require.NoError(s.T, err)
+	keyRecBz := rec.Item.(*cosmoskeyring.Record_Local_).Local.PrivKey.Value
+	privKey := cosmossecp256k1.PrivKey{}
+	err = privKey.Unmarshal(keyRecBz)
+	require.NoError(s.T, err)
 
 	kr, err := keyring.OpenFileKeyring(
-		directory,
+		s.T.TempDir(),
 		[]byte("secret"),
 	)
 	if err != nil {
@@ -74,205 +127,19 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 	// Generate the keys using the index as the seed so that multiple
 	// runs yield the same private key.  This is important for stuff like
 	// the change detector.
-	source := rand.NewSource(0)
-	r := rand.New(source)
+	//source := rand.NewSource(0)
+	//r := rand.New(source)
 
-	acpKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
-	require.NoError(s.T, err)
-	acpKeyHex := hex.EncodeToString(acpKey.Serialize())
+	//acpKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
+	//require.NoError(s.T, err)
+	//acpKeyHex := hex.EncodeToString(acpKey.Serialize())
 
-	err = kr.Set(validatorName, acpKey.Serialize())
+	err = kr.Set("validator", privKey.Bytes())
 	if err != nil {
 		return nil, err
 	}
 
-	args := []string{"init", moniker, "--chain-id", chainID, "--home", directory}
-	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
-	out, err := exec.Command("sourcehubd", args...).CombinedOutput()
-	s.T.Log(string(out))
-	if err != nil {
-		return nil, err
-	}
-
-	// Annoyingly, the CLI does not support changing the comet config params that we need,
-	// so we have to manually rewrite the config file.
-	cfg, err := toml.LoadFile(filepath.Join(directory, "config", "config.toml"))
-	if err != nil {
-		return nil, err
-	}
-
-	fo, err := os.Create(filepath.Join(directory, "config", "config.toml"))
-	if err != nil {
-		return nil, err
-	}
-
-	// Speed up the rate at which the blocks are created, this is particularly important for getting
-	// the first block created on the `sourcehubd start` call at the end of this function as
-	// we cannot use the node until the first block has been created.
-	cfg.Set("consensus.timeout_propose", "0.5s")
-	cfg.Set("consensus.timeout_commit", "1s")
-
-	_, err = cfg.WriteTo(fo)
-	if err != nil {
-		return nil, err
-	}
-	err = fo.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	args = []string{
-		"keys", "import-hex", validatorName, acpKeyHex,
-		"--keyring-backend", keyringBackend,
-		"--home", directory,
-	}
-
-	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
-	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-	s.T.Log(string(out))
-	if err != nil {
-		return nil, err
-	}
-
-	args = []string{
-		"keys", "show", validatorName,
-		"--address",
-		"--keyring-backend", keyringBackend,
-		"--home", directory,
-	}
-	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
-	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-	s.T.Log(string(out))
-	if err != nil {
-		return nil, err
-	}
-
-	// The result is suffixed with a newline char so we must trim the whitespace
-	validatorAddress := strings.TrimSpace(string(out))
-	s.SourcehubAddress = validatorAddress
-
-	args = []string{"genesis", "add-genesis-account", validatorAddress, "1000000000uopen",
-		"--keyring-backend", keyringBackend,
-		"--home", directory,
-	}
-	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
-	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-	s.T.Log(string(out))
-	if err != nil {
-		return nil, err
-	}
-
-	args = []string{"genesis", "gentx", validatorName, "100000000uopen",
-		"--chain-id", chainID,
-		"--keyring-backend", keyringBackend,
-		"--home", directory}
-	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
-	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-	s.T.Log(string(out))
-	if err != nil {
-		return nil, err
-	}
-
-	args = []string{"genesis", "collect-gentxs", "--home", directory}
-	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
-	out, err = exec.Command("sourcehubd", args...).CombinedOutput()
-	s.T.Log(string(out))
-	if err != nil {
-		return nil, err
-	}
-
-	// We need to lock across all the test processes as we assign ports to the source hub instance as this
-	// process involves finding free ports, dropping them, and then assigning them to the source hub node.
-	//
-	// We have to do this because source hub (cosmos) annoyingly does not support automatic port assignment
-	// (apart from the p2p port which we just manage here for consistency).
-	//
-	// We need to lock before getting the ports, otherwise they may try and use the port we use for locking.
-	// We can only unlock after the source hub node has started and begun listening on the assigned ports.
-	unlock, err := crossLock(44444)
-	if err != nil {
-		return nil, err
-	}
-	defer unlock()
-
-	gRpcPort, releaseGrpcPort, err := getFreePort()
-	if err != nil {
-		return nil, err
-	}
-
-	rpcPort, releaseRpcPort, err := getFreePort()
-	if err != nil {
-		return nil, err
-	}
-
-	p2pPort, releaseP2pPort, err := getFreePort()
-	if err != nil {
-		return nil, err
-	}
-
-	pprofPort, releasePprofPort, err := getFreePort()
-	if err != nil {
-		return nil, err
-	}
-
-	gRpcAddress := fmt.Sprintf("127.0.0.1:%v", gRpcPort)
-	rpcAddress := fmt.Sprintf("tcp://127.0.0.1:%v", rpcPort)
-	p2pAddress := fmt.Sprintf("tcp://127.0.0.1:%v", p2pPort)
-	pprofAddress := fmt.Sprintf("127.0.0.1:%v", pprofPort)
-
-	releaseGrpcPort()
-	releaseRpcPort()
-	releaseP2pPort()
-	releasePprofPort()
-
-	args = []string{
-		"start",
-		"--minimum-gas-prices", "0uopen",
-		"--home", directory,
-		"--grpc.address", gRpcAddress,
-		"--rpc.laddr", rpcAddress,
-		"--p2p.laddr", p2pAddress,
-		"--rpc.pprof_laddr", pprofAddress,
-	}
-	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
-	sourceHubCmd := exec.Command("sourcehubd", args...)
-
-	err = sourceHubCmd.Start()
-	if err != nil {
-		return nil, err
-	}
-
-	s.T.Cleanup(
-		func() {
-			err := sourceHubCmd.Process.Kill()
-			require.NoError(s.T, err)
-		},
-	)
-
-	// wait until SourceHub is ready for connections
-	timeout := time.After(5 * time.Second)
-	i := 1
-	startTs := time.Now()
-loop:
-	for {
-		// use an exponential backoff timer to adjust polling
-		timer := time.After(time.Duration(i) * (10 * time.Millisecond))
-		i++
-		select {
-		case <-timeout:
-			s.T.Logf("time out waiting for sourcehub to start")
-			return nil, fmt.Errorf("error setting up SourceHub: connection not ready after deadline")
-		case <-timer:
-			ok := probeSourceHub(gRpcAddress, rpcAddress, validatorAddress)
-			if ok {
-				elapsed := time.Since(startTs)
-				s.T.Logf("sourcehub ready to receive connections: after %v", elapsed)
-				break loop
-			}
-		}
-	}
-
-	signer, err := keyring.NewTxSignerFromKeyringKey(kr, validatorName)
+	signer, err := keyring.NewTxSignerFromKeyringKey(kr, "validator")
 	if err != nil {
 		return nil, err
 	}
@@ -280,75 +147,32 @@ loop:
 	return []node.DocumentACPOpt{
 		node.WithTxnSigner(immutable.Some[node.TxSigner](signer)),
 		node.WithSourceHubChainID(chainID),
-		node.WithSourceHubGRPCAddress(gRpcAddress),
-		node.WithSourceHubCometRPCAddress(rpcAddress),
+		node.WithSourceHubGRPCAddress(grpcEndpoint),
+		node.WithSourceHubCometRPCAddress(rpcEndpoint),
 	}, nil
 }
 
-func getFreePort() (int, func(), error) {
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		return 0, nil, err
-	}
-
-	return l.Addr().(*net.TCPAddr).Port, //nolint:forcetypeassert
-		func() {
-			// there are no errors that this returns that we actually care about
-			_ = l.Close()
-		},
-		nil
-}
-
-// crossLock forms a cross process lock by attempting to listen to the given port.
-//
-// This function will only return once the port is free or the timeout is reached.
-// A function to unbind from the port is returned - this unlock function may be called
-// multiple times without issue.
-func crossLock(port uint16) (func(), error) {
-	timeout := time.After(30 * time.Second)
+func waitForSourceHub(t testing.TB, container testcontainers.Container, grpcEndpoint, cometRpcEndpoint string, valAddr string) error {
+	timeout := time.After(5 * time.Second)
+	i := 1
+	startTs := time.Now()
 	for {
+		// use an exponential backoff timer to adjust polling
+		timer := time.After(time.Duration(i) * (10 * time.Millisecond))
+		i++
 		select {
 		case <-timeout:
-			return nil, fmt.Errorf("timeout reached while trying to acquire cross process lock on port %v", port)
-		default:
-			l, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%v", port))
-			if err != nil {
-				if strings.Contains(err.Error(), "address already in use") {
-					time.Sleep(5 * time.Millisecond)
-					continue
-				}
-				return nil, err
+			t.Logf("time out waiting for sourcehub to start")
+			return fmt.Errorf("error setting up SourceHub: connection not ready after deadline")
+		case <-timer:
+			ok := probeSourceHub(grpcEndpoint, cometRpcEndpoint, valAddr)
+			if ok {
+				elapsed := time.Since(startTs)
+				t.Logf("sourcehub ready to receive connections: after %v", elapsed)
+				return nil
 			}
-
-			return func() {
-					// there are no errors that this returns that we actually care about
-					_ = l.Close()
-				},
-				nil
 		}
 	}
-}
-
-// testBuffer is a very simple, thread-safe (--race flag friendly), io.Writer
-// implementation that allows us to easily access the out/err outputs of CLI commands.
-//
-// Calling void will result in all writes being discarded.
-type testBuffer struct {
-	Lines chan string
-	void  atomic.Bool
-}
-
-var _ io.Writer = (*testBuffer)(nil)
-
-func (b *testBuffer) Write(p []byte) (n int, err error) {
-	if !b.void.Load() {
-		b.Lines <- string(p)
-	}
-	return len(p), nil
-}
-
-func (b *testBuffer) Void() {
-	b.void.Swap(true)
 }
 
 // probeSourceHub is a rediness probe which tries to connect to SourceHub's
