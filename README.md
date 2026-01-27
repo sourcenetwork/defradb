@@ -552,5 +552,6 @@ DefraDB's code is released under the [Business Source License (BSL)](licenses/BS
 - Keenan Nemetz ([@nasdf](https://github.com/nasdf))
 - Ivan Vercenco ([@iverc](https://github.com/iverc))
 - Chris Quigley ([@ChrisBQu](https://github.com/ChrisBQu))
+- Jack Zampolin ([@jackzampolin](https://github.com/jackzampolin))
 
 You are invited to contribute to DefraDB. Follow the [Contributing guide](./CONTRIBUTING.md) to get started.
