@@ -350,8 +350,8 @@ func (f *indexFetcher) canAllBranchesUseIndex(branches []map[connor.FilterKey]an
 	return true
 }
 
-// newOrIndexIterator creates a new multiIndexIterator for handling _or filter conditions.
-func (f *indexFetcher) newOrIndexIterator(branches []map[connor.FilterKey]any) *multiIndexIterator {
+// newMultiIndexIteratorForOrOp creates a new multiIndexIterator for handling _or filter conditions.
+func (f *indexFetcher) newMultiIndexIteratorForOrOp(branches []map[connor.FilterKey]any) *multiIndexIterator {
 	return &multiIndexIterator{
 		count: len(branches),
 		factory: func(idx int) (indexIterator, error) {
@@ -476,9 +476,9 @@ func (f *indexFetcher) newPrefixBasedMatchIteratorFromConditions(
 	return iter, nil
 }
 
-// newInIndexIterator creates a new multiIndexIterator for fetching indexed data using _in filter.
+// newMultiIndexIteratorForInOp creates a new multiIndexIterator for fetching indexed data using _in filter.
 // It can modify the input matchers slice.
-func (f *indexFetcher) newInIndexIterator(
+func (f *indexFetcher) newMultiIndexIteratorForInOp(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
 ) (*multiIndexIterator, error) {
@@ -691,7 +691,7 @@ func (f *indexFetcher) createIndexIterator(indexFilter *mapper.Filter) (indexIte
 			// Additional check: verify all branches can actually use the index
 			// (some operators like _not may prevent index usage even on indexed fields)
 			if f.canAllBranchesUseIndex(orBranches) {
-				iter := f.newOrIndexIterator(orBranches)
+				iter := f.newMultiIndexIteratorForOrOp(orBranches)
 				return &memorizingIndexIterator{inner: iter}, nil
 			}
 			return nil, nil
@@ -739,7 +739,7 @@ func (f *indexFetcher) createIteratorFromConditions(fieldConditions []fieldFilte
 	} else if f.isRangeCompatible(fieldConditions[0]) {
 		iter, err = f.newRangeBasedMatchIterator(fieldConditions[0], matchers)
 	} else if fieldConditions[0].op == opIn && fieldConditions[0].arrOp != compOpNone {
-		iter, err = f.newInIndexIterator(fieldConditions, matchers)
+		iter, err = f.newMultiIndexIteratorForInOp(fieldConditions, matchers)
 	} else {
 		iter, err = f.newPrefixBasedMatchIteratorFromConditions(fieldConditions, matchers)
 	}
