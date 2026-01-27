@@ -13,7 +13,6 @@ package http
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/sourcenetwork/immutable"
@@ -39,10 +38,8 @@ func NewTransaction(rawURL string, tokenID string) (*Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	numericID, _ := strconv.ParseUint(tokenID, 10, 64)
 	return &Transaction{
 		Client:  &Client{httpClient},
-		id:      numericID,
 		tokenID: tokenID,
 	}, nil
 }

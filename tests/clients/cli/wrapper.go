@@ -582,7 +582,7 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	if err := json.Unmarshal(data, &res); err != nil {
 		return nil, err
 	}
-	tx, err := w.handler.Transaction("", res.ID)
+	tx, err := w.handler.Transaction(res.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -605,7 +605,7 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	if err := json.Unmarshal(data, &res); err != nil {
 		return nil, err
 	}
-	tx, err := w.handler.Transaction("", res.ID)
+	tx, err := w.handler.Transaction(res.ID)
 	if err != nil {
 		return nil, err
 	}

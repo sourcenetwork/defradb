@@ -17,7 +17,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 )
 
 type txHandler struct{}
@@ -37,23 +36,12 @@ func (h *txHandler) NewTxn(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Generate a unique UUID token for the transaction for all users
-	// This unifies the client-facing ID format.
+	// Generate a unique UUID token for the transaction.
+	// This unifies the client-facing ID format and provides isolation.
 	token := uuid.NewString()
-	clientID := token
 
-	var storageKey string
-	identity := acpIdentity.FromContext(req.Context())
-	if identity.HasValue() {
-		// Authenticated user: Scope the UUID with their DID
-		storageKey = identity.Value().DID() + ":" + token
-	} else {
-		// Anonymous user: Use the UUID directly
-		storageKey = token
-	}
-
-	txs.Store(storageKey, tx)
-	responseJSON(rw, http.StatusOK, &CreateTxResponse{clientID})
+	txs.Store(token, tx)
+	responseJSON(rw, http.StatusOK, &CreateTxResponse{token})
 }
 
 func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) {
@@ -67,46 +55,24 @@ func (h *txHandler) NewConcurrentTxn(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	// Generate a unique UUID token for the transaction for all users
-	// This unifies the client-facing ID format.
+	// Generate a unique UUID token for the transaction.
+	// This unifies the client-facing ID format and provides isolation.
 	token := uuid.NewString()
-	clientID := token
 
-	var storageKey string
-	identity := acpIdentity.FromContext(req.Context())
-	if identity.HasValue() {
-		// Authenticated user: Scope the UUID with their DID
-		storageKey = identity.Value().DID() + ":" + token
-	} else {
-		// Anonymous user: Use the UUID directly
-		storageKey = token
-	}
-
-	txs.Store(storageKey, tx)
-	responseJSON(rw, http.StatusOK, &CreateTxResponse{clientID})
+	txs.Store(token, tx)
+	responseJSON(rw, http.StatusOK, &CreateTxResponse{token})
 }
 
 func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 	txs := mustGetContextSyncMap(req)
 
-	txIDParam := chi.URLParam(req, "id")
-	if txIDParam == "" {
+	txID := chi.URLParam(req, "id")
+	if txID == "" {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 
-	// Determine the storage key based on user identity
-	var storageKey string
-	identity := acpIdentity.FromContext(req.Context())
-	if identity.HasValue() {
-		// Authenticated user: construct DID-scoped key
-		storageKey = identity.Value().DID() + ":" + txIDParam
-	} else {
-		// Anonymous user: the ID IS the storage key (UUID token)
-		storageKey = txIDParam
-	}
-
-	txVal, ok := txs.Load(storageKey)
+	txVal, ok := txs.Load(txID)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
@@ -118,31 +84,20 @@ func (h *txHandler) Commit(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	txs.Delete(storageKey)
+	txs.Delete(txID)
 	rw.WriteHeader(http.StatusOK)
 }
 
 func (h *txHandler) Discard(rw http.ResponseWriter, req *http.Request) {
 	txs := mustGetContextSyncMap(req)
 
-	txIDParam := chi.URLParam(req, "id")
-	if txIDParam == "" {
+	txID := chi.URLParam(req, "id")
+	if txID == "" {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
 	}
 
-	// Determine the storage key based on user identity
-	var storageKey string
-	identity := acpIdentity.FromContext(req.Context())
-	if identity.HasValue() {
-		// Authenticated user: construct DID-scoped key
-		storageKey = identity.Value().DID() + ":" + txIDParam
-	} else {
-		// Anonymous user: the ID IS the storage key (UUID token)
-		storageKey = txIDParam
-	}
-
-	txVal, ok := txs.LoadAndDelete(storageKey)
+	txVal, ok := txs.LoadAndDelete(txID)
 	if !ok {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrInvalidTransactionId})
 		return
@@ -191,7 +146,7 @@ func (h *txHandler) bindRoutes(router *Router) {
 
 	txnIdPathParam := openapi3.NewPathParameter("id").
 		WithRequired(true).
-		WithSchema(openapi3.NewInt64Schema())
+		WithSchema(openapi3.NewStringSchema())
 
 	txnCommit := openapi3.NewOperation()
 	txnCommit.OperationID = "transaction_commit"

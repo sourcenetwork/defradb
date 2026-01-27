@@ -290,7 +290,7 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 		return nil, client.NewErrUnexpectedType[*http.Transaction]("clientTxn", clientTxn)
 	}
 
-	serverTxn, err := w.handler.Transaction("", httpTxn.TokenID())
+	serverTxn, err := w.handler.Transaction(httpTxn.TokenID())
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +308,7 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 		return nil, client.NewErrUnexpectedType[*http.Transaction]("clientTxn", clientTxn)
 	}
 
-	serverTxn, err := w.handler.Transaction("", httpTxn.TokenID())
+	serverTxn, err := w.handler.Transaction(httpTxn.TokenID())
 	if err != nil {
 		return nil, err
 	}

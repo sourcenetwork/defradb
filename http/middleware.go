@@ -21,7 +21,6 @@ import (
 	"github.com/go-chi/cors"
 	"golang.org/x/exp/slices"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -65,18 +64,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Determine the storage key based on user identity
-		var storageKey string
-		identity := acpIdentity.FromContext(req.Context())
-		if identity.HasValue() {
-			// Authenticated user: construct DID-scoped key
-			storageKey = identity.Value().DID() + ":" + txValue
-		} else {
-			// Anonymous user: the token IS the storage key
-			storageKey = txValue
-		}
-
-		tx, ok := txs.Load(storageKey)
+		tx, ok := txs.Load(txValue)
 		if !ok {
 			next.ServeHTTP(rw, req)
 			return

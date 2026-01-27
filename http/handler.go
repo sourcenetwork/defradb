@@ -12,7 +12,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -109,17 +108,10 @@ func NewHandler(db DB) (*Handler, error) {
 	}, nil
 }
 
-// Transaction returns the transaction with the given ID for the specified identity.
-// The identityDID should be the DID of the user who owns the transaction.
-// If identityDID is empty, it treats the tokenID as the direct storage key (anonymous/UUID).
-func (h *Handler) Transaction(identityDID string, tokenID string) (client.Txn, error) {
-	var key string
-	if identityDID != "" {
-		key = fmt.Sprintf("%s:%s", identityDID, tokenID)
-	} else {
-		key = tokenID
-	}
-	tx, ok := h.txs.Load(key)
+// Transaction returns the transaction with the given token ID.
+// Token IDs are UUIDv4 strings that uniquely identify each transaction.
+func (h *Handler) Transaction(tokenID string) (client.Txn, error) {
+	tx, ok := h.txs.Load(tokenID)
 	if !ok {
 		return nil, ErrInvalidTransactionId
 	}
