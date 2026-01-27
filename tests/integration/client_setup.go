@@ -65,6 +65,11 @@ func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 		return cbindings.NewCWrapper(nodeObj)
 
 	case state.RustFFIClientType:
+		if s.IsNetworkEnabled {
+			// Use the same IP as Go P2P with a random port
+			listenAddr := "/ip4/" + getIPString() + "/tcp/0"
+			return rustffi.NewWrapperWithP2P(listenAddr)
+		}
 		return rustffi.NewWrapper()
 
 	default:

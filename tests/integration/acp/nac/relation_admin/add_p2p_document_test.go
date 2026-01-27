@@ -30,6 +30,7 @@ func TestNAC_AdminRelation_CanAddP2PDocument(t *testing.T) {
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

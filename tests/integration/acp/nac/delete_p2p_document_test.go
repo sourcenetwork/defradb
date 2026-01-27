@@ -30,6 +30,7 @@ func TestNAC_GatesDeleteP2PDocument_AuthorizedIdentity_AllowAccess(t *testing.T)
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -93,6 +94,7 @@ func TestNAC_GatesDeleteP2PDocument_NoIdentity_NotAuthorizedError(t *testing.T) 
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -157,6 +159,7 @@ func TestNAC_GatesDeleteP2PDocument_WrongIdentity_NotAuthorizedError(t *testing.
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

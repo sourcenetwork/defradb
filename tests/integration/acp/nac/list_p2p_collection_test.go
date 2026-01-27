@@ -30,6 +30,7 @@ func TestNAC_GatesListP2PCollection_AuthorizedIdentity_AllowAccess(t *testing.T)
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -83,6 +84,7 @@ func TestNAC_GatesListP2PCollection_NoIdentity_NotAuthorizedError(t *testing.T) 
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -136,6 +138,7 @@ func TestNAC_GatesListP2PCollection_WrongIdentity_NotAuthorizedError(t *testing.
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
