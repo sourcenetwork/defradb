@@ -37,8 +37,9 @@ func init() {
 		skipBackupTests = true
 	}
 	if rustFFIClient {
-		skipNetworkTests = true
-		skipBackupTests = true
+		// Don't skip any tests - let them fail so we can track progress
+		skipNetworkTests = false
+		skipBackupTests = false
 	}
 }
 
