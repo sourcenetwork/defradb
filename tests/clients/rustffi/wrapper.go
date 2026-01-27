@@ -4,6 +4,7 @@
 package rustffi
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -177,8 +178,13 @@ func (w *Wrapper) ExecRequest(
 		}
 	}
 
+	// Use json.Decoder with UseNumber() to preserve numeric precision.
+	// This ensures integers stay as json.Number rather than being converted to float64,
+	// which is required for test assertions to pass.
 	var gqlResult client.GQLResult
-	if err := json.Unmarshal([]byte(responseJSON), &gqlResult); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader([]byte(responseJSON)))
+	decoder.UseNumber()
+	if err := decoder.Decode(&gqlResult); err != nil {
 		return &client.RequestResult{
 			GQL: client.GQLResult{
 				Errors: []error{fmt.Errorf("failed to parse response: %w", err)},
@@ -606,8 +612,13 @@ func (t *TxnWrapper) ExecRequest(ctx context.Context, request string, opts ...cl
 		}
 	}
 
+	// Use json.Decoder with UseNumber() to preserve numeric precision.
+	// This ensures integers stay as json.Number rather than being converted to float64,
+	// which is required for test assertions to pass.
 	var gqlResult client.GQLResult
-	if err := json.Unmarshal([]byte(responseJSON), &gqlResult); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader([]byte(responseJSON)))
+	decoder.UseNumber()
+	if err := decoder.Decode(&gqlResult); err != nil {
 		return &client.RequestResult{
 			GQL: client.GQLResult{
 				Errors: []error{fmt.Errorf("failed to parse response: %w", err)},
