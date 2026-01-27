@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/google/uuid"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -58,12 +59,14 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		s.T.Skipf("test has no document ACP elements when testing with SourceHub ACP")
 	}
 	const chainID string = "sourcehub-dev"
+	name := uuid.New()
 
 	testLogger := tclog.TestLogger(s.T)
 	ctx := context.Background()
 	img := fmt.Sprintf("ghcr.io/sourcenetwork/sourcehub:refactor-df-defra") // TODO
 	container, err := testcontainers.Run(ctx,
 		img,
+		testcontainers.WithName(name.String()),
 		testcontainers.WithExposedPorts("26657/tcp"),
 		testcontainers.WithExposedPorts("9090/tcp"),
 		testcontainers.WithLogger(testLogger),
