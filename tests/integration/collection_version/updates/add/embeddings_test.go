@@ -30,7 +30,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldError(t *
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -59,7 +59,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownFieldName_ShouldErrorMult
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -93,7 +93,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -121,7 +121,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnknownEmbeddingGenerationField_
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -155,7 +155,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithInvalidEmbeddingGenerationFieldK
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -184,7 +184,7 @@ func TestColVersionUpdate_AddVectorEmbedding_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -230,7 +230,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldError(t *
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -259,7 +259,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFieldName_ShouldErrorMult
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -293,7 +293,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFields_ShouldError(t *tes
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -322,7 +322,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingFields_ShouldErrorMultipl
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -356,7 +356,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingProvider_ShouldError(t *t
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -385,7 +385,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingProvider_ShouldErrorMulti
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -419,7 +419,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldError(
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -448,7 +448,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithUnsupportedProvider_ShouldErrorM
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -482,7 +482,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingModel_ShouldError(t *test
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -511,7 +511,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingModel_ShouldErrorMultiple
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -545,7 +545,7 @@ func TestColVersionUpdate_AddVectorEmbeddingWithMissingURL_ShouldSucceed(t *test
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -593,7 +593,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToSelf_ShouldError(t *testi
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -622,7 +622,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToSelf_ShouldErrorMultiple(
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -657,7 +657,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldEr
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -688,7 +688,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbedding_ShouldEr
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -724,7 +724,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbeddingInPatch_S
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -759,7 +759,7 @@ func TestColVersionUpdate_AddVectorEmbeddingReferenceToAnotherEmbeddingInPatch_S
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

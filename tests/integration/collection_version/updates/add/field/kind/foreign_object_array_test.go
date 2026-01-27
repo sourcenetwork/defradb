@@ -27,7 +27,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_UnknownSchema(t *testing.T)
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
@@ -52,7 +52,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_NoRelationName(t *testing.T
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
@@ -77,7 +77,7 @@ func TestSchemaUpdatesAddFieldKindForeignObjectArray_KnownSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {
