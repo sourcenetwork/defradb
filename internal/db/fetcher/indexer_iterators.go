@@ -812,21 +812,7 @@ func (f *indexFetcher) determineFieldFilterConditions(indexFilter *mapper.Filter
 						return true
 					}
 
-					// For _geq: null, every value is >= null, so the index provides no benefit -
-					// we need all documents anyway. Fall back to a full scan.
-					// For _leq: null on nested JSON paths, documents where the JSON field is entirely
-					// missing or null should also match. If path is specified though, the index
-					// has no efficient way of distinguishing between them. Fall back to scan.
-					if filterVal == nil && (op == opGe || (op == opLe && len(jsonPath) > 0)) {
-						return true
-					}
-
-					// For JSON fields with _eq or _in operator and object/array filter value at root level,
-					// the index cannot be used because JSON indexes only store leaf values (scalars).
-					if indexedField.Kind == client.FieldKind_NILLABLE_JSON &&
-						len(jsonPath) == 0 &&
-						(op == opEq || op == opIn) &&
-						isComplexJSONFilterValue(filterVal) {
+					if shouldFallbackToFullScan(op, filterVal, jsonPath, indexedField.Kind) {
 						return true
 					}
 
@@ -940,19 +926,71 @@ func getNestedOperatorConditionIfJSON(
 	}
 }
 
-// isComplexJSONFilterValue returns true if the filter value is an object or array.
-// JSON indexes only store leaf values (scalars), so object/array filter values cannot
-// be efficiently matched using the index.
-func isComplexJSONFilterValue(filterVal any) bool {
-	if filterVal == nil {
-		return false
-	}
+// isComplexFilterValue returns true if the filter value is an object or array.
+func isComplexFilterValue(filterVal any) bool {
 	switch filterVal.(type) {
 	case map[string]any, []any:
 		return true
 	default:
 		return false
 	}
+}
+
+func isArrayFilterWithComplexValue(filterVal any) bool {
+	arr, ok := filterVal.([]any)
+	if !ok {
+		return false
+	}
+	isComplex := false
+	for _, v := range arr {
+		isComplex = isComplex || isComplexFilterValue(v)
+	}
+	return isComplex
+}
+
+// shouldFallbackToFullScan returns true if the index cannot efficiently handle the filter
+// and a full document scan should be used instead.
+//
+// Cases where fallback is needed:
+//   - _geq: null - every value is >= null, so the index provides no benefit
+//   - _leq: null on nested JSON paths - documents with missing JSON fields should match,
+//     but the index can't find them
+//   - _neq: null on root-level JSON fields - documents with empty objects/arrays have no
+//     index entries, so the index can't find all non-null documents.
+//     For nested paths, _neq: null CAN use the index efficiently.
+//   - _eq/_neq/_in/_nin with object/array value on JSON fields - JSON indexes only store
+//     leaf values (scalars), not entire objects or arrays.
+func shouldFallbackToFullScan(op string, filterVal any, jsonPath client.JSONPath, fieldKind client.FieldKind) bool {
+	isJSON := fieldKind == client.FieldKind_NILLABLE_JSON
+
+	if filterVal == nil {
+		if op == opGe {
+			// _geq: null matches everything
+			return true
+		}
+		if op == opLe && len(jsonPath) > 0 {
+			// _leq: null on nested path can't find missing fields
+			return true
+		}
+		if op == opNe && isJSON && len(jsonPath) == 0 {
+			// _neq: null on root-level JSON can't find empty objects/arrays
+			// For nested paths, the index can efficiently find non-null values
+			return true
+		}
+		return false
+	}
+
+	// JSON indexes only store leaf values (scalars), not objects or arrays.
+	// If the filter value is a complex type (object/array), we must fall back to full scan.
+	if isJSON && (op == opEq || op == opNe) && isComplexFilterValue(filterVal) {
+		return true
+	}
+
+	if isJSON && (op == opIn || op == opNin) && isArrayFilterWithComplexValue(filterVal) {
+		return true
+	}
+
+	return false
 }
 
 // isJSONFilterCondition returns true if the field is JSON and has a path or filter value.

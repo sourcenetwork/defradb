@@ -908,7 +908,7 @@ func TestJSONIndex_WithEqFilterOnNullField_ShouldUseIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestJSONIndex_WithNeFilterOnNullField_ShouldUseIndex(t *testing.T) {
+func TestJSONIndex_WithNeFilterOnNullNestedField_ShouldUseIndex(t *testing.T) {
 	req := `query {
 		User(filter: {custom: {title: {_neq: null}}}) {
 			name
@@ -1501,63 +1501,6 @@ func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestJSONIndex_WithNeFilterAgainstNullField_ShouldFetchNonNullValues(t *testing.T) {
-	req := `query {
-		User(filter: {custom: {age: {_neq: null}}}) {
-			name
-		}
-	}`
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddSchema{
-				Schema: `
-					type User {
-						name: String 
-						custom: JSON @index
-					}`,
-			},
-			&action.CreateDoc{
-				DocMap: map[string]any{
-					"name": "John",
-					"custom": map[string]any{
-						"age": 48,
-					},
-				},
-			},
-			&action.CreateDoc{
-				DocMap: map[string]any{
-					"name": "Andy",
-					"custom": map[string]any{
-						"age": nil,
-					},
-				},
-			},
-			&action.CreateDoc{
-				DocMap: map[string]any{
-					"name": "Shahzad",
-					"custom": map[string]any{
-						"age": 42,
-					},
-				},
-			},
-			&action.Request{
-				Request: req,
-				Results: map[string]any{
-					"User": []map[string]any{
-						{"name": "Shahzad"},
-						{"name": "John"},
-					},
-				},
-			},
-			&action.Request{
-				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
-			},
-		},
-	}
-	testUtils.ExecuteTestCase(t, test)
-}
-
 func TestJSONIndex_WithEqFilterAgainstExplicitNullField_ShouldFetchNullValues(t *testing.T) {
 	req := `query {
 		User(filter: {custom: {_eq: null}}) {
@@ -1585,40 +1528,6 @@ func TestJSONIndex_WithEqFilterAgainstExplicitNullField_ShouldFetchNullValues(t 
 					"custom": 100
 				}`,
 			},
-			&action.Request{
-				Request: req,
-				Results: map[string]any{
-					"User": []map[string]any{
-						{"name": "John"},
-					},
-				},
-				NonOrderedResults: true,
-			},
-			&action.Request{
-				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestJSONIndex_WithEqFilterAgainstOmittedNullField_ShouldFetchNullValues(t *testing.T) {
-	req := `query {
-		User(filter: {custom: {_eq: null}}) {
-			name
-		}
-	}`
-	test := testUtils.TestCase{
-		Actions: []any{
-			&action.AddSchema{
-				Schema: `
-					type User {
-						name: String 
-						custom: JSON @index
-					}`,
-			},
 			&action.CreateDoc{
 				Doc: `{
 					"name": "Kyle"
@@ -1626,14 +1535,15 @@ func TestJSONIndex_WithEqFilterAgainstOmittedNullField_ShouldFetchNullValues(t *
 			},
 			&action.CreateDoc{
 				Doc: `{
-					"name": "Islam",
-					"custom": 100
+					"name": "Andy",
+					"custom": "null"
 				}`,
 			},
 			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
+						{"name": "John"},
 						{"name": "Kyle"},
 					},
 				},
@@ -1641,7 +1551,7 @@ func TestJSONIndex_WithEqFilterAgainstOmittedNullField_ShouldFetchNullValues(t *
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -1956,6 +1866,248 @@ func TestJSONIndex_WithLeqNullFilterOnNestedJSONPath_ShouldNotUseIndex(t *testin
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "David"},
+						{"name": "Bruno"},
+						{"name": "Andy"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithEqFilterWithObjectValueOnNestedPath_ShouldFilter(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {nested: {_eq: {foo: "bar"}}}}) {
+			name
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"nested": {"foo": "bar"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": {"nested": {"foo": "baz"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
+					"custom": {"nested": "scalar"}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"other": {"foo": "bar"}}
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithNeqFilterWithObjectValueOnNestedPath_ShouldFilter(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {nested: {_neq: {foo: "bar"}}}}) {
+			name
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"nested": {"foo": "bar"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": {"nested": {"foo": "baz"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
+					"custom": {"nested": "scalar"}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"other": {"foo": "bar"}}
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "David"},
+						{"name": "Bruno"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithInFilterWithObjectValueOnNestedPath_ShouldFilter(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {nested: {_in: [{foo: "bar"}, {foo: "baz"}]}}}) {
+			name
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"nested": {"foo": "bar"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": {"nested": {"foo": "baz"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
+					"custom": {"nested": {"foo": "qux"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"other": {"foo": "bar"}}
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "David"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithNinFilterWithObjectValueOnNestedPath_ShouldFilter(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {nested: {_nin: [{foo: "bar"}, {foo: "baz"}]}}}) {
+			name
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"nested": {"foo": "bar"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": {"nested": {"foo": "baz"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
+					"custom": {"nested": {"foo": "qux"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"other": {"foo": "bar"}}
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
 						{"name": "Bruno"},
 						{"name": "Andy"},
 					},
