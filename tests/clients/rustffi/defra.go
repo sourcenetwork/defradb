@@ -832,6 +832,35 @@ func (n *Node) DeleteNACActorRelationship(requestorDID, targetDID string) (bool,
 // DAC (Document Access Control) Functions
 // ============================================================================
 
+// AddDACPolicy registers a DAC policy and returns its content-addressed ID.
+func (n *Node) AddDACPolicy(identityDID, policy string) (string, error) {
+	cIdentityDID := C.CString(identityDID)
+	defer C.free(unsafe.Pointer(cIdentityDID))
+
+	cPolicy := C.CString(policy)
+	defer C.free(unsafe.Pointer(cPolicy))
+
+	result := C.add_dac_policy(n.ptr, cIdentityDID, cPolicy)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: add_dac_policy failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var response struct {
+		PolicyID string `json:"PolicyID"`
+	}
+	if err := json.Unmarshal([]byte(value), &response); err != nil {
+		return "", fmt.Errorf("ffi: failed to parse response: %w", err)
+	}
+
+	return response.PolicyID, nil
+}
+
 // AddDACActorRelationship shares document access with target.
 // Relation can be "reader", "updater", or "deleter".
 // Returns true if added, false if already exists.
