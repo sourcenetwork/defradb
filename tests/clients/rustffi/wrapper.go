@@ -321,7 +321,17 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 // ============================================================================
 
 func (w *Wrapper) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
-	return client.AddPolicyResult{}, fmt.Errorf("AddDACPolicy not yet implemented in FFI")
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	policyID, err := w.node.AddDACPolicy(identityDID, policy)
+	if err != nil {
+		return client.AddPolicyResult{}, err
+	}
+
+	return client.AddPolicyResult{PolicyID: policyID}, nil
 }
 
 func (w *Wrapper) AddDACActorRelationship(
