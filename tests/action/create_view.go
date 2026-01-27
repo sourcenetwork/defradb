@@ -108,4 +108,6 @@ func (a *CreateView) Execute() {
 
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
+
+	refreshCollections(a.s)
 }
