@@ -41,19 +41,19 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 					"age":  40,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -77,7 +77,7 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {name: {_eq: "John"}}) {
 						name
@@ -93,7 +93,7 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {name: {_eq: "John"}}) {
 						name
@@ -119,31 +119,31 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigrate
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -167,7 +167,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigrate
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -181,7 +181,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigrate
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -206,31 +206,31 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -257,7 +257,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV1,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -271,7 +271,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -296,31 +296,31 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -344,10 +344,10 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 					},
 				},
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				FieldName: "age",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -361,7 +361,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -386,31 +386,31 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexD
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -437,10 +437,10 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexD
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV1,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				FieldName: "age",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -454,7 +454,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexD
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -480,52 +480,52 @@ func setupDistantVersions() []any {
 				}
 			`,
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			DocMap: map[string]any{
 				"name": "Andy",
 				"age":  20,
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			DocMap: map[string]any{
 				"name": "John",
 				"age":  30,
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			DocMap: map[string]any{
 				"name": "Fred",
 				"age":  25,
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			DocMap: map[string]any{
 				"name": "Islam",
 				"age":  32,
 			},
 		},
-		testUtils.PatchCollection{
+		&action.PatchCollection{
 			Patch: `
 				[
 					{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
 				]
 			`,
 		},
-		testUtils.PatchCollection{
+		&action.PatchCollection{
 			Patch: `
 				[
 					{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }
 				]
 			`,
 		},
-		testUtils.PatchCollection{
+		&action.PatchCollection{
 			Patch: `
 				[
 					{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "rank", "Kind": "Int"} }
 				]
 			`,
 		},
-		testUtils.PatchCollection{
+		&action.PatchCollection{
 			Patch: `
 				[
 					{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "score", "Kind": "Int"} }
@@ -564,7 +564,7 @@ func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_ShouldNo
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV1,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -578,7 +578,7 @@ func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithNoMigrations_ShouldNo
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -603,7 +603,7 @@ func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithNoMigrations_ShouldNo
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV5,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -617,7 +617,7 @@ func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithNoMigrations_ShouldNo
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -639,7 +639,7 @@ func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithMigrationInBetween_Sh
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV1,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -653,7 +653,7 @@ func TestSchemaMigrationQuery_SwitchToOldDistantVersionWithMigrationInBetween_Sh
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -678,7 +678,7 @@ func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithMigrationInBetween_Sh
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV5,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -692,7 +692,7 @@ func TestSchemaMigrationQuery_SwitchToNewDistantVersionWithMigrationInBetween_Sh
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -717,7 +717,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldReindex(
 				VersionID: schemaV5,
 			},
 			addMigrationBetweenV3AndV4(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -731,7 +731,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationBetweenOldVersions_ShouldReindex(
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -754,7 +754,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotReind
 				VersionID: schemaV1,
 			},
 			addMigrationBetweenV3AndV4(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -768,7 +768,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationBetweenNewVersions_ShouldNotReind
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -793,25 +793,25 @@ func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Should
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
@@ -836,14 +836,14 @@ func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Should
 			},
 			// Now patch to actually create v2 - this should trigger reindexing
 			// even though the patch itself doesn't touch indexes
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -857,7 +857,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Should
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -882,31 +882,31 @@ func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -924,7 +924,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *tes
 					},
 				}),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -938,7 +938,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *tes
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -963,20 +963,20 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Alice",
 					"age":  25,
 				},
 			},
 			// Create branch A: v1 -> v2 (no migration)
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -987,7 +987,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 				VersionID: schemaV1,
 			},
 			// Create branch B: v1 -> v3 (with migration: age+5)
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }
@@ -1005,7 +1005,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 					},
 				}),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 35}}) {
 						name
@@ -1021,7 +1021,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 35}}) {
 						name
@@ -1032,7 +1032,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV2,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -1048,7 +1048,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -1059,7 +1059,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV1,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -1079,7 +1079,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV3,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 35}}) {
 						name
@@ -1095,7 +1095,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 35}}) {
 						name
@@ -1120,14 +1120,14 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  20,
 				},
 			},
 			// Create branch A: v1 -> v2 (no migration)
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -1139,7 +1139,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 				VersionID: schemaV1,
 			},
 			// Create branch B: v1 -> v3 (migration: age+5)
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }
@@ -1162,7 +1162,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 				VersionID: schemaV1,
 			},
 			// Create branch C: v1 -> v4 (migration: age+10)
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "rank", "Kind": "Int"} }
@@ -1181,7 +1181,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 				}),
 			},
 			// Test branch C (v4): age should be 30 (20 + 10)
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -1197,7 +1197,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -1209,7 +1209,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV3,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 25}}) {
 						name
@@ -1225,7 +1225,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 25}}) {
 						name
@@ -1237,7 +1237,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV2,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 20}}) {
 						name
@@ -1253,7 +1253,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 20}}) {
 						name
@@ -1265,7 +1265,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV1,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 20}}) {
 						name
@@ -1285,7 +1285,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 			testUtils.SetActiveCollectionVersion{
 				VersionID: schemaV4,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -1301,7 +1301,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					Users(filter: {age: {_eq: 30}}) {
 						name

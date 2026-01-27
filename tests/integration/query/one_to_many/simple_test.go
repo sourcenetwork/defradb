@@ -13,13 +13,14 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToMany_PrimaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
@@ -27,7 +28,7 @@ func TestQueryOneToMany_PrimaryDirection(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -35,7 +36,7 @@ func TestQueryOneToMany_PrimaryDirection(t *testing.T) {
 						"verified": true
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Book {
 							name
@@ -68,7 +69,7 @@ func TestQueryOneToMany_PrimaryDirection(t *testing.T) {
 func TestQueryOneToMany_SecondaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
@@ -76,7 +77,7 @@ func TestQueryOneToMany_SecondaryDirection(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "A Time for Mercy",
@@ -84,7 +85,7 @@ func TestQueryOneToMany_SecondaryDirection(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Theif Lord",
@@ -92,7 +93,7 @@ func TestQueryOneToMany_SecondaryDirection(t *testing.T) {
 						"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -100,7 +101,7 @@ func TestQueryOneToMany_SecondaryDirection(t *testing.T) {
 						"verified": true
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "Cornelia Funke",
@@ -108,7 +109,7 @@ func TestQueryOneToMany_SecondaryDirection(t *testing.T) {
 						"verified": false
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -158,14 +159,14 @@ func TestQueryOneToMany_SecondaryDirection(t *testing.T) {
 func TestQueryOneToManyWithNonExistantParent(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

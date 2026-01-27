@@ -27,7 +27,7 @@ func TestMutationCreate_WithNullEncrypt_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_Users(encrypt: null, input: {name: "Bob"}) {
 						name
@@ -57,7 +57,7 @@ func TestMutationCreate_WithNullInput_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_Users(input: null) {
 						name
@@ -83,7 +83,7 @@ func TestMutationCreate_WithNullInputEntry_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_Users(input: [null]) {
 						name
@@ -107,7 +107,7 @@ func TestMutationCreate_WithNullEncryptFields_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_Users(encryptFields: null, input: {name: "Bob"}) {
 						name

@@ -33,35 +33,25 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_LocalACP(t *testing
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy: `
-                    name: test
-                    description: a test policy which marks a collection in a database as a resource
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-                `,
+description: a test policy which marks a collection in a database as a resource
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 			&action.AddSchema{
 				Schema: `
@@ -97,35 +87,25 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy: `
-                    name: test
-                    description: a test policy which marks a collection in a database as a resource
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-                `,
+description: a test policy which marks a collection in a database as a resource
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 			&action.AddSchema{
 				Schema: `
@@ -142,7 +122,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
@@ -150,7 +130,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 				},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is accessible on all nodes to authorized actors
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
@@ -168,7 +148,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is hidden on all nodes to unidentified actors
 				Request: `
 					query {
@@ -181,7 +161,7 @@ func TestACP_P2POneToOneReplicatorWithPermissionedCollection_SourceHubACP(t *tes
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is hidden on all nodes to unauthorized actors
 				Identity: testUtils.ClientIdentity(2),
 				Request: `

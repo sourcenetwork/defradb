@@ -179,6 +179,12 @@ These are the set of filter operators available for use when filtering on String
 These are the set of filter operators available for use when filtering on String!
  values.
 `
+
+	notNullBlobOperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Blob!
+ values.
+`
+
 	idOperatorBlockDescription string = `
 These are the set of filter operators available for use when filtering on ID
  values.

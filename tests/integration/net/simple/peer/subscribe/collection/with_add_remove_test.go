@@ -43,20 +43,20 @@ func TestP2PCollectionAddAndRemoveSingle(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name": "Fred"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// John has not been synced, as it was removed from the subscription set
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -106,13 +106,13 @@ func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 				// Unsubscribe from Users, but remain subscribed to Giraffes
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				Doc: `{
@@ -120,7 +120,7 @@ func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// John the User has not been synced, as Users was removed from the subscription set.
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -132,7 +132,7 @@ func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Gillian the Giraffe has still been synced, as it was not removed from the subscription set.
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -179,14 +179,14 @@ func TestP2PCollectionAddSingleAndRemoveErroneous(t *testing.T) {
 				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// John has been synced, as the unsubscribe errored and should not have affected
 				// the subscription to collection 0.
 				Request: `query {
@@ -232,14 +232,14 @@ func TestP2PCollectionAddSingleAndRemoveNone(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// John has been synced, as nothing was removed from the subscription set
 				Request: `query {
 					Users {

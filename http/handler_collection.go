@@ -347,6 +347,18 @@ func (h *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *ht
 	rw.WriteHeader(http.StatusOK)
 }
 
+func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	err := col.Truncate(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
 func (h *collectionHandler) bindRoutes(router *Router) {
 	errorResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/error",
@@ -591,6 +603,16 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	deleteEncryptedIndex.Responses.Set("200", successResponse)
 	deleteEncryptedIndex.Responses.Set("400", errorResponse)
 
+	truncate := openapi3.NewOperation()
+	truncate.OperationID = "truncate"
+	truncate.Description = "Truncate a collection, removing all document data within it from the server. " +
+		"Does not propagate the deletion to other Defra nodes in the network."
+	truncate.Tags = []string{"truncate"}
+	truncate.AddParameter(collectionNamePathParam)
+	truncate.Responses = openapi3.NewResponses()
+	truncate.Responses.Set("200", successResponse)
+	truncate.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
@@ -607,4 +629,5 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		h.ListEncryptedIndexes)
 	router.AddRoute("/collections/{name}/encrypted-indexes/{field}", http.MethodDelete, deleteEncryptedIndex,
 		h.DeleteEncryptedIndex)
+	router.AddRoute("/collections/{name}/truncate", http.MethodDelete, truncate, h.Truncate)
 }

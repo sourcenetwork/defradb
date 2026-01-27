@@ -28,13 +28,13 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
@@ -54,7 +54,7 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -92,19 +92,19 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
@@ -124,7 +124,7 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -162,19 +162,19 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
@@ -204,7 +204,7 @@ func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
@@ -234,7 +234,7 @@ func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
@@ -264,7 +264,7 @@ func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: null,
@@ -294,19 +294,19 @@ func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_Returns
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 50
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},

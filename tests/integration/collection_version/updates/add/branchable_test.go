@@ -31,7 +31,7 @@ func TestBranchableCollection_AddNewField_ShouldUpdateCollectionDefinition(t *te
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -39,7 +39,7 @@ func TestBranchableCollection_AddNewField_ShouldUpdateCollectionDefinition(t *te
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("User"),
 				},
@@ -87,19 +87,19 @@ func TestBranchableCollection_AddNewFieldWithMultipleDocs_ShouldAddField(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name": "Islam",
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -107,7 +107,7 @@ func TestBranchableCollection_AddNewFieldWithMultipleDocs_ShouldAddField(t *test
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":  "Andy",
@@ -121,7 +121,7 @@ func TestBranchableCollection_AddNewFieldWithMultipleDocs_ShouldAddField(t *test
 					"email": "islam@gmail.com"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					User {

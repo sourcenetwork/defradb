@@ -20,7 +20,7 @@ import (
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
 // func TestQueryOneToManyWithUnknownCidAndDocID(t *testing.T) {
-// 	test := testUtils.RequestTestCase{
+// 	test := &action.Request{TestCase{
 // 		Request: `query {
 // 					Book (
 // 							cid: "bafybeicgwjdyqyuntdop5ytpsfrqg5a4t2r25pfv6prfppl5ta5k5altca",
@@ -82,7 +82,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
@@ -91,7 +91,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -100,7 +100,7 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
 							cid: "bafyreial4br7zz2teyhegjcijy2hw6i3oirvxyjxdbrjjnhxmhkphd3l2q"
@@ -152,7 +152,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
@@ -161,7 +161,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -176,7 +176,7 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 					"age": 22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
 							cid: "bafyreial4br7zz2teyhegjcijy2hw6i3oirvxyjxdbrjjnhxmhkphd3l2q",
@@ -226,7 +226,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
@@ -235,7 +235,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -250,7 +250,7 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 					"rating": 4.5
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
 						cid: "bafyreial4br7zz2teyhegjcijy2hw6i3oirvxyjxdbrjjnhxmhkphd3l2q",
@@ -300,7 +300,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
@@ -309,7 +309,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
@@ -324,7 +324,7 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 					"rating": 4.5
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
 						cid: "bafyreifxbqpzvepc2rseagci6beohmv3qr3knjnfddzk7oqru5su7bdtpi",

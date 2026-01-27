@@ -29,13 +29,13 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// This just moves an object to a new key in a temporary dictionary, it doesn't actually do
 				// anything
 				Patch: `
@@ -51,7 +51,7 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					"name": "Johnnn"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that Users is still Users
 				Request: `query {
 					Users {
@@ -66,7 +66,7 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that the version ID remains the same
 				Request: `query {
 					_commits (filter: {fieldName: {_eq: "_C"}}) {

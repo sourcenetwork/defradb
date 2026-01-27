@@ -30,7 +30,7 @@ func TestMutationUpdate_WithArrayOfStringsInts(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"preferredStrings": ["", "the previous", "the first", "empty string", null]
@@ -41,7 +41,7 @@ func TestMutationUpdate_WithArrayOfStringsInts(t *testing.T) {
 					"preferredStrings": ["", "the previous", null, "empty string", "blank string", "hitchi"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

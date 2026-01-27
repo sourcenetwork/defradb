@@ -39,7 +39,7 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -92,7 +92,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			&action.AddSchema{
 				Schema: schemas,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Bob",
@@ -113,7 +113,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 				NodeID:        immutable.Some(1),
 				ImportContent: expectedExportData,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `
 					query  {
@@ -174,7 +174,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -240,7 +240,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -315,7 +315,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				// bae-89136f56-3779-5656-b8a6-f76a1c262f37
@@ -323,7 +323,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 					"name": "John and the sourcerers' stone"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
 				Doc: `{
@@ -351,7 +351,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				NodeID:        immutable.Some(1),
 				ImportContent: expectedExportData,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `
 					query {

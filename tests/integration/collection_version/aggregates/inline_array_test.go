@@ -552,7 +552,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 																},
 															},
 															map[string]any{
-																"name": "_ne",
+																"name": "_neq",
 																"type": map[string]any{
 																	"name": "Boolean",
 																},
@@ -678,7 +678,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 																},
 															},
 															map[string]any{
-																"name": "_ne",
+																"name": "_neq",
 																"type": map[string]any{
 																	"name": "Boolean",
 																},
@@ -798,7 +798,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 																},
 															},
 															map[string]any{
-																"name": "_ge",
+																"name": "_geq",
 																"type": map[string]any{
 																	"name": "Int",
 																},
@@ -816,7 +816,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 																},
 															},
 															map[string]any{
-																"name": "_le",
+																"name": "_leq",
 																"type": map[string]any{
 																	"name": "Int",
 																},
@@ -828,7 +828,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 																},
 															},
 															map[string]any{
-																"name": "_ne",
+																"name": "_neq",
 																"type": map[string]any{
 																	"name": "Int",
 																},
@@ -948,7 +948,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 																},
 															},
 															map[string]any{
-																"name": "_ge",
+																"name": "_geq",
 																"type": map[string]any{
 																	"name": "Int",
 																},
@@ -966,7 +966,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 																},
 															},
 															map[string]any{
-																"name": "_le",
+																"name": "_leq",
 																"type": map[string]any{
 																	"name": "Int",
 																},
@@ -978,7 +978,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 																},
 															},
 															map[string]any{
-																"name": "_ne",
+																"name": "_neq",
 																"type": map[string]any{
 																	"name": "Int",
 																},
@@ -1098,7 +1098,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 																},
 															},
 															map[string]any{
-																"name": "_ge",
+																"name": "_geq",
 																"type": map[string]any{
 																	"name": "Float64",
 																},
@@ -1116,7 +1116,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 																},
 															},
 															map[string]any{
-																"name": "_le",
+																"name": "_leq",
 																"type": map[string]any{
 																	"name": "Float64",
 																},
@@ -1128,7 +1128,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 																},
 															},
 															map[string]any{
-																"name": "_ne",
+																"name": "_neq",
 																"type": map[string]any{
 																	"name": "Float64",
 																},
@@ -1248,7 +1248,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 																},
 															},
 															map[string]any{
-																"name": "_ge",
+																"name": "_geq",
 																"type": map[string]any{
 																	"name": "Float64",
 																},
@@ -1266,7 +1266,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 																},
 															},
 															map[string]any{
-																"name": "_le",
+																"name": "_leq",
 																"type": map[string]any{
 																	"name": "Float64",
 																},
@@ -1278,7 +1278,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 																},
 															},
 															map[string]any{
-																"name": "_ne",
+																"name": "_neq",
 																"type": map[string]any{
 																	"name": "Float64",
 																},
@@ -1416,7 +1416,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 																},
 															},
 															map[string]any{
-																"name": "_ne",
+																"name": "_neq",
 																"type": map[string]any{
 																	"name": "String",
 																},
@@ -1566,7 +1566,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 																},
 															},
 															map[string]any{
-																"name": "_ne",
+																"name": "_neq",
 																"type": map[string]any{
 																	"name": "String",
 																},

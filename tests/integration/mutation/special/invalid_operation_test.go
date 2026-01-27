@@ -27,7 +27,7 @@ func TestMutationInvalidMutation(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					dostuff_User(input: {}) {
 						_docID

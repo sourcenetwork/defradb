@@ -52,7 +52,7 @@ A robust access control policy system is your first line of defense against unau
 ## ReBac Authorization Model
 
 ### Zanzibar
-In 2019, Google published their [Zanzibar](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/) paper, a paper explaining how they handle authorization across their many services. It uses access control lists but with relationship-based access control rather than role-based access control. Relationship-Based Access Control (ReBAC) establishes an authorization model where a subject's permission to access an object is defined by the presence of relationships between those subjects and objects.
+In 2019, Google published their [Zanzibar](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/) paper, a paper explaining how they handle authorization across their many services. It implements an enhanced type of access control list (ACL), which supports both object and subject grouping. Zanzibar's design is inspired on the relationship-based access control model, rather than the widely adopted role-based access control, which is incompatible with ACLs. Relationship-Based Access Control (ReBAC) establishes an authorization model where a subject's permission to access an object is defined by the presence of relationships between those subjects and objects.
 The way Zanzibar works is it exposes an API with (mainly) operations to manage `Relationships` (`tuples`) and Verify Access Requests (can Bob do X) through the `Check` call. A `tuple` includes subject, relation, and object. The Check call performs Graph Search over the `tuples` to find a path between the user and the object, if such a path exist then according to `RelBAC` the user has the queried permission. It operates as a Consistent and Partition-Tolerant System.
 
 ### Zanzi
@@ -92,11 +92,7 @@ We call these rules DPI A.K.A DefraDB Policy Interface.
 ## DAC DPI Rules
 
 To qualify as a DPI-compliant `resource`, the following rules **MUST** be satisfied:
-- The resource **must include** the mandatory `registerer` (`owner`) relation within the `relations` attribute.
 - The resource **must encompass** all the required permissions under the `permissions` attribute.
-- Every required permission must have the required registerer relation (`owner`) in `expr`.
-- The required registerer relation **must be positioned** as the leading (first) relation in `expr` (see example below).
-- Any relation after the required registerer relation must only be a union set operation (`+`).
 
 For a `Policy` to be `DPI` compliant for DAC, all of its `resources` must be DPI compliant.
 To be `Partially-DPI` at least one of its `resource` must be DPI compliant.
@@ -106,9 +102,6 @@ To be `Partially-DPI` at least one of its `resource` must be DPI compliant.
 All mandatory permissions are:
 - Specified in the `dpi.go` file within the variable `dpiRequiredPermissions`.
 
-The name of the required 'registerer' relation is:
-- Specified in the `dpi.go` file within the variable `requiredRegistererRelationName`.
-
 ### DPI Resource Examples:
 - Check out tests here: [tests/integration/acp/schema/add_dpi](/tests/integration/acp/schema/add_dpi)
 - The tests linked are broken into `accept_*_test.go` and `reject_*_test.go` files.
@@ -117,25 +110,11 @@ The name of the required 'registerer' relation is:
 - There are also some Partially-DPI tests that are both accepted and rejected depending on the resource.
 
 ### Required Permission's Expression:
-Even though the following expressions are valid generic policy expressions, they will make a
-DPI compliant resource lose its DPI status as these expressions are not in accordance to
-our DPI [rules](#dac-dpi-rules). Assuming these `expr` are under a required permission label:
-- `expr: owner-owner`
-- `expr: owner-reader`
-- `expr: owner&reader`
-- `expr: owner - reader`
-- `expr: ownerMalicious + owner`
-- `expr: ownerMalicious`
-- `expr: owner_new`
-- `expr: reader+owner`
-- `expr: reader-owner`
-- `expr: reader - owner`
-
 Here are some valid expression examples. Assuming these `expr` are under a required permission label:
-- `expr: owner`
-- `expr: owner + reader`
-- `expr: owner +reader`
-- `expr: owner+reader`
+- `expr: ` 
+- `expr: reader`
+- `expr: reader + writer`
+- `expr: reader & admin`
 
 ## DAC Usage CLI:
 

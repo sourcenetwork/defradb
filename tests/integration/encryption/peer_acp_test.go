@@ -26,50 +26,36 @@ name: Test Policy
 
 description: A Policy
 
-actor:
-  name: actor
-
 resources:
-  users:
+  - name: users
     permissions:
-      read:
-        expr: owner + reader + updater + deleter
-
-      update:
-        expr: owner + updater
-
-      delete:
-        expr: owner + deleter
-
-      nothing:
-        expr: dummy
+    - name: read
+      expr: reader + updater + deleter
+    - name: update
+      expr: updater
+    - name: delete
+      expr: deleter
+    - name: nothing
+      expr: dummy
 
     relations:
-      owner:
-        types:
-          - actor
-
-      reader:
-        types:
-          - actor
-
-      updater:
-        types:
-          - actor
-
-      deleter:
-        types:
-          - actor
-
-      admin:
-        manages:
-          - reader
-        types:
-          - actor
-
-      dummy:
-        types:
-          - actor
+    - name: reader
+      types:
+      - actor
+    - name: updater
+      types:
+      - actor
+    - name: deleter
+      types:
+      - actor
+    - name: admin
+      manages:
+      - reader
+      types:
+      - actor
+    - name: dummy
+      types:
+      - actor
 `
 
 func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
@@ -106,7 +92,7 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(0),
 				Doc: `
@@ -130,7 +116,7 @@ func TestDocEncryptionACP_IfUserAndNodeHaveAccess_ShouldFetch(t *testing.T) {
 				Relation:          "reader",
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
@@ -186,7 +172,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(0),
 				Doc: `
@@ -204,7 +190,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 				Relation:          "reader",
 			},
 			testUtils.Wait{Duration: 100 * time.Millisecond},
-			testUtils.Request{
+			&action.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
@@ -220,7 +206,7 @@ func TestDocEncryptionACP_IfUserHasAccessButNotNode_ShouldNotFetch(t *testing.T)
 			},
 			// If the instance doesn't have rights to the doc, it can't do block sync
 			// and therefore doesn't have the related commit blocks.
-			testUtils.Request{
+			&action.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.ClientIdentity(1),
 				Request: `
@@ -276,7 +262,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				CollectionIDs: []int{0},
 			},
 			// encrypted, private, shared
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Doc: `
@@ -294,7 +280,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				Relation:          "reader",
 			},
 			// encrypted, private, not shared
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Doc: `
@@ -306,7 +292,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				IsDocEncrypted: true,
 			},
 			// encrypted, public
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `
 					{
@@ -317,7 +303,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				IsDocEncrypted: true,
 			},
 			// not encrypted, private, shared
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Doc: `
@@ -334,7 +320,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				Relation:          "reader",
 			},
 			// not encrypted, private, not shared
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Doc: `
@@ -345,7 +331,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				`,
 			},
 			// not encrypted, public
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `
 					{
@@ -355,7 +341,7 @@ func TestDocEncryptionACP_IfNodeHasAccessToSomeDocs_ShouldFetchOnlyThem(t *testi
 				`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.NodeIdentity(1),
 				Request: `
@@ -424,7 +410,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 				NodeID:        2,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.NodeIdentity(0),
 				Doc: `
@@ -448,7 +434,7 @@ func TestDocEncryptionACP_IfClientNodeHasDocPermissionButServerNodeIsNotAvailabl
 			testUtils.Wait{
 				Duration: 100 * time.Millisecond,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID:   immutable.Some(1),
 				Identity: testUtils.NodeIdentity(1),
 				Request: `

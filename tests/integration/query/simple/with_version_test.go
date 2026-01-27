@@ -20,13 +20,13 @@ import (
 func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -81,13 +81,13 @@ func TestQuery_CreateDocWithNestedLatestCommit(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -147,7 +147,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -158,7 +158,7 @@ func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
 					"Age": 22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -230,13 +230,13 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithCollectionVersionID(t *testing.T
 	collectionVersionID := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -269,13 +269,13 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -311,13 +311,13 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -380,7 +380,7 @@ func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -391,7 +391,7 @@ func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.
 					"Age": 22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -486,13 +486,13 @@ func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
 	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -556,14 +556,14 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -631,7 +631,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"Name": "John",
@@ -643,7 +643,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 				DocID:        0,
 				Doc:          `{"Age": 22}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name

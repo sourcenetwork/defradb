@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
@@ -42,7 +43,7 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				TransactionID: immutable.Some(0),
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),

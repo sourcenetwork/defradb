@@ -13,25 +13,26 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithFloatGreaterThanFilterBlock_OneMatchingResult(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"Name": "John",
 						"HeightM": 2.1
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"Name": "Bob",
 						"HeightM": 1.82
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {HeightM: {_gt: 2.0999999999999}}) {
 							Name
@@ -54,19 +55,19 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_OneMatchingResult(t *testing
 func TestQuerySimpleWithFloatGreaterThanFilterBlock_NoMatchingResult(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"Name": "John",
 						"HeightM": 2.1
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"Name": "Bob",
 						"HeightM": 1.82
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {HeightM: {_gt: 40}}) {
 							Name
@@ -85,19 +86,19 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_NoMatchingResult(t *testing.
 func TestQuerySimpleWithFloatGreaterThanFilterBlock_AllMatchingResult(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"Name": "John",
 						"HeightM": 2.1
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"Name": "Bob",
 						"HeightM": 1.82
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Users(filter: {HeightM: {_gt: 1.8199999999999}}) {
 							Name
@@ -124,19 +125,19 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlock_AllMatchingResult(t *testing
 func TestQuerySimpleWithFloatGreaterThanFilterBlockWithIntFilterValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {HeightM: {_gt: 2}}) {
 						Name
@@ -159,18 +160,18 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlockWithIntFilterValue(t *testing
 func TestQuerySimpleWithFloatGreaterThanFilterBlockWithNullFilterValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {HeightM: {_gt: null}}) {
 						Name

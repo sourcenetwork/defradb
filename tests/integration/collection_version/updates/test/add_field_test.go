@@ -27,7 +27,7 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Name", "value": "Users" },
@@ -35,7 +35,7 @@ func TestSchemaUpdatesTestAddField(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -61,7 +61,7 @@ func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Name", "value": "Author" },
@@ -70,7 +70,7 @@ func TestSchemaUpdatesTestAddFieldBlockedByTest(t *testing.T) {
 				`,
 				ExpectedError: "test failed",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

@@ -27,11 +27,11 @@ func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
                         age: Int
                     }
                 `},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
                     query {
                         Users {
@@ -74,14 +74,14 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
                         points: Int @crdt(type: pcounter)
                     }
                 `},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"John",
 						"points": 5
 					}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: query,
 				Results: map[string]any{
 					"Users": []map[string]any{
@@ -96,7 +96,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 				DocID: 0,
 				Doc:   `{ "points": 3 }`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: query,
 				Results: map[string]any{
 					"Users": []map[string]any{

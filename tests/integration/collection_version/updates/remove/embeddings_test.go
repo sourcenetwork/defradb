@@ -30,7 +30,7 @@ func TestColVersionUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -40,7 +40,7 @@ func TestColVersionUpdate_RemoveVectorEmbedding_ShouldSucceed(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:             "Users",
