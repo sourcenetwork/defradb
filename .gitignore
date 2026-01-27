@@ -70,3 +70,10 @@ crash.log
 
 # Ignore .env files containing sensitive information.
 .env
+
+# Rust FFI test reports
+reports/
+
+# Rust FFI library files (built from defradb.rs)
+tests/clients/rustffi/*.a
+tests/clients/rustffi/*.dylib

@@ -42,8 +42,8 @@ echo "Output: ${REPORT_FILE}"
 # Run tests and capture output
 RAW_OUTPUT=$(go test "./tests/integration/${PACKAGE}/..." -v -count=1 2>&1) || true
 
-# Count results
-TOTAL=$(echo "$RAW_OUTPUT" | grep -cE "^(---|===) (RUN|PASS|FAIL)" || echo 0)
+# Count results (only count === RUN to avoid double-counting)
+TOTAL=$(echo "$RAW_OUTPUT" | grep -c "^=== RUN" || echo 0)
 PASSED=$(echo "$RAW_OUTPUT" | grep -c "^--- PASS" || echo 0)
 FAILED=$(echo "$RAW_OUTPUT" | grep -c "^--- FAIL" || echo 0)
 
