@@ -13,13 +13,14 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -27,7 +28,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -35,7 +36,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -43,7 +44,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -51,7 +52,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -59,7 +60,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {_alias: {minRating: {_gt: 0}}}) {
 						name
@@ -89,7 +90,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -97,7 +98,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchOne(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -105,7 +106,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchOne(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -113,7 +114,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchOne(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -121,7 +122,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchOne(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -129,7 +130,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchOne(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {_alias: {minRating: {_lt: 4.7}}}) {
 						name

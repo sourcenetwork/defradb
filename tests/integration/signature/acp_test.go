@@ -22,34 +22,27 @@ import (
 )
 
 const policy = `
-	name: test
-	description: a test policy which marks a collection in a database as a resource
+name: test
+description: a test policy which marks a collection in a database as a resource
 
-	actor:
-	  name: actor
+resources:
+- name: users
+  permissions:
+  - name: read
+    expr: reader
+  - name: update
+  - name: delete
 
-	resources:
-	  users:
-		permissions:
-		  read:
-			expr: owner + reader
-		  update:
-			expr: owner
-		  delete:
-			expr: owner
+  relations:
+  - name: reader
+    types:
+    - actor
 
-		relations:
-		  owner:
-			types:
-			  - actor
-		  reader:
-			types:
-			  - actor
-		  admin:
-			manages:
-			  - reader
-			types:
-			  - actor
+  - name: admin
+    manages:
+    - reader
+    types:
+    - actor
 `
 
 func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
@@ -76,7 +69,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
  					}
  				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",
@@ -119,7 +112,7 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
  					}
  				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",

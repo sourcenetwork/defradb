@@ -20,13 +20,13 @@ import (
 func TestQuerySimpleWithInvalidCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (cid: "any non-nil string value - this will be ignored") {
 						Name
@@ -50,12 +50,12 @@ func TestQuerySimpleWithCid(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
 							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
@@ -87,17 +87,17 @@ func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
 							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey"
@@ -129,7 +129,7 @@ func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"counter": int64(1),
@@ -140,7 +140,7 @@ func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 				DocID:        0,
 				Doc:          `{"counter": 1}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(cid: "{{.CID0_0_1}}") {
 						counter
@@ -170,7 +170,7 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -178,7 +178,7 @@ func TestQuerySimple_WithCidAfterDeleteOperation_ShouldReturnUser(t *testing.T) 
 			testUtils.DeleteDoc{
 				DocID: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
 						cid: "bafyreic2vrbl344kkc7h5d7e2hpnwvffta4ck73bvjs5acgjtvqubvvioe"

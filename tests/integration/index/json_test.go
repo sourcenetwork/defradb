@@ -32,43 +32,43 @@ func TestJSONIndex_WithFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 168}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": "168 cm"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"height": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"height": 190}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -78,7 +78,7 @@ func TestJSONIndex_WithFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -103,43 +103,43 @@ func TestJSONIndex_WithGtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 178}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": "168 cm"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"height": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"height": 190}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -147,7 +147,7 @@ func TestJSONIndex_WithGtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -159,7 +159,7 @@ func TestJSONIndex_WithGtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithGeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {height: {_ge: 178}}}) {
+		User(filter: {custom: {height: {_geq: 178}}}) {
 			name
 		}
 	}`
@@ -172,43 +172,55 @@ func TestJSONIndex_WithGeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 178}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": "168 cm"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"height": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"height": 190}
 				}`,
 			},
-			testUtils.Request{
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Jesse",
+					"custom": null
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Chris",
+					"custom": 180
+				}`,
+			},
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -217,7 +229,7 @@ func TestJSONIndex_WithGeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -242,43 +254,43 @@ func TestJSONIndex_WithLtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 178}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": "168 cm"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"height": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"height": 190}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -286,7 +298,7 @@ func TestJSONIndex_WithLtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -298,7 +310,7 @@ func TestJSONIndex_WithLtFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithLeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {height: {_le: 178}}}) {
+		User(filter: {custom: {height: {_leq: 178}}}) {
 			name
 		}
 	}`
@@ -311,43 +323,43 @@ func TestJSONIndex_WithLeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 178}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": "168 cm"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"height": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"height": 190}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -356,7 +368,7 @@ func TestJSONIndex_WithLeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -368,7 +380,7 @@ func TestJSONIndex_WithLeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithNeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {height: {_ne: 178}}}) {
+		User(filter: {custom: {height: {_neq: 178}}}) {
 			name
 		}
 	}`
@@ -381,43 +393,43 @@ func TestJSONIndex_WithNeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 178}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": "168 cm"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"height": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"height": 190}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -428,7 +440,7 @@ func TestJSONIndex_WithNeFilterOnNumberField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
@@ -453,43 +465,43 @@ func TestJSONIndex_WithEqFilterOnStringField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"title": "Mr", "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"title": "Mr"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"title": 7}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"title": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"title": "Dr"}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -498,7 +510,7 @@ func TestJSONIndex_WithEqFilterOnStringField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -528,43 +540,43 @@ func TestJSONIndex_WithLikeFilterOnStringField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"title": "Mr", "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"title": "dr"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"title": 7}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"title": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"title": "Dr"}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: likeReq,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -572,11 +584,11 @@ func TestJSONIndex_WithLikeFilterOnStringField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(likeReq),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ilikeReq,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -585,7 +597,7 @@ func TestJSONIndex_WithLikeFilterOnStringField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(ilikeReq),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
@@ -615,43 +627,43 @@ func TestJSONIndex_WithNLikeFilterOnStringField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"title": "Mr", "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"title": "dr"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"title": 7}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"title": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"title": "Dr"}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: nlikeReq,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -660,11 +672,11 @@ func TestJSONIndex_WithNLikeFilterOnStringField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(nlikeReq),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: nilikeReq,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -672,7 +684,7 @@ func TestJSONIndex_WithNLikeFilterOnStringField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(nilikeReq),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
@@ -697,43 +709,43 @@ func TestJSONIndex_WithEqFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"isStudent": true, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"isStudent": true}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"isStudent": "very much true"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"isStudent": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"isStudent": false}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -743,7 +755,7 @@ func TestJSONIndex_WithEqFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -755,7 +767,7 @@ func TestJSONIndex_WithEqFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithNeFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {isStudent: {_ne: false}}}) {
+		User(filter: {custom: {isStudent: {_neq: false}}}) {
 			name
 		}
 	}`
@@ -768,43 +780,43 @@ func TestJSONIndex_WithNeFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"isStudent": true, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"isStudent": true}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"isStudent": "very much true"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"isStudent": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"isStudent": false}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -816,7 +828,7 @@ func TestJSONIndex_WithNeFilterOnBoolField_ShouldUseIndex(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
 			},
@@ -841,43 +853,43 @@ func TestJSONIndex_WithEqFilterOnNullField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"title": null, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"title": null}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"title": "null"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"title": 0}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"title": "Dr"}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -886,7 +898,7 @@ func TestJSONIndex_WithEqFilterOnNullField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -898,7 +910,7 @@ func TestJSONIndex_WithEqFilterOnNullField_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithNeFilterOnNullField_ShouldUseIndex(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {title: {_ne: null}}}) {
+		User(filter: {custom: {title: {_neq: null}}}) {
 			name
 		}
 	}`
@@ -911,31 +923,31 @@ func TestJSONIndex_WithNeFilterOnNullField_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"title": null, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"weight": 80, "BMI": 25}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"title": "null"}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": {"title": 0}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -944,7 +956,7 @@ func TestJSONIndex_WithNeFilterOnNullField_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -974,13 +986,13 @@ func TestJSONIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 180, "BMI": 25}
@@ -992,7 +1004,7 @@ func TestJSONIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 					"custom": {"height": 172, "BMI": 22}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1000,11 +1012,11 @@ func TestJSONIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req1),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1012,7 +1024,7 @@ func TestJSONIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req2),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -1037,37 +1049,37 @@ func TestJSONIndex_WithInFilter_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 180, "weight": 80}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"height": 172, "weight": 75}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": 190, "weight": 85}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred",
 					"custom": {"height": 180, "weight": 70}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1077,7 +1089,7 @@ func TestJSONIndex_WithInFilter_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -1102,31 +1114,31 @@ func TestJSONIndex_WithInFilterOfDifferentTypes_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 180, "weight": 80}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"height": 172, "weight": 75}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": 190, "weight": 85}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred",
 					"custom": {"height": "172 cm", "weight": 70}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1135,7 +1147,7 @@ func TestJSONIndex_WithInFilterOfDifferentTypes_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -1160,31 +1172,31 @@ func TestJSONIndex_WithNinFilter_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 180, "weight": 80}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"height": 172, "weight": 75}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": 190, "weight": 85}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1193,7 +1205,7 @@ func TestJSONIndex_WithNinFilter_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
@@ -1218,31 +1230,31 @@ func TestJSONIndex_WithNotAndInFilter_ShouldNotUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 180, "weight": 80}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"height": 172, "weight": 75}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": 190, "weight": 85}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1276,31 +1288,31 @@ func TestJSONIndex_WithCompoundFilterCondition_ShouldUseIndex(t *testing.T) {
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 180, "weight": 80}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {"height": 180, "weight": 75}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": {"height": 190, "weight": 85}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1308,7 +1320,7 @@ func TestJSONIndex_WithCompoundFilterCondition_ShouldUseIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -1320,7 +1332,7 @@ func TestJSONIndex_WithCompoundFilterCondition_ShouldUseIndex(t *testing.T) {
 
 func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {age: {_ne: 48}}}) {
+		User(filter: {custom: {age: {_neq: 48}}}) {
 			name
 		}
 	}`
@@ -1333,7 +1345,7 @@ func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testi
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -1341,7 +1353,7 @@ func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -1349,7 +1361,7 @@ func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -1357,7 +1369,7 @@ func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testi
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1366,7 +1378,7 @@ func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testi
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -1377,7 +1389,7 @@ func TestJSONIndex_WithNeFilterAgainstNumberField_ShouldFetchNullValues(t *testi
 
 func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {city: {_ne: "Istanbul"}}}) {
+		User(filter: {custom: {city: {_neq: "Istanbul"}}}) {
 			name
 		}
 	}`
@@ -1390,7 +1402,7 @@ func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testi
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -1398,7 +1410,7 @@ func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -1406,7 +1418,7 @@ func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -1414,7 +1426,7 @@ func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testi
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1423,7 +1435,7 @@ func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testi
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -1434,7 +1446,7 @@ func TestJSONIndex_WithNeFilterAgainstStringField_ShouldFetchNullValues(t *testi
 
 func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {verified: {_ne: true}}}) {
+		User(filter: {custom: {verified: {_neq: true}}}) {
 			name
 		}
 	}`
@@ -1447,7 +1459,7 @@ func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -1455,7 +1467,7 @@ func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -1463,7 +1475,7 @@ func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -1471,7 +1483,7 @@ func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1480,7 +1492,7 @@ func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -1491,7 +1503,7 @@ func TestJSONIndex_WithNeFilterAgainstBoolField_ShouldFetchNullValues(t *testing
 
 func TestJSONIndex_WithNeFilterAgainstNullField_ShouldFetchNonNullValues(t *testing.T) {
 	req := `query {
-		User(filter: {custom: {age: {_ne: null}}}) {
+		User(filter: {custom: {age: {_neq: null}}}) {
 			name
 		}
 	}`
@@ -1504,7 +1516,7 @@ func TestJSONIndex_WithNeFilterAgainstNullField_ShouldFetchNonNullValues(t *test
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -1512,7 +1524,7 @@ func TestJSONIndex_WithNeFilterAgainstNullField_ShouldFetchNonNullValues(t *test
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -1520,7 +1532,7 @@ func TestJSONIndex_WithNeFilterAgainstNullField_ShouldFetchNonNullValues(t *test
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -1528,7 +1540,7 @@ func TestJSONIndex_WithNeFilterAgainstNullField_ShouldFetchNonNullValues(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1537,7 +1549,7 @@ func TestJSONIndex_WithNeFilterAgainstNullField_ShouldFetchNonNullValues(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -1561,19 +1573,19 @@ func TestJSONIndex_WithEqFilterAgainstExplicitNullField_ShouldFetchNullValues(t 
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": null
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": 100
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1582,7 +1594,7 @@ func TestJSONIndex_WithEqFilterAgainstExplicitNullField_ShouldFetchNullValues(t 
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -1607,18 +1619,18 @@ func TestJSONIndex_WithEqFilterAgainstOmittedNullField_ShouldFetchNullValues(t *
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Kyle"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": 100
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -1627,9 +1639,78 @@ func TestJSONIndex_WithEqFilterAgainstOmittedNullField_ShouldFetchNullValues(t *
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithGreaterThanFilterOnTopLevelJSONField_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		Users(filter: {custom: {_gt: 20}}) {
+			name
+			custom
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						custom: JSON @index
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": 21
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": 19
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
+					"custom": {"height": null}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"height": 190}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Jesse",
+					"custom": null
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"name":   "John",
+							"custom": int64(21),
+						},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}

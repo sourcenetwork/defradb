@@ -29,14 +29,14 @@ func TestQuerySimpleWithRestart(t *testing.T) {
 				`,
 			},
 			testUtils.Restart{},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"age": 30
 				}`,
 			},
 			testUtils.Restart{},
-			testUtils.Request{
+			&action.Request{
 				Request: ` query {
 					Users {
 						name

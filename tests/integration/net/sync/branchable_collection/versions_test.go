@@ -31,13 +31,13 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name": "Islam",
@@ -51,7 +51,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name":  "Andy",
@@ -65,13 +65,13 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					"email": "islam@gmail.com"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name": "Shahzad",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name": "Islam",
@@ -85,7 +85,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(1),
 				DocMap: map[string]any{
 					"name":  "Fred",
@@ -112,7 +112,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 				CollectionID: 0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					User {
@@ -145,7 +145,7 @@ func TestBranchableCollectionSync_WithBranchedVersionsAndDocs_ShouldSync(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {

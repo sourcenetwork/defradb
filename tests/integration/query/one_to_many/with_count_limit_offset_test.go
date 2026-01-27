@@ -13,13 +13,14 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
@@ -27,7 +28,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
@@ -35,7 +36,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Firm",
@@ -43,7 +44,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Pelican Brief",
@@ -51,7 +52,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
@@ -59,7 +60,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -67,7 +68,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -75,7 +76,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -117,7 +118,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
@@ -125,7 +126,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
@@ -133,7 +134,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Associate",
@@ -141,7 +142,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
@@ -149,7 +150,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -157,7 +158,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -165,7 +166,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -211,7 +212,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
@@ -219,7 +220,7 @@ func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
@@ -227,7 +228,7 @@ func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
@@ -235,7 +236,7 @@ func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
 					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -243,7 +244,7 @@ func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -251,7 +252,7 @@ func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name

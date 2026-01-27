@@ -48,7 +48,7 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",
@@ -96,7 +96,7 @@ func TestNAC_GatesVerifySignature_GoClient_AuthorizedIdentity_AllowAccess(t *tes
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",

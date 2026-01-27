@@ -40,7 +40,7 @@ func TestDocEncryptionPeer_WithSimpleRequest_ShouldFetchSuccessfully(t *testing.
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
@@ -49,7 +49,7 @@ func TestDocEncryptionPeer_WithSimpleRequest_ShouldFetchSuccessfully(t *testing.
 				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSESync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -91,7 +91,7 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *tes
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John",
@@ -102,7 +102,7 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *tes
 				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSESync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -118,7 +118,7 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *tes
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -134,7 +134,7 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *tes
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -175,7 +175,7 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
@@ -183,7 +183,7 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Alice",
@@ -191,7 +191,7 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Bob",
@@ -200,7 +200,7 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSESync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -216,7 +216,7 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -235,7 +235,7 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -271,7 +271,7 @@ func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError(t *testing.T) 
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
@@ -279,7 +279,7 @@ func TestDocEncryption_IfThereIsNoIndex_EncryptedQueryShouldError(t *testing.T) 
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -309,7 +309,7 @@ func TestDocEncryption_IfThereIsIndexButOnAnotherField_EncryptedQueryShouldError
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
@@ -317,7 +317,7 @@ func TestDocEncryption_IfThereIsIndexButOnAnotherField_EncryptedQueryShouldError
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -353,7 +353,7 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t 
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John",
@@ -361,7 +361,7 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t 
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John",
@@ -369,7 +369,7 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t 
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Bob",
@@ -378,7 +378,7 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t 
 				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSESync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {
@@ -394,7 +394,7 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t 
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `
 					query {

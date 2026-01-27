@@ -28,13 +28,13 @@ func TestMutationUpdate_WithBooleanFilter_ResultFilteredOut(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// The update will result in a record that no longer matches the filter
 				Request: `mutation {
 					update_Users(filter: {verified: {_eq: true}}, input: {verified: false}) {
@@ -66,28 +66,28 @@ func TestMutationUpdate_WithBooleanFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"verified": true,
 					"points": 42.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bob",
 					"verified": false,
 					"points": 66.6
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred",
 					"verified": true,
 					"points": 33
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(filter: {verified: {_eq: true}}, input: {points: 59}) {
 						name

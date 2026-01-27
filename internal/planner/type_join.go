@@ -11,12 +11,15 @@
 package planner
 
 import (
+	"slices"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -372,13 +375,16 @@ func (p *Planner) newInvertableTypeJoin(
 		isParent:           false,
 	}
 
+	childScan := getNode[*scanNode](childSide.plan)
 	join := invertibleTypeJoin{
 		docMapper:  docMapper{parent.documentMapping},
 		parentSide: parentSide,
 		childSide:  childSide,
 		skipChild:  skipChild,
 		// we store child's own filter in case an index kicks in and replaces it with it's own filter
-		subFilter: getNode[*scanNode](childSide.plan).filter,
+		subFilter: childScan.filter,
+		// we store child's ordering to apply when fetching child documents
+		subOrdering: childScan.ordering,
 	}
 
 	return join, nil
@@ -462,6 +468,12 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 
 	node.Prefixes(prefixes)
 
+	// Temporarily clear the index for direct docID lookup. When the scan node has an index,
+	// the fetcher uses the index keys instead of the docID prefix, which breaks the lookup.
+	oldIndex := scan.index
+	scan.index = immutable.None[client.IndexDescription]()
+	defer func() { scan.index = oldIndex }()
+
 	if err := node.Init(); err != nil {
 		return immutable.None[core.Doc](), NewErrSubTypeInit(err)
 	}
@@ -485,6 +497,9 @@ type invertibleTypeJoin struct {
 
 	// the filter of the subnode to store in case it's replaced by an index filter
 	subFilter *mapper.Filter
+
+	// the ordering of the subnode to apply when fetching child documents
+	subOrdering []mapper.OrderCondition
 
 	secondaryFetchLimit uint
 
@@ -532,6 +547,7 @@ type primaryObjectsRetriever struct {
 
 	targetSecondaryDoc core.Doc
 	filter             *mapper.Filter
+	ordering           []mapper.OrderCondition
 
 	primaryScan *scanNode
 
@@ -604,8 +620,36 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 
 	oldFetcher := r.primaryScan.fetcher
 	oldIndex := r.primaryScan.index
+	oldOrdering := r.primaryScan.ordering
 
-	r.primaryScan.index = findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
+	// we first try to find an index based on sub-filter fields
+	r.primaryScan.index = findIndexByFilteringField(r.primaryScan)
+
+	if !r.primaryScan.index.HasValue() {
+		// if no index can be used for sub-filter fall back to relation ID field index
+		r.primaryScan.index = findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
+	}
+
+	// Check if the selected index can satisfy ordering. Use the same function (CanBeOrderedByIndex)
+	// that isOrderedByIndex uses to ensure consistent behavior between plan expansion and execution.
+	if r.primaryScan.index.HasValue() && len(r.ordering) > 0 {
+		canOrder, _ := fetcher.CanBeOrderedByIndex(r.ordering, r.primaryScan.index.Value(), r.primaryScan.documentMapping)
+		if canOrder {
+			r.primaryScan.ordering = r.ordering
+		} else {
+			// Clear ordering so the fetcher doesn't try to use it with an incompatible index.
+			// The orderNode (added during plan expansion) will handle in-memory sorting.
+			r.primaryScan.ordering = nil
+		}
+	} else if !r.primaryScan.index.HasValue() && len(r.ordering) > 0 {
+		// if there is no index for filter, we try to find one for ordering
+		orderIndex, canOrderByIndex := r.findOrderingIndex()
+		if canOrderByIndex {
+			r.primaryScan.index = orderIndex
+			r.primaryScan.ordering = r.ordering
+		}
+	}
+
 	r.primaryScan.initFetcher(immutable.None[string]())
 
 	docs, err := r.collectDocs(0)
@@ -620,6 +664,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 
 	r.primaryScan.fetcher = oldFetcher
 	r.primaryScan.index = oldIndex
+	r.primaryScan.ordering = oldOrdering
 
 	return docs, nil
 }
@@ -672,12 +717,14 @@ func fetchPrimaryDocsReferencingSecondaryDoc(
 	primarySide, secondarySide *joinSide,
 	secondaryDoc core.Doc,
 	filter *mapper.Filter,
+	ordering []mapper.OrderCondition,
 ) ([]core.Doc, core.Doc, error) {
 	retriever := primaryObjectsRetriever{
 		primarySide:        primarySide,
 		secondarySide:      secondarySide,
 		targetSecondaryDoc: secondaryDoc,
 		filter:             filter,
+		ordering:           ordering,
 	}
 	err := retriever.retrievePrimaryDocsReferencingSecondaryDoc()
 	return retriever.resultPrimaryDocs, retriever.resultSecondaryDoc, err
@@ -706,7 +753,7 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 		return join.fetchRelatedSecondaryDocWithChildren(firstSide.plan.Value())
 	} else {
 		primaryDocs, secondaryDoc, err := fetchPrimaryDocsReferencingSecondaryDoc(
-			join.getPrimarySide(), join.getSecondarySide(), firstSide.plan.Value(), join.subFilter)
+			join.getPrimarySide(), join.getSecondarySide(), firstSide.plan.Value(), join.subFilter, join.subOrdering)
 		if err != nil {
 			return false, err
 		}
@@ -743,10 +790,8 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 	if secondSide.isParent {
 		// child primary docs reference the same secondary parent doc. So if we already encountered
 		// the secondary parent doc, we continue to the next primary doc.
-		for i := range join.encounteredDocIDs {
-			if join.encounteredDocIDs[i] == secondaryDocID {
-				return join.Next()
-			}
+		if slices.Contains(join.encounteredDocIDs, secondaryDocID) {
+			return join.Next()
 		}
 		join.encounteredDocIDs = append(join.encounteredDocIDs, secondaryDocID)
 	}
@@ -776,7 +821,7 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 				[]core.Doc{firstSide.plan.Value()}, secondaryDoc, join.getPrimarySide(), join.getSecondSide())
 		} else {
 			primaryDocs, secondaryDoc, err = fetchPrimaryDocsReferencingSecondaryDoc(
-				join.getPrimarySide(), join.getSecondarySide(), secondaryDoc, join.subFilter)
+				join.getPrimarySide(), join.getSecondarySide(), secondaryDoc, join.subFilter, join.subOrdering)
 			if err != nil {
 				return false, err
 			}
@@ -859,4 +904,22 @@ func getNode[T planNode](plan planNode) T {
 	}
 	var zero T
 	return zero
+}
+
+// findOrderingIndex finds an index that can satisfy the ordering requirement.
+// Returns the index and whether it can provide ordering.
+func (r *primaryObjectsRetriever) findOrderingIndex() (immutable.Option[client.IndexDescription], bool) {
+	if len(r.ordering) == 0 {
+		return immutable.None[client.IndexDescription](), false
+	}
+
+	indexes := r.primaryScan.col.Version().Indexes
+	for _, idx := range indexes {
+		canOrder, _ := fetcher.CanBeOrderedByIndex(r.ordering, idx, r.primaryScan.documentMapping)
+		if canOrder {
+			return immutable.Some(idx), true
+		}
+	}
+
+	return immutable.None[client.IndexDescription](), false
 }

@@ -13,10 +13,11 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestNAC_AdminRelation_CanP2PCollectionList(t *testing.T) {

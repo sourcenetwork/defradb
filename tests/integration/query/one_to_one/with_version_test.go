@@ -33,20 +33,20 @@ func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "فارسی دوم دبستان"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "نمی دانم",
 					"published": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -98,20 +98,20 @@ func TestQueryOneToOne_WithVersionOnOuterAfterJoin(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "فارسی دوم دبستان"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "نمی دانم",
 					"published": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {

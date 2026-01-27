@@ -36,7 +36,7 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 				`,
 				ExpectedError: "moving fields is not currently supported. Name: email",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -72,7 +72,7 @@ func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 				`,
 				ExpectedError: "moving fields is not currently supported. Name: email, ProposedIndex: 2, ExistingIndex: 1\nmoving fields is not currently supported. Name: email, ProposedIndex: 3, ExistingIndex: 1\nmoving fields is not currently supported. Name: name, ProposedIndex: 4, ExistingIndex: 2\nduplicate field. Name: email\nduplicate field. Name: email",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -110,7 +110,7 @@ func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -150,14 +150,14 @@ func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) 
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
 					"age": 3
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

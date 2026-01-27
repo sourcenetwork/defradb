@@ -34,7 +34,7 @@ func TestP2PPeerReplicatorWithUpdateAndRestart(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
@@ -67,7 +67,7 @@ func TestP2PPeerReplicatorWithUpdateAndRestart(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age

@@ -19,62 +19,44 @@ import (
 
 func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: reader + updater + deleter
+    name: read
+  - expr: updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -89,7 +71,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -102,7 +84,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
@@ -165,62 +147,44 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActorTwice_ShowThatTheRelationshipAl
 
 func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing.T) {
 	test := testUtils.TestCase{
-
 		Actions: []any{
 			testUtils.AddDACPolicy{
 
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: reader + updater + deleter
+    name: read
+  - expr: updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -235,7 +199,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -248,7 +212,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
@@ -290,7 +254,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can now read.
 
 				Request: `
@@ -322,7 +286,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDelete(t *testing
 				DocID: 0,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Check if actually deleted.
 
 				Request: `
@@ -354,55 +318,38 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: Test Policy
-
-                    description: A Policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader + updater + deleter
-
-                          update:
-                            expr: owner + updater
-
-                          delete:
-                            expr: owner + deleter
-
-                          nothing:
-                            expr: dummy
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-
-                          reader:
-                            types:
-                              - actor
-
-                          updater:
-                            types:
-                              - actor
-
-                          deleter:
-                            types:
-                              - actor
-
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-
-                          dummy:
-                            types:
-                              - actor
-                `,
+description: A Policy
+name: Test Policy
+resources:
+- name: users
+  permissions:
+  - expr: deleter
+    name: delete
+  - expr: dummy
+    name: nothing
+  - expr: reader + updater + deleter
+    name: read
+  - expr: updater
+    name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: deleter
+    types:
+    - actor
+  - name: dummy
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+  - name: updater
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -417,7 +364,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -444,7 +391,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1), // Owner can still also delete (ownership not transferred)
 
 				Request: `
@@ -476,7 +423,7 @@ func TestACP_OwnerGivesDeleteAccessToAnotherActor_OtherActorCanDeleteSoCanTheOwn
 				DocID: 0,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1), // Check if actually deleted.
 
 				Request: `

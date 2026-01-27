@@ -106,7 +106,7 @@ func CommitObject(
 						},
 						request.SignatureIdentityFieldName: &gql.Field{
 							Description: "The identity of the signer, which is used to determine " +
-								"the public key used to verify the signature.ureIdentityFieldDescription",
+								"the public key used to verify the signature.",
 							Type: gql.String,
 						},
 						request.SignatureValueFieldName: &gql.Field{

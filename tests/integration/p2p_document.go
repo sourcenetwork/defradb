@@ -15,8 +15,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const (

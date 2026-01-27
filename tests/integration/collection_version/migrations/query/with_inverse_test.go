@@ -81,7 +81,7 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 33,
@@ -91,7 +91,7 @@ func TestSchemaMigrationQueryInversesAcrossMultipleVersions(t *testing.T) {
 			testUtils.SetActiveCollectionVersion{
 				VersionID: "bafyreigbatez5rnojqa4ccfqsbguh4ckquxr76elgqij7ckftbxpwqniv4",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

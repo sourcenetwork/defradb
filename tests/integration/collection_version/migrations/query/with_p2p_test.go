@@ -66,7 +66,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -74,7 +74,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Node 0 should yield results as they were defined, as the newer schema version is
 				// unknown to this node.
 				NodeID: immutable.Some(0),
@@ -91,7 +91,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Node 1 should yield results migrated to the new schema version.
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -187,7 +187,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -195,7 +195,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Node 0 should yield results as they were defined, as the newer schema version is
 				// unknown to this node.
 				NodeID: immutable.Some(0),
@@ -212,7 +212,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Node 1 should yield results migrated to the new schema version.
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -281,7 +281,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -290,7 +290,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Node 0 should yield results as they were defined
 				NodeID: immutable.Some(0),
 				Request: `query {
@@ -308,7 +308,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Node 1 should yield results migrated down to the old schema version.
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -387,7 +387,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -395,7 +395,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Node 1 should also yield the synced doc, even though there was a gap in the schema version history
 				Request: `query {
 					Users {

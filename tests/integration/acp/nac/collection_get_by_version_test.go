@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -30,7 +31,7 @@ func TestNAC_GatesCollectionGetByVersion_AuthorizedIdentity_AllowAccess(t *testi
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.ClientIdentity(1),
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID:       immutable.Some("does not exist"),
@@ -55,7 +56,7 @@ func TestNAC_GatesCollectionGetByVersion_NoIdentity_NotAuthorizedError(t *testin
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.NoIdentity(),
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID:       immutable.Some("does not exist"),
@@ -80,7 +81,7 @@ func TestNAC_GatesCollectionGetByVersion_WrongIdentity_NotAuthorizedError(t *tes
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.ClientIdentity(2),
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID:       immutable.Some("does not exist"),

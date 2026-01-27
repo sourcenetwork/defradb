@@ -139,18 +139,18 @@ func TestSchemaUpdatesAddFieldKindForeignObject_Succeeds(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Keenan",
 					"foo":  testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -208,20 +208,20 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToOneRelationI
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title": "The Great Gatsby",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "F. Scott Fitzgerald",
 					"published": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -241,7 +241,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToOneRelationI
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						title
@@ -294,27 +294,27 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "F. Scott Fitzgerald",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "The Great Gatsby",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"title":  "Tender Is the Night",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -335,7 +335,7 @@ func TestSchemaUpdatesAddFieldKindForeignObject_WithPatchAddingOneToManyRelation
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						title

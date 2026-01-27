@@ -27,12 +27,12 @@ func TestMutationDelete_WithNullFilter_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_Users(filter: null) {
 						name
@@ -62,12 +62,12 @@ func TestMutationDelete_WithNullDocID_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_Users(docID: null) {
 						name
@@ -97,12 +97,12 @@ func TestMutationDelete_WithNullDocIDs_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_Users(docID: null) {
 						name

@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -41,7 +42,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -55,7 +56,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing
 
 				ExpectedPatterns: maxTypeIndexJoinPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "maxNode",
 						IncludeChildNodes: false,
@@ -118,7 +119,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -138,7 +139,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(
 
 				ExpectedPatterns: maxTypeIndexJoinPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "maxNode",
 						IncludeChildNodes: false,
@@ -209,7 +210,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -244,7 +245,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "maxNode",
 						IncludeChildNodes: false,

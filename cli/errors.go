@@ -38,6 +38,10 @@ var (
 	ErrMissingKeyringSecret             = errors.New("missing keyring secret")
 	ErrEmptySchemaString                = errors.New(errEmptySchemaString)
 	ErrNegativeReplicatorRetryIntervals = errors.New("replicator retry intervals must only contain positive integers")
+	ErrStdinSingleInputOnly             = errors.New("stdin only allowed as single input")
+	ErrReadingInput                     = errors.New("reading input")
+	ErrParsingSDL                       = errors.New("parsing SDL")
+	ErrGeneratingSDL                    = errors.New("generating SDL")
 	ErrPurgeForceFlagRequired           = errors.New("run this command again with --force if you " +
 		"really want to purge all data")
 )

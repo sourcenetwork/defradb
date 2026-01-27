@@ -78,7 +78,7 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 		if err != nil {
 			return err
 		}
-		break
+		return nil
 	}
 	return nil
 }

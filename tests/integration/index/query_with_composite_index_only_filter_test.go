@@ -49,7 +49,7 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -57,11 +57,11 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req1),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -69,11 +69,11 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req2),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req3,
 				Results: map[string]any{
 					"User": []map[string]any{},
@@ -87,7 +87,7 @@ func TestQueryWithCompositeIndex_WithEqualFilter_ShouldFetch(t *testing.T) {
 
 func TestQueryWithCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {name: {_ne: "Keenan"}, age: {_gt: 44}}) {
+		User(filter: {name: {_neq: "Keenan"}, age: {_gt: 44}}) {
 			name
 		}
 	}`
@@ -104,7 +104,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -112,7 +112,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -124,7 +124,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnFirstField_ShouldFetch(t
 
 func TestQueryWithCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {name: {_ne: "Keenan"}, age: {_gt: 44}}) {
+		User(filter: {name: {_neq: "Keenan"}, age: {_gt: 44}}) {
 			name
 		}
 	}`
@@ -141,7 +141,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -149,7 +149,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
@@ -161,7 +161,7 @@ func TestQueryWithCompositeIndex_WithGreaterThanFilterOnSecondField_ShouldFetch(
 
 func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {name: {_ne: "Keenan"}, age: {_ge: 44},}) {
+		User(filter: {name: {_neq: "Keenan"}, age: {_geq: 44},}) {
 			name
 		}
 	}`
@@ -178,7 +178,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetc
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -187,7 +187,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetc
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -199,7 +199,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnFirstField_ShouldFetc
 
 func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_ge: 44}, name: {_ne: "Keenan"}}) {
+		User(filter: {age: {_geq: 44}, name: {_neq: "Keenan"}}) {
 			name
 		}
 	}`
@@ -216,7 +216,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFet
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -225,7 +225,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFet
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
@@ -237,7 +237,7 @@ func TestQueryWithCompositeIndex_WithGreaterOrEqualFilterOnSecondField_ShouldFet
 
 func TestQueryWithCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_lt: 24}, name: {_ne: "Shahzad"}}) {
+		User(filter: {age: {_lt: 24}, name: {_neq: "Shahzad"}}) {
 			name
 		}
 	}`
@@ -254,7 +254,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *t
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -262,7 +262,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *t
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -274,7 +274,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnFirstField_ShouldFetch(t *t
 
 func TestQueryWithCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_lt: 24}, name: {_ne: "Shahzad"}}) {
+		User(filter: {age: {_lt: 24}, name: {_neq: "Shahzad"}}) {
 			name
 		}
 	}`
@@ -291,7 +291,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -299,7 +299,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
@@ -311,7 +311,7 @@ func TestQueryWithCompositeIndex_WithLessThanFilterOnSecondField_ShouldFetch(t *
 
 func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_le: 28}, name: {_ne: "Bruno"}}) {
+		User(filter: {age: {_leq: 28}, name: {_neq: "Bruno"}}) {
 			name
 		}
 	}`
@@ -328,7 +328,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -337,7 +337,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -349,7 +349,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnFirstField_ShouldFetch(t
 
 func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {age: {_le: 28}, name: {_ne: "Bruno"}}) {
+		User(filter: {age: {_leq: 28}, name: {_neq: "Bruno"}}) {
 			name
 		}
 	}`
@@ -366,7 +366,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -375,7 +375,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
@@ -387,7 +387,7 @@ func TestQueryWithCompositeIndex_WithLessOrEqualFilterOnSecondField_ShouldFetch(
 
 func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 	req := `query {
-		User(filter: {name: {_ne: "Islam"}, age: {_ne: 28}}) {
+		User(filter: {name: {_neq: "Islam"}, age: {_neq: 28}}) {
 			name
 		}
 	}`
@@ -404,7 +404,7 @@ func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -419,7 +419,7 @@ func TestQueryWithCompositeIndex_WithNotEqualFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
@@ -448,7 +448,7 @@ func TestQueryWithCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -457,7 +457,7 @@ func TestQueryWithCompositeIndex_WithInFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -486,7 +486,7 @@ func TestQueryWithCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -496,7 +496,7 @@ func TestQueryWithCompositeIndex_WithNotInFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
@@ -554,7 +554,7 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -562,11 +562,11 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req1),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -574,11 +574,11 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req2),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req3,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -586,11 +586,11 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req3),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req4,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -598,11 +598,11 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req4),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req5,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -610,17 +610,17 @@ func TestQueryWithCompositeIndex_WithLikeFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req5),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req6,
 				Results: map[string]any{
 					"User": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req7,
 				Results: map[string]any{
 					"User": []map[string]any{},
@@ -650,7 +650,7 @@ func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -661,7 +661,7 @@ func TestQueryWithCompositeIndex_WithNotLikeFilter_ShouldFetch(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(10),
 			},
@@ -685,7 +685,7 @@ func TestQueryWithCompositeIndex_IfFirstFieldIsNotInFilter_ShouldNotUseIndex(t *
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query @explain(type: execute) {
 					User(filter: {age: {_eq: 32}}) {
 							name
@@ -710,7 +710,7 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t 
 						email: String
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -718,14 +718,14 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t 
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"age":	32
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_eq: null}}) {
@@ -756,7 +756,7 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t
 						email: String
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -764,21 +764,21 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"Bob"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"Alice"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_eq: "Alice"}, age: {_eq: null}}) {
@@ -812,7 +812,7 @@ func TestQueryWithCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t 
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -821,7 +821,7 @@ func TestQueryWithCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t 
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -830,7 +830,7 @@ func TestQueryWithCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t 
 						"age":	38
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -839,7 +839,7 @@ func TestQueryWithCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t 
 						"age":	51
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_like: "%l%"}, age: {_gt: 30}}) {
@@ -887,7 +887,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						about: String
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -897,7 +897,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						"about": "bob1"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -907,7 +907,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						"about": "bob2"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -917,7 +917,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						"about": "bob3"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -927,7 +927,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						"about": "bob4"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -937,7 +937,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						"about": "alice"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: reqWithName,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -948,11 +948,11 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(reqWithName),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: reqWithNameAge,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -962,11 +962,11 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(reqWithNameAge),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: reqWithNameAgeNumChildren,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -975,7 +975,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(reqWithNameAgeNumChildren),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},

@@ -28,7 +28,7 @@ func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [27, 28]
@@ -39,7 +39,7 @@ func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 					"numbers": [22, 23]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -74,7 +74,7 @@ func TestMutationUpdate_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [27, 28]

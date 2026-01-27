@@ -33,7 +33,7 @@ func TestOneToOneUniqueIndex_OnPrimarySide_AutoCreated(t *testing.T) {
 						user: User
 					}`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -67,7 +67,7 @@ func TestOneToOneUniqueIndex_UserDefinedUniqueIndexWithName_Succeeds(t *testing.
 						user: User
 					}`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -123,7 +123,7 @@ func TestOneToOneUniqueIndex_TypeLevelCompositeUniqueIndex_Succeeds(t *testing.T
 						user: User
 					}`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -182,7 +182,7 @@ func TestOneToOneUniqueIndex_CompositeIndexRelationNotFirst_AutoIndexStillCreate
 						user: User
 					}`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -225,20 +225,20 @@ func TestOneToOneUniqueIndex_ReferenceSameRelatedDoc_RejectsDuplicateLink(t *tes
 						user: User
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"street": "123 Main St"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":       "John",
 					"_addressID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":       "Jane",
@@ -267,19 +267,19 @@ func TestOneToOneUniqueIndex_MultipleNullRelations_Allowed(t *testing.T) {
 						user: User
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Jane"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name
@@ -314,11 +314,11 @@ func TestOneToOneUniqueIndex_OneToMany_ShouldNotCreateIndex(t *testing.T) {
 						author: Author
 					}`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID:    1,
 				ExpectedIndexes: []client.IndexDescription{},
 			},

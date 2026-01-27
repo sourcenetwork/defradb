@@ -159,6 +159,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeCollectionDescribeCommand(ctx),
 		MakeCollectionPatchCommand(ctx),
 		MakeCollectionSetActiveCommand(ctx),
+		MakeCollectionTruncateCommand(ctx),
 	)
 
 	block := MakeBlockCommand(ctx)
@@ -198,11 +199,17 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeIdentityNewCommand(ctx),
 	)
 
+	sdl := MakeSDLCommand(ctx)
+	sdl.AddCommand(
+		MakeSDLGenerateCommand(ctx),
+	)
+
 	root := MakeRootCommand(ctx)
 	root.AddCommand(
 		client,
 		keyring,
 		identity,
+		sdl,
 		MakeStartCommand(ctx),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(ctx),

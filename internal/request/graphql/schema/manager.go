@@ -11,9 +11,15 @@
 package schema
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
+
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/astprinter"
+	"github.com/wundergraph/graphql-go-tools/v2/pkg/introspection"
+
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
-
 	gql "github.com/sourcenetwork/graphql-go"
 	gqlp "github.com/sourcenetwork/graphql-go/language/parser"
 	"github.com/sourcenetwork/graphql-go/language/source"
@@ -97,3 +103,34 @@ func (s *SchemaManager) ParseSDL(sdl string) ([]core.Collection, error) {
 	}
 	return fromAst(doc)
 }
+
+func (s *SchemaManager) WriteSDL(writer io.Writer) error {
+	params := gql.Params{Schema: *s.Schema(), RequestString: introspectionQueryRequest}
+	r := gql.Do(params)
+	if len(r.Errors) != 0 {
+		// for simplicity we're just going to return the
+		// first error, if there are more, they'll be caught on
+		// follow up invocations.
+		return errors.Join(ErrGeneratingSDL, r.Errors[0])
+	}
+
+	respJson, err := json.Marshal(r.Data)
+	if err != nil {
+		return err
+	}
+	respBuf := bytes.NewBuffer(respJson)
+
+	converter := introspection.JsonConverter{}
+	doc, err := converter.GraphQLDocument(respBuf)
+	if err != nil {
+		return err
+	}
+
+	err = astprinter.PrintIndent(doc, []byte("    "), writer)
+	if err != nil {
+		return errors.Join(ErrWritingSDL, err)
+	}
+	return nil
+}
+
+const introspectionQueryRequest = "query IntrospectionQuery{__schema{queryType{name}mutationType{name}subscriptionType{name}types{...FullType}directives{name description locations args{...InputValue}}}}fragment FullType on __Type{kind name description fields(includeDeprecated:true){name description args{...InputValue}type{...TypeRef}isDeprecated deprecationReason}inputFields{...InputValue}interfaces{...TypeRef}enumValues(includeDeprecated:true){name description isDeprecated deprecationReason}possibleTypes{...TypeRef}}fragment InputValue on __InputValue{name description type{...TypeRef}defaultValue}fragment TypeRef on __Type{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name ofType{kind name}}}}}}}}}}" //nolint:lll

@@ -37,7 +37,7 @@ func TestP2POneToOneReplicatorWithRestart(t *testing.T) {
 				TargetNodeID: 1,
 			},
 			testUtils.Restart{},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -46,7 +46,7 @@ func TestP2POneToOneReplicatorWithRestart(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
