@@ -137,7 +137,7 @@ func TestNAC_GatesCollectionSetActiveVersion_NoIdentity_CLIClient_NotAuthorizedE
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Patch: `
 					[
@@ -236,7 +236,7 @@ func TestNAC_GatesCollectionSetActiveVersion_WrongIdentity_CLIClient_NotAuthoriz
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Patch: `
 					[

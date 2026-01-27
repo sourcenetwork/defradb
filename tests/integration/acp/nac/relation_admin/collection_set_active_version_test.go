@@ -111,7 +111,7 @@ func TestNAC_AdminRelation_CLIClient_CanCollectionSetActiveVersion(t *testing.T)
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Patch: `
 					[

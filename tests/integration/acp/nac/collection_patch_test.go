@@ -122,7 +122,7 @@ func TestNAC_GatesCollectionPatch_NoIdentity_CLIClient_NotAuthorizedError(t *tes
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.NoIdentity(),
 				Patch: `
 					[
@@ -207,7 +207,7 @@ func TestNAC_GatesCollectionPatch_WrongIdentity_CLIClient_NotAuthorizedError(t *
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.ClientIdentity(2),
 				Patch: `
 					[
