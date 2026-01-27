@@ -1445,3 +1445,147 @@ func TestQueryWithIndex_WithLeqNullFilterOnDateTimeField_ShouldUseIndex(t *testi
 	}
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithIndex_WithEqFilterOnJSONFieldWithObjectValue_ShouldNotUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {_eq: {tree:"oak",age:450}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {
+						"tree": "maple",
+						"age": 250
+					}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {
+						"tree": "oak",
+						"age": 450
+					}
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithEqFilterOnJSONFieldWithNestedArrayValue_ShouldNotUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {_eq: {level_1: {level_2: [true, false]}}}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"level_1": {"level_2": [true, false]}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"level_1": {"level_2": [false, true]}}
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithInFilterOnJSONFieldWithObjectValue_ShouldNotUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {_in: [{tree:"oak",age:450}]}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {
+						"tree": "maple",
+						"age": 250
+					}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {
+						"tree": "oak",
+						"age": 450
+					}
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

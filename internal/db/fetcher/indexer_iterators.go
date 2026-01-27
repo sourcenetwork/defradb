@@ -821,6 +821,15 @@ func (f *indexFetcher) determineFieldFilterConditions(indexFilter *mapper.Filter
 						return true
 					}
 
+					// For JSON fields with _eq or _in operator and object/array filter value at root level,
+					// the index cannot be used because JSON indexes only store leaf values (scalars).
+					if indexedField.Kind == client.FieldKind_NILLABLE_JSON &&
+						len(jsonPath) == 0 &&
+						(op == opEq || op == opIn) &&
+						isComplexJSONFilterValue(filterVal) {
+						return true
+					}
+
 					cond, err := makeFieldFilterCondition(op, jsonPath, indexedField, filterVal)
 
 					if err != nil {
@@ -928,6 +937,21 @@ func getNestedOperatorConditionIfJSON(
 			// containing either another nested ObjectProperty or Operator
 			condMap = filterVal.(map[connor.FilterKey]any)
 		}
+	}
+}
+
+// isComplexJSONFilterValue returns true if the filter value is an object or array.
+// JSON indexes only store leaf values (scalars), so object/array filter values cannot
+// be efficiently matched using the index.
+func isComplexJSONFilterValue(filterVal any) bool {
+	if filterVal == nil {
+		return false
+	}
+	switch filterVal.(type) {
+	case map[string]any, []any:
+		return true
+	default:
+		return false
 	}
 }
 
