@@ -93,7 +93,7 @@ func newIndexFetcher(
 		}
 	}
 
-	iter, err := f.createIndexIterator()
+	iter, err := f.createIndexIterator(f.indexFilter)
 	if err != nil || iter == nil {
 		return nil, err
 	}

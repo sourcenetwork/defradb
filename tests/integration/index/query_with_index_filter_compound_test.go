@@ -563,7 +563,7 @@ func TestQueryWithIndex_WithOrFilterWithAnyAndNoneOnSameArrayField_ShouldFallbac
 	// Test OR filter combining _any and _none on the same indexed array field.
 	// Falls back to full scan since _none cannot use the index.
 	req := `query {
-		User(filter: {_or: [{numbers: {_any: {_gt: 20}}}, {numbers: {_none: {_eq: 30}}}]}) {
+		User(filter: {_or: [{numbers: {_any: {_gt: 20}}}, {numbers: {_none: {_eq: 10}}}]}) {
 			name
 		}
 	}`
@@ -591,7 +591,7 @@ func TestQueryWithIndex_WithOrFilterWithAnyAndNoneOnSameArrayField_ShouldFallbac
 			&action.CreateDoc{
 				Doc: `{
 					"name": "Carlo",
-					"numbers": [10, 20, 30]
+					"numbers": [20, 20, 20]
 				}`,
 			},
 			&action.CreateDoc{
@@ -604,11 +604,12 @@ func TestQueryWithIndex_WithOrFilterWithAnyAndNoneOnSameArrayField_ShouldFallbac
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{
-							"name": "Alice",
-						},
+						{"name": "Bob"},
+						{"name": "Alice"},
+						{"name": "Carlo"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
