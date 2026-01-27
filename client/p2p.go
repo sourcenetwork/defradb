@@ -82,10 +82,28 @@ type P2P interface {
 	// It will not complete until a version is found, so it is strongly recommended
 	// to set a timeout using `context.WithTimeout`.
 	SyncCollectionVersions(ctx context.Context, versionIDs ...string) error
+
+	// SyncBranchableCollection requests the latest version of the branchable collection's DAG
+	// from the network and synchronizes it locally. This syncs the collection-level history
+	// for branchable collections (collections marked with @branchable directive).
+	// It doesn't automatically subscribe to the collection for future updates.
+	// context.WithTimeout can be used to set a timeout for the operation.
+	SyncBranchableCollection(ctx context.Context, collectionID string) error
 }
 
 type StreamHandler = func(stream io.Reader, peerID string)
 type PubsubMessageHandler = func(from string, topic string, msg []byte) ([]byte, error)
+
+const (
+	// PeerEventTypeJoined indicates that a peer has joined a pubsub topic.
+	PeerEventTypeJoined = "JOINED"
+	// PeerEventTypeLeft indicates that a peer has left a pubsub topic.
+	PeerEventTypeLeft = "LEFT"
+)
+
+// PeerEventHandler is called when a peer joins or leaves a pubsub topic.
+// The joined parameter is true when the peer joins, false when the peer leaves.
+type PeerEventHandler = func(peerID string, topic string, eventType string)
 type BlockAccessFunc = func(ctx context.Context, peerID string, c cid.Cid) bool
 
 type PeerInfo struct {
@@ -132,7 +150,10 @@ type Host interface {
 	// handle them with the given handler.
 	SetStreamHandler(protocolID string, handler StreamHandler)
 	// AddPubSubTopic adds a pubsub topic to the host.
-	AddPubSubTopic(topicName string, subscribe bool, handler PubsubMessageHandler) error
+	// If subscribe is true, the peer will subscribe to the topic and receive messages.
+	// The handler is called for each incoming message on the topic.
+	// The eventHandler, if not nil, is called when peers join or leave the topic.
+	AddPubSubTopic(topicName string, subscribe bool, handler PubsubMessageHandler, eventHandler PeerEventHandler) error
 	// RemovePubSubTopic removes the given topic from the host.
 	RemovePubSubTopic(topic string) error
 	// PublishToTopicAsync sends a new message on the given topic without waiting for a response.

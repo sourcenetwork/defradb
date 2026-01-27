@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -28,11 +29,11 @@ type LWWDelta struct {
 	DocID     []byte
 	FieldName string
 	Priority  uint64
-	// SchemaVersionID is the schema version datastore key at the time of commit.
+	// CollectionVersionID is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
-	SchemaVersionID string
-	Data            []byte
+	CollectionVersionID string
+	Data                []byte
 }
 
 var _ Delta = (*LWWDelta)(nil)
@@ -43,11 +44,11 @@ var _ Delta = (*LWWDelta)(nil)
 func (d LWWDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type LWWDelta struct {
-		docID     		Bytes
-		fieldName 		String
-		priority  		Int
-		schemaVersionID String
-		data            Bytes
+		docID     			Bytes
+		fieldName 			String
+		priority  			Int
+		collectionVersionID String
+		data            	Bytes
 	}`)
 }
 
@@ -63,10 +64,10 @@ func (d *LWWDelta) SetPriority(prio uint64) {
 
 // LWW is a MerkleCRDT implementation of the LWW using MerkleClocks.
 type LWW struct {
-	store           corekv.ReaderWriter
-	key             keys.DataStoreKey
-	schemaVersionID string
-	fieldName       string
+	store               datastore.Keyedstore
+	key                 keys.DataStoreKey
+	collectionVersionID string
+	fieldName           string
 }
 
 var _ FieldLevelCRDT = (*LWW)(nil)
@@ -75,16 +76,16 @@ var _ ReplicatedData = (*LWW)(nil)
 // NewLWW creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a LWWRegister CRDT.
 func NewLWW(
-	store corekv.ReaderWriter,
-	schemaVersionID string,
+	store datastore.Keyedstore,
+	collectionVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 ) *LWW {
 	return &LWW{
-		key:             key,
-		store:           store,
-		schemaVersionID: schemaVersionID,
-		fieldName:       fieldName,
+		key:                 key,
+		store:               store,
+		collectionVersionID: collectionVersionID,
+		fieldName:           fieldName,
 	}
 }
 
@@ -100,10 +101,10 @@ func (l *LWW) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	}
 
 	return &LWWDelta{
-		Data:            bytes,
-		DocID:           []byte(l.key.DocID),
-		FieldName:       l.fieldName,
-		SchemaVersionID: l.schemaVersionID,
+		Data:                bytes,
+		DocID:               []byte(l.key.DocID),
+		FieldName:           l.fieldName,
+		CollectionVersionID: l.collectionVersionID,
 	}, nil
 }
 
@@ -130,7 +131,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 	// else if the current value is lexicographically
 	// greater than the new then ignore
 	key := l.key.WithValueFlag()
-	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey().Bytes())
+	marker, err := l.store.Get(ctx, l.key.ToPrimaryDataStoreKey())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
 	}
@@ -140,7 +141,7 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 	if priority < curPrio {
 		return nil
 	} else if priority == curPrio {
-		curValue, err := l.store.Get(ctx, key.Bytes())
+		curValue, err := l.store.Get(ctx, key)
 		if err != nil {
 			return err
 		}
@@ -155,12 +156,12 @@ func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 		// the field datastore key to exist.  Ommiting the key saves space and is
 		// consistent with what would be found if the user omitted the property on
 		// create.
-		err = l.store.Delete(ctx, key.Bytes())
+		err = l.store.Delete(ctx, key)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = l.store.Set(ctx, key.Bytes(), val)
+		err = l.store.Set(ctx, key, val)
 		if err != nil {
 			return NewErrFailedToStoreValue(err)
 		}

@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	FilterEqOp = &Operator{Operation: "_eq"}
+	FilterEqOp = &Operator{Operation: connor.EqualOp}
 )
 
 // SelectionType is the type of selection.
@@ -198,7 +198,7 @@ func toSelect(
 				if fieldDesc.Kind.IsArray() {
 					return nil, NewErrInvalidFieldToGroupBy(groupByField)
 				}
-				groupByFields[index] = groupByField + request.RelatedObjectID
+				groupByFields[index] = request.ToFieldID(groupByField)
 			}
 		}
 
@@ -454,7 +454,6 @@ func resolveAggregates(
 			if !hasHost {
 				// If a matching host is not found, we need to construct and add it.
 				index := mapping.GetNextIndex()
-
 				hostSelectRequest := &request.Select{
 					Field: request.Field{
 						Name: target.hostExternalName,
@@ -519,7 +518,9 @@ func resolveAggregates(
 				if err != nil {
 					return nil, err
 				}
-				dummyJoin := &Select{
+
+				var dummyJoin Requestable
+				dummyJoinSelect := &Select{
 					Targetable: Targetable{
 						Field: Field{
 							Index: index,
@@ -533,12 +534,27 @@ func resolveAggregates(
 					DocumentMapping: childMapping,
 					Fields:          childFields,
 				}
+				hostTarget = &dummyJoinSelect.Targetable
+
+				if rootSelectType == CommitSelection {
+					dummyJoinCommit := &CommitSelect{
+						Select: *dummyJoinSelect,
+						Depth:  immutable.Some(uint64(0)),
+					}
+					index := childMapping.FirstIndexOfName(request.CidFieldName)
+
+					dummyJoinCommit.Fields = append(dummyJoinCommit.Fields, &Field{
+						Index: index,
+						Name:  request.CidFieldName,
+					})
+					dummyJoin = dummyJoinCommit
+				} else {
+					dummyJoin = dummyJoinSelect
+				}
 
 				fields = append(fields, dummyJoin)
 				mapping.Add(index, target.hostExternalName)
-
 				host = dummyJoin
-				hostTarget = &dummyJoin.Targetable
 			} else {
 				var isTargetable bool
 				hostTarget, isTargetable = host.AsTargetable()
@@ -812,6 +828,21 @@ func getRequestables(
 			})
 
 			mapping.Add(index, f.Name)
+		case *request.CommitSelect:
+			index := mapping.GetNextIndex()
+			innerSelect, err := toCommitSelect(ctx, store, f, index)
+			if err != nil {
+				return nil, nil, err
+			}
+			fields = append(fields, innerSelect)
+			mapping.SetChildAt(index, innerSelect.DocumentMapping)
+
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   getRenderKey(&f.Field),
+			})
+
+			mapping.Add(index, f.Name)
 		case *request.Aggregate:
 			index := mapping.GetNextIndex()
 			aggregateRequest, err := getAggregateRequests(index, f)
@@ -973,14 +1004,6 @@ func getTopLevelInfo(
 	}
 
 	switch selectRequest.Name {
-	case request.LinksFieldName:
-		for i, f := range request.LinksFields {
-			mapping.Add(i, f)
-		}
-
-		// Setting the type name must be done after adding the fields, as
-		// the typeName index is dynamic, but the field indexes are not
-		mapping.SetTypeName(request.LinksFieldName)
 	case request.SignatureFieldName:
 		for i, f := range request.SignatureFields {
 			mapping.Add(i, f)
@@ -1238,7 +1261,10 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
+		objectFieldName, ok := request.ToRelatedObjectName(existingField.Name)
+		if !ok {
+			continue
+		}
 
 		var siblingFound bool
 		for _, siblingRequestable := range requestables {
@@ -1249,8 +1275,6 @@ func resolveSecondaryRelationIDs(
 		}
 
 		if !siblingFound {
-			objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
-
 			// We only require the docID of the related object, so an empty join is all we need.
 			join, err := constructEmptyJoin(
 				ctx,
@@ -1883,5 +1907,5 @@ func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
 	}
 
 	typedChildBlock := childBlock.(map[string]any)
-	typedChildBlock["_ne"] = nil
+	typedChildBlock[connor.NotEqualOp] = nil
 }

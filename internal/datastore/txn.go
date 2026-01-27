@@ -12,11 +12,13 @@ package datastore
 
 import (
 	"context"
+	"time"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 )
 
 // Txn is a common interface to the BasicTxn struct.
@@ -25,7 +27,7 @@ type Txn interface {
 	Blockstore() Blockstore
 
 	// Datastore returns the prefixed store for the datastore
-	Datastore() corekv.ReaderWriter
+	Datastore() Keyedstore
 
 	// Encstore returns the prefixed store for the encryption key store
 	Encstore() Blockstore
@@ -44,6 +46,9 @@ type Txn interface {
 
 	// ID returns the unique immutable identifier for this transaction.
 	ID() uint64
+
+	// StartTS returns the start timestamp of the transaction
+	StartTS() time.Time
 
 	// Commit finalizes a transaction, attempting to commit it to the Datastore.
 	// May return an error if the transaction has gone stale. The presence of an
@@ -79,6 +84,7 @@ type BasicTxn struct {
 
 	txn corekv.Txn
 	id  uint64
+	ts  time.Time // timestamp
 
 	successFns []func()
 	errorFns   []func()
@@ -92,18 +98,29 @@ type BasicTxn struct {
 var _ Txn = (*BasicTxn)(nil)
 
 // newTxnFrom returns a new Txn from the rootstore.
-func NewTxnFrom(rootstore corekv.TxnStore, id uint64, readonly bool, chunkSize immutable.Option[int]) *BasicTxn {
+func NewTxnFrom(
+	rootstore corekv.TxnStore,
+	lockSet *lock.LockSet,
+	id uint64,
+	readonly bool,
+	chunkSize immutable.Option[int],
+) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
-	multistore := NewMultistore(rootTxn, chunkSize)
+	multistore := NewMultistore(rootTxn, lockSet, chunkSize)
 	return &BasicTxn{
 		Multistore: multistore,
 		txn:        rootTxn,
 		id:         id,
+		ts:         time.Now(),
 	}
 }
 
 func (t *BasicTxn) ID() uint64 {
 	return t.id
+}
+
+func (t *BasicTxn) StartTS() time.Time {
+	return t.ts
 }
 
 func (t *BasicTxn) Commit() error {

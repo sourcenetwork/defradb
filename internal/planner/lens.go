@@ -167,9 +167,9 @@ func (n *lensNode) toDoc(mapping *core.DocumentMapping, mapDoc map[string]any) c
 	}
 
 	return core.Doc{
-		Fields:          properties,
-		SchemaVersionID: n.collection.VersionID,
-		Status:          status,
+		Fields:              properties,
+		CollectionVersionID: n.collection.VersionID,
+		Status:              status,
 	}
 }
 

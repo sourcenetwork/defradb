@@ -41,12 +41,12 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							fieldName

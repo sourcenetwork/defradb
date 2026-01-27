@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -32,13 +33,14 @@ type concurrentTxn struct {
 // newConcurrentTxnFrom creates a new Txn from rootstore that supports concurrent API calls
 func NewConcurrentTxnFrom(
 	rootstore corekv.TxnStore,
+	lockSet *lock.LockSet,
 	id uint64,
 	readonly bool,
 	chunkSize immutable.Option[int],
 ) *BasicTxn {
 	rootTxn := rootstore.NewTxn(readonly)
 	rootConcurentTxn := &concurrentTxn{Txn: rootTxn}
-	multistore := NewMultistore(rootTxn, chunkSize)
+	multistore := NewMultistore(rootTxn, lockSet, chunkSize)
 
 	return &BasicTxn{
 		Multistore: multistore,

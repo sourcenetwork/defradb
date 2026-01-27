@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
+	"github.com/sourcenetwork/defradb/cli/config"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
@@ -29,7 +30,7 @@ func MakeServerDumpCmd() *cobra.Command {
 			ctx := cmd.Context()
 			log.InfoContext(ctx, "Dumping DB state...")
 
-			if cfg.GetString("datastore.store") != configStoreBadger {
+			if cfg.GetString("datastore.store") != config.ConfigStoreBadger {
 				return errors.New("server-side dump is only supported for the Badger datastore")
 			}
 			badgerPath := cfg.GetString("datastore.badger.path")

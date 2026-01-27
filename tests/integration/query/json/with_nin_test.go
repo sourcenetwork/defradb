@@ -28,7 +28,7 @@ func TestQueryJSON_WithNotInFilter_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -37,7 +37,7 @@ func TestQueryJSON_WithNotInFilter_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
@@ -46,7 +46,7 @@ func TestQueryJSON_WithNotInFilter_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_nin: [{tree:"oak",age:450}]}}) {
 						name

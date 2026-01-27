@@ -13,10 +13,11 @@ package test_acp_nac
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestNAC_GatesP2PDocumentList_AuthorizedIdentity_AllowAccess(t *testing.T) {
@@ -49,7 +50,7 @@ func TestNAC_GatesP2PDocumentList_AuthorizedIdentity_AllowAccess(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -112,7 +113,7 @@ func TestNAC_GatesP2PDocumentList_NoIdentity_NotAuthorizedError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -173,7 +174,7 @@ func TestNAC_GatesP2PDocumentList_WrongIdentity_NotAuthorizedError(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",

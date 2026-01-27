@@ -36,7 +36,22 @@ func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.AddLens{
+				Lens: model.Lens{
+					// This transform will copy the value from `name` into the `fullName` field,
+					// like an overly-complicated alias
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "name",
+								"dst": "fullName",
+							},
+						},
+					},
+				},
+			},
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -54,34 +69,22 @@ func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 						name: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					// This transform will copy the value from `name` into the `fullName` field,
-					// like an overly-complicated alias
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.CopyModulePath,
-							Arguments: map[string]any{
-								"src": "name",
-								"dst": "fullName",
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Ferdowsi"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "Shahnameh",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {

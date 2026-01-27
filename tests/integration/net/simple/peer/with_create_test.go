@@ -32,7 +32,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Shahzad on all nodes
 				Doc: `{
 					"Name": "Shahzad",
@@ -43,7 +43,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",
@@ -51,7 +51,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -70,7 +70,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -107,7 +107,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Shahzad on all nodes
 				Doc: `{
 					"Name": "Shahzad",
@@ -122,21 +122,21 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Addo",
 					"Age": 28
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"Name": "Fred",
@@ -144,7 +144,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -168,7 +168,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -250,7 +250,7 @@ func TestP2PCreate_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
 				NodeID:        4,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
                     "Name": "John",
@@ -258,7 +258,7 @@ func TestP2PCreate_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
                 }`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
                     Users {
                         Age
@@ -314,7 +314,7 @@ func TestP2PCreate_WithP2PCollectionOnLastNodeInNodeChain_ShouldPropagateUpdate(
 				NodeID:        4,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
                     "Name": "John",
@@ -322,7 +322,7 @@ func TestP2PCreate_WithP2PCollectionOnLastNodeInNodeChain_ShouldPropagateUpdate(
                 }`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(4),
 				Request: `query {
                     Users {
@@ -364,7 +364,7 @@ func TestP2PCreate_WithP2PCollectionAndSubscription_ShouldSucceed(t *testing.T) 
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				NodeID: immutable.Some(1),
 				Request: `subscription {
 					Users {
@@ -381,7 +381,7 @@ func TestP2PCreate_WithP2PCollectionAndSubscription_ShouldSucceed(t *testing.T) 
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
                     "Name": "John",

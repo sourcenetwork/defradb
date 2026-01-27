@@ -24,35 +24,25 @@ func TestACP_AddPolicy_ExtraPermissionsAndExtraRelations_ValidPolicyID(t *testin
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a policy
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-                          read:
-                            expr: owner + reader
-                          extra:
-                            expr: joker
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          joker:
-                            types:
-                              - actor
-                `,
+description: a policy
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - expr: joker
+    name: extra
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - name: joker
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 		},
 	}

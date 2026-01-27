@@ -39,7 +39,7 @@ func TestNAC_GatesCollectionGetByName_AuthorizedIdentity_AllowAccess(t *testing.
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.ClientIdentity(1),
 				FilterOptions: client.CollectionFetchOptions{
 					Name:            immutable.Some("Users"),
@@ -76,7 +76,7 @@ func TestNAC_GatesCollectionGetByName_NoIdentity_NotAuthorizedError(t *testing.T
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.NoIdentity(),
 				FilterOptions: client.CollectionFetchOptions{
 					Name:            immutable.Some("Users"),
@@ -101,7 +101,7 @@ func TestNAC_GatesCollectionGetByName_WrongIdentity_NotAuthorizedError(t *testin
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.ClientIdentity(2),
 				FilterOptions: client.CollectionFetchOptions{
 					Name:            immutable.Some("Users"),

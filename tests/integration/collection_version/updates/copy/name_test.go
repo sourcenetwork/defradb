@@ -36,7 +36,7 @@ func TestColVersionUpdateCopyName(t *testing.T) {
 					type Books {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Books/Fields/-", "value": {"Name": "name", "Kind": "String"} },
@@ -49,7 +49,7 @@ func TestColVersionUpdateCopyName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("Books"),
 				},

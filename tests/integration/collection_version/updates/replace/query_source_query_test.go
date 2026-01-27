@@ -34,7 +34,7 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				// Create the view on the `Books` collection
 				Query: `
 					Books {
@@ -47,12 +47,12 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the view query definition so that it now queries the `Users` collection
 				Patch: `
 					[
@@ -64,7 +64,7 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					View {
 						name
@@ -102,7 +102,7 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				// Create the view on the `Books` collection
 				Query: `
 					Books {
@@ -115,12 +115,12 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the view query definition so that it now queries the `Users` collection
 				Patch: `
 					[
@@ -132,7 +132,7 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					View {
 						name

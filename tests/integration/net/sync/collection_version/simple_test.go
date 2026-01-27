@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColSync_WithInitialColVersion(t *testing.T) {
+func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -42,7 +42,7 @@ func TestColSync_WithInitialColVersion(t *testing.T) {
 				VersionIDs: []string{"bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				NodeID: immutable.Some(0),
 				ExpectedResults: []client.CollectionVersion{
 					{
@@ -64,7 +64,7 @@ func TestColSync_WithInitialColVersion(t *testing.T) {
 					},
 				},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -96,7 +96,7 @@ func TestColSync_WithInitialColVersion(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColSync_WithInitialColVersion_CanBeActivatedAndQueried(t *testing.T) {
+func TestSyncColVersion_WithInitialColVersion_CanBeActivatedAndQueried(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -125,7 +125,7 @@ func TestColSync_WithInitialColVersion_CanBeActivatedAndQueried(t *testing.T) {
 				NodeID:    immutable.Some(1),
 				VersionID: "{{.CollectionVersionID0}}",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				DocMap: map[string]any{
 					"name": "John",
@@ -138,7 +138,7 @@ func TestColSync_WithInitialColVersion_CanBeActivatedAndQueried(t *testing.T) {
 				DocIDs:       []int{0},
 				SourceNodes:  []int{0},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

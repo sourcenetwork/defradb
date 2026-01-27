@@ -13,6 +13,7 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/se"
@@ -67,7 +68,7 @@ func (n *seScanNode) queryRemoteNodes() ([]string, error) {
 		}
 
 		// Extract the equality value
-		value, hasEq := condition.(map[string]any)["_eq"]
+		value, hasEq := condition.(map[string]any)[connor.EqualOp]
 		if !hasEq {
 			return nil, NewErrUnsupportedEncryptedOperator(fieldName)
 		}

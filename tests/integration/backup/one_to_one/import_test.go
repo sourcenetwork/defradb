@@ -33,7 +33,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -59,7 +59,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollections_NoError(t *testing
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						Book {
@@ -91,7 +91,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 				ImportContent: `{
 					"Book":[
 						{
-							"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
+							"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"name":"John and the sourcerers' stone"
 						}
 					],
@@ -107,7 +107,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -129,7 +129,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndUpdatedDocs_NoEr
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						Book {
@@ -163,11 +163,11 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 				ImportContent: `{
 					"Book":[
 						{
-							"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
+							"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"name":"Game of chains"
 						},
 						{
-							"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
+							"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4",
 							"name":"John and the sourcerers' stone"
 						}
 					],
@@ -182,7 +182,7 @@ func TestBackupImport_WithMultipleNoKeyAndMultipleCollectionsAndMultipleUpdatedD
 						}
 					]
 				}`,
-				ExpectedError: "target document is already linked to another document.",
+				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
 		},
 	}
@@ -209,9 +209,9 @@ func TestBackupImport_DoubleRelationshipWithUpdate_NoError(t *testing.T) {
 				`,
 			},
 			testUtils.BackupImport{
-				ImportContent: `{"User":[{"age":31,"name":"Bob"},{"age":31,"name":"John"}],"Book":[{"name":"Game of chains"},{"author_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","favourite_id":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","name":"John and the sourcerers' stone"}]}`,
+				ImportContent: `{"User":[{"age":31,"name":"Bob"},{"age":31,"name":"John"}],"Book":[{"name":"Game of chains"},{"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","_favouriteID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","name":"John and the sourcerers' stone"}]}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						Book {

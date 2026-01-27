@@ -15,10 +15,6 @@ const (
 	// https://spec.graphql.org/October2021/#sec-Type-Name-Introspection
 	TypeNameFieldName = "__typename"
 
-	// This is appended to the related object name to give us the field name
-	// that corresponds to the related object's join relation id, i.e. `Author_id`.
-	RelatedObjectID = "_id"
-
 	Input              = "input"
 	CreateInput        = "create"
 	UpdateInput        = "update"
@@ -64,19 +60,14 @@ const (
 
 	CommitsName = "_commits"
 
-	CommitTypeName           = "Commit"
-	LinksFieldName           = "links"
-	SignatureFieldName       = "signature"
-	SignatureTypeName        = "Signature"
-	HeightFieldName          = "height"
-	SchemaVersionIDFieldName = "schemaVersionId"
-	DeltaFieldName           = "delta"
-
-	DeltaArgFieldName       = "FieldName"
-	DeltaArgData            = "Data"
-	DeltaArgSchemaVersionID = "SchemaVersionID"
-	DeltaArgPriority        = "Priority"
-	DeltaArgDocID           = "DocID"
+	CommitTypeName               = "Commit"
+	LinksFieldName               = "links"
+	HeadsFieldName               = "heads"
+	SignatureFieldName           = "signature"
+	SignatureTypeName            = "Signature"
+	HeightFieldName              = "height"
+	CollectionVersionIDFieldName = "collectionVersionId"
+	DeltaFieldName               = "delta"
 
 	// SelfTypeName is the name given to relation field types that reference the host type.
 	//
@@ -84,7 +75,7 @@ const (
 	// will be of type [SelfTypeName].
 	SelfTypeName = "Self"
 
-	LinksNameFieldName = "name"
+	LinksNameFieldName = "linkName"
 	CidFieldName       = "cid"
 
 	SignatureTypeFieldName     = "type"
@@ -138,9 +129,10 @@ var (
 		HeightFieldName,
 		CidFieldName,
 		DocIDArgName,
-		SchemaVersionIDFieldName,
+		CollectionVersionIDFieldName,
 		FieldNameName,
 		DeltaFieldName,
+		LinksNameFieldName,
 	}
 
 	LinksFields = []string{
@@ -154,3 +146,32 @@ var (
 		SignatureValueFieldName,
 	}
 )
+
+// This is appended to the related object name to give us the field name
+// that corresponds to the related object's join relation id, i.e. `_authorID`.
+const relatedObjectIDSuffix = "ID"
+
+// ToFieldID converts a field name to its relation ID field name.
+// For example: "author" becomes "_authorID"
+func ToFieldID(fieldName string) string {
+	return "_" + fieldName + relatedObjectIDSuffix
+}
+
+// ToRelatedObjectName extracts the object field name from a relation ID field name.
+// For example: "_authorID" returns ("author", true)
+// Returns ("", false) if the field name is not a valid relation ID field.
+func ToRelatedObjectName(fieldName string) (string, bool) {
+	if len(fieldName) <= len(relatedObjectIDSuffix)+1 {
+		return "", false
+	}
+	if fieldName[0] != '_' {
+		return "", false
+	}
+	if fieldName == DocIDFieldName {
+		return "", false
+	}
+	if fieldName[len(fieldName)-len(relatedObjectIDSuffix):] != relatedObjectIDSuffix {
+		return "", false
+	}
+	return fieldName[1 : len(fieldName)-len(relatedObjectIDSuffix)], true
+}

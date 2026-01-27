@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	ErrDeltaMissingSchemaVersionID         = errors.New("commit Delta missing schema version ID")
+	ErrDeltaMissingCollectionVersionID     = errors.New("commit Delta missing collection version ID")
 	ErrDeltaMissingPriority                = errors.New("commit Delta missing priority key")
 	ErrDeltaMissingDocID                   = errors.New("commit Delta missing document ID")
 	ErrDeltaMissingFieldName               = errors.New("commit Delta missing field name")

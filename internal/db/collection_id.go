@@ -35,6 +35,7 @@ import (
 func setCollectionIDs(
 	ctx context.Context,
 	newCollections []client.CollectionVersion,
+	existingCollections []client.CollectionVersion,
 ) error {
 	// We need to group the inputs and then mutate them, so we temporarily
 	// map them to pointers.
@@ -52,7 +53,7 @@ func setCollectionIDs(
 		// their IDs are deterministic.
 		sortSet(collectionSet)
 
-		substituteRelationFieldKinds(collectionSet, collectionSets)
+		substituteRelationFieldKinds(collectionSet, collectionSets, existingCollections)
 		err := saveBlocks(ctx, collectionSet)
 		if err != nil {
 			return err
@@ -63,7 +64,7 @@ func setCollectionIDs(
 		// Secondary fields are not saved in the blockstore, thus they do not contribute to the collection IDs.
 		// The Kinds do however need to reference by CollectionID, which need to be substituted after the
 		// CollectionIDs have been generated.
-		substituteSecondaryRelationFieldKinds(collectionSet, collectionSets)
+		substituteSecondaryRelationFieldKinds(collectionSet, collectionSets, existingCollections)
 	}
 
 	for i := range newCollectionPtrs {
@@ -247,22 +248,20 @@ func mapCollectionSetIDs(
 		circlesBackHere := circlesBack(collection.name, relation, collectionRelationsByCollectionName, map[string]struct{}{})
 
 		var circleID int
-		if circlesBackHere {
-			if id, ok := collectionSetIds[relation]; ok {
-				// If this collection has already been assigned a setID, use that
-				circleID = id
-			} else {
-				collectionSetId, ok := collectionSetIds[collection.name]
-				if !ok {
-					// If this collection has not already been assigned a setID, it must be
-					// the first discovered node in a new circle.  Assign it a new setID,
-					// this will be picked up by its circle-forming descendents.
-					*i = *i + 1
-					collectionSetId = *i
-				}
-				collectionSetIds[collection.name] = collectionSetId
-				circleID = collectionSetId
+		if id, ok := collectionSetIds[relation]; ok {
+			// If this collection has already been assigned a setID, use that
+			circleID = id
+		} else if circlesBackHere {
+			collectionSetId, ok := collectionSetIds[collection.name]
+			if !ok {
+				// If this collection has not already been assigned a setID, it must be
+				// the first discovered node in a new circle.  Assign it a new setID,
+				// this will be picked up by its circle-forming descendents.
+				*i = *i + 1
+				collectionSetId = *i
 			}
+			collectionSetIds[collection.name] = collectionSetId
+			circleID = collectionSetId
 		} else {
 			// If this collection and its relations does not circle back to itself, we
 			// increment `i` and assign the new value to this collection *only*
@@ -533,13 +532,17 @@ func saveBlocks(
 // Using names to reference other types is unsuitable as the names may change over time.
 func substituteRelationFieldKinds(
 	collectionSet []*client.CollectionVersion,
-	allCollectionSets [][]*client.CollectionVersion,
+	newCollectionSets [][]*client.CollectionVersion,
+	existingCollections []client.CollectionVersion,
 ) {
 	collectionsByName := map[string]client.CollectionVersion{}
-	for _, collectionSet := range allCollectionSets {
-		for _, collection := range collectionSet {
+	for _, set := range newCollectionSets {
+		for _, collection := range set {
 			collectionsByName[collection.Name] = *collection
 		}
+	}
+	for _, collection := range existingCollections {
+		collectionsByName[collection.Name] = collection
 	}
 
 	setIndexesByName := map[string]int{}
@@ -591,13 +594,17 @@ func substituteRelationFieldKinds(
 
 func substituteSecondaryRelationFieldKinds(
 	collectionSet []*client.CollectionVersion,
-	allCollectionSets [][]*client.CollectionVersion,
+	newCollectionSets [][]*client.CollectionVersion,
+	existingCollections []client.CollectionVersion,
 ) {
 	collectionsByName := map[string]client.CollectionVersion{}
-	for _, collectionSet := range allCollectionSets {
-		for _, collection := range collectionSet {
+	for _, set := range newCollectionSets {
+		for _, collection := range set {
 			collectionsByName[collection.Name] = *collection
 		}
+	}
+	for _, collection := range existingCollections {
+		collectionsByName[collection.Name] = collection
 	}
 
 	for i := range collectionSet {

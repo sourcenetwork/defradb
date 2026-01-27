@@ -14,6 +14,7 @@ import (
 	gql "github.com/sourcenetwork/graphql-go"
 
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/internal/connor"
 )
 
 // Commit represents an individual commit to a MerkleCRDT
@@ -23,10 +24,10 @@ import (
 //		CID: String
 //		DocID: String
 //		CollectionID: Int
-//		SchemaVersionID: String
+//		CollectionVersionID: String
 //		Delta: String
-//		Previous: [Commit]
 //		Links: [Commit]
+//		Heads: [Commit]
 //		Signature: Signature
 //	}
 //
@@ -38,11 +39,34 @@ import (
 //
 // Any self referential type needs to be initialized
 // inside the init() func
-func CommitObject(commitLinkObject *gql.Object) *gql.Object {
-	return gql.NewObject(gql.ObjectConfig{
-		Name:        request.CommitTypeName,
-		Description: commitDescription,
-		Fields: gql.Fields{
+func CommitObject(
+	commitsOrderArg *gql.InputObject,
+	commitsFilterArg *gql.InputObject,
+	commitsEnum *gql.Enum,
+) *gql.Object {
+	// we need the fieldThunk since we are creating a circular type reference
+	var commitObject *gql.Object
+	fieldsThunk := (gql.FieldsThunk)(func() (gql.Fields, error) {
+		commitLinkType := &gql.Field{
+			Description: commitLinksDescription,
+			Type:        gql.NewList(commitObject),
+			Args: gql.FieldConfigArgument{
+				request.DocIDArgName: NewArgConfig(gql.ID, commitDocIDArgDescription),
+				request.FilterClause: NewArgConfig(commitsFilterArg, "Filter results based on specified conditions."),
+				"order":              NewArgConfig(gql.NewList(commitsOrderArg), OrderArgDescription),
+				request.CidArgName:   NewArgConfig(gql.ID, commitCIDArgDescription),
+				"groupBy": NewArgConfig(
+					gql.NewList(
+						gql.NewNonNull(
+							commitsEnum,
+						),
+					),
+					GroupByArgDescription,
+				),
+			},
+		}
+
+		fields := gql.Fields{
 			request.HeightFieldName: &gql.Field{
 				Description: commitHeightFieldDescription,
 				Type:        gql.Int,
@@ -55,8 +79,8 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 				Description: commitDocIDFieldDescription,
 				Type:        gql.String,
 			},
-			request.SchemaVersionIDFieldName: &gql.Field{
-				Description: commitSchemaVersionIDFieldDescription,
+			request.CollectionVersionIDFieldName: &gql.Field{
+				Description: commitCollectionVersionIDFieldDescription,
 				Type:        gql.String,
 			},
 			request.FieldNameName: &gql.Field{
@@ -67,10 +91,8 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 				Description: commitDeltaFieldDescription,
 				Type:        gql.String,
 			},
-			request.LinksFieldName: &gql.Field{
-				Description: commitLinksDescription,
-				Type:        gql.NewList(commitLinkObject),
-			},
+			request.LinksFieldName: commitLinkType,
+			request.HeadsFieldName: commitLinkType,
 			request.SignatureFieldName: &gql.Field{
 				Description: signatureDescription,
 				Type: gql.NewObject(gql.ObjectConfig{
@@ -84,7 +106,7 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 						},
 						request.SignatureIdentityFieldName: &gql.Field{
 							Description: "The identity of the signer, which is used to determine " +
-								"the public key used to verify the signature.ureIdentityFieldDescription",
+								"the public key used to verify the signature.",
 							Type: gql.String,
 						},
 						request.SignatureValueFieldName: &gql.Field{
@@ -108,32 +130,25 @@ func CommitObject(commitLinkObject *gql.Object) *gql.Object {
 									Description: commitLinksDescription,
 									Value:       "links",
 								},
+								"heads": &gql.EnumValueConfig{
+									Description: commitLinksDescription,
+									Value:       "heads",
+								},
 							},
 						}),
 					},
 				},
 			},
-		},
+		}
+		return fields, nil
 	})
-}
 
-// CommitLink is a named DAG link between commits.
-// This is primary used for CompositeDAG CRDTs
-func CommitLinkObject() *gql.Object {
-	return gql.NewObject(gql.ObjectConfig{
-		Name:        "CommitLink",
-		Description: commitLinksDescription,
-		Fields: gql.Fields{
-			request.LinksNameFieldName: &gql.Field{
-				Description: commitLinkNameFieldDescription,
-				Type:        gql.String,
-			},
-			request.CidFieldName: &gql.Field{
-				Description: commitLinkCIDFieldDescription,
-				Type:        gql.String,
-			},
-		},
+	commitObject = gql.NewObject(gql.ObjectConfig{
+		Name:        request.CommitTypeName,
+		Description: commitDescription,
+		Fields:      fieldsThunk,
 	})
+	return commitObject
 }
 
 func CommitsFilterFieldNameArg() *gql.InputObject {
@@ -141,11 +156,11 @@ func CommitsFilterFieldNameArg() *gql.InputObject {
 		Name:        "CommitsFieldNameFilterArg",
 		Description: "Filter operators for commit fieldName.",
 		Fields: gql.InputObjectConfigFieldMap{
-			"_eq": &gql.InputObjectFieldConfig{
+			connor.EqualOp: &gql.InputObjectFieldConfig{
 				Description: eqOperatorDescription,
 				Type:        gql.String,
 			},
-			"_ne": &gql.InputObjectFieldConfig{
+			connor.NotEqualOp: &gql.InputObjectFieldConfig{
 				Description: neOperatorDescription,
 				Type:        gql.String,
 			},
@@ -195,6 +210,33 @@ func CommitsFilterArg(fieldNameFilter *gql.InputObject) *gql.InputObject {
 	return selfRefType
 }
 
+func CommitsEnum() *gql.Enum {
+	return gql.NewEnum(
+		gql.EnumConfig{
+			Name:        "commitFields",
+			Description: commitFieldsEnumDescription,
+			Values: gql.EnumValueConfigMap{
+				request.HeightArgName: &gql.EnumValueConfig{
+					Value:       request.HeightArgName,
+					Description: commitHeightFieldDescription,
+				},
+				request.CidArgName: &gql.EnumValueConfig{
+					Value:       request.CidArgName,
+					Description: commitCIDFieldDescription,
+				},
+				request.DocIDArgName: &gql.EnumValueConfig{
+					Value:       request.DocIDArgName,
+					Description: commitDocIDFieldDescription,
+				},
+				request.FieldNameName: &gql.EnumValueConfig{
+					Value:       request.FieldNameName,
+					Description: commitFieldNameFieldDescription,
+				},
+			},
+		},
+	)
+}
+
 func CommitsOrderArg(orderEnum *gql.Enum) *gql.InputObject {
 	return gql.NewInputObject(
 		gql.InputObjectConfig{
@@ -222,6 +264,7 @@ func QueryCommits(
 	commitObject *gql.Object,
 	commitsOrderArg *gql.InputObject,
 	commitsFilterArg *gql.InputObject,
+	commitsEnum *gql.Enum,
 ) *gql.Field {
 	return &gql.Field{
 		Name:        request.CommitsName,
@@ -235,30 +278,7 @@ func QueryCommits(
 			"groupBy": NewArgConfig(
 				gql.NewList(
 					gql.NewNonNull(
-						gql.NewEnum(
-							gql.EnumConfig{
-								Name:        "commitFields",
-								Description: commitFieldsEnumDescription,
-								Values: gql.EnumValueConfigMap{
-									request.HeightArgName: &gql.EnumValueConfig{
-										Value:       request.HeightArgName,
-										Description: commitHeightFieldDescription,
-									},
-									request.CidArgName: &gql.EnumValueConfig{
-										Value:       request.CidArgName,
-										Description: commitCIDFieldDescription,
-									},
-									request.DocIDArgName: &gql.EnumValueConfig{
-										Value:       request.DocIDArgName,
-										Description: commitDocIDFieldDescription,
-									},
-									request.FieldNameName: &gql.EnumValueConfig{
-										Value:       request.FieldNameName,
-										Description: commitFieldNameFieldDescription,
-									},
-								},
-							},
-						),
+						commitsEnum,
 					),
 				),
 				GroupByArgDescription,

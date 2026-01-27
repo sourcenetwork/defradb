@@ -16,9 +16,8 @@ package crdt
 import (
 	"context"
 
-	"github.com/sourcenetwork/corekv"
-
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -28,8 +27,8 @@ type FieldLevelCRDT interface {
 }
 
 func FieldLevelCRDTWithStore(
-	store corekv.ReaderWriter,
-	schemaVersionID string,
+	store datastore.Keyedstore,
+	collectionVersionID string,
 	cType client.CType,
 	kind client.FieldKind,
 	key keys.DataStoreKey,
@@ -39,14 +38,14 @@ func FieldLevelCRDTWithStore(
 	case client.LWW_REGISTER:
 		return NewLWW(
 			store,
-			schemaVersionID,
+			collectionVersionID,
 			key,
 			fieldName,
 		), nil
 	case client.PN_COUNTER, client.P_COUNTER:
 		return NewCounter(
 			store,
-			schemaVersionID,
+			collectionVersionID,
 			key,
 			fieldName,
 			cType == client.PN_COUNTER,

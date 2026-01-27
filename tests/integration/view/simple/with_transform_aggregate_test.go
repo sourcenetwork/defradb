@@ -13,11 +13,12 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
+
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
-	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
 func TestView_SimpleWithTransformAggregate(t *testing.T) {
@@ -30,7 +31,20 @@ func TestView_SimpleWithTransformAggregate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.AddLens{
+				Lens: model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.StandardDeviationModulePath,
+							Arguments: map[string]any{
+								"src": "age",
+								"dst": "stddev",
+							},
+						},
+					},
+				},
+			},
+			&action.CreateView{
 				Query: `
 					User {
 						age
@@ -41,34 +55,24 @@ func TestView_SimpleWithTransformAggregate(t *testing.T) {
 						stddev: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.StandardDeviationModulePath,
-							Arguments: map[string]any{
-								"src": "age",
-								"dst": "stddev",
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"age": 30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"age": 26,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"age": 34,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserStdDev {

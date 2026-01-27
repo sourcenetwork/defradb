@@ -24,6 +24,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -40,11 +41,11 @@ type CounterDelta struct {
 	// Nonce is an added randomly generated number that ensures
 	// that each increment operation is unique.
 	Nonce int64
-	// SchemaVersionID is the schema version datastore key at the time of commit.
+	// CollectionVersionID is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
-	SchemaVersionID string
-	Data            []byte
+	CollectionVersionID string
+	Data                []byte
 }
 
 var _ Delta = (*CounterDelta)(nil)
@@ -55,12 +56,12 @@ var _ Delta = (*CounterDelta)(nil)
 func (delta *CounterDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type CounterDelta struct {
-		docID     		Bytes
-		fieldName 		String
-		priority  		Int
-		nonce 			Int
-		schemaVersionID String
-		data            Bytes
+		docID     			Bytes
+		fieldName 			String
+		priority  			Int
+		nonce 				Int
+		collectionVersionID String
+		data            	Bytes
 	}`)
 }
 
@@ -76,12 +77,12 @@ func (delta *CounterDelta) SetPriority(prio uint64) {
 
 // Counter is a MerkleCRDT implementation of the Counter using MerkleClocks.
 type Counter struct {
-	store           corekv.ReaderWriter
-	key             keys.DataStoreKey
-	schemaVersionID string
-	fieldName       string
-	allowDecrement  bool
-	kind            client.ScalarKind
+	store               datastore.Keyedstore
+	key                 keys.DataStoreKey
+	collectionVersionID string
+	fieldName           string
+	allowDecrement      bool
+	kind                client.ScalarKind
 }
 
 var _ FieldLevelCRDT = (*Counter)(nil)
@@ -90,20 +91,20 @@ var _ ReplicatedData = (*Counter)(nil)
 // NewCounter creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a Counter CRDT.
 func NewCounter(
-	store corekv.ReaderWriter,
-	schemaVersionID string,
+	store datastore.Keyedstore,
+	collectionVersionID string,
 	key keys.DataStoreKey,
 	fieldName string,
 	allowDecrement bool,
 	kind client.ScalarKind,
 ) *Counter {
 	return &Counter{
-		store:           store,
-		key:             key,
-		schemaVersionID: schemaVersionID,
-		fieldName:       fieldName,
-		allowDecrement:  allowDecrement,
-		kind:            kind,
+		store:               store,
+		key:                 key,
+		collectionVersionID: collectionVersionID,
+		fieldName:           fieldName,
+		allowDecrement:      allowDecrement,
+		kind:                kind,
 	}
 }
 
@@ -125,7 +126,7 @@ func (c *Counter) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	// To ensure that the dag block is unique, we add a random number to the delta.
 	// This is done only on update (if the doc doesn't already exist) to ensure that the
 	// initial dag block of a document can be reproducible.
-	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey().Bytes())
+	exists, err := c.store.Has(ctx, c.key.ToPrimaryDataStoreKey())
 	if err != nil {
 		return nil, err
 	}
@@ -140,11 +141,11 @@ func (c *Counter) Delta(ctx context.Context, data *DocField) (Delta, error) {
 	}
 
 	return &CounterDelta{
-		DocID:           []byte(c.key.DocID),
-		FieldName:       c.fieldName,
-		Data:            bytes,
-		SchemaVersionID: c.schemaVersionID,
-		Nonce:           nonce,
+		DocID:               []byte(c.key.DocID),
+		FieldName:           c.fieldName,
+		Data:                bytes,
+		CollectionVersionID: c.collectionVersionID,
+		Nonce:               nonce,
 	}, nil
 }
 
@@ -165,7 +166,7 @@ func (c *Counter) incrementValue(
 	priority uint64,
 ) error {
 	key := c.key.WithValueFlag()
-	marker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey().Bytes())
+	marker, err := c.store.Get(ctx, c.key.ToPrimaryDataStoreKey())
 	if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 		return err
 	}
@@ -195,7 +196,7 @@ func (c *Counter) incrementValue(
 		return NewErrUnsupportedCounterType(c.kind)
 	}
 
-	err = c.store.Set(ctx, key.Bytes(), resultAsBytes)
+	err = c.store.Set(ctx, key, resultAsBytes)
 	if err != nil {
 		return NewErrFailedToStoreValue(err)
 	}
@@ -212,7 +213,7 @@ func (c *Counter) CType() client.CType {
 
 func validateAndIncrement[T Incrementable](
 	ctx context.Context,
-	store corekv.ReaderWriter,
+	store datastore.Keyedstore,
 	key keys.DataStoreKey,
 	valueAsBytes []byte,
 	allowDecrement bool,
@@ -237,10 +238,10 @@ func validateAndIncrement[T Incrementable](
 
 func getCurrentValue[T Incrementable](
 	ctx context.Context,
-	store corekv.ReaderWriter,
+	store datastore.Keyedstore,
 	key keys.DataStoreKey,
 ) (T, error) {
-	curValue, err := store.Get(ctx, key.Bytes())
+	curValue, err := store.Get(ctx, key)
 	if err != nil {
 		if errors.Is(err, corekv.ErrNotFound) {
 			return 0, nil

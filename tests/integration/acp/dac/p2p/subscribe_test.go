@@ -37,35 +37,25 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_LocalACP(t *test
 				Identity: testUtils.ClientIdentity(1),
 
 				Policy: `
-                    name: test
-                    description: a test policy which marks a collection in a database as a resource
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-                `,
+description: a test policy which marks a collection in a database as a resource
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 
 			&action.AddSchema{
@@ -113,35 +103,25 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
 			testUtils.AddDACPolicy{
 				Identity: testUtils.ClientIdentity(1),
 				Policy: `
-                    name: test
-                    description: a test policy which marks a collection in a database as a resource
-
-                    actor:
-                      name: actor
-
-                    resources:
-                      users:
-                        permissions:
-                          read:
-                            expr: owner + reader
-                          update:
-                            expr: owner
-                          delete:
-                            expr: owner
-
-                        relations:
-                          owner:
-                            types:
-                              - actor
-                          reader:
-                            types:
-                              - actor
-                          admin:
-                            manages:
-                              - reader
-                            types:
-                              - actor
-                `,
+description: a test policy which marks a collection in a database as a resource
+name: test
+resources:
+- name: users
+  permissions:
+  - name: delete
+  - expr: reader
+    name: read
+  - name: update
+  relations:
+  - manages:
+    - reader
+    name: admin
+    types:
+    - actor
+  - name: reader
+    types:
+    - actor
+`,
 			},
 			&action.AddSchema{
 				Schema: `
@@ -162,14 +142,14 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// The document will only be accessible on node 0 since node 1 is not authorized to
 				// access the document.
 				NodeID:   immutable.Some(0),
@@ -189,7 +169,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Since node 1 is not authorized to access the document, it won't have to document
 				// so even if requesting with an authorized identity, the document won't be returned.
 				NodeID:   immutable.Some(1),
@@ -205,7 +185,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is hidden on all nodes to unidentified actors
 				Request: `
 					query {
@@ -218,7 +198,7 @@ func TestACP_P2PSubscribeAddGetSingleWithPermissionedCollection_SourceHubACP(t *
 					"Users": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Ensure that the document is hidden on all nodes to unauthorized actors
 				Identity: testUtils.ClientIdentity(2),
 				Request: `

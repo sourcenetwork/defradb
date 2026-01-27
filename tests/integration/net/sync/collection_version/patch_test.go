@@ -20,7 +20,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestColSync_WithPatchVersionOfUnknownCollection(t *testing.T) {
+func TestSyncColVersion_WithPatchVersionOfUnknownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -34,7 +34,7 @@ func TestColSync_WithPatchVersionOfUnknownCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -50,7 +50,7 @@ func TestColSync_WithPatchVersionOfUnknownCollection(t *testing.T) {
 				NodeID:     1,
 				VersionIDs: []string{"bafyreics7adsddesun4kqqotr6g6c6ld2t7djlwcbrm4ftbhru3ayindy4"},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -108,7 +108,7 @@ func TestColSync_WithPatchVersionOfUnknownCollection(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestColSync_WithPatchVersionOfKnownCollection(t *testing.T) {
+func TestSyncColVersion_WithPatchVersionOfKnownCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
@@ -121,7 +121,7 @@ func TestColSync_WithPatchVersionOfKnownCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -137,7 +137,7 @@ func TestColSync_WithPatchVersionOfKnownCollection(t *testing.T) {
 				NodeID:     1,
 				VersionIDs: []string{"bafyreics7adsddesun4kqqotr6g6c6ld2t7djlwcbrm4ftbhru3ayindy4"},
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},

@@ -32,14 +32,14 @@ func TestNAC_GatesDocumentRead_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -67,14 +67,14 @@ func TestNAC_GatesDocumentRead_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.Request{
+			&action.Request{
 				Identity:      testUtils.NoIdentity(),
 				Request:       `query{ User { name } }`,
 				ExpectedError: "not authorized to perform operation",
@@ -100,14 +100,14 @@ func TestNAC_GatesDocumentRead_WrongIdentity_NotAuthorizedError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.Request{
+			&action.Request{
 				Identity:      testUtils.ClientIdentity(2),
 				Request:       `query{ User { name } }`,
 				ExpectedError: "not authorized to perform operation",

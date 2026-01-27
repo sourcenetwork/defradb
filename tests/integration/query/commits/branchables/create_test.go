@@ -41,22 +41,25 @@ func TestQueryCommitsBranchables_WithMultipleCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"Fred",
 					"age":	25
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits {
 							cid
+							heads {
+								cid
+							}
 							links {
 								cid
 							}
@@ -66,10 +69,12 @@ func TestQueryCommitsBranchables_WithMultipleCreate(t *testing.T) {
 					"_commits": []map[string]any{
 						{
 							"cid": gomega.And(doc2CollectionCid, uniqueCid),
-							"links": []map[string]any{
+							"heads": []map[string]any{
 								{
 									"cid": doc1CollectionCid,
 								},
+							},
+							"links": []map[string]any{
 								{
 									"cid": doc2CompositeCid,
 								},
@@ -82,14 +87,17 @@ func TestQueryCommitsBranchables_WithMultipleCreate(t *testing.T) {
 									"cid": doc1CompositeCid,
 								},
 							},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid":   gomega.And(doc2AgeFieldCid, uniqueCid),
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid":   gomega.And(doc2NameFieldCid, uniqueCid),
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid": gomega.And(doc2CompositeCid, uniqueCid),
@@ -101,14 +109,17 @@ func TestQueryCommitsBranchables_WithMultipleCreate(t *testing.T) {
 									"cid": doc2NameFieldCid,
 								},
 							},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid":   gomega.And(doc1AgeFieldCid, uniqueCid),
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid":   gomega.And(doc1NameFieldCid, uniqueCid),
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
 							"cid": gomega.And(doc1CompositeCid, uniqueCid),
@@ -120,6 +131,7 @@ func TestQueryCommitsBranchables_WithMultipleCreate(t *testing.T) {
 									"cid": doc1NameFieldCid,
 								},
 							},
+							"heads": []map[string]any{},
 						},
 					},
 				},

@@ -28,7 +28,7 @@ func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"created_at": "2011-07-23T01:11:11-05:00"
@@ -39,7 +39,7 @@ func TestMutationUpdate_WithDateTimeField(t *testing.T) {
 					"created_at": "2021-07-23T02:22:22-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -72,19 +72,19 @@ func TestMutationUpdate_WithDateTimeField_MultipleDocs(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred",
 					"created_at": "2021-07-23T02:22:22-05:00"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(input: {created_at: "2031-07-23T03:23:23Z"}) {
 						name
@@ -121,7 +121,7 @@ func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
@@ -131,7 +131,7 @@ func TestMutationUpdate_IfDateTimeFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"created_at": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -164,14 +164,14 @@ func TestMutationUpdate_WithDateTimeField_WithUTCNow(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"created_at": "2011-07-23T01:11:11-05:00"
 				}`,
 			},
 			// Perform mutation to update using UTC_NOW
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(
 						filter: { name: { _eq: "John" } },
@@ -188,6 +188,57 @@ func TestMutationUpdate_WithDateTimeField_WithUTCNow(t *testing.T) {
 							"created_at": testUtils.CurrentTimestamp(),
 						},
 					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationUpdate_WithDateTimeField_WithUTCNow_ShouldBeEqual(t *testing.T) {
+	timestampMatcher := testUtils.NewSameValue()
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+						created_at: DateTime
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"created_at": "2011-07-23T01:11:11-05:00"
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Chris",
+					"created_at": "2012-07-23T01:11:11-05:00"
+				}`,
+			},
+			// Perform mutations to update using UTC_NOW
+			&action.Request{
+				Request: `mutation {
+					john: update_Users(
+						filter: { name: { _eq: "John" } },
+						input: { created_at: UTC_NOW }
+					) {
+						created_at
+					}
+					chris: update_Users(
+						filter: { name: { _eq: "Chris" } },
+						input: { created_at: UTC_NOW }
+					) {
+						created_at
+					}
+				}`,
+				Results: map[string]any{
+					"john":  []map[string]any{{"created_at": timestampMatcher}},
+					"chris": []map[string]any{{"created_at": timestampMatcher}},
 				},
 			},
 		},

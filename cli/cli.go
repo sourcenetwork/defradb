@@ -39,6 +39,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeP2PCollectionRemoveCommand(ctx),
 		MakeP2PCollectionGetAllCommand(ctx),
 		MakeP2PCollectionSyncVersionsCommand(ctx),
+		MakeP2PCollectionSyncBranchableCommand(ctx),
 	)
 
 	p2p_document := MakeP2PDocumentCommand(ctx)
@@ -69,6 +70,8 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 	lens := MakeLensCommand(ctx)
 	lens.AddCommand(
 		MakeLensSetCommand(ctx),
+		MakeLensAddCommand(ctx),
+		MakeLensListCommand(ctx),
 	)
 
 	schema := MakeSchemaCommand(ctx)
@@ -156,6 +159,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeCollectionDescribeCommand(ctx),
 		MakeCollectionPatchCommand(ctx),
 		MakeCollectionSetActiveCommand(ctx),
+		MakeCollectionTruncateCommand(ctx),
 	)
 
 	block := MakeBlockCommand(ctx)
@@ -195,14 +199,21 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeIdentityNewCommand(ctx),
 	)
 
+	sdl := MakeSDLCommand(ctx)
+	sdl.AddCommand(
+		MakeSDLGenerateCommand(ctx),
+	)
+
 	root := MakeRootCommand(ctx)
 	root.AddCommand(
 		client,
 		keyring,
 		identity,
+		sdl,
 		MakeStartCommand(ctx),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(ctx),
+		MakeWizardCommand(),
 	)
 
 	return root

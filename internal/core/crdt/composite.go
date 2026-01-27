@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/base"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -32,7 +33,7 @@ type DocCompositeDelta struct {
 	// document.  This would require a local index in order to handle field level commit-queries.
 	DocID    []byte
 	Priority uint64
-	// SchemaVersionID is the schema version datastore key at the time of commit.
+	// CollectionVersionID is the schema version datastore key at the time of commit.
 	//
 	// It can be used to identify the collection datastructure state at the time of commit.
 	//
@@ -41,7 +42,7 @@ type DocCompositeDelta struct {
 	//
 	// Conversely we could remove this from the field-level commits and leave it on the composite,
 	// however that would complicate commit-queries and would require us to maintain an index elsewhere.
-	SchemaVersionID string
+	CollectionVersionID string
 	// Status represents the status of the document. By default it is `Active`.
 	// Alternatively, if can be set to `Deleted`.
 	Status client.DocumentStatus
@@ -55,10 +56,10 @@ var _ Delta = (*DocCompositeDelta)(nil)
 func (delta *DocCompositeDelta) IPLDSchemaBytes() []byte {
 	return []byte(`
 	type DocCompositeDelta struct {
-		docID     		Bytes
-		priority  		Int
-		schemaVersionID String
-		status          Int
+		docID     			Bytes
+		priority  			Int
+		collectionVersionID String
+		status          	Int
 	}`)
 }
 
@@ -74,9 +75,9 @@ func (delta *DocCompositeDelta) SetPriority(prio uint64) {
 
 // DocComposite is a MerkleCRDT implementation of the CompositeDAG using MerkleClocks.
 type DocComposite struct {
-	store           corekv.ReaderWriter
-	key             keys.DataStoreKey
-	schemaVersionID string
+	store               datastore.Keyedstore
+	key                 keys.DataStoreKey
+	collectionVersionID string
 }
 
 var _ ReplicatedData = (*DocComposite)(nil)
@@ -84,14 +85,14 @@ var _ ReplicatedData = (*DocComposite)(nil)
 // NewDocComposite creates a new instance (or loaded from DB) of a MerkleCRDT
 // backed by a CompositeDAG CRDT.
 func NewDocComposite(
-	store corekv.ReaderWriter,
-	schemaVersionID string,
+	store datastore.Keyedstore,
+	collectionVersionID string,
 	key keys.DataStoreKey,
 ) *DocComposite {
 	return &DocComposite{
-		store:           store,
-		key:             key,
-		schemaVersionID: schemaVersionID,
+		store:               store,
+		key:                 key,
+		collectionVersionID: collectionVersionID,
 	}
 }
 
@@ -102,18 +103,18 @@ func (m *DocComposite) HeadstorePrefix() keys.HeadstoreKey {
 // DeleteDelta sets the values of CompositeDAG for a delete.
 func (m *DocComposite) DeleteDelta() *DocCompositeDelta {
 	return &DocCompositeDelta{
-		DocID:           []byte(m.key.DocID),
-		SchemaVersionID: m.schemaVersionID,
-		Status:          client.Deleted,
+		DocID:               []byte(m.key.DocID),
+		CollectionVersionID: m.collectionVersionID,
+		Status:              client.Deleted,
 	}
 }
 
 // Delta the value of the composite CRDT to DAG.
 func (m *DocComposite) Delta() *DocCompositeDelta {
 	return &DocCompositeDelta{
-		DocID:           []byte(m.key.DocID),
-		SchemaVersionID: m.schemaVersionID,
-		Status:          client.Active,
+		DocID:               []byte(m.key.DocID),
+		CollectionVersionID: m.collectionVersionID,
+		Status:              client.Active,
 	}
 }
 
@@ -127,7 +128,7 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 	}
 
 	if dagDelta.Status.IsDeleted() {
-		err := m.store.Set(ctx, m.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.DeletedObjectMarker})
+		err := m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.DeletedObjectMarker})
 		if err != nil {
 			return err
 		}
@@ -138,7 +139,7 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 	// reflected in `dagDelta.Status` if sourced via P2P.  Updates synced via P2P should not undelete
 	// the local representation of the document.
 	versionKey := m.key.WithValueFlag().WithFieldID(keys.DATASTORE_DOC_VERSION_FIELD_ID)
-	objectMarker, err := m.store.Get(ctx, m.key.ToPrimaryDataStoreKey().Bytes())
+	objectMarker, err := m.store.Get(ctx, m.key.ToPrimaryDataStoreKey())
 	hasObjectMarker := !errors.Is(err, corekv.ErrNotFound)
 	if err != nil && hasObjectMarker {
 		return err
@@ -148,22 +149,22 @@ func (m *DocComposite) Merge(ctx context.Context, delta Delta) error {
 		versionKey = versionKey.WithDeletedFlag()
 	}
 
-	err = m.store.Set(ctx, versionKey.Bytes(), []byte(dagDelta.SchemaVersionID))
+	err = m.store.Set(ctx, versionKey, []byte(dagDelta.CollectionVersionID))
 	if err != nil {
 		return err
 	}
 
 	if !hasObjectMarker {
 		// ensure object marker exists
-		return m.store.Set(ctx, m.key.ToPrimaryDataStoreKey().Bytes(), []byte{base.ObjectMarker})
+		return m.store.Set(ctx, m.key.ToPrimaryDataStoreKey(), []byte{base.ObjectMarker})
 	}
 
 	return nil
 }
 
 func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKey) error {
-	iter, err := m.store.Iterator(ctx, corekv.IterOptions{
-		Prefix: key.Bytes(),
+	iter, err := m.store.Iterator(ctx, datastore.IterOptions{
+		Prefix: key,
 	})
 	if err != nil {
 		return err
@@ -207,11 +208,11 @@ func (m DocComposite) deleteWithPrefix(ctx context.Context, key keys.DataStoreKe
 	}
 
 	for _, item := range kvArray {
-		err = m.store.Set(ctx, item.key.WithDeletedFlag().Bytes(), item.value)
+		err = m.store.Set(ctx, item.key.WithDeletedFlag(), item.value)
 		if err != nil {
 			return err
 		}
-		err = m.store.Delete(ctx, item.key.Bytes())
+		err = m.store.Delete(ctx, item.key)
 		if err != nil {
 			return err
 		}

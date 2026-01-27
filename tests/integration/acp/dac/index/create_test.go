@@ -38,13 +38,13 @@ func TestACP_IndexCreateWithSeparateRequest_OnCollectionWithPolicy_NoError(t *te
 				`,
 			},
 
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID: 0,
 				IndexName:    "some_index",
 				FieldName:    "name",
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						Users {
@@ -84,7 +84,7 @@ func TestACP_IndexCreateWithDirective_OnCollectionWithPolicy_NoError(t *testing.
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						Users {

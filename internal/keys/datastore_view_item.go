@@ -11,6 +11,7 @@
 package keys
 
 import (
+	"bytes"
 	"strconv"
 
 	ds "github.com/ipfs/go-datastore"
@@ -35,6 +36,7 @@ type ViewCacheKey struct {
 }
 
 var _ Key = (*ViewCacheKey)(nil)
+var _ CollectionedKey = ViewCacheKey{}
 
 func NewViewCacheColPrefix(collectionShortID uint32) ViewCacheKey {
 	return ViewCacheKey{
@@ -47,6 +49,38 @@ func NewViewCacheKey(collectionShortID uint32, itemID uint) ViewCacheKey {
 		CollectionShortID: collectionShortID,
 		ItemID:            itemID,
 	}
+}
+
+func NewViewCacheKeyFromRaw(raw []byte) (ViewCacheKey, error) {
+	if len(raw) == 0 {
+		return ViewCacheKey{}, nil
+	}
+
+	raw, _ = bytes.CutPrefix(raw, []byte(COLLECTION_VIEW_ITEMS+"/"))
+
+	components := bytes.Split(raw, []byte("/"))
+	if len(components) > 2 {
+		return ViewCacheKey{}, ErrInvalidKey
+	}
+
+	_, collectionShortID, err := encoding.DecodeUvarintAscending(components[0])
+	if err != nil {
+		return ViewCacheKey{}, err
+	}
+
+	var itemID uint
+	if len(components) == 2 {
+		_, r, err := encoding.DecodeUvarintAscending(components[1])
+		if err != nil {
+			return ViewCacheKey{}, err
+		}
+		itemID = uint(r)
+	}
+
+	return ViewCacheKey{
+		CollectionShortID: uint32(collectionShortID),
+		ItemID:            itemID,
+	}, nil
 }
 
 func (k ViewCacheKey) ToString() string {
@@ -84,4 +118,8 @@ func (k ViewCacheKey) PrettyPrint() string {
 	}
 
 	return result
+}
+
+func (k ViewCacheKey) GetCollectionShortID() uint32 {
+	return k.CollectionShortID
 }

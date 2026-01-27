@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 )
 
 var (
@@ -35,7 +36,7 @@ var (
 
 type Multistore struct {
 	block  Blockstore
-	data   corekv.ReaderWriter
+	data   *datastore
 	enc    Blockstore
 	head   corekv.ReaderWriter
 	peer   corekv.ReaderWriter
@@ -43,10 +44,10 @@ type Multistore struct {
 	system corekv.ReaderWriter
 }
 
-func NewMultistore(rootstore corekv.ReaderWriter, chunkSize immutable.Option[int]) *Multistore {
+func NewMultistore(rootstore corekv.ReaderWriter, lockSet *lock.LockSet, chunkSize immutable.Option[int]) *Multistore {
 	return &Multistore{
 		block:  BlockstoreFrom(rootstore, chunkSize),
-		data:   namespace.Wrap(rootstore, []byte{dataStoreKey}),
+		data:   newDatastore(rootstore, lockSet),
 		enc:    newBlockstore(namespace.Wrap(rootstore, []byte{encStoreKey})),
 		head:   namespace.Wrap(rootstore, []byte{headStoreKey}),
 		peer:   namespace.Wrap(rootstore, []byte{peerStoreKey}),
@@ -59,7 +60,7 @@ func (m *Multistore) Blockstore() Blockstore {
 	return m.block
 }
 
-func (m *Multistore) Datastore() corekv.ReaderWriter {
+func (m *Multistore) Datastore() Keyedstore {
 	return m.data
 }
 
@@ -81,10 +82,6 @@ func (m *Multistore) Rootstore() corekv.ReaderWriter {
 
 func (m *Multistore) Systemstore() corekv.ReaderWriter {
 	return m.system
-}
-
-func DatastoreFrom(rootstore corekv.ReaderWriter) corekv.ReaderWriter {
-	return namespace.Wrap(rootstore, []byte{dataStoreKey})
 }
 
 // The key used to calculate keyLen is descriptive only, they are all the same length, and there

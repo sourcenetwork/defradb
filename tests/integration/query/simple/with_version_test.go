@@ -17,16 +17,16 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
+func TestQuerySimpleWithNestedLatestCommit(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -35,7 +35,10 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 							cid
 							links {
 								cid
-								name
+								fieldName
+							}
+							heads {
+								cid
 							}
 						}
 					}
@@ -47,17 +50,18 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 							"Age":  int64(21),
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
+									"cid": "bafyreidzdrrjkjch3icknknh6tfmwitc352v54bds4h5ftblghwhsojgru",
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
-											"name": "Name",
+											"cid":       "bafyreiapiprlzrtsh7bkf4ru36q7g5nm2nz5unke2kkl4uyofd3scxmlye",
+											"fieldName": "Name",
 										},
 										{
-											"cid":  "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
-											"name": "Age",
+											"cid":       "bafyreie7qecbfvigblfgobuyt7hrejf7k2isscppzr75hwfkm5brntauva",
+											"fieldName": "Age",
 										},
 									},
+									"heads": []map[string]any{},
 								},
 							},
 						},
@@ -70,21 +74,174 @@ func TestQuerySimpleWithEmbeddedLatestCommit(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
+func TestQuery_CreateDocWithNestedLatestCommit(t *testing.T) {
+	docCompositeCid := testUtils.NewUniqueValue()
+	ageCreateCid := testUtils.NewUniqueValue()
+	nameCreateCid := testUtils.NewUniqueValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
+				Request: `query {
+					Users {
+						Name
+						Age
+						_version {
+							cid
+							links {
+								cid
+								fieldName
+								height
+							}
+							heads {
+								cid
+								height
+							}
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+							"_version": []map[string]any{
+								{
+									"cid": docCompositeCid,
+									"links": []map[string]any{
+										{
+											"cid":       nameCreateCid,
+											"fieldName": "Name",
+											"height":    uint64(1),
+										},
+										{
+											"cid":       ageCreateCid,
+											"fieldName": "Age",
+											"height":    uint64(1),
+										},
+									},
+									"heads": []map[string]any{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuery_UpdateDocWithNestedLatestCommit(t *testing.T) {
+	docUpdateCompositeCid := testUtils.NewUniqueValue()
+	docCreateCompositeCid := testUtils.NewSameValue()
+	ageUpdateCid := testUtils.NewUniqueValue()
+	ageCreateCid := testUtils.NewUniqueValue()
+	nameCreateCid := testUtils.NewUniqueValue()
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"Age": 22
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						Name
+						Age
+						_version {
+							cid
+							links {
+								cid
+								fieldName
+								height
+							}
+							heads {
+								cid
+								height
+							}
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(22),
+							"_version": []map[string]any{
+								{
+									"cid": docUpdateCompositeCid,
+									"links": []map[string]any{
+										{
+											"cid":       ageUpdateCid,
+											"fieldName": "Age",
+											"height":    uint64(2),
+										},
+									},
+									"heads": []map[string]any{
+										{
+											"cid":    docCreateCompositeCid,
+											"height": uint64(1),
+										},
+									},
+								},
+								{
+									"cid": docCreateCompositeCid,
+									"links": []map[string]any{
+										{
+											"cid":       nameCreateCid,
+											"fieldName": "Name",
+											"height":    uint64(1),
+										},
+										{
+											"cid":       ageCreateCid,
+											"fieldName": "Age",
+											"height":    uint64(1),
+										},
+									},
+									"heads": []map[string]any{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithEmbeddedLatestCommitWithCollectionVersionID(t *testing.T) {
+	collectionVersionID := testUtils.NewUniqueValue()
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
 						_version {
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -94,7 +251,7 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
 							"Name": "John",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": "bafyreia4ba6igfuvhp225vxxqpkn46lecvkih74g3wxvglum5nnv26m66e",
+									"collectionVersionId": collectionVersionID,
 								},
 							},
 						},
@@ -108,17 +265,17 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithSchemaVersionID(t *testing.T) {
 }
 
 func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
-	const docID = "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"
+	docID := testUtils.NewSameValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -149,15 +306,18 @@ func TestQuerySimpleWithEmbeddedLatestCommitWithDocID(t *testing.T) {
 }
 
 func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
+	docCreateCompositeCid := testUtils.NewUniqueValue()
+	ageCreateCid := testUtils.NewUniqueValue()
+	nameCreateCid := testUtils.NewUniqueValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -166,10 +326,10 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 							cid
 							L1: links {
 								cid
-								name
+								fieldName
 							}
 							L2: links {
-								name
+								fieldName
 							}
 						}
 					}
@@ -181,23 +341,195 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 							"Age":  int64(21),
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
+									"cid": docCreateCompositeCid,
 									"L1": []map[string]any{
 										{
-											"cid":  "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
-											"name": "Name",
+											"cid":       nameCreateCid,
+											"fieldName": "Name",
 										},
 										{
-											"cid":  "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
-											"name": "Age",
+											"cid":       ageCreateCid,
+											"fieldName": "Age",
 										},
 									},
 									"L2": []map[string]any{
 										{
-											"name": "Name",
+											"fieldName": "Name",
 										},
 										{
-											"name": "Age",
+											"fieldName": "Age",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithMultipleAliasedInterleavedNestedLatestCommit(t *testing.T) {
+	docUpdateCompositeCid := testUtils.NewUniqueValue()
+	docCreateCompositeCid := testUtils.NewSameValue()
+	ageUpdateCid := testUtils.NewUniqueValue()
+	ageCreateCid := testUtils.NewUniqueValue()
+	nameCreateCid := testUtils.NewUniqueValue()
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"Age": 22
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						Name
+						Age
+						_version {
+							cid
+							L1: links {
+								cid
+								fieldName
+							}
+							H1: heads {
+								cid
+							}
+							L2: links {
+								fieldName
+							}
+							H2: heads {
+								cid
+								height
+							}
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(22),
+							"_version": []map[string]any{
+								{
+									"cid": docUpdateCompositeCid,
+									"L1": []map[string]any{
+										{
+											"cid":       ageUpdateCid,
+											"fieldName": "Age",
+										},
+									},
+									"H1": []map[string]any{
+										{
+											"cid": docCreateCompositeCid,
+										},
+									},
+									"L2": []map[string]any{
+										{
+											"fieldName": "Age",
+										},
+									},
+									"H2": []map[string]any{
+										{
+											"cid":    docCreateCompositeCid,
+											"height": uint64(1),
+										},
+									},
+								},
+								{
+									"cid": docCreateCompositeCid,
+									"L1": []map[string]any{
+										{
+											"cid":       nameCreateCid,
+											"fieldName": "Name",
+										},
+										{
+											"cid":       ageCreateCid,
+											"fieldName": "Age",
+										},
+									},
+									"H1": []map[string]any{},
+									"L2": []map[string]any{
+										{
+											"fieldName": "Name",
+										},
+										{
+											"fieldName": "Age",
+										},
+									},
+									"H2": []map[string]any{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuery_WithMultipleAliasedFilteredEmbeddedLatestCommit(t *testing.T) {
+	docCreateCompositeCid := testUtils.NewUniqueValue()
+	ageCreateCid := testUtils.NewUniqueValue()
+	nameCreateCid := testUtils.NewUniqueValue()
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					Users {
+						Name
+						Age
+						_version {
+							cid
+							L1: links(filter: {fieldName: {_eq: "Age"}}) {
+								cid
+								fieldName
+								height
+							}
+							L2: links(filter: {fieldName: {_eq: "Name"}}) {
+								fieldName
+								height
+							}
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+							"_version": []map[string]any{
+								{
+									"cid": docCreateCompositeCid,
+									"L1": []map[string]any{
+										{
+											"cid":       ageCreateCid,
+											"fieldName": "Age",
+											"height":    uint64(1),
+										},
+									},
+									"L2": []map[string]any{
+										{
+											"fieldName": nameCreateCid,
+											"height":    uint64(1),
 										},
 									},
 								},
@@ -213,21 +545,25 @@ func TestQuerySimpleWithMultipleAliasedEmbeddedLatestCommit(t *testing.T) {
 }
 
 func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
-	const docID = "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"
+	docID := testUtils.NewSameValue()
+	collectionVersionID := testUtils.NewUniqueValue()
+	docCreateCompositeCid := testUtils.NewUniqueValue()
+	ageCreateCid := testUtils.NewUniqueValue()
+	nameCreateCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -240,9 +576,9 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 							height
 							links {
 								cid
-								name
+								fieldName
 							}
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -253,22 +589,22 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 							"_docID": docID,
 							"_version": []map[string]any{
 								{
-									"cid":       "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
+									"cid":       docCreateCompositeCid,
 									"delta":     nil,
-									"docID":     "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b",
+									"docID":     docID,
 									"fieldName": "_C",
 									"height":    int64(1),
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
-											"name": "Name",
+											"cid":       nameCreateCid,
+											"fieldName": "Name",
 										},
 										{
-											"cid":  "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
-											"name": "Age",
+											"cid":       ageCreateCid,
+											"fieldName": "Age",
 										},
 									},
-									"schemaVersionId": "bafyreia4ba6igfuvhp225vxxqpkn46lecvkih74g3wxvglum5nnv26m66e",
+									"collectionVersionId": collectionVersionID,
 								},
 							},
 						},
@@ -282,14 +618,20 @@ func TestQuery_WithAllCommitFields_NoError(t *testing.T) {
 }
 
 func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
-	const docID = "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b"
+	docID := testUtils.NewSameValue()
+	collectionVersionID := testUtils.NewSameValue()
+	docUpdateCompositeCid := testUtils.NewUniqueValue()
+	docCreateCompositeCid := testUtils.NewSameValue()
+	ageUpdateCid := testUtils.NewUniqueValue()
+	ageCreateCid := testUtils.NewUniqueValue()
+	nameCreateCid := testUtils.NewUniqueValue()
 
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
 				Schema: userCollectionGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"Name": "John",
@@ -301,7 +643,7 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 				DocID:        0,
 				Doc:          `{"Age": 22}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -315,9 +657,12 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 							height
 							links {
 								cid
-								name
+								fieldName
 							}
-							schemaVersionId
+							heads {
+								cid
+							}
+							collectionVersionId
 						}
 					}
 				}`,
@@ -329,40 +674,42 @@ func TestQuery_WithAllCommitFieldsWithUpdate_NoError(t *testing.T) {
 							"_docID": docID,
 							"_version": []map[string]any{
 								{
-									"cid":       "bafyreigftnzgbysanputrc65nys3feyebwprvh3x3hucjt5xrkpog2auay",
+									"cid":       docUpdateCompositeCid,
 									"delta":     nil,
 									"docID":     docID,
 									"fieldName": "_C",
 									"height":    int64(2),
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
-											"name": "_head",
-										},
-										{
-											"cid":  "bafyreibvn3oanzbe4uxw2vocro6u7widukuriwi4fctt7jx3np425nxzqa",
-											"name": "Age",
+											"cid":       ageUpdateCid,
+											"fieldName": "Age",
 										},
 									},
-									"schemaVersionId": "bafyreia4ba6igfuvhp225vxxqpkn46lecvkih74g3wxvglum5nnv26m66e",
+									"heads": []map[string]any{
+										{
+											"cid": docCreateCompositeCid,
+										},
+									},
+									"collectionVersionId": collectionVersionID,
 								},
 								{
-									"cid":       "bafyreieoljg2ynsazfcesosye5gc2zcl2bgyuefjintc4eu7hrbzfvbdli",
+									"cid":       docCreateCompositeCid,
 									"delta":     nil,
 									"docID":     docID,
 									"fieldName": "_C",
 									"height":    int64(1),
 									"links": []map[string]any{
 										{
-											"cid":  "bafyreih4kr6m7wil7xgvkwktbnfab4fs6hrhytf62wogov2i4bjzjddk2m",
-											"name": "Name",
+											"cid":       nameCreateCid,
+											"fieldName": "Name",
 										},
 										{
-											"cid":  "bafyreih5pxyir6jxoeb2lptmoiwkvixz4p2fty6jpfztq5setgnf3f4mru",
-											"name": "Age",
+											"cid":       ageCreateCid,
+											"fieldName": "Age",
 										},
 									},
-									"schemaVersionId": "bafyreia4ba6igfuvhp225vxxqpkn46lecvkih74g3wxvglum5nnv26m66e",
+									"heads":               []map[string]any{},
+									"collectionVersionId": collectionVersionID,
 								},
 							},
 						},

@@ -244,7 +244,7 @@ func TestNormalizeConditions(t *testing.T) {
 						m("published", m("rating", m("_lt", 4.8))),
 					),
 					r("_and", m("age", m("_lt", 55))),
-					m("age", m("_ne", 33)),
+					m("age", m("_neq", 33)),
 				},
 				"name": m("_eq", "John"),
 			},
@@ -254,7 +254,7 @@ func TestNormalizeConditions(t *testing.T) {
 				"_and": []any{
 					m("age", m("_gt", 30)),
 					m("age", m("_lt", 55)),
-					m("age", m("_ne", 33)),
+					m("age", m("_neq", 33)),
 				},
 			},
 		},
@@ -263,7 +263,7 @@ func TestNormalizeConditions(t *testing.T) {
 			input: map[string]any{
 				"_and": []any{
 					m("published", m("rating", m("_lt", 4.8))),
-					r("_and", m("name", m("_ne", "Islam"))),
+					r("_and", m("name", m("_neq", "Islam"))),
 					r("_and",
 						m("age", m("_gt", 30)),
 						m("published", m("genre", m("_eq", "Thriller"))),
@@ -278,7 +278,7 @@ func TestNormalizeConditions(t *testing.T) {
 			expected: map[string]any{
 				"_and": []any{
 					m("name", m("_eq", "John")),
-					m("name", m("_ne", "Islam")),
+					m("name", m("_neq", "Islam")),
 					m("published", m("rating", m("_gt", 4.4))),
 					m("published", m("rating", m("_lt", 4.8))),
 					m("published", m("genre", m("_eq", "Thriller"))),

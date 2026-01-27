@@ -25,7 +25,7 @@ func TestColVersionUpdateReplacePolicy_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -51,7 +51,7 @@ func TestColVersionUpdateReplacePolicyID_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -77,7 +77,7 @@ func TestColVersionUpdateReplacePolicyResource_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

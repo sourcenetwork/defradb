@@ -195,7 +195,7 @@ func (db *DB) PatchCollection(
 	return txn.Commit()
 }
 
-func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID string) error {
+func (db *DB) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -209,7 +209,7 @@ func (db *DB) SetActiveCollectionVersion(ctx context.Context, schemaVersionID st
 	}
 	defer txn.Discard()
 
-	err = db.setActiveCollectionVersion(ctx, schemaVersionID)
+	err = db.setActiveCollectionVersion(ctx, collectionVersionID)
 	if err != nil {
 		return err
 	}
@@ -240,11 +240,47 @@ func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	return lensID, nil
 }
 
+func (db *DB) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return "", err
+	}
+	defer txn.Discard()
+
+	lensID, err := db.addLens(ctx, lens)
+	if err != nil {
+		return "", err
+	}
+
+	err = txn.Commit()
+	if err != nil {
+		return "", err
+	}
+
+	return lensID, nil
+}
+
+func (db *DB) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	ctx, span := tracer.Start(ctx)
+	defer span.End()
+
+	ctx, txn, err := ensureContextTxn(ctx, db, false)
+	if err != nil {
+		return nil, err
+	}
+	defer txn.Discard()
+
+	return db.listLenses(ctx)
+}
+
 func (db *DB) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
+	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -255,7 +291,7 @@ func (db *DB) AddView(
 	}
 	defer txn.Discard()
 
-	defs, err := db.addView(ctx, query, sdl, transform)
+	defs, err := db.addView(ctx, query, sdl, transformCID)
 	if err != nil {
 		return nil, err
 	}

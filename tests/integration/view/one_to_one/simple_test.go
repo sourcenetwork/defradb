@@ -32,7 +32,7 @@ func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -53,7 +53,7 @@ func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 			},
 			// Try and create a second view that creates a new `BookView`, this
 			// should error as `BookView` has already been created by the first view.
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						authorName: name
