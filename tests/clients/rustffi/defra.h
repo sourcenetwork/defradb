@@ -839,6 +839,148 @@ struct PollSubscriptionResult poll_subscription(uintptr_t subscription_handle);
  */
 struct CloseSubscriptionResult close_subscription(uintptr_t subscription_handle);
 
+// =============================================================================
+// P2P Functions
+// =============================================================================
+
+/*
+ Create a new DefraDB node with P2P enabled.
+
+ # Arguments
+
+ * `options` - Node initialization options
+ * `listen_addr` - P2P multiaddr to listen on (e.g., "/ip4/127.0.0.1/tcp/9171")
+
+ # Returns
+
+ A NewNodeResult containing the node handle on success.
+
+ # Safety
+
+ `listen_addr` must be a valid null-terminated UTF-8 string.
+ The returned `node_ptr` must be freed by calling `node_close`.
+ */
+struct NewNodeResult new_node_with_p2p(struct NodeInitOptions options,
+                                       const char *listen_addr);
+
+/*
+ Get P2P peer info (local peer ID and listening addresses).
+
+ Returns a JSON array of full multiaddrs with peer ID embedded:
+ `["/ip4/127.0.0.1/tcp/9171/p2p/12D3KooW..."]`
+
+ # Safety
+
+ The caller must free the returned string with `defra_free_string`.
+ */
+struct FfiResult p2p_peer_info(uintptr_t node_ptr);
+
+/*
+ Get list of connected peers.
+
+ Returns a JSON array of peer IDs.
+
+ # Safety
+
+ The caller must free the returned string with `defra_free_string`.
+ */
+struct FfiResult p2p_active_peers(uintptr_t node_ptr);
+
+/*
+ Connect to a peer at the given multiaddr.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `addr` - Full multiaddr including peer ID (e.g., "/ip4/127.0.0.1/tcp/9171/p2p/12D3KooW...")
+
+ # Safety
+
+ `addr` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult p2p_connect(uintptr_t node_ptr, const char *addr);
+
+/*
+ Set (add/update) a replicator for collections.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `peer_addr` - Full multiaddr of the peer including peer ID
+ * `collections_json` - JSON array of collection names
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult p2p_set_replicator(uintptr_t node_ptr,
+                                    const char *peer_addr,
+                                    const char *collections_json);
+
+/*
+ Delete a replicator.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `peer_id_str` - Peer ID string (e.g., "12D3KooW...")
+
+ # Safety
+
+ `peer_id_str` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult p2p_delete_replicator(uintptr_t node_ptr, const char *peer_id_str);
+
+/*
+ Get all replicators.
+
+ Returns a JSON array of replicator info objects.
+
+ # Safety
+
+ The caller must free the returned string with `defra_free_string`.
+ */
+struct FfiResult p2p_get_all_replicators(uintptr_t node_ptr);
+
+/*
+ Add collections to P2P replication.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `collections_json` - JSON array of collection names
+
+ # Safety
+
+ `collections_json` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult p2p_add_collections(uintptr_t node_ptr, const char *collections_json);
+
+/*
+ Remove collections from P2P replication.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `collections_json` - JSON array of collection names
+
+ # Safety
+
+ `collections_json` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult p2p_remove_collections(uintptr_t node_ptr, const char *collections_json);
+
+/*
+ Get all P2P collections.
+
+ Returns a JSON array of collection names.
+
+ # Safety
+
+ The caller must free the returned string with `defra_free_string`.
+ */
+struct FfiResult p2p_get_all_collections(uintptr_t node_ptr);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus

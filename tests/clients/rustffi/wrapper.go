@@ -504,63 +504,92 @@ func (w *Wrapper) ListAllEncryptedIndexes(ctx context.Context) (map[client.Colle
 // ============================================================================
 
 func (w *Wrapper) PeerInfo() ([]string, error) {
-	return nil, fmt.Errorf("P2P not available in FFI client")
+	return w.node.P2PPeerInfo()
 }
 
 func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
-	return nil, fmt.Errorf("P2P not available in FFI client")
+	return w.node.P2PActivePeers()
 }
 
 func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
-	return fmt.Errorf("P2P not available in FFI client")
+	for _, addr := range addresses {
+		if err := w.node.P2PConnect(addr); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
-	return fmt.Errorf("P2P not available in FFI client")
+	if len(addresses) == 0 {
+		return fmt.Errorf("at least one address is required")
+	}
+	// Use the first address as the peer address
+	return w.node.P2PSetReplicator(addresses[0], collections)
 }
 
 func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
-	return fmt.Errorf("P2P not available in FFI client")
+	return w.node.P2PDeleteReplicator(id)
 }
 
 func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	return nil, fmt.Errorf("P2P not available in FFI client")
+	replicators, err := w.node.P2PGetAllReplicators()
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert to client.Replicator
+	result := make([]client.Replicator, len(replicators))
+	for i, r := range replicators {
+		result[i] = client.Replicator{
+			ID:            r.PeerID,
+			Addresses:     r.Addresses,
+			CollectionIDs: r.Collections,
+		}
+	}
+	return result, nil
 }
 
 func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
-	return fmt.Errorf("P2P not available in FFI client")
+	return w.node.P2PAddCollections(collectionNames)
 }
 
 func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
-	return fmt.Errorf("P2P not available in FFI client")
+	return w.node.P2PRemoveCollections(collectionNames)
 }
 
 func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	return nil, fmt.Errorf("P2P not available in FFI client")
+	return w.node.P2PGetAllCollections()
 }
 
 func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
-	return fmt.Errorf("P2P not available in FFI client")
+	// Document-level P2P not yet implemented in Rust FFI
+	return fmt.Errorf("P2P document sync not yet implemented in FFI client")
 }
 
 func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
-	return fmt.Errorf("P2P not available in FFI client")
+	// Document-level P2P not yet implemented in Rust FFI
+	return fmt.Errorf("P2P document sync not yet implemented in FFI client")
 }
 
 func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
-	return nil, fmt.Errorf("P2P not available in FFI client")
+	// Document-level P2P not yet implemented in Rust FFI
+	return nil, fmt.Errorf("P2P document sync not yet implemented in FFI client")
 }
 
 func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
-	return fmt.Errorf("P2P not available in FFI client")
+	// Document sync not yet implemented in Rust FFI
+	return fmt.Errorf("P2P document sync not yet implemented in FFI client")
 }
 
 func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
-	return fmt.Errorf("P2P not available in FFI client")
+	// Collection version sync not yet implemented in Rust FFI
+	return fmt.Errorf("P2P collection version sync not yet implemented in FFI client")
 }
 
 func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
-	return fmt.Errorf("P2P not available in FFI client")
+	// Branchable collection sync not yet implemented in Rust FFI
+	return fmt.Errorf("P2P branchable collection sync not yet implemented in FFI client")
 }
 
 // ============================================================================
