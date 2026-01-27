@@ -31,7 +31,7 @@ func TestSchemaUpdatesReplaceField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "replace", "path": "/Users/Fields/1", "value": {"Name": "fax", "Kind": 11} }

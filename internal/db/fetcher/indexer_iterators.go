@@ -42,6 +42,7 @@ const (
 	compOpAll  = connor.AllOp
 	compOpNone = connor.NoneOp
 	opNot      = connor.NotOp
+	opOr       = connor.OrOp
 	// it's just there for composite indexes. We construct a slice of value matchers with
 	// every matcher being responsible for a corresponding field in the index to match.
 	// For some fields there might not be any criteria to match. For examples if you have
@@ -229,35 +230,38 @@ func (iter *eqSingleIndexIterator) Close() error {
 	return nil
 }
 
-type inIndexIterator struct {
+// iteratorFactory is a function that creates an index iterator for a given index.
+type iteratorFactory func(idx int) (indexIterator, error)
+
+// multiIndexIterator is a generic iterator that chains through multiple sub-iterators.
+// It is used for both _in (iterating through values) and _or (iterating through branches).
+type multiIndexIterator struct {
 	indexIterator
-	inValues        []client.NormalValue
-	nextValIndex    int
-	ctx             context.Context
-	store           datastore.Keyedstore
-	hasIterator     bool
-	fetcher         *indexFetcher
-	fieldConditions []fieldFilterCond
-	matchers        []valueMatcher
-	isUnique        bool
+	count       int
+	nextIdx     int
+	ctx         context.Context
+	store       datastore.Keyedstore
+	hasIterator bool
+	factory     iteratorFactory
 }
 
-var _ indexIterator = (*inIndexIterator)(nil)
+var _ indexIterator = (*multiIndexIterator)(nil)
 
-// nextIterator initializes the next index iterator based on the current value index.
-func (iter *inIndexIterator) nextIterator() (bool, error) {
-	if iter.nextValIndex > 0 {
+// nextIterator initializes the next sub-iterator.
+func (iter *multiIndexIterator) nextIterator() (bool, error) {
+	if iter.nextIdx > 0 && iter.indexIterator != nil {
 		err := iter.indexIterator.Close()
 		if err != nil {
 			return false, err
 		}
 	}
 
-	if iter.nextValIndex >= len(iter.inValues) {
+	if iter.nextIdx >= iter.count {
 		return false, nil
 	}
 
-	err := iter.createIteratorForNextValue()
+	var err error
+	iter.indexIterator, err = iter.factory(iter.nextIdx)
 	if err != nil {
 		return false, err
 	}
@@ -266,35 +270,11 @@ func (iter *inIndexIterator) nextIterator() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	iter.nextValIndex++
+	iter.nextIdx++
 	return true, nil
 }
 
-// createIteratorForNextValue initializes the next index iterator based on the current value index.
-func (iter *inIndexIterator) createIteratorForNextValue() error {
-	if iter.isUnique {
-		indexIter, err := iter.fetcher.newEqSingleIndexIterator(iter.inValues[iter.nextValIndex], iter.fieldConditions)
-		if err != nil {
-			return err
-		}
-		iter.indexIterator = indexIter
-	} else {
-		indexKey, err := iter.fetcher.newIndexDataStoreKey()
-		if err != nil {
-			return err
-		}
-		indexKey.Fields = []keys.IndexedField{{
-			Value:      iter.inValues[iter.nextValIndex],
-			Descending: iter.fetcher.indexDesc.Fields[0].Descending,
-		}}
-
-		iter.indexIterator = iter.fetcher.newPrefixBaseMatchIterator(indexKey, iter.matchers, iter.fetcher.execInfo)
-	}
-
-	return nil
-}
-
-func (iter *inIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
+func (iter *multiIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
 	iter.ctx = ctx
 	iter.store = store
 	var err error
@@ -302,7 +282,7 @@ func (iter *inIndexIterator) Init(ctx context.Context, store datastore.Keyedstor
 	return err
 }
 
-func (iter *inIndexIterator) Next() (indexIterResult, error) {
+func (iter *multiIndexIterator) Next() (indexIterResult, error) {
 	for iter.hasIterator {
 		res, err := iter.indexIterator.Next()
 		if err != nil {
@@ -320,8 +300,65 @@ func (iter *inIndexIterator) Next() (indexIterResult, error) {
 	return indexIterResult{}, nil
 }
 
-func (iter *inIndexIterator) Close() error {
+func (iter *multiIndexIterator) Close() error {
+	if iter.indexIterator != nil {
+		return iter.indexIterator.Close()
+	}
 	return nil
+}
+
+// extractOrBranches checks if the filter conditions have an _or operator at the root level
+// and returns the individual branches. Returns nil if no _or is found at root.
+func extractOrBranches(conditions map[connor.FilterKey]any) []map[connor.FilterKey]any {
+	for key, val := range conditions {
+		op, ok := key.(*mapper.Operator)
+		if !ok || op.Operation != opOr {
+			continue
+		}
+
+		branches, ok := val.([]any)
+		if !ok {
+			return nil
+		}
+
+		result := make([]map[connor.FilterKey]any, 0, len(branches))
+		for _, branch := range branches {
+			branchMap, ok := branch.(map[connor.FilterKey]any)
+			if !ok {
+				return nil
+			}
+			result = append(result, branchMap)
+		}
+		return result
+	}
+	return nil
+}
+
+// canAllBranchesUseIndex checks if all OR branches can use the index.
+// This catches cases where a branch uses operators like _not that prevent index usage.
+func (f *indexFetcher) canAllBranchesUseIndex(branches []map[connor.FilterKey]any) bool {
+	for _, branch := range branches {
+		branchFilter := &mapper.Filter{
+			Conditions: branch,
+		}
+
+		fieldConditions, err := f.determineFieldFilterConditions(branchFilter)
+		if err != nil || len(fieldConditions) == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// newMultiIndexIteratorForOrOp creates a new multiIndexIterator for handling _or filter conditions.
+func (f *indexFetcher) newMultiIndexIteratorForOrOp(branches []map[connor.FilterKey]any) *multiIndexIterator {
+	return &multiIndexIterator{
+		count: len(branches),
+		factory: func(idx int) (indexIterator, error) {
+			branchFilter := &mapper.Filter{Conditions: branches[idx]}
+			return f.createIndexIterator(branchFilter)
+		},
+	}
 }
 
 // newEqSingleIndexIterator creates a new eqSingleIndexIterator for fetching exactly one index
@@ -439,12 +476,12 @@ func (f *indexFetcher) newPrefixBasedMatchIteratorFromConditions(
 	return iter, nil
 }
 
-// newInIndexIterator creates a new inIndexIterator for fetching indexed data.
+// newMultiIndexIteratorForInOp creates a new multiIndexIterator for fetching indexed data using _in filter.
 // It can modify the input matchers slice.
-func (f *indexFetcher) newInIndexIterator(
+func (f *indexFetcher) newMultiIndexIteratorForInOp(
 	fieldConditions []fieldFilterCond,
 	matchers []valueMatcher,
-) (*inIndexIterator, error) {
+) (*multiIndexIterator, error) {
 	inValues, err := client.ToArrayOfNormalValues(fieldConditions[0].val)
 	if err != nil {
 		return nil, NewErrInvalidInOperatorValue(err)
@@ -458,20 +495,23 @@ func (f *indexFetcher) newInIndexIterator(
 
 	isUnique := isUniqueFetchByFullKey(&f.indexDesc, fieldConditions)
 
-	inIter := &inIndexIterator{
-		inValues:        inValues,
-		fetcher:         f,
-		fieldConditions: fieldConditions,
-		matchers:        matchers,
-		isUnique:        isUnique,
-	}
-
-	err = inIter.createIteratorForNextValue()
-	if err != nil {
-		return nil, err
-	}
-
-	return inIter, nil
+	return &multiIndexIterator{
+		count: len(inValues),
+		factory: func(idx int) (indexIterator, error) {
+			if isUnique {
+				return f.newEqSingleIndexIterator(inValues[idx], fieldConditions)
+			}
+			indexKey, err := f.newIndexDataStoreKey()
+			if err != nil {
+				return nil, err
+			}
+			indexKey.Fields = []keys.IndexedField{{
+				Value:      inValues[idx],
+				Descending: f.indexDesc.Fields[0].Descending,
+			}}
+			return f.newPrefixBaseMatchIterator(indexKey, matchers, f.execInfo), nil
+		},
+	}, nil
 }
 
 func (f *indexFetcher) newIndexDataStoreKey() (keys.IndexDataStoreKey, error) {
@@ -642,8 +682,23 @@ func (f *indexFetcher) tryCreateOrderedIndexIterator() (indexIterator, error) {
 	return nil, nil
 }
 
-func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
-	fieldConditions, err := f.determineFieldFilterConditions()
+func (f *indexFetcher) createIndexIterator(indexFilter *mapper.Filter) (indexIterator, error) {
+	// Check for _or operator at the root level first.
+	// Note: hasOrWithMultipleFields in newIndexFetcher already filters out OR filters
+	// that span different fields, so we only get here if all branches use fields in this index.
+	if indexFilter != nil {
+		if orBranches := extractOrBranches(indexFilter.Conditions); orBranches != nil {
+			// Additional check: verify all branches can actually use the index
+			// (some operators like _not may prevent index usage even on indexed fields)
+			if f.canAllBranchesUseIndex(orBranches) {
+				iter := f.newMultiIndexIteratorForOrOp(orBranches)
+				return &memorizingIndexIterator{inner: iter}, nil
+			}
+			return nil, nil
+		}
+	}
+
+	fieldConditions, err := f.determineFieldFilterConditions(indexFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -654,6 +709,20 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 		return f.tryCreateOrderedIndexIterator()
 	}
 
+	iter, err := f.createIteratorFromConditions(fieldConditions)
+	if err != nil {
+		return nil, err
+	}
+
+	if doConditionsHaveArrayOrJSON(fieldConditions) {
+		iter = &memorizingIndexIterator{inner: iter}
+	}
+
+	return iter, nil
+}
+
+// createIteratorFromConditions creates an index iterator based on the field conditions.
+func (f *indexFetcher) createIteratorFromConditions(fieldConditions []fieldFilterCond) (indexIterator, error) {
 	matchers, err := createValueMatchers(fieldConditions)
 	if err != nil {
 		return nil, err
@@ -664,30 +733,15 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 	if fieldConditions[0].op == opEq {
 		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
 			iter, err = f.newEqSingleIndexIterator(fieldConditions[0].val, fieldConditions)
-			if err != nil {
-				return nil, err
-			}
 		} else {
 			iter, err = f.newPrefixBasedMatchIteratorFromConditions(fieldConditions, matchers)
-			if err != nil {
-				return nil, err
-			}
 		}
 	} else if f.isRangeCompatible(fieldConditions[0]) {
 		iter, err = f.newRangeBasedMatchIterator(fieldConditions[0], matchers)
-		if err != nil {
-			return nil, err
-		}
 	} else if fieldConditions[0].op == opIn && fieldConditions[0].arrOp != compOpNone {
-		iter, err = f.newInIndexIterator(fieldConditions, matchers)
-		if err != nil {
-			return nil, err
-		}
+		iter, err = f.newMultiIndexIteratorForInOp(fieldConditions, matchers)
 	} else {
 		iter, err = f.newPrefixBasedMatchIteratorFromConditions(fieldConditions, matchers)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	if err != nil {
@@ -696,10 +750,6 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 
 	if iter == nil {
 		return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
-	}
-
-	if doConditionsHaveArrayOrJSON(fieldConditions) {
-		iter = &memorizingIndexIterator{inner: iter}
 	}
 
 	return iter, nil
@@ -726,8 +776,8 @@ type fieldFilterCond struct {
 // determineFieldFilterConditions determines the conditions and their corresponding operation
 // for each indexed field.
 // It returns a slice of fieldFilterCond, where each element corresponds to a field in the index.
-func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, error) {
-	if f.indexFilter == nil {
+func (f *indexFetcher) determineFieldFilterConditions(indexFilter *mapper.Filter) ([]fieldFilterCond, error) {
+	if indexFilter == nil {
 		return nil, nil
 	}
 
@@ -739,7 +789,7 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 		var err error
 
 		filter.TraverseProperties(
-			f.indexFilter.Conditions,
+			indexFilter.Conditions,
 			func(prop *mapper.PropertyIndex, condMap map[connor.FilterKey]any) bool {
 				if fieldInd != prop.Index {
 					return true
@@ -759,6 +809,24 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 					// so on until it exhaust all prefixes in ascending order.
 					// It might be even less effective than just scanning all documents.
 					if op == compOpNone {
+						return true
+					}
+
+					// For _geq: null, every value is >= null, so the index provides no benefit -
+					// we need all documents anyway. Fall back to a full scan.
+					// For _leq: null on nested JSON paths, documents where the JSON field is entirely
+					// missing or null should also match. If path is specified though, the index
+					// has no efficient way of distinguishing between them. Fall back to scan.
+					if filterVal == nil && (op == opGe || (op == opLe && len(jsonPath) > 0)) {
+						return true
+					}
+
+					// For JSON fields with _eq or _in operator and object/array filter value at root level,
+					// the index cannot be used because JSON indexes only store leaf values (scalars).
+					if indexedField.Kind == client.FieldKind_NILLABLE_JSON &&
+						len(jsonPath) == 0 &&
+						(op == opEq || op == opIn) &&
+						isComplexJSONFilterValue(filterVal) {
 						return true
 					}
 
@@ -869,6 +937,21 @@ func getNestedOperatorConditionIfJSON(
 			// containing either another nested ObjectProperty or Operator
 			condMap = filterVal.(map[connor.FilterKey]any)
 		}
+	}
+}
+
+// isComplexJSONFilterValue returns true if the filter value is an object or array.
+// JSON indexes only store leaf values (scalars), so object/array filter values cannot
+// be efficiently matched using the index.
+func isComplexJSONFilterValue(filterVal any) bool {
+	if filterVal == nil {
+		return false
+	}
+	switch filterVal.(type) {
+	case map[string]any, []any:
+		return true
+	default:
+		return false
 	}
 }
 

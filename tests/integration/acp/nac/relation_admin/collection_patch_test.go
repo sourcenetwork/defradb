@@ -49,7 +49,7 @@ func TestNAC_AdminRelation_CanCollectionPatch(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.ClientIdentity(2),
 				Patch: `
 					[
@@ -127,7 +127,7 @@ func TestNAC_AdminRelation_CLIClient_CanCollectionPatch(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.ClientIdentity(2),
 				Patch: `
 					[

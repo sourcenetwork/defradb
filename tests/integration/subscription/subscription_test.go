@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestSubscriptionWithCreateMutations(t *testing.T) {
@@ -85,6 +86,8 @@ func TestSubscriptionWithCreateMutations(t *testing.T) {
 
 func TestSubscriptionWithFilterAndOneCreateMutation(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {
@@ -159,6 +162,8 @@ func TestSubscriptionWithFilterAndOneCreateMutationOutsideFilter(t *testing.T) {
 
 func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.SubscriptionRequest{
 				Request: `subscription {

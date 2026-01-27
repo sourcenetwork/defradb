@@ -31,7 +31,7 @@ func TestPatchCollection_AddEncryptedIndex_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -68,7 +68,7 @@ func TestPatchCollection_RemoveEncryptedIndex_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -99,7 +99,7 @@ func TestPatchCollection_ModifyEncryptedIndex_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

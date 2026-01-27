@@ -35,9 +35,9 @@ func callback_SetKeyringBackend(s step, ctx *WizardContext) error {
 		return NewErrModelTypeMismatch(s.ID(), "*modelMultipleChoice")
 	}
 
-	choice := "file"
+	choice := keyring.KeyringBackendFile
 	if mm.cursor == 1 {
-		choice = "system"
+		choice = keyring.KeyringBackendSystem
 	}
 
 	return setConfigValue(ctx, "keyring.backend", choice)

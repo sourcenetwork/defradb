@@ -28,7 +28,7 @@ func TestSchemaUpdatesCopyFieldErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" }
@@ -63,7 +63,7 @@ func TestSchemaUpdatesCopyFieldErrorsMultiple(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },
@@ -99,7 +99,7 @@ func TestSchemaUpdatesCopyFieldWithAndReplaceName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Here we esentially use Email as a template, copying it and renaming the
 				// clone.
 				Patch: `
@@ -138,7 +138,7 @@ func TestSchemaUpdatesCopyFieldWithReplaceNameAndKindSubstitution(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Here we esentially use Name as a template, copying it, and renaming and
 				// re-typing the clone.
 				Patch: `
@@ -190,7 +190,7 @@ func TestSchemaUpdatesCopyFieldAndReplaceNameAndInvalidKindSubstitution(t *testi
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Here we esentially use Name as a template, copying it and renaming and
 				// re-typing the clone.
 				Patch: `
