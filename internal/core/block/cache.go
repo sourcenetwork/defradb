@@ -17,7 +17,7 @@ import (
 	"github.com/ipfs/go-cid"
 )
 
-const defaultCacheSize = 1000000
+const defaultCacheSize = 1_000_000
 
 // BlockCache wraps an LRU cache for recently written blocks.
 type BlockCache struct {

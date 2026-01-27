@@ -3,7 +3,7 @@ module github.com/sourcenetwork/defradb
 go 1.25.5
 
 require (
-	github.com/bits-and-blooms/bitset v1.22.0
+	github.com/bits-and-blooms/bitset v1.24.2
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.4
@@ -21,6 +21,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/uuid v1.6.0
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/iancoleman/strcase v0.3.0
 	github.com/ipfs/boxo v0.35.2
 	github.com/ipfs/go-block-format v0.2.3
@@ -228,7 +229,6 @@ require (
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
 	github.com/hdevalence/ed25519consensus v0.2.0 // indirect
 	github.com/huandu/skiplist v1.2.0 // indirect

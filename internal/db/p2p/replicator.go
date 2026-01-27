@@ -204,11 +204,13 @@ func (p *P2P) pushHeadsForDoc(ctx context.Context, docID, collectionID string, p
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
 		pushLogReq := protocol.PushLogRequest{
-			DocID:        docID,
-			CID:          head.cid.Bytes(),
 			CollectionID: collectionID,
 			Creator:      p.host.ID(),
-			Block:        rawblock,
+			Documents: []protocol.DocumentInfo{{
+				DocID: docID,
+				CID:   head.cid.Bytes(),
+				Block: rawblock,
+			}},
 		}
 
 		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
@@ -334,11 +336,13 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 				ctx, cancel := context.WithTimeout(p.ctx, networkRequestTimeout)
 				defer cancel()
 				pushLogReq := protocol.PushLogRequest{
-					DocID:        lg.DocID,
-					CID:          lg.Cid.Bytes(),
 					CollectionID: lg.CollectionID,
 					Creator:      p.host.ID(),
-					Block:        lg.Block,
+					Documents: []protocol.DocumentInfo{{
+						DocID: lg.DocID,
+						CID:   lg.Cid.Bytes(),
+						Block: lg.Block,
+					}},
 				}
 				if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
 					log.ErrorE(
@@ -761,11 +765,13 @@ func (p *P2P) retryDoc(ctx context.Context, peerID string, docID string) error {
 		ctx, cancel := context.WithTimeout(ctx, networkRequestTimeout)
 		defer cancel()
 		pushLogReq := protocol.PushLogRequest{
-			DocID:        docID,
-			CID:          head.cid.Bytes(),
 			CollectionID: head.block.Delta.GetCollectionVersionID(),
 			Creator:      p.host.ID(),
-			Block:        rawblock,
+			Documents: []protocol.DocumentInfo{{
+				DocID: docID,
+				CID:   head.cid.Bytes(),
+				Block: rawblock,
+			}},
 		}
 		if _, err := p.replicatorProtocol.SendRequest(ctx, pushLogReq, peerID); err != nil {
 			return err

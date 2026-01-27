@@ -277,6 +277,18 @@ func parseCAR(carData []byte) (*parsedCAR, error) {
 	}, nil
 }
 
+// parseCARRootCID extracts root CID from a CAR file without fully parsing it.
+func parseCARRootCID(carData []byte) (cid.Cid, error) {
+	reader, err := car.NewBlockReader(bytes.NewReader(carData))
+	if err != nil {
+		return cid.Cid{}, err
+	}
+	if len(reader.Roots) == 0 {
+		return cid.Cid{}, ErrEmptyCARRoots
+	}
+	return reader.Roots[0], nil
+}
+
 // importCARBatch imports multiple parsed CAR files in a single transaction.
 func (p *P2P) importCARBatch(ctx context.Context, parsedCARs []*parsedCAR) error {
 	if len(parsedCARs) == 0 {

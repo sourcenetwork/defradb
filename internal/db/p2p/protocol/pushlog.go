@@ -17,37 +17,20 @@ import (
 // PushLogRequest is the struct used to send a resource update to a peer node.
 type PushLogRequest struct {
 	message.MetaData
-	// DocID is the document ID for single-document requests.
-	// Empty when Documents is populated (batched mode).
-	DocID string
-	// CID is the root CID for single-document requests.
-	// Empty when Documents is populated (batched mode).
-	CID []byte
-	// CollectionID is the collection ID. Required for both modes.
+	// CollectionID is the collection ID.
 	CollectionID string
 	// Creator is the peer ID of the original creator.
 	Creator string
-	// Block is the root block data for single-document requests.
-	// Empty when Documents is populated (batched mode).
-	Block []byte
-	// CAR contains the DAG blocks in CAR format.
-	// For batched mode, contains blocks for ALL documents in Documents slice.
-	CAR []byte
-	// Documents contains multiple document infos for batched requests.
-	// When populated, DocID/CID/Block should be empty.
+	// Documents contains document infos (always used, even for single doc).
 	Documents []DocumentInfo
 }
 
-// DocumentInfo contains the metadata for a single document in a batch.
+// DocumentInfo contains the metadata for a single document.
 type DocumentInfo struct {
 	DocID string
 	CID   []byte
 	Block []byte
-}
-
-// IsBatched returns true if this is a batched request with multiple documents.
-func (r *PushLogRequest) IsBatched() bool {
-	return len(r.Documents) > 0
+	CAR   []byte // Per-doc CAR data containing DAG blocks for this document
 }
 
 // PushLogReply is the expected response struct that should be received after

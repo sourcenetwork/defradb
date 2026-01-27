@@ -198,8 +198,23 @@ func (db *DB) executeMergeBatchWithTxn(ctx context.Context, col *collection, evt
 	return db.executeMergeBatchInTxnNoCommit(ctx, col, evts)
 }
 
-// executeMergeBatchInTxnNoCommit performs batch merge using existing transaction without committing.
+// MergeBatchResult contains the result of a batch merge operation.
+type MergeBatchResult struct {
+	CollectionID string
+	DocIDs       []string
+}
+
+// executeMergeBatchInTxnNoCommit performs batch merge using existing transaction.
 func (db *DB) executeMergeBatchInTxnNoCommit(ctx context.Context, col *collection, evts []event.Merge) error {
+	_, err := db.executeMergeBatchWritesOnly(ctx, col, evts)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// executeMergeBatchWritesOnly performs batch merge writes only, returning docIDs for later index sync.
+func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, evts []event.Merge) (*MergeBatchResult, error) {
 	allDocIDs := make(map[string]struct{})
 
 	for _, dagMerge := range evts {
@@ -212,29 +227,29 @@ func (db *DB) executeMergeBatchInTxnNoCommit(ctx context.Context, col *collectio
 		} else {
 			shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			key = keys.NewHeadstoreColKey(shortID)
 		}
 
 		mt, err := getHeadsAsMergeTarget(ctx, key)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		mp, err := db.newMergeProcessor(ctx, col)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		err = mp.loadComposites(ctx, dagMerge.Cid, mt)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		ctx, err = mp.mergeComposites(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		for docID := range mp.docIDs {
@@ -242,21 +257,63 @@ func (db *DB) executeMergeBatchInTxnNoCommit(ctx context.Context, col *collectio
 		}
 	}
 
-	oldCtx, oldTxn, err := ensureContextTxn(context.Background(), db, true)
-	if err != nil {
-		return err
-	}
-	defer oldTxn.Discard()
-
+	sortedDocIDs := make([]string, 0, len(allDocIDs))
 	for docIDStr := range allDocIDs {
-		docID, err := client.NewDocIDFromString(docIDStr)
+		sortedDocIDs = append(sortedDocIDs, docIDStr)
+	}
+	sort.Strings(sortedDocIDs)
+
+	return &MergeBatchResult{
+		CollectionID: col.Version().CollectionID,
+		DocIDs:       sortedDocIDs,
+	}, nil
+}
+
+// SyncIndexesAfterMerge syncs indexes for documents after merge writes have been committed.
+func (db *DB) SyncIndexesAfterMerge(ctx context.Context, results []*MergeBatchResult) error {
+	for _, result := range results {
+		if result == nil || len(result.DocIDs) == 0 {
+			continue
+		}
+
+		col, err := getCollectionFromCollectionID(ctx, db, result.CollectionID)
+		if err != nil {
+			log.ErrorContextE(ctx, "Failed to get collection for index sync", err,
+				corelog.String("CollectionID", result.CollectionID))
+			continue
+		}
+
+		if len(col.indexes) == 0 {
+			continue
+		}
+
+		newCtx, newTxn, err := ensureContextTxn(ctx, db, true)
 		if err != nil {
 			return err
 		}
-		err = syncIndexedDoc(ctx, oldCtx, docID, col)
+
+		oldCtx, oldTxn, err := ensureContextTxn(context.Background(), db, true)
 		if err != nil {
+			newTxn.Discard()
 			return err
 		}
+
+		for _, docIDStr := range result.DocIDs {
+			docID, err := client.NewDocIDFromString(docIDStr)
+			if err != nil {
+				oldTxn.Discard()
+				newTxn.Discard()
+				return err
+			}
+			err = syncIndexedDoc(newCtx, oldCtx, docID, col)
+			if err != nil {
+				log.ErrorContextE(ctx, "Failed to sync index for doc", err,
+					corelog.String("DocID", docIDStr))
+			}
+		}
+
+		oldTxn.Discard()
+		newTxn.Discard()
 	}
 
 	return nil

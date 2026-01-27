@@ -23,7 +23,7 @@ import (
 )
 
 // mergedCacheSize is the number of merged CID entries to cache.
-const mergedCacheSize = 100000
+const mergedCacheSize = 1_000_000
 
 // Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
 type Blockstore interface {
@@ -195,4 +195,3 @@ func (bs *carImportBlockstore) PutMany(ctx context.Context, blocks []blocks.Bloc
 	}
 	return nil
 }
-
