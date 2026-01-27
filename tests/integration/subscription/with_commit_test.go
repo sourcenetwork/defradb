@@ -174,6 +174,8 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 }
 
 func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *testing.T) {
+	updateCid := testUtils.NewSameValue()
+
 	docID := "bae-45e90427-d499-598b-902a-6a3c65d0b504"
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -203,7 +205,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 					{
 						"_commits": []map[string]any{
 							{
-								"cid":   "bafyreiapbvksu6q6clclkp6ximlffdzpfy3edbi3nowawz3fufogzaaa7m",
+								"cid":   updateCid,
 								"docID": docID,
 							},
 						},
@@ -241,7 +243,7 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 							"_docID": docID,
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreiapbvksu6q6clclkp6ximlffdzpfy3edbi3nowawz3fufogzaaa7m",
+									"cid": updateCid,
 								},
 							},
 						},
