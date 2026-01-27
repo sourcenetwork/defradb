@@ -1085,3 +1085,247 @@ func (s *Subscription) Close() error {
 
 	return nil
 }
+
+// ============================================================================
+// P2P Functions
+// ============================================================================
+
+// NewNodeWithP2P creates a new DefraDB node with P2P enabled.
+// The node must be closed with Close() when done.
+func NewNodeWithP2P(opts NodeOptions, listenAddr string) (*Node, error) {
+	var cOpts C.struct_NodeInitOptions
+
+	if opts.DBPath != "" {
+		cDBPath := C.CString(opts.DBPath)
+		defer C.free(unsafe.Pointer(cDBPath))
+		cOpts.db_path = cDBPath
+	}
+
+	if opts.InMemory || opts.DBPath == "" {
+		cOpts.in_memory = 1
+	} else {
+		cOpts.in_memory = 0
+	}
+
+	cListenAddr := C.CString(listenAddr)
+	defer C.free(unsafe.Pointer(cListenAddr))
+
+	result := C.new_node_with_p2p(cOpts, cListenAddr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: new_node_with_p2p failed: %s", err)
+	}
+
+	return &Node{ptr: result.node_ptr}, nil
+}
+
+// P2PPeerInfo returns the local peer info as a list of multiaddrs with peer ID.
+func (n *Node) P2PPeerInfo() ([]string, error) {
+	result := C.p2p_peer_info(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: p2p_peer_info failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var addrs []string
+	if err := json.Unmarshal([]byte(value), &addrs); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse peer info: %w", err)
+	}
+
+	return addrs, nil
+}
+
+// P2PActivePeers returns the list of connected peer IDs.
+func (n *Node) P2PActivePeers() ([]string, error) {
+	result := C.p2p_active_peers(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: p2p_active_peers failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var peers []string
+	if err := json.Unmarshal([]byte(value), &peers); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse active peers: %w", err)
+	}
+
+	return peers, nil
+}
+
+// P2PConnect connects to a peer at the given multiaddr.
+func (n *Node) P2PConnect(addr string) error {
+	cAddr := C.CString(addr)
+	defer C.free(unsafe.Pointer(cAddr))
+
+	result := C.p2p_connect(n.ptr, cAddr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_connect failed: %s", err)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// P2PSetReplicator sets a replicator for the given collections.
+func (n *Node) P2PSetReplicator(peerAddr string, collections []string) error {
+	cPeerAddr := C.CString(peerAddr)
+	defer C.free(unsafe.Pointer(cPeerAddr))
+
+	collectionsJSON, err := json.Marshal(collections)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal collections: %w", err)
+	}
+
+	cCollections := C.CString(string(collectionsJSON))
+	defer C.free(unsafe.Pointer(cCollections))
+
+	result := C.p2p_set_replicator(n.ptr, cPeerAddr, cCollections)
+
+	if result.status != 0 {
+		errStr := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_set_replicator failed: %s", errStr)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// P2PDeleteReplicator removes a replicator by peer ID.
+func (n *Node) P2PDeleteReplicator(peerID string) error {
+	cPeerID := C.CString(peerID)
+	defer C.free(unsafe.Pointer(cPeerID))
+
+	result := C.p2p_delete_replicator(n.ptr, cPeerID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_delete_replicator failed: %s", err)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// ReplicatorInfo represents replicator information returned from FFI.
+type ReplicatorInfo struct {
+	PeerID      string   `json:"peer_id"`
+	Addresses   []string `json:"addresses"`
+	Collections []string `json:"collections"`
+}
+
+// P2PGetAllReplicators returns all replicators.
+func (n *Node) P2PGetAllReplicators() ([]ReplicatorInfo, error) {
+	result := C.p2p_get_all_replicators(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: p2p_get_all_replicators failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var replicators []ReplicatorInfo
+	if err := json.Unmarshal([]byte(value), &replicators); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse replicators: %w", err)
+	}
+
+	return replicators, nil
+}
+
+// P2PAddCollections adds collections to P2P replication.
+func (n *Node) P2PAddCollections(collections []string) error {
+	collectionsJSON, err := json.Marshal(collections)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal collections: %w", err)
+	}
+
+	cCollections := C.CString(string(collectionsJSON))
+	defer C.free(unsafe.Pointer(cCollections))
+
+	result := C.p2p_add_collections(n.ptr, cCollections)
+
+	if result.status != 0 {
+		errStr := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_add_collections failed: %s", errStr)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// P2PRemoveCollections removes collections from P2P replication.
+func (n *Node) P2PRemoveCollections(collections []string) error {
+	collectionsJSON, err := json.Marshal(collections)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal collections: %w", err)
+	}
+
+	cCollections := C.CString(string(collectionsJSON))
+	defer C.free(unsafe.Pointer(cCollections))
+
+	result := C.p2p_remove_collections(n.ptr, cCollections)
+
+	if result.status != 0 {
+		errStr := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_remove_collections failed: %s", errStr)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// P2PGetAllCollections returns all collections configured for P2P replication.
+func (n *Node) P2PGetAllCollections() ([]string, error) {
+	result := C.p2p_get_all_collections(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: p2p_get_all_collections failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var collections []string
+	if err := json.Unmarshal([]byte(value), &collections); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse collections: %w", err)
+	}
+
+	return collections, nil
+}
