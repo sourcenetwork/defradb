@@ -57,7 +57,7 @@ func TestSimple_WithSevenDummyTypesBefore(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 7,
 				DocMap: map[string]any{
 					"name": "John",
@@ -120,7 +120,7 @@ func TestSimple_WithEightDummyTypesBefore(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 8,
 				DocMap: map[string]any{
 					"name": "John",
@@ -186,7 +186,7 @@ func TestSimple_WithEightDummyTypesBeforeInSplitDeclaration(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 8,
 				DocMap: map[string]any{
 					"name": "John",
@@ -249,7 +249,7 @@ func TestSimple_WithEightDummyTypesAfter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -313,7 +313,7 @@ func TestSimple_WithSevenDummyTypesBeforeAndOneAfter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 7,
 				DocMap: map[string]any{
 					"name": "John",

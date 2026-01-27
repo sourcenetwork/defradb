@@ -66,7 +66,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -187,7 +187,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -281,7 +281,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -387,7 +387,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

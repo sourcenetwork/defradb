@@ -27,7 +27,7 @@ func TestColVersionUpdateReplaceCollectionSourceSourceCollectionID_Errors(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,

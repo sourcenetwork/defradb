@@ -70,7 +70,7 @@ func getSetupEmployeeCompanyActions() []any {
 				`,
 		},
 
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			CollectionID: 1,
 			Doc: `
 					{
@@ -79,7 +79,7 @@ func getSetupEmployeeCompanyActions() []any {
 					}
 				`,
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			CollectionID: 1,
 			Identity:     testUtils.ClientIdentity(1),
 			Doc: `
@@ -89,7 +89,7 @@ func getSetupEmployeeCompanyActions() []any {
 					}
 				`,
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			CollectionID: 0,
 			DocMap: map[string]any{
 				"name":    "PubEmp in PubCompany",
@@ -97,7 +97,7 @@ func getSetupEmployeeCompanyActions() []any {
 				"company": testUtils.NewDocIndex(1, 0),
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			CollectionID: 0,
 			DocMap: map[string]any{
 				"name":    "PubEmp in PrivateCompany",
@@ -105,7 +105,7 @@ func getSetupEmployeeCompanyActions() []any {
 				"company": testUtils.NewDocIndex(1, 1),
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			CollectionID: 0,
 			Identity:     testUtils.ClientIdentity(1),
 			DocMap: map[string]any{
@@ -114,7 +114,7 @@ func getSetupEmployeeCompanyActions() []any {
 				"company": testUtils.NewDocIndex(1, 0),
 			},
 		},
-		testUtils.CreateDoc{
+		&action.CreateDoc{
 			CollectionID: 0,
 			Identity:     testUtils.ClientIdentity(1),
 			DocMap: map[string]any{

@@ -27,7 +27,7 @@ func TestColVersionUpdateReplaceName_GivenExistingName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,

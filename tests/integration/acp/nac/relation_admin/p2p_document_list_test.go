@@ -50,7 +50,7 @@ func TestNAC_AdminRelation_CanP2PDocumentList(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",

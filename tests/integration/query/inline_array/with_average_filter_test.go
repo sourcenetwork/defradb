@@ -20,7 +20,7 @@ import (
 func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
@@ -51,7 +51,7 @@ func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
 func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"testScores": [-1, null, 13, 0]
@@ -82,7 +82,7 @@ func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
 func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteFloats": [3.4, 3.6, 10]
@@ -113,7 +113,7 @@ func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
 func TestQueryInlineNillableFloatArrayWithAverageWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.4, 3.6, 10, null]

@@ -36,7 +36,7 @@ func TestNAC_GatesDeletingDACRelationship_AuthorizedIdentity_AllowAccess(t *test
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -84,7 +84,7 @@ func TestNAC_GatesDeletingDACRelationship_NoIdentity_NotAuthorizedError(t *testi
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -132,7 +132,7 @@ func TestNAC_GatesDeletingDACRelationship_WrongIdentity_NotAuthorizedError(t *te
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,

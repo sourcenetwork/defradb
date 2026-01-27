@@ -47,7 +47,7 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
@@ -115,7 +115,7 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,

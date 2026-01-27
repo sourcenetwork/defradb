@@ -29,7 +29,7 @@ func TestEncryptedIndexCreate_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -71,7 +71,7 @@ func TestEncryptedIndexCreate_AfterCreateRequest_ShouldNotHinderQuerying(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{

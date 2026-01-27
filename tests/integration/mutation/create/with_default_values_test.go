@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
@@ -38,7 +39,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsDefaultValue(t *t
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// left empty to test default values
 				DocMap: map[string]any{},
 			},
@@ -88,7 +89,7 @@ func TestMutationCreate_WithDefaultValues_NoValuesProvided_SetsUTCNowDefaultValu
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// left empty to test default values
 				DocMap: map[string]any{},
 			},
@@ -130,7 +131,7 @@ func TestMutationCreate_WithDefaultValues_NilValuesProvided_SetsNilValue(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"age":      nil,
 					"active":   nil,
@@ -197,7 +198,7 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"age":      int64(50),
 					"active":   false,
@@ -248,13 +249,13 @@ func TestMutationCreate_WithDefaultValues_ValuesProvided_SetsValue(t *testing.T)
 
 func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// This test will fail if using the collection save
 			// method because it does not create two unique docs
 			// and instead calls update on the second doc with
 			// matching fields
-			testUtils.CollectionNamedMutationType,
-			testUtils.GQLRequestMutationType,
+			state.CollectionNamedMutationType,
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -265,11 +266,11 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsErr
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// left empty to test default values
 				DocMap: map[string]any{},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// left empty to test default values
 				DocMap:        map[string]any{},
 				ExpectedError: "a document with the given ID already exists",
@@ -282,13 +283,13 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_ReturnsErr
 
 func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueIndex_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// This test will fail if using the collection save
 			// method because it does not create two unique docs
 			// and instead calls update on the second doc with
 			// matching fields
-			testUtils.CollectionNamedMutationType,
-			testUtils.GQLRequestMutationType,
+			state.CollectionNamedMutationType,
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -299,11 +300,11 @@ func TestMutationCreate_WithDefaultValue_NoValueProvided_CreatedTwice_UniqueInde
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// left empty to test default values
 				DocMap: map[string]any{},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"age": int64(50),
 				},
@@ -326,7 +327,7 @@ func TestMutationCreate_WithDefaultJSONIntValue_ShouldBeSet(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -362,7 +363,7 @@ func TestMutationCreate_WithDefaultJSONFloatValue_ShouldBeSet(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -398,7 +399,7 @@ func TestMutationCreate_WithDefaultJSONBoolValue_ShouldBeSet(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -452,7 +453,7 @@ func TestMutationCreate_WithDefaultJSONObjectValues_ShouldBeSet(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -488,7 +489,7 @@ func TestMutationCreate_WithDefaultJSONDeepObjectValue_ShouldBeSet(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},

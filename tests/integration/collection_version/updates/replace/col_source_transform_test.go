@@ -51,7 +51,7 @@ func TestColVersionUpdateReplaceCollectionSourceTransform(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,

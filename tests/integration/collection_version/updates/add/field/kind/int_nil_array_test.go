@@ -69,7 +69,7 @@ func TestSchemaUpdatesAddFieldKindNillableIntArrayWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -118,7 +118,7 @@ func TestSchemaUpdatesAddFieldKindNillableIntArraySubstitutionWithCreate(t *test
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",

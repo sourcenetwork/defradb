@@ -20,14 +20,14 @@ import (
 func TestQuerySimpleWithDateTimeGTFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
@@ -57,14 +57,14 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithEqualValue(t *testing.T) {
 func TestQuerySimpleWithDateTimeGTFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
@@ -94,14 +94,14 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithGreaterValue(t *testing.T) {
 func TestQuerySimpleWithDateTimeGTFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21,
 					"CreatedAt": "2017-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32,
@@ -127,13 +127,13 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithLesserValue(t *testing.T) {
 func TestQuerySimpleWithDateTimeGTFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"CreatedAt": "2010-07-23T03:46:56-05:00"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob"
 				}`,
@@ -161,21 +161,21 @@ func TestQuerySimpleWithDateTimeGTFilterBlockWithNilValue(t *testing.T) {
 func TestQuerySimple_WithNilDateTimeGTAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"Name":      "John",
 					"Age":       int64(21),
 					"CreatedAt": "2017-07-23T03:46:56-05:00",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"Name":      "Bob",
 					"Age":       int64(32),
 					"CreatedAt": "2016-07-23T03:46:56-05:00",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "Fred",
 					"Age":  44,

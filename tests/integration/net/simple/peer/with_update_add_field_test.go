@@ -31,7 +31,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -120,7 +120,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,

@@ -34,7 +34,7 @@ func TestSchemaUpdates_AddFieldSizeContraint_ShouldSucceed(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",

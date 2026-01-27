@@ -149,7 +149,7 @@ func TestAddLens_WithPatchCollection_TransformsDocuments(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,

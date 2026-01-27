@@ -20,13 +20,13 @@ import (
 func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
@@ -55,13 +55,13 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithEqualValue(t *testing.T) {
 func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
@@ -90,13 +90,13 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserValue(t *testing.T) {
 func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
@@ -125,13 +125,13 @@ func TestQuerySimpleWithHeightMGEFilterBlockWithLesserIntValue(t *testing.T) {
 func TestQuerySimpleWithHeightMGEFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob"
 				}`,

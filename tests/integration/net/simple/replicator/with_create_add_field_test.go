@@ -44,7 +44,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t 
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -98,7 +98,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t 
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -150,7 +150,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

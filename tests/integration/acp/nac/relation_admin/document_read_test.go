@@ -32,7 +32,7 @@ func TestNAC_AdminRelation_CanDocumentRead(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,

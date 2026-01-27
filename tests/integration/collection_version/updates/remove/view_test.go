@@ -86,7 +86,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -135,7 +135,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -191,7 +191,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},

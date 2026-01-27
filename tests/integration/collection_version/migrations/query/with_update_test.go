@@ -31,7 +31,7 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -112,7 +112,7 @@ func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,

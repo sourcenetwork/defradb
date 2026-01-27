@@ -48,7 +48,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",
@@ -125,7 +125,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John"
@@ -183,7 +183,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) 
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",
@@ -244,7 +244,7 @@ func TestP2PPeerCreateWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesN
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create the doc with a value in the new field on the first node only, and allow the values to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

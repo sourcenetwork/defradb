@@ -215,7 +215,7 @@ func TestSubscriptionWithFilterAndCreateMutations(t *testing.T) {
 func TestSubscriptionWithUpdateMutations(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -224,7 +224,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 					"points": 42.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Addo",
@@ -276,7 +276,7 @@ func TestSubscriptionWithUpdateMutations(t *testing.T) {
 func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -285,7 +285,7 @@ func TestSubscriptionWithUpdateAllMutations(t *testing.T) {
 					"points": 42.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Addo",
@@ -375,14 +375,14 @@ func TestSubscription_WithDocIDFilter_ShouldOnlyGetUpdatesForThatDocID(t *testin
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  27,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "Addo",
@@ -457,7 +457,7 @@ func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"counter": int64(1),
@@ -518,7 +518,7 @@ func TestSubscription_WithDeleteOperation_ShouldSucceed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",

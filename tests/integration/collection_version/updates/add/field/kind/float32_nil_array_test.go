@@ -69,7 +69,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32ArrayWithCreate(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -118,7 +118,7 @@ func TestSchemaUpdatesAddFieldKindNillableFloat32ArraySubstitutionWithCreate(t *
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",

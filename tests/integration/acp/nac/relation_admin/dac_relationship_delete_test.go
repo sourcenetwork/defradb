@@ -36,7 +36,7 @@ func TestNAC_AdminRelation_WithDACManagerRelation_CanDeleteDACActorRelationship(
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -110,7 +110,7 @@ func TestNAC_AdminRelation_WithoutDACManagerRelation_CanNotDeleteDACActorRelatio
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,

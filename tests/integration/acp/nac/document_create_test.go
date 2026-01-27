@@ -34,7 +34,7 @@ func TestNAC_GatesDocumentCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -69,7 +69,7 @@ func TestNAC_GatesDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				Doc:           `{ "name": "Shahzad" }`,
@@ -103,7 +103,7 @@ func TestNAC_GatesDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.T) 
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				Doc:           `{ "name": "Shahzad" }`,

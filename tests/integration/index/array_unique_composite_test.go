@@ -33,21 +33,21 @@ func TestArrayUniqueCompositeIndex_WithUniqueCombinations_Succeed(t *testing.T) 
 						nfts2: [Int!] 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"nfts1": [1, 2],
 					"nfts2": [1, 3]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts1": [1, 2],
 					"nfts2": [2, 4]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"nfts1": [3, 4],
@@ -83,14 +83,14 @@ func TestArrayUniqueCompositeIndex_IfDocIsCreatedThatViolatesUniqueness_Error(t 
 						nfts2: [Int!] 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"nfts1": [1, 2],
 					"nfts2": [1, 3]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts1": [1, 2],
@@ -98,7 +98,7 @@ func TestArrayUniqueCompositeIndex_IfDocIsCreatedThatViolatesUniqueness_Error(t 
 				}`,
 				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts1": [5, 6, 2],
@@ -123,14 +123,14 @@ func TestArrayUniqueCompositeIndex_IfDocIsUpdatedThatViolatesUniqueness_Error(t 
 						nfts2: [Int!] 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"nfts1": [1, 2],
 					"nfts2": [1, 3]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts1": [1, 2],
@@ -163,14 +163,14 @@ func TestArrayUniqueCompositeIndex_IfDocsHaveNilValues_Succeed(t *testing.T) {
 						nfts2: [Int] 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"nfts1": [1, null],
 					"nfts2": [null, 1, 3, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts1": [1, null, 2],
