@@ -238,8 +238,6 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedGreaterValue_ShouldFilter(t *
 
 func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -260,6 +258,12 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *tes
 					"Name": "David"
 				}`,
 			},
+			&action.CreateDoc{
+				Doc: `{
+					"Name": "Addo",
+					"Custom": {"age": null}
+				}`,
+			},
 			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {age: {_geq: null}}}) {
@@ -273,6 +277,9 @@ func TestQueryJSON_WithGreaterEqualFilterWithNestedNullValue_ShouldFilter(t *tes
 						},
 						{
 							"Name": "John",
+						},
+						{
+							"Name": "Addo",
 						},
 					},
 				},

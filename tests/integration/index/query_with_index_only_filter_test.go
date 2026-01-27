@@ -1076,7 +1076,7 @@ func TestQueryWithIndex_WithNeFilterAgainstBooleanField_ShouldFetchNilValues(t *
 	}`
 	req2 := `query {
 		User(filter: {verified: {_neq: null}}) {
-			name	
+			name
 		}
 	}`
 	test := testUtils.TestCase{
@@ -1084,7 +1084,7 @@ func TestQueryWithIndex_WithNeFilterAgainstBooleanField_ShouldFetchNilValues(t *
 			&action.AddSchema{
 				Schema: `
 					type User {
-						name: String 
+						name: String
 						verified: Boolean @index
 					}`,
 			},
@@ -1131,6 +1131,315 @@ func TestQueryWithIndex_WithNeFilterAgainstBooleanField_ShouldFetchNilValues(t *
 			&action.Request{
 				Request:  makeExplainQuery(req2),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithGeqNullFilterOnIntField_ShouldNotUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_geq: null}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						age: Int @index
+					}`,
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  48,
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"age":  nil,
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+					"age":  42,
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithLeqNullFilterOnIntField_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {age: {_leq: null}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						age: Int @index
+					}`,
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name": "John",
+					"age":  48,
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Andy",
+					"age":  nil,
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name": "Shahzad",
+					"age":  42,
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithGeqNullFilterOnFloatField_ShouldNotUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {rating: {_geq: null}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						rating: Float @index
+					}`,
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":   "John",
+					"rating": 4.5,
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":   "Andy",
+					"rating": nil,
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":   "Shahzad",
+					"rating": 4.2,
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithLeqNullFilterOnFloatField_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {rating: {_leq: null}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						rating: Float @index
+					}`,
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":   "John",
+					"rating": 4.5,
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":   "Andy",
+					"rating": nil,
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":   "Shahzad",
+					"rating": 4.2,
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithGeqNullFilterOnDateTimeField_ShouldNotUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {birthdate: {_geq: null}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						birthdate: DateTime @index
+					}`,
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":      "John",
+					"birthdate": "2020-01-01T00:00:00Z",
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":      "Andy",
+					"birthdate": nil,
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":      "Shahzad",
+					"birthdate": "2024-01-01T00:00:00Z",
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "Andy"},
+						{"name": "Shahzad"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithIndex_WithLeqNullFilterOnDateTimeField_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {birthdate: {_leq: null}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						birthdate: DateTime @index
+					}`,
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":      "John",
+					"birthdate": "2020-01-01T00:00:00Z",
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":      "Andy",
+					"birthdate": nil,
+				},
+			},
+			&action.CreateDoc{
+				DocMap: map[string]any{
+					"name":      "Shahzad",
+					"birthdate": "2024-01-01T00:00:00Z",
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Andy"},
+					},
+				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
 		},
 	}

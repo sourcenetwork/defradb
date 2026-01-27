@@ -1717,3 +1717,257 @@ func TestJSONIndex_WithGreaterThanFilterOnTopLevelJSONField_ShouldUseIndex(t *te
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestJSONIndex_WithGeqNullFilterOnTopLevelJSONField_ShouldNotUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {_geq: null}}) {
+			name
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": 21
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": {"age": 32}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
+					"custom": null
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy"
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "David"},
+						{"name": "Bruno"},
+						{"name": "Andy"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithGeqNullFilterOnNestedJSONPath_ShouldNotUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {age: {_geq: null}}}) {
+			name
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"age": 21}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": {"age": null}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno"
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"height": 180}
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+						{"name": "David"},
+						{"name": "Bruno"},
+						{"name": "Andy"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithLeqNullFilterOnTopLevelJSONField_ShouldUseIndex(t *testing.T) {
+	req := `query {
+		User(filter: {custom: {_leq: null}}) {
+			name
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": 21
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": {"age": 32}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Shahzad",
+					"custom": {"age": null}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
+					"custom": null
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy"
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "Bruno"},
+						{"name": "Andy"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestJSONIndex_WithLeqNullFilterOnNestedJSONPath_ShouldNotUseIndex(t *testing.T) {
+	// _leq: null on nested paths matches documents where the path evaluates to null
+	// This includes: explicit null at the path, missing path, missing JSON field entirely
+	// The index can't efficiently handle all these cases, so it falls back to full scan
+	req := `query {
+		User(filter: {custom: {age: {_leq: null}}}) {
+			name
+		}
+	}`
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON @index
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"age": 21}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": {"age": null}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno"
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"height": 180}
+				}`,
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "David"},
+						{"name": "Bruno"},
+						{"name": "Andy"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
