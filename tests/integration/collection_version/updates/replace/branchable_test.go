@@ -27,7 +27,7 @@ func TestColVersionUpdateReplaceIsBranchable_UpdatingFromTrueToFalse_Errors(t *t
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -55,7 +55,7 @@ func TestColVersionUpdateReplaceIsBranchable_UpdatingFromFalseToTrue_Errors(t *t
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

@@ -28,7 +28,7 @@ func TestSchemaUpdatesCopyFieldIntrospectionWithRemoveIDAndReplaceName(t *testin
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "copy", "from": "/Users/Fields/1", "path": "/Users/Fields/2" },

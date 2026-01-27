@@ -31,7 +31,7 @@ func TestPatchRelation_OneToOne_CreatesUniqueIndex(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
@@ -85,7 +85,7 @@ func TestPatchRelation_MultipleOneToOne_CreatesUniqueIndexesWithCorrectIDs(t *te
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Book/Fields/-", "value": {
@@ -157,7 +157,7 @@ func TestPatchRelation_OneToMany_DoesNotCreateUniqueIndex(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Author/Fields/-", "value": {
@@ -204,7 +204,7 @@ func TestPatchRelation_OneToOneWithVersionSwitching_IndexOnlyOnActiveVersion(t *
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Author/Fields/-", "value": {

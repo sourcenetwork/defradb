@@ -14,14 +14,13 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
-	"github.com/sourcenetwork/testo/multiplier"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/gen"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -156,32 +155,6 @@ type Start struct {
 	//
 	// False by default.
 	EnableNAC bool
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// PatchCollection executes a patch collection command, updating 0 to many collections and applying
-// a migration if one is provided.
-type PatchCollection struct {
-	// NodeID may hold the ID (index) of a node to apply this patch to.
-	//
-	// If a value is not provided the patch will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The Patch to apply to the collection version.
-	Patch string
-
-	// An optional migration that will be set if the patch creates any new CollectionVersions.
-	Lens immutable.Option[model.Lens]
 
 	// Any error expected from the action. Optional.
 	//
