@@ -49,7 +49,11 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 
 	txn, ok := datastore.CtxTryGetClientTxn(req.Context())
 	if ok {
-		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
+		if tokenTxn, ok := txn.(interface{ TokenID() string }); ok {
+			req.Header.Set(txHeaderName, tokenTxn.TokenID())
+		} else {
+			req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
+		}
 	}
 	id := identity.FromContext(req.Context())
 	if !id.HasValue() {
