@@ -42,6 +42,7 @@ const (
 	compOpAll  = connor.AllOp
 	compOpNone = connor.NoneOp
 	opNot      = connor.NotOp
+	opOr       = connor.OrOp
 	// it's just there for composite indexes. We construct a slice of value matchers with
 	// every matcher being responsible for a corresponding field in the index to match.
 	// For some fields there might not be any criteria to match. For examples if you have
@@ -322,6 +323,154 @@ func (iter *inIndexIterator) Next() (indexIterResult, error) {
 
 func (iter *inIndexIterator) Close() error {
 	return nil
+}
+
+// orIndexIterator is an iterator that handles _or filter conditions by iterating through
+// each OR branch separately. It creates an iterator for each branch and chains through them.
+// Documents are deduplicated using memorizingIndexIterator wrapper.
+type orIndexIterator struct {
+	indexIterator
+	branches       []map[connor.FilterKey]any
+	nextBranchIdx  int
+	ctx            context.Context
+	store          datastore.Keyedstore
+	hasIterator    bool
+	fetcher        *indexFetcher
+	originalFilter *mapper.Filter
+}
+
+var _ indexIterator = (*orIndexIterator)(nil)
+
+// nextIterator initializes the next index iterator for the next OR branch.
+func (iter *orIndexIterator) nextIterator() (bool, error) {
+	if iter.nextBranchIdx > 0 && iter.indexIterator != nil {
+		err := iter.indexIterator.Close()
+		if err != nil {
+			return false, err
+		}
+	}
+
+	if iter.nextBranchIdx >= len(iter.branches) {
+		return false, nil
+	}
+
+	err := iter.createIteratorForNextBranch()
+	if err != nil {
+		return false, err
+	}
+
+	err = iter.indexIterator.Init(iter.ctx, iter.store)
+	if err != nil {
+		return false, err
+	}
+	iter.nextBranchIdx++
+	return true, nil
+}
+
+// createIteratorForNextBranch creates an iterator for the current OR branch.
+func (iter *orIndexIterator) createIteratorForNextBranch() error {
+	branch := iter.branches[iter.nextBranchIdx]
+
+	branchFilter := &mapper.Filter{
+		Conditions: branch,
+	}
+
+	fieldConditions, err := iter.fetcher.determineFieldFilterConditions(branchFilter)
+	if err != nil {
+		return err
+	}
+
+	iter.indexIterator, err = iter.fetcher.createIteratorFromConditions(fieldConditions)
+	return err
+}
+
+func (iter *orIndexIterator) Init(ctx context.Context, store datastore.Keyedstore) error {
+	iter.ctx = ctx
+	iter.store = store
+	var err error
+	iter.hasIterator, err = iter.nextIterator()
+	return err
+}
+
+func (iter *orIndexIterator) Next() (indexIterResult, error) {
+	for iter.hasIterator {
+		res, err := iter.indexIterator.Next()
+		if err != nil {
+			return indexIterResult{}, err
+		}
+		if !res.foundKey {
+			iter.hasIterator, err = iter.nextIterator()
+			if err != nil {
+				return indexIterResult{}, err
+			}
+			continue
+		}
+		return res, nil
+	}
+	return indexIterResult{}, nil
+}
+
+func (iter *orIndexIterator) Close() error {
+	if iter.indexIterator != nil {
+		return iter.indexIterator.Close()
+	}
+	return nil
+}
+
+// extractOrBranches checks if the filter conditions have an _or operator at the root level
+// and returns the individual branches. Returns nil if no _or is found at root.
+func extractOrBranches(conditions map[connor.FilterKey]any) []map[connor.FilterKey]any {
+	for key, val := range conditions {
+		op, ok := key.(*mapper.Operator)
+		if !ok || op.Operation != opOr {
+			continue
+		}
+
+		branches, ok := val.([]any)
+		if !ok {
+			return nil
+		}
+
+		result := make([]map[connor.FilterKey]any, 0, len(branches))
+		for _, branch := range branches {
+			branchMap, ok := branch.(map[connor.FilterKey]any)
+			if !ok {
+				return nil
+			}
+			result = append(result, branchMap)
+		}
+		return result
+	}
+	return nil
+}
+
+// canAllBranchesUseIndex checks if all OR branches can produce index conditions.
+// This catches cases where a branch uses operators like _not that prevent index usage.
+// Note: hasOrWithMultipleFields already ensures all branches reference indexed fields,
+// but this check catches operators that are skipped during condition extraction.
+// This is an all-or-nothing check - if ANY branch can't use the index, we must fall back
+// to a full scan to ensure correct results.
+func (f *indexFetcher) canAllBranchesUseIndex(branches []map[connor.FilterKey]any) bool {
+	for _, branch := range branches {
+		branchFilter := &mapper.Filter{
+			Conditions: branch,
+		}
+
+		fieldConditions, err := f.determineFieldFilterConditions(branchFilter)
+		if err != nil || len(fieldConditions) == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// newOrIndexIterator creates a new orIndexIterator for handling _or filter conditions.
+func (f *indexFetcher) newOrIndexIterator(branches []map[connor.FilterKey]any) *orIndexIterator {
+	return &orIndexIterator{
+		branches:       branches,
+		fetcher:        f,
+		originalFilter: f.indexFilter,
+	}
 }
 
 // newEqSingleIndexIterator creates a new eqSingleIndexIterator for fetching exactly one index
@@ -643,7 +792,22 @@ func (f *indexFetcher) tryCreateOrderedIndexIterator() (indexIterator, error) {
 }
 
 func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
-	fieldConditions, err := f.determineFieldFilterConditions()
+	// Check for _or operator at the root level first.
+	// Note: hasOrWithMultipleFields in newIndexFetcher already filters out OR filters
+	// that span different fields, so we only get here if all branches use fields in this index.
+	if f.indexFilter != nil {
+		if orBranches := extractOrBranches(f.indexFilter.Conditions); orBranches != nil {
+			// Additional check: verify all branches can actually use the index
+			// (some operators like _not may prevent index usage even on indexed fields)
+			if f.canAllBranchesUseIndex(orBranches) {
+				iter := f.newOrIndexIterator(orBranches)
+				return &memorizingIndexIterator{inner: iter}, nil
+			}
+			return nil, nil
+		}
+	}
+
+	fieldConditions, err := f.determineFieldFilterConditions(f.indexFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -654,6 +818,20 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 		return f.tryCreateOrderedIndexIterator()
 	}
 
+	iter, err := f.createIteratorFromConditions(fieldConditions)
+	if err != nil {
+		return nil, err
+	}
+
+	if doConditionsHaveArrayOrJSON(fieldConditions) {
+		iter = &memorizingIndexIterator{inner: iter}
+	}
+
+	return iter, nil
+}
+
+// createIteratorFromConditions creates an index iterator based on the field conditions.
+func (f *indexFetcher) createIteratorFromConditions(fieldConditions []fieldFilterCond) (indexIterator, error) {
 	matchers, err := createValueMatchers(fieldConditions)
 	if err != nil {
 		return nil, err
@@ -664,30 +842,15 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 	if fieldConditions[0].op == opEq {
 		if isUniqueFetchByFullKey(&f.indexDesc, fieldConditions) {
 			iter, err = f.newEqSingleIndexIterator(fieldConditions[0].val, fieldConditions)
-			if err != nil {
-				return nil, err
-			}
 		} else {
 			iter, err = f.newPrefixBasedMatchIteratorFromConditions(fieldConditions, matchers)
-			if err != nil {
-				return nil, err
-			}
 		}
 	} else if f.isRangeCompatible(fieldConditions[0]) {
 		iter, err = f.newRangeBasedMatchIterator(fieldConditions[0], matchers)
-		if err != nil {
-			return nil, err
-		}
 	} else if fieldConditions[0].op == opIn && fieldConditions[0].arrOp != compOpNone {
 		iter, err = f.newInIndexIterator(fieldConditions, matchers)
-		if err != nil {
-			return nil, err
-		}
 	} else {
 		iter, err = f.newPrefixBasedMatchIteratorFromConditions(fieldConditions, matchers)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	if err != nil {
@@ -696,10 +859,6 @@ func (f *indexFetcher) createIndexIterator() (indexIterator, error) {
 
 	if iter == nil {
 		return nil, NewErrInvalidFilterOperator(fieldConditions[0].op)
-	}
-
-	if doConditionsHaveArrayOrJSON(fieldConditions) {
-		iter = &memorizingIndexIterator{inner: iter}
 	}
 
 	return iter, nil
@@ -726,8 +885,8 @@ type fieldFilterCond struct {
 // determineFieldFilterConditions determines the conditions and their corresponding operation
 // for each indexed field.
 // It returns a slice of fieldFilterCond, where each element corresponds to a field in the index.
-func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, error) {
-	if f.indexFilter == nil {
+func (f *indexFetcher) determineFieldFilterConditions(indexFilter *mapper.Filter) ([]fieldFilterCond, error) {
+	if indexFilter == nil {
 		return nil, nil
 	}
 
@@ -739,7 +898,7 @@ func (f *indexFetcher) determineFieldFilterConditions() ([]fieldFilterCond, erro
 		var err error
 
 		filter.TraverseProperties(
-			f.indexFilter.Conditions,
+			indexFilter.Conditions,
 			func(prop *mapper.PropertyIndex, condMap map[connor.FilterKey]any) bool {
 				if fieldInd != prop.Index {
 					return true
