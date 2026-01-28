@@ -66,6 +66,8 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				}
 			}
 			// Skip events that do not pass the subscription's docID and cid filters
+			// This is an optimization to avoid running the selection planner and
+			// related query logic when we know the event will not be relevant to the subscription.
 			if !subRequest.CheckDocIDFilter(evt.DocID) || !subRequest.CheckCIDFilter(evt.Cid.String()) {
 				continue
 			}
