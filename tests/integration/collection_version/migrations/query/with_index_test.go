@@ -53,7 +53,7 @@ func TestSchemaMigrationQuery_WithIndexOnNotMigratedDocs_ShouldNotHinder(t *test
 					"age":  40,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -143,7 +143,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedField_ShouldUseIndexWithMigrate
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -230,7 +230,7 @@ func TestSchemaMigrationQuery_WithIndexOnMigratedFieldAndSettingOldVersionAsActi
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -320,7 +320,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterMigration_ShouldIndexDocsOnLa
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -410,7 +410,7 @@ func TestSchemaMigrationQuery_WithIndexAppliedAfterSetActiveVersion_ShouldIndexD
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -504,28 +504,28 @@ func setupDistantVersions() []any {
 				"age":  32,
 			},
 		},
-		testUtils.PatchCollection{
+		&action.PatchCollection{
 			Patch: `
 				[
 					{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
 				]
 			`,
 		},
-		testUtils.PatchCollection{
+		&action.PatchCollection{
 			Patch: `
 				[
 					{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }
 				]
 			`,
 		},
-		testUtils.PatchCollection{
+		&action.PatchCollection{
 			Patch: `
 				[
 					{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "rank", "Kind": "Int"} }
 				]
 			`,
 		},
-		testUtils.PatchCollection{
+		&action.PatchCollection{
 			Patch: `
 				[
 					{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "score", "Kind": "Int"} }
@@ -836,7 +836,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationToUnknownVersionsThenPatch_Should
 			},
 			// Now patch to actually create v2 - this should trigger reindexing
 			// even though the patch itself doesn't touch indexes
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -906,7 +906,7 @@ func TestSchemaMigrationQuery_ApplyingMigrationWithPatching_ShouldReindex(t *tes
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -976,7 +976,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 				},
 			},
 			// Create branch A: v1 -> v2 (no migration)
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -987,7 +987,7 @@ func TestSchemaMigrationQuery_WithBranchedVersionsAndMigration_ShouldApplyMigrat
 				VersionID: schemaV1,
 			},
 			// Create branch B: v1 -> v3 (with migration: age+5)
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }
@@ -1127,7 +1127,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 				},
 			},
 			// Create branch A: v1 -> v2 (no migration)
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }
@@ -1139,7 +1139,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 				VersionID: schemaV1,
 			},
 			// Create branch B: v1 -> v3 (migration: age+5)
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }
@@ -1162,7 +1162,7 @@ func TestSchemaMigrationQuery_WithThreeBranchedVersions_ShouldApplyCorrectMigrat
 				VersionID: schemaV1,
 			},
 			// Create branch C: v1 -> v4 (migration: age+10)
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "rank", "Kind": "Int"} }

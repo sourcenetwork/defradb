@@ -17,6 +17,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
@@ -29,10 +30,23 @@ import (
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
+// unsafeDatastore is used to access a
+// non-locking datastore from the multistore.
+type unsafeDatastore interface {
+	Unsafe() corekv.ReaderWriter
+}
+
 // storeArtifacts stores SE artifacts directly in the datastore.
-func storeArtifacts(ctx context.Context, ds datastore.Keyedstore, artifacts []secore.Artifact) error {
+func storeArtifacts(
+	ctx context.Context,
+	ms *datastore.Multistore,
+	artifacts []secore.Artifact,
+) error {
+	ss := ms.Systemstore()
+	ds := ms.Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
+
 	for _, artifact := range artifacts {
-		colID, err := id.GetShortCollectionID(ctx, artifact.CollectionID)
+		colID, err := id.GetUncachedShortCollectionID(ctx, artifact.CollectionID, ss)
 		if err != nil {
 			return err
 		}
@@ -44,7 +58,7 @@ func storeArtifacts(ctx context.Context, ds datastore.Keyedstore, artifacts []se
 			DocID:             artifact.DocID,
 		}
 
-		if err := ds.Set(ctx, key, []byte{}); err != nil {
+		if err := ds.Set(ctx, key.Bytes(), []byte{}); err != nil {
 			return err
 		}
 	}
@@ -56,13 +70,16 @@ func storeArtifacts(ctx context.Context, ds datastore.Keyedstore, artifacts []se
 // and returns the document IDs for documents that match all queries.
 func fetchDocIDs(
 	ctx context.Context,
-	ds datastore.Keyedstore,
+	ms *datastore.Multistore,
 	collectionID string,
 	queries []fieldQuery,
 ) ([]string, error) {
+	ss := ms.Systemstore()
+	ds := ms.Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
+
 	docIDSet := make(map[string]struct{})
 
-	colID, err := id.GetShortCollectionID(ctx, collectionID)
+	colID, err := id.GetUncachedShortCollectionID(ctx, collectionID, ss)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +91,8 @@ func fetchDocIDs(
 			IndexID:           query.IndexID,
 			SearchTag:         query.SearchTag,
 		}
-
-		iter, err := ds.Iterator(ctx, datastore.IterOptions{
-			Prefix: key,
+		iter, err := ds.Iterator(ctx, corekv.IterOptions{
+			Prefix: key.Bytes(),
 		})
 		if err != nil {
 			return nil, err

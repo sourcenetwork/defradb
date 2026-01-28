@@ -27,7 +27,7 @@ func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1/name", "value": "Email" }
@@ -50,7 +50,7 @@ func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1/Name", "value": "name" }
@@ -72,7 +72,7 @@ func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1", "value": {"Name": "name", "Kind": 11} }
@@ -95,7 +95,7 @@ func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/1", "value": {
@@ -120,7 +120,7 @@ func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/name", "value": {
@@ -145,7 +145,7 @@ func TestSchemaUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *tes
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Fields/name/Kind", "value": 11 }

@@ -94,34 +94,36 @@ func setupNode(
 	}
 
 	var path string
-	switch s.DbType {
-	case BadgerIMType:
-		opts = append(opts, node.WithBadgerInMemory(true))
-
-	case BadgerFileType:
-		switch {
-		case databaseDir != "":
+	if s.DbType == BadgerFileType || s.DbType == LevelStoreType {
+		if databaseDir != "" {
 			// restarting database
 			path = databaseDir
-
-		case changeDetector.Enabled:
+		} else if changeDetector.Enabled {
 			// change detector
 			path = changeDetector.DatabaseDir(s.T)
-
-		default:
+		} else {
 			// default test case
 			path = s.T.TempDir()
 		}
-
-		opts = append(
-			opts,
+		opts = append(opts,
 			node.WithStorePath(path),
 			node.WithDocumentACPPath(path),
 			node.WithNodeACPPath(path),
 		)
+	}
+
+	switch s.DbType {
+	case BadgerFileType:
+		opts = append(opts, node.WithStoreType(node.BadgerStore))
+
+	case BadgerIMType:
+		opts = append(opts, node.WithStoreType(node.BadgerStore), node.WithBadgerInMemory(true))
 
 	case DefraIMType:
 		opts = append(opts, node.WithStoreType(node.MemoryStore))
+
+	case LevelStoreType:
+		opts = append(opts, node.WithStoreType(node.LevelStore))
 
 	default:
 		return nil, fmt.Errorf("invalid database type: %v", s.DbType)

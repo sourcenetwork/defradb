@@ -447,11 +447,6 @@ func (db *DB) Close() {
 
 	db.events.Close()
 
-	err := db.rootstore.Close()
-	if err != nil {
-		log.ErrorE("Failure closing running process", err)
-	}
-
 	if db.nodeACP.NodeACP != nil {
 		if err := db.nodeACP.NodeACP.Close(); err != nil {
 			log.ErrorE("Failure closing node acp", err)
@@ -469,6 +464,11 @@ func (db *DB) Close() {
 			db.p2p.SECoordinator().Close()
 		}
 		db.p2p.Close()
+	}
+
+	err := db.rootstore.Close()
+	if err != nil {
+		log.ErrorE("Failure closing running process", err)
 	}
 
 	log.Info("Successfully closed running process")

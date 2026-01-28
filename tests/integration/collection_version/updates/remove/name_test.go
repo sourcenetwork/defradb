@@ -27,7 +27,7 @@ func TestColVersionUpdateRemoveNameByVersionID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -55,7 +55,7 @@ func TestColVersionUpdateRemoveName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Name" }

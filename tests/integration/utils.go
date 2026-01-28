@@ -183,6 +183,9 @@ func ExecuteTestCase(
 	if inMemoryStore {
 		databases = append(databases, DefraIMType)
 	}
+	if levelStore {
+		databases = append(databases, LevelStoreType)
+	}
 
 	var kmsList []state.KMSType
 	if testCase.KMS.Activated {
@@ -279,17 +282,12 @@ func executeTestCase(
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
-	refreshCollections(s)
+	refreshCollections(s, immutable.None[int]())
 	refreshDocuments(s, testCase, startActionIndex)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		performAction(s, testCase, i, testCase.Actions[i])
 	}
-
-	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
-	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
-	// by them. So the matchers need to be reset between the test runs.
-	resetMatchers(s)
 
 	// Notify any active subscriptions that all requests have been sent.
 	close(s.AllActionsDone)
@@ -305,6 +303,11 @@ func executeTestCase(
 			assert.Fail(t, "timeout occurred while waiting for data stream")
 		}
 	}
+
+	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
+	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
+	// by them. So the matchers need to be reset between the test runs.
+	resetMatchers(s)
 }
 
 func performAction(
@@ -359,9 +362,6 @@ func performAction(
 
 	case GetAllP2PDocuments:
 		getAllP2PDocuments(s, action)
-
-	case PatchCollection:
-		patchCollection(s, action)
 
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)
@@ -856,7 +856,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
 	// will reference the old (closed) database instances.
-	refreshCollections(s)
+	refreshCollections(s, immutable.None[int]())
 }
 
 func restartNodes(
@@ -903,6 +903,7 @@ func refreshTokens(
 // result-index will be nil.
 func refreshCollections(
 	s *state.State,
+	transactionID immutable.Option[int],
 ) {
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
@@ -911,7 +912,9 @@ func refreshCollections(
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
-		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
+		txn := getTransaction(s, node, transactionID, "")
+		ctx := db.InitContext(s.Ctx, txn)
+		ctx = getContextWithIdentity(ctx, s, nodeIdentity, nodeID)
 		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})
 		require.Nil(s.T, err)
 
@@ -1044,28 +1047,6 @@ func refreshDocuments(
 	}
 }
 
-func patchCollection(
-	s *state.State,
-	action PatchCollection,
-) {
-	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
-	// This will need to change if patches want to replace more than just lens IDs.
-	patch := replace(s, 0, action.Patch)
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := node.PatchCollection(ctx, patch, action.Lens)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
-
-	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(s)
-}
-
 func setActiveCollectionVersion(
 	s *state.State,
 	action SetActiveCollectionVersion,
@@ -1083,7 +1064,7 @@ func setActiveCollectionVersion(
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(s)
+	refreshCollections(s, immutable.None[int]())
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]

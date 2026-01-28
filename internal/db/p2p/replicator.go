@@ -13,6 +13,7 @@ package p2p
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/fxamacker/cbor/v2"
@@ -32,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -171,21 +173,43 @@ func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionN
 // pushHeadsForAllDocs gets all the docID for the given collection and sends them to get
 // pushed to the given peer.
 func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, peerID string) error {
-	docIDChan, err := col.GetAllDocIDs(ctx)
+	// this method cannot be run inside of a transaction
+	// so we have to create an unsafe iterator manually
+	// instead of calling db.GetAllDocIDs
+	type unsafeDatastore interface {
+		Unsafe() corekv.ReaderWriter
+	}
+	shortID, err := id.GetUncachedShortCollectionID(ctx, col.Version().CollectionID, p.db.Multistore().Systemstore())
 	if err != nil {
 		return err
 	}
-	for docIDResult := range docIDChan {
-		if docIDResult.Err != nil {
-			return docIDResult.Err
+	prefix := keys.PrimaryDataStoreKey{CollectionShortID: shortID}
+	ds := p.db.Multistore().Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
+	iter, err := ds.Iterator(ctx, corekv.IterOptions{Prefix: prefix.Bytes(), KeysOnly: true})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if iterErr := iter.Close(); iterErr != nil {
+			log.ErrorE("Failed to close docID iter", iterErr)
 		}
-		docID := docIDResult.ID.String()
-		err := p.pushHeadsForDoc(ctx, docID, col.CollectionID(), peerID)
+	}()
+
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return err
+		}
+		if !hasNext {
+			return nil
+		}
+		splitString := strings.Split(string(iter.Key()), "/")
+		docID := splitString[len(splitString)-1]
+		err = p.pushHeadsForDoc(ctx, docID, col.CollectionID(), peerID)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
 }
 
 // pushHeadsForDoc gets the all the head blocks for a given docID and pushes them

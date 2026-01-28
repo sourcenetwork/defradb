@@ -574,19 +574,8 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		return err
 	}
 
-	// Create a read-only transaction to read old document states.
-	oldCtx, oldTxn, err := ensureContextTxn(context.Background(), db, true)
-	if err != nil {
-		return err
-	}
-	defer oldTxn.Discard()
-
-	for docID := range mp.docIDs {
-		docID, err := client.NewDocIDFromString(docID)
-		if err != nil {
-			return err
-		}
-		err = syncIndexedDoc(ctx, oldCtx, docID, col)
+	for docID, oldDoc := range mp.docIDs {
+		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
 		if err != nil {
 			return err
 		}
@@ -657,8 +646,10 @@ type mergeProcessor struct {
 	col        *collection
 	db         *DB
 
-	// docIDs contains all docIDs that have been merged so far by the mergeProcessor
-	docIDs map[string]struct{}
+	// docIDs contains all docIDs and their original values
+	// that have been merged so far by the mergeProcessor
+	// the original values are used to update indexes
+	docIDs map[client.DocID]*client.Document
 
 	// composites is a list of composites that need to be merged.
 	composites *list.List
@@ -684,7 +675,7 @@ func (db *DB) newMergeProcessor(
 		encBlockLS: encBlockLS,
 		col:        col,
 		db:         db,
-		docIDs:     make(map[string]struct{}),
+		docIDs:     make(map[client.DocID]*client.Document),
 		composites: list.New(),
 	}, nil
 }
@@ -935,15 +926,20 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 
 	switch {
 	case crdtUnion.IsComposite():
-		docID := string(crdtUnion.GetDocID())
-		mp.docIDs[docID] = struct{}{}
-
+		docID, err := client.NewDocIDFromString(string(crdtUnion.GetDocID()))
+		if err != nil {
+			return nil, err
+		}
+		err = mp.trackMergedDocument(ctx, docID)
+		if err != nil {
+			return nil, err
+		}
 		return crdt.NewDocComposite(
 			txn.Datastore(),
 			mp.col.Version().VersionID,
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
-				DocID:             docID,
+				DocID:             docID.String(),
 			}.WithFieldID(core.COMPOSITE_NAMESPACE),
 		), nil
 
@@ -954,8 +950,14 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		), nil
 
 	default:
-		docID := string(crdtUnion.GetDocID())
-		mp.docIDs[docID] = struct{}{}
+		docID, err := client.NewDocIDFromString(string(crdtUnion.GetDocID()))
+		if err != nil {
+			return nil, err
+		}
+		err = mp.trackMergedDocument(ctx, docID)
+		if err != nil {
+			return nil, err
+		}
 
 		field := crdtUnion.GetFieldName()
 		fd, ok := mp.col.Version().GetFieldByName(field)
@@ -976,11 +978,26 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 			fd.Kind,
 			keys.DataStoreKey{
 				CollectionShortID: shortID,
-				DocID:             docID,
+				DocID:             docID.String(),
 			}.WithFieldID(fmt.Sprint(fieldShortID)),
 			field,
 		)
 	}
+}
+
+// trackMergedDocument tracks the current version of the document so we
+// can correctly sync indexes after a merge.
+func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.DocID) error {
+	_, exists := mp.docIDs[docID]
+	if exists {
+		return nil
+	}
+	doc, err := mp.col.Get(ctx, docID, false)
+	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+		return nil
+	}
+	mp.docIDs[docID] = doc
+	return nil
 }
 
 func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {
@@ -1064,28 +1081,17 @@ func syncIndexedDoc(
 	oldCtx context.Context,
 	docID client.DocID,
 	col *collection,
+	oldDoc *client.Document,
 ) error {
-	if len(col.indexes) == 0 {
-		return nil
-	}
-
-	oldDoc, err := col.Get(oldCtx, docID, false)
-	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
-	if !isNewDoc && err != nil {
+	newDoc, err := col.Get(ctx, docID, false)
+	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
 	}
-
-	doc, err := col.Get(ctx, docID, false)
-	isDeletedDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)
-	if !isDeletedDoc && err != nil {
-		return err
-	}
-
-	if isNewDoc {
-		return col.indexNewDoc(ctx, doc)
-	} else if isDeletedDoc {
-		return col.deleteIndexedDoc(ctx, oldDoc)
+	if oldDoc != nil && newDoc != nil {
+		return col.updateDocIndex(ctx, oldDoc, newDoc)
+	} else if oldDoc == nil {
+		return col.indexNewDoc(ctx, newDoc)
 	} else {
-		return col.updateDocIndex(ctx, oldDoc, doc)
+		return col.deleteIndexedDoc(ctx, oldDoc)
 	}
 }
