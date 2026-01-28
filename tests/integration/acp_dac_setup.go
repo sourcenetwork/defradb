@@ -28,20 +28,21 @@ import (
 	cosmostypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
+	tclog "github.com/testcontainers/testcontainers-go/log"
+
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/sourcehub/sdk"
-	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	tclog "github.com/testcontainers/testcontainers-go/log"
 )
 
 const (
 	// faucetMnemonic is the mnemonic for a static faucet account present in the
 	// STANDALONE version of the SourceHub image
-	faucetMnemonic = "comic very pond victory suit tube ginger antique life then core warm loyal deliver iron fashion erupt husband weekend monster sunny artist empty uphold"
+	faucetMnemonic = "comic very pond victory suit tube ginger antique life then core warm loyal deliver iron fashion erupt husband weekend monster sunny artist empty uphold" //nolint:lll
 
 	// faucetAddr is the account address matching the faucetMnemonic
 	faucetAddr = "source12d9hjf0639k995venpv675sju9ltsvf8u5c9jt"
@@ -93,7 +94,7 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		logs, err := container.Logs(ctx)
 		require.NoError(s.T, err)
 		buf := bytes.Buffer{}
-		buf.ReadFrom(logs)
+		buf.ReadFrom(logs) //nolint:errcheck
 		s.T.Logf("container logs: %v", buf.String())
 		testcontainers.TerminateContainer(container)
 	})
@@ -203,7 +204,9 @@ func getAccountDataFromMnemonic(t testing.TB, mnemonic string) []byte {
 	kb := cosmoskeyring.NewInMemory(codec)
 	rec, err := kb.NewAccount("key", faucetMnemonic, "", cosmostypes.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
 	require.NoError(t, err)
-	privKeyRecByes := rec.Item.(*cosmoskeyring.Record_Local_).Local.PrivKey.Value
+	item, ok := rec.Item.(*cosmoskeyring.Record_Local_)
+	require.True(t, ok)
+	privKeyRecByes := item.Local.PrivKey.Value
 	privKey := cosmossecp256k1.PrivKey{}
 	err = privKey.Unmarshal(privKeyRecByes)
 	require.NoError(t, err)
