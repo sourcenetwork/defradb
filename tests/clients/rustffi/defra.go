@@ -6,18 +6,17 @@
 // Build requirements:
 //   - Rust library must be built first: cargo build --release -p ffi
 //   - CGO must be enabled: CGO_ENABLED=1
-//   - Set CGO flags to point to defradb.rs (see example below)
+//   - CGO_LDFLAGS must point to the Rust library: -L<path>/target/release -lffi -ldl -lpthread -lm
 //
 // Example:
-//   export DEFRA_RS_PATH=/path/to/defradb.rs
-//   export CGO_CFLAGS="-I$DEFRA_RS_PATH/crates/ffi"
-//   export CGO_LDFLAGS="-L$DEFRA_RS_PATH/target/release -lffi -ldl -lpthread -lm"
-//   export CGO_ENABLED=1
-//   export DEFRA_CLIENT_RUST_FFI=true
+//   CGO_ENABLED=1 \
+//   CGO_LDFLAGS="-L/path/to/defradb.rs/target/release -lffi -ldl -lpthread -lm" \
+//   DEFRA_CLIENT_RUST_FFI=true \
 //   go test ./tests/integration/query/simple/...
 package rustffi
 
 /*
+#cgo CFLAGS: -I${SRCDIR}
 #cgo LDFLAGS: -lffi -ldl -lpthread -lm
 
 #include "defra.h"
