@@ -43,6 +43,7 @@ func TestNAC_AdminRelation_CanDocumentCreate(t *testing.T) {
 				// todo: After implementing granular NAC permissions, this should be changed to a
 				// specific permission error. Currently, the permission error is different across
 				// different client types and environments.
+				// See: https://github.com/sourcenetwork/defradb/issues/4446
 				ExpectedError: "not authorized to perform operation",
 			},
 

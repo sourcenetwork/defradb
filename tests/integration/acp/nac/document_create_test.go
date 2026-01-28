@@ -78,6 +78,7 @@ func TestNAC_GatesDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 				// todo: After implementing granular NAC permissions, this should be changed to a
 				// specific permission error. Currently, the permission error is different across
 				// different client types and environments.
+				// See: https://github.com/sourcenetwork/defradb/issues/4446
 				ExpectedError: "not authorized to perform operation",
 			},
 			&action.Request{ // Should not be created
@@ -117,6 +118,7 @@ func TestNAC_GatesDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				// todo: After implementing granular NAC permissions, this should be changed to a
 				// specific permission error. Currently, the permission error is different across
 				// different client types and environments.
+				// See: https://github.com/sourcenetwork/defradb/issues/4446
 				ExpectedError: "not authorized to perform operation",
 			},
 			&action.Request{ // Should not be created
