@@ -48,6 +48,8 @@ const (
 
 	// faucetAddr is the account address matching the faucetMnemonic
 	faucetAddr = "source12d9hjf0639k995venpv675sju9ltsvf8u5c9jt"
+
+	sourcehubTestChainID string = "sourcehub-dev"
 )
 
 func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, error) {
@@ -67,11 +69,11 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		// runtime of the test suite when SourceHub ACP is selected.
 		s.T.Skipf("test has no document ACP elements when testing with SourceHub ACP")
 	}
-	const chainID string = "sourcehub-dev"
-	name := uuid.New()
 
-	testLogger := tclog.TestLogger(s.T)
 	ctx := context.Background()
+	testLogger := tclog.TestLogger(s.T)
+
+	name := uuid.New()
 	container, err := testcontainers.Run(ctx,
 		sourcehubImage,
 		testcontainers.WithName(name.String()),
@@ -79,6 +81,8 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		testcontainers.WithExposedPorts("9090/tcp"),
 		testcontainers.WithLogger(testLogger),
 		testcontainers.WithEnv(map[string]string{
+			// STANDALONE configures the SH container to create a isolated chain,
+			// instead of connecting to an existing one.
 			"STANDALONE": "1",
 		}),
 	)
@@ -86,10 +90,10 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		return nil, err
 	}
 
-	// cleanup by fetching the container logs
-	// and writing it to the test logger to ease debug if the test fails
+	// read container logs before terminating it
 	s.T.Cleanup(func() {
-		logs, err := container.Logs(context.Background())
+		s.T.Helper()
+		logs, err := container.Logs(ctx)
 		require.NoError(s.T, err)
 		buf := bytes.Buffer{}
 		buf.ReadFrom(logs)
@@ -135,7 +139,7 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 
 	return []node.DocumentACPOpt{
 		node.WithTxnSigner(immutable.Some[node.TxSigner](signer)),
-		node.WithSourceHubChainID(chainID),
+		node.WithSourceHubChainID(sourcehubTestChainID),
 		node.WithSourceHubGRPCAddress(grpcEndpoint),
 		node.WithSourceHubCometRPCAddress(rpcEndpoint),
 	}, nil
@@ -164,10 +168,10 @@ func waitForSourceHub(t testing.TB, grpcEndpoint, cometRpcEndpoint string, accAd
 	}
 }
 
-// probeSourceHub is a rediness probe which tries to connect to SourceHub's
-// RPC endpoint to determine if it is ready to receive connections
-// Returns true if the probe succeeded
-func probeSourceHub(grpcAddr, cometRpcAddr, valAddr string) bool {
+// probeSourceHub is a readiness probe which tries to connect to SourceHub's
+// RPC endpoint to determine if it is ready to receive connections.
+// Returns true if the probe succeeded.
+func probeSourceHub(grpcAddr, cometRpcAddr, knownAddr string) bool {
 	client, err := sdk.NewClient(
 		sdk.WithGRPCAddr(grpcAddr),
 		sdk.WithCometRPCAddr(cometRpcAddr),
@@ -186,7 +190,7 @@ func probeSourceHub(grpcAddr, cometRpcAddr, valAddr string) bool {
 
 	// probe grpc service
 	_, err = client.AuthQueryClient().Account(context.Background(), &types.QueryAccountRequest{
-		Address: valAddr,
+		Address: knownAddr,
 	})
 	return err == nil
 }
