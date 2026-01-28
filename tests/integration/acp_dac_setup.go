@@ -149,7 +149,9 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 }
 
 func waitForSourceHub(t testing.TB, grpcEndpoint, cometRpcEndpoint string, accAddr string) error {
-	timeout := time.After(5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	i := 1
 	startTs := time.Now()
 	for {
@@ -157,11 +159,11 @@ func waitForSourceHub(t testing.TB, grpcEndpoint, cometRpcEndpoint string, accAd
 		timer := time.After(time.Duration(i) * (10 * time.Millisecond))
 		i++
 		select {
-		case <-timeout:
+		case <-ctx.Done():
 			t.Logf("time out waiting for sourcehub to start")
 			return fmt.Errorf("error setting up SourceHub: connection not ready after deadline")
 		case <-timer:
-			ok := probeSourceHub(grpcEndpoint, cometRpcEndpoint, accAddr)
+			ok := probeSourceHub(ctx, grpcEndpoint, cometRpcEndpoint, accAddr)
 			if ok {
 				elapsed := time.Since(startTs)
 				t.Logf("sourcehub ready to receive connections: after %v", elapsed)
@@ -174,7 +176,7 @@ func waitForSourceHub(t testing.TB, grpcEndpoint, cometRpcEndpoint string, accAd
 // probeSourceHub is a readiness probe which tries to connect to SourceHub's
 // RPC endpoint to determine if it is ready to receive connections.
 // Returns true if the probe succeeded.
-func probeSourceHub(grpcAddr, cometRpcAddr, knownAddr string) bool {
+func probeSourceHub(ctx context.Context, grpcAddr, cometRpcAddr, knownAddr string) bool {
 	client, err := sdk.NewClient(
 		sdk.WithGRPCAddr(grpcAddr),
 		sdk.WithCometRPCAddr(cometRpcAddr),
@@ -186,13 +188,13 @@ func probeSourceHub(grpcAddr, cometRpcAddr, knownAddr string) bool {
 
 	// probe rpc service
 	height := int64(1)
-	_, err = client.CometBFTRPCClient().Block(context.Background(), &height)
+	_, err = client.CometBFTRPCClient().Block(ctx, &height)
 	if err != nil {
 		return false
 	}
 
 	// probe grpc service
-	_, err = client.AuthQueryClient().Account(context.Background(), &types.QueryAccountRequest{
+	_, err = client.AuthQueryClient().Account(ctx, &types.QueryAccountRequest{
 		Address: knownAddr,
 	})
 	return err == nil
