@@ -13,7 +13,7 @@ Use --lens-cid to specify a lens transform. Store a lens first using 'defradb cl
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client view add [query] [sdl] [flags]
+defradb client view add [flags]
 ```
 
 ### Examples
