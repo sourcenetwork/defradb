@@ -30,7 +30,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownFieldName_ShouldError
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -59,7 +59,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithUnknownEmbeddingGenerationFi
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -88,7 +88,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingWithInvalidEmbeddingGenerationFi
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -117,7 +117,7 @@ func TestColVersionUpdate_ReplaceVectorEmbeddingParams_ShouldSucceed(t *testing.
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

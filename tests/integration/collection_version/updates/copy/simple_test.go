@@ -27,7 +27,7 @@ func TestSchemaUpdatesCopyCollectionWithRemoveIDAndReplaceName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Here we esentially use Users as a template, copying it and renaming the
 				// clone. It is deliberately blocked for now, but should function at somepoint.
 				Patch: `

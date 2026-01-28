@@ -289,11 +289,6 @@ func executeTestCase(
 		performAction(s, testCase, i, testCase.Actions[i])
 	}
 
-	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
-	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
-	// by them. So the matchers need to be reset between the test runs.
-	resetMatchers(s)
-
 	// Notify any active subscriptions that all requests have been sent.
 	close(s.AllActionsDone)
 
@@ -308,6 +303,11 @@ func executeTestCase(
 			assert.Fail(t, "timeout occurred while waiting for data stream")
 		}
 	}
+
+	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
+	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
+	// by them. So the matchers need to be reset between the test runs.
+	resetMatchers(s)
 }
 
 func performAction(
@@ -362,9 +362,6 @@ func performAction(
 
 	case GetAllP2PDocuments:
 		getAllP2PDocuments(s, action)
-
-	case PatchCollection:
-		patchCollection(s, action)
 
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)
@@ -1048,28 +1045,6 @@ func refreshDocuments(
 			}
 		}
 	}
-}
-
-func patchCollection(
-	s *state.State,
-	action PatchCollection,
-) {
-	// The lens IDs are consistent across nodes, so we can patch once for all nodes.
-	// This will need to change if patches want to replace more than just lens IDs.
-	patch := replace(s, 0, action.Patch)
-
-	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := node.PatchCollection(ctx, patch, action.Lens)
-		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-	}
-
-	// If the schema was updated we need to refresh the collection definitions.
-	refreshCollections(s, immutable.None[int]())
 }
 
 func setActiveCollectionVersion(
