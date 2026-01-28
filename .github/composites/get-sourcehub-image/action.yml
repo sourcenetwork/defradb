@@ -49,6 +49,6 @@ runs:
       working-directory: _sourcehub
       shell: bash
       run: |
-        short_commit=${{ steps.sourcehub-commit.outputs.short }})
+        short_commit=${{ steps.sourcehub-commit.outputs.short }}
         commit=$(git rev-parse $short_commit)
         echo "image=ghcr.io/sourcenetwork/sourcehub:$commit" >> "$GITHUB_ENV"
