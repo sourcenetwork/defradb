@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQuerySimpleWithDateTimeGEFilterBlockWithEqualValue(t *testing.T) {
@@ -165,8 +164,6 @@ func TestQuerySimpleWithDateTimeGEFilterBlockWithNilValue(t *testing.T) {
 
 func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.CreateDoc{
 				DocMap: map[string]any{
@@ -210,6 +207,7 @@ func TestQuerySimple_WithNilDateTimeGEAndNonNilFilterBlock_ShouldSucceed(t *test
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
