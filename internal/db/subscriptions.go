@@ -80,6 +80,10 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				db.getLensStore(ctx),
 			)
 			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
+			if s == nil {
+				txn.Discard()
+				continue
+			}
 
 			result, err := p.RunSelection(ctx, s)
 			if err == nil && len(result) == 0 {
