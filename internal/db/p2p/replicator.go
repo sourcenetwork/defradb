@@ -593,6 +593,9 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 }
 
 func (p *P2P) setReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRetryIDKey, rInfo retryInfo) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	rInfo.Retrying = true
 	rInfo.NumRetries++
 	b, err := cbor.Marshal(rInfo)
@@ -609,6 +612,9 @@ func setReplicatorNextRetry(
 	retryIntervals []time.Duration,
 	peerstore corekv.ReaderWriter,
 ) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	key := keys.NewReplicatorRetryIDKey(peerID)
 	b, err := peerstore.Get(ctx, key.Bytes())
 	if err != nil {
@@ -800,6 +806,9 @@ func deleteReplicatorRetryIfNoMoreDocs(
 	peerID string,
 	peerstore corekv.ReaderWriter,
 ) (bool, error) {
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
 	entries, err := datastore.FetchKeysForPrefix(
 		ctx,
 		keys.NewReplicatorRetryDocIDKey(peerID, "").Bytes(),
@@ -818,6 +827,9 @@ func deleteReplicatorRetryIfNoMoreDocs(
 
 // deleteReplicatorRetryAndDocs deletes the replicator retry and all retry docs.
 func (p *P2P) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	key := keys.NewReplicatorRetryIDKey(peerID)
 	err := p.db.Multistore().Peerstore().Delete(ctx, key.Bytes())
 	if err != nil {
