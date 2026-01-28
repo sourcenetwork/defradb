@@ -39,10 +39,12 @@ type unsafeDatastore interface {
 // storeArtifacts stores SE artifacts directly in the datastore.
 func storeArtifacts(
 	ctx context.Context,
-	ds datastore.Keyedstore,
-	ss corekv.ReaderWriter,
+	ms *datastore.Multistore,
 	artifacts []secore.Artifact,
 ) error {
+	ss := ms.Systemstore()
+	ds := ms.Datastore().(unsafeDatastore).Unsafe()
+
 	for _, artifact := range artifacts {
 		colID, err := id.NewShortCollectionID(ctx, artifact.CollectionID, ss)
 		if err != nil {
@@ -56,7 +58,7 @@ func storeArtifacts(
 			DocID:             artifact.DocID,
 		}
 
-		if err := ds.(unsafeDatastore).Unsafe().Set(ctx, key.Bytes(), []byte{}); err != nil {
+		if err := ds.Set(ctx, key.Bytes(), []byte{}); err != nil {
 			return err
 		}
 	}
@@ -68,11 +70,13 @@ func storeArtifacts(
 // and returns the document IDs for documents that match all queries.
 func fetchDocIDs(
 	ctx context.Context,
-	ds datastore.Keyedstore,
-	ss corekv.ReaderWriter,
+	ms *datastore.Multistore,
 	collectionID string,
 	queries []fieldQuery,
 ) ([]string, error) {
+	ss := ms.Systemstore()
+	ds := ms.Datastore().(unsafeDatastore).Unsafe()
+
 	docIDSet := make(map[string]struct{})
 
 	colID, err := id.NewShortCollectionID(ctx, collectionID, ss)
@@ -87,7 +91,7 @@ func fetchDocIDs(
 			IndexID:           query.IndexID,
 			SearchTag:         query.SearchTag,
 		}
-		iter, err := ds.(unsafeDatastore).Unsafe().Iterator(ctx, corekv.IterOptions{
+		iter, err := ds.Iterator(ctx, corekv.IterOptions{
 			Prefix: key.Bytes(),
 		})
 		if err != nil {
