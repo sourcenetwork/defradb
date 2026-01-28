@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -35,12 +36,11 @@ var createPattern = dataMap{
 
 func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (default) mutation request with create.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					create_Author(input: {name: "Shahzad Lone", age: 27, verified: true}) {
@@ -51,7 +51,7 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 
 				ExpectedPatterns: createPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "createNode",
 						IncludeChildNodes: false,
@@ -73,12 +73,11 @@ func TestDefaultExplainMutationRequestWithCreate(t *testing.T) {
 
 func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (default) mutation request with create, document exists.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					create_Author(input: {name: "Shahzad Lone", age: 27}) {
@@ -89,7 +88,7 @@ func TestDefaultExplainMutationRequestDoesNotCreateDocGivenDuplicate(t *testing.
 
 				ExpectedPatterns: createPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "createNode",
 						IncludeChildNodes: false,

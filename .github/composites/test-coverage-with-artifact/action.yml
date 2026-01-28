@@ -25,20 +25,15 @@ inputs:
 
 runs:
   # This is a composite action, setting this is required.
-  using: "composite"
+  using: 'composite'
 
   steps:
     - name: Run integration tests
       shell: bash # It's required for run step to specify shell in a composite action.
       run: make test:coverage
 
-    - name: Upload coverage artifact
-      uses: actions/upload-artifact@v4
+    - name: Save coverage report in an artifact
+      uses: ./.github/composites/upload-coverage-artifact
       with:
-        # Make sure the name is always unique per job as artifacts are now immutable.
-        # Note Issue: https://github.com/actions/upload-artifact/issues/478
-        # Solve: https://github.com/actions/upload-artifact/issues/478#issuecomment-1885470013
-        name: ${{ inputs.coverage-artifact-name }}
-        path: ${{ inputs.coverage-path }}
-        if-no-files-found: error
-        retention-days: 7
+        coverage-artifact-name: ${{ inputs.coverage-artifact-name }}
+        coverage-path: ${{ inputs.coverage-path }}

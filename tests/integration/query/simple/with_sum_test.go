@@ -13,14 +13,14 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, sum on undefined object",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_sum
 				}`,
@@ -34,9 +34,8 @@ func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 
 func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, sum on undefined field",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_sum(Users: {})
 				}`,
@@ -50,9 +49,8 @@ func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 
 func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, sum on empty",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_sum(Users: {field: Age})
 				}`,
@@ -68,21 +66,20 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 
 func TestQuerySimpleWithSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query, sum",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_sum(Users: {field: Age})
 				}`,

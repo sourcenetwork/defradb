@@ -13,42 +13,42 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithGroupByWithGroupWithDocIDs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with docIDs filter on _group",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Fred",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Shahzad",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_group(docID: ["bae-d4303725-7db9-53d2-b324-f3ee44020e52", "bae-19b16890-5f24-5e5b-8822-ed2a97ebcc24"]) {
+						_group(docID: ["bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b", "bae-1b3c71c0-3632-58b6-9a6a-b3c72713e9fe"]) {
 							Name
 						}
 					}
@@ -59,10 +59,10 @@ func TestQuerySimpleWithGroupByWithGroupWithDocIDs(t *testing.T) {
 							"Age": int64(21),
 							"_group": []map[string]any{
 								{
-									"Name": "Fred",
+									"Name": "John",
 								},
 								{
-									"Name": "John",
+									"Name": "Fred",
 								},
 							},
 						},
@@ -72,6 +72,7 @@ func TestQuerySimpleWithGroupByWithGroupWithDocIDs(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

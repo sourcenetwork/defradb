@@ -1,0 +1,391 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package sync_test
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/tests/action"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestDocSync_WithDocsAvailableOnSingleNode_ShouldSync(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			&action.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			&action.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "Andy",
+					"Age": 25
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.SyncDocs{
+				NodeID:       1,
+				CollectionID: 0,
+				DocIDs:       []int{0, 1},
+				SourceNodes:  []int{0, 0}, // Both documents are from node 0
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+						{
+							"Name": "Andy",
+							"Age":  int64(25),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocSync_WithDocsAvailableOnMultipleNode_ShouldSync(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			&action.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			&action.CreateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"Name": "Andy",
+					"Age": 25
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 2,
+			},
+			testUtils.SyncDocs{
+				NodeID:      2,
+				DocIDs:      []int{0, 1},
+				SourceNodes: []int{0, 1}, // Document 0 is from node 0, document 1 is from node 1
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				NodeID: immutable.Some(2),
+				Request: `query {
+					Users {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+						{
+							"Name": "Andy",
+							"Age":  int64(25),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocSync_WithSingleDocAvailableOnMultipleNode_ShouldSync(t *testing.T) {
+	createDocOnNode := func(nodeId int) *action.CreateDoc {
+		return &action.CreateDoc{
+			NodeID: immutable.Some(nodeId),
+			Doc: `{
+				"Name": "John",
+				"Age": 21
+			}`,
+		}
+	}
+
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+				type Users {
+					Name: String
+					Age: Int
+				}
+			`,
+			},
+			createDocOnNode(0),
+			createDocOnNode(1),
+			createDocOnNode(2),
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 3,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 3,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 2,
+				TargetNodeID: 3,
+			},
+			testUtils.SyncDocs{
+				NodeID:      3,
+				DocIDs:      []int{0},
+				SourceNodes: []int{0},
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				NodeID: immutable.Some(3),
+				Request: `query {
+					Users {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+const docSyncTopic = "doc-sync"
+
+func TestDocSync_WithDifferentVersionsOnPeers_ShouldSyncLatest(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"Age": 22
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(2),
+				Doc: `{
+					"Age": 23
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(3),
+				Doc: `{
+					"Age": 24
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(1),
+				Doc: `{
+					"Age": 25
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(3),
+				Doc: `{
+					"Age": 26
+				}`,
+			},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(3),
+				Doc: `{
+					"Age": 27
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 2,
+				TargetNodeID: 3,
+			},
+			&action.WaitForPeersEvents{
+				NodeID: 0,
+				ExpectedPeersByTopic: map[string][]int{
+					docSyncTopic: {1, 2, 3},
+				},
+			},
+			testUtils.SyncDocs{
+				NodeID:       0,
+				CollectionID: 0,
+				DocIDs:       []int{0},
+				SourceNodes:  []int{1, 2, 3},
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				NodeID: immutable.Some(0),
+				Request: `query {
+					Users {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(27),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestDocSync_AfterSync_ShouldNotSubscribeToDocUpdates(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						Name: String
+						Age: Int
+					}
+				`,
+			},
+			&action.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Name": "John",
+					"Age": 21
+				}`,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 0,
+				TargetNodeID: 1,
+			},
+			testUtils.SyncDocs{
+				NodeID:       1,
+				CollectionID: 0,
+				DocIDs:       []int{0},
+				SourceNodes:  []int{0},
+			},
+			testUtils.WaitForSync{},
+			testUtils.UpdateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+					"Age": 22
+				}`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				NodeID: immutable.Some(1),
+				Request: `query {
+					Users {
+						Name
+						Age
+					}
+				}`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

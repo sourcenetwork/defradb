@@ -13,14 +13,14 @@ package one_to_many_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-M Query to ensure joins are linked properly.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -44,7 +44,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John Grisham",
@@ -52,7 +52,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -60,7 +60,7 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Not a Writer",
@@ -68,109 +68,109 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "The Rooster Bar",
 					"rating":    4,
-					"author_id": testUtils.NewDocIndex(0, 1),
+					"_authorID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
 					"rating":    4.8,
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "The Associate",
 					"rating":    4.2,
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
 					"rating":    4.9,
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
 					"rating":    4.5,
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
 					"rating":    3.2,
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of The Rooster Bar",
 					"address":    "1 Rooster Ave., Waterloo, Ontario",
 					"yearOpened": 2022,
-					"book_id":    testUtils.NewDocIndex(1, 0),
+					"_bookID":    testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of Theif Lord",
 					"address":    "1 Theif Lord, Waterloo, Ontario",
 					"yearOpened": 2020,
-					"book_id":    testUtils.NewDocIndex(1, 1),
+					"_bookID":    testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of Painted House",
 					"address":    "600 Madison Ave., New York, New York",
 					"yearOpened": 1995,
-					"book_id":    testUtils.NewDocIndex(1, 3),
+					"_bookID":    testUtils.NewDocIndex(1, 3),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of A Time for Mercy",
 					"address":    "123 Andrew Street, Flin Flon, Manitoba",
 					"yearOpened": 2013,
-					"book_id":    testUtils.NewDocIndex(1, 4),
+					"_bookID":    testUtils.NewDocIndex(1, 4),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "First of Two Publishers of Sooley",
 					"address":    "11 Sooley Ave., Waterloo, Ontario",
 					"yearOpened": 1999,
-					"book_id":    testUtils.NewDocIndex(1, 5),
+					"_bookID":    testUtils.NewDocIndex(1, 5),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Second of Two Publishers of Sooley",
 					"address":    "22 Sooley Ave., Waterloo, Ontario",
 					"yearOpened": 2000,
-					"book_id":    testUtils.NewDocIndex(1, 5),
+					"_bookID":    testUtils.NewDocIndex(1, 5),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						_docID
@@ -193,25 +193,14 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 							"name":   "Not a Writer",
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_docID": testUtils.NewDocIndex(0, 1),
-							"book": []map[string]any{
-								{
-									"_docID": testUtils.NewDocIndex(1, 0),
-									"name":   "The Rooster Bar",
-									"publisher": []map[string]any{
-										{
-											"_docID": testUtils.NewDocIndex(2, 0),
-											"name":   "Only Publisher of The Rooster Bar",
-										},
-									},
-								},
-							},
-						},
-						{
 							"name":   "John Grisham",
 							"_docID": testUtils.NewDocIndex(0, 0),
 							"book": []map[string]any{
+								{
+									"_docID":    testUtils.NewDocIndex(1, 2),
+									"name":      "The Associate",
+									"publisher": []map[string]any{},
+								},
 								{
 									"_docID": testUtils.NewDocIndex(1, 3),
 									"name":   "Painted House",
@@ -221,25 +210,6 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 											"name":   "Only Publisher of Painted House",
 										},
 									},
-								},
-								{
-									"_docID": testUtils.NewDocIndex(1, 5),
-									"name":   "Sooley",
-									"publisher": []map[string]any{
-										{
-											"_docID": testUtils.NewDocIndex(2, 5),
-											"name":   "Second of Two Publishers of Sooley",
-										},
-										{
-											"_docID": testUtils.NewDocIndex(2, 4),
-											"name":   "First of Two Publishers of Sooley",
-										},
-									},
-								},
-								{
-									"_docID":    testUtils.NewDocIndex(1, 2),
-									"name":      "The Associate",
-									"publisher": []map[string]any{},
 								},
 								{
 									"_docID": testUtils.NewDocIndex(1, 1),
@@ -261,10 +231,41 @@ func TestOneToManyToManyJoinsAreLinkedProperly(t *testing.T) {
 										},
 									},
 								},
+								{
+									"_docID": testUtils.NewDocIndex(1, 5),
+									"name":   "Sooley",
+									"publisher": []map[string]any{
+										{
+											"_docID": testUtils.NewDocIndex(2, 4),
+											"name":   "First of Two Publishers of Sooley",
+										},
+										{
+											"_docID": testUtils.NewDocIndex(2, 5),
+											"name":   "Second of Two Publishers of Sooley",
+										},
+									},
+								},
+							},
+						},
+						{
+							"name":   "Cornelia Funke",
+							"_docID": testUtils.NewDocIndex(0, 1),
+							"book": []map[string]any{
+								{
+									"_docID": testUtils.NewDocIndex(1, 0),
+									"name":   "The Rooster Bar",
+									"publisher": []map[string]any{
+										{
+											"_docID": testUtils.NewDocIndex(2, 0),
+											"name":   "Only Publisher of The Rooster Bar",
+										},
+									},
+								},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

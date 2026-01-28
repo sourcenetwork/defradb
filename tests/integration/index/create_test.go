@@ -13,81 +13,32 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Creation of index with collection should not hinder querying",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
-					type Users {
+					type User {
 						name: String @index
 						age: Int
 					}
 				`,
 			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				// bae-d4303725-7db9-53d2-b324-f3ee44020e52
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
-				Request: `
-					query  {
-						Users {
-							name
-							age
-						}
-					}`,
-				Results: map[string]any{
-					"Users": []map[string]any{
-						{
-							"name": "John",
-							"age":  int64(21),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Creation of index separately from a collection should not hinder querying",
-		Actions: []any{
-			testUtils.SchemaUpdate{
-				Schema: `
-					type User {
-						name: String 
-						age: Int
-					}
-				`,
-			},
-			testUtils.CreateDoc{
-				CollectionID: 0,
-				// bae-d4303725-7db9-53d2-b324-f3ee44020e52
-				Doc: `
-					{
-						"name":	"John",
-						"age":	21
-					}`,
-			},
-			testUtils.CreateIndex{
-				CollectionID: 0,
-				IndexName:    "some_index",
-				FieldName:    "name",
-			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -104,6 +55,77 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 					},
 				},
 			},
+			&action.GetIndexes{
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "User_name_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name: "name",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String 
+						age: Int
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `
+					{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			&action.CreateIndex{
+				IndexName: "some_index",
+				FieldName: "name",
+			},
+			&action.Request{
+				Request: `
+					query  {
+						User {
+							name
+							age
+						}
+					}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"name": "John",
+							"age":  int64(21),
+						},
+					},
+				},
+			},
+			&action.GetIndexes{
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "some_index",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name: "name",
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -112,9 +134,8 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 
 func TestIndexCreate_IfInvalidIndexName_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If invalid index name is provided, return error",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String 
@@ -122,11 +143,29 @@ func TestIndexCreate_IfInvalidIndexName_ReturnError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateIndex{
+			&action.CreateIndex{
 				CollectionID:  0,
 				IndexName:     "!",
 				FieldName:     "Name",
 				ExpectedError: schema.NewErrIndexWithInvalidName("!").Error(),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestIndexCreate_IfGivenSameIndexName_ShouldReturnError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User @index(name: "age_index", includes: [{field: "age"}]) @index(name: "age_index", includes: [{field: "age"}]) {
+						name: String 
+						age: Int @index(name: "age_index")
+					}
+				`,
+				ExpectedError: db.NewErrIndexWithNameAlreadyExists("age_index").Error(),
 			},
 		},
 	}

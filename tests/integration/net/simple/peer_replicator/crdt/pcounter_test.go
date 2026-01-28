@@ -15,7 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
@@ -24,7 +26,7 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -32,7 +34,7 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -46,7 +48,7 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Shahzad",
@@ -54,7 +56,7 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -64,15 +66,15 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"points": int64(0),
+							"points": int64(3000),
 						},
 						{
-							"points": int64(3000),
+							"points": int64(0),
 						},
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -87,7 +89,7 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(2),
 				Request: `query {
 					Users {
@@ -97,10 +99,10 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"points": int64(0),
+							"points": int64(3000),
 						},
 						{
-							"points": int64(3000),
+							"points": int64(0),
 						},
 					},
 				},
@@ -117,7 +119,7 @@ func TestP2PPeerReplicatorWithUpdate_PCounter_NoError(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -125,7 +127,7 @@ func TestP2PPeerReplicatorWithUpdate_PCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10
@@ -134,6 +136,12 @@ func TestP2PPeerReplicatorWithUpdate_PCounter_NoError(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 1,
 				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.ConfigureReplicator{
 				SourceNodeID: 0,
@@ -147,7 +155,7 @@ func TestP2PPeerReplicatorWithUpdate_PCounter_NoError(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						points

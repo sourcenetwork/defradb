@@ -13,7 +13,30 @@ package event
 import (
 	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p/core/peer"
+
+	"github.com/sourcenetwork/defradb/client"
 )
+
+// Bus handles routing and publishing of messages to subscribers.
+type Bus interface {
+	// Publish broadcasts the given message to the bus subscribers. Non-blocking.
+	Publish(msg Message)
+	// Subscribe returns a new subscription that will receive all of the events
+	// contained in the given list of events.
+	Subscribe(events ...Name) (Subscription, error)
+	// Unsubscribe removes all event subscriptions and closes the subscription.
+	//
+	// Will do nothing if this object is already closed.
+	Unsubscribe(sub Subscription)
+	// Close unsubscribes all active subscribers and closes the bus.
+	Close()
+}
+
+// Subscription receives subscribed messages until closed.
+type Subscription interface {
+	// Message returns the message channel for the subscription.
+	Message() <-chan Message
+}
 
 // Name identifies an event
 type Name string
@@ -27,22 +50,22 @@ const (
 	MergeCompleteName = Name("merge-complete")
 	// UpdateName is the name of the database update event.
 	UpdateName = Name("update")
+	// SEArtifactReceivedName is the name of the SE artifact received event.
+	SEArtifactReceivedName = Name("se-artifact-received")
 	// PubSubName is the name of the network pubsub event.
 	PubSubName = Name("pubsub")
-	// P2PTopicName is the name of the network p2p topic update event.
-	P2PTopicName = Name("p2p-topic")
 	// PeerInfoName is the name of the network peer info event.
 	PeerInfoName = Name("peer-info")
 	// ReplicatorName is the name of the replicator event.
 	ReplicatorName = Name("replicator")
 	// ReplicatorFailureName is the name of the replicator failure event.
 	ReplicatorFailureName = Name("replicator-failure")
-	// P2PTopicCompletedName is the name of the network p2p topic update completed event.
-	P2PTopicCompletedName = Name("p2p-topic-completed")
 	// ReplicatorCompletedName is the name of the replicator completed event.
 	ReplicatorCompletedName = Name("replicator-completed")
 	// PurgeName is the name of the purge event.
 	PurgeName = Name("purge")
+	// TopicPeerEventName is the name of the topic peer join/leave event.
+	TopicPeerEventName = Name("topic-peer-event")
 )
 
 // PubSub is an event that is published when
@@ -63,8 +86,8 @@ type Update struct {
 	// Cid is the id of the composite commit that formed this update in the DAG.
 	Cid cid.Cid
 
-	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
-	SchemaRoot string
+	// CollectionID is the root identifier of the collection that this document goes by.
+	CollectionID string
 
 	// Block is the encoded contents of this composite commit, it contains the Cids of the field level commits that
 	// also formed this update.
@@ -73,9 +96,8 @@ type Update struct {
 	// IsRetry is true if this update is a retry of a previously failed update.
 	IsRetry bool
 
-	// Success is a channel that will receive a boolean value indicating if the update was successful.
-	// It is used during retries.
-	Success chan bool
+	// Is relay is set to true if this update is created from a P2P sync.
+	IsRelay bool
 }
 
 // Merge is a notification that a merge can be performed up to the provided CID.
@@ -84,25 +106,34 @@ type Merge struct {
 	DocID string
 
 	// ByPeer is the id of the peer that created the push log request.
-	ByPeer peer.ID
+	ByPeer string
 
 	// FromPeer is the id of the peer that received the push log request.
-	FromPeer peer.ID
+	FromPeer string
 
 	// Cid is the id of the composite commit that formed this update in the DAG.
 	Cid cid.Cid
 
-	// SchemaRoot is the root identifier of the schema that defined the shape of the document that was updated.
-	SchemaRoot string
+	// CollectionID is the root identifier of the collection that this document goes by.
+	CollectionID string
 }
 
 // MergeComplete is a notification that a merge has been completed.
 type MergeComplete struct {
 	// Merge is the merge that was completed.
 	Merge Merge
+}
 
-	// Decrypted specifies if the merge payload was decrypted.
-	Decrypted bool
+// SEArtifactReceived is a notification that SE artifacts have been successfully received.
+type SEArtifactReceived struct {
+	// DocID is the document ID for which SE artifacts were received.
+	DocID string
+
+	// CollectionID is the collection ID.
+	CollectionID string
+
+	// FieldNames are the fields for which artifacts were received.
+	FieldNames []string
 }
 
 // Message contains event info.
@@ -119,33 +150,15 @@ func NewMessage(name Name, data any) Message {
 	return Message{name, data}
 }
 
-// Subscription is a read-only event stream.
-type Subscription struct {
-	id     uint64
-	value  chan Message
-	events []Name
-}
-
-// Message returns the next event value from the subscription.
-func (s *Subscription) Message() <-chan Message {
-	return s.value
-}
-
-// P2PTopic is an event that is published when a peer has updated the topics it is subscribed to.
-type P2PTopic struct {
-	ToAdd    []string
-	ToRemove []string
-}
-
 // PeerInfo is an event that is published when the node has updated its peer info.
 type PeerInfo struct {
-	Info peer.AddrInfo
+	Info client.PeerInfo
 }
 
 // Replicator is an event that is published when a replicator is added or updated.
 type Replicator struct {
 	// The peer info for the replicator instance.
-	Info peer.AddrInfo
+	Info client.PeerInfo
 	// The map of schema roots that the replicator will receive updates for.
 	Schemas map[string]struct{}
 	// Docs will receive Updates if new collections have been added to the replicator
@@ -159,4 +172,14 @@ type ReplicatorFailure struct {
 	PeerID peer.ID
 	// DocID is the unique immutable identifier of the document that failed to replicate.
 	DocID string
+}
+
+// TopicPeerEvent is an event that is published when a peer joins or leaves a pubsub topic.
+type TopicPeerEvent struct {
+	// PeerID is the id of the peer that joined or left the topic.
+	PeerID string
+	// Topic is the name of the topic.
+	Topic string
+	// EventType is the type of event: "JOINED" or "LEFT".
+	EventType string
 }

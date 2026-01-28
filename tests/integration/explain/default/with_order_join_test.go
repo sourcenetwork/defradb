@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -35,12 +36,10 @@ var orderTypeJoinPattern = dataMap{
 func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with order field on a related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -65,7 +64,7 @@ func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "orderNode",
 						IncludeChildNodes: false,
@@ -91,12 +90,10 @@ func TestDefaultExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with order field on parent and related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(order: {name: ASC}) {
@@ -123,7 +120,7 @@ func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "orderNode",
 						OccurancesToSkip:  0,
@@ -165,12 +162,10 @@ func TestDefaultExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T
 func TestDefaultExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request where parent is ordered by it's related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(

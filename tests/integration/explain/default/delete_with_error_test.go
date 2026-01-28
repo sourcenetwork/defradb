@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDefaultExplainMutationRequestWithDeleteHavingNoSubSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) multation request with delete having no sub-selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					delete_Author(

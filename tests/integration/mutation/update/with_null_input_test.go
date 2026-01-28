@@ -13,26 +13,26 @@ package update
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithNullFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation, with null filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(filter: null, input: {name: "Alice"}) {
 						name
@@ -54,21 +54,20 @@ func TestMutationUpdate_WithNullFilter_Succeeds(t *testing.T) {
 
 func TestMutationUpdate_WithNullDocID_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation, with null docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(docID: null, input: {name: "Alice"}) {
 						name
@@ -90,21 +89,20 @@ func TestMutationUpdate_WithNullDocID_Succeeds(t *testing.T) {
 
 func TestMutationUpdate_WithNullDocIDs_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation, with null docIDs",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Bob",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(docID: null, input: {name: "Alice"}) {
 						name

@@ -5,16 +5,19 @@ List all document IDs (docIDs).
 ### Synopsis
 
 List all document IDs (docIDs).
-		
-Example: list all docID(s):
-  defradb client collection docIDs --name User
-
-Example: list all docID(s), with an identity:
-  defradb client collection docIDs -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User 
-		
 
 ```
 defradb client collection docIDs [-i --identity] [flags]
+```
+
+### Examples
+
+```
+list all docID(s):  
+  defradb client collection docIDs --name User
+
+list all docID(s), with an identity:  
+  defradb client collection docIDs -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User
 ```
 
 ### Options
@@ -26,6 +29,7 @@ defradb client collection docIDs [-i --identity] [flags]
 ### Options inherited from parent commands
 
 ```
+      --collection-id string        Collection ID
       --get-inactive                Get inactive collections as well as active
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
@@ -41,12 +45,11 @@ defradb client collection docIDs [-i --identity] [flags]
       --no-keyring                  Disable the keyring and generate ephemeral keys
       --no-log-color                Disable colored log output
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
-      --schema string               Collection schema Root
       --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
-      --version string              Collection version ID
+      --version-id string           Collection version ID
 ```
 
 ### SEE ALSO

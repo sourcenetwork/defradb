@@ -13,24 +13,25 @@ package encryption
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestDocEncryption_WithEncryption_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
                     type Users {
                         name: String
                         age: Int
                     }
                 `},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
                     query {
                         Users {
@@ -66,21 +67,21 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
                     type Users {
                         name: String
                         points: Int @crdt(type: pcounter)
                     }
                 `},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"John",
 						"points": 5
 					}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: query,
 				Results: map[string]any{
 					"Users": []map[string]any{
@@ -95,7 +96,7 @@ func TestDocEncryption_WithEncryptionOnCounterCRDT_ShouldFetchDecrypted(t *testi
 				DocID: 0,
 				Doc:   `{ "points": 3 }`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: query,
 				Results: map[string]any{
 					"Users": []map[string]any{

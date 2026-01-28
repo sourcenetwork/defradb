@@ -13,14 +13,14 @@ package field_kinds
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with integer array, replace with nil",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -28,7 +28,7 @@ func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -39,7 +39,7 @@ func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 					"favouriteIntegers": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -63,9 +63,8 @@ func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with integer array, replace with empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -73,7 +72,7 @@ func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -84,7 +83,7 @@ func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 					"favouriteIntegers": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -108,9 +107,8 @@ func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with integer array, replace with same size, positive values",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -118,7 +116,7 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -129,7 +127,7 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 					"favouriteIntegers": [8, 5, 3, 2, 1]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -153,9 +151,8 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with integer array, replace with same size, positive to mixed values",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -163,7 +160,7 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -174,7 +171,7 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 					"favouriteIntegers": [-1, 2, -3, 5, -8]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -198,9 +195,8 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with integer array, replace with smaller size, positive values",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -208,7 +204,7 @@ func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -219,7 +215,7 @@ func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T)
 					"favouriteIntegers": [1, 2, 3]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -243,9 +239,8 @@ func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T)
 
 func TestMutationUpdate_WithArrayOfIntsToLargerSizePositiveValues(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with integer array, replace with larger size, positive values",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -253,7 +248,7 @@ func TestMutationUpdate_WithArrayOfIntsToLargerSizePositiveValues(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -264,7 +259,7 @@ func TestMutationUpdate_WithArrayOfIntsToLargerSizePositiveValues(t *testing.T) 
 					"favouriteIntegers": [1, 2, 3, 5, 8, 13, 21]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

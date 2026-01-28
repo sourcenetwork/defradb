@@ -13,84 +13,176 @@ package cli
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-var _ datastore.Txn = (*Transaction)(nil)
+var _ client.Txn = (*Transaction)(nil)
 
 type Transaction struct {
-	tx  datastore.Txn
-	cmd *cliWrapper
+	*Wrapper
+	tx client.Txn
 }
 
-func (w *Transaction) ID() uint64 {
-	return w.tx.ID()
+func (txn *Transaction) ID() uint64 {
+	return txn.tx.ID()
 }
 
-func (w *Transaction) Commit(ctx context.Context) error {
+func (txn *Transaction) StartTS() time.Time {
+	return txn.tx.StartTS()
+}
+
+func (txn *Transaction) Commit() error {
 	args := []string{"client", "tx", "commit"}
-	args = append(args, fmt.Sprintf("%d", w.tx.ID()))
+	args = append(args, fmt.Sprintf("%d", txn.tx.ID()))
 
-	_, err := w.cmd.execute(ctx, args)
+	_, err := txn.cmd.execute(context.Background(), args)
 	return err
 }
 
-func (w *Transaction) Discard(ctx context.Context) {
+func (txn *Transaction) Discard() {
 	args := []string{"client", "tx", "discard"}
-	args = append(args, fmt.Sprintf("%d", w.tx.ID()))
+	args = append(args, fmt.Sprintf("%d", txn.tx.ID()))
 
-	w.cmd.execute(ctx, args) //nolint:errcheck
+	txn.cmd.execute(context.Background(), args) //nolint:errcheck
 }
 
-func (w *Transaction) OnSuccess(fn func()) {
-	w.tx.OnSuccess(fn)
+func (txn *Transaction) PrintDump(ctx context.Context) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.PrintDump(ctx)
 }
 
-func (w *Transaction) OnError(fn func()) {
-	w.tx.OnError(fn)
+func (txn *Transaction) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddDACPolicy(ctx, policy)
 }
 
-func (w *Transaction) OnDiscard(fn func()) {
-	w.tx.OnDiscard(fn)
+func (txn *Transaction) AddDACActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
-func (w *Transaction) OnSuccessAsync(fn func()) {
-	w.tx.OnSuccessAsync(fn)
+func (txn *Transaction) DeleteDACActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
-func (w *Transaction) OnErrorAsync(fn func()) {
-	w.tx.OnErrorAsync(fn)
+func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.GetNodeIdentity(ctx)
 }
 
-func (w *Transaction) OnDiscardAsync(fn func()) {
-	w.tx.OnDiscardAsync(fn)
+func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.VerifySignature(ctx, blockCid, pubKey)
 }
 
-func (w *Transaction) Rootstore() datastore.DSReaderWriter {
-	return w.tx.Rootstore()
+func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddSchema(ctx, sdl)
 }
 
-func (w *Transaction) Datastore() datastore.DSReaderWriter {
-	return w.tx.Datastore()
+func (txn *Transaction) PatchCollection(
+	ctx context.Context,
+	patch string,
+	migration immutable.Option[model.Lens],
+) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.PatchCollection(ctx, patch, migration)
 }
 
-func (w *Transaction) Encstore() datastore.Blockstore {
-	return w.tx.Encstore()
+func (txn *Transaction) SetActiveCollectionVersion(ctx context.Context, version string) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.SetActiveCollectionVersion(ctx, version)
 }
 
-func (w *Transaction) Headstore() datastore.DSReaderWriter {
-	return w.tx.Headstore()
+func (txn *Transaction) AddView(
+	ctx context.Context,
+	gqlQuery string,
+	sdl string,
+	transformCID immutable.Option[string],
+) ([]client.CollectionVersion, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddView(ctx, gqlQuery, sdl, transformCID)
 }
 
-func (w *Transaction) Peerstore() datastore.DSReaderWriter {
-	return w.tx.Peerstore()
+func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.RefreshViews(ctx, options)
 }
 
-func (w *Transaction) Blockstore() datastore.Blockstore {
-	return w.tx.Blockstore()
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.SetMigration(ctx, config)
 }
 
-func (w *Transaction) Systemstore() datastore.DSReaderWriter {
-	return w.tx.Systemstore()
+func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.AddLens(ctx, lens)
+}
+
+func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.ListLenses(ctx)
+}
+
+func (txn *Transaction) GetCollectionByName(
+	ctx context.Context,
+	name client.CollectionName,
+) (client.Collection, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.GetCollectionByName(ctx, name)
+}
+
+func (txn *Transaction) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.GetCollections(ctx, options)
+}
+
+func (txn *Transaction) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.GetAllIndexes(ctx)
+}
+
+func (txn *Transaction) ExecRequest(
+	ctx context.Context,
+	request string,
+	opts ...client.RequestOption,
+) *client.RequestResult {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.ExecRequest(ctx, request, opts...)
+}
+
+func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.BasicImport(ctx, filepath)
+}
+
+func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Wrapper.BasicExport(ctx, config)
 }

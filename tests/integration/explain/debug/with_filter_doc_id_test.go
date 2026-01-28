@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDebugExplainRequestWithDocIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docID filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(docID: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
@@ -45,12 +44,10 @@ func TestDebugExplainRequestWithDocIDFilter(t *testing.T) {
 func TestDebugExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docIDs filter using one ID.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(docID: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
@@ -70,12 +67,10 @@ func TestDebugExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 func TestDebugExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docIDs filter using multiple but duplicate IDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(
@@ -100,12 +95,10 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *test
 func TestDebugExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with docIDs filter using multiple unique IDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(
@@ -130,12 +123,10 @@ func TestDebugExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T)
 func TestDebugExplainRequestWithMatchingIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with a filter to match ID.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(

@@ -13,36 +13,36 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // Note: this test should follow a different code path to `_avg` on it's own
 // utilising the existing `_count` node instead of adding a new one.  This test cannot
-// verify that that code path is taken, but it does verfiy that the correct result
+// verify that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndCount(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, average and sum on non-rendered group integer value",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 38
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": -19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name

@@ -13,14 +13,14 @@ package one_to_one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple one to one to many query, from primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Indicator {
 						name: String
@@ -39,27 +39,27 @@ func TestQueryOneToOneToMany(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"Indicator1"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Observable1",
-					"indicator_id": testUtils.NewDocIndex(0, 0),
+					"_indicatorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":          "Observation1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query  {
 							Observation {
 								name
@@ -93,9 +93,8 @@ func TestQueryOneToOneToMany(t *testing.T) {
 
 func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple one to one to many query, secondary direction across the one to many",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Indicator {
 						name: String
@@ -114,27 +113,27 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Observable1",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Indicator1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":          "Observation1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query  {
 							Indicator {
 								name
@@ -170,9 +169,8 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToMany(t *testing.T) {
 
 func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple one to one to many query, secondary direction across the one to one",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Indicator {
 						name: String
@@ -191,27 +189,27 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Observable1",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":          "Indicator1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":          "Observation1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query  {
 							Observation {
 								name
@@ -245,9 +243,8 @@ func TestQueryOneToOneToManyFromSecondaryOnOneToOne(t *testing.T) {
 
 func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple one to one to many query, from secondary direction ",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Indicator {
 						name: String
@@ -266,27 +263,27 @@ func TestQueryOneToOneToManyFromSecondary(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"Indicator1"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Observable1",
-					"indicator_id": testUtils.NewDocIndex(0, 0),
+					"_indicatorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":          "Observation1",
-					"observable_id": testUtils.NewDocIndex(1, 0),
+					"_observableID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query  {
 							Indicator {
 								name

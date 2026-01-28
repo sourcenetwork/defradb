@@ -11,23 +11,18 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/http"
 )
 
-func MakeCollectionListDocIDsCommand() *cobra.Command {
+func MakeCollectionListDocIDsCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "docIDs [-i --identity]",
 		Short: "List all document IDs (docIDs).",
-		Long: `List all document IDs (docIDs).
-		
-Example: list all docID(s):
-  defradb client collection docIDs --name User
-
-Example: list all docID(s), with an identity:
-  defradb client collection docIDs -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User 
-		`,
+		Long:  `List all document IDs (docIDs).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
@@ -52,5 +47,12 @@ Example: list all docID(s), with an identity:
 			return nil
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "list all docID(s)",
+		`defradb client collection docIDs --name User`)
+
+	EmbedCLIExample(ctx, cmd, "list all docID(s), with an identity",
+		`defradb client collection docIDs -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User`)
+
 	return cmd
 }

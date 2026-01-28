@@ -13,14 +13,14 @@ package upsert
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with no filter match",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -28,13 +28,13 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
@@ -54,7 +54,7 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -64,15 +64,16 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Bob",
+							"name": "Alice",
 							"age":  int64(40),
 						},
 						{
-							"name": "Alice",
+							"name": "Bob",
 							"age":  int64(40),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -82,9 +83,8 @@ func TestMutationUpsertSimple_WithNoFilterMatch_CreatesNewDoc(t *testing.T) {
 
 func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with filter match",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -92,19 +92,19 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},
@@ -124,7 +124,7 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -134,15 +134,16 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Alice",
+							"name": "Bob",
 							"age":  int64(40),
 						},
 						{
-							"name": "Bob",
+							"name": "Alice",
 							"age":  int64(40),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -152,9 +153,8 @@ func TestMutationUpsertSimple_WithFilterMatch_UpdatesDoc(t *testing.T) {
 
 func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with multiple filter matches",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -162,19 +162,19 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
@@ -195,9 +195,8 @@ func TestMutationUpsertSimple_WithFilterMatchMultiple_ReturnsError(t *testing.T)
 
 func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with null create input",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -205,7 +204,7 @@ func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
@@ -226,9 +225,8 @@ func TestMutationUpsertSimple_WithNullCreateInput_ReturnsError(t *testing.T) {
 
 func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with null update input",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -236,7 +234,7 @@ func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {},
@@ -257,9 +255,8 @@ func TestMutationUpsertSimple_WithNullUpdateInput_ReturnsError(t *testing.T) {
 
 func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with null filter input",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -267,7 +264,7 @@ func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: null,
@@ -288,9 +285,8 @@ func TestMutationUpsertSimple_WithNullFilterInput_ReturnsError(t *testing.T) {
 
 func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple upsert mutation with unique composite index and update",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @index(includes: [{field: "name"}, {field: "age"}], unique: true) {
 						name: String 
@@ -298,19 +294,19 @@ func TestMutationUpsertSimple_WithUniqueCompositeIndexAndDuplicateUpdate_Returns
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Alice",
 					"age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bob",
 					"age": 50
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					upsert_Users(
 						filter: {name: {_eq: "Bob"}},

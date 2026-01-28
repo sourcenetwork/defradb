@@ -13,13 +13,14 @@ package encryption
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestDocEncryption_WithEncryptionOnBothRelations_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -33,14 +34,14 @@ func TestDocEncryption_WithEncryptionOnBothRelations_ShouldFetchDecrypted(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Chris"
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -49,7 +50,7 @@ func TestDocEncryption_WithEncryptionOnBothRelations_ShouldFetchDecrypted(t *tes
 				},
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name
@@ -82,7 +83,7 @@ func TestDocEncryption_WithEncryptionOnBothRelations_ShouldFetchDecrypted(t *tes
 func TestDocEncryption_WithEncryptionOnPrimaryRelations_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -96,13 +97,13 @@ func TestDocEncryption_WithEncryptionOnPrimaryRelations_ShouldFetchDecrypted(t *
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Chris"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -111,7 +112,7 @@ func TestDocEncryption_WithEncryptionOnPrimaryRelations_ShouldFetchDecrypted(t *
 				},
 				IsDocEncrypted: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name
@@ -144,7 +145,7 @@ func TestDocEncryption_WithEncryptionOnPrimaryRelations_ShouldFetchDecrypted(t *
 func TestDocEncryption_WithEncryptionOnSecondaryRelations_ShouldFetchDecrypted(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -158,14 +159,14 @@ func TestDocEncryption_WithEncryptionOnSecondaryRelations_ShouldFetchDecrypted(t
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Chris"
 				}`,
 				IsDocEncrypted: true,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -173,7 +174,7 @@ func TestDocEncryption_WithEncryptionOnSecondaryRelations_ShouldFetchDecrypted(t
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name

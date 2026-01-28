@@ -11,6 +11,8 @@
 package fetcher
 
 import (
+	"context"
+
 	"github.com/bits-and-blooms/bitset"
 	"github.com/fxamacker/cbor/v2"
 
@@ -22,7 +24,7 @@ type EncodedDocument interface {
 	// ID returns the ID of the document
 	ID() []byte
 
-	SchemaVersionID() string
+	CollectionVersionID() string
 
 	// Status returns the document status.
 	//
@@ -31,7 +33,7 @@ type EncodedDocument interface {
 
 	// Properties returns a copy of the decoded property values mapped by their field
 	// description.
-	Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error)
+	Properties(onlyFilterProps bool) (map[client.CollectionFieldDescription]any, error)
 
 	// Reset re-initializes the EncodedDocument object.
 	Reset()
@@ -41,7 +43,7 @@ type EPTuple []encProperty
 
 // EncProperty is an encoded property of a EncodedDocument
 type encProperty struct {
-	Desc client.FieldDefinition
+	Desc client.CollectionFieldDescription
 	Raw  []byte
 
 	// Filter flag to determine if this flag
@@ -66,10 +68,10 @@ func (e encProperty) Decode() (any, error) {
 // @todo: Implement Encoded Document type
 type encodedDocument struct {
 	id                   []byte
-	schemaVersionID      string
+	collectionVersionID  string
 	status               client.DocumentStatus
-	properties           map[client.FieldDefinition]*encProperty
-	decodedPropertyCache map[client.FieldDefinition]any
+	properties           map[client.CollectionFieldDescription]*encProperty
+	decodedPropertyCache map[client.CollectionFieldDescription]any
 
 	// tracking bitsets
 	// A value of 1 indicates a required field
@@ -86,8 +88,8 @@ func (encdoc *encodedDocument) ID() []byte {
 	return encdoc.id
 }
 
-func (encdoc *encodedDocument) SchemaVersionID() string {
-	return encdoc.schemaVersionID
+func (encdoc *encodedDocument) CollectionVersionID() string {
+	return encdoc.collectionVersionID
 }
 
 func (encdoc *encodedDocument) Status() client.DocumentStatus {
@@ -96,23 +98,26 @@ func (encdoc *encodedDocument) Status() client.DocumentStatus {
 
 // Reset re-initializes the EncodedDocument object.
 func (encdoc *encodedDocument) Reset() {
-	encdoc.properties = make(map[client.FieldDefinition]*encProperty, 0)
+	encdoc.properties = make(map[client.CollectionFieldDescription]*encProperty, 0)
 	encdoc.id = nil
 	encdoc.filterSet = nil
 	encdoc.selectSet = nil
-	encdoc.schemaVersionID = ""
+	encdoc.collectionVersionID = ""
 	encdoc.status = 0
 	encdoc.decodedPropertyCache = nil
 }
 
 // Decode returns a properly decoded document object
-func Decode(encdoc EncodedDocument, collectionDefinition client.CollectionDefinition) (*client.Document, error) {
+func Decode(ctx context.Context,
+	encdoc EncodedDocument,
+	collection client.CollectionVersion,
+) (*client.Document, error) {
 	docID, err := client.NewDocIDFromString(string(encdoc.ID()))
 	if err != nil {
 		return nil, err
 	}
 
-	doc, err := client.NewDocWithID(docID, collectionDefinition)
+	doc, err := client.NewDocWithID(ctx, docID, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +127,7 @@ func Decode(encdoc EncodedDocument, collectionDefinition client.CollectionDefini
 	}
 
 	for desc, val := range properties {
-		err = doc.Set(desc.Name, val)
+		err = doc.Set(ctx, desc.Name, val)
 		if err != nil {
 			return nil, err
 		}
@@ -149,14 +154,20 @@ func (encdoc *encodedDocument) MergeProperties(other EncodedDocument) {
 	if other.ID() != nil {
 		encdoc.id = other.ID()
 	}
-	if other.SchemaVersionID() != "" {
-		encdoc.schemaVersionID = other.SchemaVersionID()
+	if other.CollectionVersionID() != "" {
+		encdoc.collectionVersionID = other.CollectionVersionID()
 	}
 }
 
 // DecodeToDoc returns a decoded document as a
 // map of field/value pairs
-func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter bool) (core.Doc, error) {
+func DecodeToDoc(
+	ctx context.Context,
+	collectionShortID uint32,
+	encdoc EncodedDocument,
+	mapping *core.DocumentMapping,
+	filter bool,
+) (core.Doc, error) {
 	doc := mapping.NewDoc()
 	doc.SetID(string(encdoc.ID()))
 
@@ -166,19 +177,20 @@ func DecodeToDoc(encdoc EncodedDocument, mapping *core.DocumentMapping, filter b
 	}
 
 	for desc, value := range properties {
-		doc.Fields[desc.ID] = value
+		index := mapping.FirstIndexOfName(desc.Name)
+		doc.Fields[index] = value
 	}
 
-	doc.SchemaVersionID = encdoc.SchemaVersionID()
+	doc.CollectionVersionID = encdoc.CollectionVersionID()
 	doc.Status = encdoc.Status()
 
 	return doc, nil
 }
 
-func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.FieldDefinition]any, error) {
-	result := map[client.FieldDefinition]any{}
+func (encdoc *encodedDocument) Properties(onlyFilterProps bool) (map[client.CollectionFieldDescription]any, error) {
+	result := map[client.CollectionFieldDescription]any{}
 	if encdoc.decodedPropertyCache == nil {
-		encdoc.decodedPropertyCache = map[client.FieldDefinition]any{}
+		encdoc.decodedPropertyCache = map[client.CollectionFieldDescription]any{}
 	}
 
 	for _, prop := range encdoc.properties {

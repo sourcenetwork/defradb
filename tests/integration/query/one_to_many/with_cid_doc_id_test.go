@@ -13,18 +13,18 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // This test is for documentation reasons only. This is not
 // desired behaviour (should just return empty).
 // func TestQueryOneToManyWithUnknownCidAndDocID(t *testing.T) {
-// 	test := testUtils.RequestTestCase{
-// 		Description: "One-to-many relation query from one side with unknown cid and docID",
+// 	test := &action.Request{TestCase{
 // 		Request: `query {
 // 					Book (
 // 							cid: "bafybeicgwjdyqyuntdop5ytpsfrqg5a4t2r25pfv6prfppl5ta5k5altca",
-// 							docID: "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+// 							docID: "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 // 						) {
 // 						name
 // 						author {
@@ -34,15 +34,15 @@ import (
 // 				}`,
 // 		Docs: map[int][]string{
 // 			//books
-// 			0: { // bae-be6d8024-4953-5a92-84b4-f042d25230c6
+// 			0: { // bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25
 // 				`{
 // 					"name": "Painted House",
 // 					"rating": 4.9,
-// 					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+// 					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 // 				}`,
 // 			},
 // 			//authors
-// 			1: { // bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
+// 			1: { // bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 // 				`{
 // 					"name": "John Grisham",
 // 					"age": 65,
@@ -65,9 +65,8 @@ import (
 
 func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side with cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -83,29 +82,29 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
-				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
+				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
-				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
+				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
-							cid: "bafyreiasdwoa6u2irf3x3mpogkzlzfhyl7ugzzigiyzgecnlryqmiqf4fi"
-							docID: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"
+							cid: "bafyreial4br7zz2teyhegjcijy2hw6i3oirvxyjxdbrjjnhxmhkphd3l2q"
+							docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 						) {
 						name
 						author {
@@ -136,9 +135,8 @@ func TestQueryOneToManyWithCidAndDocID(t *testing.T) {
 // to parent state).
 func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side with child update and parent cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -154,18 +152,18 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
-				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
+				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
-				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
+				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -178,11 +176,11 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 					"age": 22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
-							cid: "bafyreiasdwoa6u2irf3x3mpogkzlzfhyl7ugzzigiyzgecnlryqmiqf4fi",
-							docID: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"
+							cid: "bafyreial4br7zz2teyhegjcijy2hw6i3oirvxyjxdbrjjnhxmhkphd3l2q",
+							docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 						) {
 						name
 						author {
@@ -211,9 +209,8 @@ func TestQueryOneToManyWithChildUpdateAndFirstCidAndDocID(t *testing.T) {
 
 func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side with parent update and parent cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -229,18 +226,18 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
-				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
+				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
-				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
+				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -253,11 +250,11 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 					"rating": 4.5
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreiasdwoa6u2irf3x3mpogkzlzfhyl7ugzzigiyzgecnlryqmiqf4fi",
-						docID: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"
+						cid: "bafyreial4br7zz2teyhegjcijy2hw6i3oirvxyjxdbrjjnhxmhkphd3l2q",
+						docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 					) {
 						name
 						rating
@@ -286,9 +283,8 @@ func TestQueryOneToManyWithParentUpdateAndFirstCidAndDocID(t *testing.T) {
 
 func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from one side with parent update and parent cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -304,18 +300,18 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
-				// bae-be6d8024-4953-5a92-84b4-f042d25230c6
+				// bae-82bbdc18-aa15-57b8-83af-795a752b3b8f
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
-				// bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b
+				// bae-9d52c335-c8e3-5782-8daa-e359c106e0ab
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
@@ -328,11 +324,11 @@ func TestQueryOneToManyWithParentUpdateAndLastCidAndDocID(t *testing.T) {
 					"rating": 4.5
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book (
-						cid: "bafyreibisnyjsjsmfd5hgaxt5sn4ktjwr2tisyl7khxr753sa35un3zyoq",
-						docID: "bae-064f13c1-7726-5d53-8eec-c395d94da4d0"
+						cid: "bafyreifxbqpzvepc2rseagci6beohmv3qr3knjnfddzk7oqru5su7bdtpi",
+						docID: "bae-82bbdc18-aa15-57b8-83af-795a752b3b8f"
 					) {
 						name
 						rating

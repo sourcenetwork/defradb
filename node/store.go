@@ -12,8 +12,10 @@ package node
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/corekv"
 )
 
 type StoreType string
@@ -29,7 +31,7 @@ const (
 //
 // Is is populated by the `init` functions in the runtime-specific files - this
 // allows it's population to be managed by build flags.
-var storeConstructors = map[StoreType]func(ctx context.Context, options *StoreOptions) (datastore.Rootstore, error){}
+var storeConstructors = map[StoreType]func(ctx context.Context, options *StoreOptions) (corekv.TxnStore, error){}
 
 // storePurgeFuncs is a map of [StoreType]s to store purge functions.
 //
@@ -46,9 +48,22 @@ type StoreOptions struct {
 	badgerInMemory      bool
 }
 
+// GetDefaultStorePath is a helper function that returns '$HOME/.defradb', but which
+// relies on Go to handle the platform-specific path resolution.
+func GetDefaultStorePath() string {
+	home, err := os.UserHomeDir()
+	// This should never error on any major platform. But if it does, as a fallback,
+	// we will leave the root directory path blank.
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".defradb")
+}
+
 // DefaultStoreOptions returns new options with default values.
 func DefaultStoreOptions() *StoreOptions {
 	return &StoreOptions{
+		path:           GetDefaultStorePath(),
 		badgerInMemory: false,
 		badgerFileSize: 1 << 30,
 	}
@@ -72,16 +87,24 @@ func WithStorePath(path string) StoreOpt {
 }
 
 // NewStore returns a new store with the given options.
-func NewStore(ctx context.Context, opts ...StoreOpt) (datastore.Rootstore, error) {
+func NewStore(ctx context.Context, opts ...StoreOpt) (corekv.TxnStore, bool, error) {
 	options := DefaultStoreOptions()
 	for _, opt := range opts {
 		opt(options)
 	}
+
+	var isValueSizeLimited bool
+	if options.badgerInMemory {
+		isValueSizeLimited = true
+	}
+
 	storeConstructor, ok := storeConstructors[options.store]
 	if ok {
-		return storeConstructor(ctx, options)
+		store, err := storeConstructor(ctx, options)
+		return store, isValueSizeLimited, err
 	}
-	return nil, NewErrStoreTypeNotSupported(options.store)
+
+	return nil, false, NewErrStoreTypeNotSupported(options.store)
 }
 
 func purgeStore(ctx context.Context, opts ...StoreOpt) error {

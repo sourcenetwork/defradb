@@ -13,14 +13,13 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) with order field on parent.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -29,7 +28,7 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(order: {age: ASC}) {
 						name
@@ -73,13 +72,11 @@ func TestExecuteExplainRequestWithOrderFieldOnParent(t *testing.T) {
 func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) with multiple order fields on parent.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			// Authors
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -88,7 +85,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -97,7 +94,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -106,7 +103,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -115,7 +112,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(order: [{age: ASC}, {name: DESC}]) {
 						name
@@ -159,8 +156,6 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) with order field on child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -169,7 +164,7 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -221,8 +216,6 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) with order field on both parent and child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -231,7 +224,7 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(order: {age: ASC}) {
 						name
@@ -287,8 +280,6 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) where parent field is ordered by child field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -297,7 +288,7 @@ func TestExecuteExplainRequestWhereParentFieldIsOrderedByChildField(t *testing.T
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(
 						order: {

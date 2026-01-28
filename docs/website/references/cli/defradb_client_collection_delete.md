@@ -5,20 +5,23 @@ Delete documents by docID or filter.
 ### Synopsis
 
 Delete documents by docID or filter and lists the number of documents deleted.
-		
-Example: delete by docID:
-  defradb client collection delete  --name User --docID bae-123
-
-Example: delete by docID with identity:
-  defradb client collection delete --name User --docID bae-123 \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
-Example: delete by filter:
-  defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
-		
 
 ```
 defradb client collection delete [-i --identity] [--filter <filter> --docID <docID>] [flags]
+```
+
+### Examples
+
+```
+delete by docID:  
+  defradb client collection delete  --name User --docID bae-123
+
+delete by docID with identity:  
+  defradb client collection delete --name User --docID bae-123 \
+  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+
+delete by filter:  
+  defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'
 ```
 
 ### Options
@@ -32,6 +35,7 @@ defradb client collection delete [-i --identity] [--filter <filter> --docID <doc
 ### Options inherited from parent commands
 
 ```
+      --collection-id string        Collection ID
       --get-inactive                Get inactive collections as well as active
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
@@ -47,12 +51,11 @@ defradb client collection delete [-i --identity] [--filter <filter> --docID <doc
       --no-keyring                  Disable the keyring and generate ephemeral keys
       --no-log-color                Disable colored log output
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
-      --schema string               Collection schema Root
       --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
-      --version string              Collection version ID
+      --version-id string           Collection version ID
 ```
 
 ### SEE ALSO

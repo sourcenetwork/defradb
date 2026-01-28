@@ -17,7 +17,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // These tests document https://github.com/sourcenetwork/defradb/issues/2569
@@ -25,14 +27,14 @@ import (
 func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
+			[]state.ClientType{
 				// This issue only affects the http and the cli clients
-				testUtils.HTTPClientType,
-				testUtils.CLIClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
 			},
 		),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -40,7 +42,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g
@@ -52,7 +54,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 					"points": %g
 				}`, math.MaxFloat64/10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -70,14 +72,14 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
+			[]state.ClientType{
 				// This issue only affects the http and the cli clients
-				testUtils.HTTPClientType,
-				testUtils.CLIClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
 			},
 		),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -85,7 +87,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g
@@ -97,7 +99,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 					"points": %g
 				}`, -math.MaxFloat64/10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -115,23 +117,23 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
+			[]state.ClientType{
 				// This issue only affects the http and the cli clients
-				testUtils.HTTPClientType,
-				testUtils.CLIClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
 			},
 		),
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// We limit the test to Collection mutation calls, as the test framework
 				// will make a `Get` call before submitting the document, which is where the error
 				// will surface (not the update itelf)
-				testUtils.CollectionSaveMutationType,
-				testUtils.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
 			},
 		),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -139,7 +141,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g

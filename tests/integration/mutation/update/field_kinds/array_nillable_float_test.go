@@ -15,14 +15,14 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithArrayOfNillableFloats(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, nillable floats",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -30,7 +30,7 @@ func TestMutationUpdate_WithArrayOfNillableFloats(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, null, -0.00000000001, 10]
@@ -41,7 +41,7 @@ func TestMutationUpdate_WithArrayOfNillableFloats(t *testing.T) {
 					"favouriteFloats": [3.1425, -0.00000000001, null, 10]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

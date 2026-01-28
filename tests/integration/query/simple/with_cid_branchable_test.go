@@ -13,20 +13,21 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,
@@ -36,15 +37,15 @@ func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 					"name": "Freddddd"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreiewwsnu2ld5qlntamdm77ayb7xtmxz3p5difvaaakaome7zbtpo4u"
+							cid: "bafyreicxlkbypv4hjc2trunobsugx63no47322xfjjazj3v5y6hqeck3d4"
 						) {
 						name
 					}
@@ -66,14 +67,14 @@ func TestQuerySimpleWithCidOfBranchableCollection_FirstCid(t *testing.T) {
 func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,
@@ -83,15 +84,15 @@ func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 					"name": "Freddddd"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreifpamlyhcbriztgbhds5ctgi5rm6w5wcar2py7246lo6j5v7iusxm"
+							cid: "bafyreibc2flc7hsmj3qfw77niwtbdh54thycppxizgvqdwn2l3zpcymbpq"
 						) {
 						name
 					}
@@ -113,14 +114,14 @@ func TestQuerySimpleWithCidOfBranchableCollection_MiddleCid(t *testing.T) {
 func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,
@@ -130,15 +131,15 @@ func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 					"name": "Freddddd"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreigmt6ytph32jjxts2bij7fkne5ntionldsnklp35vcamvvl2x3a5i"
+							cid: "bafyreibyobeiqifhovshswbvezcuug6l76bz7ejm5zec47pzsmmmldz5we"
 						) {
 						name
 					}
@@ -146,13 +147,14 @@ func TestQuerySimpleWithCidOfBranchableCollection_LastCid(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name": "Freddddd",
+							"name": "John",
 						},
 						{
-							"name": "John",
+							"name": "Freddddd",
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

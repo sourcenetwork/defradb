@@ -11,6 +11,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"regexp"
 	"strings"
@@ -19,10 +20,12 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
-	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/clock"
 	"github.com/sourcenetwork/defradb/errors"
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
@@ -97,24 +100,24 @@ type Document struct {
 	// marks if document has unsaved changes
 	isDirty bool
 
-	collectionDefinition CollectionDefinition
+	collection CollectionVersion
 }
 
-func newEmptyDoc(collectionDefinition CollectionDefinition) (*Document, error) {
+func newEmptyDoc(ctx context.Context, collection CollectionVersion) (*Document, error) {
 	doc := &Document{
-		fields:               make(map[string]Field),
-		values:               make(map[Field]*FieldValue),
-		collectionDefinition: collectionDefinition,
+		fields:     make(map[string]Field),
+		values:     make(map[Field]*FieldValue),
+		collection: collection,
 	}
-	if err := doc.setDefaultValues(); err != nil {
+	if err := doc.setDefaultValues(ctx); err != nil {
 		return nil, err
 	}
 	return doc, nil
 }
 
 // NewDocWithID creates a new Document with a specified key.
-func NewDocWithID(docID DocID, collectionDefinition CollectionDefinition) (*Document, error) {
-	doc, err := newEmptyDoc(collectionDefinition)
+func NewDocWithID(ctx context.Context, docID DocID, collection CollectionVersion) (*Document, error) {
+	doc, err := newEmptyDoc(ctx, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +126,8 @@ func NewDocWithID(docID DocID, collectionDefinition CollectionDefinition) (*Docu
 }
 
 // NewDocFromMap creates a new Document from a data map.
-func NewDocFromMap(data map[string]any, collectionDefinition CollectionDefinition) (*Document, error) {
-	doc, err := newEmptyDoc(collectionDefinition)
+func NewDocFromMap(ctx context.Context, data map[string]any, collection CollectionVersion) (*Document, error) {
+	doc, err := newEmptyDoc(ctx, collection)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +145,7 @@ func NewDocFromMap(data map[string]any, collectionDefinition CollectionDefinitio
 		}
 	}
 
-	err = doc.setAndParseObjectType(data)
+	err = doc.setAndParseObjectType(ctx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -166,12 +169,12 @@ func IsJSONArray(obj []byte) bool {
 }
 
 // NewFromJSON creates a new instance of a Document from a raw JSON object byte array.
-func NewDocFromJSON(obj []byte, collectionDefinition CollectionDefinition) (*Document, error) {
-	doc, err := newEmptyDoc(collectionDefinition)
+func NewDocFromJSON(ctx context.Context, obj []byte, collection CollectionVersion) (*Document, error) {
+	doc, err := newEmptyDoc(ctx, collection)
 	if err != nil {
 		return nil, err
 	}
-	err = doc.SetWithJSON(obj)
+	err = doc.SetWithJSON(ctx, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +187,7 @@ func NewDocFromJSON(obj []byte, collectionDefinition CollectionDefinition) (*Doc
 
 // ManyFromJSON creates a new slice of Documents from a raw JSON array byte array.
 // It will return an error if the given byte array is not a valid JSON array.
-func NewDocsFromJSON(obj []byte, collectionDefinition CollectionDefinition) ([]*Document, error) {
+func NewDocsFromJSON(ctx context.Context, obj []byte, collection CollectionVersion) ([]*Document, error) {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
 		return nil, err
@@ -200,11 +203,11 @@ func NewDocsFromJSON(obj []byte, collectionDefinition CollectionDefinition) ([]*
 		if err != nil {
 			return nil, err
 		}
-		doc, err := newEmptyDoc(collectionDefinition)
+		doc, err := newEmptyDoc(ctx, collection)
 		if err != nil {
 			return nil, err
 		}
-		err = doc.setWithFastJSONObject(o)
+		err = doc.setWithFastJSONObject(ctx, o)
 		if err != nil {
 			return nil, err
 		}
@@ -222,7 +225,7 @@ func NewDocsFromJSON(obj []byte, collectionDefinition CollectionDefinition) ([]*
 // and ensures it matches the supplied field description.
 // It will do any minor parsing, like dates, and return
 // the typed value again as an interface.
-func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
+func validateFieldSchema(ctx context.Context, val any, field CollectionFieldDescription) (NormalValue, error) {
 	if field.Kind.IsNillable() {
 		if val == nil {
 			return NewNormalNil(field.Kind)
@@ -351,7 +354,7 @@ func validateFieldSchema(val any, field FieldDefinition) (NormalValue, error) {
 		return NewNormalNillableFloat32Array(v), nil
 
 	case FieldKind_NILLABLE_DATETIME:
-		v, err := getDateTime(val)
+		v, err := getDateTime(ctx, val)
 		if err != nil {
 			return nil, err
 		}
@@ -467,7 +470,7 @@ func getInt64(v any) (int64, error) {
 	}
 }
 
-func getDateTime(v any) (time.Time, error) {
+func getDateTime(ctx context.Context, v any) (time.Time, error) {
 	var s string
 	switch val := v.(type) {
 	case *fastjson.Value:
@@ -480,6 +483,10 @@ func getDateTime(v any) (time.Time, error) {
 		return val, nil
 	default:
 		s = val.(string)
+		if s == "UTC_NOW" {
+			t := clock.TimeFromContext(ctx)
+			return t.UTC(), nil
+		}
 	}
 	return time.Parse(time.RFC3339, s)
 }
@@ -668,7 +675,7 @@ func (doc *Document) GetValueWithField(f Field) (*FieldValue, error) {
 // JSON Merge Patch object. Note: fields indicated as nil in the Merge
 // Patch are to be deleted
 // @todo: Handle sub documents for SetWithJSON
-func (doc *Document) SetWithJSON(obj []byte) error {
+func (doc *Document) SetWithJSON(ctx context.Context, obj []byte) error {
 	v, err := fastjson.ParseBytes(obj)
 	if err != nil {
 		return err
@@ -678,14 +685,14 @@ func (doc *Document) SetWithJSON(obj []byte) error {
 		return err
 	}
 
-	return doc.setWithFastJSONObject(o)
+	return doc.setWithFastJSONObject(ctx, o)
 }
 
-func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
+func (doc *Document) setWithFastJSONObject(ctx context.Context, obj *fastjson.Object) error {
 	var visitErr error
 	obj.Visit(func(k []byte, v *fastjson.Value) {
 		fieldName := string(k)
-		err := doc.Set(fieldName, v)
+		err := doc.Set(ctx, fieldName, v)
 		if err != nil {
 			visitErr = err
 			return
@@ -695,32 +702,33 @@ func (doc *Document) setWithFastJSONObject(obj *fastjson.Object) error {
 }
 
 // Set the value of a field.
-func (doc *Document) Set(field string, value any) error {
-	fd, exists := doc.collectionDefinition.GetFieldByName(field)
+func (doc *Document) Set(ctx context.Context, field string, value any) error {
+	fd, exists := doc.collection.GetFieldByName(field)
 	if !exists {
 		return NewErrFieldNotExist(field)
 	}
 
-	if fd.Kind == FieldKind_DocID && strings.HasSuffix(field, request.RelatedObjectID) {
-		objFieldName := strings.TrimSuffix(field, request.RelatedObjectID)
-		ofd, exists := doc.collectionDefinition.GetFieldByName(objFieldName)
-		if exists && !ofd.IsPrimaryRelation {
-			return NewErrCannotSetRelationFromSecondarySide(field)
+	if fd.Kind == FieldKind_DocID {
+		if objFieldName, ok := request.ToRelatedObjectName(field); ok {
+			ofd, exists := doc.collection.GetFieldByName(objFieldName)
+			if exists && !ofd.IsPrimary {
+				return NewErrCannotSetRelationFromSecondarySide(field)
+			}
 		}
-	} else if fd.Kind.IsObject() && !fd.IsPrimaryRelation {
+	} else if fd.Kind.IsObject() && !fd.IsPrimary {
 		return NewErrCannotSetRelationFromSecondarySide(field)
 	}
 
 	if fd.Kind.IsObject() && !fd.Kind.IsArray() {
-		if !strings.HasSuffix(field, request.RelatedObjectID) {
-			field = field + request.RelatedObjectID
+		if _, ok := request.ToRelatedObjectName(field); !ok {
+			field = request.ToFieldID(field)
 		}
-		fd, exists = doc.collectionDefinition.GetFieldByName(field)
+		fd, exists = doc.collection.GetFieldByName(field)
 		if !exists {
 			return NewErrFieldNotExist(field)
 		}
 	}
-	val, err := validateFieldSchema(value, fd)
+	val, err := validateFieldSchema(ctx, value, fd)
 	if err != nil {
 		return err
 	}
@@ -747,9 +755,9 @@ func (doc *Document) setCBOR(t CType, field string, val NormalValue) error {
 	return doc.set(t, field, value)
 }
 
-func (doc *Document) setAndParseObjectType(value map[string]any) error {
+func (doc *Document) setAndParseObjectType(ctx context.Context, value map[string]any) error {
 	for k, v := range value {
-		err := doc.Set(k, v)
+		err := doc.Set(ctx, k, v)
 		if err != nil {
 			return err
 		}
@@ -757,12 +765,12 @@ func (doc *Document) setAndParseObjectType(value map[string]any) error {
 	return nil
 }
 
-func (doc *Document) setDefaultValues() error {
-	for _, field := range doc.collectionDefinition.GetFields() {
+func (doc *Document) setDefaultValues(ctx context.Context) error {
+	for _, field := range doc.collection.Fields {
 		if field.DefaultValue == nil {
 			continue // no default value to set
 		}
-		err := doc.Set(field.Name, field.DefaultValue)
+		err := doc.Set(ctx, field.Name, field.DefaultValue)
 		if err != nil {
 			return err
 		}
@@ -787,7 +795,7 @@ func (doc *Document) Values() map[Field]*FieldValue {
 // Bytes returns the document as a serialzed byte array using CBOR encoding.
 func (doc *Document) Bytes() ([]byte, error) {
 	// We want to ommit properties with nil values from the map, as setting a
-	// propery to nil should result in the same serialized value as ommiting the
+	// propery to nil should result in the same serialized value as ommiting
 	// the property from the document.
 	//
 	// This is particularly important for docID generation.
@@ -818,6 +826,14 @@ func (doc *Document) String() (string, error) {
 	}
 
 	return string(j), nil
+}
+
+func (doc *Document) MarshalJSON() ([]byte, error) {
+	value, err := doc.String()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(value), nil
 }
 
 // ToMap returns the document as a map[string]any object.
@@ -870,6 +886,7 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 			continue
 		}
 
+		// In the case of a document, convert it to a map recursively.
 		if value.IsDocument() {
 			subDoc := value.Value().(*Document)
 			subDocMap, err := subDoc.toMap(excludeEmpty)
@@ -877,9 +894,31 @@ func (doc *Document) toMap(excludeEmpty bool) (map[string]any, error) {
 				return nil, err
 			}
 			docMap[k] = subDocMap
+			continue
 		}
 
-		docMap[k] = value.Value()
+		normValue := value.NormalValue()
+		if normValue.IsNil() {
+			docMap[k] = nil
+			continue
+		}
+
+		// In the case of nillable arrays of nillables, we need to convert to the underlying value.
+		var innerValue any
+		if v, ok := normValue.NillableStringArray(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableIntArray(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableFloat64Array(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableFloat32Array(); ok {
+			innerValue = convertImmutable(v)
+		} else if v, ok := normValue.NillableBoolArray(); ok {
+			innerValue = convertImmutable(v)
+		} else {
+			innerValue = normValue.Unwrap()
+		}
+		docMap[k] = innerValue
 	}
 
 	return docMap, nil
@@ -921,7 +960,7 @@ func (doc *Document) GenerateDocID() (DocID, error) {
 	// The DocID must take into consideration the schema root, this ensures that
 	// otherwise identical documents created using different schema will have different
 	// document IDs - we do not want cross-schema docID collisions.
-	bytes = append(bytes, []byte(doc.collectionDefinition.Schema.Root)...)
+	bytes = append(bytes, []byte(doc.collection.CollectionID)...)
 
 	cid, err := ccid.NewSHA256CidV1(bytes)
 	if err != nil {

@@ -21,7 +21,7 @@ import (
 
 // NormalizeFieldValue takes a field value and description and converts it to the
 // standardized Defra Go type.
-func NormalizeFieldValue(fieldDesc client.FieldDefinition, val any) (any, error) {
+func NormalizeFieldValue(fieldDesc client.CollectionFieldDescription, val any) (any, error) {
 	if val == nil {
 		return nil, nil
 	}

@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDebugExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with a document ID on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(
@@ -50,12 +49,10 @@ func TestDebugExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 func TestDebugExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with document IDs and filter on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(

@@ -12,11 +12,11 @@ package encryption
 
 import (
 	"github.com/sourcenetwork/defradb/crypto"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/action"
 )
 
 // we explicitly set LWW CRDT type because we want to test encryption with this specific CRDT type
-// and we don't wat to rely on the default behavior
+// and we don't want to rely on the default behavior
 const userCollectionGQLSchema = (`
 	type Users {
 		name: String
@@ -34,12 +34,12 @@ const (
 		"name":	"Islam",
 		"age":	33
 	}`
-	john21DocID  = "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3"
-	islam33DocID = "bae-d55bd956-1cc4-5d26-aa71-b98807ad49d6"
+	john21DocID  = "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738"
+	islam33DocID = "bae-0ee3406d-fe46-59d2-b2ce-618eeb24158f"
 )
 
-func updateUserCollectionSchema() testUtils.SchemaUpdate {
-	return testUtils.SchemaUpdate{
+func updateUserCollectionSchema() *action.AddSchema {
+	return &action.AddSchema{
 		Schema: userCollectionGQLSchema,
 	}
 }

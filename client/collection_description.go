@@ -11,54 +11,56 @@
 package client
 
 import (
-	"encoding/json"
-	"fmt"
-	"math"
+	"reflect"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
-// CollectionDescription with no known root will take this ID as their temporary RootID.
+// OrphanCollectionID represents an orphan Collection.
 //
-// Orphan CollectionDescriptions are typically created when setting migrations from schema versions
-// that do not yet exist.  The OrphanRootID will be replaced with the actual RootID once a full chain
-// of schema versions leading back to a schema version used by a collection with a non-orphan RootID
-// has been established.
-const OrphanRootID uint32 = math.MaxUint32
+// Some actions may result in CollectionVersions being defined in an oprhaned state,
+// such as registering Lens migrations for version(s) that do not yet exist locally.
+//
+// Orphaned collections cannot be queried.
+const OrphanCollectionID string = "OrphanCollectionID"
 
-// CollectionDescription describes a Collection and all its associated metadata.
-type CollectionDescription struct {
+// CollectionVersion describes a Collection and all its associated metadata.
+type CollectionVersion struct {
 	// Name contains the name of the collection.
-	//
-	// It is conceptually local to the node hosting the DefraDB instance, but currently there
-	// is no means to update the local value so that it differs from the (global) schema name.
-	Name immutable.Option[string]
+	Name string
 
-	// ID is the local identifier of this collection.
-	//
-	// It is immutable.
-	ID uint32
+	// The immutable VersionID of this collection version.
+	VersionID string
 
-	// RootID is the local root identifier of this collection, linking together a chain of
-	// collection instances on different schema versions.
-	//
-	// Collections sharing the same RootID will be compatable with each other, with the documents
-	// within them shared and yielded as if they were in the same set, using Lens transforms to
-	// migrate between schema versions when provided.
-	RootID uint32
+	// The immutable ID of this collection, consistent across all versions.
+	CollectionID string
 
-	// The ID of the schema version that this collection is at.
-	SchemaVersionID string
-
-	// Sources is the set of sources from which this collection draws data.
+	// CollectionSet contains the information required to identify a collection as part of
+	// a larger set.
 	//
-	// Currently supported source types are:
-	// - [QuerySource]
-	// - [CollectionSource]
-	Sources []any
+	// These are global, deterministic properties that, like CollectionID and VersionID, are common across all
+	// Defra nodes hosting the collection.
+	//
+	// Collections only form a collection set if, at the time of their creation, they form a circular set of relations -
+	// for example if the Book collection contains a primary relation to Author, and Author contains a primary relation
+	// to Book.
+	//
+	// If this CollectionVersion is not part of a collection set, this property will be None.
+	CollectionSet immutable.Option[CollectionSetDescription]
+
+	// Query may hold a query, along with a Lens transform to source data from.
+	//
+	// If a value is provided, this Collection may not be directly written too,
+	// and it may not (yet) have its documents synced across the P2P network.
+	Query immutable.Option[QuerySource]
+
+	// PreviousVersion may hold the path details to the previous collection version.
+	//
+	// If it is None, this is either the first version, or this is an orphaned version
+	// created by setting a migration from a collection version not yet known locally.
+	PreviousVersion immutable.Option[CollectionSource]
 
 	// Fields contains the fields local to the node within this Collection.
 	//
@@ -70,6 +72,9 @@ type CollectionDescription struct {
 	// Indexes contains the secondary indexes that this Collection has.
 	Indexes []IndexDescription
 
+	// EncryptedIndexes contains the encrypted indexes that this Collection has.
+	EncryptedIndexes []EncryptedIndexDescription
+
 	// Policy contains the policy information on this collection.
 	//
 	// It is possible for a collection to not have a policy, a collection
@@ -79,6 +84,14 @@ type CollectionDescription struct {
 	// parsing is done, to avoid storing an invalid policyID or policy resource
 	// that may not even exist on acp.
 	Policy immutable.Option[PolicyDescription]
+
+	// IsActive defines whether this version of the collection is active or not.
+	//
+	// The active version will be used when accessed via various functions/endpoints,
+	// such as GQL.
+	//
+	// Only one version can be active at a time.
+	IsActive bool
 
 	// IsMaterialized defines whether the items in this collection are cached or not.
 	//
@@ -104,6 +117,19 @@ type CollectionDescription struct {
 	// that will change in the future.
 	IsBranchable bool
 
+	// IsEmbeddedOnly defines whether this collection exists only as a child object embedded within
+	// another collection or not.
+	//
+	// If true, it will not be directly queriable.
+	IsEmbeddedOnly bool
+
+	// IsPlaceholder defines whether or not this collection version is an empty placeholder waiting
+	// to be defined in this Defra node.
+	//
+	// This can happen if a migration between version ids is defined locally before the version (for
+	// example, via PatchCollection).
+	IsPlaceholder bool
+
 	// VectorEmbeddings contains the configuration for generating embedding vectors.
 	//
 	// This is only usable with array fields.
@@ -115,6 +141,25 @@ type CollectionDescription struct {
 	VectorEmbeddings []VectorEmbeddingDescription
 }
 
+// CollectionSetDescription contains the information required to identify a collection as part of
+// a larger set.
+//
+// These are global, deterministic properties that, like CollectionID and VersionID, are common across all
+// Defra nodes hosting the collection.
+//
+// Collections only form a collection set if, at the time of their creation, they form a circular set of relations -
+// for example if the Book collection contains a primary relation to Author, and Author contains a primary relation
+// to Book.
+type CollectionSetDescription struct {
+	// CollectionSetID is the ID of the collection set that this item belongs to.
+	CollectionSetID string
+
+	// RelativeID is this item's relative location within the collection set.
+	//
+	// This is currently based on Name, lexographically ascending, at the time of creation.
+	RelativeID int
+}
+
 // QuerySource represents a collection data source from a query.
 //
 // The query will be executed when data from this source is requested, and the query results
@@ -123,12 +168,12 @@ type QuerySource struct {
 	// Query contains the base query of this data source.
 	Query request.Select
 
-	// Transform is a optional Lens configuration.  If specified, data drawn from the [Query] will have the
+	// Transform is a optional Lens configuration.  If an ID is specified, data drawn from the [Query] will have the
 	// transform applied before being returned.
 	//
 	// The transform is not limited to just transforming the input documents, it may also yield new ones, or filter out
 	// those passed in from the underlying query.
-	Transform immutable.Option[model.Lens]
+	Transform immutable.Option[string]
 }
 
 // CollectionSource represents a collection data source from another collection instance.
@@ -138,29 +183,24 @@ type QuerySource struct {
 //
 // Typically these are used to link together multiple schema versions into the same dataset.
 type CollectionSource struct {
-	// SourceCollectionID is the local identifier of the source [CollectionDescription] from which to
+	// SourceCollectionID is the local identifier of the source [CollectionVersion] from which to
 	// share data.
 	//
 	// This is a bi-directional relationship, and documents in the host collection instance will also
 	// be available to the source collection instance.
-	SourceCollectionID uint32
+	SourceCollectionID string
 
-	// Transform is a optional Lens configuration.  If specified, data drawn from the source will have the
+	// Transform is a optional Lens configuration.  If an ID is specified, data drawn from the source will have the
 	// transform applied before being returned by any operation on the host collection instance.
 	//
 	// If the transform supports an inverse operation, that inverse will be applied when the source collection
 	// draws data from this host.
-	Transform immutable.Option[model.Lens]
-}
-
-// IDString returns the collection ID as a string.
-func (col CollectionDescription) IDString() string {
-	return fmt.Sprint(col.ID)
+	Transform immutable.Option[string]
 }
 
 // GetFieldByName returns the field for the given field name. If such a field is found it
 // will return it and true, if it is not found it will return false.
-func (col CollectionDescription) GetFieldByName(fieldName string) (CollectionFieldDescription, bool) {
+func (col CollectionVersion) GetFieldByName(fieldName string) (CollectionFieldDescription, bool) {
 	for _, field := range col.Fields {
 		if field.Name == fieldName {
 			return field, true
@@ -170,115 +210,24 @@ func (col CollectionDescription) GetFieldByName(fieldName string) (CollectionFie
 }
 
 // GetFieldByRelation returns the field that supports the relation of the given name.
-func (col CollectionDescription) GetFieldByRelation(
+func (col CollectionVersion) GetFieldByRelation(
 	relationName string,
 	otherCollectionName string,
 	otherFieldName string,
 ) (CollectionFieldDescription, bool) {
 	for _, field := range col.Fields {
 		if field.RelationName.Value() == relationName &&
-			!(col.Name.Value() == otherCollectionName && otherFieldName == field.Name) &&
-			field.Kind.Value() != FieldKind_DocID {
+			!(col.Name == otherCollectionName && otherFieldName == field.Name) &&
+			field.Kind != FieldKind_DocID {
 			return field, true
 		}
 	}
 	return CollectionFieldDescription{}, false
 }
 
-// QuerySources returns all the Sources of type [QuerySource]
-func (col CollectionDescription) QuerySources() []*QuerySource {
-	return sourcesOfType[*QuerySource](col)
-}
-
-// CollectionSources returns all the Sources of type [CollectionSource]
-func (col CollectionDescription) CollectionSources() []*CollectionSource {
-	return sourcesOfType[*CollectionSource](col)
-}
-
-func sourcesOfType[ResultType any](col CollectionDescription) []ResultType {
-	result := []ResultType{}
-	for _, source := range col.Sources {
-		if typedSource, isOfType := source.(ResultType); isOfType {
-			result = append(result, typedSource)
-		}
-	}
-	return result
-}
-
-// collectionDescription is a private type used to facilitate the unmarshalling
-// of json to a [CollectionDescription].
-type collectionDescription struct {
-	// These properties are unmarshalled using the default json unmarshaller
-	Name             immutable.Option[string]
-	ID               uint32
-	RootID           uint32
-	SchemaVersionID  string
-	IsMaterialized   bool
-	IsBranchable     bool
-	Policy           immutable.Option[PolicyDescription]
-	Indexes          []IndexDescription
-	Fields           []CollectionFieldDescription
-	VectorEmbeddings []VectorEmbeddingDescription
-
-	// Properties below this line are unmarshalled using custom logic in [UnmarshalJSON]
-	Sources []map[string]json.RawMessage
-}
-
-func (c *CollectionDescription) UnmarshalJSON(bytes []byte) error {
-	var descMap collectionDescription
-	err := json.Unmarshal(bytes, &descMap)
-	if err != nil {
-		return err
-	}
-
-	c.Name = descMap.Name
-	c.ID = descMap.ID
-	c.RootID = descMap.RootID
-	c.SchemaVersionID = descMap.SchemaVersionID
-	c.IsMaterialized = descMap.IsMaterialized
-	c.IsBranchable = descMap.IsBranchable
-	c.Indexes = descMap.Indexes
-	c.Fields = descMap.Fields
-	c.Sources = make([]any, len(descMap.Sources))
-	c.Policy = descMap.Policy
-	c.VectorEmbeddings = descMap.VectorEmbeddings
-
-	for i, source := range descMap.Sources {
-		sourceJson, err := json.Marshal(source)
-		if err != nil {
-			return err
-		}
-
-		var sourceValue any
-		// We detect which concrete type each `Source` object is by detecting
-		// non-nillable fields, if the key is present it must be of that type.
-		// They must be non-nillable as nil values may have their keys omitted from
-		// the json. This also relies on the fields being unique.  We may wish to change
-		// this later to custom-serialize with a `_type` property.
-		if _, ok := source["Query"]; ok {
-			// This must be a QuerySource, as only the `QuerySource` type has a `Query` field
-			var querySource QuerySource
-			err := json.Unmarshal(sourceJson, &querySource)
-			if err != nil {
-				return err
-			}
-			sourceValue = &querySource
-		} else if _, ok := source["SourceCollectionID"]; ok {
-			// This must be a CollectionSource, as only the `CollectionSource` type has a `SourceCollectionID` field
-			var collectionSource CollectionSource
-			err := json.Unmarshal(sourceJson, &collectionSource)
-			if err != nil {
-				return err
-			}
-			sourceValue = &collectionSource
-		} else {
-			return ErrFailedToUnmarshalCollection
-		}
-
-		c.Sources[i] = sourceValue
-	}
-
-	return nil
+// Equal returns true if this and the given [CollectionVersion] are equal.
+func (col CollectionVersion) Equal(other CollectionVersion) bool {
+	return reflect.DeepEqual(col, other)
 }
 
 // VectorEmbeddingDescription hold the relevant information to generate embeddings.

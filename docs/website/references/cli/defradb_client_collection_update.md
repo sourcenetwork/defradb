@@ -5,25 +5,25 @@ Update documents by docID or filter.
 ### Synopsis
 
 Update documents by docID or filter.
-		
-Example: update from string:
-  defradb client collection update --name User --docID bae-123 '{ "name": "Bob" }'
-
-Example: update by filter:
-  defradb client collection update --name User \
-  --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
-
-Example: update by docID:
-  defradb client collection update --name User \
-  --docID bae-123 --updater '{ "verified": true }'
-
-Example: update private docID, with identity:
-  defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User \
-  --docID bae-123 --updater '{ "verified": true }'
-		
 
 ```
-defradb client collection update [-i --identity] [--filter <filter> --docID <docID> --updater <updater>] <document> [flags]
+defradb client collection update [-i --identity] [--filter <filter> --docID <docID>] --updater <updater> [flags]
+```
+
+### Examples
+
+```
+update by filter:  
+  defradb client collection update --name User \
+  --filter '{ "points": { "_gte": 100 } }' --updater '{ "verified": true }'
+
+update by docID:  
+  defradb client collection update --name User \
+  --docID bae-123 --updater '{ "verified": true }'
+
+update private docID, with identity:  
+  defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User \
+  --docID bae-123 --updater '{ "verified": true }'
 ```
 
 ### Options
@@ -38,6 +38,7 @@ defradb client collection update [-i --identity] [--filter <filter> --docID <doc
 ### Options inherited from parent commands
 
 ```
+      --collection-id string        Collection ID
       --get-inactive                Get inactive collections as well as active
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
@@ -53,12 +54,11 @@ defradb client collection update [-i --identity] [--filter <filter> --docID <doc
       --no-keyring                  Disable the keyring and generate ephemeral keys
       --no-log-color                Disable colored log output
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
-      --schema string               Collection schema Root
       --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
-      --version string              Collection version ID
+      --version-id string           Collection version ID
 ```
 
 ### SEE ALSO

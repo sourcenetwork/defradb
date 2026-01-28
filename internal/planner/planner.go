@@ -14,17 +14,20 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/immutable"
+	lensStore "github.com/sourcenetwork/lens/host-go/store"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
+	"github.com/sourcenetwork/defradb/internal/se"
 )
 
 // planNode is an interface all nodes in the plan tree need to implement.
@@ -84,30 +87,42 @@ type PlanContext struct {
 	context.Context
 }
 
+// P2P defines the P2P operations needed by the planner.
+type P2P interface {
+	// QueryDocIDsWithSETags queries SE artifacts from replicators based on field values.
+	QueryDocIDsWithSETags(ctx context.Context, collectionID string, fieldValues []se.FieldValueQuery) ([]string, error)
+}
+
 // Planner combines session state and database state to
 // produce a request plan, which is run by the execution context.
 type Planner struct {
-	txn      datastore.Txn
-	identity immutable.Option[acpIdentity.Identity]
-	acp      immutable.Option[acp.ACP]
-	db       client.Store
+	identity    immutable.Option[acpIdentity.Identity]
+	nodeACP     acpDB.NACInfo
+	documentACP immutable.Option[dac.DocumentACP]
+	db          client.TxnStore
 
-	ctx context.Context
+	p2p       P2P
+	ctx       context.Context
+	lensStore lensStore.Store
 }
 
 func New(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
-	acp immutable.Option[acp.ACP],
-	db client.Store,
-	txn datastore.Txn,
+	nodeACP acpDB.NACInfo,
+	documentACP immutable.Option[dac.DocumentACP],
+	db client.TxnStore,
+	p2p P2P,
+	lensStore lensStore.Store,
 ) *Planner {
 	return &Planner{
-		txn:      txn,
-		identity: identity,
-		acp:      acp,
-		db:       db,
-		ctx:      ctx,
+		identity:    identity,
+		nodeACP:     nodeACP,
+		documentACP: documentACP,
+		db:          db,
+		p2p:         p2p,
+		lensStore:   lensStore,
+		ctx:         ctx,
 	}
 }
 
@@ -210,6 +225,10 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	// wire up source to plan
 	plan.planNode = plan.selectNode
 
+	// The similarity plan need to be expanded before group, order, aggregate and limit or otherwise
+	// it wont be taken into consideration if one of them tries to targets it.
+	p.expandSimilarityPlans(plan)
+
 	// if group
 	if plan.group != nil {
 		err := p.expandGroupNodePlan(plan)
@@ -221,8 +240,8 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 
 	p.expandAggregatePlans(plan)
 
-	// if order
-	if plan.order != nil {
+	// if we have an index that can take over ordering, we ignore the order node
+	if plan.order != nil && !isOrderedByIndex(plan.selectNode.source) {
 		plan.order.plan = plan.planNode
 		plan.planNode = plan.order
 	}
@@ -246,6 +265,13 @@ func (p *Planner) expandAggregatePlans(plan *selectTopNode) {
 		aggregate := plan.aggregates[i]
 		aggregate.SetPlan(plan.planNode)
 		plan.planNode = aggregate
+	}
+}
+
+func (p *Planner) expandSimilarityPlans(plan *selectTopNode) {
+	for _, sim := range plan.similarity {
+		sim.SetPlan(plan.planNode)
+		plan.planNode = sim
 	}
 }
 
@@ -292,18 +318,62 @@ func findFilteredByRelationFields(
 	return filteredSubFields
 }
 
+// isOrderedByIndex checks if the plan is ordered by an index.
+func isOrderedByIndex(plan planNode) bool {
+	var scan *scanNode
+	// the typeIndexJoin has 2 scan nodes for every side of the join
+	// so we need to make sure we get the scan node that is scheduled first, i.e. more optimal
+	typeJoin := getNode[*typeIndexJoin](plan)
+	if typeJoin != nil {
+		if j, ok := typeJoin.joinPlan.(*typeJoinOne); ok {
+			scan = getNode[*scanNode](j.getFirstSide().plan)
+		} else if j, ok := typeJoin.joinPlan.(*typeJoinMany); ok {
+			scan = getNode[*scanNode](j.getFirstSide().plan)
+		}
+	} else {
+		scan = getNode[*scanNode](plan)
+	}
+	if scan == nil || !scan.index.HasValue() {
+		return false
+	}
+
+	ok, _ := fetcher.CanBeOrderedByIndex(scan.ordering, scan.index.Value(), scan.documentMapping)
+	return ok
+}
+
+// tryOptimizeJoinDirection tries to optimize the join direction by using a filter or order on the child side.
 func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
 	if !node.childSide.relFieldDef.HasValue() {
 		// If the relation is one sided we cannot invert the join, so return early
 		return nil
+	}
+	optimized, err := p.tryOptimizeJoinDirectionByFilter(node, parentPlan)
+	if err != nil {
+		return err
+	}
+	if !optimized {
+		_, err = p.tryOptimizeJoinDirectionByOrder(node, parentPlan)
+	}
+
+	return err
+}
+
+// tryOptimizeJoinDirectionByFilter tries to optimize the join direction by using a filter on the child side.
+// If the child side has an index on a field that is filtered on, we can invert the join direction.
+// Returns true if the join direction was optimized, false otherwise.
+func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, parentPlan *selectTopNode) (bool, error) {
+	if parentPlan.selectNode.filter == nil {
+		return false, nil
 	}
 
 	filteredSubFields := findFilteredByRelationFields(
 		parentPlan.selectNode.filter.Conditions,
 		node.documentMapping,
 	)
+
 	slct := node.childSide.plan.(*selectTopNode).selectNode
-	desc := slct.collection.Description()
+	desc := slct.collection.Version()
+
 	for subFieldName, subFieldInd := range filteredSubFields {
 		indexes := desc.GetIndexesOnField(subFieldName)
 		if len(indexes) > 0 && !filter.IsComplex(parentPlan.selectNode.filter) {
@@ -311,39 +381,138 @@ func (p *Planner) tryOptimizeJoinDirection(node *invertibleTypeJoin, parentPlan 
 			relatedField := mapper.Field{Name: node.parentSide.relFieldDef.Value().Name, Index: subInd}
 			relevantFilter := filter.CopyField(parentPlan.selectNode.filter, relatedField,
 				mapper.Field{Name: subFieldName, Index: subFieldInd})
+
 			fieldFilter := extractRelatedSubFilter(relevantFilter, node.parentSide.plan.DocumentMap(), relatedField)
 			// At the moment we just take the first index, but later we want to run some kind of analysis to
 			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
-			err := node.invertJoinDirectionWithIndex(fieldFilter, indexes[0])
+			err := node.invertJoinDirectionWithIndex(indexes[0], fieldFilter, nil)
 			if err != nil {
-				return err
+				return false, err
 			}
-			break
+			// If there's a sub-filter on the child side, remove the related field condition from
+			// the parent filter. This prevents re-evaluation at the parent level which would fail
+			// when the sub-filter modifies the child docs (e.g., filtering by model="Galaxy" when
+			// parent filter is model="Walkman").
+			//
+			// Example:
+			// 	User(filter: {devices: {model: {_eq: "Walkman"}}}) {
+			// 		name
+			// 		devices(filter: {model: {_eq: "Galaxy"}}) {
+			// 			model
+			// 		}
+			// 	}
+			if node.subFilter != nil {
+				filter.RemoveField(parentPlan.selectNode.filter, relatedField)
+			}
+			return true, nil
 		}
 	}
-
-	return nil
+	return false, nil
 }
 
+// extractRelatedSubFilter extracts the sub filter from the parent filter.
+// Returns nil if the relation field doesn't exist in the document map.
 func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, relField mapper.Field) *mapper.Filter {
-	subInd := docMap.FirstIndexOfName(relField.Name)
+	// In groupBy queries with _group filters, the docMap may not contain the relation field,
+	// so we check existence before accessing to avoid a panic.
+	indexes, ok := docMap.IndexesByName[relField.Name]
+	if !ok {
+		return nil
+	}
+	subInd := indexes[0]
 	relatedField := mapper.Field{Name: relField.Name, Index: subInd}
 	subFilter := filter.UnwrapRelation(f, relatedField)
 	return subFilter
 }
 
-// expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
-func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
-	if parentPlan.selectNode.filter == nil {
-		return p.expandPlan(node.childSide.plan, parentPlan)
+// tryOptimizeJoinDirectionByOrder tries to optimize the join direction by using an order on the child side.
+// If the child side has an index on a field that is ordered on, we can invert the join direction.
+// Returns true if the join direction was optimized, false otherwise.
+func (p *Planner) tryOptimizeJoinDirectionByOrder(node *invertibleTypeJoin, parentPlan *selectTopNode) (bool, error) {
+	if parentPlan.order == nil || len(parentPlan.order.ordering) == 0 {
+		return false, nil
 	}
 
+	childFieldName, err := findOrderedByRelationFields(parentPlan.order.ordering[0], node.documentMapping)
+	if err != nil {
+		return false, err
+	}
+
+	slct := node.childSide.plan.(*selectTopNode).selectNode
+	desc := slct.collection.Version()
+	indexes := desc.GetIndexesOnField(childFieldName)
+
+	if len(indexes) == 0 {
+		return false, nil
+	}
+
+	ordering := parentPlan.order.ordering[0]
+	ordering.FieldIndexes = ordering.FieldIndexes[1:]
+
+	err = node.invertJoinDirectionWithIndex(indexes[0], nil, []mapper.OrderCondition{ordering})
+	return err == nil, err
+}
+
+// findOrderedByRelationFields finds the field that is ordered on in the order condition.
+// Returns the field name and an error if the field is not found.
+func findOrderedByRelationFields(
+	ordering mapper.OrderCondition,
+	mapping *core.DocumentMapping,
+) (string, error) {
+	fieldIndex := ordering.FieldIndexes[0]
+	if fieldIndex < len(mapping.ChildMappings) {
+		if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
+			// if fieldIndex is from child mapping, then we need to get the sub field index
+			// is must exist, otherwise the query would ill-formed
+			subFieldIndex := ordering.FieldIndexes[1]
+			childFieldName, found := childMapping.TryToFindNameFromIndex(subFieldIndex)
+			if !found {
+				return "", client.NewErrFieldIndexNotExist(subFieldIndex)
+			}
+			return childFieldName, nil
+		}
+	}
+	return "", nil
+}
+
+// expandTypeJoin does a plan graph expansion and other optimizations on invertibleTypeJoin.
+func (p *Planner) expandTypeJoin(node *invertibleTypeJoin, parentPlan *selectTopNode) error {
 	err := p.tryOptimizeJoinDirection(node, parentPlan)
 	if err != nil {
 		return err
 	}
 
+	ensureOrderNodeForRelationIndex(node)
+
 	return p.expandPlan(node.childSide.plan, parentPlan)
+}
+
+// ensureOrderNodeForRelationIndex clears the child's index if a relation ID index exists,
+// ensuring orderNode is added during plan expansion. Without this, isOrderedByIndex might
+// see an ordering index that can satisfy ordering, so orderNode won't be added. But
+// retrievePrimaryDocs might use a relation ID index instead, which can't satisfy ordering.
+func ensureOrderNodeForRelationIndex(node *invertibleTypeJoin) {
+	childTop, ok := node.childSide.plan.(*selectTopNode)
+	if !ok || childTop.order == nil {
+		return
+	}
+
+	if !node.childSide.relFieldDef.HasValue() || !node.childSide.isPrimary() {
+		return
+	}
+
+	relIDFieldName := request.ToFieldID(node.childSide.relFieldDef.Value().Name)
+	relIDIndex := findIndexByFieldName(node.childSide.col, relIDFieldName)
+	if !relIDIndex.HasValue() {
+		return
+	}
+
+	// A relation ID index exists and might be used instead of ordering index.
+	// Clear the current index to ensure orderNode is added.
+	childScan := getNode[*scanNode](node.childSide.plan)
+	if childScan != nil {
+		childScan.index = immutable.None[client.IndexDescription]()
+	}
 }
 
 func (p *Planner) expandGroupNodePlan(topNodeSelect *selectTopNode) error {
@@ -508,7 +677,7 @@ func (p *Planner) executeRequest(
 // RunSelection runs a selection and returns the result(s).
 func (p *Planner) RunSelection(
 	ctx context.Context,
-	sel *request.Select,
+	sel request.Selection,
 ) (map[string]any, error) {
 	req := &request.Request{
 		Queries: []*request.OperationDefinition{{

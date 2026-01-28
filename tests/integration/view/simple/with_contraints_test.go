@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -23,9 +24,8 @@ func TestView_SimpleWithSizeConstraint_CacheLessView_DoesNotErrorOnSizeViolation
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			testUtils.CachelessViewType,
 		}),
-		Description: "Simple view with size constraint",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -35,7 +35,7 @@ func TestView_SimpleWithSizeConstraint_CacheLessView_DoesNotErrorOnSizeViolation
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -53,7 +53,7 @@ func TestView_SimpleWithSizeConstraint_CacheLessView_DoesNotErrorOnSizeViolation
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"Alice",
 					"pointsListInt": [1, 2, 3],
@@ -61,7 +61,7 @@ func TestView_SimpleWithSizeConstraint_CacheLessView_DoesNotErrorOnSizeViolation
 					"pointsListFloat64": [1, 2, 3]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {
@@ -98,9 +98,8 @@ func TestView_SimpleWithSizeConstraint_MaterializedView_DoesNotErrorOnSizeViolat
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{
 			testUtils.MaterializedViewType,
 		}),
-		Description: "Simple view with size constraint",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -110,7 +109,7 @@ func TestView_SimpleWithSizeConstraint_MaterializedView_DoesNotErrorOnSizeViolat
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -128,7 +127,7 @@ func TestView_SimpleWithSizeConstraint_MaterializedView_DoesNotErrorOnSizeViolat
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"Alice",
 					"pointsListInt": [1, 2, 3],
@@ -136,7 +135,7 @@ func TestView_SimpleWithSizeConstraint_MaterializedView_DoesNotErrorOnSizeViolat
 					"pointsListFloat64": [1, 2, 3]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

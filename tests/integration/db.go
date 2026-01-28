@@ -12,22 +12,18 @@ package tests
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strconv"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/require"
+	lensNode "github.com/sourcenetwork/lens/host-go/node"
 
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/internal/kms"
-	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
-
-type DatabaseType string
 
 const (
 	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
@@ -38,9 +34,9 @@ const (
 )
 
 const (
-	BadgerIMType   DatabaseType = "badger-in-memory"
-	DefraIMType    DatabaseType = "defra-memory-datastore"
-	BadgerFileType DatabaseType = "badger-file-system"
+	BadgerIMType   state.DatabaseType = "badger-in-memory"
+	DefraIMType    state.DatabaseType = "defra-memory-datastore"
+	BadgerFileType state.DatabaseType = "badger-file-system"
 )
 
 var (
@@ -69,11 +65,29 @@ func init() {
 		// Default is to test all but filesystem db types.
 		badgerFile = false
 		badgerInMemory = true
-		inMemoryStore = true
+		inMemoryStore = false
 	}
 }
 
-func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
+func defaultNodeOpts() []node.Option {
+	return []node.Option{
+		db.WithLensOpts(
+			lensNode.WithPoolSize(lensPoolSize),
+		),
+		db.WithLensRuntime(lensType),
+		// The test framework sets this up elsewhere when required so that it may be wrapped
+		// into a [client.TxnStore].
+		node.WithDisableAPI(true),
+		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
+		// to keep the tests as lightweight as possible.
+		node.WithDisableP2P(true),
+		// The default is 5 and that is never going to be needed in a testing scenario where all the
+		// nodes are on the same machine with no network latency.
+		db.WithP2PBlockSyncTimeout(1 * time.Second),
+	}
+}
+
+func NewBadgerMemoryDB(ctx context.Context) (node.DB, error) {
 	opts := []node.Option{
 		node.WithDisableP2P(true),
 		node.WithDisableAPI(true),
@@ -91,7 +105,7 @@ func NewBadgerMemoryDB(ctx context.Context) (client.DB, error) {
 	return node.DB, err
 }
 
-func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
+func NewBadgerFileDB(ctx context.Context, t testing.TB) (node.DB, error) {
 	path := t.TempDir()
 
 	opts := []node.Option{
@@ -109,136 +123,4 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (client.DB, error) {
 		return nil, err
 	}
 	return node.DB, err
-}
-
-func getDefaultNodeOpts() ([]node.Option, error) {
-	opts := []node.Option{
-		node.WithLensPoolSize(lensPoolSize),
-		// The test framework sets this up elsewhere when required so that it may be wrapped
-		// into a [client.DB].
-		node.WithDisableAPI(true),
-		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
-		// to keep the tests as lightweight as possible.
-		node.WithDisableP2P(true),
-		node.WithLensRuntime(lensType),
-	}
-
-	if badgerEncryption && encryptionKey == nil {
-		key, err := crypto.GenerateAES256()
-		if err != nil {
-			return []node.Option{}, err
-		}
-		encryptionKey = key
-	}
-
-	if encryptionKey != nil {
-		opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
-	}
-
-	return opts, nil
-}
-
-// setupNode returns the database implementation for the current
-// testing state. The database type on the test state is used to
-// select the datastore implementation to use.
-func setupNode(s *state, opts ...node.Option) (*nodeState, error) {
-	defaultOpts, err := getDefaultNodeOpts()
-	if err != nil {
-		return nil, err
-	}
-
-	opts = append(defaultOpts, opts...)
-
-	switch acpType {
-	case LocalACPType:
-		opts = append(opts, node.WithACPType(node.LocalACPType))
-
-	case SourceHubACPType:
-		if len(s.acpOptions) == 0 {
-			s.acpOptions, err = setupSourceHub(s)
-			require.NoError(s.t, err)
-		}
-
-		opts = append(opts, node.WithACPType(node.SourceHubACPType))
-		for _, opt := range s.acpOptions {
-			opts = append(opts, opt)
-		}
-
-	default:
-		// no-op, use the `node` package default
-	}
-
-	var path string
-	switch s.dbt {
-	case BadgerIMType:
-		opts = append(opts, node.WithBadgerInMemory(true))
-
-	case BadgerFileType:
-		switch {
-		case databaseDir != "":
-			// restarting database
-			path = databaseDir
-
-		case changeDetector.Enabled:
-			// change detector
-			path = changeDetector.DatabaseDir(s.t)
-
-		default:
-			// default test case
-			path = s.t.TempDir()
-		}
-
-		opts = append(opts, node.WithStorePath(path), node.WithACPPath(path))
-
-	case DefraIMType:
-		opts = append(opts, node.WithStoreType(node.MemoryStore))
-
-	default:
-		return nil, fmt.Errorf("invalid database type: %v", s.dbt)
-	}
-
-	if s.kms == PubSubKMSType {
-		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
-	}
-
-	netOpts := make([]net.NodeOpt, 0)
-	for _, opt := range opts {
-		if opt, ok := opt.(net.NodeOpt); ok {
-			netOpts = append(netOpts, opt)
-		}
-	}
-
-	if s.isNetworkEnabled {
-		opts = append(opts, node.WithDisableP2P(false))
-	}
-
-	node, err := node.New(s.ctx, opts...)
-	if err != nil {
-		return nil, err
-	}
-
-	err = node.Start(s.ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	c, err := setupClient(s, node)
-	require.Nil(s.t, err)
-
-	eventState, err := newEventState(c.Events())
-	require.NoError(s.t, err)
-
-	st := &nodeState{
-		Client:  c,
-		event:   eventState,
-		p2p:     newP2PState(),
-		dbPath:  path,
-		netOpts: netOpts,
-	}
-
-	if node.Peer != nil {
-		st.peerInfo = node.Peer.PeerInfo()
-	}
-
-	return st, nil
 }

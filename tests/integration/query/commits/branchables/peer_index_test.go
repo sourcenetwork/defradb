@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -23,7 +24,7 @@ func TestQueryCommitsBranchables_SyncsIndexAcrossPeerConnection(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String @index
@@ -38,14 +39,14 @@ func TestQueryCommitsBranchables_SyncsIndexAcrossPeerConnection(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name":	"John"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// This query errors out if the document's index has not been correctly
 				// constructed
 				Request: `query {

@@ -60,7 +60,7 @@ func getEmbeddingFunc(provider, model, url string) chromem.EmbeddingFunc {
 // However, if the vector field itself has been set, it will not be overwritten by a new embedding generation.
 func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isCreate bool) error {
 	embeddingGenerated := false
-	for _, embedding := range c.Description().VectorEmbeddings {
+	for _, embedding := range c.Version().VectorEmbeddings {
 		vecValue, err := doc.GetValue(embedding.FieldName)
 		if err != nil && !errors.Is(err, client.ErrFieldNotExist) {
 			return NewErrGetEmbeddingField(err)
@@ -71,7 +71,7 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 		}
 		fieldsVal := make(map[string]client.NormalValue)
 		needsGeneration := false
-		missingFieldsForGeneration := []client.FieldDefinition{}
+		missingFieldsForGeneration := []client.CollectionFieldDescription{}
 
 		// Get the new values of the fields used for embedding generation. We keep track
 		// of the fields that aren't defined to lookup their previous values later.
@@ -122,14 +122,17 @@ func (c *collection) setEmbedding(ctx context.Context, doc *client.Document, isC
 		var text strings.Builder
 		for _, fieldName := range embedding.Fields {
 			if val, ok := fieldsVal[fieldName]; ok {
-				text.WriteString(fmt.Sprintf("%v\n", val.Unwrap()))
+				_, err := text.WriteString(fmt.Sprintf("%v\n", val.Unwrap()))
+				if err != nil {
+					return err
+				}
 			}
 		}
 		embeddingVec, err := embeddingFunc(ctx, text.String())
 		if err != nil {
 			return err
 		}
-		err = doc.Set(embedding.FieldName, embeddingVec)
+		err = doc.Set(ctx, embedding.FieldName, embeddingVec)
 		if err != nil {
 			return err
 		}

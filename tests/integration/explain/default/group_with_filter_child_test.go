@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with filter on the inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author (groupBy: [age]) {
@@ -38,7 +37,7 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 
 				ExpectedPatterns: groupPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -65,7 +64,7 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
 							"filter":         nil,
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"prefixes": []string{
 								"/3",
@@ -83,12 +82,10 @@ func TestDefaultExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with filter on parent groupBy and on the inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 			Author (
@@ -104,7 +101,7 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 
 				ExpectedPatterns: groupPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -135,7 +132,7 @@ func TestDefaultExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t 
 									"_gt": int32(62),
 								},
 							},
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"prefixes": []string{
 								"/3",

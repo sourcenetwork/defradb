@@ -49,6 +49,9 @@ const (
 	IndexDirectivePropDirection = "direction"
 	IndexDirectivePropIncludes  = "includes"
 
+	EncryptedIndexDirectiveLabel    = "encryptedIndex"
+	EncryptedIndexDirectivePropType = "type"
+
 	IncludesPropField     = "field"
 	IncludesPropDirection = "direction"
 
@@ -71,6 +74,8 @@ const (
 
 	FieldOrderASC  = "ASC"
 	FieldOrderDESC = "DESC"
+
+	SimilarityArgVector = "vector"
 )
 
 // OrderingEnum is an enum for the Ordering argument.
@@ -142,10 +147,10 @@ func DefaultDirective() *gql.Directive {
 				Type: gql.DateTime,
 			},
 			DefaultDirectivePropJSON: &gql.ArgumentConfig{
-				Type: JSONScalarType(),
+				Type: JSON,
 			},
 			DefaultDirectivePropBlob: &gql.ArgumentConfig{
-				Type: BlobScalarType(),
+				Type: Blob,
 			},
 		},
 		Locations: []string{
@@ -376,6 +381,24 @@ func VectorEmbeddingDirective() *gql.Directive {
 				Type:        gql.String,
 				Description: "The template to use with the fields to create the content to feed the model.",
 			},
+		},
+	})
+}
+
+// EncryptedIndexDirective @encryptedIndex is used to mark fields for searchable encryption
+func EncryptedIndexDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        EncryptedIndexDirectiveLabel,
+		Description: "Marks a field for searchable encryption, allowing queries on encrypted data.",
+		Args: gql.FieldConfigArgument{
+			EncryptedIndexDirectivePropType: &gql.ArgumentConfig{
+				Description:  "The type of searchable encryption (currently only 'equality' is supported).",
+				Type:         gql.String,
+				DefaultValue: string(client.EncryptedIndexTypeEquality),
+			},
+		},
+		Locations: []string{
+			gql.DirectiveLocationFieldDefinition,
 		},
 	})
 }

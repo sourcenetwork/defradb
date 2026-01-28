@@ -22,13 +22,17 @@ import (
 	"strings"
 	"testing"
 
+	badgerds "github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/corekv/badger"
+
+	"github.com/sourcenetwork/defradb/acp/dac"
+
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore/memory"
 	"github.com/sourcenetwork/defradb/internal/db"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
 func TestCCIPGet_WithValidData(t *testing.T) {
@@ -43,7 +47,7 @@ func TestCCIPGet_WithValidData(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	data := "0x" + hex.EncodeToString([]byte(gqlData))
+	data := "0x" + hex.EncodeToString(gqlData)
 	sender := "0x0000000000000000000000000000000000000000"
 	url := "http://localhost:9181/api/v0/ccip/" + path.Join(sender, data)
 
@@ -82,7 +86,7 @@ func TestCCIPGet_WithSubscription(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	data := "0x" + hex.EncodeToString([]byte(gqlData))
+	data := "0x" + hex.EncodeToString(gqlData)
 	sender := "0x0000000000000000000000000000000000000000"
 	url := "http://localhost:9181/api/v0/ccip/" + path.Join(sender, data)
 
@@ -128,7 +132,7 @@ func TestCCIPPost_WithValidData(t *testing.T) {
 	require.NoError(t, err)
 
 	body, err := json.Marshal(&CCIPRequest{
-		Data:   "0x" + hex.EncodeToString([]byte(gqlJSON)),
+		Data:   "0x" + hex.EncodeToString(gqlJSON),
 		Sender: "0x0000000000000000000000000000000000000000",
 	})
 	require.NoError(t, err)
@@ -190,10 +194,15 @@ func TestCCIPPost_WithInvalidBody(t *testing.T) {
 	assert.Equal(t, 400, res.StatusCode)
 }
 
-func setupDatabase(t *testing.T) client.DB {
+func setupDatabase(t *testing.T) DB {
 	ctx := context.Background()
+	store, err := badger.NewDatastore("", badgerds.DefaultOptions("").WithInMemory(true))
+	require.NoError(t, err)
 
-	cdb, err := db.NewDB(ctx, memory.NewDatastore(ctx), acp.NoACP, nil)
+	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
+	require.NoError(t, err)
+
+	cdb, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP)
 	require.NoError(t, err)
 
 	_, err = cdb.AddSchema(ctx, `type User {
@@ -204,13 +213,13 @@ func setupDatabase(t *testing.T) client.DB {
 	col, err := cdb.GetCollectionByName(ctx, "User")
 	require.NoError(t, err)
 
-	doc, err := client.NewDocFromJSON([]byte(`{"name": "bob"}`), col.Definition())
+	doc, err := client.NewDocFromJSON(ctx, []byte(`{"name": "bob"}`), col.Version())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc)
 	require.NoError(t, err)
 
-	doc2, err := client.NewDocFromJSON([]byte(`{"name": "adam"}`), col.Definition())
+	doc2, err := client.NewDocFromJSON(ctx, []byte(`{"name": "adam"}`), col.Version())
 	require.NoError(t, err)
 
 	err = col.Create(ctx, doc2)

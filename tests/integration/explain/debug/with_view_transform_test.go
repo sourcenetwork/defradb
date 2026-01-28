@@ -13,9 +13,10 @@ package test_explain_debug
 import (
 	"testing"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
 )
@@ -45,16 +46,28 @@ var transformViewPattern = dataMap{
 func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedViewTypes: immutable.Some([]testUtils.ViewType{testUtils.CachelessViewType}),
-		Description:        "Explain (debug) request with view with transform",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.AddLens{
+				Lens: model.Lens{
+					Lenses: []model.LensModule{
+						{
+							Path: lenses.CopyModulePath,
+							Arguments: map[string]any{
+								"src": "name",
+								"dst": "fullName",
+							},
+						},
+					},
+				},
+			},
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -65,19 +78,9 @@ func TestDebugExplainRequestWithViewWithTransform(t *testing.T) {
 						fullName: String
 					}
 				`,
-				Transform: immutable.Some(model.Lens{
-					Lenses: []model.LensModule{
-						{
-							Path: lenses.CopyModulePath,
-							Arguments: map[string]any{
-								"src": "name",
-								"dst": "fullName",
-							},
-						},
-					},
-				}),
+				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: debug) {
 					UserView {
 						fullName

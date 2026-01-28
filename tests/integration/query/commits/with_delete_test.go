@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2022 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,13 +13,23 @@ package commits
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
+
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	deleteCid := testUtils.NewSameValue()
+	createCompositeCid := testUtils.NewSameValue()
+	createAgeCid := testUtils.NewSameValue()
+	createNameCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -27,7 +37,7 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21
@@ -36,44 +46,48 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 			testUtils.DeleteDoc{
 				DocID: 0,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
-						commits(fieldId: "C") {
+						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
 							fieldName
 							links {
 								cid
-								name
+								fieldName
+							}
+							heads {
+								cid
 							}
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":       testUtils.NewUniqueCid("delete"),
-							"fieldName": nil,
-							"links": []map[string]any{
+							"cid":       gomega.And(deleteCid, uniqueCid),
+							"fieldName": "_C",
+							"links":     []map[string]any{},
+							"heads": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("create composite"),
-									"name": "_head",
+									"cid": createCompositeCid,
 								},
 							},
 						},
 						{
-							"cid":       testUtils.NewUniqueCid("create composite"),
-							"fieldName": nil,
+							"cid":       gomega.And(createCompositeCid, uniqueCid),
+							"fieldName": "_C",
 							"links": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("create age"),
-									"name": "age",
+									"cid":       createAgeCid,
+									"fieldName": "age",
 								},
 								{
-									"cid":  testUtils.NewUniqueCid("create name"),
-									"name": "name",
+									"cid":       createNameCid,
+									"fieldName": "name",
 								},
 							},
+							"heads": []map[string]any{},
 						},
 					},
 				},

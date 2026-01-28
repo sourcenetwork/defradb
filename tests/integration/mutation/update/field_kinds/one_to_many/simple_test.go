@@ -14,42 +14,43 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
 
 func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
+	author1ID := "bae-5059e989-3cae-5584-9357-f3eb81e86241"
 	bookID := "bae-22e0a1c2-d12b-5bfd-b039-0cf72f963991"
 
 	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation id from single side (wrong)",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: fmt.Sprintf(
 					`{
 						"name": "Painted House",
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author1ID,
 				),
@@ -57,14 +58,14 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing
 			testUtils.UpdateDoc{
 				CollectionID: 1,
 				DocID:        1,
-				// NOTE: There is no `published_id` on book.
+				// NOTE: There is no `_publishedID` on book.
 				Doc: fmt.Sprintf(
 					`{
-						"published_id": "%s"
+						"_publishedID": "%s"
 					}`,
 					bookID,
 				),
-				ExpectedError: "the given field does not exist. Name: published_id",
+				ExpectedError: "the given field does not exist. Name: _publishedID",
 			},
 		},
 	}
@@ -73,24 +74,23 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromSingleSide_Error(t *testing
 }
 
 func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
+	author1ID := "bae-5059e989-3cae-5584-9357-f3eb81e86241"
 	invalidAuthorID := "bae-35953ca-518d-9e6b-9ce6cd00eff5"
 
 	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation id from many side",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: fmt.Sprintf(
 					`{
 						"name": "Painted House",
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author1ID,
 				),
@@ -100,7 +100,7 @@ func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					invalidAuthorID,
 				),
@@ -113,36 +113,35 @@ func TestMutationUpdateOneToMany_InvalidRelationIDToLinkFromManySide(t *testing.
 }
 
 func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Error(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
-	author2ID := "bae-789d10d4-e54f-531b-ae81-e15100f8e506"
+	author1ID := "bae-5059e989-3cae-5584-9357-f3eb81e86241"
+	author2ID := "bae-31e97109-6225-5be2-8c86-b16baa2782a3"
 
 	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation id from many side, with a wrong field.",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: fmt.Sprintf(
 					`{
 						"name": "Painted House",
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author1ID,
 				),
@@ -153,7 +152,7 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Erro
 				Doc: fmt.Sprintf(
 					`{
 						"notName": "Unpainted Condo",
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author2ID,
 				),
@@ -166,30 +165,29 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySideWithWrongField_Erro
 }
 
 func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
-	author1ID := "bae-a47f80ab-1c30-53b3-9dac-04a4a3fda77e"
-	author2ID := "bae-789d10d4-e54f-531b-ae81-e15100f8e506"
+	author1ID := "bae-5059e989-3cae-5584-9357-f3eb81e86241"
+	author2ID := "bae-31e97109-6225-5be2-8c86-b16baa2782a3"
 
 	test := testUtils.TestCase{
-		Description: "One to many update mutation using relation id from many side",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "New Shahzad"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: fmt.Sprintf(
 					`{
 						"name": "Painted House",
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author1ID,
 				),
@@ -199,12 +197,12 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 				DocID:        0,
 				Doc: fmt.Sprintf(
 					`{
-						"author_id": "%s"
+						"_authorID": "%s"
 					}`,
 					author2ID,
 				),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
  					Author {
  						name
@@ -216,6 +214,10 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
+							"name":      "John Grisham",
+							"published": []map[string]any{},
+						},
+						{
 							"name": "New Shahzad",
 							"published": []map[string]any{
 								{
@@ -223,14 +225,11 @@ func TestMutationUpdateOneToMany_RelationIDToLinkFromManySide(t *testing.T) {
 								},
 							},
 						},
-						{
-							"name":      "John Grisham",
-							"published": []map[string]any{},
-						},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

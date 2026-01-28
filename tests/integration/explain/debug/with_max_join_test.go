@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -38,12 +39,10 @@ var debugMaxTypeIndexJoinManyPattern = dataMap{
 func TestDebugExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with max on a one-to-many joined field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
@@ -66,12 +65,10 @@ func TestDebugExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing.T
 func TestDebugExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with max on a one-to-many joined field, with filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
@@ -100,12 +97,10 @@ func TestDebugExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(t 
 func TestDebugExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with max on a one-to-many joined field with many sources.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {

@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -36,12 +37,10 @@ var updatePattern = dataMap{
 func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with update using boolean filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					update_Author(
@@ -60,7 +59,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 
 				ExpectedPatterns: updatePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
@@ -80,7 +79,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"verified": dataMap{
@@ -103,12 +102,10 @@ func TestDefaultExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T)
 func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with update using ids.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					update_Author(
@@ -126,7 +123,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 
 				ExpectedPatterns: updatePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
@@ -145,7 +142,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -165,12 +162,10 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with update using document id.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					update_Author(
@@ -185,7 +180,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 
 				ExpectedPatterns: updatePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
@@ -203,7 +198,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -222,12 +217,10 @@ func TestDefaultExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with update using both ids and filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					update_Author(
@@ -250,7 +243,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 
 				ExpectedPatterns: updatePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "updateNode",
 						IncludeChildNodes: false,
@@ -273,7 +266,7 @@ func TestDefaultExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) 
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"verified": dataMap{

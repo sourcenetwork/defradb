@@ -13,49 +13,49 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and min of average on int",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 25,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34,
 					"Verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19,
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -83,16 +83,6 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_min": float64(55),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_avg":     float64(55),
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_min": float64(19),
 							"_group": []map[string]any{
@@ -102,8 +92,19 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_
 								},
 							},
 						},
+						{
+							"Name": "Carlo",
+							"_min": float64(55),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_avg":     float64(55),
+								},
+							},
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -113,28 +114,27 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, average and min on non-rendered group integer value",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 38
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// It is important to test negative values here, due to the auto-typing of numbers
 				Doc: `{
 					"Name": "Alice",
 					"Age": -19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name

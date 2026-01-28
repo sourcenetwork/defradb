@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDefaultExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with limit on related child with count.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -59,7 +58,7 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T)
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "countNode",
 						IncludeChildNodes: false,
@@ -91,12 +90,10 @@ func TestDefaultExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T)
 func TestDefaultExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with limit args on parent and related child with count.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(limit: 3, offset: 1) {
@@ -132,7 +129,7 @@ func TestDefaultExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *t
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "limitNode",
 						OccurancesToSkip:  0,

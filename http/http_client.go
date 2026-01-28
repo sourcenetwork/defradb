@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -19,12 +19,13 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 type httpClient struct {
 	client  *http.Client
 	baseURL *url.URL
+	apiURL  *url.URL
 }
 
 func newHttpClient(rawURL string) (*httpClient, error) {
@@ -37,7 +38,8 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 	}
 	return &httpClient{
 		client:  http.DefaultClient,
-		baseURL: baseURL.JoinPath("/api/v0"),
+		baseURL: baseURL,
+		apiURL:  baseURL.JoinPath("/api/v0"),
 	}, nil
 }
 
@@ -45,7 +47,7 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
-	txn, ok := db.TryGetContextTxn(req.Context())
+	txn, ok := datastore.CtxTryGetClientTxn(req.Context())
 	if ok {
 		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
 	}
@@ -53,7 +55,9 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	if !id.HasValue() {
 		return nil
 	}
-	req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, []byte(id.Value().BearerToken)))
+	if tokenIdentity, ok := id.Value().(identity.TokenIdentity); ok {
+		req.Header.Set(authHeaderName, fmt.Sprintf("%s%s", authSchemaPrefix, tokenIdentity.BearerToken()))
+	}
 	return nil
 }
 

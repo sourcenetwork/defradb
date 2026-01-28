@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PReplicatorCommand() *cobra.Command {
+func MakeP2PReplicatorCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "replicator",
 		Short: "Configure the replicator system",

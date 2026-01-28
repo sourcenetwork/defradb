@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -36,12 +37,10 @@ var upsertPattern = dataMap{
 func TestDefaultExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) mutation request with upsert.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain {
 					upsert_Author(
@@ -57,7 +56,7 @@ func TestDefaultExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 
 				ExpectedPatterns: upsertPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "upsertNode",
 						IncludeChildNodes: false,
@@ -80,7 +79,7 @@ func TestDefaultExplainMutationRequest_WithUpsert_Succeeds(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"name": dataMap{

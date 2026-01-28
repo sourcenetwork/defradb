@@ -17,17 +17,19 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/cli/config"
 )
 
 func TestCreateConfig(t *testing.T) {
 	rootdir := t.TempDir()
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
-	err := createConfig(rootdir, flags)
+	err := config.CreateConfig(rootdir, flags)
 	require.NoError(t, err)
 
 	// ensure no errors when config already exists
-	err = createConfig(rootdir, flags)
+	err = config.CreateConfig(rootdir, flags)
 	require.NoError(t, err)
 
 	assert.FileExists(t, filepath.Join(rootdir, "config.yaml"))
@@ -37,7 +39,7 @@ func TestLoadConfigNotExist(t *testing.T) {
 	rootdir := t.TempDir()
 	flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
 
-	cfg, err := loadConfig(rootdir, flags)
+	cfg, err := config.LoadConfig(rootdir, flags)
 	require.NoError(t, err)
 
 	assert.Equal(t, 5, cfg.GetInt("datastore.maxtxnretries"))

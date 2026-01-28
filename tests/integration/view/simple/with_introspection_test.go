@@ -13,22 +13,22 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/integration/schema"
+	"github.com/sourcenetwork/defradb/tests/integration/collection_version"
 )
 
 func TestView_Simple_GQLIntrospectionTest(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple view",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					User {
 						name
@@ -58,8 +58,8 @@ func TestView_Simple_GQLIntrospectionTest(t *testing.T) {
 				ExpectedData: map[string]any{
 					"__type": map[string]any{
 						"name": "UserView",
-						"fields": schema.DefaultViewObjFields.Append(
-							schema.Field{
+						"fields": collection_version.DefaultViewObjFields.Append(
+							collection_version.Field{
 								"name": "name",
 								"type": map[string]any{
 									"kind": "SCALAR",

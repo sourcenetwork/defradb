@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -35,12 +36,10 @@ var orderTypeJoinPattern = dataMap{
 func TestDebugExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with order field on a related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
@@ -76,12 +75,10 @@ func TestDebugExplainRequestWithOrderFieldOnRelatedChild(t *testing.T) {
 func TestDebugExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with order field on parent and related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(order: {name: ASC}) {
@@ -119,12 +116,10 @@ func TestDebugExplainRequestWithOrderFieldOnParentAndRelatedChild(t *testing.T) 
 func TestDebugExplainRequestWhereParentIsOrderedByItsRelatedChild(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request where parent is ordered by it's related child.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(

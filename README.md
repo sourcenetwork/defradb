@@ -20,6 +20,10 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
 
 <!--ts-->
    * [Install](#install)
+   * [Build Requirements](#build-requirements)
+      * [Prerequisites](#prerequisites)
+      * [System Resources](#system-resources)
+      * [Building on Resource-Constrained Systems](#building-on-resource-constrained-systems)
    * [Key Management](#key-management)
    * [Start](#start)
    * [Configuration](#configuration)
@@ -36,18 +40,19 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
    * [Backing up and restoring](#backing-up-and-restoring)
    * [Telemetry](#telemetry)
    * [Community](#community)
+   * [Playground](#playground)
    * [Licensing](#licensing)
    * [Contributors](#contributors)
 <!--te-->
 
-DISCLAIMER: At this early stage, DefraDB does not offer data encryption, and the default configuration exposes the database to the network. The software is provided "as is" and is not guaranteed to be stable, secure, or error-free. We encourage you to experiment with DefraDB and provide feedback, but please do not use it for production purposes until it has been thoroughly tested and developed.
+DISCLAIMER: The software is provided "as is" and is not guaranteed to be stable, secure, or error-free. We encourage you to experiment with DefraDB and provide feedback, and when you plan to deploy it to production, please thoroughly test your integrations.
 
 ## Install
 
 Install `defradb` by [downloading an executable](https://github.com/sourcenetwork/defradb/releases) or building it locally using the [Go toolchain](https://golang.org/):
 
 ```sh
-git clone git@github.com:sourcenetwork/defradb.git
+git clone https://github.com/sourcenetwork/defradb.git
 cd defradb
 make install
 ```
@@ -59,6 +64,48 @@ export PATH=$PATH:$(go env GOPATH)/bin
 ```
 
 We recommend experimenting with queries using a native GraphQL client. GraphiQL is a popular option - [download and install it](https://altairgraphql.dev/#download).
+
+## Build Requirements
+
+Building DefraDB from source requires significant system resources. If you encounter out-of-memory errors or build failures, review the requirements below.
+
+### Prerequisites
+
+- [Go](https://golang.org/) 1.24 or later
+- [Rust toolchain](https://www.rust-lang.org/tools/install) (for WASM lens compilation, if running tests)
+- Git
+
+### System Resources
+
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| RAM | 2 GB | 4+ GB |
+| Disk Space | 3 GB | 5+ GB |
+
+The Go compiler requires substantial memory during compilation. Builds with less than 2 GB of available RAM will likely fail with out-of-memory errors.
+
+### Building on Resource-Constrained Systems
+
+If you're building on a system with limited RAM (e.g., a small VM or container), you may encounter build failures. Common issues and solutions:
+
+**Out of Memory (OOM) errors:**
+- Ensure at least 2 GB of RAM is available
+- Add swap space if physical RAM is limited
+- Use `-p 1` to limit compiler parallelism: `go build -p 1 ./cmd/defradb`
+
+**`/tmp` running out of space:**
+On systems where `/tmp` is a small tmpfs (RAM-backed filesystem), the Go compiler may exhaust available space. Redirect Go's temp directories to a location with more space:
+```sh
+export GOTMPDIR=/path/with/space
+export GOCACHE=/path/with/space/go-cache
+export GOMODCACHE=/path/with/space/go-mod
+```
+
+**Reducing memory usage:**
+For extremely constrained environments, disable optimizations (produces slower binary):
+```sh
+go build -p 1 -gcflags="all=-N -l" ./cmd/defradb
+```
 
 ## Key Management
 
@@ -195,7 +242,7 @@ You can further filter results with the `filter` argument.
 ```shell
 defradb client query '
   query {
-    User(filter: {points: {_ge: 50}}) {
+    User(filter: {points: {_geq: 50}}) {
       _docID
       age
       name
@@ -216,7 +263,7 @@ To get the most recent commit in the MerkleDAG for the document identified as `b
 ```shell
 defradb client query '
   query {
-    latestCommits(docID: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
+    _commits(docID: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
       cid
       delta
       height
@@ -234,7 +281,7 @@ It returns a structure similar to the following, which contains the update paylo
 ```json
 {
   "data": {
-    "latestCommits": [
+    "_commits": [
       {
         "cid": "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u",
         "delta": "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=",
@@ -268,7 +315,7 @@ Obtain a specific commit by its content identifier (`cid`):
 ```shell
 defradb client query '
   query {
-    commits(cid: "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u") {
+    _commits(cid: "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u") {
       cid
       delta
       height
@@ -285,7 +332,7 @@ defradb client query '
 
 DQL is compatible with GraphQL but features various extensions.
 
-Read its documentation at [docs.source.network](https://docs.source.network/references/query-specification/query-language-overview) to discover its filtering, ordering, limiting, relationships, variables, aggregate functions, and other useful features.
+Read its documentation at [docs.source.network](https://docs.source.network/defradb/references/query-specification/query-language-overview) to discover its filtering, ordering, limiting, relationships, variables, aggregate functions, and other useful features.
 
 ## Peer-to-peer data synchronization
 
@@ -439,7 +486,7 @@ defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-pr
 ```
 
 ## Access Control System
-Read more about the access control [here](./acp/README.md).
+Read more about the DefraDB ACP System [here](/acp/README.md)
 
 ## Supporting CORS
 
@@ -486,6 +533,9 @@ DefraDB has no telemetry reporting by default. To enable OpenTelemetry in DefraD
 
 Discuss on [Discord](https://discord.gg/w7jYQVJ) or [Github Discussions](https://github.com/sourcenetwork/defradb/discussions). The Source project is on [Twitter](https://twitter.com/sourcenetwrk).
 
+## Playground
+
+Instructions for the playground can be found [here](./playground/README.md).
 
 ## Licensing
 
@@ -500,5 +550,8 @@ DefraDB's code is released under the [Business Source License (BSL)](licenses/BS
 - Fred Carle ([@fredcarle](https://github.com/fredcarle))
 - Islam Aliev ([@islamaliev](https://github.com/islamaliev))
 - Keenan Nemetz ([@nasdf](https://github.com/nasdf))
+- Ivan Vercenco ([@iverc](https://github.com/iverc))
+- Chris Quigley ([@ChrisBQu](https://github.com/ChrisBQu))
+- Jack Zampolin ([@jackzampolin](https://github.com/jackzampolin))
 
 You are invited to contribute to DefraDB. Follow the [Contributing guide](./CONTRIBUTING.md) to get started.

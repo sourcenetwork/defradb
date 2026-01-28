@@ -8,6 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+//go:build !js
+
 package node
 
 import (
@@ -19,24 +21,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestWithDisableP2P(t *testing.T) {
-	options := &Options{}
-	WithDisableP2P(true)(options)
-	assert.Equal(t, true, options.disableP2P)
-}
-
-func TestWithDisableAPI(t *testing.T) {
-	options := &Options{}
-	WithDisableAPI(true)(options)
-	assert.Equal(t, true, options.disableAPI)
-}
-
-func TestWithEnableDevelopment(t *testing.T) {
-	options := &Options{}
-	WithEnableDevelopment(true)(options)
-	assert.Equal(t, true, options.enableDevelopment)
-}
 
 func TestPurgeAndRestartWithDevModeDisabled(t *testing.T) {
 	ctx := context.Background()
@@ -79,7 +63,7 @@ func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
 	err = n.PurgeAndRestart(ctx)
 	require.NoError(t, err)
 
-	schemas, err := n.DB.GetSchemas(ctx, client.SchemaFetchOptions{})
+	schemas, err := n.DB.GetCollections(ctx, client.CollectionFetchOptions{})
 	require.NoError(t, err)
 
 	assert.Len(t, schemas, 0)

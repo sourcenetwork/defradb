@@ -13,37 +13,37 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsWithNullDepth(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null depth",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(depth: null) {
+						_commits(depth: null) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 						},
 						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},
@@ -56,32 +56,31 @@ func TestQueryCommitsWithNullDepth(t *testing.T) {
 
 func TestQueryCommitsWithNullCID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(cid: null) {
+						_commits(cid: null) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 						},
 						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},
@@ -92,26 +91,25 @@ func TestQueryCommitsWithNullCID(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithNullFieldID(t *testing.T) {
+func TestQueryCommitsWithNullField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null fieldId",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(fieldId: null) {
+						_commits(filter: {fieldName: {_eq: null}}) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
 			},
 		},
@@ -122,32 +120,31 @@ func TestQueryCommitsWithNullFieldID(t *testing.T) {
 
 func TestQueryCommitsWithNullOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null order",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(order: null) {
+						_commits(order: null) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 						},
 						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},
@@ -160,32 +157,31 @@ func TestQueryCommitsWithNullOrder(t *testing.T) {
 
 func TestQueryCommitsWithNullOrderField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null order field",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(docID: null) {
+						_commits(docID: null) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 						},
 						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},
@@ -198,32 +194,31 @@ func TestQueryCommitsWithNullOrderField(t *testing.T) {
 
 func TestQueryCommitsWithNullLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null limit",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(limit: null) {
+						_commits(limit: null) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 						},
 						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},
@@ -236,32 +231,31 @@ func TestQueryCommitsWithNullLimit(t *testing.T) {
 
 func TestQueryCommitsWithNullOffset(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null offset",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(offset: null) {
+						_commits(offset: null) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 						},
 						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},
@@ -274,32 +268,31 @@ func TestQueryCommitsWithNullOffset(t *testing.T) {
 
 func TestQueryCommitsWithNullGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with null groupBy",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(groupBy: null) {
+						_commits(groupBy: null) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 						},
 						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},

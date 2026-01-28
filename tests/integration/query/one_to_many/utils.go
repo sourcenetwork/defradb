@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -32,18 +33,13 @@ var bookAuthorGQLSchema = (`
 `)
 
 func executeTestCase(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteTestCase(
-		t,
-		testUtils.TestCase{
-			Description: test.Description,
-			Actions: append(
-				[]any{
-					testUtils.SchemaUpdate{
-						Schema: bookAuthorGQLSchema,
-					},
-				},
-				test.Actions...,
-			),
+	test.Actions = append(
+		[]any{
+			&action.AddSchema{
+				Schema: bookAuthorGQLSchema,
+			},
 		},
+		test.Actions...,
 	)
+	testUtils.ExecuteTestCase(t, test)
 }

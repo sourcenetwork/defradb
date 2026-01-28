@@ -13,38 +13,38 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count with filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -52,7 +52,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -60,7 +60,7 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -70,15 +70,16 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "Cornelia Funke",
-							"_count": 0,
-						},
-						{
 							"name":   "John Grisham",
 							"_count": 1,
 						},
+						{
+							"name":   "Cornelia Funke",
+							"_count": 0,
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -88,40 +89,39 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 
 func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count with filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Associate",
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -129,7 +129,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -137,27 +137,18 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
-						_count(published: {filter: {rating: {_ne: null}}})
-						published(filter: {rating: {_ne: null}}){
+						_count(published: {filter: {rating: {_neq: null}}})
+						published(filter: {rating: {_neq: null}}){
 							name
 						}
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
-						{
-							"name":   "Cornelia Funke",
-							"_count": 1,
-							"published": []map[string]any{
-								{
-									"name": "Theif Lord",
-								},
-							},
-						},
 						{
 							"name":   "John Grisham",
 							"_count": 2,
@@ -170,8 +161,18 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 								},
 							},
 						},
+						{
+							"name":   "Cornelia Funke",
+							"_count": 1,
+							"published": []map[string]any{
+								{
+									"name": "Theif Lord",
+								},
+							},
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -181,9 +182,8 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 
 func TestQueryOneToMany_WithCountWithJSONFilterAndChildFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with count with JSON filter",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 				type Book {
 					name: String
@@ -199,7 +199,7 @@ func TestQueryOneToMany_WithCountWithJSONFilterAndChildFilter_Succeeds(t *testin
 					metadata: JSON
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -210,7 +210,7 @@ func TestQueryOneToMany_WithCountWithJSONFilterAndChildFilter_Succeeds(t *testin
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -221,31 +221,31 @@ func TestQueryOneToMany_WithCountWithJSONFilterAndChildFilter_Succeeds(t *testin
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
 					"rating":    4.9,
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
 					"rating":    4.5,
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
 					"rating":    4.8,
-					"author_id": testUtils.NewDocIndex(1, 1),
+					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_count(Author: {filter: {
 						metadata: {yearOfBirth: {_eq: 1958}},

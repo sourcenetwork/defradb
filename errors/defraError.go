@@ -33,24 +33,24 @@ type defraError struct {
 
 func (e *defraError) Error() string {
 	builder := strings.Builder{}
-	builder.WriteString(e.message)
+	_, _ = builder.WriteString(e.message)
 
 	if e.inner != nil {
-		builder.WriteString(": ")
-		builder.WriteString(e.inner.Error())
+		_, _ = builder.WriteString(": ")
+		_, _ = builder.WriteString(e.inner.Error())
 	}
 
 	if len(e.kvs) > 0 {
-		builder.WriteString(".")
+		_, _ = builder.WriteString(".")
 	}
 
 	for i, kv := range e.kvs {
-		builder.WriteString(" ")
-		builder.WriteString(kv.key)
-		builder.WriteString(": ")
-		builder.WriteString(fmt.Sprint(kv.value))
+		_, _ = builder.WriteString(" ")
+		_, _ = builder.WriteString(kv.key)
+		_, _ = builder.WriteString(": ")
+		_, _ = builder.WriteString(fmt.Sprint(kv.value))
 		if i < len(e.kvs)-1 {
-			builder.WriteString(",")
+			_, _ = builder.WriteString(",")
 		}
 	}
 

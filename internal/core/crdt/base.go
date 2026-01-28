@@ -14,16 +14,16 @@ import (
 	"context"
 	"encoding/binary"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 func setPriority(
 	ctx context.Context,
-	store datastore.DSReaderWriter,
+	store datastore.Keyedstore,
 	key keys.DataStoreKey,
 	priority uint64,
 ) error {
@@ -34,19 +34,19 @@ func setPriority(
 		return ErrEncodingPriority
 	}
 
-	return store.Put(ctx, prioK.ToDS(), buf[0:n])
+	return store.Set(ctx, prioK, buf[0:n])
 }
 
 // get the current priority for given key
 func getPriority(
 	ctx context.Context,
-	store datastore.DSReaderWriter,
+	store datastore.Keyedstore,
 	key keys.DataStoreKey,
 ) (uint64, error) {
 	pKey := key.WithPriorityFlag()
-	pbuf, err := store.Get(ctx, pKey.ToDS())
+	pbuf, err := store.Get(ctx, pKey)
 	if err != nil {
-		if errors.Is(err, ds.ErrNotFound) {
+		if errors.Is(err, corekv.ErrNotFound) {
 			return 0, nil
 		}
 		return 0, err

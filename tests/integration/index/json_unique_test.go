@@ -13,8 +13,7 @@ package index
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -26,56 +25,52 @@ func TestJSONUniqueIndex_WithRandomValues_ShouldGuaranteeUniquenessAndBeAbelToUs
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						custom: JSON @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {"height": 190}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 168}
 				}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-0b423e0b-2c5d-566f-8266-91211353ab66",
-					errors.NewKV("custom", map[string]any{"height": float64(168)})).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": 20
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": 30
 				}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-67dd014b-4a26-55ab-a71d-fbd14a3fcecc",
-					errors.NewKV("custom", 30)).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -83,7 +78,7 @@ func TestJSONUniqueIndex_WithRandomValues_ShouldGuaranteeUniquenessAndBeAbelToUs
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -106,20 +101,20 @@ func TestJSONUniqueIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						custom: JSON @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {"height": 168, "weight": 70}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": {"height": 180, "BMI": 25}
@@ -131,7 +126,7 @@ func TestJSONUniqueIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 					"custom": {"height": 172, "BMI": 22}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -139,11 +134,11 @@ func TestJSONUniqueIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req1),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -151,7 +146,7 @@ func TestJSONUniqueIndex_UponUpdate_ShouldUseNewIndexValues(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req2),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},

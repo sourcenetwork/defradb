@@ -13,14 +13,14 @@ package field_kinds
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with string array, replace with nil",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -28,7 +28,7 @@ func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
@@ -39,7 +39,7 @@ func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 					"preferredStrings": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -63,9 +63,8 @@ func TestMutationUpdate_WithArrayOfStringsToNil(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with string array, replace with empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -73,7 +72,7 @@ func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
@@ -84,7 +83,7 @@ func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 					"preferredStrings": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -108,9 +107,8 @@ func TestMutationUpdate_WithArrayOfStringsToEmpty(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfStringsToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with string array, replace with same size",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -118,7 +116,7 @@ func TestMutationUpdate_WithArrayOfStringsToSameSize(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
@@ -129,7 +127,7 @@ func TestMutationUpdate_WithArrayOfStringsToSameSize(t *testing.T) {
 					"preferredStrings": ["zeroth", "the previous", "the first", "null string"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -153,9 +151,8 @@ func TestMutationUpdate_WithArrayOfStringsToSameSize(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfStringsToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with string array, replace with smaller size",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -163,7 +160,7 @@ func TestMutationUpdate_WithArrayOfStringsToSmallerSize(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
@@ -174,7 +171,7 @@ func TestMutationUpdate_WithArrayOfStringsToSmallerSize(t *testing.T) {
 					"preferredStrings": ["", "the first"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -198,9 +195,8 @@ func TestMutationUpdate_WithArrayOfStringsToSmallerSize(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfStringsToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with string array, replace with larger size",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -208,7 +204,7 @@ func TestMutationUpdate_WithArrayOfStringsToLargerSize(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"preferredStrings": ["", "the previous", "the first", "empty string"]
@@ -219,7 +215,7 @@ func TestMutationUpdate_WithArrayOfStringsToLargerSize(t *testing.T) {
 					"preferredStrings": ["", "the previous", "the first", "empty string", "blank string", "hitchi"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

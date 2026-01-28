@@ -13,56 +13,56 @@ package json
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryJSON_WithAnyFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple JSON array, filtered any of all types array",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					name: String
 					custom: JSON
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": [1, false, "second", {"one": 1}, [1, 2]]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred",
 					"custom": [null, false, "second", {"one": 1}, [1, 2]]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": null
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": 0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": ""
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_any: {_eq: null}}}) {
 						name
@@ -84,57 +84,56 @@ func TestQueryJSON_WithAnyFilterWithAllTypes_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithAnyFilterAndNestedArray_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple JSON array, filtered any of all types array",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					name: String
 					custom: JSON
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": [1, false, "second", {"one": 1}, [1, 2]]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred",
 					"custom": [null, false, "second", {"one": 1}, [1, [2, 3]]]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"custom": null
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"custom": 3
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bruno",
 					"custom": [null, 3]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": ""
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_any: {_eq: 3}}}) {
 						name

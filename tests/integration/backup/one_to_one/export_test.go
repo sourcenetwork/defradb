@@ -14,13 +14,14 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
@@ -28,7 +29,7 @@ func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 				Config: client.BackupConfig{
 					Collections: []string{"User"},
 				},
-				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","age":30,"name":"John"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","age":30,"name":"John"}]}`,
 			},
 		},
 	}
@@ -39,15 +40,15 @@ func TestBackupExport_JustUserCollection_NoError(t *testing.T) {
 func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 31}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "John and the sourcerers' stone",
@@ -60,7 +61,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.
 				Doc:          `{"age": 31}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"},{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"}],"Book":[{"_docID":"bae-af59fdc4-e495-5fd3-a9a6-386249aafdbb","_docIDNew":"bae-d374c406-c6ea-51cd-9e9b-dd44a97b499c","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","name":"John and the sourcerers' stone"}]}`,
+				ExpectedContent: `{"Book":[{"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","_docID":"bae-a7dc8647-e224-5abc-a0df-0fe2d380c7a7","_docIDNew":"bae-5048dc2a-683b-5ff4-a4a6-8d25f01df2a3","name":"John and the sourcerers' stone"}],"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","age":31,"name":"John"},{"_docID":"bae-be327e0b-a7fa-53ce-b29a-919cce5b5120","_docIDNew":"bae-be327e0b-a7fa-53ce-b29a-919cce5b5120","age":31,"name":"Bob"}]}`,
 			},
 		},
 	}
@@ -71,7 +72,7 @@ func TestBackupExport_AllCollectionsMultipleDocsAndDocUpdate_NoError(t *testing.
 func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 				type User {
 					name: String
@@ -86,15 +87,15 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 				}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 31}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "John and the sourcerers' stone",
@@ -108,7 +109,7 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 				Doc:          `{"age": 31}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"},{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"}],"Book":[{"_docID":"bae-bddb7139-7035-5fff-a118-3fc2033723b3","_docIDNew":"bae-6972e51f-a8cd-59eb-9a34-8a37058ddf4e","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","favourite_id":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","name":"John and the sourcerers' stone"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","age":31,"name":"John"},{"_docID":"bae-be327e0b-a7fa-53ce-b29a-919cce5b5120","_docIDNew":"bae-be327e0b-a7fa-53ce-b29a-919cce5b5120","age":31,"name":"Bob"}],"Book":[{"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","_docID":"bae-64c6f714-5379-5aa0-be61-14c5fbbc2900","_docIDNew":"bae-041e43b9-93dd-5884-8075-f35b42f827ed","_favouriteID":"bae-be327e0b-a7fa-53ce-b29a-919cce5b5120","name":"John and the sourcerers' stone"}]}`,
 			},
 		},
 	}
@@ -119,7 +120,7 @@ func TestBackupExport_DoubleReletionship_NoError(t *testing.T) {
 func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 				type User {
 					name: String
@@ -134,15 +135,15 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 				}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "John", "age": 30}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob", "age": 31}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "John and the sourcerers' stone",
@@ -150,7 +151,7 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 					"favourite": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc:          `{"name": "Game of chains"}`,
 			},
@@ -160,7 +161,7 @@ func TestBackupExport_DoubleReletionshipWithUpdate_NoError(t *testing.T) {
 				Doc:          `{"age": 31}`,
 			},
 			testUtils.BackupExport{
-				ExpectedContent: `{"User":[{"_docID":"bae-7fca96a2-5f01-5558-a81f-09b47587f26d","_docIDNew":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","age":31,"name":"John"},{"_docID":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","_docIDNew":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","age":31,"name":"Bob"}],"Book":[{"_docID":"bae-0aa10275-4f6e-5b38-9915-5664dd4c7802","_docIDNew":"bae-0aa10275-4f6e-5b38-9915-5664dd4c7802","name":"Game of chains"},{"_docID":"bae-bddb7139-7035-5fff-a118-3fc2033723b3","_docIDNew":"bae-6972e51f-a8cd-59eb-9a34-8a37058ddf4e","author_id":"bae-9918e1ec-c62b-5de2-8fbf-c82795b8ac7f","favourite_id":"bae-ebfe11e2-045d-525d-9fb7-2abb961dc84f","name":"John and the sourcerers' stone"}]}`,
+				ExpectedContent: `{"User":[{"_docID":"bae-3fc941b7-505c-5ce2-91a0-b180930ec8a9","_docIDNew":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","age":31,"name":"John"},{"_docID":"bae-be327e0b-a7fa-53ce-b29a-919cce5b5120","_docIDNew":"bae-be327e0b-a7fa-53ce-b29a-919cce5b5120","age":31,"name":"Bob"}],"Book":[{"_docID":"bae-01e3546b-088f-5da6-b345-25cb5858f90b","_docIDNew":"bae-01e3546b-088f-5da6-b345-25cb5858f90b","name":"Game of chains"},{"_authorID":"bae-1552bcf5-6b3b-5cd0-bdaf-33bb43f74ab4","_docID":"bae-64c6f714-5379-5aa0-be61-14c5fbbc2900","_docIDNew":"bae-041e43b9-93dd-5884-8075-f35b42f827ed","_favouriteID":"bae-be327e0b-a7fa-53ce-b29a-919cce5b5120","name":"John and the sourcerers' stone"}]}`,
 			},
 		},
 	}

@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -9,7 +9,7 @@
 // licenses/APL.txt.
 
 /*
-Package db provides the implementation of the [client.DB] interface, collection operations,
+Package db provides the implementation of the [client.TxnStore] interface, collection operations,
 and related components.
 */
 package db
@@ -20,20 +20,23 @@ import (
 	"sync/atomic"
 	"time"
 
-	ds "github.com/ipfs/go-datastore"
-	dsq "github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
+	_ "github.com/sourcenetwork/corekv/chunk"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
+	lensNode "github.com/sourcenetwork/lens/host-go/node"
+	lensStore "github.com/sourcenetwork/lens/host-go/store"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
-	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
+	"github.com/sourcenetwork/defradb/internal/db/p2p"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 )
@@ -59,88 +62,106 @@ const (
 type DB struct {
 	glock sync.RWMutex
 
-	rootstore  datastore.Rootstore
-	multistore datastore.MultiStore
+	rootstore corekv.TxnStore
 
-	events *event.Bus
+	events event.Bus
 
 	parser core.Parser
 
-	lensRegistry client.LensRegistry
+	// WARNING - This property should never be accessed directly, use `db.GetLensStore`
+	// in order to ensure any transactions are respected.
+	lensNode *lensNode.Node
+
+	blockStoreChunkSize immutable.Option[int]
 
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
 
-	// The options used to init the database
+	// The options used to init the database.
 	options []Option
 
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
 
-	// The identity of the current node
+	// The identity of the current node.
 	nodeIdentity immutable.Option[identity.Identity]
 
-	// Contains ACP if it exists
-	acp immutable.Option[acp.ACP]
+	// Node ACP system along with it's current state information.
+	nodeACP acpDB.NACInfo
 
-	// The peer ID and network address information for the current node
-	// if network is enabled. The `atomic.Value` should hold a `peer.AddrInfo` struct.
-	peerInfo atomic.Value
+	// Contains document ACP if it exists.
+	documentACP immutable.Option[dac.DocumentACP]
 
 	// To be able to close the context passed to NewDB on DB close,
 	// we need to keep a reference to the cancel function. Otherwise,
 	// some goroutines might leak.
 	ctxCancel context.CancelFunc
 
-	// The intervals at which to retry replicator failures.
-	// For example, this can define an exponential backoff strategy.
+	// If true, block signing is disabled. By default, block signing is enabled.
+	signingDisabled bool
+
+	// The cryptographic key used to generate search tags for searchable encryption.
+	searchableEncryptionKey []byte
+
+	docMergeQueue *mergeQueue
+	colMergeQueue *mergeQueue
+
+	p2p *p2p.P2P
+	// Retry intervals when a replicator failure occurs.
 	retryIntervals []time.Duration
+	// timeout duration for syncing block links.
+	p2pBlockSyncTimeout time.Duration
+
+	// lockSet contains and manages the set of locks held and available to this Defra instance.
+	lockSet *lock.LockSet
 }
 
-var _ client.DB = (*DB)(nil)
+var _ client.TxnStore = (*DB)(nil)
 
 // NewDB creates a new instance of the DB using the given options.
 func NewDB(
 	ctx context.Context,
-	rootstore datastore.Rootstore,
-	acp immutable.Option[acp.ACP],
-	lens client.LensRegistry,
+	rootstore corekv.TxnStore,
+	nodeACP acpDB.NACInfo,
+	documentACP immutable.Option[dac.DocumentACP],
 	options ...Option,
 ) (*DB, error) {
-	return newDB(ctx, rootstore, acp, lens, options...)
+	return newDB(ctx, rootstore, nodeACP, documentACP, options...)
 }
 
 func newDB(
 	ctx context.Context,
-	rootstore datastore.Rootstore,
-	acp immutable.Option[acp.ACP],
-	lens client.LensRegistry,
+	rootstore corekv.TxnStore,
+	nodeACP acpDB.NACInfo,
+	documentACP immutable.Option[dac.DocumentACP],
 	options ...Option,
 ) (*DB, error) {
-	multistore := datastore.MultiStoreFrom(rootstore)
-
-	parser, err := graphql.NewParser()
-	if err != nil {
-		return nil, err
-	}
-
-	opts := defaultOptions()
+	opts := defaultDBOptions()
 	for _, opt := range options {
 		opt(opts)
+	}
+
+	parser, err := graphql.NewParser(len(opts.searchableEncryptionKey) > 0)
+	if err != nil {
+		return nil, err
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
 
 	db := &DB{
-		rootstore:      rootstore,
-		multistore:     multistore,
-		acp:            acp,
-		lensRegistry:   lens,
-		parser:         parser,
-		options:        options,
-		events:         event.NewBus(commandBufferSize, eventBufferSize),
-		ctxCancel:      cancel,
-		retryIntervals: opts.RetryIntervals,
+		rootstore:           rootstore,
+		blockStoreChunkSize: opts.ChunkSize,
+		nodeACP:             nodeACP,
+		documentACP:         documentACP,
+		parser:              parser,
+		options:             options,
+		events:              event.NewChannelBus(commandBufferSize, eventBufferSize),
+		ctxCancel:           cancel,
+		docMergeQueue:       newMergeQueue(),
+		colMergeQueue:       newMergeQueue(),
+		retryIntervals:      opts.retryIntervals,
+		p2pBlockSyncTimeout: opts.p2pBlockSyncTimeout,
+		lockSet:             lock.NewLockSet(),
 	}
 
 	if opts.maxTxnRetries.HasValue() {
@@ -148,9 +169,39 @@ func newDB(
 	}
 
 	db.nodeIdentity = opts.identity
+	db.signingDisabled = opts.disableSigning
+	db.searchableEncryptionKey = opts.searchableEncryptionKey
 
-	if lens != nil {
-		lens.Init(db)
+	lensRuntime, err := newLensRuntime(opts.LensRuntimeType)
+	if err != nil {
+		return nil, err
+	}
+
+	// Overwrite a few key Lens options for now, by appending them to the end of the option
+	// slice.
+	opts.LensOptions = append(opts.LensOptions, lensNode.WithRootstore(rootstore))
+	opts.LensOptions = append(opts.LensOptions, lensNode.WithTxnSource(wrapSource(db)))
+	opts.LensOptions = append(opts.LensOptions, lensNode.WithRuntime(lensRuntime))
+
+	if opts.p2p.HasValue() {
+		opts.LensOptions = appendLensP2POpt(opts.LensOptions, opts)
+	} else {
+		// If defra has no P2P enabled, it doesn't make sense to enable it for Lens
+		opts.LensOptions = append(opts.LensOptions, lensNode.WithP2PDisabled(true))
+	}
+
+	node, err := lensNode.New(ctx, opts.LensOptions...)
+	if err != nil {
+		return nil, err
+	}
+	db.lensNode = node
+
+	if opts.p2p.HasValue() {
+		p, err := p2p.New(ctx, db, node, opts.p2p.Value(), db.nodeIdentity, NewCollectionRetriever(db))
+		if err != nil {
+			return nil, err
+		}
+		db.p2p = p
 	}
 
 	err = db.initialize(ctx)
@@ -158,85 +209,33 @@ func newDB(
 		return nil, err
 	}
 
-	sub, err := db.events.Subscribe(event.MergeName, event.PeerInfoName, event.ReplicatorFailureName)
-	if err != nil {
-		return nil, err
-	}
-	go db.handleMessages(ctx, sub)
-	go db.handleReplicatorRetries(ctx)
-
 	return db, nil
 }
 
 // NewTxn creates a new transaction.
-func (db *DB) NewTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewTxnFrom(ctx, db.rootstore, txnId, readonly)
+	txn := datastore.NewTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
+	return wrapDatastoreTxn(txn, db), nil
 }
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
-func (db *DB) NewConcurrentTxn(ctx context.Context, readonly bool) (datastore.Txn, error) {
+func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
 	txnId := db.previousTxnID.Add(1)
-	return datastore.NewConcurrentTxnFrom(ctx, db.rootstore, txnId, readonly)
-}
-
-// Rootstore returns the root datastore.
-func (db *DB) Rootstore() datastore.Rootstore {
-	return db.rootstore
-}
-
-// Blockstore returns the internal DAG store which contains IPLD blocks.
-func (db *DB) Blockstore() datastore.Blockstore {
-	return db.multistore.Blockstore()
-}
-
-// Encstore returns the internal enc store which contains encryption key for documents and their fields.
-func (db *DB) Encstore() datastore.Blockstore {
-	return db.multistore.Encstore()
-}
-
-// Peerstore returns the internal DAG store which contains IPLD blocks.
-func (db *DB) Peerstore() datastore.DSReaderWriter {
-	return db.multistore.Peerstore()
-}
-
-// Headstore returns the internal DAG store which contains IPLD blocks.
-func (db *DB) Headstore() ds.Read {
-	return db.multistore.Headstore()
-}
-
-func (db *DB) LensRegistry() client.LensRegistry {
-	return db.lensRegistry
-}
-
-func (db *DB) AddPolicy(
-	ctx context.Context,
-	policy string,
-) (client.AddPolicyResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if !db.acp.HasValue() {
-		return client.AddPolicyResult{}, client.ErrACPOperationButACPNotAvailable
-	}
-
-	policyID, err := db.acp.Value().AddPolicy(
-		ctx,
-		identity.FromContext(ctx).Value(),
-		policy,
-	)
-	if err != nil {
-		return client.AddPolicyResult{}, err
-	}
-
-	return client.AddPolicyResult{PolicyID: policyID}, nil
+	txn := datastore.NewConcurrentTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
+	return wrapDatastoreTxn(txn, db), nil
 }
 
 // publishDocUpdateEvent publishes an update event for a document.
 // It uses heads iterator to read the document's head blocks directly from the storage, i.e. without
 // using a transaction.
 func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collection client.Collection) error {
-	headsIterator, err := NewHeadBlocksIterator(ctx, db.multistore.Headstore(), db.Blockstore(), docID)
+	headsIterator, err := NewHeadBlocksIterator(
+		ctx,
+		datastore.HeadstoreFrom(db.rootstore),
+		datastore.BlockstoreFrom(db.rootstore, db.blockStoreChunkSize),
+		docID,
+	)
 	if err != nil {
 		return err
 	}
@@ -251,117 +250,34 @@ func (db *DB) publishDocUpdateEvent(ctx context.Context, docID string, collectio
 		}
 
 		updateEvent := event.Update{
-			DocID:      docID,
-			Cid:        headsIterator.CurrentCid(),
-			SchemaRoot: collection.Schema().Root,
-			Block:      headsIterator.CurrentRawBlock(),
+			DocID:        docID,
+			Cid:          headsIterator.CurrentCid(),
+			CollectionID: collection.Version().CollectionID,
+			Block:        headsIterator.CurrentRawBlock(),
 		}
-		db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+		db.sendUpdate(updateEvent)
 	}
 	return nil
 }
-
-func (db *DB) AddDocActorRelationship(
-	ctx context.Context,
-	collectionName string,
-	docID string,
-	relation string,
-	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if !db.acp.HasValue() {
-		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
-	}
-
-	collection, err := db.GetCollectionByName(ctx, collectionName)
-	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
-	}
-
-	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
-	if !hasPolicy {
-		return client.AddDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
-	}
-
-	exists, err := db.acp.Value().AddDocActorRelationship(
-		ctx,
-		policyID,
-		resourceName,
-		docID,
-		relation,
-		identity.FromContext(ctx).Value(),
-		targetActor,
-	)
-
-	if err != nil {
-		return client.AddDocActorRelationshipResult{}, err
-	}
-
-	if !exists {
-		err = db.publishDocUpdateEvent(ctx, docID, collection)
-		if err != nil {
-			return client.AddDocActorRelationshipResult{}, err
-		}
-	}
-
-	return client.AddDocActorRelationshipResult{ExistedAlready: exists}, nil
-}
-
-func (db *DB) DeleteDocActorRelationship(
-	ctx context.Context,
-	collectionName string,
-	docID string,
-	relation string,
-	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
-	ctx, span := tracer.Start(ctx)
-	defer span.End()
-
-	if !db.acp.HasValue() {
-		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
-	}
-
-	collection, err := db.GetCollectionByName(ctx, collectionName)
-	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
-	}
-
-	policyID, resourceName, hasPolicy := permission.IsPermissioned(collection)
-	if !hasPolicy {
-		return client.DeleteDocActorRelationshipResult{}, client.ErrACPOperationButCollectionHasNoPolicy
-	}
-
-	recordFound, err := db.acp.Value().DeleteDocActorRelationship(
-		ctx,
-		policyID,
-		resourceName,
-		docID,
-		relation,
-		identity.FromContext(ctx).Value(),
-		targetActor,
-	)
-
-	if err != nil {
-		return client.DeleteDocActorRelationshipResult{}, err
-	}
-
-	return client.DeleteDocActorRelationshipResult{RecordFound: recordFound}, nil
-}
-
 func (db *DB) GetNodeIdentity(_ context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	if db.nodeIdentity.HasValue() {
-		return immutable.Some(db.nodeIdentity.Value().IntoRawIdentity().Public()), nil
+		return immutable.Some(db.nodeIdentity.Value().ToPublicRawIdentity()), nil
 	}
 	return immutable.None[identity.PublicRawIdentity](), nil
 }
 
 func (db *DB) GetNodeIdentityToken(_ context.Context, audience immutable.Option[string]) ([]byte, error) {
-	if db.nodeIdentity.HasValue() {
-		return db.nodeIdentity.Value().NewToken(time.Hour*24, audience, immutable.None[string]())
+	if !db.nodeIdentity.HasValue() {
+		return nil, nil
 	}
-	return nil, nil
+
+	ident := db.nodeIdentity.Value()
+	fullIdentity, ok := ident.(identity.FullIdentity)
+	if !ok || fullIdentity.PrivateKey() == nil {
+		return nil, identity.ErrPrivateKeyNotAvailable
+	}
+
+	return fullIdentity.NewToken(time.Hour*24, audience, immutable.None[string]())
 }
 
 // Initialize is called when a database is first run and creates all the db global meta data
@@ -374,18 +290,22 @@ func (db *DB) initialize(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
-	// Start acp if enabled, this will recover previous state if there is any.
-	if db.acp.HasValue() {
-		// db is responsible to call db.acp.Close() to free acp resources while closing.
-		if err = db.acp.Value().Start(ctx); err != nil {
+	if err := db.initializeNodeACP(ctx, txn); err != nil {
+		return err
+	}
+
+	// Start document acp if enabled, this will recover previous state if there is any.
+	if db.documentACP.HasValue() {
+		// db is responsible to call db.documentACP.Close() to free acp resources while closing.
+		if err = db.documentACP.Value().Start(ctx); err != nil {
 			return err
 		}
 	}
 
-	exists, err := txn.Systemstore().Has(ctx, ds.NewKey("init"))
-	if err != nil && !errors.Is(err, ds.ErrNotFound) {
+	exists, err := txn.Systemstore().Has(ctx, []byte("/init"))
+	if err != nil {
 		return err
 	}
 	// if we're loading an existing database, just load the schema
@@ -396,7 +316,7 @@ func (db *DB) initialize(ctx context.Context) error {
 			return err
 		}
 
-		err = db.lensRegistry.ReloadLenses(ctx)
+		err = db.getLensStore(ctx).Reload(ctx)
 		if err != nil {
 			return err
 		}
@@ -404,26 +324,27 @@ func (db *DB) initialize(ctx context.Context) error {
 		// The query language types are only updated on successful commit
 		// so we must not forget to do so on success regardless of whether
 		// we have written to the datastores.
-		return txn.Commit(ctx)
+		return txn.Commit()
 	}
 
-	// init meta data
-	// collection sequence
-	_, err = db.getSequence(ctx, keys.CollectionIDSequenceKey{})
+	err = txn.Systemstore().Set(ctx, []byte("/init"), []byte{1})
 	if err != nil {
 		return err
 	}
 
-	err = txn.Systemstore().Put(ctx, ds.NewKey("init"), []byte{1})
-	if err != nil {
-		return err
-	}
+	return txn.Commit()
+}
 
-	return txn.Commit(ctx)
+func (db *DB) Rootstore() corekv.TxnStore {
+	return db.rootstore
+}
+
+func (db *DB) Multistore() *datastore.Multistore {
+	return datastore.NewMultistore(db.rootstore, db.lockSet, db.blockStoreChunkSize)
 }
 
 // Events returns the events Channel.
-func (db *DB) Events() *event.Bus {
+func (db *DB) Events() event.Bus {
 	return db.events
 }
 
@@ -436,9 +357,24 @@ func (db *DB) MaxTxnRetries() int {
 	return defaultMaxTxnRetries
 }
 
+// SearchableEncryptionKey returns the searchable encryption key if configured.
+func (db *DB) SearchableEncryptionKey() []byte {
+	return db.searchableEncryptionKey
+}
+
+// RetryIntervals returns the replicator retry configuration.
+func (db *DB) RetryIntervals() []time.Duration {
+	return db.retryIntervals
+}
+
+// P2PBlockSyncTimeout is the timeout duration for syncing block links.
+func (db *DB) P2PBlockSyncTimeout() time.Duration {
+	return db.p2pBlockSyncTimeout
+}
+
 // PrintDump prints the entire database to console.
 func (db *DB) PrintDump(ctx context.Context) error {
-	return printStore(ctx, db.multistore.Rootstore())
+	return printStore(ctx, db.rootstore)
 }
 
 // Close is called when we are shutting down the database.
@@ -455,30 +391,84 @@ func (db *DB) Close() {
 		log.ErrorE("Failure closing running process", err)
 	}
 
-	if db.acp.HasValue() {
-		if err := db.acp.Value().Close(); err != nil {
+	if db.nodeACP.NodeACP != nil {
+		if err := db.nodeACP.NodeACP.Close(); err != nil {
+			log.ErrorE("Failure closing node acp", err)
+		}
+	}
+
+	if db.documentACP.HasValue() {
+		if err := db.documentACP.Value().Close(); err != nil {
 			log.ErrorE("Failure closing acp", err)
 		}
+	}
+
+	if db.p2p != nil && db.p2p.SECoordinator() != nil {
+		db.p2p.SECoordinator().Close()
 	}
 
 	log.Info("Successfully closed running process")
 }
 
-func printStore(ctx context.Context, store datastore.DSReaderWriter) error {
-	q := dsq.Query{
-		Prefix:   "",
-		KeysOnly: false,
-		Orders:   []dsq.Order{dsq.OrderByKey{}},
-	}
-
-	results, err := store.Query(ctx, q)
+func printStore(ctx context.Context, store corekv.ReaderWriter) error {
+	iter, err := store.Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
 		return err
 	}
 
-	for r := range results.Next() {
-		log.InfoContext(ctx, "", corelog.Any(r.Key, r.Value))
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		if !hasNext {
+			break
+		}
+
+		value, err := iter.Value()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		key, err := datastore.HumanReadableKey(iter.Key())
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		log.InfoContext(ctx, "", corelog.Any(key, value))
 	}
 
-	return results.Close()
+	return iter.Close()
+}
+
+type txnSource struct {
+	txnSource client.TxnSource
+}
+
+var _ lensStore.TxnSource = (*txnSource)(nil)
+
+func wrapSource(s client.TxnSource) *txnSource {
+	return &txnSource{
+		txnSource: s,
+	}
+}
+
+func (s *txnSource) NewTxn(readOnly bool) (lensStore.Txn, error) {
+	txn, err := s.txnSource.NewTxn(readOnly)
+	if err != nil {
+		return nil, err
+	}
+
+	dsTxn := datastore.MustGetFromClientTxn(txn)
+
+	return &wrappedTxn{
+		Txn:          dsTxn,
+		ReaderWriter: dsTxn.Rootstore(),
+	}, nil
+}
+
+type wrappedTxn struct {
+	datastore.Txn
+	corekv.ReaderWriter
 }

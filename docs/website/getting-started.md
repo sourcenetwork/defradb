@@ -129,14 +129,14 @@ This returns only user documents which have a value for the `points` field *Grea
 
 ## Obtain document commits
 
-DefraDB's data model is based on [MerkleCRDTs](./guides/merkle-crdt.md). Each document has a graph of all of its updates, similar to Git. The updates are called `commits` and are identified by `cid`, a content identifier. Each references its parents by their `cid`s.
+DefraDB's data model is based on [MerkleCRDTs](./guides/merkle-crdt.md). Each document has a graph of all of its updates, similar to Git. The updates are called `_commits` and are identified by `cid`, a content identifier. Each references its parents by their `cid`s.
 
 To get the most recent commits in the MerkleDAG for the document identified as `bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab`:
 
 ```shell
 defradb client query '
   query {
-    latestCommits(dockey: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
+    _commits(docID: "bae-91171025-ed21-50e3-b0dc-e31bccdfa1ab") {
       cid
       delta
       height
@@ -154,7 +154,7 @@ It returns a structure similar to the following, which contains the update paylo
 ```json
 {
   "data": {
-    "latestCommits": [
+    "_commits": [
       {
         "cid": "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u",
         "delta": "pGNhZ2UYH2RuYW1lY0JvYmZwb2ludHMYWmh2ZXJpZmllZPU=",
@@ -188,7 +188,7 @@ Obtain a specific commit by its content identifier (`cid`):
 ```shell
 defradb client query '
   query {
-    commits(cid: "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u") {
+    _commits(cid: "bafybeifhtfs6vgu7cwbhkojneh7gghwwinh5xzmf7nqkqqdebw5rqino7u") {
       cid
       delta
       height
@@ -254,7 +254,7 @@ This starts two nodes and connects them via pubsub networking.
 
 ### Collection subscription example
 
-It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `schemaVersionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
+It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `collectionVersionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the `rpc p2pcollection` command:
 
 ```shell
 defradb client rpc p2pcollection add --url localhost:9182 bafkreibpnvkvjqvg4skzlijka5xe63zeu74ivcjwd76q7yi65jdhwqhske

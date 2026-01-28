@@ -18,7 +18,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 )
 
 // SchemaDefinition represents a schema definition.
@@ -30,6 +29,11 @@ type SchemaDefinition struct {
 	// todo: this needs to be properly typed and handled according to
 	// https://github.com/sourcenetwork/defradb/issues/863
 	Body []byte
+}
+
+type Collection struct {
+	Definition    client.CollectionVersion
+	CreateIndexes []client.IndexCreateRequest
 }
 
 // Parser represents the object responsible for handling stuff specific to a query language.
@@ -50,15 +54,15 @@ type Parser interface {
 	// NewFilterFromString creates a new filter from a string.
 	NewFilterFromString(collectionType string, body string) (immutable.Option[request.Filter], error)
 
-	// ParseSDL parses an SDL string into a set of collection descriptions.
+	// ParseSDL parses an SDL string into a set of collection versions.
 	//
 	// The parsing should validate the syntax, but not validate what that syntax expresses
 	// is valid or not, i.e. we don't want the parser to make remote calls to verify the
 	// policy description is valid or not (that is the callers responsiblity).
-	ParseSDL(ctx context.Context, sdl string) ([]client.CollectionDefinition, error)
+	ParseSDL(ctx context.Context, sdl string) ([]Collection, error)
 
 	// Adds the given schema to this parser's model.
 	//
 	// All collections should be provided, not just new/updated ones.
-	SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDefinition) error
+	SetSchema(ctx context.Context, collections []client.CollectionVersion) error
 }

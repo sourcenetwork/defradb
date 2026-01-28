@@ -1,0 +1,110 @@
+// Copyright 2024 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package cli
+
+import (
+	"context"
+
+	"github.com/spf13/cobra"
+)
+
+func MakeDocumentACPRelationshipDeleteCommand(ctx context.Context) *cobra.Command {
+	var (
+		collectionArg  string
+		relationArg    string
+		targetActorArg string
+		docIDArg       string
+	)
+
+	var cmd = &cobra.Command{
+		Use:   "delete [--docID] [-c --collection] [-r --relation] [-a --actor] [-i --identity]",
+		Short: "Delete relationship",
+		Long: `Delete relationship
+
+To revoke access to a document for an actor, we must delete the relationship between the
+actor and the document. In order to delete the relationship we require all of the following:
+
+1) Target DocID: The docID of the document we want to delete a relationship for.
+2) Collection Name: The name of the collection that has the Target DocID.
+3) Relation Name: The type of relation (name must be defined within the linked policy on collection).
+4) Target Identity: The identity of the actor the relationship is being deleted for.
+5) Requesting Identity: The identity of the actor that is making the request.
+
+Notes:
+  - ACP must be available (i.e. ACP can not be disabled).
+  - The target document must be registered with ACP already (policy & resource specified).
+  - The requesting identity MUST either be the owner OR the manager (manages the relation) of the resource.
+  - If the relationship record was not found, then it will be a no-op.
+  - Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/references/acp)
+`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliClient := mustGetContextCLIClient(cmd)
+			deleteDACActorRelationshipResult, err := cliClient.DeleteDACActorRelationship(
+				cmd.Context(),
+				collectionArg,
+				docIDArg,
+				relationArg,
+				targetActorArg,
+			)
+
+			if err != nil {
+				return err
+			}
+
+			return writeJSON(cmd, deleteDACActorRelationshipResult)
+		},
+	}
+
+	EmbedCLIExample(ctx, cmd, "Remove an actor from reading a private document",
+		`defradb client acp document relationship delete \
+	--collection Users \
+	--docID bae-ff3ceb1c-b5c0-5e86-a024-dd1b16a4261c \
+	--relation reader \
+	--actor did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn \
+	--identity e3b722906ee4e56368f581cd8b18ab0f48af1ea53e635e3f7b8acd076676f6ac`)
+
+	cmd.Flags().StringVarP(
+		&collectionArg,
+		"collection",
+		"c",
+		"",
+		"Collection that has the resource and policy for object",
+	)
+	_ = cmd.MarkFlagRequired("collection")
+
+	cmd.Flags().StringVarP(
+		&relationArg,
+		"relation",
+		"r",
+		"",
+		"Relation that needs to be deleted within the relationship",
+	)
+	_ = cmd.MarkFlagRequired("relation")
+
+	cmd.Flags().StringVarP(
+		&targetActorArg,
+		"actor",
+		"a",
+		"",
+		"Actor to delete relationship for",
+	)
+	_ = cmd.MarkFlagRequired("actor")
+
+	cmd.Flags().StringVar(
+		&docIDArg,
+		"docID",
+		"",
+		"Document Identifier (ObjectID) to delete relationship for",
+	)
+	_ = cmd.MarkFlagRequired("docID")
+
+	return cmd
+}

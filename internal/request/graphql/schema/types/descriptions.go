@@ -44,11 +44,10 @@ An optional docID parameter for this commit query. Only commits for a document
  with a matching docID will be returned.  If no documents match, the result
  set will be empty.
 `
-	commitFieldIDArgDescription string = `
-An optional field ID parameter for this commit query. Only commits for a fields
- matching this ID will be returned. Specifying 'C' will limit the results to 
- composite (document level) commits only, otherwise field IDs are numeric. If no
- fields match, the result set will be empty.
+	commitFieldNameArgDescription string = `
+An optional field name parameter for this commit query. Only commits for a fields
+ matching this name will be returned. Specifying '_C' will limit the results to
+ composite (document level) commits only. If no fields match, the result set will be empty.
 `
 	commitCIDArgDescription string = `
 An optional value that specifies the commit ID of the commits to return. If a
@@ -62,6 +61,10 @@ An optional value that specifies the maximum depth to which the commit DAG graph
 Child commits in the DAG that contribute to the composition of this commit.
  Composite commits will link to the field commits for the fields modified during
  the single mutation.  Collection commits will link to composites.
+`
+	signatureDescription string = `
+The signature of the commit, if one exists. This is used to verify the integrity
+ of the commit and the data it contains.
 `
 	commitHeightFieldDescription string = `
 Height represents the location of the commit in the DAG. All commits (collection, composite,
@@ -78,29 +81,25 @@ The docID of the document that this commit is for.
 	commitCollectionIDFieldDescription string = `
 The ID of the collection that this commit was committed against.
 `
-	commitSchemaVersionIDFieldDescription string = `
-The ID of the schema version that this commit was committed against. This ID allows one
+	commitCollectionVersionIDFieldDescription string = `
+The ID of the collection version that this commit was committed against. This ID allows one
  to determine the state of the data model at the time of commit.
 `
 	commitFieldNameFieldDescription string = `
 The name of the field that this commit was committed against. If this is a composite
  or a collection the value will be null.
 `
-	commitFieldIDFieldDescription string = `
-The id of the field that this commit was committed against. If this is a composite field
- the value will be "C". If it is a collection level commit it will be null.
-`
 	commitDeltaFieldDescription string = `
 The CBOR encoded representation of the value that is saved as part of this commit.
 `
 	commitLinkNameFieldDescription string = `
-The Name of the field that this linked commit mutated.
+The Name of the linked CID.
 `
 	commitLinkCIDFieldDescription string = `
 The CID of this linked commit.
 `
 	commitFieldsEnumDescription string = `
-These are the set of fields supported for grouping by in a commits query.
+These are the set of fields supported for grouping by in a _commits query.
 `
 	commitsQueryDescription string = `
 Returns a set of commits matching any provided criteria. If no arguments are
@@ -110,7 +109,7 @@ Returns a set of commits matching any provided criteria. If no arguments are
 Returns a set of head commits matching any provided criteria. If no arguments are
  provided all head commits in the system will be returned. If no 'field' argument
  is provided only composite commits will be returned. This is equivalent to
- a 'commits' query with Depth: 1, and a differing 'field' default value.
+ a '_commits' query with Depth: 1, and a differing 'field' default value.
 `
 	CountFieldDescription string = `
 Returns the total number of items within the specified child sets. If multiple child
@@ -180,9 +179,18 @@ These are the set of filter operators available for use when filtering on String
 These are the set of filter operators available for use when filtering on String!
  values.
 `
+
+	notNullBlobOperatorBlockDescription string = `
+These are the set of filter operators available for use when filtering on Blob!
+ values.
+`
+
 	idOperatorBlockDescription string = `
 These are the set of filter operators available for use when filtering on ID
  values.
+`
+	scalarAggregateSelectorDescription string = `
+The scalar field selection type for aggregate input arguments.
 `
 	eqOperatorDescription string = `
 The equality operator - if the target matches the value the check will pass.

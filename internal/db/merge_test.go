@@ -21,10 +21,14 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/corekv/blockstore"
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 const userSchema = `
@@ -37,7 +41,7 @@ type User {
 func TestMerge_SingleBranch_NoError(t *testing.T) {
 	ctx := context.Background()
 
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
 	_, err = db.AddSchema(ctx, userSchema)
@@ -47,21 +51,21 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(db.multistore.Blockstore().AsIPLDStorage())
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
 
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(col, initialDocState)
+	d, docID := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
-		DocID:      docID.String(),
-		Cid:        compInfo2.link.Cid,
-		SchemaRoot: col.SchemaRoot(),
+		DocID:        docID.String(),
+		Cid:          compInfo2.link.Cid,
+		CollectionID: col.CollectionID(),
 	})
 	require.NoError(t, err)
 
@@ -82,7 +86,7 @@ func TestMerge_SingleBranch_NoError(t *testing.T) {
 func TestMerge_DualBranch_NoError(t *testing.T) {
 	ctx := context.Background()
 
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
 	_, err = db.AddSchema(ctx, userSchema)
@@ -92,21 +96,21 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(db.multistore.Blockstore().AsIPLDStorage())
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
 
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(col, initialDocState)
+	d, docID := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
-		DocID:      docID.String(),
-		Cid:        compInfo2.link.Cid,
-		SchemaRoot: col.SchemaRoot(),
+		DocID:        docID.String(),
+		Cid:          compInfo2.link.Cid,
+		CollectionID: col.CollectionID(),
 	})
 	require.NoError(t, err)
 
@@ -114,9 +118,9 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
-		DocID:      docID.String(),
-		Cid:        compInfo3.link.Cid,
-		SchemaRoot: col.SchemaRoot(),
+		DocID:        docID.String(),
+		Cid:          compInfo3.link.Cid,
+		CollectionID: col.CollectionID(),
 	})
 	require.NoError(t, err)
 
@@ -140,7 +144,7 @@ func TestMerge_DualBranch_NoError(t *testing.T) {
 func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	ctx := context.Background()
 
-	db, err := newDefraMemoryDB(ctx)
+	db, err := newBadgerDB(ctx)
 	require.NoError(t, err)
 
 	_, err = db.AddSchema(ctx, userSchema)
@@ -150,25 +154,25 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(db.multistore.Blockstore().AsIPLDStorage())
+	lsys.SetWriteStorage(blockstore.NewIPLDStore(datastore.BlockstoreFrom(db.rootstore, immutable.None[int]())))
 
 	initialDocState := map[string]any{
 		"name": "John",
 	}
-	d, docID := newDagBuilder(col, initialDocState)
+	d, docID := newDagBuilder(ctx, col, initialDocState)
 	compInfo, err := d.generateCompositeUpdate(&lsys, initialDocState, compositeInfo{})
 	require.NoError(t, err)
 	compInfo2, err := d.generateCompositeUpdate(&lsys, map[string]any{"name": "Johny"}, compInfo)
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
-		DocID:      docID.String(),
-		Cid:        compInfo2.link.Cid,
-		SchemaRoot: col.SchemaRoot(),
+		DocID:        docID.String(),
+		Cid:          compInfo2.link.Cid,
+		CollectionID: col.CollectionID(),
 	})
 	require.NoError(t, err)
 
-	someUnknownBlock := coreblock.Block{Delta: crdt.CRDT{CompositeDAGDelta: &crdt.CompositeDAGDelta{Status: 1}}}
+	someUnknownBlock := coreblock.Block{Delta: crdt.CRDT{DocCompositeDelta: &crdt.DocCompositeDelta{Status: 1}}}
 	someUnknownLink, err := coreblock.GetLinkFromNode(someUnknownBlock.GenerateNode())
 	require.NoError(t, err)
 
@@ -181,11 +185,11 @@ func TestMerge_DualBranchWithOneIncomplete_CouldNotFindCID(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.executeMerge(ctx, col.(*collection), event.Merge{
-		DocID:      docID.String(),
-		Cid:        compInfo3.link.Cid,
-		SchemaRoot: col.SchemaRoot(),
+		DocID:        docID.String(),
+		Cid:          compInfo3.link.Cid,
+		CollectionID: col.CollectionID(),
 	})
-	require.ErrorContains(t, err, "could not find bafyreibdsxukhmkwea4hdd2svvf6fijvuhdxeil2bf75v4wzooldb74uwq")
+	require.ErrorContains(t, err, "could not find bafyreihs5kx5u6k6mc3m6st3ytam4e3mmk3sd6p4jn3hh5o63wpf4holoq")
 
 	// Verify the document was created with the expected values
 	doc, err := col.Get(ctx, docID, false)
@@ -207,10 +211,11 @@ type dagBuilder struct {
 	col          client.Collection
 }
 
-func newDagBuilder(col client.Collection, initalDocState map[string]any) (*dagBuilder, client.DocID) {
+func newDagBuilder(ctx context.Context, col client.Collection, initalDocState map[string]any) (*dagBuilder, client.DocID) {
 	doc, err := client.NewDocFromMap(
+		ctx,
 		initalDocState,
-		col.Definition(),
+		col.Version(),
 	)
 	if err != nil {
 		panic(err)
@@ -240,12 +245,12 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 		// Generate new Block and save to lsys
 		fieldBlock := coreblock.Block{
 			Delta: crdt.CRDT{
-				LWWRegDelta: &crdt.LWWRegDelta{
-					DocID:           d.docID,
-					FieldName:       field,
-					Priority:        d.fieldsHeight[field],
-					SchemaVersionID: d.col.Schema().VersionID,
-					Data:            encodeValue(val),
+				LWWDelta: &crdt.LWWDelta{
+					DocID:               d.docID,
+					FieldName:           field,
+					Priority:            d.fieldsHeight[field],
+					CollectionVersionID: d.col.Version().VersionID,
+					Data:                encodeValue(val),
 				},
 			},
 		}
@@ -260,12 +265,12 @@ func (d *dagBuilder) generateCompositeUpdate(lsys *linking.LinkSystem, fields ma
 	}
 
 	compositeBlock := coreblock.New(
-		&crdt.CompositeDAGDelta{
-			DocID:           d.docID,
-			Priority:        newPriority,
-			SchemaVersionID: d.col.Schema().VersionID,
-			Status:          1,
-		},
+		crdt.NewCRDT(&crdt.DocCompositeDelta{
+			DocID:               d.docID,
+			Priority:            newPriority,
+			CollectionVersionID: d.col.Version().VersionID,
+			Status:              1,
+		}),
 		links,
 		heads...,
 	)

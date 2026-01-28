@@ -11,21 +11,20 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
 // MakeKeyringListCommand creates a new command to list all keys in the keyring.
-func MakeKeyringListCommand() *cobra.Command {
+func MakeKeyringListCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "list",
 		Short: "List all keys in the keyring",
 		Long: `List all keys in the keyring.
 The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
 This can also be done with a .env file in the working directory or at a path
-defined with the --secret-file flag.
-
-Example:
-  defradb keyring list`,
+defined with the --secret-file flag.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			keyring, err := openKeyring(cmd)
@@ -50,5 +49,9 @@ Example:
 			return nil
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "List all keys",
+		`defradb keyring list`)
+
 	return cmd
 }

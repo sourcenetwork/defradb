@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -41,12 +42,10 @@ var topLevelMaxPattern = dataMap{
 func TestDefaultExplain_WithTopLevelMaxRequest_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) top-level max request.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					_max(
@@ -58,12 +57,12 @@ func TestDefaultExplain_WithTopLevelMaxRequest_Succeeds(t *testing.T) {
 
 				ExpectedPatterns: topLevelMaxPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -95,12 +94,10 @@ func TestDefaultExplain_WithTopLevelMaxRequest_Succeeds(t *testing.T) {
 func TestDefaultExplain_WithTopLevelMaxRequestWithFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) top-level max request with filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					_max(
@@ -117,12 +114,12 @@ func TestDefaultExplain_WithTopLevelMaxRequestWithFilter_Succeeds(t *testing.T) 
 
 				ExpectedPatterns: topLevelMaxPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{

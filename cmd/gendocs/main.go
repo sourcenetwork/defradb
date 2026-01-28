@@ -14,13 +14,14 @@ gendocs is a tool to generate the collections' documents automatically.
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/sourcenetwork/defradb/tests/gen/cli"
 )
 
 func main() {
-	gendocsCmd := cli.MakeGenDocCommand()
+	gendocsCmd := cli.MakeGenDocCommand(context.Background())
 	if err := gendocsCmd.Execute(); err != nil {
 		// this error is okay to discard because cobra
 		// logs any errors encountered during execution

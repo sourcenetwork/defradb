@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDebugExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with order (descending) on inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(groupBy: [name]) {
@@ -47,12 +46,10 @@ func TestDebugExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testing.
 func TestDebugExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with order (ascending) on inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(groupBy: [name]) {
@@ -74,12 +71,10 @@ func TestDebugExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing.T
 func TestDebugExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with order on nested parent groupBy and on nested parent's inner _group.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(groupBy: [name]) {

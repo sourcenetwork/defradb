@@ -15,19 +15,21 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestMutationCreate_WithOmittedValueAndExplicitNullValue(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// Collection.Save would treat the second create as an update, and so
 			// is excluded from this test.
-			testUtils.CollectionNamedMutationType,
-			testUtils.GQLRequestMutationType,
+			state.CollectionNamedMutationType,
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -35,12 +37,12 @@ func TestMutationCreate_WithOmittedValueAndExplicitNullValue(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": null

@@ -14,101 +14,54 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"time"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/crypto"
 )
 
 type CollectionName = string
 
-// DB is the primary public programmatic access point to the local DefraDB instance.
+// TxnStore is the primary public programmatic access point to the local DefraDB instance.
 //
 // It should be constructed via the [db] package, via the [db.NewDB] function.
-type DB interface {
-	// Store contains DefraDB functions protected by an internal, short-lived, transaction, allowing safe
-	// access to common database read and write operations.
+type TxnStore interface {
 	Store
 
 	// NewTxn returns a new transaction on the root store that may be managed externally.
 	//
 	// It may be used with other functions in the client package. It is not threadsafe.
-	NewTxn(context.Context, bool) (datastore.Txn, error)
+	NewTxn(readOnly bool) (Txn, error)
 
 	// NewConcurrentTxn returns a new transaction on the root store that may be managed externally.
 	//
 	// It may be used with other functions in the client package. It is threadsafe and multiple threads/Go routines
 	// can safely operate on it concurrently.
-	NewConcurrentTxn(context.Context, bool) (datastore.Txn, error)
+	NewConcurrentTxn(readOnly bool) (Txn, error)
+}
 
-	// Rootstore returns the underlying root store, within which all data managed by DefraDB is held.
-	Rootstore() datastore.Rootstore
-
-	// Blockstore returns the blockstore, within which all blocks (commits) managed by DefraDB are held.
-	//
-	// It sits within the rootstore returned by [Root].
-	Blockstore() datastore.Blockstore
-
-	// Encstore returns the store, that contains all known encryption keys for documents and their fields.
-	//
-	// It sits within the rootstore returned by [Root].
-	Encstore() datastore.Blockstore
-
-	// Peerstore returns the peerstore where known host information is stored.
-	//
-	// It sits within the rootstore returned by [Root].
-	Peerstore() datastore.DSReaderWriter
-
-	// Headstore returns the headstore where the current heads of the database are stored.
-	//
-	// It is read-only and sits within the rootstore returned by [Root].
-	Headstore() ds.Read
-
-	// Close closes the database instance and releases any resources held.
-	//
-	// The behaviour of other functions in this package after this function has been called is undefined
-	// unless explicitly stated on the function in question.
-	//
-	// It does not explicitly clear any data from persisted storage, and a new [DB] instance may typically
-	// be created after calling this to resume operations on the prior data - this is however dependant on
-	// the behaviour of the rootstore provided on database instance creation, as this function will Close
-	// the provided rootstore.
-	Close()
-
-	// Events returns the database event queue.
-	//
-	// It may be used to monitor database events - a new event will be yielded for each mutation.
-	// Note: it does not copy the queue, just the reference to it.
-	Events() *event.Bus
-
-	// MaxTxnRetries returns the number of retries that this DefraDB instance has been configured to
-	// make in the event of a transaction conflict in certain scenarios.
-	//
-	// Currently this is only used within the P2P system and will not affect operations initiated by users.
-	MaxTxnRetries() int
-
+type Store interface {
 	// PrintDump logs the entire contents of the rootstore (all the data managed by this DefraDB instance).
 	//
 	// It is likely unwise to call this on a large database instance.
 	PrintDump(ctx context.Context) error
 
-	// AddPolicy adds policy to acp, if acp is available.
+	// AddDACPolicy adds policy to document acp system, if available.
 	//
-	// If policy was successfully added to acp then a policyID is returned,
-	// otherwise if acp was not available then returns the following error:
+	// If policy was successfully added then a policyID is returned,
+	// otherwise if acp system was not available then returns the following error:
 	// [client.ErrPolicyAddFailureNoACP]
 	//
 	// Detects the format of the policy automatically by assuming YAML format if JSON
 	// validation fails.
 	//
 	// Note: A policy can not be added without the creatorID (identity).
-	AddPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
+	AddDACPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
 
-	// AddDocActorRelationship creates a relationship between document and the target actor.
+	// AddDACActorRelationship creates a relationship between document and the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship already existed (no-op), and false if a new relationship was made.
@@ -116,15 +69,15 @@ type DB interface {
 	// Note:
 	// - The request actor must either be the owner or manager of the document.
 	// - If the target actor arg is "*", then the relationship applies to all actors implicitly.
-	AddDocActorRelationship(
+	AddDACActorRelationship(
 		ctx context.Context,
 		collectionName string,
 		docID string,
 		relation string,
 		targetActor string,
-	) (AddDocActorRelationshipResult, error)
+	) (AddActorRelationshipResult, error)
 
-	// DeleteDocActorRelationship deletes a relationship between document and the target actor.
+	// DeleteDACActorRelationship deletes a relationship between document and the target actor.
 	//
 	// If failure occurs, the result will return an error. Upon success the boolean value will
 	// be true if the relationship record was found and deleted. Upon success the boolean value
@@ -134,75 +87,115 @@ type DB interface {
 	// - The request actor must either be the owner or manager of the document.
 	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
 	//   removed, however this does not revoke access from actors that had explicit relationships.
-	DeleteDocActorRelationship(
+	DeleteDACActorRelationship(
 		ctx context.Context,
 		collectionName string,
 		docID string,
 		relation string,
 		targetActor string,
-	) (DeleteDocActorRelationshipResult, error)
+	) (DeleteActorRelationshipResult, error)
+
+	// AddNACActorRelationship creates a relationship to grant node access to the target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship already existed (no-op), and false if a new relationship was made.
+	//
+	// Note:
+	// - The request actor must either be the owner or manager of the document.
+	// - If the target actor arg is "*", then the relationship applies to all actors implicitly.
+	AddNACActorRelationship(
+		ctx context.Context,
+		relation string,
+		targetActor string,
+	) (AddActorRelationshipResult, error)
+
+	// DeleteNACActorRelationship deletes a relationship to revoke node access from target actor.
+	//
+	// If failure occurs, the result will return an error. Upon success the boolean value will
+	// be true if the relationship record was found and deleted. Upon success the boolean value
+	// will be false if the relationship record was not found (no-op).
+	//
+	// Note:
+	// - The request actor must either be the owner or manager of the document.
+	// - If the target actor arg is "*", then the implicitly added relationship with all actors is
+	//   removed, however this does not revoke access from actors that had explicit relationships.
+	DeleteNACActorRelationship(
+		ctx context.Context,
+		relation string,
+		targetActor string,
+	) (DeleteActorRelationshipResult, error)
+
+	// ReEnableNAC will re-enable node acp that was temporarily disabled (and configured). This will
+	// recover previously saved nac state with all the relationships formed.
+	//
+	// If node acp is already enabled, then returns an error reflecting that it is already enabled.
+	//
+	// If node acp is not already configured or the previous state was purged then this will return an error,
+	// as the user must use the node's start command to configure/enable the node acp the first time.
+	//
+	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
+	// authorized to perform this operation.
+	ReEnableNAC(ctx context.Context) error
+
+	// DisableNAC will disable node acp for the users temporarily. This will keep the current node acp
+	// state saved so that if it is re-enabled in the future, then we can recover all the relationships formed.
+	//
+	// If node acp is already disabled, then returns an error reflecting that it is already disabled.
+	//
+	// If node acp is not already configured or the previous state was purged then this will return an error.
+	//
+	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
+	// authorized to perform this operation.
+	DisableNAC(ctx context.Context) error
+
+	// GetNACStatus returns the node acp status that tells us if node access was ever configured,
+	// or if node acp is currently enabled or temporarily disabled.
+	GetNACStatus(ctx context.Context) (NACStatusResult, error)
 
 	// GetNodeIdentity returns the identity of the node.
-	GetNodeIdentity(context.Context) (immutable.Option[identity.PublicRawIdentity], error)
-}
+	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
 
-// Store contains the core DefraDB read-write operations.
-type Store interface {
-	// Backup holds the backup related methods that must be implemented by the database.
-	Backup
-
-	// P2P contains functions related to the P2P system.
-	//
-	// These functions are only useful if there is a configured network peer.
-	P2P
+	// VerifySignature verifies the signatures of a block using a public key.
+	// Returns an error if any signature verification fails.
+	VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error
 
 	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
 	// creating the necessary collections, request types, etc.
 	//
 	// All schema types provided must not exist prior to calling this, and they may not reference existing
 	// types previously defined.
-	AddSchema(context.Context, string) ([]CollectionDescription, error)
+	AddSchema(ctx context.Context, sdl string) ([]CollectionVersion, error)
 
-	// PatchSchema takes the given JSON patch string and applies it to the set of SchemaDescriptions
+	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 	// present in the database.
-	//
-	// If true is provided, the new schema versions will be made active and previous versions deactivated, otherwise
-	// [SetActiveSchemaVersion] should be called to do so.
 	//
 	// It will also update the GQL types used by the query system. It will error and not apply any of the
 	// requested, valid updates should the net result of the patch result in an invalid state.  The
 	// individual operations defined in the patch do not need to result in a valid state, only the net result
 	// of the full patch.
 	//
-	// The collections (including the schema version ID) will only be updated if any changes have actually
-	// been made, if the net result of the patch matches the current persisted description then no changes
-	// will be applied.
+	// New CollectionVersions created by modifying the global type definition (e.g. renaming, adding fields, etc)
+	// will automatically become the active version of the Collection, unless `IsActive` is set to false by the patch.
 	//
 	// Field [FieldKind] values may be provided in either their raw integer form, or as string as per
 	// [FieldKindStringToEnumMapping].
 	//
-	// A lens configuration may also be provided, it will be added to all collections using the schema.
-	PatchSchema(context.Context, string, immutable.Option[model.Lens], bool) error
+	// CollectionVersions may be referenced by their VersionID, or their Name.  Referencing by name will patch
+	// the current active version, whereas referencing by VersionID will patch that specific version, whether it is
+	// currently active or not.
+	//
+	// A lens configuration may also be provided, and will become the migration to any new CollectionVersions created
+	// by the patch.
+	PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens]) error
 
-	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionDescriptions
-	// present in the database.
+	// SetActiveCollectionVersion activates all collection versions with the given VersionID, and deactivates all
+	// those share the same CollectionID as the activated CollectionVersion.
 	//
-	// It will also update the GQL types used by the query system. It will error and not apply any of the
-	// requested, valid updates should the net result of the patch result in an invalid state.  The
-	// individual operations defined in the patch do not need to result in a valid state, only the net result
-	// of the full patch.
-	//
-	// Currently only the collection name can be modified.
-	PatchCollection(context.Context, string) error
-
-	// SetActiveSchemaVersion activates all collection versions with the given schema version, and deactivates all
-	// those without it (if they share the same schema root).
-	//
-	// This will affect all operations interacting with the schema where a schema version is not explicitly
+	// This will affect all operations interacting with the collection where a version ID is not explicitly
 	// provided.  This includes GQL queries and Collection operations.
 	//
-	// It will return an error if the provided schema version ID does not exist.
-	SetActiveSchemaVersion(context.Context, string) error
+	// It will return an error if the provided version ID does not exist.
+	SetActiveCollectionVersion(ctx context.Context, versionID string) error
 
 	// AddView creates a new Defra View.
 	//
@@ -231,15 +224,19 @@ type Store interface {
 	// It will return the collection definitions of the types defined in the SDL if successful, otherwise an error
 	// will be returned.  This function does not execute the given query.
 	//
-	// Optionally, a lens transform configuration may also be provided - it will execute after the query has run.
-	// The transform is not limited to just transforming the input documents, it may also yield new ones, or filter out
-	// those passed in from the underlying query.
+	// Optionally, a transformCID may be provided referencing an already-stored lens by its CID.
+	// Use AddLens to store a lens and obtain its CID before calling AddView.
+	// The transform will execute after the query has run. It is not limited to just transforming
+	// the input documents - it may also yield new ones, or filter out those passed in from the underlying query.
+	//
+	// If the view being added is materialized, the results will be generated and cached during this call.  This
+	// may take some time if the dataset is large.
 	AddView(
 		ctx context.Context,
 		gqlQuery string,
 		sdl string,
-		transform immutable.Option[model.Lens],
-	) ([]CollectionDefinition, error)
+		transformCID immutable.Option[string],
+	) ([]CollectionVersion, error)
 
 	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set, all views
 	// will be refreshed.
@@ -247,25 +244,31 @@ type Store interface {
 	// The cached result is dependent on the ACP settings of the source data and the permissions of the user making
 	// the call.  At the moment only one cache can be active at a time, so please pay attention to access rights
 	// when making this call.
-	RefreshViews(context.Context, CollectionFetchOptions) error
+	RefreshViews(ctx context.Context, options CollectionFetchOptions) error
 
-	// SetMigration sets the migration for all collections using the given source-destination schema version IDs.
+	// SetMigration sets the migration for all collections using the given source-destination collection version IDs.
 	//
 	// There may only be one migration per collection version.  If another migration was registered it will be
 	// overwritten by this migration.
 	//
-	// Neither of the schema version IDs specified in the configuration need to exist at the time of calling.
-	// This is to allow the migration of documents of schema versions unknown to the local node received by the
+	// Neither of the collection version IDs specified in the configuration need to exist at the time of calling.
+	// This is to allow the migration of documents of collection versions unknown to the local node received by the
 	// P2P system.
 	//
-	// Migrations will only run if there is a complete path from the document schema version to the latest local
-	// schema version.
-	SetMigration(context.Context, LensConfig) error
-
-	// LensRegistry returns the LensRegistry in use by this database instance.
+	// Migrations will only run if there is a complete path from the document collection version to the latest local
+	// collection version.
 	//
-	// It exposes several useful thread-safe migration related functions.
-	LensRegistry() LensRegistry
+	// Returns the ID of the Lens transform.
+	SetMigration(ctx context.Context, config LensConfig) (string, error)
+
+	// AddLens stores a lens configuration and returns its CID.
+	//
+	// The lens store is content-addressed, so identical lens configurations
+	// will return the same CID without duplicating storage.
+	AddLens(ctx context.Context, lens model.Lens) (string, error)
+
+	// ListLenses returns all stored lenses mapped by their CID.
+	ListLenses(ctx context.Context) (map[string]model.Lens, error)
 
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
@@ -273,7 +276,7 @@ type Store interface {
 	//
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
 	// made via the returned [Collection] will respect that transaction.
-	GetCollectionByName(context.Context, CollectionName) (Collection, error)
+	GetCollectionByName(ctx context.Context, name CollectionName) (Collection, error)
 
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
@@ -283,31 +286,60 @@ type Store interface {
 	//
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
 	// made via the returned [Collection]s will respect that transaction.
-	GetCollections(context.Context, CollectionFetchOptions) ([]Collection, error)
-
-	// GetSchemaByVersionID returns the schema description for the schema version of the
-	// ID provided.
-	//
-	// Will return an error if it is not found.
-	GetSchemaByVersionID(context.Context, string) (SchemaDescription, error)
-
-	// GetSchemas returns all schema versions that currently exist within
-	// this [Store].
-	GetSchemas(context.Context, SchemaFetchOptions) ([]SchemaDescription, error)
+	GetCollections(ctx context.Context, options CollectionFetchOptions) ([]Collection, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
-	GetAllIndexes(context.Context) (map[CollectionName][]IndexDescription, error)
+	GetAllIndexes(ctx context.Context) (map[CollectionName][]IndexDescription, error)
+
+	// ListAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].
+	ListAllEncryptedIndexes(context.Context) (map[CollectionName][]EncryptedIndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
 	ExecRequest(ctx context.Context, request string, opts ...RequestOption) *RequestResult
+
+	// BasicImport imports a json dataset.
+	// filepath must be accessible to the node.
+	BasicImport(ctx context.Context, filepath string) error
+
+	// BasicExport exports the current data or subset of data to file in json format.
+	BasicExport(ctx context.Context, config *BackupConfig) error
+
+	// P2P holds the methods that are related to P2P operations.
+	// Calling them when no networking stack has been configured should return an error.
+	P2P
+}
+
+// Txn is a Store instance that has been wrapped by a transaction.
+//
+// It provides access to all the Store methods and ensures that they are
+// executed under the transaction.
+type Txn interface {
+	Store
+
+	// ID returns the unique immutable identifier for this transaction.
+	ID() uint64
+
+	// StartTS returns the timestamp from the start of the transaction
+	StartTS() time.Time
+
+	// Commit finalizes a transaction, attempting to commit it to the Datastore.
+	// May return an error if the transaction has gone stale. The presence of an
+	// error is an indication that the data was not committed to the Datastore.
+	Commit() error
+
+	// Discard throws away changes recorded in a transaction without committing
+	// them to the underlying Datastore. Any calls made to Discard after Commit
+	// has been successfully called will have no effect on the transaction and
+	// state of the Datastore, making it safe to defer.
+	Discard()
 }
 
 // GQLOptions contains optional arguments for GQL requests.
 type GQLOptions struct {
 	// OperationName is the name of the operation to exec.
-	OperationName string
+	OperationName string `json:"operationName"`
 	// Variables is a map of names to varible values.
-	Variables map[string]any
+	Variables map[string]any `json:"variables"`
 }
 
 // RequestOption sets an optional request setting.
@@ -397,14 +429,14 @@ type RequestResult struct {
 
 // CollectionFetchOptions represents a set of options used for fetching collections.
 type CollectionFetchOptions struct {
-	// If provided, only collections with this schema version id will be returned.
-	SchemaVersionID immutable.Option[string]
+	// If provided, only collections with this version id will be returned.
+	VersionID immutable.Option[string]
 
-	// If provided, only collections with schemas of this root will be returned.
-	SchemaRoot immutable.Option[string]
+	// If provided, only collections with this CollectionID will be returned.
+	CollectionID immutable.Option[string]
 
-	// If provided, only collections with this root will be returned.
-	Root immutable.Option[uint32]
+	// If provided, only collections with this CollectionSetID will be returned.
+	CollectionSetID immutable.Option[string]
 
 	// If provided, only collections with this name will be returned.
 	Name immutable.Option[string]

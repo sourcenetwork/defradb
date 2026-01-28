@@ -18,12 +18,12 @@ import (
 	"sync"
 	"testing"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/badger/v4"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/bench/fixtures"
 	testutils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -48,7 +48,7 @@ func init() {
 func SetupCollections(
 	b *testing.B,
 	ctx context.Context,
-	db client.DB,
+	db client.TxnStore,
 	fixture fixtures.Generator,
 ) ([]client.Collection, error) {
 	numTypes := len(fixture.Types())
@@ -99,7 +99,7 @@ func SetupDBAndCollections(
 	b *testing.B,
 	ctx context.Context,
 	fixture fixtures.Generator,
-) (client.DB, []client.Collection, error) {
+) (node.DB, []client.Collection, error) {
 	db, err := NewTestDB(ctx, b)
 	if err != nil {
 		return nil, nil, err
@@ -159,7 +159,7 @@ func BackfillBenchmarkDB(
 					// create the documents
 					docIDs := make([]client.DocID, numTypes)
 					for j := 0; j < numTypes; j++ {
-						doc, err := client.NewDocFromJSON([]byte(docs[j]), cols[j].Definition())
+						doc, err := client.NewDocFromJSON(ctx, []byte(docs[j]), cols[j].Version())
 						if err != nil {
 							errCh <- errors.Wrap("failed to create document from fixture", err)
 							return
@@ -171,7 +171,7 @@ func BackfillBenchmarkDB(
 						// but its fine :).
 						for {
 							if err := cols[j].Create(ctx, doc); err != nil &&
-								err.Error() == badger.ErrConflict.Error() {
+								err.Error() == corekv.ErrTxnConflict.Error() {
 								log.InfoContext(
 									ctx,
 									"Failed to commit TX for doc %s, retrying...\n",
@@ -209,18 +209,18 @@ func BackfillBenchmarkDB(
 	}
 }
 
-func NewTestDB(ctx context.Context, t testing.TB) (client.DB, error) {
+func NewTestDB(ctx context.Context, t testing.TB) (node.DB, error) {
 	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi, err
 }
 
-func NewTestStorage(ctx context.Context, t testing.TB) (ds.Batching, error) {
+func NewTestStorage(ctx context.Context, t testing.TB) (corekv.TxnStore, error) {
 	dbi, err := newBenchStoreInfo(ctx, t)
 	return dbi.Rootstore(), err
 }
 
-func newBenchStoreInfo(ctx context.Context, t testing.TB) (client.DB, error) {
-	var db client.DB
+func newBenchStoreInfo(ctx context.Context, t testing.TB) (node.DB, error) {
+	var db node.DB
 	var err error
 
 	switch storage {

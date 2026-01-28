@@ -15,11 +15,13 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/parser"
@@ -35,11 +37,13 @@ type wrappingFetcher struct {
 	// interface.  They can be remove from state once the [Fetcher] interface is cleaned up.
 	identity    immutable.Option[acpIdentity.Identity]
 	txn         datastore.Txn
-	acp         immutable.Option[acp.ACP]
+	nodeACP     acpDB.NACInfo
+	documentACP immutable.Option[dac.DocumentACP]
 	index       immutable.Option[client.IndexDescription]
 	col         client.Collection
-	fields      []client.FieldDefinition
+	fields      []client.CollectionFieldDescription
 	filter      *mapper.Filter
+	ordering    []mapper.OrderCondition
 	docMapper   *core.DocumentMapping
 	showDeleted bool
 }
@@ -54,21 +58,25 @@ func (f *wrappingFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
-	acp immutable.Option[acp.ACP],
+	nodeACP acpDB.NACInfo,
+	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
-	fields []client.FieldDefinition,
+	fields []client.CollectionFieldDescription,
 	filter *mapper.Filter,
+	ordering []mapper.OrderCondition,
 	docMapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
 	f.identity = identity
 	f.txn = txn
-	f.acp = acp
+	f.nodeACP = nodeACP
+	f.documentACP = documentACP
 	f.index = index
 	f.col = col
 	f.fields = fields
 	f.filter = filter
+	f.ordering = ordering
 	f.docMapper = docMapper
 	f.showDeleted = showDeleted
 
@@ -93,31 +101,41 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 
 	if f.filter != nil && len(f.fields) > 0 {
 		conditions := f.filter.ToMap(f.docMapper)
-		parsedFilterFields, err := parser.ParseFilterFieldsForDescription(conditions, f.col.Definition())
+		parsedFilterFields, err := parser.ParseFilterFieldsForDescription(conditions, f.col.Version())
 		if err != nil {
 			return err
 		}
 
-		existingFields := make(map[client.FieldID]struct{}, len(f.fields))
+		existingFields := make(map[string]struct{}, len(f.fields))
 		for _, field := range f.fields {
-			existingFields[field.ID] = struct{}{}
+			existingFields[field.Name] = struct{}{}
 		}
 
 		for _, field := range parsedFilterFields {
-			if _, ok := existingFields[field.ID]; !ok {
+			if _, ok := existingFields[field.Name]; !ok {
 				f.fields = append(f.fields, field)
 			}
-			existingFields[field.ID] = struct{}{}
+			existingFields[field.Name] = struct{}{}
 		}
 	}
 
-	if len(f.fields) == 0 {
-		f.fields = f.col.Definition().GetFields()
+	colShortID, err := id.GetShortCollectionID(ctx, f.col.Version().CollectionID)
+	if err != nil {
+		return err
 	}
 
-	fieldsByID := make(map[uint32]client.FieldDefinition, len(f.fields))
+	if len(f.fields) == 0 {
+		f.fields = f.col.Version().Fields
+	}
+
+	fieldsByID := make(map[uint32]client.CollectionFieldDescription, len(f.fields))
 	for _, field := range f.fields {
-		fieldsByID[uint32(field.ID)] = field
+		fieldShortID, err := id.GetShortFieldID(ctx, colShortID, field.FieldID)
+		if err != nil {
+			return err
+		}
+
+		fieldsByID[fieldShortID] = field
 	}
 
 	f.execInfo.Reset()
@@ -125,7 +143,7 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 	var top fetcher
 	if f.index.HasValue() {
 		indexFetcher, err := newIndexFetcher(ctx, f.txn, fieldsByID, f.index.Value(), f.filter, f.col,
-			f.docMapper, &f.execInfo)
+			f.docMapper, &f.execInfo, f.ordering)
 		if err != nil {
 			return err
 		}
@@ -152,12 +170,12 @@ func (f *wrappingFetcher) Start(ctx context.Context, prefixes ...keys.Walkable) 
 		top = newMultiFetcher(top, deletedFetcher)
 	}
 
-	if f.acp.HasValue() {
-		top = newPermissionedFetcher(ctx, f.identity, f.acp.Value(), f.col, top)
+	if f.documentACP.HasValue() {
+		top = newPermissionedFetcher(ctx, f.identity, f.nodeACP, f.documentACP.Value(), f.col, top)
 	}
 
 	if f.filter != nil {
-		top = newFilteredFetcher(f.filter, f.docMapper, top)
+		top = newFilteredFetcher(ctx, colShortID, f.filter, f.docMapper, top)
 	}
 
 	f.fetcher = top

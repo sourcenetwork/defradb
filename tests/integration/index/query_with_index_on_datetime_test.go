@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -24,26 +25,26 @@ func TestQueryWithIndex_WithEqFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -51,7 +52,7 @@ func TestQueryWithIndex_WithEqFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -62,38 +63,57 @@ func TestQueryWithIndex_WithEqFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithGtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
+	req := `query {
+		User(filter: {birthday: {_gt: "2001-08-23T03:00:00-00:00"}}) {
+			name
+		}
+	}`
+
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
-						"name":	"Fred",
-						"birthday": "2000-07-23T03:00:00-00:00"
+						"name":	"Shahzad",
+						"birthday": "2001-08-24T03:00:00-00:00"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
+				Doc: `{
+						"name":	"Fred",
+						"birthday": "2000-08-22T03:00:00-00:00"
+					}`,
+			},
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
-				Request: `query {
-					User(filter: {birthday: {_gt: "2001-01-01T00:00:00-00:00"}}) {
-						name
-					}
-				}`,
+			&action.CreateDoc{
+				Doc: `{
+						"name":	"John",
+						"birthday": "2001-08-25T03:00:00-00:00"
+					}`,
+			},
+			&action.Request{
+				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Andy"},
+						{"name": "Shahzad"},
+						{"name": "John"},
 					},
 				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -102,45 +122,51 @@ func TestQueryWithIndex_WithGtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithGeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
+	req := `query {
+		User(filter: {birthday: {_geq: "2001-01-01T00:00:00-00:00"}}) {
+			name
+		}
+	}`
+
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Keenan",
 						"birthday": "2001-01-01T00:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
-				Request: `query {
-					User(filter: {birthday: {_ge: "2001-01-01T00:00:00-00:00"}}) {
-						name
-					}
-				}`,
+			&action.Request{
+				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "Keenan"},
 						{"name": "Andy"},
 					},
 				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -149,38 +175,44 @@ func TestQueryWithIndex_WithGeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithLtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
+	req := `query {
+		User(filter: {birthday: {_lt: "2001-01-01T00:00:00-00:00"}}) {
+			name
+		}
+	}`
+
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
-				Request: `query {
-					User(filter: {birthday: {_lt: "2001-01-01T00:00:00-00:00"}}) {
-						name
-					}
-				}`,
+			&action.Request{
+				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "Fred"},
 					},
 				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
 		},
 	}
@@ -189,45 +221,51 @@ func TestQueryWithIndex_WithLtFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 }
 
 func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
+	req := `query {
+		User(filter: {birthday: {_leq: "2001-01-01T00:00:00-00:00"}}) {
+			name
+		}
+	}`
+
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Keenan",
 						"birthday": "2001-01-01T00:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
-				Request: `query {
-					User(filter: {birthday: {_le: "2001-01-01T00:00:00-00:00"}}) {
-						name
-					}
-				}`,
+			&action.Request{
+				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "Fred"},
 						{"name": "Keenan"},
 					},
 				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -238,28 +276,28 @@ func TestQueryWithIndex_WithLeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 func TestQueryWithIndex_WithNeFilterOnDateTimeField_ShouldIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						birthday: DateTime @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2001-08-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					User(filter: {birthday: {_ne: "2000-07-23T03:00:00-00:00"}}) {
+					User(filter: {birthday: {_neq: "2000-07-23T03:00:00-00:00"}}) {
 						name
 					}
 				}`,

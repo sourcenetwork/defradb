@@ -39,3 +39,12 @@ func WithContext(ctx context.Context, identity immutable.Option[Identity]) conte
 	}
 	return context.WithValue(ctx, identityContextKey{}, nil)
 }
+
+// FullFromContext returns the FullIdentity from the given context.
+func FullFromContext(ctx context.Context) immutable.Option[FullIdentity] {
+	identity, ok := ctx.Value(identityContextKey{}).(FullIdentity)
+	if ok {
+		return immutable.Some(identity)
+	}
+	return immutable.None[FullIdentity]()
+}

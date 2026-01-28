@@ -13,46 +13,46 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with simple descending order by sub type",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
+					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {author: {verified: DESC}}) {
 						name
@@ -92,41 +92,40 @@ func TestQueryOneToOneWithChildBooleanOrderDescending(t *testing.T) {
 
 func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with simple ascending order by sub type",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
+					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {author: {verified: ASC}}) {
 						name
@@ -166,41 +165,40 @@ func TestQueryOneToOneWithChildBooleanOrderAscending(t *testing.T) {
 
 func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Relation query with descending order by sub-type's int field, but only parent fields are selected.",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
+					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {author: {age: DESC}}) {
 						name
@@ -228,41 +226,40 @@ func TestQueryOneToOneWithChildIntOrderDescendingWithNoSubTypeFieldsSelected(t *
 
 func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Relation query with ascending order by sub-type's int field, but only parent fields are selected.",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
 					"age": 65,
 					"verified": true,
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
 					"age": 62,
 					"verified": false,
-					"published_id": "bae-26a28d23-ae5b-5257-91b7-d4f2c6abef7b"
+					"_publishedID": "bae-9793af00-a131-5ef2-b2c9-22b8053a11e7"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {author: {age: ASC}}) {
 						name
@@ -290,41 +287,40 @@ func TestQueryOneToOneWithChildIntOrderAscendingWithNoSubTypeFieldsSelected(t *t
 
 func TestQueryOneToOne_WithAliasedChildIntOrderAscending_ShouldOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Relation query with ascending order by aliased child's int field.",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Cornelia Funke",
 					"age":          62,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {_alias: {writer: {age: ASC}}}) {
 						name
@@ -361,41 +357,40 @@ func TestQueryOneToOne_WithAliasedChildIntOrderAscending_ShouldOrder(t *testing.
 
 func TestQueryOneToOne_WithChildAliasedIntOrderAscending_ShouldOrder(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Relation query with ascending order by child's aliased int field.",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"age":          65,
 					"verified":     true,
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Cornelia Funke",
 					"age":          62,
 					"verified":     false,
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book(order: {author: {_alias: {authorAge: ASC}}}) {
 						name

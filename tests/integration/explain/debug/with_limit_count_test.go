@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDebugExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with limit on related child with count.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
@@ -72,12 +71,10 @@ func TestDebugExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 func TestDebugExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with limit args on parent and related child with count.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(limit: 3, offset: 1) {

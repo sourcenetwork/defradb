@@ -13,16 +13,17 @@ package field_kinds
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
 
 func TestMutationCreate_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given an object value.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -30,13 +31,13 @@ func TestMutationCreate_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": {"tree": "maple", "age": 250}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -63,9 +64,8 @@ func TestMutationCreate_WithJSONFieldGivenObjectValue_Succeeds(t *testing.T) {
 
 func TestMutationCreate_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a list of scalars value.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -73,13 +73,13 @@ func TestMutationCreate_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": ["maple", 250]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -103,9 +103,8 @@ func TestMutationCreate_WithJSONFieldGivenListOfScalarsValue_Succeeds(t *testing
 
 func TestMutationCreate_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a list of objects value.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -113,7 +112,7 @@ func TestMutationCreate_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": [
@@ -122,7 +121,7 @@ func TestMutationCreate_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -149,9 +148,8 @@ func TestMutationCreate_WithJSONFieldGivenListOfObjectsValue_Succeeds(t *testing
 
 func TestMutationCreate_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a int value.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -159,13 +157,13 @@ func TestMutationCreate_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": 250
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -189,9 +187,8 @@ func TestMutationCreate_WithJSONFieldGivenIntValue_Succeeds(t *testing.T) {
 
 func TestMutationCreate_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a string value.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -199,13 +196,13 @@ func TestMutationCreate_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": "hello"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -229,9 +226,8 @@ func TestMutationCreate_WithJSONFieldGivenStringValue_Succeeds(t *testing.T) {
 
 func TestMutationCreate_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a boolean value.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -239,13 +235,13 @@ func TestMutationCreate_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -269,9 +265,8 @@ func TestMutationCreate_WithJSONFieldGivenBooleanValue_Succeeds(t *testing.T) {
 
 func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with JSON field given a null value.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -279,13 +274,13 @@ func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -310,15 +305,14 @@ func TestMutationCreate_WithJSONFieldGivenNullValue_Succeeds(t *testing.T) {
 // This test confirms that our JSON value encoding is determinstic.
 func TestMutationCreate_WithDuplicateJSONField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Create mutation with duplicate JSON field errors.",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// Save will not produce an error on duplicate
 			// because it will just update the previous doc
-			testUtils.GQLRequestMutationType,
-			testUtils.CollectionNamedMutationType,
+			state.GQLRequestMutationType,
+			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -326,13 +320,13 @@ func TestMutationCreate_WithDuplicateJSONField_ReturnsError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": {"one": 1, "two": 2, "three": [0, 1, 2]}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John", 
 					"custom": {"three": [0, 1, 2], "two": 2, "one": 1}

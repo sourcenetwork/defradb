@@ -1,0 +1,50 @@
+# The below policy contains a valid document acp resource interface that can be linked to a collection
+# object during the schema add command to have access control enabled for documents of that collection.
+#
+# This policy specifically has the manages attribute defined under admin relation which gives admin
+# of a resource, the ability to add/remove relationships with `reader` relation name.
+#
+# Learn more about the DefraDB [ACP System](/acp/README.md)
+
+name: An Example Document ACP Policy With Manages
+
+description: A Document ACP Policy With Manages
+
+resources:
+  - name: users
+    permissions:
+      - name: read
+        expr: writer + updater + deleter + reader
+      - name: update
+        expr: writer + updater
+      - name: delete
+        expr: writer + deleter
+      - name: nothing
+        expr: dummy
+
+    relations:
+      - name: reader
+        types:
+          - actor
+
+      - name: updater
+        types:
+          - actor
+
+      - name: deleter
+        types:
+          - actor
+
+      - name: writer
+        types:
+          - actor
+
+      - name: admin
+        manages:
+          - reader
+        types:
+          - actor
+
+      - name: dummy
+        types:
+          - actor

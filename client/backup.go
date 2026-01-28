@@ -10,19 +10,6 @@
 
 package client
 
-import (
-	"context"
-)
-
-// Backup contains DefraDB's supported backup operations.
-type Backup interface {
-	// BasicImport imports a json dataset.
-	// filepath must be accessible to the node.
-	BasicImport(ctx context.Context, filepath string) error
-	// BasicExport exports the current data or subset of data to file in json format.
-	BasicExport(ctx context.Context, config *BackupConfig) error
-}
-
 // BackupConfig holds the configuration parameters for database backups.
 type BackupConfig struct {
 	// If a file already exists at this location, it will be truncated and overwriten.

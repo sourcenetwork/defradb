@@ -13,32 +13,32 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, count with limit and offset on non-rendered group",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -66,33 +66,32 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimitA
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, child limit, count with limit and offset on rendered group",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Shahzad",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -112,7 +111,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 									"Name": "Bob",
 								},
 								{
-									"Name": "Shahzad",
+									"Name": "John",
 								},
 							},
 						},
@@ -127,6 +126,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

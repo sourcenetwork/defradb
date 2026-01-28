@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,17 +21,15 @@ import (
 func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) mutation request with deletion using document id.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
-					delete_ContactAddress(docID: ["bae-49f715e7-7f01-5509-a213-ed98cb81583f"]) {
+					delete_ContactAddress(docID: ["bae-78bc4454-19a6-58ed-9e18-f0ca175dd12c"]) {
 						city
 					}
 				}`,
@@ -71,8 +70,6 @@ func TestExecuteExplainMutationRequestWithDeleteUsingID(t *testing.T) {
 func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) mutation request with deletion using filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -80,7 +77,7 @@ func TestExecuteExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					delete_Author(filter: {name: {_like: "%Funke%"}}) {
 						name

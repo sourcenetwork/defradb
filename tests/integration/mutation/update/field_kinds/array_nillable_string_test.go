@@ -15,14 +15,14 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithArrayOfStringsInts(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, nillable string",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -30,7 +30,7 @@ func TestMutationUpdate_WithArrayOfStringsInts(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"preferredStrings": ["", "the previous", "the first", "empty string", null]
@@ -41,7 +41,7 @@ func TestMutationUpdate_WithArrayOfStringsInts(t *testing.T) {
 					"preferredStrings": ["", "the previous", null, "empty string", "blank string", "hitchi"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

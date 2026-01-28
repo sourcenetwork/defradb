@@ -13,13 +13,17 @@ package json
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -27,7 +31,7 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -36,7 +40,7 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
@@ -45,13 +49,13 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_eq: {tree:"oak",age:450}}}) {
 						name
@@ -72,7 +76,7 @@ func TestQueryJSON_WithEqualFilterWithObject_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -80,7 +84,7 @@ func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
@@ -89,7 +93,7 @@ func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -98,7 +102,7 @@ func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"custom": {
@@ -107,7 +111,7 @@ func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_and: [
 						{custom: {tree: {_eq: "maple"}}},
@@ -130,8 +134,10 @@ func TestQueryJSON_WithCompoundFilterCondition_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -139,7 +145,7 @@ func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": {
@@ -151,7 +157,7 @@ func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {
@@ -163,7 +169,7 @@ func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 					}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_eq: {level_1: {level_2: {level_3: [true, false]}}}}}) {
 						name
@@ -184,7 +190,7 @@ func TestQueryJSON_WithEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 func TestQueryJSON_WithEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -192,19 +198,19 @@ func TestQueryJSON_WithEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"custom": null
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"custom": {}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_eq: null}}) {
 						name
@@ -224,9 +230,10 @@ func TestQueryJSON_WithEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _eq filter all types",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -234,37 +241,37 @@ func TestQueryJSON_WithEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Shahzad",
 					"Custom": "32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Andy",
 					"Custom": [1, 2]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Fred",
 					"Custom": {"one": 1}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_eq: {one: 1}}}) {
 						Name
@@ -277,6 +284,60 @@ func TestQueryJSON_WithEqualFilterWithAllTypes_ShouldFilter(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryJSON_WithEqualFilterWithObjectValueOnNestedPath_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON 
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"nested": {"foo": "bar"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": {"nested": {"foo": "baz"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
+					"custom": {"nested": "scalar"}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"other": {"foo": "bar"}}
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					User(filter: {custom: {nested: {_eq: {foo: "bar"}}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "John"},
+					},
+				},
+				NonOrderedResults: true,
 			},
 		},
 	}

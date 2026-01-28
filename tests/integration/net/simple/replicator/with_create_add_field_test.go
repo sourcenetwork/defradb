@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -23,14 +24,14 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t 
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			&action.PatchCollection{
 				// Patch the schema on the node that we will directly create a doc on
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -43,7 +44,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t 
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -52,7 +53,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t 
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -77,14 +78,14 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t 
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			&action.PatchCollection{
 				// Patch the schema on the node that we sync docs to
 				NodeID: immutable.Some(1),
 				Patch: `
@@ -97,7 +98,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t 
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -105,7 +106,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t 
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -130,14 +131,14 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			testUtils.SchemaPatch{
+			&action.PatchCollection{
 				// Patch the schema on all nodes
 				Patch: `
 					[
@@ -149,7 +150,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -158,7 +159,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name

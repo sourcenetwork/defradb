@@ -14,18 +14,17 @@ import (
 	"context"
 
 	"github.com/ipfs/go-cid"
-	dsq "github.com/ipfs/go-datastore/query"
+
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT heads of a given doc/field.
 type HeadFetcher struct {
-	fieldId immutable.Option[string]
-
-	kvIter dsq.Results
+	kvIter corekv.Iterator
 }
 
 // Start starts/initializes the fetcher, performing all the work it can do outside
@@ -36,67 +35,48 @@ type HeadFetcher struct {
 // heads.
 func (hf *HeadFetcher) Start(
 	ctx context.Context,
-	txn datastore.Txn,
 	prefix immutable.Option[keys.HeadstoreKey],
-	fieldId immutable.Option[string],
 ) error {
-	hf.fieldId = fieldId
+	txn := datastore.CtxMustGetTxn(ctx)
 
-	var prefixString string
+	var prefixBytes []byte
 	if prefix.HasValue() {
-		prefixString = prefix.Value().ToString()
+		prefixBytes = prefix.Value().Bytes()
 	}
 
-	q := dsq.Query{
-		Prefix: prefixString,
-		Orders: []dsq.Order{dsq.OrderByKey{}},
-	}
-
-	var err error
 	if hf.kvIter != nil {
 		if err := hf.kvIter.Close(); err != nil {
 			return err
 		}
 	}
-	hf.kvIter, err = txn.Headstore().Query(ctx, q)
+
+	iter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
+		Prefix: prefixBytes,
+	})
 	if err != nil {
 		return err
 	}
 
+	hf.kvIter = iter
 	return nil
 }
 
 func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
-	res, available := hf.kvIter.NextSync()
-	if res.Error != nil {
-		return nil, res.Error
-	}
-	if !available {
-		return nil, nil
+	hasValue, err := hf.kvIter.Next()
+	if err != nil || !hasValue {
+		return nil, err
 	}
 
-	headStoreKey, err := keys.NewHeadstoreKey(res.Key)
+	headStoreKey, err := keys.NewHeadstoreKey(string(hf.kvIter.Key()))
 	if err != nil {
 		return nil, err
 	}
 
-	if hf.fieldId.HasValue() {
-		switch typedHeadStoreKey := headStoreKey.(type) {
-		case keys.HeadstoreDocKey:
-			if hf.fieldId.Value() != typedHeadStoreKey.FieldID {
-				// FieldIds do not match, continue to next row
-				return hf.FetchNext()
-			}
-
-			return &typedHeadStoreKey.Cid, nil
-
-		case keys.HeadstoreColKey:
-			if hf.fieldId.Value() == "" {
-				return &typedHeadStoreKey.Cid, nil
-			} else {
-				return nil, nil
-			}
-		}
+	// This needs to be handled more efficiently - these keys should not be scanned in the first place
+	// https://github.com/sourcenetwork/defradb/issues/3846
+	switch headStoreKey.(type) {
+	case keys.HeadstoreFieldDefinition, keys.HeadstoreCollectionDefinition, keys.HeadstoreCollectionSetDefinition:
+		return hf.FetchNext()
 	}
 
 	cid := headStoreKey.GetCid()

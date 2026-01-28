@@ -13,14 +13,14 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one view and duplicate embedded schema",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -32,7 +32,7 @@ func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -53,7 +53,7 @@ func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 			},
 			// Try and create a second view that creates a new `BookView`, this
 			// should error as `BookView` has already been created by the first view.
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						authorName: name
@@ -71,7 +71,7 @@ func TestView_OneToOneDuplicateEmbeddedSchema_Errors(t *testing.T) {
 						bookName: String
 					}
 				`,
-				ExpectedError: "schema type already exists. Name: BookView",
+				ExpectedError: "collection already exists. Name: BookView",
 			},
 			testUtils.IntrospectionRequest{
 				Request: `

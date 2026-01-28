@@ -14,9 +14,8 @@ import (
 	"context"
 	"fmt"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/ipfs/go-datastore/query"
-	"github.com/lens-vm/lens/host-go/config/model"
+	"github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -24,7 +23,9 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
 )
@@ -33,14 +34,14 @@ func (db *DB) addView(
 	ctx context.Context,
 	inputQuery string,
 	sdl string,
-	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+	transformCID immutable.Option[string],
+) ([]client.CollectionVersion, error) {
 	// Wrap the given query as part of the GQL query object - this simplifies the syntax for users
 	// and ensures that we can't be given mutations.  In the future this line should disappear along
 	// with the all calls to the parser appart from `ParseSDL` when we implement the DQL stuff.
 	query := fmt.Sprintf(`query { %s }`, inputQuery)
 
-	newDefinitions, err := db.parser.ParseSDL(ctx, sdl)
+	parseResults, err := db.parser.ParseSDL(ctx, sdl)
 	if err != nil {
 		return nil, err
 	}
@@ -64,33 +65,45 @@ func (db *DB) addView(
 		return nil, NewErrInvalidViewQueryCastFailed(inputQuery)
 	}
 
-	for i := range newDefinitions {
+	for i := range parseResults {
+		var lensID immutable.Option[string]
+		if transformCID.HasValue() {
+			exists, err := db.lensCIDExists(ctx, transformCID.Value())
+			if err != nil {
+				return nil, err
+			}
+			if !exists {
+				return nil, NewErrLensCIDNotFound(transformCID.Value())
+			}
+			lensID = transformCID
+		}
+
 		source := client.QuerySource{
 			Query:     *baseQuery,
-			Transform: transform,
+			Transform: lensID,
 		}
-		newDefinitions[i].Description.Sources = append(newDefinitions[i].Description.Sources, &source)
+		parseResults[i].Definition.Query = immutable.Some(source)
 	}
 
-	returnDescriptions, err := db.createCollections(ctx, newDefinitions)
+	returnDescriptions, err := db.createCollections(ctx, parseResults)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, definition := range returnDescriptions {
-		for _, source := range definition.Description.QuerySources() {
-			if source.Transform.HasValue() {
-				err = db.LensRegistry().SetMigration(ctx, definition.Description.ID, source.Transform.Value())
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
 	}
 
 	err = db.loadSchema(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, view := range returnDescriptions {
+		if view.Query.HasValue() && view.IsMaterialized {
+			err := db.refreshViews(ctx, client.CollectionFetchOptions{
+				VersionID: immutable.Some(view.VersionID),
+			})
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return returnDescriptions, nil
@@ -104,7 +117,7 @@ func (db *DB) refreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	}
 
 	for _, col := range cols {
-		if !col.Description.IsMaterialized {
+		if !col.IsMaterialized {
 			// We only care about materialized views here, so skip any that aren't
 			continue
 		}
@@ -126,39 +139,47 @@ func (db *DB) refreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	return nil
 }
 
-func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) ([]client.CollectionDefinition, error) {
+func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) ([]client.CollectionVersion, error) {
 	cols, err := db.getCollections(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	var views []client.CollectionDefinition
+	var views []client.CollectionVersion
 	for _, col := range cols {
-		if querySrcs := col.Description().QuerySources(); len(querySrcs) == 0 {
+		if !col.Version().Query.HasValue() {
 			continue
 		}
 
-		views = append(views, col.Definition())
+		views = append(views, col.Version())
 	}
 
 	return views, nil
 }
 
-func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinition) (err error) {
-	txn := mustGetContextTxn(ctx)
+func (db *DB) buildViewCache(ctx context.Context, col client.CollectionVersion) (err error) {
+	txn := datastore.CtxMustGetTxn(ctx)
 
-	p := planner.New(ctx, identity.FromContext(ctx), db.acp, db, txn)
+	p := planner.New(
+		ctx,
+		identity.FromContext(ctx),
+		db.nodeACP,
+		db.documentACP,
+		db,
+		db.p2p,
+		db.getLensStore(ctx),
+	)
 
 	// temporarily disable the cache in order to query without using it
-	col.Description.IsMaterialized = false
-	col.Description, err = description.SaveCollection(ctx, txn, col.Description)
+	col.IsMaterialized = false
+	err = description.SaveCollection(ctx, col)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		var defErr error
-		col.Description.IsMaterialized = true
-		col.Description, defErr = description.SaveCollection(ctx, txn, col.Description)
+		col.IsMaterialized = true
+		defErr = description.SaveCollection(ctx, col)
 		if err == nil {
 			// Do not overwrite the original error if there is one, defErr is probably an artifact of the original
 			// failue and can be discarded.
@@ -211,8 +232,13 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 			return err
 		}
 
-		itemKey := keys.NewViewCacheKey(col.Description.RootID, itemID)
-		err = txn.Datastore().Put(ctx, itemKey.ToDS(), serializedItem)
+		shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+		if err != nil {
+			return err
+		}
+
+		itemKey := keys.NewViewCacheKey(shortID, itemID)
+		err = txn.Datastore().Set(ctx, itemKey, serializedItem)
 		if err != nil {
 			return err
 		}
@@ -226,41 +252,54 @@ func (db *DB) buildViewCache(ctx context.Context, col client.CollectionDefinitio
 	return nil
 }
 
-func (db *DB) clearViewCache(ctx context.Context, col client.CollectionDefinition) error {
-	txn := mustGetContextTxn(ctx)
-	prefix := keys.NewViewCacheColPrefix(col.Description.RootID)
+func (db *DB) clearViewCache(ctx context.Context, col client.CollectionVersion) error {
+	txn := datastore.CtxMustGetTxn(ctx)
 
-	q, err := txn.Datastore().Query(ctx, query.Query{
-		Prefix:   prefix.ToString(),
+	shortID, err := id.GetShortCollectionID(ctx, col.CollectionID)
+	if err != nil {
+		return err
+	}
+
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+		Prefix:   keys.NewViewCacheColPrefix(shortID),
 		KeysOnly: true,
 	})
 	if err != nil {
 		return err
 	}
 
-	for res := range q.Next() {
-		if res.Error != nil {
-			return errors.Join(res.Error, q.Close())
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
 		}
 
-		err = txn.Datastore().Delete(ctx, ds.NewKey(res.Key))
+		key, err := keys.NewViewCacheKeyFromRaw(iter.Key())
 		if err != nil {
-			return errors.Join(err, q.Close())
+			return errors.Join(err, iter.Close())
+		}
+
+		err = txn.Datastore().Delete(ctx, key)
+		if err != nil {
+			return errors.Join(err, iter.Close())
 		}
 	}
 
-	return q.Close()
+	return iter.Close()
 }
 
 func (db *DB) generateMaximalSelectFromCollection(
 	ctx context.Context,
-	col client.CollectionDefinition,
+	col client.CollectionVersion,
 	fieldName immutable.Option[string],
 	typesHit map[string]struct{},
 ) (*request.Select, error) {
 	// `__-` is an impossible field name prefix, so we can safely concat using it as a separator without risk
 	// of collision.
-	identifier := col.GetName() + "__-" + fieldName.Value()
+	identifier := col.Name + "__-" + fieldName.Value()
 	if _, ok := typesHit[identifier]; ok {
 		// If this identifier is already in the set, the schema must be circular and we should return
 		return nil, nil
@@ -268,9 +307,9 @@ func (db *DB) generateMaximalSelectFromCollection(
 	typesHit[identifier] = struct{}{}
 
 	childRequests := []request.Selection{}
-	for _, field := range col.GetFields() {
-		if field.IsRelation() && field.Kind.IsObject() {
-			relatedCol, _, err := client.GetDefinitionFromStore(ctx, db, col, field.Kind)
+	for _, field := range col.Fields {
+		if field.RelationName.HasValue() && field.Kind.IsObject() {
+			relatedCol, _, err := description.GetRelatedCollection(ctx, col, field.Kind)
 			if err != nil {
 				return nil, err
 			}
@@ -297,7 +336,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 	if fieldName.HasValue() {
 		name = fieldName.Value()
 	} else {
-		name = col.GetName()
+		name = col.Name
 	}
 
 	return &request.Select{
@@ -308,4 +347,24 @@ func (db *DB) generateMaximalSelectFromCollection(
 			Fields: childRequests,
 		},
 	}, nil
+}
+
+// lensCIDExists checks if a lens with the given CID exists in the lens store.
+func (db *DB) lensCIDExists(ctx context.Context, cidStr string) (bool, error) {
+	targetCID, err := cid.Decode(cidStr)
+	if err != nil {
+		return false, err
+	}
+
+	lenses, err := db.getLensStore(ctx).List(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	for storedCID := range lenses {
+		if storedCID.Equals(targetCID) {
+			return true, nil
+		}
+	}
+	return false, nil
 }

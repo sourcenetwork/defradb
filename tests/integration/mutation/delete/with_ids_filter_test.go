@@ -13,35 +13,35 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationDeletion_WithIDsAndEmptyFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deletion of using document ids and filter, known id and empty filter.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
-					delete_User(docID: ["bae-22dacd35-4560-583a-9a80-8edbf28aa85c"], filter: {}) {
+					delete_User(docID: ["bae-390b4419-fe1c-506b-98bd-20847cdab2d9"], filter: {}) {
 						_docID
 					}
 				}`,
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"_docID": "bae-22dacd35-4560-583a-9a80-8edbf28aa85c",
+							"_docID": "bae-390b4419-fe1c-506b-98bd-20847cdab2d9",
 						},
 					},
 				},

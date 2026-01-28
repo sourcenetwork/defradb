@@ -11,25 +11,20 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeCollectionGetCommand() *cobra.Command {
+func MakeCollectionGetCommand(ctx context.Context) *cobra.Command {
 	var showDeleted bool
 	var cmd = &cobra.Command{
 		Use:   "get [-i --identity] [--show-deleted] <docID> ",
 		Short: "View document fields.",
-		Long: `View document fields.
-
-Example:
-  defradb client collection get --name User bae-123
-
-Example to get a private document we must use an identity:
-  defradb client collection get -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User bae-123
-		`,
-		Args: cobra.ExactArgs(1),
+		Long:  `View document fields.`,
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
@@ -51,6 +46,14 @@ Example to get a private document we must use an identity:
 			return writeJSON(cmd, docMap)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "Get document by ID",
+		`defradb client collection get --name User bae-123`)
+
+	EmbedCLIExample(ctx, cmd, "Get a private document using an identity",
+		`defradb client collection get --name User bae-123 \
+	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f `)
+
 	cmd.Flags().BoolVar(&showDeleted, "show-deleted", false, "Show deleted documents")
 	return cmd
 }

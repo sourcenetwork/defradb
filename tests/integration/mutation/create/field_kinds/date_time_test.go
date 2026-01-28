@@ -14,25 +14,26 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationCreateFieldKinds_WithDateTime(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						time: DateTime
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"time": "2017-07-23T03:46:56.000Z",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						time
@@ -55,29 +56,29 @@ func TestMutationCreateFieldKinds_WithDateTime(t *testing.T) {
 func TestMutationCreateFieldKinds_WithDateTimesNanoSecondsAppart(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						time: DateTime
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"time": "2017-07-23T03:46:56.000Z",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"time": "2017-07-23T03:46:56.000000001Z",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"time": "2017-07-23T03:46:56.000000002Z",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						time
@@ -86,15 +87,78 @@ func TestMutationCreateFieldKinds_WithDateTimesNanoSecondsAppart(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"time": time.Date(2017, time.July, 23, 3, 46, 56, 1, time.UTC),
-						},
-						{
 							"time": time.Date(2017, time.July, 23, 3, 46, 56, 0, time.UTC),
 						},
 						{
 							"time": time.Date(2017, time.July, 23, 3, 46, 56, 2, time.UTC),
 						},
+						{
+							"time": time.Date(2017, time.July, 23, 3, 46, 56, 1, time.UTC),
+						},
 					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreateFieldKinds_WithDateTime_WithUTCNow(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						time: DateTime
+					}
+				`,
+			},
+			&action.Request{
+				Request: `mutation {
+                    create_User(input: {time: UTC_NOW}) {
+						time
+                    }
+                }`,
+				Results: map[string]any{
+					"create_User": []map[string]any{
+						{
+							"time": testUtils.CurrentTimestamp(),
+						},
+					},
+				},
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_WithDateTime_SetsTwoEqualUTCNowValues(t *testing.T) {
+	timestampMatcher := testUtils.NewSameValue()
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						created: DateTime
+					}
+				`,
+			},
+			&action.Request{
+				Request: `mutation {
+					bob: create_User(input: { name: "Bob", created: UTC_NOW }) {
+						created
+					}
+
+					alice: create_User(input: { name: "Alice", created: UTC_NOW }) {
+						created
+					}
+                }`,
+				Results: map[string]any{
+					"bob":   []map[string]any{{"created": timestampMatcher}},
+					"alice": []map[string]any{{"created": timestampMatcher}},
 				},
 			},
 		},

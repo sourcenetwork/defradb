@@ -13,62 +13,62 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N ascending order & filter on parent, with sum on on subtype field.",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -76,7 +76,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -84,7 +84,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Little Kid",
@@ -92,7 +92,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Not a Writer",
@@ -100,7 +100,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(order: {age: ASC}, filter: {age: {_gt: 8}}) {
 						name
@@ -115,7 +115,7 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 						},
 						{
 							"name": "John Grisham",
-							"_sum": 20.8,
+							"_sum": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 						},
 						{
 							"name": "Not a Writer",
@@ -132,57 +132,56 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 
 func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N descending order & filter on parent, with sum on on subtype field.",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -190,7 +189,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -198,7 +197,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Little Kid",
@@ -206,7 +205,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Not a Writer",
@@ -214,7 +213,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(order: {age: DESC}, filter: {age: {_gt: 8}}) {
 						name
@@ -229,7 +228,7 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 						},
 						{
 							"name": "John Grisham",
-							"_sum": 20.8,
+							"_sum": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 						},
 						{
 							"name": "Cornelia Funke",
@@ -246,57 +245,56 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 
 func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N sum subtype and sum subtype with desc. order on field with limit.",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -304,7 +302,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -312,7 +310,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Little Kid",
@@ -320,7 +318,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Not a Writer",
@@ -328,7 +326,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -344,18 +342,18 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 							"sum2": 0.0,
 						},
 						{
-							"name": "Not a Writer",
-							"sum1": 0.0,
-							"sum2": 0.0,
-						},
-						{
 							"name": "Cornelia Funke",
 							"sum1": 4.8,
 							"sum2": 4.8,
 						},
 						{
+							"name": "Not a Writer",
+							"sum1": 0.0,
+							"sum2": 0.0,
+						},
+						{
 							"name": "John Grisham",
-							"sum1": 20.8,
+							"sum1": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 							"sum2": 4.9 + 4.5,
 						},
 					},
@@ -369,57 +367,56 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 
 func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N sum subtype and sum subtype with asc. order on field with limit.",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -427,7 +424,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -435,7 +432,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Little Kid",
@@ -443,7 +440,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Not a Writer",
@@ -451,7 +448,7 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -467,18 +464,18 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 							"sum2": 0.0,
 						},
 						{
-							"name": "Not a Writer",
-							"sum1": 0.0,
-							"sum2": 0.0,
-						},
-						{
 							"name": "Cornelia Funke",
 							"sum1": 4.8,
 							"sum2": 4.8,
 						},
 						{
+							"name": "Not a Writer",
+							"sum1": 0.0,
+							"sum2": 0.0,
+						},
+						{
 							"name": "John Grisham",
-							"sum1": 20.8,
+							"sum1": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 							"sum2": 4.0 + 3.2,
 						},
 					},
@@ -492,57 +489,56 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 
 func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N sum of subtype float field with limit and asc. order, and non-sum query of same subtype fields.",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -550,7 +546,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -558,7 +554,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Little Kid",
@@ -566,7 +562,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Not a Writer",
@@ -574,7 +570,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						LimitOrderSum: _sum(published: {field: rating, limit: 2, order: {rating: ASC}})
@@ -590,16 +586,16 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 							"LimitOrderFields": []map[string]any{},
 						},
 						{
-							"LimitOrderSum":    0.0,
-							"LimitOrderFields": []map[string]any{},
-						},
-						{
 							"LimitOrderSum": 4.8,
 							"LimitOrderFields": []map[string]any{
 								{
 									"name": "Theif Lord",
 								},
 							},
+						},
+						{
+							"LimitOrderSum":    0.0,
+							"LimitOrderFields": []map[string]any{},
 						},
 						{
 							"LimitOrderSum": 3.2 + 4.0,
@@ -623,57 +619,56 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 
 func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N sum of subtype float field with limit and desc. order, and non-sum query of same subtype fields.",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Associate",
 					"rating": 4.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Sooley",
 					"rating": 3.2,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Rooster Bar",
 					"rating": 4,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -681,7 +676,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -689,7 +684,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Little Kid",
@@ -697,7 +692,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Not a Writer",
@@ -705,7 +700,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						LimitOrderSum: _sum(published: {field: rating, limit: 2, order: {rating: DESC}})
@@ -721,16 +716,16 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 							"LimitOrderFields": []map[string]any{},
 						},
 						{
-							"LimitOrderSum":    0.0,
-							"LimitOrderFields": []map[string]any{},
-						},
-						{
 							"LimitOrderSum": 4.8,
 							"LimitOrderFields": []map[string]any{
 								{
 									"name": "Theif Lord",
 								},
 							},
+						},
+						{
+							"LimitOrderSum":    0.0,
+							"LimitOrderFields": []map[string]any{},
 						},
 						{
 							"LimitOrderSum": 4.9 + 4.5,

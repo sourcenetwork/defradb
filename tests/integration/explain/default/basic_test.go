@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) a request by providing the directive on wrong location (field).",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query {
 					Author @explain {
@@ -45,12 +44,10 @@ func TestDefaultExplainOnWrongFieldDirective_BadUsage(t *testing.T) {
 func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) a basic request.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -69,7 +66,7 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 										"filter": nil,
 										"scanNode": dataMap{
 											"filter":         nil,
-											"collectionID":   "3",
+											"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 											"collectionName": "Author",
 											"prefixes": []string{
 												"/3",
@@ -91,12 +88,10 @@ func TestDefaultExplainRequestWithFullBasicGraph(t *testing.T) {
 func TestDefaultExplainWithAlias(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) a basic request with alias, no filter",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {

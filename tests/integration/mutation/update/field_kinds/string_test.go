@@ -13,21 +13,21 @@ package field_kinds
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_IfStringFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If string field is set to null, should set to nil",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -37,7 +37,7 @@ func TestMutationUpdate_IfStringFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"name": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

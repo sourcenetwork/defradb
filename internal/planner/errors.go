@@ -17,10 +17,14 @@ const (
 	errFailedToClosePlan              string = "failed to close the plan"
 	errFailedToCollectExecExplainInfo string = "failed to collect execution explain information"
 	errSubTypeInit                    string = "sub-type initialization error at scan node reset"
+	errUnsupportedEncryptedOperator   string = "unsupported operator for encrypted field"
+	errFailedToCreateNormalValue      string = "failed to create normal value for field"
+	errFailedToGenerateSearchTag      string = "failed to generate search tag for field"
+	errMissingFieldSelection          string = "missing field selection"
 )
 
 var (
-	ErrDeltaMissingSchemaVersionID         = errors.New("commit Delta missing schema version ID")
+	ErrDeltaMissingCollectionVersionID     = errors.New("commit Delta missing collection version ID")
 	ErrDeltaMissingPriority                = errors.New("commit Delta missing priority key")
 	ErrDeltaMissingDocID                   = errors.New("commit Delta missing document ID")
 	ErrDeltaMissingFieldName               = errors.New("commit Delta missing field name")
@@ -35,6 +39,12 @@ var (
 	ErrUnknownRelationType                 = errors.New("failed sub selection, unknown relation type")
 	ErrUnknownExplainRequestType           = errors.New("can not explain request of unknown type")
 	ErrUpsertMultipleDocuments             = errors.New("cannot upsert multiple matching documents")
+	ErrMismatchLengthOnSimilarity          = errors.New("source and vector must be of the same length")
+	ErrIncorrectCIDForDocId                = errors.New("cid does not belong to document")
+	ErrUnsupportedEncryptedOperator        = errors.New(errUnsupportedEncryptedOperator)
+	ErrFailedToCreateNormalValue           = errors.New(errFailedToCreateNormalValue)
+	ErrFailedToGenerateSearchTag           = errors.New(errFailedToGenerateSearchTag)
+	ErrIncorrectOrMissingCID               = errors.New("cid either does not exist or belong to document")
 )
 
 func NewErrUnknownDependency(name string) error {
@@ -51,4 +61,40 @@ func NewErrFailedToCollectExecExplainInfo(inner error) error {
 
 func NewErrSubTypeInit(inner error) error {
 	return errors.Wrap(errSubTypeInit, inner)
+}
+
+func NewErrMismatchLengthOnSimilarity(source, vector int) error {
+	return errors.WithStack(
+		ErrMismatchLengthOnSimilarity,
+		errors.NewKV("Source", source),
+		errors.NewKV("Vector", vector),
+	)
+}
+
+func NewErrUnsupportedEncryptedOperator(fieldName string) error {
+	return errors.WithStack(
+		ErrUnsupportedEncryptedOperator,
+		errors.NewKV("FieldName", fieldName),
+		errors.NewKV("SupportedOperators", []string{"_eq"}),
+	)
+}
+
+func NewErrFailedToCreateNormalValue(fieldName string, inner error) error {
+	return errors.Wrap(
+		errFailedToCreateNormalValue,
+		inner,
+		errors.NewKV("FieldName", fieldName),
+	)
+}
+
+func NewErrFailedToGenerateSearchTag(fieldName string, inner error) error {
+	return errors.Wrap(
+		errFailedToGenerateSearchTag,
+		inner,
+		errors.NewKV("FieldName", fieldName),
+	)
+}
+
+func NewErrMissingFieldSelection(field string) error {
+	return errors.New(errMissingFieldSelection, errors.NewKV("Field", field))
 }

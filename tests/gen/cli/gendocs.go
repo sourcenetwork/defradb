@@ -26,7 +26,7 @@ import (
 
 const defaultBatchSize = 1000
 
-func MakeGenDocCommand() *cobra.Command {
+func MakeGenDocCommand(ctx context.Context) *cobra.Command {
 	var demandJSON string
 	var url string
 	var cmd = &cobra.Command{
@@ -38,7 +38,7 @@ Example: The following command generates 100 User documents and 500 Device docum
   gendocs --demand '{"User": 100, "Device": 500 }'`,
 		ValidArgs: []string{"demand"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store, err := http.NewClient(url)
+			c, err := http.NewClient(url)
 			if err != nil {
 				return err
 			}
@@ -49,7 +49,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 				return NewErrInvalidDemandValue(err)
 			}
 
-			collections, err := store.GetCollections(cmd.Context(), client.CollectionFetchOptions{})
+			collections, err := c.GetCollections(cmd.Context(), client.CollectionFetchOptions{})
 			if err != nil {
 				return err
 			}
@@ -58,7 +58,7 @@ Example: The following command generates 100 User documents and 500 Device docum
 			for colName, numDocs := range demandMap {
 				opts = append(opts, gen.WithTypeDemand(colName, numDocs))
 			}
-			docs, err := gen.AutoGenerate(colsToDefs(collections), opts...)
+			docs, err := gen.AutoGenerate(ctx, colsToVersions(collections), opts...)
 			if err != nil {
 				return err
 			}
@@ -120,7 +120,7 @@ func saveBatchToCollections(
 ) error {
 	for colName, colDocs := range colDocsMap {
 		for _, col := range collections {
-			if col.Description().Name.Value() == colName {
+			if col.Version().Name == colName {
 				err := col.CreateMany(ctx, colDocs)
 				if err != nil {
 					return err
@@ -135,15 +135,15 @@ func saveBatchToCollections(
 func groupDocsByCollection(docs []gen.GeneratedDoc) map[string][]*client.Document {
 	result := make(map[string][]*client.Document)
 	for _, doc := range docs {
-		result[doc.Col.Description.Name.Value()] = append(result[doc.Col.Description.Name.Value()], doc.Doc)
+		result[doc.Col.Name] = append(result[doc.Col.Name], doc.Doc)
 	}
 	return result
 }
 
-func colsToDefs(cols []client.Collection) []client.CollectionDefinition {
-	var colDefs []client.CollectionDefinition
+func colsToVersions(cols []client.Collection) []client.CollectionVersion {
+	var colDefs []client.CollectionVersion
 	for _, col := range cols {
-		colDefs = append(colDefs, col.Definition())
+		colDefs = append(colDefs, col.Version())
 	}
 	return colDefs
 }

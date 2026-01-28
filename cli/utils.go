@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -14,27 +14,32 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
-	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
-	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/immutable"
+
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/cli/config"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/keyring"
+	"github.com/sourcenetwork/defradb/node"
 )
 
 const (
-	peerKeyName         = "peer-key"
-	encryptionKeyName   = "encryption-key"
-	nodeIdentityKeyName = "node-identity-key"
+	peerKeyName                 = "peer-key"
+	encryptionKeyName           = "encryption-key"
+	nodeIdentityKeyName         = "node-identity-key"
+	searchableEncryptionKeyName = "searchable-encryption-key"
 )
 
 type contextKey string
@@ -44,9 +49,9 @@ var (
 	cfgContextKey = contextKey("cfg")
 	// rootDirContextKey is the context key for the root directory.
 	rootDirContextKey = contextKey("rootDir")
-	// dbContextKey is the context key for the client.DB
-	dbContextKey = contextKey("db")
-	// colContextKey is the context key for the client.Collection
+	// clientContextKey is the context key for the cliclient.TxnStore
+	clientContextKey = contextKey("client")
+	// colContextKey is the context key for the cliClient.Collection
 	//
 	// If a transaction exists, all operations will be executed
 	// in the current transaction context.
@@ -58,32 +63,11 @@ const (
 	authTokenExpiration = time.Minute * 15
 )
 
-// mustGetContextDB returns the db for the current command context.
+// mustGetContextCLIClient returns the CLI for the current command context.
 //
-// If a db is not set in the current context this function panics.
-func mustGetContextDB(cmd *cobra.Command) client.DB {
-	return cmd.Context().Value(dbContextKey).(client.DB) //nolint:forcetypeassert
-}
-
-// mustGetContextStore returns the store for the current command context.
-//
-// If a store is not set in the current context this function panics.
-func mustGetContextStore(cmd *cobra.Command) client.Store {
-	return cmd.Context().Value(dbContextKey).(client.Store) //nolint:forcetypeassert
-}
-
-// mustGetContextP2P returns the p2p implementation for the current command context.
-//
-// If a p2p implementation is not set in the current context this function panics.
-func mustGetContextP2P(cmd *cobra.Command) client.P2P {
-	return cmd.Context().Value(dbContextKey).(client.P2P) //nolint:forcetypeassert
-}
-
-// mustGetContextHTTP returns the http client for the current command context.
-//
-// If http client is not set in the current context this function panics.
-func mustGetContextHTTP(cmd *cobra.Command) *http.Client {
-	return cmd.Context().Value(dbContextKey).(*http.Client) //nolint:forcetypeassert
+// If a CLI is not set in the current context this function panics.
+func mustGetContextCLIClient(cmd *cobra.Command) CLI {
+	return cmd.Context().Value(clientContextKey).(CLI) //nolint:forcetypeassert
 }
 
 // mustGetContextConfig returns the config for the current command context.
@@ -107,22 +91,22 @@ func tryGetContextCollection(cmd *cobra.Command) (client.Collection, bool) {
 	return col, ok
 }
 
-// setContextDB sets the db for the current command context.
-func setContextDB(cmd *cobra.Command) error {
+// setContextClient sets the db for the current command context.
+func setContextClient(cmd *cobra.Command) error {
 	cfg := mustGetContextConfig(cmd)
-	db, err := http.NewClient(cfg.GetString("api.address"))
+	client, err := http.NewClient(cfg.GetString("api.address"))
 	if err != nil {
 		return err
 	}
-	ctx := context.WithValue(cmd.Context(), dbContextKey, db)
+	ctx := context.WithValue(cmd.Context(), clientContextKey, client)
 	cmd.SetContext(ctx)
 	return nil
 }
 
-// setContextConfig sets teh config for the current command context.
+// setContextConfig sets the config for the current command context.
 func setContextConfig(cmd *cobra.Command) error {
 	rootdir := mustGetContextRootDir(cmd)
-	cfg, err := loadConfig(rootdir, cmd.Flags())
+	cfg, err := config.LoadConfig(rootdir, cmd.Flags())
 	if err != nil {
 		return err
 	}
@@ -141,7 +125,7 @@ func setContextTransaction(cmd *cobra.Command, txId uint64) error {
 	if err != nil {
 		return err
 	}
-	ctx := db.SetContextTxn(cmd.Context(), tx)
+	ctx := datastore.CtxSetFromClientTxn(cmd.Context(), tx)
 	cmd.SetContext(ctx)
 	return nil
 }
@@ -158,14 +142,14 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 
 	cfg := mustGetContextConfig(cmd)
 
-	sourcehubAddressString := cfg.GetString("acp.sourceHub.address")
+	sourcehubAddressString := cfg.GetString("acp.document.sourceHub.address")
 	var sourcehubAddress immutable.Option[string]
 	if sourcehubAddressString != "" {
 		sourcehubAddress = immutable.Some(sourcehubAddressString)
 	}
 
 	privKey := secp256k1.PrivKeyFromBytes(data)
-	ident, err := acpIdentity.FromPrivateKey(privKey)
+	ident, err := acpIdentity.FromPrivateKey(crypto.NewPrivateKey(privKey))
 	if err != nil {
 		return err
 	}
@@ -177,7 +161,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		return err
 	}
 
-	ctx := identity.WithContext(cmd.Context(), immutable.Some(ident))
+	ctx := acpIdentity.WithContext(cmd.Context(), immutable.Some[acpIdentity.Identity](ident))
 	cmd.SetContext(ctx)
 	return nil
 }
@@ -189,11 +173,7 @@ func setContextRootDir(cmd *cobra.Command) error {
 		return err
 	}
 	if rootdir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return err
-		}
-		rootdir = filepath.Join(home, ".defradb")
+		rootdir = node.GetDefaultStorePath()
 	}
 	ctx := context.WithValue(cmd.Context(), rootDirContextKey, rootdir)
 	cmd.SetContext(ctx)
@@ -204,10 +184,10 @@ func setContextRootDir(cmd *cobra.Command) error {
 func openKeyring(cmd *cobra.Command) (keyring.Keyring, error) {
 	cfg := mustGetContextConfig(cmd)
 	backend := cfg.Get("keyring.backend")
-	if backend == "system" {
+	if backend == keyring.KeyringBackendSystem {
 		return keyring.OpenSystemKeyring(cfg.GetString("keyring.namespace")), nil
 	}
-	if backend != "file" {
+	if backend != keyring.KeyringBackendFile {
 		log.Info("keyring defaulted to file backend")
 	}
 	path := cfg.GetString("keyring.path")
@@ -225,4 +205,112 @@ func writeJSON(cmd *cobra.Command, out any) error {
 	enc := json.NewEncoder(cmd.OutOrStdout())
 	enc.SetIndent("", "  ")
 	return enc.Encode(out)
+}
+
+// withExampleRegistry injects an ExampleRegitry into the context.
+// This is primarily only needed by the tests but needs to exist
+// in the main CLI package
+func withExampleRegistry(ctx context.Context, registry *exampleRegistry) context.Context {
+	return context.WithValue(ctx, exampleRegistryCtxKey{}, registry)
+}
+
+type exampleRegistry struct {
+	examples map[string]string
+}
+
+func newExampleRegistry() *exampleRegistry {
+	return &exampleRegistry{
+		examples: make(map[string]string),
+	}
+}
+
+// EmbedCLIExample will embed the given CLI usage example into the provided cobra command `Example` field.
+// Most notably, it will also register the example with a `exampleRegistry` if it exists in the provided
+// context. This enables the `exampleRegistry` to expose the examples in a programatic way that can be
+// accessed by the test suite.
+//
+// This means we can maintain correctness between our CLI examples, and docs, while also programatically
+// validating the examples, so they can't drift from the implementation. Note, this is *only* validating
+// the commands, flags, and arguments. Its not actually running the full command execution.
+//
+// It *must* be called *after* the `cmd` object has been defined. Beyond that, it doesn't matter if
+// its before or after the flag definitions. It is reccomended to immedietly follow the command definition
+// for clarity/consistency.
+//
+// You may use any "name", such as a short title or even a somewhat longer description. It is used for
+// uniqueness and for error reporting if an example fails. The actual name used on the registry is
+// combined with the cmd.Short (if it exists).
+//
+// Check out `cli/cli_test.go:TestCLIExamples()` for the test consuming side of the example registry.
+func EmbedCLIExample(ctx context.Context, cmd *cobra.Command, name, usage string) {
+	exampleString := cliExampleToString(name, usage)
+	if cmd.Example != "" {
+		cmd.Example += "\n\n"
+	}
+	cmd.Example += exampleString
+
+	cmdName := cmd.Short
+	if cmdName == "" {
+		cmdName = cmd.Name()
+	}
+	exampleName := cmdName + "/" + name
+	registerCLIExample(ctx, exampleName, usage)
+}
+
+type exampleRegistryCtxKey struct{}
+
+func cliExampleToString(name, usage string) string {
+	// this is intentionally formatted this way, including
+	// the 2 white spaces at the start/end of the lines
+	return fmt.Sprintf(`%s:  
+  %s`, name, usage)
+}
+
+func registerCLIExample(ctx context.Context, name, usage string) {
+	registry, ok := ctx.Value(exampleRegistryCtxKey{}).(*exampleRegistry)
+	if !ok {
+		return
+	}
+
+	_, exists := registry.examples[name]
+	if exists {
+		panic("CLI example with the same name already exists: " + name)
+	}
+
+	if strings.Contains(usage, " | ") {
+		usageParts := strings.Split(usage, "|")
+		usage = usageParts[1]
+	}
+	registry.examples[name] = strings.ReplaceAll(usage, "\\\n", "")
+}
+
+func validateCLIArgs(cmd *cobra.Command, args []string) error {
+	cmd, args, err := cmd.Find(args)
+	if err != nil {
+		return err
+	}
+
+	if !cmd.Runnable() {
+		return fmt.Errorf("command isn't runnable: %s", cmd.Name())
+	}
+
+	flags := cmd.Flags()
+	err = flags.Parse(args)
+	if err != nil {
+		return err
+	}
+
+	remainingArgs := flags.Args()
+
+	if cmd.Args != nil {
+		if err := cmd.Args(cmd, remainingArgs); err != nil {
+			return err
+		}
+	}
+
+	if err := cmd.ValidateRequiredFlags(); err != nil {
+		return err
+	}
+
+	return nil
 }

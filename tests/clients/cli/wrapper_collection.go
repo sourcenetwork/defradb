@@ -15,60 +15,46 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var _ client.Collection = (*Collection)(nil)
 
 type Collection struct {
 	cmd *cliWrapper
-	def client.CollectionDefinition
+	def client.CollectionVersion
 }
 
-func (c *Collection) Description() client.CollectionDescription {
-	return c.def.Description
-}
-
-func (c *Collection) Name() immutable.Option[string] {
-	return c.Description().Name
-}
-
-func (c *Collection) Schema() client.SchemaDescription {
-	return c.def.Schema
-}
-
-func (c *Collection) ID() uint32 {
-	return c.Description().ID
-}
-
-func (c *Collection) SchemaRoot() string {
-	return c.Schema().Root
-}
-
-func (c *Collection) Definition() client.CollectionDefinition {
+func (c *Collection) Version() client.CollectionVersion {
 	return c.def
+}
+
+func (c *Collection) Name() string {
+	return c.Version().Name
+}
+
+func (c *Collection) VersionID() string {
+	return c.Version().VersionID
+}
+
+func (c *Collection) CollectionID() string {
+	return c.Version().CollectionID
 }
 
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	args := makeDocCreateArgs(ctx, c)
+	args := makeDocCreateArgs(c, opts)
 
 	document, err := doc.String()
 	if err != nil {
 		return err
 	}
-	args = append(args, string(document))
+	args = append(args, document)
 
 	_, err = c.cmd.execute(ctx, args)
 	if err != nil {
@@ -81,12 +67,9 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
+	opts ...client.DocCreateOption,
 ) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	args := makeDocCreateArgs(ctx, c)
+	args := makeDocCreateArgs(c, opts)
 
 	docStrings := make([]string, len(docs))
 	for i, doc := range docs {
@@ -109,20 +92,20 @@ func (c *Collection) CreateMany(
 }
 
 func makeDocCreateArgs(
-	ctx context.Context,
 	c *Collection,
+	opts []client.DocCreateOption,
 ) []string {
 	args := []string{"client", "collection", "create"}
-	args = append(args, "--name", c.Description().Name.Value())
+	args = append(args, "--name", c.Version().Name)
 
-	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() {
-		if encConf.Value().IsDocEncrypted {
-			args = append(args, "--encrypt")
-		}
-		if len(encConf.Value().EncryptedFields) > 0 {
-			args = append(args, "--encrypt-fields", strings.Join(encConf.Value().EncryptedFields, ","))
-		}
+	createDocOpts := client.DocCreateOptions{}
+	createDocOpts.Apply(opts)
+
+	if createDocOpts.EncryptDoc {
+		args = append(args, "--encrypt")
+	}
+	if len(createDocOpts.EncryptedFields) > 0 {
+		args = append(args, "--encrypt-fields", strings.Join(createDocOpts.EncryptedFields, ","))
 	}
 
 	return args
@@ -132,19 +115,15 @@ func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.Description().Name.Value())
-	args = append(args, "--docID", doc.ID().String())
-
 	document, err := doc.ToJSONPatch()
 	if err != nil {
 		return err
 	}
-	args = append(args, string(document))
+
+	args := []string{"client", "collection", "update"}
+	args = append(args, "--name", c.Version().Name)
+	args = append(args, "--docID", doc.ID().String())
+	args = append(args, "--updater", string(document))
 
 	_, err = c.cmd.execute(ctx, args)
 	if err != nil {
@@ -157,13 +136,14 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.Create(ctx, doc)
+		return c.Create(ctx, doc, opts...)
 	}
 	return err
 }
@@ -173,7 +153,7 @@ func (c *Collection) Delete(
 	docID client.DocID,
 ) (bool, error) {
 	args := []string{"client", "collection", "delete"}
-	args = append(args, "--name", c.Description().Name.Value())
+	args = append(args, "--name", c.Version().Name)
 	args = append(args, "--docID", docID.String())
 
 	_, err := c.cmd.execute(ctx, args)
@@ -199,12 +179,8 @@ func (c *Collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
 	args := []string{"client", "collection", "update"}
-	args = append(args, "--name", c.Description().Name.Value())
+	args = append(args, "--name", c.Version().Name)
 	args = append(args, "--updater", updater)
 
 	filterJSON, err := json.Marshal(filter)
@@ -229,12 +205,8 @@ func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
 ) (*client.DeleteResult, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
 	args := []string{"client", "collection", "delete"}
-	args = append(args, "--name", c.Description().Name.Value())
+	args = append(args, "--name", c.Version().Name)
 
 	filterJSON, err := json.Marshal(filter)
 	if err != nil {
@@ -259,12 +231,8 @@ func (c *Collection) Get(
 	docID client.DocID,
 	showDeleted bool,
 ) (*client.Document, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
 	args := []string{"client", "collection", "get"}
-	args = append(args, "--name", c.Description().Name.Value())
+	args = append(args, "--name", c.Version().Name)
 	args = append(args, docID.String())
 
 	if showDeleted {
@@ -275,11 +243,11 @@ func (c *Collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocWithID(docID, c.Definition())
+	doc, err := client.NewDocWithID(ctx, docID, c.Version())
 	if err != nil {
 		return nil, err
 	}
-	err = doc.SetWithJSON(data)
+	err = doc.SetWithJSON(ctx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -291,12 +259,8 @@ func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
 
 ) (<-chan client.DocIDResult, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
 	args := []string{"client", "collection", "docIDs"}
-	args = append(args, "--name", c.Description().Name.Value())
+	args = append(args, "--name", c.Version().Name)
 
 	stdOut, _, err := c.cmd.executeStream(ctx, args)
 	if err != nil {
@@ -332,14 +296,10 @@ func (c *Collection) GetAllDocIDs(
 
 func (c *Collection) CreateIndex(
 	ctx context.Context,
-	indexDesc client.IndexDescriptionCreateRequest,
+	indexDesc client.IndexCreateRequest,
 ) (index client.IndexDescription, err error) {
-	if !c.Description().Name.HasValue() {
-		return client.IndexDescription{}, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
 	args := []string{"client", "index", "create"}
-	args = append(args, "--collection", c.Description().Name.Value())
+	args = append(args, "--collection", c.Version().Name)
 	if indexDesc.Name != "" {
 		args = append(args, "--name", indexDesc.Name)
 	}
@@ -378,12 +338,8 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-
 	args := []string{"client", "index", "drop"}
-	args = append(args, "--collection", c.Description().Name.Value())
+	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--name", indexName)
 
 	_, err := c.cmd.execute(ctx, args)
@@ -391,12 +347,8 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
 	args := []string{"client", "index", "list"}
-	args = append(args, "--collection", c.Description().Name.Value())
+	args = append(args, "--collection", c.Version().Name)
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
@@ -407,4 +359,58 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 		return nil, err
 	}
 	return indexes, nil
+}
+
+// CreateEncryptedIndex implements client.Collection.
+func (c *Collection) CreateEncryptedIndex(
+	ctx context.Context,
+	indexDesc client.EncryptedIndexDescription,
+) (index client.EncryptedIndexDescription, err error) {
+	args := []string{"client", "encrypted-index", "create"}
+	args = append(args, "--collection", c.Version().Name)
+
+	args = append(args, "--field", indexDesc.FieldName)
+
+	data, err := c.cmd.execute(ctx, args)
+	if err != nil {
+		return index, err
+	}
+	if err := json.Unmarshal(data, &index); err != nil {
+		return index, err
+	}
+	return index, nil
+}
+
+// ListEncryptedIndexes implements client.Collection.
+func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	args := []string{"client", "encrypted-index", "list"}
+	args = append(args, "--collection", c.Version().Name)
+
+	data, err := c.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var indexes []client.EncryptedIndexDescription
+	if err := json.Unmarshal(data, &indexes); err != nil {
+		return nil, err
+	}
+	return indexes, nil
+}
+
+// DeleteEncryptedIndex implements client.Collection.
+func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+	args := []string{"client", "encrypted-index", "delete"}
+	args = append(args, "--collection", c.Version().Name)
+	args = append(args, "--field", fieldName)
+
+	_, err := c.cmd.execute(ctx, args)
+	return err
+}
+
+func (c *Collection) Truncate(ctx context.Context) error {
+	args := []string{"client", "collection", "truncate"}
+	args = append(args, "--name", c.Version().Name)
+
+	_, err := c.cmd.execute(ctx, args)
+	return err
 }

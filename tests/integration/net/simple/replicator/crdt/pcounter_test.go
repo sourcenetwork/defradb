@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -23,7 +24,7 @@ func TestP2POneToOneReplicatorUpdate_PCounter_NoError(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -31,7 +32,7 @@ func TestP2POneToOneReplicatorUpdate_PCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in first node before the replicator is set up.
 				// Updates should be synced across nodes.
 				NodeID: immutable.Some(0),
@@ -52,7 +53,7 @@ func TestP2POneToOneReplicatorUpdate_PCounter_NoError(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						points

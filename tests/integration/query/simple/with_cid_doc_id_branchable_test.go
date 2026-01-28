@@ -13,25 +13,26 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -41,13 +42,13 @@ func TestQuerySimpleWithCidOfBranchableCollectionAndDocID(t *testing.T) {
 					"name": "Freddddd"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// This is the cid of the collection-commit when the second doc (John) is created.
 				// Without the docID param both John and Fred should be returned.
 				Request: `query {
 					Users (
-							cid: "bafyreiboen2mw2unu4fty2pyyd5nicqi57vcdahrrag6bjm54md5myj54u",
-							docID: "bae-3a7df128-bfa9-559a-a9c5-96f2bf6d1038"
+							cid: "bafyreicxlkbypv4hjc2trunobsugx63no47322xfjjazj3v5y6hqeck3d4",
+							docID: "bae-235c64e3-abf7-549c-9aff-971c8afdfa3f"
 						) {
 						name
 					}

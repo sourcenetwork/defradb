@@ -16,12 +16,12 @@ import (
 	"sync"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/event"
 
 	"github.com/go-chi/chi/v5"
 )
 
-// Global variable for the development mode flag
+// IsDevMode is a global variable for the development mode flag
 // This is checked by the http/handler_extras.go/Purge function to determine which response to send
 var IsDevMode bool = false
 
@@ -37,9 +37,9 @@ func NewApiRouter() (*Router, error) {
 	acp_handler := &acpHandler{}
 	collection_handler := &collectionHandler{}
 	p2p_handler := &p2pHandler{}
-	lens_handler := &lensHandler{}
 	ccip_handler := &ccipHandler{}
 	extras_handler := &extrasHandler{}
+	block_handler := &blockHandler{}
 
 	router, err := NewRouter()
 	if err != nil {
@@ -52,14 +52,11 @@ func NewApiRouter() (*Router, error) {
 	p2p_handler.bindRoutes(router)
 	ccip_handler.bindRoutes(router)
 	extras_handler.bindRoutes(router)
+	block_handler.bindRoutes(router)
 
 	router.AddRouteGroup(func(r *Router) {
 		r.AddMiddleware(CollectionMiddleware)
 		collection_handler.bindRoutes(r)
-	})
-
-	router.AddRouteGroup(func(r *Router) {
-		lens_handler.bindRoutes(r)
 	})
 
 	if err := router.Validate(context.Background()); err != nil {
@@ -68,13 +65,22 @@ func NewApiRouter() (*Router, error) {
 	return router, nil
 }
 
+type DB interface {
+	client.TxnStore
+	client.P2P
+	// Events returns the database event queue.
+	//
+	// It may be used to monitor database events - a new event will be yielded for each mutation.
+	// Note: it does not copy the queue, just the reference to it.
+	Events() event.Bus
+}
+
 type Handler struct {
-	db  client.DB
 	mux *chi.Mux
 	txs *sync.Map
 }
 
-func NewHandler(db client.DB) (*Handler, error) {
+func NewHandler(db DB) (*Handler, error) {
 	router, err := NewApiRouter()
 	if err != nil {
 		return nil, err
@@ -92,15 +98,17 @@ func NewHandler(db client.DB) (*Handler, error) {
 	mux.Get("/openapi.json", func(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusOK, router.OpenAPI())
 	})
+	mux.Get("/health-check", func(rw http.ResponseWriter, req *http.Request) {
+		responseJSON(rw, http.StatusOK, "Healthy")
+	})
 	mux.Handle("/*", playgroundHandler)
 	return &Handler{
-		db:  db,
 		mux: mux,
 		txs: txs,
 	}, nil
 }
 
-func (h *Handler) Transaction(id uint64) (datastore.Txn, error) {
+func (h *Handler) Transaction(id uint64) (client.Txn, error) {
 	tx, ok := h.txs.Load(id)
 	if !ok {
 		return nil, ErrInvalidTransactionId

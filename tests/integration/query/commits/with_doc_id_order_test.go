@@ -13,15 +13,15 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, order height desc",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -35,33 +35,33 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {height: DESC}) {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: DESC}) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":    "bafyreih5h6i6ohfsgrcjtg76iarebqcurpaft73gpobl2z2cfsvihsgdqu",
+							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 							"height": int64(1),
 						},
 					},
@@ -75,10 +75,9 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, order height asc",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -92,33 +91,33 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {height: ASC}) {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: ASC}) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":    "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreih5h6i6ohfsgrcjtg76iarebqcurpaft73gpobl2z2cfsvihsgdqu",
+							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
 							"height": int64(2),
 						},
 					},
@@ -132,10 +131,9 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, order cid desc",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -149,34 +147,34 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {cid: DESC}) {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {cid: DESC}) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":    "bafyreih5h6i6ohfsgrcjtg76iarebqcurpaft73gpobl2z2cfsvihsgdqu",
+							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"height": int64(1),
+						},
+						{
+							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
 							"height": int64(2),
-						},
-						{
-							"cid":    "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
-							"height": int64(1),
 						},
 					},
 				},
@@ -189,10 +187,9 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, order cid asc",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -206,33 +203,33 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {cid: ASC}) {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {cid: ASC}) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":    "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
-							"height": int64(1),
-						},
-						{
-							"cid":    "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreih5h6i6ohfsgrcjtg76iarebqcurpaft73gpobl2z2cfsvihsgdqu",
+							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"height": int64(1),
+						},
+						{
+							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
 							"height": int64(2),
 						},
 					},
@@ -246,10 +243,9 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, multiple updates with order cid asc",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -277,49 +273,49 @@ func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 					"age":	24
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						 commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {height: ASC}) {
+						 _commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: ASC}) {
 							 cid
 							 height
 						 }
 					 }`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":    "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 							"height": int64(1),
 						},
 						{
-							"cid":    "bafyreih5h6i6ohfsgrcjtg76iarebqcurpaft73gpobl2z2cfsvihsgdqu",
+							"cid":    "bafyreihht6jz3vxk3fvr4sp3kqnvuplmva36hivbjtpdum7zydvb2yztwu",
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreig3qosmew7pkq27dijjvwe35jjpvh3ed3f5dxpzemtqhw7xka7hga",
+							"cid":    "bafyreiayx64xmsfgk2dz6mga2hcgm5ajbwrx2nhiroxyzdk7tfojjrl3fe",
 							"height": int64(3),
 						},
 						{
-							"cid":    "bafyreiahq3xwdjmp2kq7jernt2axomiq3kuef2rik7k3fnn2pb242a5oha",
+							"cid":    "bafyreicbj6l6nnv6mlkjfhbc4ij36coaui7bejn7zbtxvhdl23d2w6qm5i",
 							"height": int64(3),
 						},
 						{
-							"cid":    "bafyreig3nogimi6exh2uokpayevfeds3sseixk657dj2asusys7avyu7wu",
+							"cid":    "bafyreidw723v77miekvwuoouci6npeb6kkv6hidnplh5ob5sbahwsjduuy",
 							"height": int64(4),
 						},
 						{
-							"cid":    "bafyreibhg2q3574zycclsiooz6h2ofafdqmpqqglodk4je5esegaosy3q4",
+							"cid":    "bafyreigkfzwwfmcw2lkss4xecb27a6s3f6uzfaj5d3mqx5wninv6dnnhhq",
 							"height": int64(4),
 						},
 					},

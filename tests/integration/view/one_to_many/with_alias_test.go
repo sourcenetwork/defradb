@@ -13,14 +13,14 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with alias on outer object",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -32,7 +32,7 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						fullName: name
@@ -51,20 +51,20 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							AuthorView {
 								fullName
@@ -94,9 +94,8 @@ func TestView_OneToManyWithAliasOnOuter(t *testing.T) {
 
 func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with alias on inner object",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -108,7 +107,7 @@ func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -127,20 +126,20 @@ func TestView_OneToManyWithAliasOnInner(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {

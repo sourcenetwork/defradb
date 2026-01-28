@@ -13,21 +13,21 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete without sub-selection, should give error.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User
 				}`,
@@ -41,22 +41,21 @@ func TestMutationDeletion_WithoutSubSelection(t *testing.T) {
 
 func TestMutationDeletion_WithoutSubSelectionFields(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete without sub-selection fields, should give error.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User{
 
 					}
 				}`,
-				ExpectedError: "Syntax Error GraphQL request (2:17) Unexpected empty IN {}",
+				ExpectedError: "Syntax Error GraphQL",
 			},
 		},
 	}

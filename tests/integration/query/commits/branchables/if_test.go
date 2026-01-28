@@ -13,13 +13,23 @@ package branchables
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
+
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	collectionCid := testUtils.NewSameValue()
+	nameCid := testUtils.NewSameValue()
+	ageCid := testUtils.NewSameValue()
+	headCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable(if: true) {
 						name: String
@@ -27,31 +37,31 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection"),
+							"cid": gomega.And(collectionCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name"),
+							"cid": gomega.And(nameCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("age"),
+							"cid": gomega.And(ageCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("head"),
+							"cid": gomega.And(headCid, uniqueCid),
 						},
 					},
 				},
@@ -63,9 +73,15 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 }
 
 func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	nameCid := testUtils.NewSameValue()
+	ageCid := testUtils.NewSameValue()
+	headCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable(if: false) {
 						name: String
@@ -73,30 +89,30 @@ func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						// Note: This collection is not branchable, there is no collection
 						// level commit
 						{
-							"cid": testUtils.NewUniqueCid("name"),
+							"cid": gomega.And(nameCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("age"),
+							"cid": gomega.And(ageCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("head"),
+							"cid": gomega.And(headCid, uniqueCid),
 						},
 					},
 				},

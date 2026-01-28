@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with docID filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(docID: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
@@ -36,7 +35,7 @@ func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 
 				ExpectedPatterns: basicPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
@@ -50,7 +49,7 @@ func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -69,12 +68,10 @@ func TestDefaultExplainRequestWithDocIDFilter(t *testing.T) {
 func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with docIDs filter using one ID.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(docID: ["bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d"]) {
@@ -85,7 +82,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 
 				ExpectedPatterns: basicPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
@@ -99,7 +96,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -118,12 +115,10 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingOneID(t *testing.T) {
 func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with docIDs filter using multiple but duplicate IDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -139,7 +134,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *te
 
 				ExpectedPatterns: basicPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
@@ -154,7 +149,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *te
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -174,12 +169,10 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleButDuplicateIDs(t *te
 func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with docIDs filter using multiple unique IDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -195,7 +188,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.
 
 				ExpectedPatterns: basicPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
@@ -210,7 +203,7 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -230,12 +223,10 @@ func TestDefaultExplainRequestWithDocIDsFilterUsingMultipleUniqueIDs(t *testing.
 func TestDefaultExplainRequestWithMatchingIDFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with a filter to match ID.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -252,7 +243,7 @@ func TestDefaultExplainRequestWithMatchingIDFilter(t *testing.T) {
 
 				ExpectedPatterns: basicPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
@@ -264,7 +255,7 @@ func TestDefaultExplainRequestWithMatchingIDFilter(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"_docID": dataMap{

@@ -11,8 +11,6 @@
 package keys
 
 import (
-	"strconv"
-
 	ds "github.com/ipfs/go-datastore"
 )
 
@@ -20,17 +18,17 @@ import (
 //
 // The sequence is specific to each collection version.
 type IndexIDSequenceKey struct {
-	CollectionID uint32
+	CollectionID string
 }
 
 var _ Key = (*IndexIDSequenceKey)(nil)
 
-func NewIndexIDSequenceKey(collectionID uint32) IndexIDSequenceKey {
+func NewIndexIDSequenceKey(collectionID string) IndexIDSequenceKey {
 	return IndexIDSequenceKey{CollectionID: collectionID}
 }
 
 func (k IndexIDSequenceKey) ToString() string {
-	return INDEX_ID_SEQ + "/" + strconv.Itoa(int(k.CollectionID))
+	return INDEX_ID_SEQ + "/" + k.CollectionID
 }
 
 func (k IndexIDSequenceKey) Bytes() []byte {

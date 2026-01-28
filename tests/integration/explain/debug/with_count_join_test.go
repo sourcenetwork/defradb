@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -38,12 +39,10 @@ var debugCountTypeIndexJoinManyPattern = dataMap{
 func TestDebugExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with count on a one-to-many joined field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
@@ -63,12 +62,10 @@ func TestDebugExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 func TestDebugExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with count on a one-to-many joined field with many sources.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {

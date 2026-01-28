@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,20 +26,20 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 				ImportContent: `{
 					"User":[
 						{
-							"_docID":"bae-0dfbaf9f-3c58-5133-aa07-a9f25d792f4e",
+							"_docID":"bae-692a9178-a258-5224-990f-9ad703a2bbea",
 							"age":31,
-							"boss_id":"bae-8096e3d7-41ab-5afe-ad88-481150483db1",
+							"_bossID":"bae-1635f80b-612a-5378-a185-cad7a3018354",
 							"name":"Bob"
 						},
 						{
-							"_docID":"bae-8096e3d7-41ab-5afe-ad88-481150483db1",
+							"_docID":"bae-1635f80b-612a-5378-a185-cad7a3018354",
 							"age":30,
 							"name":"John"
 						}
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -51,17 +52,18 @@ func TestBackupSelfRefImport_Simple_NoError(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
+							"name": "John",
+							"boss": nil,
+						},
+						{
 							"name": "Bob",
 							"boss": map[string]any{
 								"name": "John",
 							},
 						},
-						{
-							"name": "John",
-							"boss": nil,
-						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -73,10 +75,10 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 	expectedExportData := `{` +
 		`"User":[` +
 		`{` +
-		`"_docID":"bae-b9449db8-3894-5701-84ce-ee96a3eafc9c",` +
-		`"_docIDNew":"bae-b9449db8-3894-5701-84ce-ee96a3eafc9c",` +
+		`"_bossID":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
+		`"_docID":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
+		`"_docIDNew":"bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9",` +
 		`"age":31,` +
-		`"boss_id":"bae-b9449db8-3894-5701-84ce-ee96a3eafc9c",` +
 		`"name":"Bob"` +
 		`}` +
 		`]` +
@@ -87,10 +89,10 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			// and import to the second.
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: schemas,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Bob",
@@ -100,7 +102,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
-					"boss_id": "bae-b9449db8-3894-5701-84ce-ee96a3eafc9c"
+					"_bossID": "bae-0a85be75-1f76-5dcd-b31a-4798f65e45e9"
 				}`,
 			},
 			testUtils.BackupExport{
@@ -111,7 +113,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 				NodeID:        immutable.Some(1),
 				ImportContent: expectedExportData,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `
 					query  {
@@ -142,7 +144,7 @@ func TestBackupSelfRefImport_SelfRef_NoError(t *testing.T) {
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -166,13 +168,13 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 					"Book":[
 						{
 							"name":"John and the sourcerers' stone",
-							"author":"bae-da91935a-9176-57ea-ba68-afe05781da16",
-							"reviewedBy":"bae-da91935a-9176-57ea-ba68-afe05781da16"
+							"author":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
+							"reviewedBy":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4"
 						}
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -208,7 +210,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollection_NoError(t *test
 func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -227,8 +229,8 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 					"Book":[
 						{
 							"name":"John and the sourcerers' stone",
-							"author":"bae-da91935a-9176-57ea-ba68-afe05781da16",
-							"reviewedBy":"bae-da91935a-9176-57ea-ba68-afe05781da16"
+							"author":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4",
+							"reviewedBy":"bae-ca99414a-8336-537d-87d7-a7c4d90903b4"
 						}
 					],
 					"Author":[
@@ -238,7 +240,7 @@ func TestBackupSelfRefImport_PrimaryRelationWithSecondCollectionWrongOrder_NoErr
 					]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -279,7 +281,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 		`{` +
 		`"_docID":"bae-bf1f16db-3c02-5759-8127-7d73346442cc",` +
 		`"_docIDNew":"bae-bf1f16db-3c02-5759-8127-7d73346442cc",` +
-		`"book_id":"bae-89136f56-3779-5656-b8a6-f76a1c262f37",` +
+		`"_bookID":"bae-89136f56-3779-5656-b8a6-f76a1c262f37",` +
 		`"name":"John"` +
 		`}` +
 		`],` +
@@ -288,7 +290,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 		`"_docID":"bae-89136f56-3779-5656-b8a6-f76a1c262f37",` +
 		`"_docIDNew":"bae-66b0f769-c743-5a50-ae6d-1dcd978e2404",` +
 		`"name":"John and the sourcerers' stone",` +
-		`"reviewedBy_id":"bae-bf1f16db-3c02-5759-8127-7d73346442cc"` +
+		`"_reviewedByID":"bae-bf1f16db-3c02-5759-8127-7d73346442cc"` +
 		`}` +
 		`]` +
 		`}`
@@ -299,7 +301,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 			// and import to the second.
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -313,7 +315,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				// bae-89136f56-3779-5656-b8a6-f76a1c262f37
@@ -321,7 +323,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 					"name": "John and the sourcerers' stone"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
 				Doc: `{
@@ -334,7 +336,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				CollectionID: 1,
 				DocID:        0,
 				Doc: `{
-					"reviewedBy_id": "bae-bf1f16db-3c02-5759-8127-7d73346442cc"
+					"_reviewedByID": "bae-bf1f16db-3c02-5759-8127-7d73346442cc"
 				}`,
 			},
 			/*
@@ -349,7 +351,7 @@ func TestBackupSelfRefImport_SplitPrimaryRelationWithSecondCollection_NoError(t 
 				NodeID:        immutable.Some(1),
 				ImportContent: expectedExportData,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `
 					query {

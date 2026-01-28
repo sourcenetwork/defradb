@@ -13,151 +13,164 @@ package db
 import (
 	"context"
 
-	ds "github.com/ipfs/go-datastore"
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
+	"github.com/sourcenetwork/lens/host-go/store"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
-	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) error {
-	txn := mustGetContextTxn(ctx)
+func (db *DB) getLensStore(ctx context.Context) store.Store {
+	txn, ok := datastore.CtxTryGetTxn(ctx)
+	if ok {
+		return db.lensNode.Store.WithTxn(wrappedTxn{
+			Txn:          txn,
+			ReaderWriter: db.rootstore,
+		})
+	}
 
-	dstCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, cfg.DestinationSchemaVersionID)
+	return db.lensNode.Store
+}
+
+func (db *DB) addLens(ctx context.Context, lens model.Lens) (string, error) {
+	cid, err := db.getLensStore(ctx).Add(ctx, lens)
 	if err != nil {
-		return err
+		return "", err
 	}
+	return cid.String(), nil
+}
 
-	sourceCols, err := description.GetCollectionsBySchemaVersionID(ctx, txn, cfg.SourceSchemaVersionID)
+func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
+	lenses, err := db.getLensStore(ctx).List(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	colSeq, err := db.getSequence(ctx, keys.CollectionIDSequenceKey{})
+	result := make(map[string]model.Lens, len(lenses))
+	for cid, lens := range lenses {
+		result[cid.String()] = lens
+	}
+	return result, nil
+}
+
+func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
+	dstFound := true
+	dstCol, err := description.GetCollectionByID(ctx, cfg.DestinationCollectionVersionID)
 	if err != nil {
-		return err
+		if errors.Is(err, corekv.ErrNotFound) {
+			dstFound = false
+		} else {
+			return "", err
+		}
 	}
 
-	if len(sourceCols) == 0 {
-		// If no collections are found with the given [SourceSchemaVersionID], this migration must be from
-		// a collection/schema version that does not yet exist locally.  We must now create it.
-		colID, err := colSeq.next(ctx)
+	srcFound := true
+	sourceCol, err := description.GetCollectionByID(ctx, cfg.SourceCollectionVersionID)
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			srcFound = false
+		} else {
+			return "", err
+		}
+	}
+
+	if !srcFound {
+		sourceCol = client.CollectionVersion{
+			VersionID:      cfg.SourceCollectionVersionID,
+			CollectionID:   client.OrphanCollectionID,
+			IsMaterialized: true,
+			IsPlaceholder:  true,
+		}
+
+		err = description.SaveCollection(ctx, sourceCol)
 		if err != nil {
-			return err
+			return "", err
 		}
+	}
 
-		desc := client.CollectionDescription{
-			ID:              uint32(colID),
-			RootID:          client.OrphanRootID,
-			SchemaVersionID: cfg.SourceSchemaVersionID,
-			IsMaterialized:  true,
+	if !dstFound {
+		dstCol = client.CollectionVersion{
+			Name:           sourceCol.Name,
+			VersionID:      cfg.DestinationCollectionVersionID,
+			IsMaterialized: true,
+			IsPlaceholder:  true,
+			CollectionID:   sourceCol.CollectionID,
 		}
+	}
 
-		col, err := description.SaveCollection(ctx, txn, desc)
+	if dstCol.PreviousVersion.HasValue() && dstCol.PreviousVersion.Value().SourceCollectionID != sourceCol.VersionID {
+		return "", NewErrMigrationBetweenNonAdjacentVersions(cfg.SourceCollectionVersionID,
+			cfg.DestinationCollectionVersionID)
+	}
+
+	id, err := db.getLensStore(ctx).Add(ctx, cfg.Lens)
+	if err != nil {
+		return "", err
+	}
+
+	dstCol.PreviousVersion = immutable.Some(client.CollectionSource{
+		SourceCollectionID: sourceCol.VersionID,
+		Transform:          immutable.Some(id.String()),
+	})
+
+	err = description.SaveCollection(ctx, dstCol)
+	if err != nil {
+		return "", err
+	}
+
+	shouldReindex, activeCol, err := db.shouldReindexAfterMigration(ctx, dstCol)
+	if err != nil {
+		return "", err
+	}
+
+	if shouldReindex {
+		err = db.reindexNewActiveVersion(ctx, activeCol)
 		if err != nil {
-			return err
-		}
-
-		sourceCols = append(sourceCols, col)
-	}
-
-	for _, sourceCol := range sourceCols {
-		isDstCollectionFound := false
-	dstColsLoop:
-		for i, dstCol := range dstCols {
-			if len(dstCol.Sources) == 0 {
-				// If the destingation collection has no sources at all, it must have been added as an orphaned source
-				// by another migration.  This can happen if the migrations are added in an unusual order, before
-				// their schemas have been defined locally.
-				dstCol.Sources = append(dstCol.Sources, &client.CollectionSource{
-					SourceCollectionID: sourceCol.ID,
-				})
-				dstCols[i] = dstCol
-			}
-
-			for _, source := range dstCol.CollectionSources() {
-				if source.SourceCollectionID == sourceCol.ID {
-					isDstCollectionFound = true
-					break dstColsLoop
-				}
-			}
-		}
-
-		if !isDstCollectionFound {
-			// If the destination collection was not found, we must create it.  This can happen when setting a migration
-			// to a schema version that does not yet exist locally.
-			colID, err := colSeq.next(ctx)
-			if err != nil {
-				return err
-			}
-
-			desc := client.CollectionDescription{
-				ID:              uint32(colID),
-				RootID:          sourceCol.RootID,
-				SchemaVersionID: cfg.DestinationSchemaVersionID,
-				IsMaterialized:  true,
-				Sources: []any{
-					&client.CollectionSource{
-						SourceCollectionID: sourceCol.ID,
-						// The transform will be set later, when updating all destination collections
-						// whether they are newly created or not.
-					},
-				},
-			}
-
-			col, err := description.SaveCollection(ctx, txn, desc)
-			if err != nil {
-				return err
-			}
-
-			if desc.RootID != client.OrphanRootID {
-				var schemaFound bool
-				// If the root schema id is known, we need to add it to the index, even if the schema is not known locally
-				schema, err := description.GetSchemaVersion(ctx, txn, cfg.SourceSchemaVersionID)
-				if err != nil {
-					if !errors.Is(err, ds.ErrNotFound) {
-						return err
-					}
-				} else {
-					schemaFound = true
-				}
-
-				if schemaFound {
-					schemaRootKey := keys.NewSchemaRootKey(schema.Root, cfg.DestinationSchemaVersionID)
-					err = txn.Systemstore().Put(ctx, schemaRootKey.ToDS(), []byte{})
-					if err != nil {
-						return err
-					}
-				}
-			}
-
-			dstCols = append(dstCols, col)
+			return "", err
 		}
 	}
 
-	for _, col := range dstCols {
-		collectionSources := col.CollectionSources()
+	return id.String(), nil
+}
 
-		for _, source := range collectionSources {
-			// WARNING: Here we assume that the collection source points at a collection of the source schema version.
-			// This works currently, as collections only have a single source.  If/when this changes we need to make
-			// sure we only update the correct source.
-
-			source.Transform = immutable.Some(cfg.Lens)
-
-			err = db.LensRegistry().SetMigration(ctx, col.ID, cfg.Lens)
-			if err != nil {
-				return err
-			}
-		}
-
-		_, err = description.SaveCollection(ctx, txn, col)
-		if err != nil {
-			return err
-		}
+// shouldReindexAfterMigration determines if reindexing is needed after adding a migration.
+// Reindexing is needed if:
+// 1. The destination collection is currently active, OR
+// 2. The destination collection is in the history chain of any currently active collection
+// Returns: (shouldReindex bool, activeCollection, error)
+func (db *DB) shouldReindexAfterMigration(
+	ctx context.Context,
+	dstCol client.CollectionVersion,
+) (bool, client.CollectionVersion, error) {
+	if dstCol.IsActive {
+		return true, dstCol, nil
 	}
 
-	return nil
+	activeCol, err := description.GetActiveCollectionByCollectionID(ctx, dstCol.CollectionID)
+	if err != nil {
+		if errors.Is(err, corekv.ErrNotFound) {
+			return false, client.CollectionVersion{}, nil
+		}
+		return false, client.CollectionVersion{}, err
+	}
+
+	history, err := description.GetTargetedCollectionHistory(
+		ctx,
+		activeCol.CollectionID,
+		activeCol.VersionID,
+	)
+	if err != nil {
+		return false, client.CollectionVersion{}, err
+	}
+
+	if history == nil {
+		return false, activeCol, nil
+	}
+
+	_, found := history[dstCol.VersionID]
+	return found, activeCol, nil
 }

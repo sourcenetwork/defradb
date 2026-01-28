@@ -15,7 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // The parent-child distinction in these tests is as much documentation and test
@@ -25,7 +27,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -33,7 +35,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -44,6 +46,12 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the first node only, and allow the value to sync
 				NodeID: immutable.Some(0),
@@ -52,7 +60,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -79,7 +87,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -87,7 +95,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -98,6 +106,12 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the second node only, and allow the value to sync
 				NodeID: immutable.Some(1),
@@ -106,7 +120,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -132,7 +146,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -140,7 +154,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -150,6 +164,18 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the first node to 60
@@ -166,7 +192,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -175,7 +201,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": testUtils.AnyOf{int64(45), int64(60)},
+							"Age": testUtils.AnyOf(int64(45), int64(60)),
 						},
 					},
 				},
@@ -193,7 +219,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 			testUtils.RandomNetworkingConfig(),
 			// This last node is not marked for peer sync
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -201,7 +227,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -212,6 +238,12 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the first node to 60
 				NodeID: immutable.Some(0),
@@ -220,7 +252,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -235,7 +267,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -250,7 +282,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Update should not be synced to this node
 				NodeID: immutable.Some(2),
 				Request: `query {
@@ -280,7 +312,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 			// This node is unmapped, updates applied to this node should
 			// not be synced to the other nodes.
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -288,7 +320,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -307,7 +339,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Update should not be synced to this node
 				NodeID: immutable.Some(0),
 				Request: `query {
@@ -323,7 +355,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Update should not be synced to this node
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -339,7 +371,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(2),
 				Request: `query {
 					Users {
@@ -366,7 +398,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -374,7 +406,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -384,6 +416,18 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
@@ -422,7 +466,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -431,7 +475,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": testUtils.AnyOf{int64(47), int64(62)},
+							"Age": testUtils.AnyOf(int64(47), int64(62)),
 						},
 					},
 				},
@@ -449,7 +493,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -457,7 +501,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -472,7 +516,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Fred",
@@ -487,7 +531,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -496,10 +540,10 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(21),
+							"Age": int64(60),
 						},
 						{
-							"Age": int64(60),
+							"Age": int64(21),
 						},
 					},
 				},
@@ -518,7 +562,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -526,7 +570,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Shahzad on all nodes
 				Doc: `{
 					"Name": "John",
@@ -541,7 +585,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Fred",
@@ -605,7 +649,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -614,10 +658,10 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": testUtils.AnyOf{int64(47), int64(62)},
+							"Age": int64(60),
 						},
 						{
-							"Age": int64(60),
+							"Age": testUtils.AnyOf(int64(47), int64(62)),
 						},
 					},
 				},

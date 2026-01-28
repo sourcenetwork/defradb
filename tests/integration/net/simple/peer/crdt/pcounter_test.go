@@ -15,7 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
@@ -23,7 +25,7 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -31,7 +33,7 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Shahzad on all nodes
 				Doc: `{
 					"name": "Shahzad",
@@ -42,6 +44,12 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
 				DocID:  0,
@@ -50,7 +58,7 @@ func TestP2PUpdate_WithPCounter_NoError(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						points
@@ -75,7 +83,7 @@ func TestP2PUpdate_WithPCounterSimultaneousUpdate_NoError(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -83,7 +91,7 @@ func TestP2PUpdate_WithPCounterSimultaneousUpdate_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -93,6 +101,18 @@ func TestP2PUpdate_WithPCounterSimultaneousUpdate_NoError(t *testing.T) {
 			testUtils.ConnectPeers{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
 			},
 			testUtils.UpdateDoc{
 				NodeID: immutable.Some(0),
@@ -107,7 +127,7 @@ func TestP2PUpdate_WithPCounterSimultaneousUpdate_NoError(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age

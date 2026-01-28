@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -36,12 +37,10 @@ var countPattern = dataMap{
 func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with count on an inline array field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Book {
@@ -52,7 +51,7 @@ func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 
 				ExpectedPatterns: countPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "countNode",
 						IncludeChildNodes: false,
@@ -70,7 +69,7 @@ func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
 							"filter":         nil,
-							"collectionID":   "2",
+							"collectionID":   "bafyreifnc6yphaqxf7x7fa3phxrsuvzqvnnjz4q7fuirhty4cnrxubp6eq",
 							"collectionName": "Book",
 							"prefixes": []string{
 								"/2",

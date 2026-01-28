@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -38,12 +39,10 @@ var groupLimitPattern = dataMap{
 func TestDefaultExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with limit and offset on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -60,7 +59,7 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 
 				ExpectedPatterns: groupLimitPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -90,12 +89,10 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 func TestDefaultExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with limit and offset on parent groupBy and inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -111,7 +108,7 @@ func TestDefaultExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *
 
 				ExpectedPatterns: groupLimitPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,

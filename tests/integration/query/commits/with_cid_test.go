@@ -13,15 +13,15 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsWithCid(t *testing.T) {
+func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -35,18 +35,18 @@ func TestQueryCommitsWithCid(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(
-							cid: "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy"
+						_commits(
+							cid: "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu"
 						) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},
@@ -57,31 +57,35 @@ func TestQueryCommitsWithCid(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
+func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.T) {
 	// cid is for a field commit, see TestQueryCommitsWithDocIDAndFieldId
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with cid",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			testUtils.UpdateDoc{
+				Doc: `{
+					"name": "Johnn"
+				}`,
+			},
+			&action.Request{
 				Request: `query {
-						commits(
-							cid: "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy"
+						_commits(
+							cid: "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm"
 						) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 						},
 					},
 				},
@@ -94,27 +98,27 @@ func TestQueryCommitsWithCidForFieldCommit(t *testing.T) {
 
 func TestQueryCommitsWithInvalidCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "query for a single block by invalid CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(cid: "fhbnjfahfhfhanfhga") {
+						_commits(cid: "fhbnjfahfhfhanfhga") {
 							cid
 							height
 							delta
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
+				ExpectedError: "invalid cid",
 			},
 		},
 	}
@@ -124,27 +128,27 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 
 func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "query for a single block by invalid, short CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(cid: "bafybeidfhbnjfahfhfhanfhga") {
+						_commits(cid: "bafybeidfhbnjfahfhfhanfhga") {
 							cid
 							height
 							delta
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
+				ExpectedError: "invalid cid",
 			},
 		},
 	}
@@ -154,27 +158,27 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 
 func TestQueryCommitsWithUnknownCid(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "query for a single block by unknown CID",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
+						_commits(cid: "bafybeid57gpbwi4i6bg7g35hhhhhhhhhhhhhhhhhhhhhhhdoesnotexist") {
 							cid
 							height
 							delta
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
+				ExpectedError: "cid either does not exist or belong to document",
 			},
 		},
 	}

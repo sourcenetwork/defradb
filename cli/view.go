@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeViewCommand() *cobra.Command {
+func MakeViewCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "view",
 		Short: "Manage views within a running DefraDB instance",

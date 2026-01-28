@@ -1,0 +1,158 @@
+// Copyright 2023 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package test
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/defradb/tests/action"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestSchemaUpdatesTestFieldNameErrors(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "test", "path": "/Users/Fields/1/name", "value": "Email" }
+					]
+				`,
+				ExpectedError: "failed: test failed",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesTestFieldNamePasses(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "test", "path": "/Users/Fields/1/Name", "value": "name" }
+					]
+				`,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesTestFieldErrors(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "test", "path": "/Users/Fields/1", "value": {"Name": "name", "Kind": 11} }
+					]
+				`,
+				ExpectedError: "test failed",
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesTestFieldPasses(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "test", "path": "/Users/Fields/1", "value": {
+							"FieldID": "bafyreiaezc5g33yzhyzcgbyiv476lovyztyoliotzksdfogoep5ktgpedq",
+							"Name": "name", "Kind": 11, "Typ":1, "RelationName": null, "IsPrimary": false, "DefaultValue": null, "Size": 0
+						} }
+					]
+				`,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesTestFieldPasses_UsingFieldNameAsIndex(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "test", "path": "/Users/Fields/name", "value": {
+							"FieldID": "bafyreiaezc5g33yzhyzcgbyiv476lovyztyoliotzksdfogoep5ktgpedq",
+							"Name": "name", "Kind": 11, "Typ":1, "RelationName": null, "IsPrimary": false, "DefaultValue": null, "Size": 0
+						} }
+					]
+				`,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestSchemaUpdatesTestFieldPasses_TargettingKindUsingFieldNameAsIndex(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Users {
+						name: String
+					}
+				`,
+			},
+			&action.PatchCollection{
+				Patch: `
+					[
+						{ "op": "test", "path": "/Users/Fields/name/Kind", "value": 11 }
+					]
+				`,
+			},
+		},
+	}
+	testUtils.ExecuteTestCase(t, test)
+}

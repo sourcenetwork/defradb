@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with all documents matching.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				// bae-111e8e29-0530-52ae-815f-14c7ba46d277
@@ -35,7 +34,7 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				// bae-e147be24-bf9c-5d38-8c7b-ad18e4034c53
@@ -45,7 +44,7 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -86,12 +85,10 @@ func TestExecuteExplainRequestWithAllDocumentsMatching(t *testing.T) {
 func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with no documents.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -131,12 +128,10 @@ func TestExecuteExplainRequestWithNoDocuments(t *testing.T) {
 func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with some documents matching.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				// bae-111e8e29-0530-52ae-815f-14c7ba46d277
@@ -146,7 +141,7 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				// bae-e147be24-bf9c-5d38-8c7b-ad18e4034c53
@@ -156,7 +151,7 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(filter: {name: {_eq: "Shahzad"}}) {
 						name
@@ -197,12 +192,10 @@ func TestExecuteExplainRequestWithSomeDocumentsMatching(t *testing.T) {
 func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with documents but no matches.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				// bae-111e8e29-0530-52ae-815f-14c7ba46d277
@@ -212,7 +205,7 @@ func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				// bae-e147be24-bf9c-5d38-8c7b-ad18e4034c53
@@ -222,7 +215,7 @@ func TestExecuteExplainRequestWithDocumentsButNoMatches(t *testing.T) {
 				}`,
 			},
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author(filter: {name: {_eq: "John"}}) {
 						name

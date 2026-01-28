@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeBackupCommand() *cobra.Command {
+func MakeBackupCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "backup",
 		Short: "Interact with the backup utility",

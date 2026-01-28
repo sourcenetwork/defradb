@@ -14,14 +14,14 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Getting indexes should return list of existing indexes",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(name: "age_index", includes: [{field: "age"}]) {
 						name: String @index(name: "name_index")
@@ -29,7 +29,7 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.GetIndexes{
+			&action.GetIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -49,6 +49,60 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 								Name: "age",
 							},
 						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String 
+						age: Int @index
+					}
+
+					type Address {
+						street: String
+						postalCode: String @index
+					}
+				`,
+			},
+			&action.GetIndexes{
+				CollectionID: 0,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "User_age_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name:       "age",
+								Descending: false,
+							},
+						},
+						Unique: false,
+					},
+				},
+			},
+			&action.GetIndexes{
+				CollectionID: 1,
+				ExpectedIndexes: []client.IndexDescription{
+					{
+						Name: "Address_postalCode_ASC",
+						ID:   1,
+						Fields: []client.IndexedFieldDescription{
+							{
+								Name:       "postalCode",
+								Descending: false,
+							},
+						},
+						Unique: false,
 					},
 				},
 			},

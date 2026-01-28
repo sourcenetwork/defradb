@@ -8,6 +8,9 @@ coverage
 tests/bench/*.log
 tests/bench/*.svg
 
+tests/package.json
+tests/package-lock.json
+tests/node_modules
 tests/lenses/rust_wasm32_set_default/Cargo.lock
 tests/lenses/rust_wasm32_set_default/target
 tests/lenses/rust_wasm32_set_default/pkg
@@ -23,6 +26,12 @@ tests/lenses/rust_wasm32_prepend/pkg
 tests/lenses/rust_wasm32_filter/Cargo.lock
 tests/lenses/rust_wasm32_filter/target
 tests/lenses/rust_wasm32_filter/pkg
+tests/lenses/rust_wasm32_std_dev/Cargo.lock
+tests/lenses/rust_wasm32_std_dev/target
+tests/lenses/rust_wasm32_std_dev/pkg
+tests/lenses/rust_wasm32_increment/Cargo.lock
+tests/lenses/rust_wasm32_increment/target
+tests/lenses/rust_wasm32_increment/pkg
 
 # Ignore OS X metadata files.
 .history

@@ -13,38 +13,38 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with logical compound filter (or)",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_or: [{Age: {_eq: 55}}, {Age: {_eq: 19}}]}) {
 						Name
@@ -54,15 +54,16 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Alice",
 							"Age":  int64(19),
 						},
+						{
+							"Name": "Carlo",
+							"Age":  int64(55),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -72,31 +73,30 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 
 func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with logical compound filter (or) on inline int array",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `type Users {
 					Name: String
 					FavoriteNumbers: [Int!]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"FavoriteNumbers": [10, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"FavoriteNumbers": [30, 40]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_or: [
-						{FavoriteNumbers: {_any: {_le: 100}}},
-						{FavoriteNumbers: {_any: {_ge: 0}}},
+						{FavoriteNumbers: {_any: {_leq: 100}}},
+						{FavoriteNumbers: {_any: {_geq: 0}}},
 					]}) {
 						Name
 					}
@@ -111,6 +111,7 @@ func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T)
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

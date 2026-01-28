@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -23,14 +24,14 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t *test
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -43,7 +44,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t *test
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SchemaPatch{
+			&action.PatchCollection{
 				// Patch the schema on the node that we will directly create a doc on
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -68,7 +69,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t *test
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -85,7 +86,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// The second update should still be received by the second node, updating Name
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -112,14 +113,14 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
@@ -132,7 +133,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SchemaPatch{
+			&action.PatchCollection{
 				// Patch the schema on the node that we will directly update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -150,7 +151,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -167,7 +168,7 @@ func TestP2PPeerUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {

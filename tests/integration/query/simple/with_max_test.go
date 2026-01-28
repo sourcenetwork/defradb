@@ -14,16 +14,17 @@ import (
 	"math"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
 
 func TestQuerySimple_WithMaxOnUndefinedObject_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query max on undefined object",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max
 				}`,
@@ -37,9 +38,8 @@ func TestQuerySimple_WithMaxOnUndefinedObject_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMaxOnUndefinedField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query max on undefined field",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max(Users: {})
 				}`,
@@ -53,9 +53,8 @@ func TestQuerySimple_WithMaxOnUndefinedField_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMaxOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query max on empty",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max(Users: {field: Age})
 				}`,
@@ -71,21 +70,20 @@ func TestQuerySimple_WithMaxOnEmptyCollection_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query max",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max(Users: {field: Age})
 				}`,
@@ -101,20 +99,25 @@ func TestQuerySimple_WithMax_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GraphQL does not support 64 bit int
-			testUtils.CollectionSaveMutationType,
-			testUtils.CollectionNamedMutationType,
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// JavaScript does not support 64 bit int
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
 		}),
-		Description: "Simple query max and max value int",
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			// GraphQL does not support 64 bit int
+			state.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 					"Age":  int64(math.MaxInt64),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max(Users: {field: Age})
 				}`,
@@ -130,9 +133,8 @@ func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithAliasedMaxOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query aliased max on empty",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					maximum: _max(Users: {field: Age})
 				}`,

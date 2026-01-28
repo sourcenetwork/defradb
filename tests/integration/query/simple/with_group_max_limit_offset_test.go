@@ -13,39 +13,39 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMaxWithLimitAndOffset_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, offsetted limited max on non-rendered group integer value",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 38
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 28
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// It is important to test negative values here, due to the auto-typing of numbers
 				Doc: `{
 					"Name": "Alice",
 					"Age": -19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -56,7 +56,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMaxWith
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_max": int64(38),
+							"_max": int64(32),
 						},
 						{
 							"Name": "Alice",

@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -34,9 +35,8 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field in 1-N relation",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -52,21 +52,22 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{"name": "Shahzad"},
-						{"name": "Islam"},
 						{"name": "Keenan"},
+						{"name": "Islam"},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req1),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -74,7 +75,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req2),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -102,9 +103,8 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed secondary relation field in 1-1 relation",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -120,7 +120,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -128,21 +128,22 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req1),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "John"},
 						{"name": "Shahzad"},
+						{"name": "John"},
 						{"name": "Fred"},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req2),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -170,26 +171,25 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed field of primary relation in 1-1 relation",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
-						name: String 
+						name: String
 						age: Int
-						address: Address @primary @index
-					} 
+						address: Address @primary @index(unique: true)
+					}
 
 					type Address {
 						user: User
 						city: String @index
-						street: String 
+						street: String
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -197,13 +197,13 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req1),
 				// we make 2 index fetches: 1. to get the only address with city == "London"
 				// and 2. to get the corresponding user
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -213,7 +213,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req2),
 				// we make 3 index fetches to get the 3 address with city == "Montreal"
 				// and 3 more index fetches to get the corresponding users
@@ -243,9 +243,8 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed field of primary relation in 1-1 relation",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -262,7 +261,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req1,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -270,15 +269,15 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req1),
-				// we make 1 index fetch to get the only address with city == "London"
-				// we fetch 2 fields for Address doc: "city" and "street"
-				// then we scan all 10 users to find one with matching "address_id"
-				// for each of User docs we fetch 3 fields: "name", "age" and "address_id"
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(32).WithIndexFetches(1),
+				// With the auto-created unique index on _addressID:
+				// 1 index fetch to get the address with city == "London"
+				// 1 index fetch to find the user with matching _addressID
+				// 5 field fetches total
+				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(5).WithIndexFetches(2),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req2,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -288,12 +287,12 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req2),
-				// we make 3 index fetch to get the 3 address with city == "Montreal"
-				// then we scan all 10 users to find one with matching "address_id" for each address
-				// after this we fetch the name of each user
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				// With the auto-created unique index on _addressID:
+				// 3 index fetches to get the 3 addresses with city == "Montreal"
+				// 3 index fetches to find the users with matching _addressID
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
 			},
 		},
 	}
@@ -311,26 +310,25 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed field of primary relation while having indexed foreign field in 1-1 relation",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
-						name: String 
+						name: String
 						age: Int
-						address: Address @primary @index
-					} 
+						address: Address @primary @index(unique: true)
+					}
 
 					type Address {
 						user: User
 						city: String @index
-						street: String 
+						street: String
 					}`,
 			},
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -338,7 +336,7 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -350,9 +348,8 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 
 func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field in 1-N relations",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -366,19 +363,19 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *t
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Chris"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Addo"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -386,7 +383,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *t
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -394,7 +391,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *t
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Running Man",
@@ -402,7 +399,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *t
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {
 						devices: {model: {_eq: "Walkman"}}
@@ -419,23 +416,24 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *t
 						{
 							"name": "Chris",
 							"devices": []map[string]any{
-								{
-									"model":        "Walkman",
-									"manufacturer": "Sony",
-								},
-								{
-									"model":        "Walkman",
-									"manufacturer": "The Proclaimers",
-								},
 								// The filter is on User, so all devices belonging to it will be returned
 								{
 									"model":        "Running Man",
 									"manufacturer": "Braveworld Productions",
 								},
+								{
+									"model":        "Walkman",
+									"manufacturer": "The Proclaimers",
+								},
+								{
+									"model":        "Walkman",
+									"manufacturer": "Sony",
+								},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -445,9 +443,8 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDoc_ShouldFilter(t *t
 
 func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field in 1-N relations",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -461,19 +458,19 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_Shoul
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Chris"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Addo"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -481,7 +478,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_Shoul
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -489,7 +486,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_Shoul
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Running Man",
@@ -497,13 +494,13 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_Shoul
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {
 						devices: {model: {_eq: "Walkman"}}
 					}) {
 						name
-						devices(filter: {manufacturer: {_ne: "Sony"}}) {
+						devices(filter: {manufacturer: {_neq: "Sony"}}) {
 							model
 							manufacturer
 						}
@@ -515,12 +512,12 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedPrimaryDocAndSubFilter_Shoul
 							"name": "Chris",
 							"devices": []map[string]any{
 								{
-									"model":        "Walkman",
-									"manufacturer": "The Proclaimers",
-								},
-								{
 									"model":        "Running Man",
 									"manufacturer": "Braveworld Productions",
+								},
+								{
+									"model":        "Walkman",
+									"manufacturer": "The Proclaimers",
 								},
 							},
 						},
@@ -546,9 +543,8 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field in 1-N relations",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -562,13 +558,13 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Chris"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -576,7 +572,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -584,7 +580,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Running Man",
@@ -592,7 +588,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -600,23 +596,24 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 							"name": "Chris",
 							"devices": []map[string]any{
 								{
-									"model":        "Walkman",
-									"manufacturer": "Sony",
+									"model":        "Running Man",
+									"manufacturer": "Braveworld Productions",
 								},
 								{
 									"model":        "Walkman",
 									"manufacturer": "The Proclaimers",
 								},
 								{
-									"model":        "Running Man",
-									"manufacturer": "Braveworld Productions",
+									"model":        "Walkman",
+									"manufacturer": "Sony",
 								},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -639,9 +636,8 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field in 1-1 relation",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -657,7 +653,7 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -670,7 +666,7 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -694,9 +690,8 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "With filter on indexed field of secondary relation (N-1) should fetch secondary and primary objects",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -713,16 +708,10 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Device": []map[string]any{
-						{
-							"model": "Playstation 5",
-							"owner": map[string]any{
-								"name": "Addo",
-							},
-						},
 						{
 							"model": "iPhone 10",
 							"owner": map[string]any{
@@ -735,10 +724,17 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 								"name": "Islam",
 							},
 						},
+						{
+							"model": "Playstation 5",
+							"owner": map[string]any{
+								"name": "Addo",
+							},
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// we make 3 index fetches to get all 3 devices with year 2021
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
@@ -761,9 +757,8 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Upon querying secondary object with filter on indexed field of primary relation (in 1-N) should fetch all secondary objects of the same primary one",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index
@@ -779,7 +774,7 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			testUtils.CreatePredefinedDocs{
 				Docs: getUserDocs(),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Device": []map[string]any{
@@ -788,8 +783,9 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 						{"model": "iPhone 13"},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// we make 1 index fetch to get the owner by it's name
 				// and 3 index fetches to get all 3 devices of the owner
@@ -804,15 +800,14 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIndex(t *testing.T) {
 	req := `query {
 		Device(filter: {
-			owner_id: {_ne: null}
+			_ownerID: {_neq: null}
 		}) {
 			model
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field in 1-N relations",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -826,13 +821,13 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Chris"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -840,7 +835,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPhone",
@@ -848,21 +843,21 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"model":	"Running Man",
 					"manufacturer": "Braveworld Productions"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"model":	"PlayStation 5",
 					"manufacturer": "Sony"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Device": []map[string]any{
@@ -870,10 +865,11 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 						{"model": "iPhone"},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
-				// we make 4 index fetches to find 2 devices with owner_id != null
+				// we make 4 index fetches to find 2 devices with _ownerID != null
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
@@ -885,15 +881,14 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIndex(t *testing.T) {
 	req := `query {
 		Device(filter: {
-			owner_id: {_eq: null}
+			_ownerID: {_eq: null}
 		}) {
 			model
 		}
 	}`
 	test := testUtils.TestCase{
-		Description: "Filter on indexed relation field in 1-N relations",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -907,13 +902,13 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Chris"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -921,7 +916,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPhone",
@@ -929,32 +924,32 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"model":	"Running Man",
 					"manufacturer": "Braveworld Productions"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"model":	"PlayStation 5",
 					"manufacturer": "Sony"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"Device": []map[string]any{
-						{"model": "PlayStation 5"},
 						{"model": "Running Man"},
+						{"model": "PlayStation 5"},
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
-				// we make 2 index fetches to get all 2 devices with owner_id == null
+				// we make 2 index fetches to get all 2 devices with _ownerID == null
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
@@ -968,7 +963,7 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -987,18 +982,18 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name": "Apple",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "MacBook Pro",
@@ -1006,12 +1001,12 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 					"manufacturer": testUtils.NewDocIndex(2, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						devices {
-							owner_id
-							manufacturer_id
+							_ownerID
+							_manufacturerID
 						}
 					}
 				}`,
@@ -1020,8 +1015,8 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 						{
 							"devices": []map[string]any{
 								{
-									"owner_id":        testUtils.NewDocIndex(0, 0),
-									"manufacturer_id": testUtils.NewDocIndex(2, 0),
+									"_ownerID":        testUtils.NewDocIndex(0, 0),
+									"_manufacturerID": testUtils.NewDocIndex(2, 0),
 								},
 							},
 						},
@@ -1037,7 +1032,7 @@ func TestQueryWithIndexOnManyToOne_MultipleViaOneToMany(t *testing.T) {
 func TestQueryWithUniqueIndex_WithFilterOnChildIndexedField_ShouldFetch(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index(unique: true)
@@ -1050,13 +1045,13 @@ func TestQueryWithUniqueIndex_WithFilterOnChildIndexedField_ShouldFetch(t *testi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Device(filter: {owner: {name: {_eq: "John"}}}) {
 						trusted

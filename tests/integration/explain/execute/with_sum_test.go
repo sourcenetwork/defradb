@@ -13,14 +13,13 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) request with sum on an inline array.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -30,7 +29,7 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 			create2AuthorDocuments(),
 			create3BookDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Book {
 						name
@@ -74,8 +73,6 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) request with sum of a related one to many field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 			create2AddressDocuments(),
@@ -83,7 +80,7 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 			create2AuthorDocuments(),
 			create3ArticleDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name

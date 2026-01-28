@@ -13,16 +13,19 @@ package one_to_many_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 deep orderby subtypes of both descending and ascending.",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -37,9 +40,17 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":                 "Not a Writer",
-							"NewestPublishersBook": []map[string]any{},
-							"OldestPublishersBook": []map[string]any{},
+							"name": "Cornelia Funke",
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
+							},
+							"OldestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
+							},
 						},
 						{
 							"name": "John Grisham",
@@ -55,17 +66,9 @@ func TestOneToManyToOneDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 							},
 						},
 						{
-							"name": "Cornelia Funke",
-							"NewestPublishersBook": []map[string]any{
-								{
-									"name": "The Rooster Bar",
-								},
-							},
-							"OldestPublishersBook": []map[string]any{
-								{
-									"name": "The Rooster Bar",
-								},
-							},
+							"name":                 "Not a Writer",
+							"NewestPublishersBook": []map[string]any{},
+							"OldestPublishersBook": []map[string]any{},
 						},
 					},
 				},

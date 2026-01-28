@@ -15,7 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
@@ -23,7 +25,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -35,7 +37,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in node `0` after the replicator has
 				// been set up. Its creation and future updates should be synced
 				// across all configured nodes.
@@ -53,7 +55,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -78,7 +80,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -90,7 +92,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in node `0` after the replicator has
 				// been set up. Its creation and future updates should be synced
 				// across all configured nodes.
@@ -103,6 +105,12 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 			// Wait for John to be synced to the target before attempting to update
 			// it.
 			testUtils.WaitForSync{},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the seond node only, and allow the value to sync
 				// back to the original node that created the document.
@@ -112,7 +120,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -137,7 +145,7 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -145,7 +153,7 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in all nodes
 				Doc: `{
 					"Name": "John",
@@ -159,7 +167,7 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in the second node (target) only
 				NodeID: immutable.Some(1),
 				Doc: `{
@@ -176,7 +184,7 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Assert that the target node only contains John
 				NodeID: immutable.Some(0),
 				Request: `query {

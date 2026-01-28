@@ -13,20 +13,20 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -51,15 +51,14 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 
 func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -84,15 +83,14 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 
 func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [2, null, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -117,15 +115,14 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 
 func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [null, 2, 5, 1, 0, 7]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -150,15 +147,14 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 
 func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -183,15 +179,14 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 
 func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteFloats": [3.1425, 0.00000000001, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -216,15 +211,14 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 
 func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -249,15 +243,14 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 
 func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array, ordered offsetted limited sum of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, null, 10, 2.718, 0.577, 6.283]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

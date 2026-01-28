@@ -13,20 +13,20 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, count of nil integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -50,15 +50,14 @@ func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, count of empty integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -82,15 +81,14 @@ func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 
 func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, count of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -114,15 +112,14 @@ func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 
 func TestQueryInlineNillableBoolArrayWithCountAndPopulatedArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, count of nillable bool array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"indexLikesDislikes": [true, true, false, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

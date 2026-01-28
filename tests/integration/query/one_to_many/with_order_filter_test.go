@@ -13,40 +13,41 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendingOnChild(
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from the many side, order on sub",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -54,7 +55,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -62,7 +63,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {age: {_gt: 63}}) {
 						name
@@ -100,33 +101,34 @@ func TestQueryOneToManyWithNumericGreaterThanFilterOnParentAndNumericSortAscendi
 
 func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from the many side, filter on sub from root",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord",
 					"rating": 4.8,
-					"author_id": "bae-72e8c691-9f20-55e7-9228-8af1cf54cace"
+					"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -134,7 +136,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChi
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -142,7 +144,7 @@ func TestQueryOneToManyWithNumericGreaterThanFilterAndNumericSortDescendingOnChi
 					"verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author(filter: {published: {rating: {_gt: 4.1}}}) {
 						name

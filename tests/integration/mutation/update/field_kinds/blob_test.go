@@ -13,14 +13,14 @@ package field_kinds
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithBlobField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update of blob field",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -28,7 +28,7 @@ func TestMutationUpdate_WithBlobField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"data": "00FE"
@@ -39,7 +39,7 @@ func TestMutationUpdate_WithBlobField(t *testing.T) {
 					"data": "00FF"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -63,16 +63,15 @@ func TestMutationUpdate_WithBlobField(t *testing.T) {
 
 func TestMutationUpdate_IfBlobFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If blob field is set to null, should set to nil",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						data: Blob
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"data": "00FE"
 				}`,
@@ -82,7 +81,7 @@ func TestMutationUpdate_IfBlobFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"data": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

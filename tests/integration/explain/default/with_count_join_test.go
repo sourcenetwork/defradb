@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -38,12 +39,10 @@ var countTypeIndexJoinPattern = dataMap{
 func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with count on a one-to-many joined field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -54,7 +53,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 
 				ExpectedPatterns: countTypeIndexJoinPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "countNode",
 						IncludeChildNodes: false,
@@ -82,7 +81,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
 							"filter":         nil,
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"prefixes": []string{
 								"/3",
@@ -95,7 +94,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
 							"filter":         nil,
-							"collectionID":   "2",
+							"collectionID":   "bafyreifnc6yphaqxf7x7fa3phxrsuvzqvnnjz4q7fuirhty4cnrxubp6eq",
 							"collectionName": "Book",
 							"prefixes": []string{
 								"/2",
@@ -113,12 +112,10 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with count on a one-to-many joined field with many sources.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -153,7 +150,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "countNode",
 						IncludeChildNodes: false,
@@ -186,7 +183,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 						OccurancesToSkip:  0,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -199,7 +196,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 						OccurancesToSkip:  1,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "2",
+							"collectionID":   "bafyreifnc6yphaqxf7x7fa3phxrsuvzqvnnjz4q7fuirhty4cnrxubp6eq",
 							"collectionName": "Book",
 							"filter":         nil,
 							"prefixes": []string{
@@ -222,7 +219,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 						OccurancesToSkip:  2,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -235,7 +232,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 						OccurancesToSkip:  3,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "1",
+							"collectionID":   "bafyreidpjzf5kytlap2nilnnemywjmwt74hr56e72llri2z7c6w7un7sje",
 							"collectionName": "Article",
 							"filter":         nil,
 							"prefixes": []string{
@@ -256,18 +253,16 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) 1-to-M relation request from many side with count filter shared.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
 						name
-						_count(books: {filter: {rating: {_ne: null}}})
-						books(filter: {rating: {_ne: null}}){
+						_count(books: {filter: {rating: {_neq: null}}})
+						books(filter: {rating: {_neq: null}}){
 							name
 						}
 					}
@@ -300,18 +295,16 @@ func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJo
 func TestDefaultExplainRequestOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) 1-to-M relation request from many side with count filter not shared.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
 						name
 						_count(books: {})
-						books(filter: {rating: {_ne: null}}){
+						books(filter: {rating: {_neq: null}}){
 							name
 						}
 					}

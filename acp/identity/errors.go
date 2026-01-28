@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -11,24 +11,26 @@
 package identity
 
 import (
-	"encoding/hex"
-
 	"github.com/sourcenetwork/defradb/errors"
 )
 
 const (
-	errDIDCreation = "could not produce did for key"
+	errUnsupportedKeyType      = "unsupported key type"
+	errMissingKeyType          = "missing key type in token"
+	errInvalidKeyTypeClaimType = "key type claim must be a string"
+	errPrivateKeyNotAvailable  = "private key not available"
+	errMustBeTokenIdentity     = "identity must be a TokenIdentity"
 )
 
 var (
-	ErrDIDCreation = errors.New(errDIDCreation)
+	// ErrUnsupportedKeyType is returned when attempting to use an unsupported key type.
+	ErrUnsupportedKeyType = errors.New(errUnsupportedKeyType)
+	// ErrMissingKeyType is returned when a JWT token does not contain the required key_type claim.
+	ErrMissingKeyType = errors.New(errMissingKeyType)
+	// ErrInvalidKeyTypeClaimType is returned when the key_type claim in a JWT token is not a string.
+	ErrInvalidKeyTypeClaimType = errors.New(errInvalidKeyTypeClaimType)
+	// ErrPrivateKeyNotAvailable is returned when attempting to use identity with no private key.
+	ErrPrivateKeyNotAvailable = errors.New(errPrivateKeyNotAvailable)
+	// ErrMustBeTokenIdentity is returned when used identity does not implement TokenIdentity.
+	ErrMustBeTokenIdentity = errors.New(errMustBeTokenIdentity)
 )
-
-func newErrDIDCreation(inner error, keytype string, pubKey []byte) error {
-	return errors.Wrap(
-		errDIDCreation,
-		inner,
-		errors.NewKV("KeyType", keytype),
-		errors.NewKV("PubKey", hex.EncodeToString(pubKey)),
-	)
-}

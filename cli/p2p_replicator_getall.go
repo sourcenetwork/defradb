@@ -11,28 +11,30 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PReplicatorGetAllCommand() *cobra.Command {
+func MakeP2PReplicatorGetAllCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
 		Short: "Get all replicators",
 		Long: `Get all the replicators active in the P2P data sync system.
-A replicator synchronizes one or all collection(s) from this node to another.
-
-Example:
-  defradb client p2p replicator getall
-  		`,
+A replicator synchronizes one or all collection(s) from this instance to another.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p2p := mustGetContextP2P(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
-			reps, err := p2p.GetAllReplicators(cmd.Context())
+			reps, err := cliClient.GetAllReplicators(cmd.Context())
 			if err != nil {
 				return err
 			}
 			return writeJSON(cmd, reps)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "Get all replicators",
+		`defradb client p2p replicator getall`)
+
 	return cmd
 }

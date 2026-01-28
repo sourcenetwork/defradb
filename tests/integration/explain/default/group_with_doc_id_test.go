@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with a docID on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -41,7 +40,7 @@ func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 
 				ExpectedPatterns: groupPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -56,7 +55,7 @@ func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -75,12 +74,10 @@ func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 func TestDefaultExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with docIDs and filter on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -100,7 +97,7 @@ func TestDefaultExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 
 				ExpectedPatterns: groupPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -115,7 +112,7 @@ func TestDefaultExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{

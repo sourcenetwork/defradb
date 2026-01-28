@@ -7,15 +7,18 @@ Add P2P collections
 Add P2P collections to the synchronized pubsub topics.
 The collections are synchronized between nodes of a pubsub network.
 
-Example: add single collection
-  defradb client p2p collection add bae123
+```
+defradb client p2p collection add [collectionNames] [flags]
+```
 
-Example: add multiple collections
-  defradb client p2p collection add bae123,bae456
-		
+### Examples
 
 ```
-defradb client p2p collection add [collectionIDs] [flags]
+add single collection:  
+  defradb client p2p collection add User
+
+add multiple collections:  
+  defradb client p2p collection add User,Address
 ```
 
 ### Options

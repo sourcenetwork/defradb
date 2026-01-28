@@ -13,14 +13,14 @@ package one_to_one_multiple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple one-to-one joins from primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String
@@ -39,47 +39,47 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Old Publisher"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "New Publisher"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":         "Painted House",
-					"publisher_id": testUtils.NewDocIndex(0, 0),
-					"author_id":    testUtils.NewDocIndex(1, 0),
+					"_publisherID": testUtils.NewDocIndex(0, 0),
+					"_authorID":    testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":         "Theif Lord",
-					"publisher_id": testUtils.NewDocIndex(0, 1),
-					"author_id":    testUtils.NewDocIndex(1, 1),
+					"_publisherID": testUtils.NewDocIndex(0, 1),
+					"_authorID":    testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -113,6 +113,7 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -122,9 +123,8 @@ func TestQueryOneToOneMultiple_FromPrimary(t *testing.T) {
 
 func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple one-to-one joins from primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String
@@ -143,47 +143,47 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":      "Painted House",
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
-					"author_id": testUtils.NewDocIndex(1, 1),
+					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":       "Old Publisher",
-					"printed_id": testUtils.NewDocIndex(2, 0),
+					"_printedID": testUtils.NewDocIndex(2, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":       "New Publisher",
-					"printed_id": testUtils.NewDocIndex(2, 1),
+					"_printedID": testUtils.NewDocIndex(2, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -217,6 +217,7 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -226,9 +227,8 @@ func TestQueryOneToOneMultiple_FromMixedPrimaryAndSecondary(t *testing.T) {
 
 func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple one-to-one joins from primary direction",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Publisher {
 						name: String
@@ -247,47 +247,47 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name": "Painted House",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name": "Theif Lord",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":       "Old Publisher",
-					"printed_id": testUtils.NewDocIndex(2, 0),
+					"_printedID": testUtils.NewDocIndex(2, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":       "New Publisher",
-					"printed_id": testUtils.NewDocIndex(2, 1),
+					"_printedID": testUtils.NewDocIndex(2, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(2, 0),
+					"_publishedID": testUtils.NewDocIndex(2, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Cornelia Funke",
-					"published_id": testUtils.NewDocIndex(2, 1),
+					"_publishedID": testUtils.NewDocIndex(2, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -321,9 +321,39 @@ func TestQueryOneToOneMultiple_FromSecondary(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
 
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestAddSchemaWithCyclicMutuallyReferentialRelations_DoesNotError(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Player {
+						name: String
+						decks: [Deck] @relation(name: "deck_player")
+						game: Game @relation(name: "game_players")
+					}
+
+					type Deck {
+						name: String
+						owner: Player @relation(name: "deck_player")
+						game: Game @relation(name: "game_decks")
+					}
+
+					type Game {
+						players: [Player] @relation(name: "game_players")
+						decks: [Deck] @relation(name: "game_decks")
+						winner: Player
+					}
+                `,
+			},
+		},
+	}
 	testUtils.ExecuteTestCase(t, test)
 }

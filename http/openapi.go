@@ -13,7 +13,6 @@ package http
 import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3gen"
-	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
@@ -21,35 +20,40 @@ import (
 
 // openApiSchemas is a mapping of types to auto generate schemas for.
 var openApiSchemas = map[string]any{
-	"error":                           &errorResponse{},
-	"create_tx":                       &CreateTxResponse{},
-	"collection_update":               &CollectionUpdateRequest{},
-	"collection_delete":               &CollectionDeleteRequest{},
-	"peer_info":                       &peer.AddrInfo{},
-	"graphql_request":                 &GraphQLRequest{},
-	"backup_config":                   &client.BackupConfig{},
-	"collection":                      &client.CollectionDescription{},
-	"schema":                          &client.SchemaDescription{},
-	"collection_definition":           &client.CollectionDefinition{},
-	"index":                           &client.IndexDescription{},
-	"index_create_request":            &client.IndexDescriptionCreateRequest{},
-	"delete_result":                   &client.DeleteResult{},
-	"update_result":                   &client.UpdateResult{},
-	"lens_config":                     &client.LensConfig{},
-	"replicator":                      &client.Replicator{},
-	"replicator_params":               &client.ReplicatorParams{},
-	"ccip_request":                    &CCIPRequest{},
-	"ccip_response":                   &CCIPResponse{},
-	"patch_schema_request":            &patchSchemaRequest{},
-	"add_view_request":                &addViewRequest{},
-	"migrate_request":                 &migrateRequest{},
-	"set_migration_request":           &setMigrationRequest{},
-	"acp_policy_add_result":           &client.AddPolicyResult{},
-	"acp_relationship_add_request":    &addDocActorRelationshipRequest{},
-	"acp_relationship_add_result":     &client.AddDocActorRelationshipResult{},
-	"acp_relationship_delete_request": &deleteDocActorRelationshipRequest{},
-	"acp_relationship_delete_result":  &client.DeleteDocActorRelationshipResult{},
-	"identity":                        &identity.PublicRawIdentity{},
+	"error":                                    &errorResponse{},
+	"create_tx":                                &CreateTxResponse{},
+	"collection_update":                        &CollectionUpdateRequest{},
+	"collection_delete":                        &CollectionDeleteRequest{},
+	"peer_info":                                &client.PeerInfo{},
+	"graphql_request":                          &GraphQLRequest{},
+	"backup_config":                            &client.BackupConfig{},
+	"collection":                               &client.CollectionVersion{},
+	"index":                                    &client.IndexDescription{},
+	"index_create":                             &client.IndexCreateRequest{},
+	"encrypted_index":                          &client.EncryptedIndexDescription{},
+	"encrypted_index_create":                   &client.EncryptedIndexDescription{},
+	"delete_result":                            &client.DeleteResult{},
+	"update_result":                            &client.UpdateResult{},
+	"lens_config":                              &client.LensConfig{},
+	"replicator":                               &client.Replicator{},
+	"set_replicator_params":                    &SetReplicatorParams{},
+	"delete_replicator_params":                 &DeleteReplicatorParams{},
+	"ccip_request":                             &CCIPRequest{},
+	"ccip_response":                            &CCIPResponse{},
+	"patch_collection_request":                 &patchCollectionRequest{},
+	"add_view_request":                         &addViewRequest{},
+	"acp_policy_add_result":                    &client.AddPolicyResult{},
+	"acp_relationship_add_result":              &client.AddActorRelationshipResult{},
+	"acp_relationship_delete_result":           &client.DeleteActorRelationshipResult{},
+	"acp_node_status_result":                   &client.NACStatusResult{},
+	"acp_node_relationship_add_request":        &addNACActorRelationshipRequest{},
+	"acp_node_relationship_delete_request":     &deleteNACActorRelationshipRequest{},
+	"acp_document_relationship_add_request":    &addDACActorRelationshipRequest{},
+	"acp_document_relationship_delete_request": &deleteDACActorRelationshipRequest{},
+	"identity":                                 &identity.PublicRawIdentity{},
+	"set_migration":                            &SetMigrationResponse{},
+	"add_lens_request":                         &AddLensRequest{},
+	"add_lens_response":                        &AddLensResponse{},
 }
 
 func NewOpenAPISpec() (*openapi3.T, error) {
@@ -128,7 +132,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 		Tags: openapi3.Tags{
 			&openapi3.Tag{
 				Name:        "schema",
-				Description: "Add or update schema definitions",
+				Description: "Upload GQL schemas to create collections",
 			},
 			&openapi3.Tag{
 				Name:        "collection",
@@ -144,7 +148,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			},
 			&openapi3.Tag{
 				Name:        "lens",
-				Description: "Migrate documents to and from schema versions",
+				Description: "Migrate documents to and from collection versions",
 			},
 			&openapi3.Tag{
 				Name:        "p2p",
@@ -152,7 +156,7 @@ func NewOpenAPISpec() (*openapi3.T, error) {
 			},
 			&openapi3.Tag{
 				Name:        "acp",
-				Description: "Access control policy operations",
+				Description: "Access control system(s)",
 			},
 			&openapi3.Tag{
 				Name:        "transaction",

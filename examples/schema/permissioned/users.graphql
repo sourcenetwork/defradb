@@ -5,9 +5,10 @@
 #
 # The resource name does not need to be similar to the collection name.
 #
-# The linked policy id and resource correspond to the policy at: `examples/dpi_policy/user_dpi_policy.yml`
+# The linked policy id and resource correspond to an uploaded policy, some policy examples can be
+# found under: `examples/policy/`
 # 
-# The policy must be a valid DPI, learn more about the DefraDB Policy Interface [DPI](/acp/README.md)
+# Learn more about the DefraDB [ACP System](/acp/README.md)
 
 type Users @policy(
     id: "50d354a91ab1b8fce8a0ae4693de7616fb1d82cfc540f25cfbe11eb0195a5765",

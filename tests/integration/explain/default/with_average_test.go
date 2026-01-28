@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -40,12 +41,10 @@ var averagePattern = dataMap{
 func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with average on array field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Book {
@@ -56,7 +55,7 @@ func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 
 				ExpectedPatterns: averagePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:     "averageNode",
 						IncludeChildNodes:  false,
@@ -68,7 +67,7 @@ func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"filter":    dataMap{"_ne": nil},
+									"filter":    dataMap{"_neq": nil},
 									"fieldName": "chapterPages",
 								},
 							},
@@ -80,7 +79,7 @@ func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"sources": []dataMap{
 								{
-									"filter":         dataMap{"_ne": nil},
+									"filter":         dataMap{"_neq": nil},
 									"fieldName":      "chapterPages",
 									"childFieldName": nil,
 								},
@@ -91,7 +90,7 @@ func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "2",
+							"collectionID":   "bafyreifnc6yphaqxf7x7fa3phxrsuvzqvnnjz4q7fuirhty4cnrxubp6eq",
 							"collectionName": "Book",
 							"filter":         nil,
 							"prefixes": []string{

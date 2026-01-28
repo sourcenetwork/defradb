@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -11,24 +11,22 @@
 package tests
 
 import (
-	"testing"
 	"time"
 
-	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/sourcenetwork/immutable"
-	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/net"
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/gen"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/predefined"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // TestCase contains the details of the test case to execute.
 type TestCase struct {
-	// Test description, optional.
-	Description string
-
 	// Actions contains the set of actions and their expected results that
 	// this test should execute.  They will execute in the order that they
 	// are provided.
@@ -39,21 +37,21 @@ type TestCase struct {
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between mutation types, or we need to temporarily document a bug.
-	SupportedMutationTypes immutable.Option[[]MutationType]
+	SupportedMutationTypes immutable.Option[[]state.MutationType]
 
 	// If provided a value, SupportedClientTypes will limit the client types under test to those
 	// within this set.  If no active clients pass this filter the test will be skipped.
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between client types, or we need to temporarily document a bug.
-	SupportedClientTypes immutable.Option[[]ClientType]
+	SupportedClientTypes immutable.Option[[]state.ClientType]
 
-	// If provided a value, SupportedACPTypes will cause this test to be skipped
+	// If provided a value, SupportedDocumentACPTypes will cause this test to be skipped
 	// if the active acp type is not within the given set.
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between acp types, or we need to temporarily document a bug.
-	SupportedACPTypes immutable.Option[[]ACPType]
+	SupportedDocumentACPTypes immutable.Option[[]state.DocumentACPType]
 
 	// If provided a value, SupportedACPTypes will cause this test to be skipped
 	// if the active view type is not within the given set.
@@ -67,10 +65,30 @@ type TestCase struct {
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between database types, or we need to temporarily document a bug.
-	SupportedDatabaseTypes immutable.Option[[]DatabaseType]
+	SupportedDatabaseTypes immutable.Option[[]state.DatabaseType]
 
 	// Configuration for KMS to be used in the test
 	KMS KMS
+
+	// EnableSigning indicates if signing should be enabled for the test.
+	// Use [IdentityTypes] to customize the key type that is used for identity and signing.
+	EnableSigning bool
+
+	// EnableSearchableEncryption indicates if searchable encryption should be enabled for the test.
+	// When enabled, a searchable encryption key will be generated and passed to the database.
+	EnableSearchableEncryption bool
+
+	// IdentityTypes is a map of identity to key type.
+	// Use it to customize the key type that is used for identity and signing.
+	IdentityTypes map[state.Identity]crypto.KeyType
+
+	// The test will be skipped if the current active set of multipliers
+	// does not contain all of the given multiplier names.
+	MultiplierIncludes []multiplier.Name
+
+	// The test will be skipped if the current active set of multipliers
+	// contains any of the given multiplier names.
+	MultiplierExcludes []multiplier.Name
 }
 
 // KMS contains the configuration for KMS to be used in the test
@@ -79,7 +97,7 @@ type KMS struct {
 	Activated bool
 	// ExcludedTypes specifies the KMS types that should be excluded from the test.
 	// If none are specified all types will be used.
-	ExcludedTypes []KMSType
+	ExcludedTypes []state.KMSType
 }
 
 // SetupComplete is a flag to explicitly notify the change detector at which point
@@ -97,7 +115,7 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode func() []net.NodeOpt
+type ConfigureNode func() []node.Option
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}
@@ -110,35 +128,33 @@ type Close struct {
 	NodeID immutable.Option[int]
 }
 
+// Todo: https://github.com/sourcenetwork/defradb/issues/3872
+// Start should be improved and a bit more smart to not restart a node (also won't require Close() in that case),
+// if the first action item is `Start` with flag config options. Likely should fix tests where [EnableNAC]
+// is true to start node with nac from the start once this is fixed.
 // Start is an action that will start a node that has been previously closed.
 type Start struct {
 	// NodeID may hold the ID (index) of a node to start.
 	//
 	// If a value is not provided the start will be applied to all nodes.
 	NodeID immutable.Option[int]
-}
 
-// SchemaUpdate is an action that will update the database schema.
-//
-// WARNING: getCollectionNames will not work with schemas ending in `type`, e.g. `user_type`
-// and should be updated if such a name is desired.
-type SchemaUpdate struct {
-	// NodeID may hold the ID (index) of a node to apply this update to.
+	// The identity of the user starting the node.
 	//
-	// If a value is not provided the update will be applied to all nodes.
-	NodeID immutable.Option[int]
+	// If this identity if used in combination with enabling node acp, then this
+	// Identity becomes the node acp owner for that node.
+	//
+	// To disable/purge/re-enable node acp after a successful start, must use the
+	// respective client commands instead.
+	Identity immutable.Option[state.Identity]
 
-	// The schema update.
-	Schema string
-
-	// Optionally, the expected results.
+	// EnableNAC is true when the node is being started with an attempt to setup and enable
+	// the node access control for that node.
 	//
-	// Each item will be compared individually, if ID, RootID, SchemaVersionID or Fields on the
-	// expected item are default they will not be compared with the actual.
+	// Must have a valid identity to enable (if enabling for the first time).
 	//
-	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
-	// to allow their ommission in most cases).
-	ExpectedResults []client.CollectionDescription
+	// False by default.
+	EnableNAC bool
 
 	// Any error expected from the action. Optional.
 	//
@@ -147,177 +163,21 @@ type SchemaUpdate struct {
 	ExpectedError string
 }
 
-type SchemaPatch struct {
-	// NodeID may hold the ID (index) of a node to apply this patch to.
-	//
-	// If a value is not provided the patch will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	Patch string
-
-	// If SetAsDefaultVersion has a value, and that value is false then the schema version
-	// resulting from this patch will not be made default.
-	SetAsDefaultVersion immutable.Option[bool]
-
-	Lens immutable.Option[model.Lens]
-
-	ExpectedError string
-}
-
-type PatchCollection struct {
-	// NodeID may hold the ID (index) of a node to apply this patch to.
-	//
-	// If a value is not provided the patch will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	// The Patch to apply to the collection description.
-	Patch string
-
-	ExpectedError string
-}
-
-// GetSchema is an action that fetches schema using the provided options.
-type GetSchema struct {
-	// NodeID may hold the ID (index) of a node to apply this patch to.
-	//
-	// If a value is not provided the patch will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	// The VersionID of the schema version to fetch.
-	//
-	// This option will be prioritized over all other options.
-	VersionID immutable.Option[string]
-
-	// The Root of the schema versions to fetch.
-	//
-	// This option will be prioritized over Name.
-	Root immutable.Option[string]
-
-	// The Name of the schema versions to fetch.
-	Name immutable.Option[string]
-
-	ExpectedResults []client.SchemaDescription
-
-	ExpectedError string
-}
-
-// GetCollections is an action that fetches collections using the provided options.
-//
-// ID, RootID and SchemaVersionID will only be asserted on if an expected value is provided.
-type GetCollections struct {
-	// NodeID may hold the ID (index) of a node to apply this patch to.
-	//
-	// If a value is not provided the patch will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	// Used to identify the transaction for this to run against. Optional.
-	TransactionID immutable.Option[int]
-
-	// The expected results.
-	//
-	// Each item will be compared individually, if ID, RootID or SchemaVersionID on the
-	// expected item are default they will not be compared with the actual.
-	//
-	// Assertions on Indexes and Sources will not distinguish between nil and empty (in order
-	// to allow their ommission in most cases).
-	ExpectedResults []client.CollectionDescription
-
-	// An optional set of fetch options for the collections.
-	FilterOptions client.CollectionFetchOptions
-
-	// Any error expected from the action. Optional.
-	ExpectedError string
-}
-
-// SetActiveSchemaVersion is an action that will set the active schema version to the
+// SetActiveCollectionVersion is an action that will set the active collection version to the
 // given value.
-type SetActiveSchemaVersion struct {
-	// NodeID may hold the ID (index) of a node to set the default schema version on.
+type SetActiveCollectionVersion struct {
+	// NodeID may hold the ID (index) of a node to set the collection version on.
 	//
-	// If a value is not provided the default will be set on all nodes.
-	NodeID immutable.Option[int]
-
-	SchemaVersionID string
-	ExpectedError   string
-}
-
-// CreateView is an action that will create a new View.
-type CreateView struct {
-	// NodeID may hold the ID (index) of a node to create this View on.
-	//
-	// If a value is not provided the view will be created on all nodes.
-	NodeID immutable.Option[int]
-
-	// The query that this View is to be based off of. Required.
-	Query string
-
-	// The SDL containing all types used by the view output.
-	SDL string
-
-	// An optional Lens transform to add to the view.
-	Transform immutable.Option[model.Lens]
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// RefreshViews action will execute a call to `store.RefreshViews` using the provided options.
-type RefreshViews struct {
-	// NodeID may hold the ID (index) of a node to create this View on.
-	//
-	// If a value is not provided the view will be created on all nodes.
-	NodeID immutable.Option[int]
-
-	// The set of fetch options for the views.
-	FilterOptions client.CollectionFetchOptions
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// CreateDoc will attempt to create the given document in the given collection
-// using the set [MutationType].
-type CreateDoc struct {
-	// NodeID may hold the ID (index) of a node to apply this create to.
-	//
-	// If a value is not provided the document will be created in all nodes.
+	// If a value is not provided the version will be set on all nodes.
 	NodeID immutable.Option[int]
 
 	// The identity of this request. Optional.
 	//
-	// If an Identity is not provided the created document(s) will be public.
-	//
-	// If an Identity is provided and the collection has a policy, then the
-	// created document(s) will be owned by this Identity.
-	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
-	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
-	// Specifies whether the document should be encrypted.
-	IsDocEncrypted bool
-
-	// Individual fields of the document to encrypt.
-	EncryptedFields []string
-
-	// The collection in which this document should be created.
-	CollectionID int
-
-	// The document to create, in JSON string format.
-	//
-	// If [DocMap] is provided this value will be ignored.
-	Doc string
-
-	// The document to create, in map format.
-	//
-	// If this is provided [Doc] will be ignored.
-	DocMap map[string]any
+	// VersionID to set as active collection version.
+	VersionID string
 
 	// Any error expected from the action. Optional.
 	//
@@ -334,15 +194,8 @@ type CreateDoc struct {
 //
 // The targeted document must have been defined in an action prior to the action that this index
 // is hosted upon.
-type DocIndex struct {
-	// CollectionIndex is the index of the collection holding the document to target.
-	CollectionIndex int
-
-	// Index is the index within the target collection at which the document exists.
-	//
-	// This is dependent on the order in which test [CreateDoc] actions were defined.
-	Index int
-}
+// This is a type alias for backward compatibility.
+type DocIndex = action.DocIndex
 
 // NewDocIndex creates a new [DocIndex] instance allowing relation fields to be set without worrying
 // about the specific document id.
@@ -368,9 +221,11 @@ type DeleteDoc struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also delete private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The collection in which this document should be deleted.
 	CollectionID int
@@ -387,7 +242,7 @@ type DeleteDoc struct {
 	ExpectedError string
 }
 
-// UpdateDoc will attempt to update the given document using the set [MutationType].
+// UpdateDoc will attempt to update the given document using the set [state.MutationType].
 type UpdateDoc struct {
 	// NodeID may hold the ID (index) of a node to apply this update to.
 	//
@@ -401,9 +256,11 @@ type UpdateDoc struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -444,9 +301,11 @@ type UpdateWithFilter struct {
 	// If an Identity is provided and the collection has a policy, then
 	// can also update private document(s) that are owned by this Identity.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The collection in which this document exists.
 	CollectionID int
@@ -470,18 +329,10 @@ type UpdateWithFilter struct {
 	SkipLocalUpdateEvent bool
 }
 
-// IndexField describes a field to be indexed.
-type IndexedField struct {
-	// Name contains the name of the field.
-	Name string
-	// Descending indicates whether the field is indexed in descending order.
-	Descending bool
-}
-
-// CreateIndex will attempt to create the given secondary index for the given collection
+// CreateEncryptedIndex will attempt to create the given encrypted index for the given collection
 // using the collection api.
-type CreateIndex struct {
-	// NodeID may hold the ID (index) of a node to create the secondary index on.
+type CreateEncryptedIndex struct {
+	// NodeID may hold the ID (index) of a node to create the encrypted index on.
 	//
 	// If a value is not provided the index will be created in all nodes.
 	NodeID immutable.Option[int]
@@ -489,17 +340,11 @@ type CreateIndex struct {
 	// The collection for which this index should be created.
 	CollectionID int
 
-	// The name of the index to create. If not provided, one will be generated.
-	IndexName string
-
 	// The name of the field to index. Used only for single field indexes.
 	FieldName string
 
-	// The fields to index. Used only for composite indexes.
-	Fields []IndexedField
-
-	// If Unique is true, the index will be created as a unique index.
-	Unique bool
+	// The type of the index to create.
+	Type string
 
 	// Any error expected from the action. Optional.
 	//
@@ -508,25 +353,19 @@ type CreateIndex struct {
 	ExpectedError string
 }
 
-// DropIndex will attempt to drop the given secondary index from the given collection
+// ListEncryptedIndexes will attempt to list encrypted index from the given collection
 // using the collection api.
-type DropIndex struct {
-	// NodeID may hold the ID (index) of a node to delete the secondary index from.
+type ListEncryptedIndexes struct {
+	// NodeID may hold the ID (index) of a node to list the encrypted index on.
 	//
-	// If a value is not provided the index will be deleted from all nodes.
+	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
 
-	// The collection from which the index should be deleted.
+	// The collection for which this encrypted indexes should be retrieved.
 	CollectionID int
 
-	// The index-identifier of the secondary index within the collection.
-	// This is based on the order in which it was created, not the ordering of
-	// the indexes within the database.
-	IndexID int
-
-	// The index name of the secondary index within the collection.
-	// If it is provided, `IndexID` is ignored.
-	IndexName string
+	// The expected encrypted indexes to be returned.
+	ExpectedIndexes []client.EncryptedIndexDescription
 
 	// Any error expected from the action. Optional.
 	//
@@ -535,19 +374,36 @@ type DropIndex struct {
 	ExpectedError string
 }
 
-// GetIndex will attempt to get the given secondary index from the given collection
-// using the collection api.
-type GetIndexes struct {
-	// NodeID may hold the ID (index) of a node to create the secondary index on.
+// ListAllEncryptedIndexes will attempt to list encrypted index from all collections.
+type ListAllEncryptedIndexes struct {
+	// NodeID may hold the ID (index) of a node to list the encrypted index on.
 	//
-	// If a value is not provided the indexes will be retrieved from the first nodes.
+	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
 
-	// The collection for which this indexes should be retrieved.
+	// The expected encrypted indexes by collection names to be returned.
+	ExpectedIndexes map[client.CollectionName][]client.EncryptedIndexDescription
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
+}
+
+// DeleteEncryptedIndex will attempt to delete the given encrypted index for the given collection
+// using the collection api.
+type DeleteEncryptedIndex struct {
+	// NodeID may hold the ID (index) of a node to drop the encrypted index on.
+	//
+	// If a value is not provided the index will be dropped on all nodes.
+	NodeID immutable.Option[int]
+
+	// The collection for which this index should be dropped.
 	CollectionID int
 
-	// The expected indexes to be returned.
-	ExpectedIndexes []client.IndexDescription
+	// The name of the field whose encrypted index should be dropped.
+	FieldName string
 
 	// Any error expected from the action. Optional.
 	//
@@ -557,18 +413,12 @@ type GetIndexes struct {
 }
 
 // ResultAsserter is an interface that can be implemented to provide custom result
-// assertions.
-type ResultAsserter interface {
-	// Assert will be called with the test and the result of the request.
-	Assert(t testing.TB, result map[string]any)
-}
+// assertions. This is a type alias for backward compatibility.
+type ResultAsserter = action.ResultAsserter
 
-// ResultAsserterFunc is a function that can be used to implement the ResultAsserter
-type ResultAsserterFunc func(testing.TB, map[string]any) (bool, string)
-
-func (f ResultAsserterFunc) Assert(t testing.TB, result map[string]any) {
-	f(t, result)
-}
+// ResultAsserterFunc is a function that can be used to implement the ResultAsserter.
+// This is a type alias for backward compatibility.
+type ResultAsserterFunc = action.ResultAsserterFunc
 
 // Benchmark is an action that will run another test action for benchmark test.
 // It will run benchmarks for a base case and optimized case and assert that
@@ -581,53 +431,9 @@ type Benchmark struct {
 	// Reps is the number of times to run the benchmark.
 	Reps int
 	// FocusClients is the list of clients to run the benchmark on.
-	FocusClients []ClientType
+	FocusClients []state.ClientType
 	// Factor is the factor by which the optimized case should be better than the base case.
 	Factor float64
-}
-
-// Request represents a standard Defra (GQL) request.
-type Request struct {
-	// NodeID may hold the ID (index) of a node to execute this request on.
-	//
-	// If a value is not provided the request will be executed against all nodes,
-	// in which case the expected results must all match across all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If an Identity is not provided then can only operate over public document(s).
-	//
-	// If an Identity is provided and the collection has a policy, then can
-	// operate over private document(s) that are owned by this Identity.
-	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
-	// Default value is `NoIdentity()`.
-	Identity immutable.Option[identity]
-
-	// Used to identify the transaction for this to run against. Optional.
-	TransactionID immutable.Option[int]
-
-	// OperationName sets the operation name option for the request.
-	OperationName immutable.Option[string]
-
-	// Variables sets the variables option for the request.
-	Variables immutable.Option[map[string]any]
-
-	// The request to execute.
-	Request string
-
-	// The expected (data) results of the issued request.
-	Results map[string]any
-
-	// Asserter is an optional custom result asserter.
-	Asserter ResultAsserter
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
 }
 
 // GenerateDocs is an action that will trigger generation of documents.
@@ -678,27 +484,6 @@ type CreatePredefinedDocs struct {
 type TransactionCommit struct {
 	// Used to identify the transaction to commit.
 	TransactionID int
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// SubscriptionRequest represents a subscription request.
-//
-// The subscription will remain active until shortly after all actions have been processed.
-// The results of the subscription will then be asserted upon.
-type SubscriptionRequest struct {
-	// NodeID is the node ID (index) of the node in which to subscribe to.
-	NodeID immutable.Option[int]
-
-	// The subscription request to submit.
-	Request string
-
-	// The expected (data) results yielded through the subscription across its lifetime.
-	Results []map[string]any
 
 	// Any error expected from the action. Optional.
 	//
@@ -804,9 +589,9 @@ type GetNodeIdentity struct {
 
 	// ExpectedIdentity holds the identity that is expected to be found.
 	//
-	// Use `UserIdentity` to create a user identity and `NodeIdentity` to create a node identity.
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
 	// Default value is `NoIdentity()`.
-	ExpectedIdentity immutable.Option[identity]
+	ExpectedIdentity immutable.Option[state.Identity]
 }
 
 // Wait is an action that will wait for the given duration.
@@ -815,27 +600,48 @@ type Wait struct {
 	Duration time.Duration
 }
 
-// ArrayDescription represents an array field.
-//
-// The test harness will call the Validate method to ensure that the returned array size and type
-// match what is described by this struct.
-type ArrayDescription[T any] struct {
-	// Size of the array
-	Size int
+// VerifyBlockSignature is an action that will verify the signature of the given block.
+type VerifyBlockSignature struct {
+	// The cid of the block to verify the signature of.
+	Cid string
+
+	// The identity of this request. Optional.
+	//
+	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
+	// Default value is `NoIdentity()`.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
+	// The identity of the author of the block to verify the signature of.
+	SignerIdentity state.Identity
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
-// NewArrayDescription creates a new [ArrayDescription] instance allowing validation of the array
-// characteristics instead of the content of the array itself.
-func NewArrayDescription[T any](size int) ArrayDescription[T] {
-	return ArrayDescription[T]{
-		Size: size,
-	}
-}
+// SyncDocs will synchronize documents from the network via P2P.
+type SyncDocs struct {
+	// NodeID holds the ID (index) of a node to execute the sync on.
+	NodeID int
 
-func (d ArrayDescription[T]) Validate(s *state, actualValue any, msgAndArgs ...any) {
-	var expT []T
-	require.IsType(s.t, expT, actualValue, msgAndArgs)
-	typedActualValue, ok := actualValue.([]T)
-	require.True(s.t, ok)
-	require.Equal(s.t, d.Size, len(typedActualValue), msgAndArgs)
+	// The collection containing the documents to sync.
+	CollectionID int
+
+	// The indices of documents to sync (references to previously created documents).
+	// Uses the same DocIndex pattern as other test actions - these will be resolved
+	// to actual document IDs at runtime by the test framework.
+	DocIDs []int
+
+	// The source nodes to sync documents from.
+	// This is used by testing framework to determine from which nodes the expected doc heads can
+	// be looked up for WaitForSync action.
+	// There must an item for each document in DocIDs.
+	SourceNodes []int
+
+	// Any error expected from the action.
+	ExpectedError string
 }

@@ -20,26 +20,30 @@ Options:
 		and for every field in the list it will generate a symmetric key for encryption using AES-GCM.
 		If combined with '--encrypt' flag, all the fields in the document not listed in '--encrypt-fields' 
 		will be encrypted with the same key.
-
-Example: create from string:
-  defradb client collection create --name User '{ "name": "Bob" }'
-
-Example: create from string, with identity:
-  defradb client collection create --name User '{ "name": "Bob" }' \
-  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
-
-Example: create multiple from string:
-  defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
-
-Example: create from file:
-  defradb client collection create --name User -f document.json
-
-Example: create from stdin:
-  cat document.json | defradb client collection create --name User -
 		
 
 ```
 defradb client collection create [-i --identity] [-e --encrypt] [--encrypt-fields] <document> [flags]
+```
+
+### Examples
+
+```
+Create from string1:  
+  defradb client collection create --name User '{ "name": "Bob" }'
+
+Create from string, with identity:  
+  defradb client collection create --name User '{ "name": "Bob" }' \
+  	-i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f
+
+Create multiple from string:  
+  defradb client collection create --name User '[{ "name": "Alice" }, { "name": "Bob" }]'
+
+Create from file:  
+  defradb client collection create --name User -f document.json
+
+Create from stdin:  
+  cat document.json | defradb client collection create --name User -
 ```
 
 ### Options
@@ -54,6 +58,7 @@ defradb client collection create [-i --identity] [-e --encrypt] [--encrypt-field
 ### Options inherited from parent commands
 
 ```
+      --collection-id string        Collection ID
       --get-inactive                Get inactive collections as well as active
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
@@ -69,12 +74,11 @@ defradb client collection create [-i --identity] [-e --encrypt] [--encrypt-field
       --no-keyring                  Disable the keyring and generate ephemeral keys
       --no-log-color                Disable colored log output
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
-      --schema string               Collection schema Root
       --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
-      --version string              Collection version ID
+      --version-id string           Collection version ID
 ```
 
 ### SEE ALSO

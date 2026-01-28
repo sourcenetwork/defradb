@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,9 +13,9 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/acp"
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
 // registerDocWithACP handles the registration of the document with acp.
@@ -33,14 +33,14 @@ func (c *collection) registerDocWithACP(
 	ctx context.Context,
 	docID string,
 ) error {
-	// If acp is not available, then no document is registered.
-	if !c.db.acp.HasValue() {
+	// If document acp is not available, then no document is registered.
+	if !c.db.documentACP.HasValue() {
 		return nil
 	}
-	return permission.RegisterDocOnCollectionWithACP(
+	return acpDB.RegisterDocOnCollectionWithDocumentACP(
 		ctx,
 		identity.FromContext(ctx),
-		c.db.acp.Value(),
+		c.db.documentACP.Value(),
 		c,
 		docID,
 	)
@@ -48,23 +48,24 @@ func (c *collection) registerDocWithACP(
 
 func (c *collection) checkAccessOfDocWithACP(
 	ctx context.Context,
-	dpiPermission acp.DPIPermission,
+	resourcePermission acpTypes.ResourceInterfacePermission,
 	docID string,
 ) (bool, error) {
-	// If acp is not available, then we have unrestricted access.
-	if !c.db.acp.HasValue() {
+	// If document acp is not available, then we have unrestricted access.
+	if !c.db.documentACP.HasValue() {
 		return true, nil
 	}
 	ident := identity.FromContext(ctx)
-	if ident.HasValue() && c.db.nodeIdentity.HasValue() && ident.Value().DID == c.db.nodeIdentity.Value().DID {
+	if ident.HasValue() && c.db.nodeIdentity.HasValue() && ident.Value().DID() == c.db.nodeIdentity.Value().DID() {
 		return true, nil
 	}
-	return permission.CheckAccessOfDocOnCollectionWithACP(
+	return acpDB.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
-		identity.FromContext(ctx),
-		c.db.acp.Value(),
+		ident,
+		c.db.nodeACP,
+		c.db.documentACP.Value(),
 		c,
-		dpiPermission,
+		resourcePermission,
 		docID,
 	)
 }

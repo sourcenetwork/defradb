@@ -13,32 +13,32 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, sum on non-rendered, unfiltered group",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -66,27 +66,26 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumWithFilter(t
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, sum on rendered, unfiltered group",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -121,6 +120,7 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -130,27 +130,26 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildSumWithFilter(t *t
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithMatchingFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, sum on rendered, matching filtered group",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -187,27 +186,26 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithM
 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithDifferentFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, sum on non-rendered, different filtered group",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -244,27 +242,26 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildSumWithD
 
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildSumsWithDifferentFilters(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, sum on non-rendered, unfiltered group",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age

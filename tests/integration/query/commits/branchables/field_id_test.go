@@ -13,13 +13,14 @@ package branchables
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQueryCommitsBranchables_WithFieldID(t *testing.T) {
+func TestQueryCommitsBranchables_WithFieldNameFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String
@@ -27,31 +28,28 @@ func TestQueryCommitsBranchables_WithFieldID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(
-							fieldId: null
+						_commits(
+							filter: {fieldName: {_eq: null}}
 						) {
-							cid
-							collectionID
+							collectionVersionId
 							docID
-							fieldId
+							fieldName
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection"),
-							// Extra params are used to verify this is a collection level cid
-							"collectionID": int64(1),
-							"docID":        nil,
-							"fieldId":      nil,
+							"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
+							"docID":               nil,
+							"fieldName":           nil,
 						},
 					},
 				},

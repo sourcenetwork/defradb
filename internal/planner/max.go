@@ -141,6 +141,29 @@ func (n *maxNode) Next() (bool, error) {
 			var collectionMax *big.Float
 			var err error
 			switch childCollection := child.(type) {
+			case float64, float32, int64, int:
+				var res *big.Float
+				switch v := childCollection.(type) {
+				case int:
+					res = big.NewFloat(float64(v))
+				case int64:
+					res = big.NewFloat(float64(v))
+				case float32:
+					res = big.NewFloat(float64(v))
+				case float64:
+					res = big.NewFloat(v)
+				default:
+					continue
+				}
+				if max == nil || res.Cmp(max) > 0 {
+					max = res
+					isTargetFloat, err := n.p.isValueFloat(n.parent, &source)
+					if err != nil {
+						return false, err
+					}
+					isFloat = isTargetFloat
+				}
+
 			case []core.Doc:
 				collectionMax = reduceDocs(
 					childCollection,

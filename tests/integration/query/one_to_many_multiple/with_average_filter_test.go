@@ -13,14 +13,14 @@ package one_to_many_multiple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with averages with and without filters",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Article {
 						name: String
@@ -43,7 +43,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "John Grisham",
@@ -51,7 +51,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"verified": true,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "Cornelia Funke",
@@ -59,63 +59,63 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"verified": false,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "After Guantánamo, Another Injustice",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"rating":    3,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "To my dear readers",
-					"author_id": testUtils.NewDocIndex(2, 1),
+					"_authorID": testUtils.NewDocIndex(2, 1),
 					"rating":    2,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Twinklestar's Favourite Xmas Cookie",
-					"author_id": testUtils.NewDocIndex(2, 1),
+					"_authorID": testUtils.NewDocIndex(2, 1),
 					"rating":    1,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"score":     1,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"score":     2,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"score":     3,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
-					"author_id": testUtils.NewDocIndex(2, 1),
+					"_authorID": testUtils.NewDocIndex(2, 1),
 					"score":     4,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -125,15 +125,16 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"_avg": float64(2.3333333333333335),
-						},
-						{
 							"name": "John Grisham",
 							"_avg": float64(3),
 						},
+						{
+							"name": "Cornelia Funke",
+							"_avg": float64(2.3333333333333335),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -143,9 +144,8 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 
 func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many relation query from many side with averages with filters",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Article {
 						name: String
@@ -168,7 +168,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "John Grisham",
@@ -176,7 +176,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"verified": true,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "Cornelia Funke",
@@ -184,63 +184,63 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"verified": false,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "After Guantánamo, Another Injustice",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"rating":    3,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "To my dear readers",
-					"author_id": testUtils.NewDocIndex(2, 1),
+					"_authorID": testUtils.NewDocIndex(2, 1),
 					"rating":    2,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Twinklestar's Favourite Xmas Cookie",
-					"author_id": testUtils.NewDocIndex(2, 1),
+					"_authorID": testUtils.NewDocIndex(2, 1),
 					"rating":    1,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"score":     1,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"score":     2,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
-					"author_id": testUtils.NewDocIndex(2, 0),
+					"_authorID": testUtils.NewDocIndex(2, 0),
 					"score":     3,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
-					"author_id": testUtils.NewDocIndex(2, 1),
+					"_authorID": testUtils.NewDocIndex(2, 1),
 					"score":     4,
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -250,15 +250,16 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Cornelia Funke",
-							"_avg": float64(2.3333333333333335),
-						},
-						{
 							"name": "John Grisham",
 							"_avg": float64(0),
 						},
+						{
+							"name": "Cornelia Funke",
+							"_avg": float64(2.3333333333333335),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

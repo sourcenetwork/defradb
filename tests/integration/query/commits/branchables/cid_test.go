@@ -13,13 +13,14 @@ package branchables
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String
@@ -27,31 +28,29 @@ func TestQueryCommitsBranchables_WithCidParam(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(
-							cid: "bafyreifi7borlnkazxrcohgl7r36cm5ga7moyiiajov3om7urexbx7cyl4"
+						_commits(
+							cid: "bafyreignwrgxxwvuijnrjssobtd4qdzjdho2u2myumzthtcuukoo4txxjy"
 						) {
 							cid
-							collectionID
 							docID
 							fieldName
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection"),
+							"cid": "bafyreignwrgxxwvuijnrjssobtd4qdzjdho2u2myumzthtcuukoo4txxjy",
 							// Extra params are used to verify this is a collection level cid
-							"collectionID": int64(1),
-							"docID":        nil,
-							"fieldName":    nil,
+							"docID":     nil,
+							"fieldName": nil,
 						},
 					},
 				},

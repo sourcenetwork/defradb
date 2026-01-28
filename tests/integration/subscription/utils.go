@@ -13,29 +13,25 @@ package subscription
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func execute(t *testing.T, test testUtils.TestCase) {
-	testUtils.ExecuteTestCase(
-		t,
-		testUtils.TestCase{
-			Description: test.Description,
-			Actions: append(
-				[]any{
-					testUtils.SchemaUpdate{
-						Schema: `
-							type User {
-								name: String
-								age: Int
-								points: Float
-								verified: Boolean
-							}
-						`,
-					},
-				},
-				test.Actions...,
-			),
+	test.Actions = append(
+		[]any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						age: Int
+						points: Float
+						verified: Boolean
+					}
+				`,
+			},
 		},
+		test.Actions...,
 	)
+	testUtils.ExecuteTestCase(t, test)
 }

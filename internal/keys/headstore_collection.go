@@ -20,11 +20,11 @@ import (
 
 // HeadstoreColKey are used to store the current collection head in the headstore.
 type HeadstoreColKey struct {
-	// CollectionRoot is the root of the collection that this head refers to.
+	// CollectionShortID is the root of the collection that this head refers to.
 	//
 	// Including it in the key allows easier identification of a given collection's
 	// head.
-	CollectionRoot uint32
+	CollectionShortID uint32
 
 	// Cid is the cid of this head block.
 	Cid cid.Cid
@@ -32,9 +32,9 @@ type HeadstoreColKey struct {
 
 var _ HeadstoreKey = (*HeadstoreColKey)(nil)
 
-func NewHeadstoreColKey(colRoot uint32) HeadstoreColKey {
+func NewHeadstoreColKey(collectionShortID uint32) HeadstoreColKey {
 	return HeadstoreColKey{
-		CollectionRoot: colRoot,
+		CollectionShortID: collectionShortID,
 	}
 }
 
@@ -56,8 +56,8 @@ func NewHeadstoreColKeyFromString(key string) (HeadstoreColKey, error) {
 
 	return HeadstoreColKey{
 		// elements[0] is empty (key has leading '/')
-		CollectionRoot: uint32(root),
-		Cid:            cid,
+		CollectionShortID: uint32(root),
+		Cid:               cid,
 	}, nil
 }
 
@@ -74,8 +74,8 @@ func (k HeadstoreColKey) GetCid() cid.Cid {
 func (k HeadstoreColKey) ToString() string {
 	result := HEADSTORE_COL
 
-	if k.CollectionRoot != 0 {
-		result = result + "/" + strconv.Itoa(int(k.CollectionRoot))
+	if k.CollectionShortID != 0 {
+		result = result + "/" + strconv.Itoa(int(k.CollectionShortID))
 	}
 	if k.Cid.Defined() {
 		result = result + "/" + k.Cid.String()
@@ -100,8 +100,8 @@ func (k HeadstoreColKey) PrefixEnd() Walkable {
 		return newKey
 	}
 
-	if k.CollectionRoot != 0 {
-		newKey.CollectionRoot = k.CollectionRoot + 1
+	if k.CollectionShortID != 0 {
+		newKey.CollectionShortID = k.CollectionShortID + 1
 		return newKey
 	}
 

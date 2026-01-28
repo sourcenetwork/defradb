@@ -13,22 +13,22 @@ package update
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdateUnderscoredSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update of schema with underscored name",
 
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type My_User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -38,7 +38,7 @@ func TestMutationUpdateUnderscoredSchema(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						My_User {

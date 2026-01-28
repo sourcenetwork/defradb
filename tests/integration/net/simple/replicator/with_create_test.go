@@ -15,16 +15,18 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// TestP2FullPReplicator tests document syncing between a node and a replicator.
+// TestP2POneToOneReplicator tests document syncing between a node and a replicator.
 func TestP2POneToOneReplicator(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -36,7 +38,7 @@ func TestP2POneToOneReplicator(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -45,7 +47,7 @@ func TestP2POneToOneReplicator(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -70,7 +72,7 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -78,7 +80,7 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -92,7 +94,7 @@ func TestP2POneToOneReplicatorDoesNotSyncExisting(t *testing.T) {
 				TargetNodeID: 1,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -117,7 +119,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -125,7 +127,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the second (target) node only
 				NodeID: immutable.Some(1),
 				Doc: `{
@@ -138,7 +140,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromTargetToSource(t *testing.T) {
 				TargetNodeID: 1,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Assert that John has not been synced to the first (source) node
 				NodeID: immutable.Some(0),
 				Request: `query {
@@ -161,7 +163,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -177,7 +179,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -188,7 +190,7 @@ func TestP2POneToOneReplicatorDoesNotSyncFromDeletedReplicator(t *testing.T) {
 			testUtils.WaitForSync{
 				// No documents should be synced
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that John has not been synced to the second (target) node
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -212,7 +214,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -228,7 +230,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -237,7 +239,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -264,7 +266,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			// Node[2] will not be configured
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -276,7 +278,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -285,7 +287,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -300,7 +302,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -315,7 +317,7 @@ func TestP2POneToOneOfManyReplicator(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(2),
 				Request: `query {
 					Users {
@@ -338,7 +340,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -350,7 +352,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -358,7 +360,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Fred on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -367,7 +369,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -383,6 +385,7 @@ func TestP2POneToOneReplicatorManyDocs(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -396,7 +399,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -412,7 +415,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -420,7 +423,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Fred on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -429,7 +432,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -445,6 +448,7 @@ func TestP2POneToManyReplicatorManyDocs(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -457,7 +461,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				NodeID: immutable.Some(0),
 				Schema: `
 					type Users {
@@ -466,7 +470,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				// Add the same schema to the second node but with the age and name fields in
 				// a different order.
 				NodeID: immutable.Some(1),
@@ -481,7 +485,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -490,7 +494,7 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// The document should have been synced, and should contain the same values
 				// including document id and schema version id.
 				Request: `query {
@@ -499,19 +503,19 @@ func TestP2POneToOneReplicatorOrderIndependent(t *testing.T) {
 						age
 						name
 						_version {
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
+							"_docID": "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
 							"age":    int64(21),
 							"name":   "John",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+									"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 								},
 							},
 						},
@@ -529,7 +533,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				NodeID: immutable.Some(0),
 				Schema: `
 					type Users {
@@ -538,7 +542,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				// Add the same schema to the second node but with the age and name fields in
 				// a different order.
 				NodeID: immutable.Some(1),
@@ -549,31 +553,31 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create the document directly and indepentently on each node.
 				Doc: `{
 					"name": "John",
 					"age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				// Assert that the document id and schema version id are the same across all nodes,
 				// even though the schema field order is different.
 				Request: `query {
 					Users {
 						_docID
 						_version {
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-0b2f15e5-bfe7-5cb7-8045-471318d7dbc3",
+							"_docID": "bae-c65ccba7-7d6c-55c8-9d46-e865305f7790",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": "bafkreihhd6bqrjhl5zidwztgxzeseveplv3cj3fwtn3unjkdx7j2vr2vrq",
+									"collectionVersionId": "bafyreihsneodeja4lfer5puptim3lkwvketyckrmkhfpgxm67ch5wenjwq",
 								},
 							},
 						},
@@ -589,7 +593,7 @@ func TestP2POneToOneReplicatorOrderIndependentDirectCreate(t *testing.T) {
 func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDatabaseTypes: immutable.Some(
-			[]testUtils.DatabaseType{
+			[]state.DatabaseType{
 				// This test only supports file type databases since it requires the ability to
 				// stop and start a node without losing data.
 				testUtils.BadgerFileType,
@@ -598,7 +602,7 @@ func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSu
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -613,7 +617,7 @@ func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSu
 			testUtils.Close{
 				NodeID: immutable.Some(1),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -621,7 +625,7 @@ func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSu
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Fred on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -633,7 +637,7 @@ func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSu
 				NodeID: immutable.Some(1),
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -649,6 +653,7 @@ func TestP2POneToOneReplicator_ManyDocsWithTargetNodeTemporarilyOffline_ShouldSu
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

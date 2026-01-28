@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -40,12 +41,10 @@ var debugGroupLimitPattern = dataMap{
 func TestDebugExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with limit and offset on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(
@@ -71,12 +70,10 @@ func TestDebugExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 func TestDebugExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with limit and offset on parent groupBy and inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(

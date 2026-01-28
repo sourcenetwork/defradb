@@ -11,6 +11,7 @@
 package keys
 
 import (
+	"bytes"
 	"strconv"
 
 	ds "github.com/ipfs/go-datastore"
@@ -24,8 +25,8 @@ import (
 // It is stored in the format `/collection/vi/[CollectionRootID]/[ItemID]`. It points to the
 // full serialized View item.
 type ViewCacheKey struct {
-	// CollectionRootID is the Root of the Collection that this item belongs to.
-	CollectionRootID uint32
+	// CollectionShortID is the id of the Collection that this item belongs to.
+	CollectionShortID uint32
 
 	// ItemID is the unique (to this CollectionRootID) ID of the View item.
 	//
@@ -35,18 +36,51 @@ type ViewCacheKey struct {
 }
 
 var _ Key = (*ViewCacheKey)(nil)
+var _ CollectionedKey = ViewCacheKey{}
 
-func NewViewCacheColPrefix(rootID uint32) ViewCacheKey {
+func NewViewCacheColPrefix(collectionShortID uint32) ViewCacheKey {
 	return ViewCacheKey{
-		CollectionRootID: rootID,
+		CollectionShortID: collectionShortID,
 	}
 }
 
-func NewViewCacheKey(rootID uint32, itemID uint) ViewCacheKey {
+func NewViewCacheKey(collectionShortID uint32, itemID uint) ViewCacheKey {
 	return ViewCacheKey{
-		CollectionRootID: rootID,
-		ItemID:           itemID,
+		CollectionShortID: collectionShortID,
+		ItemID:            itemID,
 	}
+}
+
+func NewViewCacheKeyFromRaw(raw []byte) (ViewCacheKey, error) {
+	if len(raw) == 0 {
+		return ViewCacheKey{}, nil
+	}
+
+	raw, _ = bytes.CutPrefix(raw, []byte(COLLECTION_VIEW_ITEMS+"/"))
+
+	components := bytes.Split(raw, []byte("/"))
+	if len(components) > 2 {
+		return ViewCacheKey{}, ErrInvalidKey
+	}
+
+	_, collectionShortID, err := encoding.DecodeUvarintAscending(components[0])
+	if err != nil {
+		return ViewCacheKey{}, err
+	}
+
+	var itemID uint
+	if len(components) == 2 {
+		_, r, err := encoding.DecodeUvarintAscending(components[1])
+		if err != nil {
+			return ViewCacheKey{}, err
+		}
+		itemID = uint(r)
+	}
+
+	return ViewCacheKey{
+		CollectionShortID: uint32(collectionShortID),
+		ItemID:            itemID,
+	}, nil
 }
 
 func (k ViewCacheKey) ToString() string {
@@ -56,9 +90,9 @@ func (k ViewCacheKey) ToString() string {
 func (k ViewCacheKey) Bytes() []byte {
 	result := []byte(COLLECTION_VIEW_ITEMS)
 
-	if k.CollectionRootID != 0 {
+	if k.CollectionShortID != 0 {
 		result = append(result, '/')
-		result = encoding.EncodeUvarintAscending(result, uint64(k.CollectionRootID))
+		result = encoding.EncodeUvarintAscending(result, uint64(k.CollectionShortID))
 	}
 
 	if k.ItemID != 0 {
@@ -76,12 +110,16 @@ func (k ViewCacheKey) ToDS() ds.Key {
 func (k ViewCacheKey) PrettyPrint() string {
 	result := COLLECTION_VIEW_ITEMS
 
-	if k.CollectionRootID != 0 {
-		result = result + "/" + strconv.Itoa(int(k.CollectionRootID))
+	if k.CollectionShortID != 0 {
+		result = result + "/" + strconv.Itoa(int(k.CollectionShortID))
 	}
 	if k.ItemID != 0 {
 		result = result + "/" + strconv.Itoa(int(k.ItemID))
 	}
 
 	return result
+}
+
+func (k ViewCacheKey) GetCollectionShortID() uint32 {
+	return k.CollectionShortID
 }

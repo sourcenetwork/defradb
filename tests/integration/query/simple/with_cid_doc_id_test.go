@@ -13,21 +13,22 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQuerySimpleWithInvalidCidAndInvalidDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with invalid cid and invalid docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
 							cid: "any non-nil string value - this will be ignored",
@@ -48,16 +49,15 @@ func TestQuerySimpleWithInvalidCidAndInvalidDocID(t *testing.T) {
 // desired behaviour (should just return empty).
 func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with unknown cid and invalid docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
 							cid: "bafybeid57gpbwi4i6bg7g357vwwyzsmr4bjo22rmhoxrwqvdxlqxcgaqvu",
@@ -76,25 +76,24 @@ func TestQuerySimpleWithUnknownCidAndInvalidDocID(t *testing.T) {
 
 func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
-							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
+							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey",
+							docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11"
 						) {
 						name
 					}
@@ -115,16 +114,15 @@ func TestQuerySimpleWithCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with (first) cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -134,11 +132,11 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 					"name": "Johnn"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
-							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
+							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey",
+							docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11"
 						) {
 						name
 					}
@@ -159,16 +157,15 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with (last) cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -178,11 +175,11 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 					"name": "Johnn"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreig2j5zwcozovwzrxr7ivfnptlj7urlabzjbv4lls64hlkh6jmhfim",
-							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
+							cid: "bafyreifkzu27a5njpdfvfpe5z7s3kw5wun5xeke6ajoxnmj74qxbzgsp3a",
+							docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11"
 						) {
 						name
 					}
@@ -203,16 +200,15 @@ func TestQuerySimpleWithUpdateAndLastCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with (middle) cid and docID",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -227,22 +223,34 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 					"name": "Johnnn"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreig2j5zwcozovwzrxr7ivfnptlj7urlabzjbv4lls64hlkh6jmhfim",
-							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
+							cid: "bafyreifkzu27a5njpdfvfpe5z7s3kw5wun5xeke6ajoxnmj74qxbzgsp3a",
+							docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11"
 						) {
 						name
+						_version {
+							cid
+						}
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Johnn",
+							"_version": []map[string]any{
+								{
+									"cid": "bafyreifkzu27a5njpdfvfpe5z7s3kw5wun5xeke6ajoxnmj74qxbzgsp3a",
+								},
+								{
+									"cid": "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey",
+								},
+							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -252,16 +260,15 @@ func TestQuerySimpleWithUpdateAndMiddleCidAndDocID(t *testing.T) {
 
 func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with (first) cid and docID and yielded schema version",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -271,15 +278,15 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 					"name": "Johnn"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-							cid: "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
-							docID: "bae-6845cfdf-cb0f-56a3-be3a-b5a67be5fbdc"
+							cid: "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey",
+							docID: "bae-9b4d35b6-00f0-50df-8627-44cea1dbcf11"
 						) {
 						name
 						_version {
-							schemaVersionId
+							collectionVersionId
 						}
 					}
 				}`,
@@ -289,7 +296,7 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 							"name": "John",
 							"_version": []map[string]any{
 								{
-									"schemaVersionId": "bafkreia3o3cetvcnnxyu5spucimoos77ifungfmacxdkva4zah2is3aooe",
+									"collectionVersionId": "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
 								},
 							},
 						},
@@ -305,9 +312,10 @@ func TestQuerySimpleWithUpdateAndFirstCidAndDocIDAndSchemaVersion(t *testing.T) 
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with first cid and docID with pncounter int type",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -315,7 +323,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10
@@ -331,11 +339,11 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 					"points": 20
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreihsqayh6zvmjrvmma3sjmrb4bkeiyy6l56nt6y2t2tm4xajkif3gu",
-						docID: "bae-bc5464e4-26a6-5307-b516-aada0abeb089"
+						cid: "bafyreiayfkr7etgwpxix7f2kmgawii7nxcb7v4tspz4no6getyk54iapby",
+						docID: "bae-379aa83a-1d36-50c5-9be9-72125861ceef"
 					) {
 						name
 						points
@@ -359,9 +367,10 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithIntKind_NoError(t *testing.T) {
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with first cid and docID with pncounter and float type",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -369,7 +378,7 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10.2
@@ -385,11 +394,11 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 					"points": 20.6
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreigkdjnvkpqfjoqoke3aqc3b6ibb45xjuxx5djpk7c6tart2lw3dcm",
-						docID: "bae-2c7c40a7-92c1-5ed4-8a00-9e8595514945"
+						cid: "bafyreifo5ehnswuh3xk3dchl3uro33rwvzeng7srx7d52v6qtzklsdvnp4",
+						docID: "bae-5b8e1cce-351f-515a-bfa4-4103bdf0cf55"
 					) {
 						name
 						points
@@ -413,9 +422,8 @@ func TestCidAndDocIDQuery_ContainsPNCounterWithFloatKind_NoError(t *testing.T) {
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with first cid and docID with pcounter int type",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -423,7 +431,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10
@@ -434,11 +442,11 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 					"points": 20
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreihxjjootrhxhapn563gsoagmtpld6uqhzf5mtn3fmmzp5sawadheu",
-						docID: "bae-d8cb53d4-ac5a-5c55-8306-64df633d400d"
+						cid: "bafyreigplcraznjztibr63zd3ygq752icmpcfhcw6cggjqns6oeiy4xdpi",
+						docID: "bae-97285e6a-29a7-556b-9550-715ef0173eb7"
 					) {
 						name
 						points
@@ -462,9 +470,8 @@ func TestCidAndDocIDQuery_ContainsPCounterWithIntKind_NoError(t *testing.T) {
 // Note: Only the first CID is reproducible given the added entropy to the Counter CRDT type.
 func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with first cid and docID with pcounter and float type",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -472,7 +479,7 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10.2
@@ -483,11 +490,11 @@ func TestCidAndDocIDQuery_ContainsPCounterWithFloatKind_NoError(t *testing.T) {
 					"points": 20.6
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (
-						cid: "bafyreihf2nipoyoxu3wjicqj6pftndjnnxljdw6nephkamgwyw5n6lcwca",
-						docID: "bae-d420ebcd-023a-5800-ae2e-8ea89442318e"
+						cid: "bafyreif7pentv7igx2pbzi3xxg3k2rtexpkevt5rc3cj7hkmg5m3yhu3ti",
+						docID: "bae-de9ca81d-1cb0-521e-834a-fcdd3ca2232d"
 					) {
 						name
 						points

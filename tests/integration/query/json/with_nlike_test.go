@@ -13,50 +13,54 @@ package json
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryJSON_WithNotLikeFilter_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						custom: JSON
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"custom": "Daenerys Stormborn of House Targaryen, the First of Her Name"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"custom": "Viserys I Targaryen, King of the Andals"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"custom": [1, 2]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"custom": {"one": 1}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"custom": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"custom": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {custom: {_nlike: "%Stormborn%"}}) {
 						custom
@@ -64,6 +68,12 @@ func TestQueryJSON_WithNotLikeFilter_ShouldFilter(t *testing.T) {
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
+						{
+							"custom": false,
+						},
+						{
+							"custom": "Viserys I Targaryen, King of the Andals",
+						},
 						{
 							"custom": map[string]any{"one": float64(1)},
 						},
@@ -73,14 +83,9 @@ func TestQueryJSON_WithNotLikeFilter_ShouldFilter(t *testing.T) {
 						{
 							"custom": []any{float64(1), float64(2)},
 						},
-						{
-							"custom": "Viserys I Targaryen, King of the Andals",
-						},
-						{
-							"custom": false,
-						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

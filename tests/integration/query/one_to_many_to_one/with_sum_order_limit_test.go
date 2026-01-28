@@ -13,16 +13,19 @@ package one_to_many_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirections(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, desc. directions.",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -35,9 +38,13 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":                 "Not a Writer",
-							"s1":                   0.0,
-							"NewestPublishersBook": []map[string]any{},
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
+							},
 						},
 						{
 							"name": "John Grisham",
@@ -52,13 +59,9 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 							},
 						},
 						{
-							"name": "Cornelia Funke",
-							"s1":   4.0,
-							"NewestPublishersBook": []map[string]any{
-								{
-									"name": "The Rooster Bar",
-								},
-							},
+							"name":                 "Not a Writer",
+							"s1":                   0.0,
+							"NewestPublishersBook": []map[string]any{},
 						},
 					},
 				},
@@ -70,11 +73,12 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirections(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, asc. directions.",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -87,9 +91,13 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":                 "Not a Writer",
-							"s1":                   0.0,
-							"NewestPublishersBook": []map[string]any{},
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"NewestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
+							},
 						},
 						{
 							"name": "John Grisham",
@@ -106,13 +114,9 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 							},
 						},
 						{
-							"name": "Cornelia Funke",
-							"s1":   4.0,
-							"NewestPublishersBook": []map[string]any{
-								{
-									"name": "The Rooster Bar",
-								},
-							},
+							"name":                 "Not a Writer",
+							"s1":                   0.0,
+							"NewestPublishersBook": []map[string]any{},
 						},
 					},
 				},
@@ -125,11 +129,12 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 sums of deep orderby subtypes of both descending and ascending.",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -140,9 +145,9 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name": "Not a Writer",
-							"s1":   0.0,
-							"s2":   0.0,
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"s2":   4.0,
 						},
 						{
 							"name": "John Grisham",
@@ -152,9 +157,9 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 							"s2": float64(4.2) + float64(4.9),
 						},
 						{
-							"name": "Cornelia Funke",
-							"s1":   4.0,
-							"s2":   4.0,
+							"name": "Not a Writer",
+							"s1":   0.0,
+							"s2":   0.0,
 						},
 					},
 				},
@@ -167,11 +172,12 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 sum of deep orderby subtypes and non-sum deep orderby, opposite directions.",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -184,9 +190,13 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":                 "Not a Writer",
-							"s1":                   0.0,
-							"OldestPublishersBook": []map[string]any{},
+							"name": "Cornelia Funke",
+							"s1":   4.0,
+							"OldestPublishersBook": []map[string]any{
+								{
+									"name": "The Rooster Bar",
+								},
+							},
 						},
 						{
 							"name": "John Grisham",
@@ -202,13 +212,9 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 							},
 						},
 						{
-							"name": "Cornelia Funke",
-							"s1":   4.0,
-							"OldestPublishersBook": []map[string]any{
-								{
-									"name": "The Rooster Bar",
-								},
-							},
+							"name":                 "Not a Writer",
+							"s1":                   0.0,
+							"OldestPublishersBook": []map[string]any{},
 						},
 					},
 				},

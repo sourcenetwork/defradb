@@ -13,44 +13,106 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsWithDocIDAndLinkCount(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple latest commits query with docID and link count",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3") {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
 							cid
 							_count(field: links)
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":    "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid":    "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 							"_count": 0,
 						},
 						{
-							"cid":    "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid":    "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 							"_count": 0,
 						},
 						{
-							"cid":    "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid":    "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 							"_count": 2,
 						},
 					},
 				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithDocUpdatesAndLinkHeadCount(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738") {
+							fieldName
+							linkCount: _count(field: links)
+							headCount: _count(field: heads)
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"fieldName": "age",
+							"linkCount": 0,
+							"headCount": 1,
+						},
+						{
+							"fieldName": "_C",
+							"linkCount": 1,
+							"headCount": 1,
+						},
+						{
+							"fieldName": "age",
+							"linkCount": 0,
+							"headCount": 0,
+						},
+						{
+							"fieldName": "name",
+							"linkCount": 0,
+							"headCount": 0,
+						},
+						{
+							"fieldName": "_C",
+							"linkCount": 2,
+							"headCount": 0,
+						},
+					},
+				},
+				NonOrderedResults: true,
 			},
 		},
 	}

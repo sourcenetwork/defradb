@@ -13,28 +13,29 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationDeletion_WithDeletedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
-						delete_User(docID: "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f") {
+						delete_User(docID: "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd") {
 							_deleted
 							_docID
 						}
@@ -43,7 +44,7 @@ func TestMutationDeletion_WithDeletedField(t *testing.T) {
 					"delete_User": []map[string]any{
 						{
 							"_deleted": true,
-							"_docID":   "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f",
+							"_docID":   "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd",
 						},
 					},
 				},

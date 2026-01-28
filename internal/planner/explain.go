@@ -50,6 +50,7 @@ var (
 	_ explainablePlanNode = (*typeIndexJoin)(nil)
 	_ explainablePlanNode = (*updateNode)(nil)
 	_ explainablePlanNode = (*upsertNode)(nil)
+	_ explainablePlanNode = (*similarityNode)(nil)
 )
 
 const (

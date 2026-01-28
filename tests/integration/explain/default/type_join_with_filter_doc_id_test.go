@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDefaultExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with related and regular filter + docIDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -57,7 +56,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T)
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
@@ -78,7 +77,7 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T)
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"name": dataMap{
@@ -102,12 +101,10 @@ func TestDefaultExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T)
 func TestDefaultExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with many related filters + docID.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -144,7 +141,7 @@ func TestDefaultExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName: "selectNode",
 						ExpectedAttributes: dataMap{
@@ -169,7 +166,7 @@ func TestDefaultExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be last node, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"name": dataMap{

@@ -14,16 +14,23 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
-var _ datastore.Txn = (*Transaction)(nil)
+var _ client.Txn = (*Transaction)(nil)
 
-// Transaction implements the datastore.Txn interface over HTTP.
+// Transaction implements the client.Txn interface over HTTP.
 type Transaction struct {
-	id   uint64
-	http *httpClient
+	*Client
+	id uint64
 }
 
 func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
@@ -31,82 +38,174 @@ func NewTransaction(rawURL string, id uint64) (*Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{id, httpClient}, nil
+	return &Transaction{&Client{httpClient}, id}, nil
 }
 
-func (c *Transaction) ID() uint64 {
-	return c.id
+func (txn *Transaction) ID() uint64 {
+	return txn.id
 }
 
-func (c *Transaction) Commit(ctx context.Context) error {
-	methodURL := c.http.baseURL.JoinPath("tx", fmt.Sprintf("%d", c.id))
+func (txn *Transaction) StartTS() time.Time {
+	return time.Time{} // http client returns empty time
+}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+func (txn *Transaction) Commit() error {
+	methodURL := txn.http.apiURL.JoinPath("tx", fmt.Sprintf("%d", txn.id))
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
 	if err != nil {
 		return err
 	}
-	_, err = c.http.request(req)
+	_, err = txn.http.request(req)
 	return err
 }
 
-func (c *Transaction) Discard(ctx context.Context) {
-	methodURL := c.http.baseURL.JoinPath("tx", fmt.Sprintf("%d", c.id))
+func (txn *Transaction) Discard() {
+	methodURL := txn.http.apiURL.JoinPath("tx", fmt.Sprintf("%d", txn.id))
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
 		return
 	}
-	c.http.request(req) //nolint:errcheck
+	txn.http.request(req) //nolint:errcheck
 }
 
-func (c *Transaction) OnSuccess(fn func()) {
-	panic("client side transaction")
+func (txn *Transaction) PrintDump(ctx context.Context) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.PrintDump(ctx)
 }
 
-func (c *Transaction) OnError(fn func()) {
-	panic("client side transaction")
+func (txn *Transaction) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.AddDACPolicy(ctx, policy)
 }
 
-func (c *Transaction) OnDiscard(fn func()) {
-	panic("client side transaction")
+func (txn *Transaction) AddDACActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
-func (c *Transaction) OnSuccessAsync(fn func()) {
-	panic("client side transaction")
+func (txn *Transaction) DeleteDACActorRelationship(
+	ctx context.Context,
+	collectionName string,
+	docID string,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
-func (c *Transaction) OnErrorAsync(fn func()) {
-	panic("client side transaction")
+func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.GetNodeIdentity(ctx)
 }
 
-func (c *Transaction) OnDiscardAsync(fn func()) {
-	panic("client side transaction")
+func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.VerifySignature(ctx, blockCid, pubKey)
 }
 
-func (c *Transaction) Rootstore() datastore.DSReaderWriter {
-	panic("client side transaction")
+func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.AddSchema(ctx, sdl)
 }
 
-func (c *Transaction) Datastore() datastore.DSReaderWriter {
-	panic("client side transaction")
+func (txn *Transaction) PatchCollection(
+	ctx context.Context,
+	patch string,
+	migration immutable.Option[model.Lens],
+) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.PatchCollection(ctx, patch, migration)
 }
 
-func (c *Transaction) Encstore() datastore.Blockstore {
-	panic("client side transaction")
+func (txn *Transaction) SetActiveCollectionVersion(ctx context.Context, version string) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.SetActiveCollectionVersion(ctx, version)
 }
 
-func (c *Transaction) Headstore() datastore.DSReaderWriter {
-	panic("client side transaction")
+func (txn *Transaction) AddView(
+	ctx context.Context,
+	gqlQuery string,
+	sdl string,
+	transformCID immutable.Option[string],
+) ([]client.CollectionVersion, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.AddView(ctx, gqlQuery, sdl, transformCID)
 }
 
-func (c *Transaction) Peerstore() datastore.DSReaderWriter {
-	panic("client side transaction")
+func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.RefreshViews(ctx, options)
 }
 
-func (c *Transaction) Blockstore() datastore.Blockstore {
-	panic("client side transaction")
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.SetMigration(ctx, config)
 }
 
-func (c *Transaction) Systemstore() datastore.DSReaderWriter {
-	panic("client side transaction")
+func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.AddLens(ctx, lens)
+}
+
+func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.ListLenses(ctx)
+}
+
+func (txn *Transaction) GetCollectionByName(
+	ctx context.Context,
+	name client.CollectionName,
+) (client.Collection, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.GetCollectionByName(ctx, name)
+}
+
+func (txn *Transaction) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.GetCollections(ctx, options)
+}
+
+func (txn *Transaction) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.GetAllIndexes(ctx)
+}
+
+func (txn *Transaction) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.ListAllEncryptedIndexes(ctx)
+}
+
+func (txn *Transaction) ExecRequest(
+	ctx context.Context,
+	request string,
+	opts ...client.RequestOption,
+) *client.RequestResult {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.ExecRequest(ctx, request, opts...)
+}
+
+func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.BasicImport(ctx, filepath)
+}
+
+func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
+	return txn.Client.BasicExport(ctx, config)
 }

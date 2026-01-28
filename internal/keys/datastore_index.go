@@ -28,23 +28,30 @@ type IndexedField struct {
 
 // IndexDataStoreKey is key of an indexed document in the database.
 type IndexDataStoreKey struct {
-	// CollectionID is the id of the collection
-	CollectionID uint32
+	// CollectionShortID is the id of the collection
+	CollectionShortID uint32
 	// IndexID is the id of the index
 	IndexID uint32
 	// Fields is the values of the fields in the index
 	Fields []IndexedField
+	// Offset can be set in order to control how many times `bytesPrefixEnd` is called when this `IndexDataStoreKey`
+	// is serialized.
+	//
+	// This allows `bytesPrefixEnd` to be managed before serialization, allowing the `bytesPrefixEnd`'ed key to be
+	// passed into strongly typed interfaces, such as `Keyedstore`.
+	Offset uint64
 }
 
-var _ Key = (*IndexDataStoreKey)(nil)
+var _ Walkable = (*IndexDataStoreKey)(nil)
+var _ CollectionedKey = (*IndexDataStoreKey)(nil)
 
 // NewIndexDataStoreKey creates a new IndexDataStoreKey from a collection ID, index ID and fields.
 // It also validates values of the fields.
-func NewIndexDataStoreKey(collectionID, indexID uint32, fields []IndexedField) IndexDataStoreKey {
+func NewIndexDataStoreKey(collectionShortID, indexID uint32, fields []IndexedField) IndexDataStoreKey {
 	return IndexDataStoreKey{
-		CollectionID: collectionID,
-		IndexID:      indexID,
-		Fields:       fields,
+		CollectionShortID: collectionShortID,
+		IndexID:           indexID,
+		Fields:            fields,
 	}
 }
 
@@ -69,7 +76,7 @@ func (k *IndexDataStoreKey) ToString() string {
 
 // Equal returns true if the two keys are equal
 func (k *IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
-	if k.CollectionID != other.CollectionID || k.IndexID != other.IndexID {
+	if k.CollectionShortID != other.CollectionShortID || k.IndexID != other.IndexID {
 		return false
 	}
 
@@ -98,7 +105,7 @@ func (k *IndexDataStoreKey) Equal(other IndexDataStoreKey) bool {
 func DecodeIndexDataStoreKey(
 	data []byte,
 	indexDesc *client.IndexDescription,
-	fields []client.FieldDefinition,
+	fields []client.CollectionFieldDescription,
 ) (IndexDataStoreKey, error) {
 	if len(data) == 0 {
 		return IndexDataStoreKey{}, ErrEmptyKey
@@ -114,7 +121,11 @@ func DecodeIndexDataStoreKey(
 		return IndexDataStoreKey{}, err
 	}
 
-	key := IndexDataStoreKey{CollectionID: uint32(colID)}
+	key := IndexDataStoreKey{CollectionShortID: uint32(colID)}
+
+	if len(data) == 0 {
+		return key, nil
+	}
 
 	if data[0] != '/' {
 		return IndexDataStoreKey{}, ErrInvalidKey
@@ -170,22 +181,44 @@ func DecodeIndexDataStoreKey(
 // EncodeIndexDataStoreKey encodes a IndexDataStoreKey to bytes to be stored as a key
 // for secondary indexes.
 func EncodeIndexDataStoreKey(key *IndexDataStoreKey) []byte {
-	if key.CollectionID == 0 {
+	if key.CollectionShortID == 0 {
 		return []byte{}
 	}
 
-	b := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(key.CollectionID))
+	b := encoding.EncodeUvarintAscending([]byte{'/'}, uint64(key.CollectionShortID))
 
-	if key.IndexID == 0 {
-		return b
-	}
-	b = append(b, '/')
-	b = encoding.EncodeUvarintAscending(b, uint64(key.IndexID))
-
-	for _, field := range key.Fields {
+	if key.IndexID != 0 {
 		b = append(b, '/')
-		b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
+		b = encoding.EncodeUvarintAscending(b, uint64(key.IndexID))
+
+		for _, field := range key.Fields {
+			b = append(b, '/')
+			b = encoding.EncodeFieldValue(b, field.Value, field.Descending)
+		}
+	}
+
+	for i := 0; i < int(key.Offset); i++ {
+		b = bytesPrefixEnd(b)
 	}
 
 	return b
+}
+
+// PrefixEnd returns a key that would sort immediately after all keys with this prefix.
+// It returns a key such that all keys with the prefix are >= k and < k.PrefixEnd().
+// This is implemented by encoding the key to bytes and incrementing it.
+func (k *IndexDataStoreKey) PrefixEnd() Walkable {
+	newFields := make([]IndexedField, len(k.Fields))
+	copy(newFields, k.Fields)
+
+	return &IndexDataStoreKey{
+		CollectionShortID: k.CollectionShortID,
+		IndexID:           k.IndexID,
+		Fields:            newFields,
+		Offset:            k.Offset + 1,
+	}
+}
+
+func (k *IndexDataStoreKey) GetCollectionShortID() uint32 {
+	return k.CollectionShortID
 }

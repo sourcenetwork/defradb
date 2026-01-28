@@ -13,19 +13,19 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query group by and parent typename",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -49,14 +49,13 @@ func TestQuerySimpleWithGroupByWithTypeName(t *testing.T) {
 
 func TestQuerySimpleWithGroupByWithChildTypeName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query group by and child typename",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name

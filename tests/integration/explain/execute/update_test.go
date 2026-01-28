@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,20 +21,18 @@ import (
 func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) mutation request with update using document IDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					update_ContactAddress(
 						docID: [
-							"bae-14f20db7-3654-58de-9156-596ef2cfd790",
-							"bae-49f715e7-7f01-5509-a213-ed98cb81583f"
+							"bae-186c2484-c3ea-5993-95d6-cb886e1b13a1",
+							"bae-78bc4454-19a6-58ed-9e18-f0ca175dd12c"
 						],
 						input: {country: "USA"}
 					) {
@@ -79,15 +78,13 @@ func TestExecuteExplainMutationRequestWithUpdateUsingIDs(t *testing.T) {
 func TestExecuteExplainMutationRequestWithUpdateUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) mutation request with update using filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			// Addresses
 			create2AddressDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `mutation @explain(type: execute) {
 					update_ContactAddress(
 						filter: {

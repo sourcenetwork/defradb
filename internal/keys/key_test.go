@@ -15,7 +15,6 @@ import (
 	"testing"
 
 	ds "github.com/ipfs/go-datastore"
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -32,54 +31,6 @@ func TestNewDataStoreKey_ReturnsEmptyStruct_GivenEmptyString(t *testing.T) {
 	assert.Equal(t, DataStoreKey{}, result)
 	assert.Equal(t, "", resultString)
 	assert.ErrorIs(t, ErrEmptyKey, err)
-}
-
-func TestNewIndexKey_IfEmptyParam_ReturnPrefix(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.None[uint32](), "")
-	assert.Equal(t, "/collection/index", key.ToString())
-}
-
-func TestNewIndexKey_IfParamsAreGiven_ReturnFullKey(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.Some[uint32](1), "idx")
-	assert.Equal(t, "/collection/index/1/idx", key.ToString())
-}
-
-func TestNewIndexKey_InNoCollectionName_ReturnJustPrefix(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.None[uint32](), "idx")
-	assert.Equal(t, "/collection/index", key.ToString())
-}
-
-func TestNewIndexKey_InNoIndexName_ReturnWithoutIndexName(t *testing.T) {
-	key := NewCollectionIndexKey(immutable.Some[uint32](1), "")
-	assert.Equal(t, "/collection/index/1", key.ToString())
-}
-
-func TestNewIndexKeyFromString_IfInvalidString_ReturnError(t *testing.T) {
-	for _, key := range []string{
-		"",
-		"/collection",
-		"/collection/index",
-		"/collection/index/col/idx/extra",
-		"/wrong/index/col/idx",
-		"/collection/wrong/col/idx",
-	} {
-		_, err := NewCollectionIndexKeyFromString(key)
-		assert.ErrorIs(t, err, ErrInvalidKey)
-	}
-}
-
-func TestNewIndexKeyFromString_IfOnlyCollectionName_ReturnKey(t *testing.T) {
-	key, err := NewCollectionIndexKeyFromString("/collection/index/1")
-	assert.NoError(t, err)
-	assert.Equal(t, immutable.Some[uint32](1), key.CollectionID)
-	assert.Equal(t, "", key.IndexName)
-}
-
-func TestNewIndexKeyFromString_IfFullKeyString_ReturnKey(t *testing.T) {
-	key, err := NewCollectionIndexKeyFromString("/collection/index/1/idx")
-	assert.NoError(t, err)
-	assert.Equal(t, immutable.Some[uint32](1), key.CollectionID)
-	assert.Equal(t, "idx", key.IndexName)
 }
 
 func encodePrefix(colID, indexID uint32) []byte {
@@ -152,12 +103,6 @@ func TestIndexDatastoreKey_Bytes(t *testing.T) {
 			Expected:     encodeKey(1, 2, 5, false, 7, false),
 		},
 		{
-			Name:         "no index",
-			CollectionID: 1,
-			Fields:       []IndexedField{{Value: client.NewNormalInt(5)}},
-			Expected:     encoding.EncodeUvarintAscending([]byte{'/'}, 1),
-		},
-		{
 			Name:     "no collection",
 			IndexID:  2,
 			Fields:   []IndexedField{{Value: client.NewNormalInt(5)}},
@@ -183,14 +128,6 @@ func TestIndexDatastoreKey_ToString(t *testing.T) {
 func TestIndexDatastoreKey_ToDS(t *testing.T) {
 	key := NewIndexDataStoreKey(1, 2, []IndexedField{{Value: client.NewNormalInt(5)}})
 	assert.Equal(t, key.ToDS(), ds.NewKey(string(encodeKey(1, 2, 5, false))))
-}
-
-func TestCollectionIndexKey_Bytes(t *testing.T) {
-	key := CollectionIndexKey{
-		CollectionID: immutable.Some[uint32](1),
-		IndexName:    "idx",
-	}
-	assert.Equal(t, []byte(COLLECTION_INDEX+"/1/idx"), key.Bytes())
 }
 
 func TestDecodeIndexDataStoreKey(t *testing.T) {
@@ -241,9 +178,9 @@ func TestDecodeIndexDataStoreKey(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			expectedKey := NewIndexDataStoreKey(colID, indexID, tc.expectedFields)
-			fieldDescs := make([]client.FieldDefinition, len(tc.desc.Fields))
+			fieldDescs := make([]client.CollectionFieldDescription, len(tc.desc.Fields))
 			for i := range tc.fieldKinds {
-				fieldDescs[i] = client.FieldDefinition{Kind: tc.fieldKinds[i]}
+				fieldDescs[i] = client.CollectionFieldDescription{Kind: tc.fieldKinds[i]}
 			}
 			key, err := DecodeIndexDataStoreKey(tc.inputBytes, &tc.desc, fieldDescs)
 			assert.NoError(t, err)
@@ -315,9 +252,9 @@ func TestDecodeIndexDataStoreKey_InvalidKey(t *testing.T) {
 	indexDesc := client.IndexDescription{ID: indexID, Fields: []client.IndexedFieldDescription{{}}}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			fieldDescs := make([]client.FieldDefinition, c.numFields)
+			fieldDescs := make([]client.CollectionFieldDescription, c.numFields)
 			for i := 0; i < c.numFields; i++ {
-				fieldDescs[i] = client.FieldDefinition{Kind: client.FieldKind_NILLABLE_INT}
+				fieldDescs[i] = client.CollectionFieldDescription{Kind: client.FieldKind_NILLABLE_INT}
 			}
 			_, err := DecodeIndexDataStoreKey(c.val, &indexDesc, fieldDescs)
 			assert.Error(t, err, c.name)

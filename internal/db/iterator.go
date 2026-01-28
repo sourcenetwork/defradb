@@ -15,11 +15,12 @@ import (
 
 	"github.com/ipfs/go-cid"
 
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/corekv"
+
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
 )
 
 // DocHeadBlocksIterator is an iterator that iterates over the head blocks of a document.
@@ -36,7 +37,7 @@ type DocHeadBlocksIterator struct {
 // NewHeadBlocksIterator creates a new DocHeadBlocksIterator.
 func NewHeadBlocksIterator(
 	ctx context.Context,
-	headstore datastore.DSReaderWriter,
+	headstore corekv.ReaderWriter,
 	blockstore datastore.Blockstore,
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
@@ -44,7 +45,7 @@ func NewHeadBlocksIterator(
 		DocID:   docID,
 		FieldID: core.COMPOSITE_NAMESPACE,
 	}
-	headset := clock.NewHeadSet(headstore, headStoreKey)
+	headset := coreblock.NewHeadSet(headstore, headStoreKey)
 	cids, _, err := headset.List(ctx)
 	if err != nil {
 		return nil, err
@@ -59,10 +60,15 @@ func NewHeadBlocksIterator(
 // NewHeadBlocksIteratorFromTxn creates a new DocHeadBlocksIterator from a transaction.
 func NewHeadBlocksIteratorFromTxn(
 	ctx context.Context,
-	txn datastore.Txn,
 	docID string,
 ) (*DocHeadBlocksIterator, error) {
-	return NewHeadBlocksIterator(ctx, txn.Headstore(), txn.Blockstore(), docID)
+	txn := datastore.CtxMustGetTxn(ctx)
+	return NewHeadBlocksIterator(
+		ctx,
+		txn.Headstore(),
+		txn.Blockstore(),
+		docID,
+	)
 }
 
 // Next advances the iterator to the next block.

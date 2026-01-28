@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -22,12 +23,10 @@ import (
 func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with a 1-to-1 join.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -51,7 +50,7 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "typeIndexJoin",
 						IncludeChildNodes: false,
@@ -70,7 +69,7 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "3",
+								"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 								"collectionName": "Author",
 								"prefixes": []string{
 									"/3",
@@ -90,7 +89,7 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
-										"collectionID":   "4",
+										"collectionID":   "bafyreie2qrsugrpukipgyuxhdtneyjf4tstssauisjvjfqhps4trc4c2py",
 										"collectionName": "AuthorContact",
 										"prefixes": []string{
 											"/4",
@@ -111,12 +110,10 @@ func TestDefaultExplainRequestWithAOneToOneJoin(t *testing.T) {
 func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with two level deep nested joins.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -155,7 +152,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "typeIndexJoin",
 						OccurancesToSkip:  0,
@@ -174,7 +171,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "3",
+								"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 								"collectionName": "Author",
 								"prefixes": []string{
 									"/3",
@@ -204,7 +201,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "4",
+								"collectionID":   "bafyreie2qrsugrpukipgyuxhdtneyjf4tstssauisjvjfqhps4trc4c2py",
 								"collectionName": "AuthorContact",
 								"prefixes": []string{
 									"/4",
@@ -223,7 +220,7 @@ func TestDefaultExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
-										"collectionID":   "5",
+										"collectionID":   "bafyreiatnwrljteqnieatpmki2m2d5jjr33np4cumtbzzl2ywfs34yeg3i",
 										"collectionName": "ContactAddress",
 										"prefixes": []string{
 											"/5",

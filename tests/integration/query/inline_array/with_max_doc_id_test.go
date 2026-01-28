@@ -13,6 +13,7 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,17 +21,16 @@ import (
 // func by targeting a specific docID in the parent select.
 func TestQueryInlineNillableFloatArray_WithDocIDAndMax_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with doc id, max of nillable float array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(docID: "bae-3f7e0f22-e253-53dd-b31b-df8b081292d9") {
+					Users(docID: "bae-234d84a8-37f9-57ea-9c53-34c247f3b272") {
 						name
 						_max(pageRatings: {})
 					}

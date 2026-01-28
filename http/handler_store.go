@@ -18,22 +18,29 @@ import (
 	"strconv"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 )
 
+const (
+	sseAcceptHeader  = "text/event-stream"
+	jsonAcceptHeader = "application/json"
+)
+
 type storeHandler struct{}
 
-func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := store.BasicImport(req.Context(), config.Filepath)
+	err := db.BasicImport(req.Context(), config.Filepath)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -41,15 +48,15 @@ func (s *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := store.BasicExport(req.Context(), &config)
+	err := db.BasicExport(req.Context(), &config)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -57,15 +64,15 @@ func (s *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
 
 	schema, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	cols, err := store.AddSchema(req.Context(), string(schema))
+	cols, err := db.AddSchema(req.Context(), string(schema))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -73,17 +80,17 @@ func (s *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, cols)
 }
 
-func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
 
-	var message patchSchemaRequest
+	var message patchCollectionRequest
 	err := requestJSON(req, &message)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	err = store.PatchSchema(req.Context(), message.Patch, message.Migration, message.SetAsDefaultVersion)
+	err = db.PatchCollection(req.Context(), message.Patch, message.Migration)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -91,33 +98,15 @@ func (s *storeHandler) PatchSchema(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
 
-	var patch string
-	err := requestJSON(req, &patch)
+	collectionVersionID, err := io.ReadAll(req.Body)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-
-	err = store.PatchCollection(req.Context(), patch)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	rw.WriteHeader(http.StatusOK)
-}
-
-func (s *storeHandler) SetActiveSchemaVersion(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
-
-	schemaVersionID, err := io.ReadAll(req.Body)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	err = store.SetActiveSchemaVersion(req.Context(), string(schemaVersionID))
+	err = db.SetActiveCollectionVersion(req.Context(), string(collectionVersionID))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -125,8 +114,8 @@ func (s *storeHandler) SetActiveSchemaVersion(rw http.ResponseWriter, req *http.
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
 
 	var message addViewRequest
 	err := requestJSON(req, &message)
@@ -135,7 +124,7 @@ func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defs, err := store.AddView(req.Context(), message.Query, message.SDL, message.Transform)
+	defs, err := db.AddView(req.Context(), message.Query, message.SDL, message.TransformCID)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -144,8 +133,12 @@ func (s *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, defs)
 }
 
-func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+type SetMigrationResponse struct {
+	LensID string `json:"lensId"`
+}
+
+func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
 
 	var cfg client.LensConfig
 	if err := requestJSON(req, &cfg); err != nil {
@@ -153,26 +146,69 @@ func (s *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err := store.SetMigration(req.Context(), cfg)
+	lensID, err := db.SetMigration(req.Context(), cfg)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	rw.WriteHeader(http.StatusOK)
+
+	responseJSON(rw, http.StatusOK, &SetMigrationResponse{LensID: lensID})
 }
 
-func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+type AddLensRequest struct {
+	Lens model.Lens `json:"lens"`
+}
+
+type AddLensResponse struct {
+	LensID string `json:"lensId"`
+}
+
+func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	var addLensReq AddLensRequest
+	if err := requestJSON(req, &addLensReq); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	lensID, err := db.AddLens(req.Context(), addLensReq.Lens)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, &AddLensResponse{LensID: lensID})
+}
+
+type ListLensesResponse struct {
+	Lenses map[string]model.Lens `json:"lenses"`
+}
+
+func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	lenses, err := db.ListLenses(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, &ListLensesResponse{Lenses: lenses})
+}
+
+func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
 
 	options := client.CollectionFetchOptions{}
 	if req.URL.Query().Has("name") {
 		options.Name = immutable.Some(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
-		options.SchemaVersionID = immutable.Some(req.URL.Query().Get("version_id"))
+		options.VersionID = immutable.Some(req.URL.Query().Get("version_id"))
 	}
-	if req.URL.Query().Has("schema_root") {
-		options.SchemaRoot = immutable.Some(req.URL.Query().Get("schema_root"))
+	if req.URL.Query().Has("collection_id") {
+		options.CollectionID = immutable.Some(req.URL.Query().Get("collection_id"))
 	}
 	if req.URL.Query().Has("get_inactive") {
 		getInactiveStr := req.URL.Query().Get("get_inactive")
@@ -185,52 +221,30 @@ func (s *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		options.IncludeInactive = immutable.Some(getInactive)
 	}
 
-	cols, err := store.GetCollections(req.Context(), options)
+	cols, err := db.GetCollections(req.Context(), options)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	colDesc := make([]client.CollectionDefinition, len(cols))
+	colDesc := make([]client.CollectionVersion, len(cols))
 	for i, col := range cols {
-		colDesc[i] = col.Definition()
+		colDesc[i] = col.Version()
 	}
 	responseJSON(rw, http.StatusOK, colDesc)
 }
 
-func (s *storeHandler) GetSchema(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
-
-	options := client.SchemaFetchOptions{}
-	if req.URL.Query().Has("version_id") {
-		options.ID = immutable.Some(req.URL.Query().Get("version_id"))
-	}
-	if req.URL.Query().Has("root") {
-		options.Root = immutable.Some(req.URL.Query().Get("root"))
-	}
-	if req.URL.Query().Has("name") {
-		options.Name = immutable.Some(req.URL.Query().Get("name"))
-	}
-
-	schema, err := store.GetSchemas(req.Context(), options)
-	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-		return
-	}
-	responseJSON(rw, http.StatusOK, schema)
-}
-
-func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
 
 	options := client.CollectionFetchOptions{}
 	if req.URL.Query().Has("name") {
 		options.Name = immutable.Some(req.URL.Query().Get("name"))
 	}
 	if req.URL.Query().Has("version_id") {
-		options.SchemaVersionID = immutable.Some(req.URL.Query().Get("version_id"))
+		options.VersionID = immutable.Some(req.URL.Query().Get("version_id"))
 	}
-	if req.URL.Query().Has("schema_root") {
-		options.SchemaRoot = immutable.Some(req.URL.Query().Get("schema_root"))
+	if req.URL.Query().Has("collection_id") {
+		options.CollectionID = immutable.Some(req.URL.Query().Get("collection_id"))
 	}
 	if req.URL.Query().Has("get_inactive") {
 		getInactiveStr := req.URL.Query().Get("get_inactive")
@@ -243,7 +257,7 @@ func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 		options.IncludeInactive = immutable.Some(getInactive)
 	}
 
-	err := store.RefreshViews(req.Context(), options)
+	err := db.RefreshViews(req.Context(), options)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -251,10 +265,10 @@ func (s *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+func (h *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
 
-	indexes, err := store.GetAllIndexes(req.Context())
+	indexes, err := db.GetAllIndexes(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -262,7 +276,18 @@ func (s *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) 
 	responseJSON(rw, http.StatusOK, indexes)
 }
 
-func (s *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) ListAllEncryptedIndexes(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	indexes, err := db.ListAllEncryptedIndexes(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, indexes)
+}
+
+func (h *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	if err := db.PrintDump(req.Context()); err != nil {
@@ -278,9 +303,134 @@ type GraphQLRequest struct {
 	Variables     map[string]any `json:"variables"`
 }
 
-func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
+func (h *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
+	// handle different request transports
+	// specifically, SSE
+	if req.Header.Get("Accept") == sseAcceptHeader {
+		execSSESubscription(rw, req)
+		return
+	}
 
+	// if its not a subscription, then its just a regular
+	// GraphQL over HTTP request
+	execHTTPRequest(rw, req)
+}
+
+func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	request, options, err := extractGraphQLRequest(req)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	result := db.ExecRequest(req.Context(), request.Query, options...)
+
+	// if at this point the we get a subscription query, it isn't using
+	// the correct accept headers, and we error
+	if result.Subscription != nil {
+		responseJSON(rw, http.StatusNotAcceptable, errorResponse{ErrInvalidSubscriptionTransport})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, result.GQL)
+}
+
+func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	request, options, err := extractGraphQLRequest(req)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	// upgrade to SSE connection
+	flusher, ok := rw.(http.Flusher)
+	if !ok {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
+		return
+	}
+
+	rw.Header().Add("Content-Type", sseAcceptHeader)
+	rw.Header().Add("Cache-Control", "no-cache")
+	rw.Header().Add("Connection", "keep-alive")
+	rw.WriteHeader(http.StatusOK)
+	flusher.Flush()
+
+	result := db.ExecRequest(req.Context(), request.Query, options...)
+
+	// if we get an error in the initial GQL request, we need to emit
+	// it as a SSE event, then we can close the connection/subscription
+	if len(result.GQL.Errors) > 0 {
+		data, err := json.Marshal(result.GQL)
+		if err != nil {
+			return
+		}
+
+		err = emitSSENextEvent(rw, flusher, string(data))
+		if err != nil {
+			return
+		}
+
+		_ = emitSSECompleteEvent(rw, flusher)
+		return
+	}
+
+	serverCtx, hasServerCtx := tryGetContexCtx(req)
+	var serverDone <-chan struct{}
+	if hasServerCtx {
+		serverDone = serverCtx.Done()
+	}
+	for {
+		select {
+		case <-req.Context().Done():
+			return
+		case <-serverDone:
+			// We need to check for closure of the server context
+			// otherwise the server won't gracefully shutdown until all
+			// connections are closed.
+			_ = emitSSECompleteEvent(rw, flusher)
+			return
+		case item, open := <-result.Subscription:
+			if !open {
+				return
+			}
+			data, err := json.Marshal(item)
+			if err != nil {
+				return
+			}
+
+			_ = emitSSENextEvent(rw, flusher, string(data))
+		}
+	}
+}
+
+func emitSSENextEvent(rw http.ResponseWriter, flusher http.Flusher, data string) error {
+	return emitSSEEvent(rw, flusher, "next", data)
+}
+
+func emitSSECompleteEvent(rw http.ResponseWriter, flusher http.Flusher) error {
+	return emitSSEEvent(rw, flusher, "complete", "{}")
+}
+
+func emitSSEEvent(rw http.ResponseWriter, flusher http.Flusher, eventType string, data string) error {
+	// For compatibility with SSE, the payload should have
+	// a line defining the `event`.
+	_, err := fmt.Fprintf(rw, "event: %s\n", eventType)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(rw, "data: %s\n\n", data)
+	if err != nil {
+		return err
+	}
+	flusher.Flush()
+	return nil
+}
+
+func extractGraphQLRequest(req *http.Request) (GraphQLRequest, []client.RequestOption, error) {
 	var request GraphQLRequest
 	switch {
 	case req.URL.Query().Get("query") != "":
@@ -293,20 +443,17 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 		if variablesFromQuery != "" {
 			var variables map[string]any
 			if err := json.Unmarshal([]byte(variablesFromQuery), &variables); err != nil {
-				responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-				return
+				return GraphQLRequest{}, nil, err
 			}
 			request.Variables = variables
 		}
 
 	case req.Body != nil:
 		if err := requestJSON(req, &request); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
-			return
+			return GraphQLRequest{}, nil, err
 		}
 	default:
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrMissingRequest})
-		return
+		return GraphQLRequest{}, nil, ErrMissingRequest
 	}
 	var options []client.RequestOption
 	if request.OperationName != "" {
@@ -315,47 +462,11 @@ func (s *storeHandler) ExecRequest(rw http.ResponseWriter, req *http.Request) {
 	if len(request.Variables) > 0 {
 		options = append(options, client.WithVariables(request.Variables))
 	}
-	result := store.ExecRequest(req.Context(), request.Query, options...)
 
-	if result.Subscription == nil {
-		responseJSON(rw, http.StatusOK, result.GQL)
-		return
-	}
-	flusher, ok := rw.(http.Flusher)
-	if !ok {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{ErrStreamingNotSupported})
-		return
-	}
-
-	rw.Header().Add("Content-Type", "text/event-stream")
-	rw.Header().Add("Cache-Control", "no-cache")
-	rw.Header().Add("Connection", "keep-alive")
-
-	rw.WriteHeader(http.StatusOK)
-	flusher.Flush()
-
-	for {
-		select {
-		case <-req.Context().Done():
-			return
-		case item, open := <-result.Subscription:
-			if !open {
-				return
-			}
-			data, err := json.Marshal(item)
-			if err != nil {
-				return
-			}
-			_, err = fmt.Fprintf(rw, "data: %s\n\n", data)
-			if err != nil {
-				return
-			}
-			flusher.Flush()
-		}
-	}
+	return request, options, nil
 }
 
-func (s *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
+func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	identity, err := db.GetNodeIdentity(req.Context())
@@ -376,12 +487,6 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/collection",
 	}
-	collectionDefinitionSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/collection_definition",
-	}
-	schemaSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/schema",
-	}
 	graphQLRequestSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/graphql_request",
 	}
@@ -394,8 +499,8 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	lensConfigSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/lens_config",
 	}
-	patchSchemaRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/patch_schema_request",
+	patchCollectionRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/patch_collection_request",
 	}
 	identitySchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/identity",
@@ -431,33 +536,19 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	addSchema.AddResponse(200, addSchemaResponse)
 	addSchema.Responses.Set("400", errorResponse)
 
-	patchSchemaRequest := openapi3.NewRequestBody().
-		WithJSONSchemaRef(patchSchemaRequestSchema)
-
-	patchSchema := openapi3.NewOperation()
-	patchSchema.OperationID = "patch_schema"
-	patchSchema.Description = "Update a schema definition"
-	patchSchema.Tags = []string{"schema"}
-	patchSchema.RequestBody = &openapi3.RequestBodyRef{
-		Value: patchSchemaRequest,
-	}
-	patchSchema.Responses = openapi3.NewResponses()
-	patchSchema.Responses.Set("200", successResponse)
-	patchSchema.Responses.Set("400", errorResponse)
-
-	setActiveSchemaVersionRequest := openapi3.NewRequestBody().
+	setActiveCollectionVersionRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
 
-	setActiveSchemaVersion := openapi3.NewOperation()
-	setActiveSchemaVersion.OperationID = "set_default_schema_version"
-	setActiveSchemaVersion.Description = "Set the default schema version for a collection"
-	setActiveSchemaVersion.Tags = []string{"schema"}
-	setActiveSchemaVersion.RequestBody = &openapi3.RequestBodyRef{
-		Value: setActiveSchemaVersionRequest,
+	setActiveCollectionVersion := openapi3.NewOperation()
+	setActiveCollectionVersion.OperationID = "set_default_collection_version"
+	setActiveCollectionVersion.Description = "Set the default version for a collection"
+	setActiveCollectionVersion.Tags = []string{"collection"}
+	setActiveCollectionVersion.RequestBody = &openapi3.RequestBodyRef{
+		Value: setActiveCollectionVersionRequest,
 	}
-	setActiveSchemaVersion.Responses = openapi3.NewResponses()
-	setActiveSchemaVersion.Responses.Set("200", successResponse)
-	setActiveSchemaVersion.Responses.Set("400", errorResponse)
+	setActiveCollectionVersion.Responses = openapi3.NewResponses()
+	setActiveCollectionVersion.Responses.Set("200", successResponse)
+	setActiveCollectionVersion.Responses.Set("400", errorResponse)
 
 	backupRequest := openapi3.NewRequestBody().
 		WithRequired(true).
@@ -488,7 +579,7 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	collectionNameQueryParam := openapi3.NewQueryParameter("name").
 		WithDescription("Collection name").
 		WithSchema(openapi3.NewStringSchema())
-	collectionSchemaRootQueryParam := openapi3.NewQueryParameter("schema_root").
+	collectionSchemaRootQueryParam := openapi3.NewQueryParameter("collection_id").
 		WithDescription("Collection schema root").
 		WithSchema(openapi3.NewStringSchema())
 	collectionVersionIdQueryParam := openapi3.NewQueryParameter("version_id").
@@ -534,24 +625,24 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	viewRefresh.Responses.Set("200", successResponse)
 	viewRefresh.Responses.Set("400", errorResponse)
 
+	patchCollectionRequest := openapi3.NewRequestBody().
+		WithJSONSchemaRef(patchCollectionRequestSchema)
+
 	patchCollection := openapi3.NewOperation()
 	patchCollection.OperationID = "patch_collection"
 	patchCollection.Description = "Update collection definitions"
 	patchCollection.Tags = []string{"collection"}
 	patchCollection.RequestBody = &openapi3.RequestBodyRef{
-		Value: openapi3.NewRequestBody().WithJSONSchema(openapi3.NewStringSchema()),
+		Value: patchCollectionRequest,
 	}
 	patchCollection.Responses = openapi3.NewResponses()
 	patchCollection.Responses.Set("200", successResponse)
 	patchCollection.Responses.Set("400", errorResponse)
 
-	collectionDefinitionsSchema := openapi3.NewArraySchema()
-	collectionDefinitionsSchema.Items = collectionDefinitionSchema
-
 	addViewResponseSchema := openapi3.NewOneOfSchema()
 	addViewResponseSchema.OneOf = openapi3.SchemaRefs{
-		collectionDefinitionSchema,
-		openapi3.NewSchemaRef("", collectionDefinitionsSchema),
+		collectionSchema,
+		openapi3.NewSchemaRef("", collectionsSchema),
 	}
 
 	addViewResponse := openapi3.NewResponse().
@@ -576,49 +667,64 @@ func (h *storeHandler) bindRoutes(router *Router) {
 		WithRequired(true).
 		WithJSONSchemaRef(lensConfigSchema)
 
+	setMigrationSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/set_migration",
+	}
+
+	setMigrationResponse := openapi3.NewResponse().
+		WithDescription("Lens info").
+		WithJSONSchemaRef(setMigrationSchema)
 	setMigration := openapi3.NewOperation()
-	setMigration.OperationID = "lens_set_migration"
-	setMigration.Description = "Add a new lens migration"
-	setMigration.Tags = []string{"lens"}
+	setMigration.OperationID = "collection_set_migration"
+	setMigration.Description = "Set a lens migration between collection versions"
+	setMigration.Tags = []string{"collection"}
 	setMigration.RequestBody = &openapi3.RequestBodyRef{
 		Value: setMigrationRequest,
 	}
 	setMigration.Responses = openapi3.NewResponses()
-	setMigration.Responses.Set("200", successResponse)
+	setMigration.AddResponse(200, setMigrationResponse)
 	setMigration.Responses.Set("400", errorResponse)
 
-	schemaNameQueryParam := openapi3.NewQueryParameter("name").
-		WithDescription("Schema name").
-		WithSchema(openapi3.NewStringSchema())
-	schemaSchemaRootQueryParam := openapi3.NewQueryParameter("root").
-		WithDescription("Schema root").
-		WithSchema(openapi3.NewStringSchema())
-	schemaVersionIDQueryParam := openapi3.NewQueryParameter("version_id").
-		WithDescription("Schema version id").
-		WithSchema(openapi3.NewStringSchema())
-
-	schemasSchema := openapi3.NewArraySchema()
-	schemasSchema.Items = schemaSchema
-
-	schemaResponseSchema := openapi3.NewOneOfSchema()
-	schemaResponseSchema.OneOf = openapi3.SchemaRefs{
-		schemaSchema,
-		openapi3.NewSchemaRef("", schemasSchema),
+	addLensRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/add_lens_request",
 	}
+	addLensRequestBody := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithJSONSchemaRef(addLensRequestSchema)
 
-	schemaResponse := openapi3.NewResponse().
-		WithDescription("Schema(s) with matching name, schema id, or version id.").
-		WithJSONSchema(schemaResponseSchema)
+	addLensResponseSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/add_lens_response",
+	}
+	addLensResponse := openapi3.NewResponse().
+		WithDescription("Lens CID").
+		WithJSONSchemaRef(addLensResponseSchema)
 
-	schemaDescribe := openapi3.NewOperation()
-	schemaDescribe.OperationID = "schema_describe"
-	schemaDescribe.Description = "Introspect schema(s) by name, schema root, or version id."
-	schemaDescribe.Tags = []string{"schema"}
-	schemaDescribe.AddParameter(schemaNameQueryParam)
-	schemaDescribe.AddParameter(schemaSchemaRootQueryParam)
-	schemaDescribe.AddParameter(schemaVersionIDQueryParam)
-	schemaDescribe.AddResponse(200, schemaResponse)
-	schemaDescribe.Responses.Set("400", errorResponse)
+	addLens := openapi3.NewOperation()
+	addLens.OperationID = "lens_add"
+	addLens.Description = "Add a lens to the lens store"
+	addLens.Tags = []string{"lens"}
+	addLens.RequestBody = &openapi3.RequestBodyRef{
+		Value: addLensRequestBody,
+	}
+	addLens.Responses = openapi3.NewResponses()
+	addLens.AddResponse(200, addLensResponse)
+	addLens.Responses.Set("400", errorResponse)
+
+	listLensesResponseSchema := &openapi3.SchemaRef{
+		Value: openapi3.NewObjectSchema().
+			WithProperty("lenses", openapi3.NewObjectSchema()),
+	}
+	listLensesResponse := openapi3.NewResponse().
+		WithDescription("List of stored lenses").
+		WithJSONSchemaRef(listLensesResponseSchema)
+
+	listLenses := openapi3.NewOperation()
+	listLenses.OperationID = "lens_list"
+	listLenses.Description = "List all stored lenses"
+	listLenses.Tags = []string{"lens"}
+	listLenses.Responses = openapi3.NewResponses()
+	listLenses.AddResponse(200, listLensesResponse)
+	listLenses.Responses.Set("400", errorResponse)
 
 	graphQLRequest := openapi3.NewRequestBody().
 		WithContent(openapi3.NewContentWithJSONSchemaRef(graphQLRequestSchema))
@@ -667,19 +773,65 @@ func (h *storeHandler) bindRoutes(router *Router) {
 	nodeIdentity.AddResponse(200, identityResponse)
 	nodeIdentity.Responses.Set("400", errorResponse)
 
+	indexSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/index",
+	}
+	indexArraySchema := openapi3.NewArraySchema()
+	indexArraySchema.Items = indexSchema
+
+	getAllIndexesMapSchema := openapi3.NewObjectSchema()
+	getAllIndexesMapSchema.AdditionalProperties = openapi3.AdditionalProperties{
+		Schema: openapi3.NewSchemaRef("", indexArraySchema),
+	}
+
+	getAllIndexesResponse := openapi3.NewResponse().
+		WithDescription("Map of collection names to their indexes").
+		WithJSONSchema(getAllIndexesMapSchema)
+
+	getAllIndexes := openapi3.NewOperation()
+	getAllIndexes.OperationID = "indexes_list_all"
+	getAllIndexes.Description = "List all indexes for all collections"
+	getAllIndexes.Tags = []string{"index"}
+	getAllIndexes.AddResponse(200, getAllIndexesResponse)
+	getAllIndexes.Responses.Set("400", errorResponse)
+
+	encryptedIndexSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/encrypted_index",
+	}
+	encryptedIndexArraySchema := openapi3.NewArraySchema()
+	encryptedIndexArraySchema.Items = encryptedIndexSchema
+
+	getAllEncryptedIndexesMapSchema := openapi3.NewObjectSchema()
+	getAllEncryptedIndexesMapSchema.AdditionalProperties = openapi3.AdditionalProperties{
+		Schema: openapi3.NewSchemaRef("", encryptedIndexArraySchema),
+	}
+
+	getAllEncryptedIndexesResponse := openapi3.NewResponse().
+		WithDescription("Map of collection names to their encrypted indexes").
+		WithJSONSchema(getAllEncryptedIndexesMapSchema)
+
+	getAllEncryptedIndexes := openapi3.NewOperation()
+	getAllEncryptedIndexes.OperationID = "encrypted_indexes_list_all"
+	getAllEncryptedIndexes.Description = "List all encrypted indexes for all collections"
+	getAllEncryptedIndexes.Tags = []string{"encrypted_index"}
+	getAllEncryptedIndexes.AddResponse(200, getAllEncryptedIndexesResponse)
+	getAllEncryptedIndexes.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/backup/export", http.MethodPost, backupExport, h.BasicExport)
 	router.AddRoute("/backup/import", http.MethodPost, backupImport, h.BasicImport)
 	router.AddRoute("/collections", http.MethodGet, collectionDescribe, h.GetCollection)
 	router.AddRoute("/collections", http.MethodPatch, patchCollection, h.PatchCollection)
+	router.AddRoute("/collections/indexes", http.MethodGet, getAllIndexes, h.GetAllIndexes)
+	router.AddRoute("/encrypted-indexes", http.MethodGet, getAllEncryptedIndexes, h.ListAllEncryptedIndexes)
+	router.AddRoute("/collections/default", http.MethodPost, setActiveCollectionVersion, h.SetActiveCollectionVersion)
+	router.AddRoute("/collections/migrations", http.MethodPost, setMigration, h.SetMigration)
 	router.AddRoute("/view", http.MethodPost, views, h.AddView)
 	router.AddRoute("/view/refresh", http.MethodPost, viewRefresh, h.RefreshViews)
 	router.AddRoute("/graphql", http.MethodGet, graphQLGet, h.ExecRequest)
 	router.AddRoute("/graphql", http.MethodPost, graphQLPost, h.ExecRequest)
 	router.AddRoute("/debug/dump", http.MethodGet, debugDump, h.PrintDump)
 	router.AddRoute("/schema", http.MethodPost, addSchema, h.AddSchema)
-	router.AddRoute("/schema", http.MethodPatch, patchSchema, h.PatchSchema)
-	router.AddRoute("/schema", http.MethodGet, schemaDescribe, h.GetSchema)
-	router.AddRoute("/schema/default", http.MethodPost, setActiveSchemaVersion, h.SetActiveSchemaVersion)
-	router.AddRoute("/lens", http.MethodPost, setMigration, h.SetMigration)
+	router.AddRoute("/lens", http.MethodPost, addLens, h.AddLens)
+	router.AddRoute("/lens", http.MethodGet, listLenses, h.ListLenses)
 	router.AddRoute("/node/identity", http.MethodGet, nodeIdentity, h.GetNodeIdentity)
 }

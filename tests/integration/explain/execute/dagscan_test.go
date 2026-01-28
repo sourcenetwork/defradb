@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,18 +21,14 @@ import (
 func TestExecuteExplainCommitsDagScan(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) commits request - dagScan.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
 			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					commits (docID: "bae-333455ca-1563-54c3-85a4-1db7ea4e9c59") {
+					_commits (docID: "bae-186c2484-c3ea-5993-95d6-cb886e1b13a1") {
 						links {
 							cid
 						}
@@ -47,59 +44,10 @@ func TestExecuteExplainCommitsDagScan(t *testing.T) {
 							{
 								"selectTopNode": dataMap{
 									"selectNode": dataMap{
-										"iterations":    uint64(6),
-										"filterMatches": uint64(5),
+										"iterations":    uint64(4),
+										"filterMatches": uint64(3),
 										"dagScanNode": dataMap{
-											"iterations": uint64(6),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	explainUtils.ExecuteTestCase(t, test)
-}
-
-func TestExecuteExplainLatestCommitsDagScan(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Description: "Explain (execute) latest commits request - dagScan.",
-
-		Actions: []any{
-			explainUtils.SchemaForExplainTests,
-
-			create2AddressDocuments(),
-			create2AuthorContactDocuments(),
-			create2AuthorDocuments(),
-
-			testUtils.ExplainRequest{
-				Request: `query @explain(type: execute) {
-					latestCommits(docID: "bae-333455ca-1563-54c3-85a4-1db7ea4e9c59") {
-						cid
-						links {
-							cid
-						}
-					}
-				}`,
-
-				ExpectedFullGraph: dataMap{
-					"explain": dataMap{
-						"executionSuccess": true,
-						"sizeOfResult":     1,
-						"planExecutions":   uint64(2),
-						"operationNode": []dataMap{
-							{
-								"selectTopNode": dataMap{
-									"selectNode": dataMap{
-										"iterations":    uint64(2),
-										"filterMatches": uint64(1),
-										"dagScanNode": dataMap{
-											"iterations": uint64(2),
+											"iterations": uint64(4),
 										},
 									},
 								},

@@ -13,21 +13,21 @@ package field_kinds
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_IfFloatFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If float field is set to null, should set to nil",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						rate: Float
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"rate": 0.55
 				}`,
@@ -37,7 +37,7 @@ func TestMutationUpdate_IfFloatFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"rate": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

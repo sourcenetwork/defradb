@@ -19,29 +19,30 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"time"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var _ client.TxnStore = (*Wrapper)(nil)
+var _ client.P2P = (*Wrapper)(nil)
 
 type Wrapper struct {
-	node       *node.Node
-	cmd        *cliWrapper
-	handler    *http.Handler
-	httpServer *httptest.Server
+	node         *node.Node
+	cmd          *cliWrapper
+	handler      *http.Handler
+	httpServer   *httptest.Server
+	serverCancel context.CancelFunc
 }
 
 // NewWrapper takes a Node, and a SourceHub address used to pay for SourceHub transactions.
@@ -53,56 +54,74 @@ func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 		return nil, err
 	}
 
-	httpServer := httptest.NewServer(handler)
+	ctx, cancel := context.WithCancel(context.Background())
+	handlerWithCtx := http.InjectServerContext(ctx)(handler)
+	httpServer := httptest.NewServer(handlerWithCtx)
 	cmd := newCliWrapper(httpServer.URL, sourceHubAddress)
 
 	return &Wrapper{
-		node:       node,
-		cmd:        cmd,
-		httpServer: httpServer,
-		handler:    handler,
+		node:         node,
+		cmd:          cmd,
+		httpServer:   httpServer,
+		handler:      handler,
+		serverCancel: cancel,
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() peer.AddrInfo {
+func (w *Wrapper) PeerInfo() ([]string, error) {
 	args := []string{"client", "p2p", "info"}
 
 	data, err := w.cmd.execute(context.Background(), args)
 	if err != nil {
-		panic(fmt.Sprintf("failed to get peer info: %v", err))
+		return nil, err
 	}
-	var info peer.AddrInfo
-	if err := json.Unmarshal(data, &info); err != nil {
-		panic(fmt.Sprintf("failed to get peer info: %v", err))
+	var addresses []string
+	if err := json.Unmarshal(data, &addresses); err != nil {
+		return nil, err
 	}
-	return info
+	return addresses, nil
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	args := []string{"client", "p2p", "replicator", "set"}
-	args = append(args, "--collection", strings.Join(rep.Collections, ","))
+func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
+	args := []string{"client", "p2p", "active-peers"}
 
-	info, err := json.Marshal(rep.Info)
+	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	args = append(args, string(info))
+	var peers []string
+	if err := json.Unmarshal(data, &peers); err != nil {
+		return nil, err
+	}
+	return peers, nil
+}
 
-	_, err = w.cmd.execute(ctx, args)
+func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
+	args := []string{"client", "p2p", "connect"}
+
+	args = append(args, strings.Join(addresses, ","))
+
+	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
+func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+	args := []string{"client", "p2p", "replicator", "set"}
+	args = append(args, "--collection", strings.Join(collections, ","))
+
+	args = append(args, strings.Join(addresses, ","))
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
-	args = append(args, "--collection", strings.Join(rep.Collections, ","))
+	args = append(args, "--collection", strings.Join(collections, ","))
 
-	info, err := json.Marshal(rep.Info)
-	if err != nil {
-		return err
-	}
-	args = append(args, string(info))
+	args = append(args, id)
 
-	_, err = w.cmd.execute(ctx, args)
+	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
@@ -120,7 +139,7 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	return reps, nil
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	args := []string{"client", "p2p", "collection", "add"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
@@ -128,7 +147,7 @@ func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string)
 	return err
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
+func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	args := []string{"client", "p2p", "collection", "remove"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
@@ -148,6 +167,81 @@ func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	return cols, nil
+}
+
+func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+	args := []string{"client", "p2p", "document", "add"}
+	args = append(args, strings.Join(docIDs, ","))
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+	args := []string{"client", "p2p", "document", "remove"}
+	args = append(args, strings.Join(docIDs, ","))
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
+}
+
+func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+	args := []string{"client", "p2p", "document", "getall"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var docIDs []string
+	if err := json.Unmarshal(data, &docIDs); err != nil {
+		return nil, err
+	}
+	return docIDs, nil
+}
+
+func (w *Wrapper) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+) error {
+	args := []string{"client", "p2p", "document", "sync"}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		args = append(args, "--timeout", time.Until(deadline).String())
+	}
+
+	args = append(args, collectionName)
+	args = append(args, docIDs...)
+
+	_, err := w.cmd.execute(context.Background(), args)
+	return err
+}
+
+func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+	args := []string{"client", "p2p", "collection", "sync-versions"}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		args = append(args, "--timeout", time.Until(deadline).String())
+	}
+
+	args = append(args, versionIDs...)
+
+	_, err := w.cmd.execute(context.Background(), args)
+	return err
+}
+
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	args := []string{"client", "p2p", "collection", "sync-branchable", collectionID}
+
+	deadline, hasDeadline := ctx.Deadline()
+	if hasDeadline {
+		args = append(args, "--timeout", time.Until(deadline).String())
+	}
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
@@ -176,7 +270,7 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	return err
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
+func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	args := []string{"client", "schema", "add"}
 	args = append(args, schema)
 
@@ -184,23 +278,19 @@ func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.Collec
 	if err != nil {
 		return nil, err
 	}
-	var cols []client.CollectionDescription
+	var cols []client.CollectionVersion
 	if err := json.Unmarshal(data, &cols); err != nil {
 		return nil, err
 	}
 	return cols, nil
 }
 
-func (w *Wrapper) PatchSchema(
+func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	setDefault bool,
 ) error {
-	args := []string{"client", "schema", "patch"}
-	if setDefault {
-		args = append(args, "--set-active")
-	}
+	args := []string{"client", "collection", "patch"}
 	args = append(args, patch)
 
 	if migration.HasValue() {
@@ -215,19 +305,9 @@ func (w *Wrapper) PatchSchema(
 	return err
 }
 
-func (w *Wrapper) PatchCollection(
-	ctx context.Context,
-	patch string,
-) error {
-	args := []string{"client", "collection", "patch"}
-	args = append(args, patch)
-	_, err := w.cmd.execute(ctx, args)
-	return err
-}
-
-func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	args := []string{"client", "schema", "set-active"}
-	args = append(args, schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+	args := []string{"client", "collection", "set-active"}
+	args = append(args, collectionVersionID)
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
@@ -237,25 +317,21 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
+	transformCID immutable.Option[string],
+) ([]client.CollectionVersion, error) {
 	args := []string{"client", "view", "add"}
 	args = append(args, query)
 	args = append(args, sdl)
 
-	if transform.HasValue() {
-		lenses, err := json.Marshal(transform.Value())
-		if err != nil {
-			return nil, err
-		}
-		args = append(args, string(lenses))
+	if transformCID.HasValue() {
+		args = append(args, "--lens-cid", transformCID.Value())
 	}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
 		return nil, err
 	}
-	var defs []client.CollectionDefinition
+	var defs []client.CollectionVersion
 	if err := json.Unmarshal(data, &defs); err != nil {
 		return nil, err
 	}
@@ -267,11 +343,11 @@ func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFet
 	if options.Name.HasValue() {
 		args = append(args, "--name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		args = append(args, "--version", options.SchemaVersionID.Value())
+	if options.VersionID.HasValue() {
+		args = append(args, "--version-id", options.VersionID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		args = append(args, "--schema", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		args = append(args, "--collection-id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -281,23 +357,63 @@ func (w *Wrapper) RefreshViews(ctx context.Context, options client.CollectionFet
 	return err
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
-	args := []string{"client", "schema", "migration", "set"}
+func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+	args := []string{"client", "lens", "set"}
 
 	lenses, err := json.Marshal(config.Lens)
 	if err != nil {
-		return err
+		return "", err
 	}
-	args = append(args, config.SourceSchemaVersionID)
-	args = append(args, config.DestinationSchemaVersionID)
+	args = append(args, config.SourceCollectionVersionID)
+	args = append(args, config.DestinationCollectionVersionID)
 	args = append(args, string(lenses))
 
-	_, err = w.cmd.execute(ctx, args)
-	return err
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return "", err
+	}
+
+	var lensID string
+	if err := json.Unmarshal(data, &lensID); err != nil {
+		return "", err
+	}
+	return lensID, nil
 }
 
-func (w *Wrapper) LensRegistry() client.LensRegistry {
-	return &LensRegistry{w.cmd}
+func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	args := []string{"client", "lens", "add"}
+
+	lensJSON, err := json.Marshal(lens)
+	if err != nil {
+		return "", err
+	}
+	args = append(args, string(lensJSON))
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return "", err
+	}
+
+	var lensID string
+	if err := json.Unmarshal(data, &lensID); err != nil {
+		return "", err
+	}
+	return lensID, nil
+}
+
+func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	args := []string{"client", "lens", "list"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+
+	var lenses map[string]model.Lens
+	if err := json.Unmarshal(data, &lenses); err != nil {
+		return nil, err
+	}
+	return lenses, nil
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
@@ -318,11 +434,11 @@ func (w *Wrapper) GetCollections(
 	if options.Name.HasValue() {
 		args = append(args, "--name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		args = append(args, "--version", options.SchemaVersionID.Value())
+	if options.VersionID.HasValue() {
+		args = append(args, "--version-id", options.VersionID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		args = append(args, "--schema", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		args = append(args, "--collection-id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		args = append(args, "--get-inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -332,7 +448,7 @@ func (w *Wrapper) GetCollections(
 	if err != nil {
 		return nil, err
 	}
-	var colDesc []client.CollectionDefinition
+	var colDesc []client.CollectionVersion
 	if err := json.Unmarshal(data, &colDesc); err != nil {
 		return nil, err
 	}
@@ -343,42 +459,6 @@ func (w *Wrapper) GetCollections(
 	return cols, err
 }
 
-func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	schemas, err := w.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-
-	// schemas will always have length == 1 here
-	return schemas[0], nil
-}
-
-func (w *Wrapper) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	args := []string{"client", "schema", "describe"}
-	if options.ID.HasValue() {
-		args = append(args, "--version", options.ID.Value())
-	}
-	if options.Root.HasValue() {
-		args = append(args, "--root", options.Root.Value())
-	}
-	if options.Name.HasValue() {
-		args = append(args, "--name", options.Name.Value())
-	}
-
-	data, err := w.cmd.execute(ctx, args)
-	if err != nil {
-		return nil, err
-	}
-	var schema []client.SchemaDescription
-	if err := json.Unmarshal(data, &schema); err != nil {
-		return nil, err
-	}
-	return schema, err
-}
-
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 
@@ -387,6 +467,22 @@ func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 		return nil, err
 	}
 	var indexes map[client.CollectionName][]client.IndexDescription
+	if err := json.Unmarshal(data, &indexes); err != nil {
+		return nil, err
+	}
+	return indexes, nil
+}
+
+func (w *Wrapper) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	args := []string{"client", "encrypted-index", "list"}
+
+	data, err := w.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var indexes map[client.CollectionName][]client.EncryptedIndexDescription
 	if err := json.Unmarshal(data, &indexes); err != nil {
 		return nil, err
 	}
@@ -472,13 +568,13 @@ func (w *Wrapper) execRequestSubscription(r io.Reader) chan client.GQLResult {
 	return resCh
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	args := []string{"client", "tx", "create"}
 	if readOnly {
 		args = append(args, "--read-only")
 	}
 
-	data, err := w.cmd.execute(ctx, args)
+	data, err := w.cmd.execute(context.Background(), args)
 	if err != nil {
 		return nil, err
 	}
@@ -490,10 +586,10 @@ func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, err
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{tx, w.cmd}, nil
+	return &Transaction{w, tx}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	args := []string{"client", "tx", "create"}
 	args = append(args, "--concurrent")
 
@@ -501,7 +597,7 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 		args = append(args, "--read-only")
 	}
 
-	data, err := w.cmd.execute(ctx, args)
+	data, err := w.cmd.execute(context.Background(), args)
 	if err != nil {
 		return nil, err
 	}
@@ -513,36 +609,16 @@ func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastor
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{tx, w.cmd}, nil
-}
-
-func (w *Wrapper) Rootstore() datastore.Rootstore {
-	return w.node.DB.Rootstore()
-}
-
-func (w *Wrapper) Encstore() datastore.Blockstore {
-	return w.node.DB.Encstore()
-}
-
-func (w *Wrapper) Blockstore() datastore.Blockstore {
-	return w.node.DB.Blockstore()
-}
-
-func (w *Wrapper) Headstore() ds.Read {
-	return w.node.DB.Headstore()
-}
-
-func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
-	return w.node.DB.Peerstore()
+	return &Transaction{w, tx}, nil
 }
 
 func (w *Wrapper) Close() {
-	w.httpServer.CloseClientConnections()
+	w.serverCancel()
 	w.httpServer.Close()
 	_ = w.node.Close(context.Background())
 }
 
-func (w *Wrapper) Events() *event.Bus {
+func (w *Wrapper) Events() event.Bus {
 	return w.node.DB.Events()
 }
 
@@ -555,10 +631,6 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
-}
-
-func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.Peer.Connect(ctx, addr)
 }
 
 func (w *Wrapper) Host() string {
@@ -577,4 +649,14 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
 	return immutable.Some(res), nil
+}
+
+func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+	args := []string{"client", "block", "verify-signature"}
+
+	args = append(args, "--type", string(pubKey.Type()))
+	args = append(args, pubKey.String(), cid)
+
+	_, err := w.cmd.execute(ctx, args)
+	return err
 }

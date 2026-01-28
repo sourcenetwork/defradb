@@ -14,16 +14,17 @@ import (
 	"math"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
 
 func TestQuerySimple_WithMinOnUndefinedObject_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query min on undefined object",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_min
 				}`,
@@ -37,9 +38,8 @@ func TestQuerySimple_WithMinOnUndefinedObject_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMinOnUndefinedField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query min on undefined field",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_min(Users: {})
 				}`,
@@ -53,9 +53,8 @@ func TestQuerySimple_WithMinOnUndefinedField_ReturnsError(t *testing.T) {
 
 func TestQuerySimple_WithMinOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query min on empty",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_min(Users: {field: Age})
 				}`,
@@ -71,21 +70,20 @@ func TestQuerySimple_WithMinOnEmptyCollection_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMin_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query min",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_min(Users: {field: Age})
 				}`,
@@ -101,20 +99,25 @@ func TestQuerySimple_WithMin_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			// GraphQL does not support 64 bit int
-			testUtils.CollectionSaveMutationType,
-			testUtils.CollectionNamedMutationType,
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// JavaScript does not support 64 bit int
+			state.GoClientType,
+			state.CLIClientType,
+			state.HTTPClientType,
 		}),
-		Description: "Simple query min and max value int",
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			// GraphQL does not support 64 bit int
+			state.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 					"Age":  int64(math.MaxInt64),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					_max(Users: {field: Age})
 				}`,
@@ -130,9 +133,8 @@ func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 
 func TestQuerySimple_WithAliasedMinOnEmptyCollection_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query aliased min on empty",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					minimum: _min(Users: {field: Age})
 				}`,

@@ -13,26 +13,26 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimple_WithAliasEqualsFilterBlock_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with alias filter(age)",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_alias: {UserAge: {_eq: 21}}}) {
 						Name
@@ -56,21 +56,20 @@ func TestQuerySimple_WithAliasEqualsFilterBlock_ShouldFilter(t *testing.T) {
 
 func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with empty alias filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_alias: {}}) {
 						Name
@@ -80,15 +79,16 @@ func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
-							"Age":  int64(21),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -98,21 +98,20 @@ func TestQuerySimple_WithEmptyAlias_ShouldNotFilter(t *testing.T) {
 
 func TestQuerySimple_WithNullAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with null alias filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_alias: null}) {
 						Name
@@ -131,21 +130,20 @@ func TestQuerySimple_WithNullAlias_ShouldFilterAll(t *testing.T) {
 
 func TestQuerySimple_WithNonObjectAlias_ShouldFilterAll(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with non object alias filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_alias: 1}) {
 						Name
@@ -164,21 +162,20 @@ func TestQuerySimple_WithNonObjectAlias_ShouldFilterAll(t *testing.T) {
 
 func TestQuerySimple_WithNonExistantAlias_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with non existant alias filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_alias: {UserAge: {_eq: 21}}}) {
 						Name
@@ -195,21 +192,20 @@ func TestQuerySimple_WithNonExistantAlias_ShouldReturnError(t *testing.T) {
 
 func TestQuerySimple_WithNonAliasedField_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with non aliased filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_alias: {Age: {_eq: 32}}}) {
 						Name
@@ -233,21 +229,20 @@ func TestQuerySimple_WithNonAliasedField_ShouldMatchFilter(t *testing.T) {
 
 func TestQuerySimple_WithCompoundAlias_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with compound alias filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {
 						_and: [
@@ -276,21 +271,20 @@ func TestQuerySimple_WithCompoundAlias_ShouldMatchFilter(t *testing.T) {
 
 func TestQuerySimple_WithAliasWithCompound_ShouldMatchFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with alias with compound filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {
 						_alias: {

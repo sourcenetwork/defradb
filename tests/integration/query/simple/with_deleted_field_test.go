@@ -13,25 +13,26 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimple_WithDeletedField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy"
 				}`,
@@ -42,7 +43,7 @@ func TestQuerySimple_WithDeletedField(t *testing.T) {
 			testUtils.DeleteDoc{
 				DocID: 1,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(showDeleted: true) {
 							_deleted
@@ -61,6 +62,7 @@ func TestQuerySimple_WithDeletedField(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

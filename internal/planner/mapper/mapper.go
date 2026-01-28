@@ -21,6 +21,8 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 )
 
 const (
@@ -30,7 +32,7 @@ const (
 )
 
 var (
-	FilterEqOp = &Operator{Operation: "_eq"}
+	FilterEqOp = &Operator{Operation: connor.EqualOp}
 )
 
 // SelectionType is the type of selection.
@@ -39,6 +41,7 @@ type SelectionType int
 const (
 	ObjectSelection SelectionType = iota
 	CommitSelection
+	EncryptedSearchSelection
 )
 
 // ToOperation converts the given [request.OperationDefinition] into an [Operation].
@@ -47,7 +50,7 @@ const (
 // yielded by the [Operation].
 func ToOperation(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	operationRequest *request.OperationDefinition,
 ) (*Operation, error) {
 	operation := &Operation{
@@ -94,7 +97,7 @@ func ToOperation(
 // yielded by the [Select].
 func ToSelect(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 ) (*Select, error) {
@@ -108,7 +111,7 @@ func ToSelect(
 // yielded by the [Select].
 func toSelect(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	thisIndex int,
 	selectRequest *request.Select,
@@ -120,7 +123,11 @@ func toSelect(
 		rootSelectType = CommitSelection
 	}
 
-	collectionName, err := getCollectionName(ctx, store, rootSelectType, selectRequest, parentCollectionName)
+	if selectRequest.IsEncrypted {
+		rootSelectType = EncryptedSearchSelection
+	}
+
+	collectionName, err := getCollectionName(ctx, rootSelectType, selectRequest, parentCollectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +173,7 @@ func toSelect(
 		return nil, err
 	}
 
-	if len(definition.Schema.Fields) != 0 {
+	if len(definition.Fields) != 0 {
 		fields, err = resolveSecondaryRelationIDs(
 			ctx,
 			store,
@@ -191,7 +198,7 @@ func toSelect(
 				if fieldDesc.Kind.IsArray() {
 					return nil, NewErrInvalidFieldToGroupBy(groupByField)
 				}
-				groupByFields[index] = groupByField + request.RelatedObjectID
+				groupByFields[index] = request.ToFieldID(groupByField)
 			}
 		}
 
@@ -212,12 +219,14 @@ func toSelect(
 	if err != nil {
 		return nil, err
 	}
+
 	return &Select{
 		Targetable:      targetable,
 		DocumentMapping: mapping,
 		Cid:             selectRequest.CID,
 		CollectionName:  collectionName,
 		Fields:          fields,
+		IsEncrypted:     selectRequest.IsEncrypted,
 	}, nil
 }
 
@@ -225,7 +234,7 @@ func toSelect(
 // Modifies the consumed existingFields and mapping accordingly.
 func resolveOrderDependencies(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	descName string,
 	source immutable.Option[request.OrderBy],
@@ -308,7 +317,7 @@ outer:
 // and add a coorsponding select field(s)
 func resolveChildOrder(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	descName string,
 	orderChildField string,
@@ -362,9 +371,18 @@ func resolveAggregates(
 	inputFields []Requestable,
 	mapping *core.DocumentMapping,
 	collectionName string,
-	def client.CollectionDefinition,
-	store client.Store,
+	def client.CollectionVersion,
+	store client.TxnStore,
 ) ([]Requestable, error) {
+	var collectionShortID uint32
+	if def.CollectionID != "" {
+		var err error
+		collectionShortID, err = id.GetShortCollectionID(ctx, def.CollectionID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	fields := inputFields
 	dependenciesByParentId := map[int][]int{}
 	for _, aggregate := range aggregates {
@@ -397,13 +415,18 @@ func resolveAggregates(
 						}
 					}
 
+					fieldShortID, err := id.GetShortFieldID(ctx, collectionShortID, fieldDesc.FieldID)
+					if err != nil {
+						return nil, err
+					}
+
 					// If the hostExternalName matches a non-object field
 					// we don't have to search for it and can just construct the
 					// targeting info here.
 					hasHost = true
 					host = &Targetable{
 						Field: Field{
-							Index: int(fieldDesc.ID),
+							Index: int(fieldShortID),
 							Name:  target.hostExternalName,
 						},
 						Filter:  ToFilter(target.filter.Value(), mapping),
@@ -431,7 +454,6 @@ func resolveAggregates(
 			if !hasHost {
 				// If a matching host is not found, we need to construct and add it.
 				index := mapping.GetNextIndex()
-
 				hostSelectRequest := &request.Select{
 					Field: request.Field{
 						Name: target.hostExternalName,
@@ -442,7 +464,7 @@ func resolveAggregates(
 					collectionName = ""
 				}
 
-				childCollectionName, err := getCollectionName(ctx, store, rootSelectType, hostSelectRequest, collectionName)
+				childCollectionName, err := getCollectionName(ctx, rootSelectType, hostSelectRequest, collectionName)
 				if err != nil {
 					return nil, err
 				}
@@ -496,7 +518,9 @@ func resolveAggregates(
 				if err != nil {
 					return nil, err
 				}
-				dummyJoin := &Select{
+
+				var dummyJoin Requestable
+				dummyJoinSelect := &Select{
 					Targetable: Targetable{
 						Field: Field{
 							Index: index,
@@ -510,12 +534,27 @@ func resolveAggregates(
 					DocumentMapping: childMapping,
 					Fields:          childFields,
 				}
+				hostTarget = &dummyJoinSelect.Targetable
+
+				if rootSelectType == CommitSelection {
+					dummyJoinCommit := &CommitSelect{
+						Select: *dummyJoinSelect,
+						Depth:  immutable.Some(uint64(0)),
+					}
+					index := childMapping.FirstIndexOfName(request.CidFieldName)
+
+					dummyJoinCommit.Fields = append(dummyJoinCommit.Fields, &Field{
+						Index: index,
+						Name:  request.CidFieldName,
+					})
+					dummyJoin = dummyJoinCommit
+				} else {
+					dummyJoin = dummyJoinSelect
+				}
 
 				fields = append(fields, dummyJoin)
 				mapping.Add(index, target.hostExternalName)
-
 				host = dummyJoin
-				hostTarget = &dummyJoin.Targetable
 			} else {
 				var isTargetable bool
 				hostTarget, isTargetable = host.AsTargetable()
@@ -754,7 +793,7 @@ func getRequestables(
 	selectRequest *request.Select,
 	mapping *core.DocumentMapping,
 	collectionName string,
-	store client.Store,
+	store client.TxnStore,
 ) (fields []Requestable, aggregates []*aggregateRequest, err error) {
 	for _, field := range selectRequest.Fields {
 		switch f := field.(type) {
@@ -789,6 +828,21 @@ func getRequestables(
 			})
 
 			mapping.Add(index, f.Name)
+		case *request.CommitSelect:
+			index := mapping.GetNextIndex()
+			innerSelect, err := toCommitSelect(ctx, store, f, index)
+			if err != nil {
+				return nil, nil, err
+			}
+			fields = append(fields, innerSelect)
+			mapping.SetChildAt(index, innerSelect.DocumentMapping)
+
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   getRenderKey(&f.Field),
+			})
+
+			mapping.Add(index, f.Name)
 		case *request.Aggregate:
 			index := mapping.GetNextIndex()
 			aggregateRequest, err := getAggregateRequests(index, f)
@@ -803,6 +857,26 @@ func getRequestables(
 				Key:   getRenderKey(&f.Field),
 			})
 
+			mapping.Add(index, f.Name)
+		case *request.Similarity:
+			index := mapping.GetNextIndex()
+			fields = append(fields, &Similarity{
+				Field: Field{
+					Index: index,
+					Name:  f.Name,
+				},
+				Vector: f.Vector,
+				SimilarityTarget: Targetable{
+					Field: Field{
+						Index: mapping.FirstIndexOfName(f.Target),
+						Name:  f.Target,
+					},
+				},
+			})
+			mapping.RenderKeys = append(mapping.RenderKeys, core.RenderKey{
+				Index: index,
+				Key:   getRenderKey(&f.Field),
+			})
 			mapping.Add(index, f.Name)
 		default:
 			return nil, nil, client.NewErrUnhandledType("field", field)
@@ -841,7 +915,6 @@ func getAggregateRequests(index int, aggregate *request.Aggregate) (aggregateReq
 // if this is a commit request.
 func getCollectionName(
 	ctx context.Context,
-	store client.Store,
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	parentCollectionName string,
@@ -854,90 +927,71 @@ func getCollectionName(
 		return parentCollectionName, nil
 	} else if rootSelectType == CommitSelection {
 		return parentCollectionName, nil
+	} else if rootSelectType == EncryptedSearchSelection {
+		return strings.TrimPrefix(selectRequest.Name, request.EncryptedCollectionPrefix), nil
 	}
 
 	if parentCollectionName != "" {
-		parentCollection, err := store.GetCollectionByName(ctx, parentCollectionName)
+		parentCollection, err := description.GetCollectionByName(ctx, parentCollectionName)
 		if err != nil {
 			return "", err
 		}
 
-		hostFieldDesc, parentHasField := parentCollection.Definition().GetFieldByName(selectRequest.Name)
+		hostFieldDesc, parentHasField := parentCollection.GetFieldByName(selectRequest.Name)
 		if parentHasField && hostFieldDesc.Kind.IsObject() {
-			def, found, err := client.GetDefinitionFromStore(ctx, store, parentCollection.Definition(), hostFieldDesc.Kind)
+			def, found, err := description.GetRelatedCollection(ctx, parentCollection, hostFieldDesc.Kind)
 			if !found {
 				return "", NewErrTypeNotFound(hostFieldDesc.Kind.String())
 			}
 
 			// If this field exists on the parent, and it is a child object
 			// then this collection name is the collection name of the child.
-			return def.GetName(), err
+			return def.Name, err
 		}
 	}
 
 	return selectRequest.Name, nil
 }
 
-// getTopLevelInfo returns the collection description and maps the fields directly on the object.
+// getTopLevelInfo returns the collection version and maps the fields directly on the object.
 func getTopLevelInfo(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	selectRequest *request.Select,
 	collectionName string,
-) (*core.DocumentMapping, client.CollectionDefinition, error) {
+) (*core.DocumentMapping, client.CollectionVersion, error) {
 	mapping := core.NewDocumentMapping()
 
 	if _, isAggregate := request.Aggregates[selectRequest.Name]; isAggregate {
 		// If this is a (top-level) aggregate, then it will have no collection
 		// description, and no top-level fields, so we return an empty mapping only
-		return mapping, client.CollectionDefinition{}, nil
+		return mapping, client.CollectionVersion{}, nil
+	}
+
+	if rootSelectType == EncryptedSearchSelection {
+		mapping.Add(core.DocIDFieldIndex, request.DocIDsFieldName)
+		mapping.SetTypeName(request.EncryptedSearchResultName)
+		return mapping, client.CollectionVersion{}, nil
 	}
 
 	if rootSelectType == ObjectSelection {
-		var definition client.CollectionDefinition
 		collection, err := store.GetCollectionByName(ctx, collectionName)
 		if err != nil {
-			// If the collection is not found, check to see if a schema of that name exists,
-			// if so, this must be an embedded object.
-			//
-			// Note: This is a poor way to check if a collection exists or not, see
-			// https://github.com/sourcenetwork/defradb/issues/2146
-			schemas, err := store.GetSchemas(
-				ctx,
-				client.SchemaFetchOptions{
-					Name: immutable.Some(collectionName),
-				},
-			)
-			if err != nil {
-				return nil, client.CollectionDefinition{}, err
-			}
-			if len(schemas) == 0 {
-				return nil, client.CollectionDefinition{}, NewErrTypeNotFound(collectionName)
+			return nil, client.CollectionVersion{}, err
+		}
+
+		mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
+
+		// Map all fields from schema into the map as they are fetched automatically
+		for _, f := range collection.Version().Fields {
+			if f.RelationName.HasValue() && f.Kind.IsObject() {
+				// Objects are skipped, as they are not fetched by default and
+				// have to be requested via selects.
+				continue
 			}
 
-			for i, f := range schemas[0].Fields {
-				// As embedded objects do not have collections/field-ids, we just take the index
-				mapping.Add(int(i), f.Name)
-			}
-
-			definition = client.CollectionDefinition{
-				// `schemas` will contain all versions of that name, as views cannot be updated atm this should
-				// be fine for now
-				Schema: schemas[0],
-			}
-		} else {
-			mapping.Add(core.DocIDFieldIndex, request.DocIDFieldName)
-			definition = collection.Definition()
-			// Map all fields from schema into the map as they are fetched automatically
-			for _, f := range definition.GetFields() {
-				if f.Kind.IsObject() {
-					// Objects are skipped, as they are not fetched by default and
-					// have to be requested via selects.
-					continue
-				}
-				mapping.Add(int(f.ID), f.Name)
-			}
+			mapping.Add(mapping.GetNextIndex(), f.Name)
 		}
 
 		// Setting the type name must be done after adding the fields, as
@@ -946,18 +1000,19 @@ func getTopLevelInfo(
 
 		mapping.Add(mapping.GetNextIndex(), request.DeletedFieldName)
 
-		return mapping, definition, nil
+		return mapping, collection.Version(), nil
 	}
 
-	if selectRequest.Name == request.LinksFieldName {
-		for i, f := range request.LinksFields {
+	switch selectRequest.Name {
+	case request.SignatureFieldName:
+		for i, f := range request.SignatureFields {
 			mapping.Add(i, f)
 		}
 
 		// Setting the type name must be done after adding the fields, as
 		// the typeName index is dynamic, but the field indexes are not
-		mapping.SetTypeName(request.LinksFieldName)
-	} else {
+		mapping.SetTypeName(request.SignatureFieldName)
+	default:
 		for i, f := range request.VersionFields {
 			mapping.Add(i, f)
 		}
@@ -967,12 +1022,12 @@ func getTopLevelInfo(
 		mapping.SetTypeName(request.CommitTypeName)
 	}
 
-	return mapping, client.CollectionDefinition{}, nil
+	return mapping, client.CollectionVersion{}, nil
 }
 
 func resolveFilterDependencies(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	parentCollectionName string,
 	source immutable.Option[request.Filter],
@@ -997,7 +1052,7 @@ func resolveFilterDependencies(
 
 func resolveInnerFilterDependencies(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	parentCollectionName string,
 	source map[string]any,
@@ -1107,7 +1162,7 @@ func resolveInnerFilterDependencies(
 		}
 
 		dummyParsed := &request.Select{Field: request.Field{Name: key}}
-		childCollectionName, err := getCollectionName(ctx, store, rootSelectType, dummyParsed, parentCollectionName)
+		childCollectionName, err := getCollectionName(ctx, rootSelectType, dummyParsed, parentCollectionName)
 		if err != nil {
 			return nil, err
 		}
@@ -1135,7 +1190,7 @@ func resolveInnerFilterDependencies(
 // constructEmptyJoin constructs a valid empty join with no requested fields.
 func constructEmptyJoin(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	parentCollectionName string,
 	parentMapping *core.DocumentMapping,
@@ -1149,7 +1204,7 @@ func constructEmptyJoin(
 		},
 	}
 
-	childCollectionName, err := getCollectionName(ctx, store, rootSelectType, dummyParsed, parentCollectionName)
+	childCollectionName, err := getCollectionName(ctx, rootSelectType, dummyParsed, parentCollectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -1182,10 +1237,10 @@ func constructEmptyJoin(
 // They copying itself is handled within [typeJoinOne].
 func resolveSecondaryRelationIDs(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	rootSelectType SelectionType,
 	collectionName string,
-	schema client.CollectionDefinition,
+	schema client.CollectionVersion,
 	mapping *core.DocumentMapping,
 	requestables []Requestable,
 ) ([]Requestable, error) {
@@ -1206,7 +1261,10 @@ func resolveSecondaryRelationIDs(
 			continue
 		}
 
-		objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
+		objectFieldName, ok := request.ToRelatedObjectName(existingField.Name)
+		if !ok {
+			continue
+		}
 
 		var siblingFound bool
 		for _, siblingRequestable := range requestables {
@@ -1217,8 +1275,6 @@ func resolveSecondaryRelationIDs(
 		}
 
 		if !siblingFound {
-			objectFieldName := strings.TrimSuffix(existingField.Name, request.RelatedObjectID)
-
 			// We only require the docID of the related object, so an empty join is all we need.
 			join, err := constructEmptyJoin(
 				ctx,
@@ -1245,7 +1301,7 @@ func resolveSecondaryRelationIDs(
 // yielded by the [Select] embedded in the [CommitSelect].
 func ToCommitSelect(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	selectRequest *request.CommitSelect,
 ) (*CommitSelect, error) {
 	return toCommitSelect(ctx, store, selectRequest, 0)
@@ -1257,7 +1313,7 @@ func ToCommitSelect(
 // yielded by the [Select] embedded in the [CommitSelect].
 func toCommitSelect(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	selectRequest *request.CommitSelect,
 	thisIndex int,
 ) (*CommitSelect, error) {
@@ -1266,11 +1322,10 @@ func toCommitSelect(
 		return nil, err
 	}
 	return &CommitSelect{
-		Select:  *underlyingSelect,
-		DocID:   selectRequest.DocID,
-		FieldID: selectRequest.FieldID,
-		Depth:   selectRequest.Depth,
-		Cid:     selectRequest.CID,
+		Select: *underlyingSelect,
+		DocID:  selectRequest.DocID,
+		Depth:  selectRequest.Depth,
+		Cid:    selectRequest.CID,
 	}, nil
 }
 
@@ -1278,7 +1333,11 @@ func toCommitSelect(
 //
 // In the process of doing so it will construct the document map required to access the data
 // yielded by the [Select] embedded in the [Mutation].
-func ToMutation(ctx context.Context, store client.Store, mutationRequest *request.ObjectMutation) (*Mutation, error) {
+func ToMutation(
+	ctx context.Context,
+	store client.TxnStore,
+	mutationRequest *request.ObjectMutation,
+) (*Mutation, error) {
 	return toMutation(ctx, store, mutationRequest, 0)
 }
 
@@ -1288,7 +1347,7 @@ func ToMutation(ctx context.Context, store client.Store, mutationRequest *reques
 // yielded by the [Select] embedded in the [Mutation].
 func toMutation(
 	ctx context.Context,
-	store client.Store,
+	store client.TxnStore,
 	mutationRequest *request.ObjectMutation,
 	thisIndex int,
 ) (*Mutation, error) {
@@ -1561,21 +1620,21 @@ func RunFilter(doc any, filter *Filter) (bool, error) {
 }
 
 // equal compares the given Targetables and returns true if they can be considered equal.
-func (s Targetable) equal(other Targetable) bool {
-	if s.Index != other.Index &&
-		s.Name != other.Name {
+func (t Targetable) equal(other Targetable) bool {
+	if t.Index != other.Index &&
+		t.Name != other.Name {
 		return false
 	}
 
-	if !s.Filter.equal(other.Filter) {
+	if !t.Filter.equal(other.Filter) {
 		return false
 	}
 
-	if !s.Limit.equal(other.Limit) {
+	if !t.Limit.equal(other.Limit) {
 		return false
 	}
 
-	if !s.OrderBy.equal(other.OrderBy) {
+	if !t.OrderBy.equal(other.OrderBy) {
 		return false
 	}
 
@@ -1848,5 +1907,5 @@ func appendNotNilFilter(field *aggregateRequestTarget, childField string) {
 	}
 
 	typedChildBlock := childBlock.(map[string]any)
-	typedChildBlock["_ne"] = nil
+	typedChildBlock[connor.NotEqualOp] = nil
 }

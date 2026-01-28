@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDebugExplainRequestWithAOneToOneJoin(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with a 1-to-1 join.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
@@ -60,12 +59,10 @@ func TestDebugExplainRequestWithAOneToOneJoin(t *testing.T) {
 func TestDebugExplainRequestWithTwoLevelDeepNestedJoins(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with two level deep nested joins.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {

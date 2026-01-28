@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/core"
 )
 
 func parseCommitSelect(
@@ -44,16 +43,9 @@ func parseCommitSelect(
 				commit.DocID = immutable.Some(v)
 			}
 
-		case request.Cid:
+		case request.CidFieldName:
 			if v, ok := value.(string); ok {
 				commit.CID = immutable.Some(v)
-			}
-
-		case request.FieldIDName:
-			if value == nil {
-				commit.FieldID = immutable.Some("")
-			} else if v, ok := value.(string); ok {
-				commit.FieldID = immutable.Some(v)
 			}
 
 		case request.OrderClause:
@@ -96,19 +88,11 @@ func parseCommitSelect(
 			commit.GroupBy = immutable.Some(request.GroupBy{
 				Fields: fields,
 			})
-		}
-	}
 
-	// latestCommits is just syntax sugar around a commits operation.
-	if commit.Name == request.LatestCommitsName {
-		// Depth is not exposed as an input parameter for latestCommits,
-		// so we can blindly set it here without worrying about existing
-		// values
-		commit.Depth = immutable.Some(uint64(1))
-
-		if !commit.FieldID.HasValue() {
-			// latest commits defaults to composite commits only at the moment
-			commit.FieldID = immutable.Some(core.COMPOSITE_NAMESPACE)
+		case request.FilterClause:
+			if v, ok := value.(map[string]any); ok {
+				commit.Filter = immutable.Some(request.Filter{Conditions: v})
+			}
 		}
 	}
 

@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -36,12 +37,10 @@ var deletePattern = dataMap{
 func TestDebugExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with delete using filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
 					delete_Author(filter: {name: {_eq: "Shahzad"}}) {
@@ -60,12 +59,10 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilter(t *testing.T) {
 func TestDebugExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with delete using filter to match everything.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
 					delete_Author(filter: {}) {
@@ -84,12 +81,10 @@ func TestDebugExplainMutationRequestWithDeleteUsingFilterToMatchEverything(t *te
 func TestDebugExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with delete using document id.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
 					delete_Author(docID: "bae-079d0bd8-4b1b-5f5f-bd95-4d915c277f9d") {
@@ -108,12 +103,10 @@ func TestDebugExplainMutationRequestWithDeleteUsingId(t *testing.T) {
 func TestDebugExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with delete using ids.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
 					delete_Author(docID: [
@@ -135,12 +128,10 @@ func TestDebugExplainMutationRequestWithDeleteUsingIds(t *testing.T) {
 func TestDebugExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with delete using no ids.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
 					delete_Author(docID: []) {
@@ -159,12 +150,10 @@ func TestDebugExplainMutationRequestWithDeleteUsingNoIds(t *testing.T) {
 func TestDebugExplainMutationRequestWithDeleteUsingFilterAndIds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with delete using filter and ids.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
 					delete_Author(

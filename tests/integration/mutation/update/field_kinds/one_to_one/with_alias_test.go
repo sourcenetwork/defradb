@@ -16,29 +16,30 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testing.T) {
-	bookID := "bae-dafb74e9-2bf1-5f12-aea9-967814592bad"
+	bookID := "bae-9164d9cb-db28-5e2b-9d87-31afd65945d0"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using alias relation id from single side",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "John Grisham",
 					"published": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "New Shahzad"
@@ -53,7 +54,7 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromPrimarySide(t *testin
 					}`,
 					bookID,
 				),
-				ExpectedError: "target document is already linked to another document.",
+				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
 		},
 	}
@@ -65,26 +66,25 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_Collect
 	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using alias relation id from secondary side",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionSaveMutationType,
-			testUtils.CollectionNamedMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "John Grisham",
 					"published": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "New Shahzad"
@@ -111,25 +111,24 @@ func TestMutationUpdateOneToOne_AliasRelationNameToLinkFromSecondarySide_GQL(t *
 	author2ID := "bae-c058cfd4-259f-5b08-975d-106f13a143d5"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using alias relation id from secondary side",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "John Grisham",
 					"published": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "New Shahzad"
@@ -157,15 +156,14 @@ func TestMutationUpdateOneToOne_AliasWithInvalidLengthRelationIDToLink_Error(t *
 	invalidBookID := "bae-" + invalidLenSubID
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation using invalid alias relation id",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "John Grisham",

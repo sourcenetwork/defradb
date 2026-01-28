@@ -15,19 +15,20 @@ import (
 )
 
 const (
+	errInvalidACPSystem                          = "invalid acp system"
 	errInitializationOfACPFailed                 = "initialization of acp failed"
 	errStartingACPInEmptyPath                    = "starting acp in an empty path"
 	errFailedToAddPolicyWithACP                  = "failed to add policy with acp"
 	errFailedToRegisterDocWithACP                = "failed to register document with acp"
 	errFailedToCheckIfDocIsRegisteredWithACP     = "failed to check if doc is registered with acp"
 	errFailedToVerifyDocAccessWithACP            = "failed to verify doc access with acp"
+	errFailedToVerifyAdminAccessWithACP          = "failed to verify admin access with acp"
 	errFailedToAddDocActorRelationshipWithACP    = "failed to add document actor relationship with acp"
 	errFailedToDeleteDocActorRelationshipWithACP = "failed to delete document actor relationship with acp"
 	errMissingReqArgToAddDocActorRelationship    = "missing a required argument needed to add doc actor relationship"
 	errMissingReqArgToDeleteDocActorRelationship = "missing a required argument needed to delete doc actor relationship"
 
-	errObjectDidNotRegister = "no-op while registering object (already exists or error) with acp"
-	errNoPolicyArgs         = "missing policy arguments, must have both id and resource"
+	errNoPolicyArgs = "missing policy arguments, must have both id and resource"
 
 	errPolicyIDMustNotBeEmpty        = "policyID must not be empty"
 	errPolicyDoesNotExistWithACP     = "policyID specified does not exist with acp"
@@ -44,6 +45,7 @@ const (
 )
 
 var (
+	ErrInvalidACPSystem                          = errors.New(errInvalidACPSystem)
 	ErrInitializationOfACPFailed                 = errors.New(errInitializationOfACPFailed)
 	ErrFailedToAddPolicyWithACP                  = errors.New(errFailedToAddPolicyWithACP)
 	ErrFailedToRegisterDocWithACP                = errors.New(errFailedToRegisterDocWithACP)
@@ -55,14 +57,15 @@ var (
 
 	ErrResourceDoesNotExistOnTargetPolicy = errors.New(errResourceDoesNotExistOnTargetPolicy)
 
-	ErrPolicyDataMustNotBeEmpty    = errors.New("policy data can not be empty")
-	ErrPolicyCreatorMustNotBeEmpty = errors.New("policy creator can not be empty")
-	ErrACPResetState               = errors.New("acp could not be reset")
-	ErrObjectDidNotRegister        = errors.New(errObjectDidNotRegister)
-	ErrNoPolicyArgs                = errors.New(errNoPolicyArgs)
-	ErrPolicyIDMustNotBeEmpty      = errors.New(errPolicyIDMustNotBeEmpty)
-	ErrResourceNameMustNotBeEmpty  = errors.New(errResourceNameMustNotBeEmpty)
-	ErrInvalidActorID              = errors.New(errInvalidActorID)
+	ErrPolicyDataMustNotBeEmpty                    = errors.New("policy data can not be empty")
+	ErrPolicyCreatorMustNotBeEmpty                 = errors.New("policy creator can not be empty")
+	ErrACPResetState                               = errors.New("acp could not be reset")
+	ErrLocalACPStoreNameEmptyWithPersistentStorage = errors.New("acp store name is empty with persistent storage")
+	ErrLocalACPAlreadyStarted                      = errors.New("trying to start local acp, when it is already started")
+	ErrNoPolicyArgs                                = errors.New(errNoPolicyArgs)
+	ErrPolicyIDMustNotBeEmpty                      = errors.New(errPolicyIDMustNotBeEmpty)
+	ErrResourceNameMustNotBeEmpty                  = errors.New(errResourceNameMustNotBeEmpty)
+	ErrInvalidActorID                              = errors.New(errInvalidActorID)
 )
 
 func NewErrInitializationOfACPFailed(
@@ -124,6 +127,25 @@ func NewErrFailedToCheckIfDocIsRegisteredWithACP(
 		errors.NewKV("PolicyID", policyID),
 		errors.NewKV("ResourceName", resourceName),
 		errors.NewKV("DocID", docID),
+	)
+}
+
+func NewErrFailedToVerifyNodeAccessWithACP(
+	inner error,
+	permission string,
+	policyID string,
+	actorID string,
+	resourceName string,
+	operation string,
+) error {
+	return errors.Wrap(
+		errFailedToVerifyAdminAccessWithACP,
+		inner,
+		errors.NewKV("Permission", permission),
+		errors.NewKV("PolicyID", policyID),
+		errors.NewKV("ActorID", actorID),
+		errors.NewKV("ResourceName", resourceName),
+		errors.NewKV("Operation", operation),
 	)
 }
 
@@ -194,7 +216,7 @@ func NewErrFailedToDeleteDocActorRelationshipWithACP(
 	)
 }
 
-func newErrPolicyDoesNotExistWithACP(
+func NewErrPolicyDoesNotExistWithACP(
 	inner error,
 	policyID string,
 ) error {
@@ -205,7 +227,7 @@ func newErrPolicyDoesNotExistWithACP(
 	)
 }
 
-func newErrPolicyValidationFailedWithACP(
+func NewErrPolicyValidationFailedWithACP(
 	inner error,
 	policyID string,
 ) error {
@@ -216,7 +238,7 @@ func newErrPolicyValidationFailedWithACP(
 	)
 }
 
-func newErrResourceDoesNotExistOnTargetPolicy(
+func NewErrResourceDoesNotExistOnTargetPolicy(
 	resourceName string,
 	policyID string,
 ) error {
@@ -226,8 +248,16 @@ func newErrResourceDoesNotExistOnTargetPolicy(
 		errors.NewKV("ResourceName", resourceName),
 	)
 }
+func NewErrInvalidACPSystem(
+	unknownACP string,
+) error {
+	return errors.New(
+		errInvalidACPSystem,
+		errors.NewKV("UnknownACP", unknownACP),
+	)
+}
 
-func newErrResourceIsMissingRequiredPermission(
+func NewErrResourceIsMissingRequiredPermission(
 	resourceName string,
 	permission string,
 	policyID string,
@@ -240,7 +270,7 @@ func newErrResourceIsMissingRequiredPermission(
 	)
 }
 
-func newErrExprOfRequiredPermissionMustStartWithRelation(
+func NewErrExprOfRequiredPermissionMustStartWithRelation(
 	permission string,
 	relation string,
 ) error {
@@ -251,7 +281,7 @@ func newErrExprOfRequiredPermissionMustStartWithRelation(
 	)
 }
 
-func newErrExprOfRequiredPermissionHasInvalidChar(
+func NewErrExprOfRequiredPermissionHasInvalidChar(
 	permission string,
 	relation string,
 	char byte,
@@ -302,7 +332,7 @@ func NewErrMissingRequiredArgToDeleteDocActorRelationship(
 	)
 }
 
-func newErrInvalidActorID(
+func NewErrInvalidActorID(
 	inner error,
 	id string,
 ) error {

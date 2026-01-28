@@ -18,13 +18,11 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sourcenetwork/immutable"
 	sse "github.com/vito/go-sse/sse"
 
 	"github.com/sourcenetwork/defradb/errors"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -32,42 +30,31 @@ var _ client.Collection = (*Collection)(nil)
 // Collection implements the client.Collection interface over HTTP.
 type Collection struct {
 	http *httpClient
-	def  client.CollectionDefinition
+	def  client.CollectionVersion
 }
 
-func (c *Collection) Description() client.CollectionDescription {
-	return c.def.Description
-}
-
-func (c *Collection) Name() immutable.Option[string] {
-	return c.Description().Name
-}
-
-func (c *Collection) Schema() client.SchemaDescription {
-	return c.def.Schema
-}
-
-func (c *Collection) ID() uint32 {
-	return c.Description().ID
-}
-
-func (c *Collection) SchemaRoot() string {
-	return c.Schema().Root
-}
-
-func (c *Collection) Definition() client.CollectionDefinition {
+func (c *Collection) Version() client.CollectionVersion {
 	return c.def
+}
+
+func (c *Collection) Name() string {
+	return c.Version().Name
+}
+
+func (c *Collection) VersionID() string {
+	return c.Version().VersionID
+}
+
+func (c *Collection) CollectionID() string {
+	return c.Version().CollectionID
 }
 
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	body, err := doc.String()
 	if err != nil {
@@ -79,7 +66,7 @@ func (c *Collection) Create(
 		return err
 	}
 
-	setDocEncryptionFlagIfNeeded(ctx, req)
+	setDocEncryptionFlagIfNeeded(req, opts)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -92,11 +79,9 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
+	opts ...client.DocCreateOption,
 ) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	var docMapList []json.RawMessage
 	for _, doc := range docs {
@@ -117,7 +102,7 @@ func (c *Collection) CreateMany(
 		return err
 	}
 
-	setDocEncryptionFlagIfNeeded(ctx, req)
+	setDocEncryptionFlagIfNeeded(req, opts)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -130,16 +115,18 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func setDocEncryptionFlagIfNeeded(ctx context.Context, req *http.Request) {
-	encConf := encryption.GetContextConfig(ctx)
-	if encConf.HasValue() {
-		q := req.URL.Query()
-		if encConf.Value().IsDocEncrypted {
-			q.Set(docEncryptParam, "true")
-		}
-		if len(encConf.Value().EncryptedFields) > 0 {
-			q.Set(docEncryptFieldsParam, strings.Join(encConf.Value().EncryptedFields, ","))
-		}
+func setDocEncryptionFlagIfNeeded(req *http.Request, opts []client.DocCreateOption) {
+	createDocsOptions := client.DocCreateOptions{}
+	createDocsOptions.Apply(opts)
+
+	q := req.URL.Query()
+	if createDocsOptions.EncryptDoc {
+		q.Set(docEncryptParam, "true")
+	}
+	if len(createDocsOptions.EncryptedFields) > 0 {
+		q.Set(docEncryptFieldsParam, strings.Join(createDocsOptions.EncryptedFields, ","))
+	}
+	if len(q) > 0 {
 		req.URL.RawQuery = q.Encode()
 	}
 }
@@ -148,11 +135,7 @@ func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
 ) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), doc.ID().String())
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, doc.ID().String())
 
 	body, err := doc.ToJSONPatch()
 	if err != nil {
@@ -174,13 +157,14 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...client.DocCreateOption,
 ) error {
 	_, err := c.Get(ctx, doc.ID(), true)
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		return c.Create(ctx, doc)
+		return c.Create(ctx, doc, opts...)
 	}
 	return err
 }
@@ -189,11 +173,7 @@ func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
 ) (bool, error) {
-	if !c.Description().Name.HasValue() {
-		return false, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), docID.String())
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, docID.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
@@ -223,11 +203,7 @@ func (c *Collection) UpdateWithFilter(
 	filter any,
 	updater string,
 ) (*client.UpdateResult, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	request := CollectionUpdateRequest{
 		Filter:  filter,
@@ -254,11 +230,7 @@ func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
 ) (*client.DeleteResult, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	request := CollectionDeleteRequest{
 		Filter: filter,
@@ -286,16 +258,12 @@ func (c *Collection) Get(
 	docID client.DocID,
 	showDeleted bool,
 ) (*client.Document, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
 	query := url.Values{}
 	if showDeleted {
 		query.Add("show_deleted", "true")
 	}
 
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), docID.String())
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, docID.String())
 	methodURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -307,11 +275,11 @@ func (c *Collection) Get(
 	if err != nil {
 		return nil, err
 	}
-	doc, err := client.NewDocWithID(docID, c.def)
+	doc, err := client.NewDocWithID(ctx, docID, c.Version())
 	if err != nil {
 		return nil, err
 	}
-	err = doc.SetWithJSON(data)
+	err = doc.SetWithJSON(ctx, data)
 	if err != nil {
 		return nil, err
 	}
@@ -322,11 +290,7 @@ func (c *Collection) Get(
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value())
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -380,13 +344,9 @@ func (c *Collection) GetAllDocIDs(
 
 func (c *Collection) CreateIndex(
 	ctx context.Context,
-	indexDesc client.IndexDescriptionCreateRequest,
+	indexDesc client.IndexCreateRequest,
 ) (client.IndexDescription, error) {
-	if !c.Description().Name.HasValue() {
-		return client.IndexDescription{}, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), "indexes")
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes")
 
 	body, err := json.Marshal(&indexDesc)
 	if err != nil {
@@ -404,11 +364,7 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
-	if !c.Description().Name.HasValue() {
-		return client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), "indexes", indexName)
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes", indexName)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
 	if err != nil {
@@ -419,11 +375,7 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 }
 
 func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	if !c.Description().Name.HasValue() {
-		return nil, client.ErrOperationNotPermittedOnNamelessCols
-	}
-
-	methodURL := c.http.baseURL.JoinPath("collections", c.Description().Name.Value(), "indexes")
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -434,4 +386,63 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 		return nil, err
 	}
 	return indexes, nil
+}
+
+func (c *Collection) CreateEncryptedIndex(
+	ctx context.Context,
+	indexDesc client.EncryptedIndexDescription,
+) (client.EncryptedIndexDescription, error) {
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes")
+
+	body, err := json.Marshal(&indexDesc)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	var index client.EncryptedIndexDescription
+	if err := c.http.requestJson(req, &index); err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+	return index, nil
+}
+
+func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var indexes []client.EncryptedIndexDescription
+	if err := c.http.requestJson(req, &indexes); err != nil {
+		return nil, err
+	}
+	return indexes, nil
+}
+
+func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes", fieldName)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
+}
+
+func (c *Collection) Truncate(ctx context.Context) error {
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "truncate")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
 }

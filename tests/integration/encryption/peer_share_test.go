@@ -15,7 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestDocEncryptionPeer_IfDocIsPublic_ShouldFetchKeyAndDecrypt(t *testing.T) {
@@ -24,7 +26,7 @@ func TestDocEncryptionPeer_IfDocIsPublic_ShouldFetchKeyAndDecrypt(t *testing.T) 
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -40,13 +42,13 @@ func TestDocEncryptionPeer_IfDocIsPublic_ShouldFetchKeyAndDecrypt(t *testing.T) 
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -73,7 +75,7 @@ func TestDocEncryptionPeer_IfPublicDocHasEncryptedField_ShouldFetchKeyAndDecrypt
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -89,13 +91,13 @@ func TestDocEncryptionPeer_IfPublicDocHasEncryptedField_ShouldFetchKeyAndDecrypt
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:          immutable.Some(0),
 				Doc:             john21Doc,
 				EncryptedFields: []string{"age"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -124,7 +126,7 @@ func TestDocEncryptionPeer_IfEncryptedPublicDocHasEncryptedField_ShouldFetchKeys
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -140,14 +142,14 @@ func TestDocEncryptionPeer_IfEncryptedPublicDocHasEncryptedField_ShouldFetchKeys
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:          immutable.Some(0),
 				Doc:             john21Doc,
 				IsDocEncrypted:  true,
 				EncryptedFields: []string{"age"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -176,7 +178,7 @@ func TestDocEncryptionPeer_IfAllFieldsOfEncryptedPublicDocAreIndividuallyEncrypt
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -192,14 +194,14 @@ func TestDocEncryptionPeer_IfAllFieldsOfEncryptedPublicDocAreIndividuallyEncrypt
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:          immutable.Some(0),
 				Doc:             john21Doc,
 				IsDocEncrypted:  true,
 				EncryptedFields: []string{"name", "age"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -228,7 +230,7 @@ func TestDocEncryptionPeer_IfAllFieldsOfPublicDocAreIndividuallyEncrypted_Should
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -244,13 +246,13 @@ func TestDocEncryptionPeer_IfAllFieldsOfPublicDocAreIndividuallyEncrypted_Should
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:          immutable.Some(0),
 				Doc:             john21Doc,
 				EncryptedFields: []string{"name", "age"},
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -275,11 +277,13 @@ func TestDocEncryptionPeer_IfAllFieldsOfPublicDocAreIndividuallyEncrypted_Should
 
 func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecryptAndCorrectlyMerge(t *testing.T) {
 	test := testUtils.TestCase{
-		KMS: testUtils.KMS{Activated: true},
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		KMS:                testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -291,7 +295,7 @@ func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecry
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:          immutable.Some(0),
 				Doc:             john21Doc,
 				EncryptedFields: []string{"age"},
@@ -309,7 +313,7 @@ func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecry
 				Doc:    `{"age": 2}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -334,11 +338,13 @@ func TestDocEncryptionPeer_WithUpdatesOnEncryptedDeltaBasedCRDTField_ShouldDecry
 
 func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_ShouldDecryptAndCorrectlyMerge(t *testing.T) {
 	test := testUtils.TestCase{
-		KMS: testUtils.KMS{Activated: true},
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
+		KMS:                testUtils.KMS{Activated: true},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -350,7 +356,7 @@ func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_Should
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
@@ -368,7 +374,7 @@ func TestDocEncryptionPeer_WithUpdatesOnDeltaBasedCRDTFieldOfEncryptedDoc_Should
 				Doc:    `{"age": 2}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -397,7 +403,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrec
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -409,7 +415,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrec
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
@@ -423,7 +429,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrec
 				Doc:    `{"name": ""}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -441,7 +447,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsEmptyString_ShouldDecryptAndCorrec
 				Doc:    `{"name": "John"}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -466,7 +472,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsStringToNull_ShouldDecryptAndCorre
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -478,7 +484,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsStringToNull_ShouldDecryptAndCorre
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:         immutable.Some(0),
 				Doc:            john21Doc,
 				IsDocEncrypted: true,
@@ -492,7 +498,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsStringToNull_ShouldDecryptAndCorre
 				Doc:    `{"name": null}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {
@@ -510,7 +516,7 @@ func TestDocEncryptionPeer_WithUpdatesThatSetsStringToNull_ShouldDecryptAndCorre
 				Doc:    `{"name": "John"}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					User {

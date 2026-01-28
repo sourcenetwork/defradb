@@ -13,88 +13,87 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "One-to-many relation query from many side with parent level group and filter on join",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "The Client",
 						"rating": 4.5,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Candide",
 						"rating": 4.95,
-						"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+						"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Zadig",
 						"rating": 4.91,
-						"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+						"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 						"rating": 2,
-						"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
+						"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "Voltaire",
 						"age": 327,
 						"verified": true
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "Simon Pelloutier",
 						"age": 327,
 						"verified": true
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			&action.Request{
+				Request: `query {
 						Author (groupBy: [age]) {
 							age
 							_group {
@@ -107,40 +106,39 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 						}
 					}`,
 
-					Results: map[string]any{
-						"Author": []map[string]any{
-							{
-								"age": int64(327),
-								"_group": []map[string]any{
-									{
-										"name": "Voltaire",
-										"published": []map[string]any{
-											{
-												"name":   "Candide",
-												"rating": 4.95,
-											},
-											{
-												"name":   "Zadig",
-												"rating": 4.91,
-											},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"age": int64(327),
+							"_group": []map[string]any{
+								{
+									"name": "Voltaire",
+									"published": []map[string]any{
+										{
+											"name":   "Candide",
+											"rating": 4.95,
+										},
+										{
+											"name":   "Zadig",
+											"rating": 4.91,
 										},
 									},
-									{
-										"name":      "Simon Pelloutier",
-										"published": []map[string]any{},
-									},
+								},
+								{
+									"name":      "Simon Pelloutier",
+									"published": []map[string]any{},
 								},
 							},
-							{
-								"age": int64(65),
-								"_group": []map[string]any{
-									{
-										"name": "John Grisham",
-										"published": []map[string]any{
-											{
-												"name":   "Painted House",
-												"rating": 4.9,
-											},
+						},
+						{
+							"age": int64(65),
+							"_group": []map[string]any{
+								{
+									"name": "John Grisham",
+									"published": []map[string]any{
+										{
+											"name":   "Painted House",
+											"rating": 4.9,
 										},
 									},
 								},
@@ -148,94 +146,91 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	executeTestCase(t, test)
 }
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "One-to-many relation query from many side with parent level group and group filter",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
-						"name": "Painted House",
-						"rating": 4.9,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
-						"name": "A Time for Mercy",
-						"rating": 4.5,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
-						"name": "The Client",
-						"rating": 4.5,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
-					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
-						"name": "Candide",
-						"rating": 4.95,
-						"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
-					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
-						"name": "Zadig",
-						"rating": 4.91,
-						"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
-					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
-						"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
-						"rating": 2,
-						"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
-					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "Voltaire",
 						"age": 327,
 						"verified": true
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "Simon Pelloutier",
 						"age": 327,
 						"verified": true
 					}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Painted House",
+					"rating":    4.9,
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
-				testUtils.Request{
-					Request: `query {
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "A Time for Mercy",
+					"rating":    4.5,
+					"_authorID": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "The Client",
+					"rating":    4.5,
+					"_authorID": testUtils.NewDocIndex(1, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Candide",
+					"rating":    4.95,
+					"_authorID": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Zadig",
+					"rating":    4.91,
+					"_authorID": testUtils.NewDocIndex(1, 1),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"name":      "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
+					"rating":    2,
+					"_authorID": testUtils.NewDocIndex(1, 2),
+				},
+			},
+			&action.Request{
+				Request: `query {
 						Author (groupBy: [age]) {
 							age
 							_group (filter: {published: {rating: {_gt: 4.6}}}) {
@@ -247,44 +242,43 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 							}
 						}
 					}`,
-					Results: map[string]any{
-						"Author": []map[string]any{
-							{
-								"age": int64(327),
-								"_group": []map[string]any{
-									{
-										"name": "Voltaire",
-										"published": []map[string]any{
-											{
-												"name":   "Candide",
-												"rating": 4.95,
-											},
-											{
-												"name":   "Zadig",
-												"rating": 4.91,
-											},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"age": int64(327),
+							"_group": []map[string]any{
+								{
+									"name": "Voltaire",
+									"published": []map[string]any{
+										{
+											"name":   "Candide",
+											"rating": 4.95,
+										},
+										{
+											"name":   "Zadig",
+											"rating": 4.91,
 										},
 									},
 								},
 							},
-							{
-								"age": int64(65),
-								"_group": []map[string]any{
-									{
-										"name": "John Grisham",
-										"published": []map[string]any{
-											{
-												"name":   "Painted House",
-												"rating": 4.9,
-											},
-											{
-												"name":   "The Client",
-												"rating": 4.5,
-											},
-											{
-												"name":   "A Time for Mercy",
-												"rating": 4.5,
-											},
+						},
+						{
+							"age": int64(65),
+							"_group": []map[string]any{
+								{
+									"name": "John Grisham",
+									"published": []map[string]any{
+										{
+											"name":   "Painted House",
+											"rating": 4.9,
+										},
+										{
+											"name":   "A Time for Mercy",
+											"rating": 4.5,
+										},
+										{
+											"name":   "The Client",
+											"rating": 4.5,
 										},
 									},
 								},
@@ -292,94 +286,91 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	executeTestCase(t, test)
 }
 
 func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroupJoin(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "One-to-many relation query from many side with parent level group and filters",
-			Actions: []any{
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "A Time for Mercy",
 						"rating": 4.5,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "The Client",
 						"rating": 4.5,
-						"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Candide",
 						"rating": 4.95,
-						"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+						"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Zadig",
 						"rating": 4.91,
-						"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+						"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 0,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
 						"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 						"rating": 2,
-						"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
+						"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "John Grisham",
 						"age": 65,
 						"verified": true
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "Voltaire",
 						"age": 327,
 						"verified": true
 					}`,
-				},
-				testUtils.CreateDoc{
-					CollectionID: 1,
-					Doc: `{
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
 						"name": "Simon Pelloutier",
 						"age": 327,
 						"verified": true
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			&action.Request{
+				Request: `query {
 						Author (groupBy: [age], filter: {age: {_gt: 300}}) {
 							age
 							_group {
@@ -391,23 +382,22 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 							}
 						}
 					}`,
-					Results: map[string]any{
-						"Author": []map[string]any{
-							{
-								"age": int64(327),
-								"_group": []map[string]any{
-									{
-										"name": "Voltaire",
-										"published": []map[string]any{
-											{
-												"name":   "Candide",
-												"rating": 4.95,
-											},
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"age": int64(327),
+							"_group": []map[string]any{
+								{
+									"name":      "Simon Pelloutier",
+									"published": []map[string]any{},
+								},
+								{
+									"name": "Voltaire",
+									"published": []map[string]any{
+										{
+											"name":   "Candide",
+											"rating": 4.95,
 										},
-									},
-									{
-										"name":      "Simon Pelloutier",
-										"published": []map[string]any{},
 									},
 								},
 							},
@@ -418,7 +408,5 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	executeTestCase(t, test)
 }

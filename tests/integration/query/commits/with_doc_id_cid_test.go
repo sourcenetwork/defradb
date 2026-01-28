@@ -13,24 +13,24 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and cid, for different doc",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
-						commits(
+						_commits(
 							docID: "bae-not-this-doc",
 							cid: "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny"
 						) {
@@ -38,8 +38,9 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
 				},
+				ExpectedError: "cid either does not exist or belong to document",
 			},
 		},
 	}
@@ -49,10 +50,9 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDoc(t *testing.T) {
 
 func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and cid, for different doc with update",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -66,17 +66,59 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: ` {
-						commits(
+						_commits(
 							docID: "bae-not-this-doc",
-							cid: "bafybeica4js2abwqjjrz7dcialbortbz32uxp7ufxu7yljbwvmhjqqxzny"
+							cid: "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla"
 						) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{},
+					"_commits": []map[string]any{},
+				},
+				ExpectedError: "cid either does not exist or belong to document",
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryCommits_WithDocIDAndCidWithUpdate(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			updateUserCollectionSchema(),
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"John",
+						"age":	21
+					}`,
+			},
+			testUtils.UpdateDoc{
+				CollectionID: 0,
+				DocID:        0,
+				Doc: `{
+					"age":	22
+				}`,
+			},
+			&action.Request{
+				Request: ` {
+						_commits(
+							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							cid: "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla"
+						) {
+							cid
+						}
+					}`,
+				Results: map[string]any{
+					"_commits": []map[string]any{
+						{
+							"cid": "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+						},
+					},
 				},
 			},
 		},
@@ -85,12 +127,11 @@ func TestQueryCommitsWithDocIDAndCidForDifferentDocWithUpdate(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
+func TestQueryCommitsWithDocIDAndCidWithUpdateAndDepth(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID and cid, with update",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -104,22 +145,29 @@ func TestQueryCommitsWithDocIDAndCidWithUpdate(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			// depth is pretty arbitrary here, as long as its big enough to cover the updates
+			// from the target cid (ie >=2)
+			&action.Request{
 				Request: ` {
-						commits(
-							docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							cid: "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4"
+						_commits(
+							docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							cid: "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+							depth: 5
 						) {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							"cid": "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
+						},
+						{
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

@@ -13,14 +13,15 @@ package json
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryJSON_WithGreaterThanFilterBlockWithGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), greater than",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -28,19 +29,19 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithGreaterValue_ShouldFilter(t *te
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_gt: 20}}) {
 						Name
@@ -64,9 +65,8 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithGreaterValue_ShouldFilter(t *te
 
 func TestQueryJSON_WithGreaterThanFilterBlockWithLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), greater than",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -74,19 +74,19 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithLesserValue_ShouldFilter(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_gt: 22}}) {
 						Name
@@ -105,9 +105,8 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithLesserValue_ShouldFilter(t *tes
 
 func TestQueryJSON_WithGreaterThanFilterBlockWithNullFilterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic JSON greater than filter, with null filter value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -115,18 +114,18 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithNullFilterValue_ShouldFilter(t 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_gt: null}}) {
 						Name
@@ -148,9 +147,8 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithNullFilterValue_ShouldFilter(t 
 
 func TestQueryJSON_WithGreaterThanFilterBlockWithNestedGreaterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), nested greater than",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -158,19 +156,19 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithNestedGreaterValue_ShouldFilter
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": {"age": 19}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {age: {_gt: 20}}}) {
 						Name
@@ -196,9 +194,8 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithNestedGreaterValue_ShouldFilter
 
 func TestQueryJSON_WithGreaterThanFilterBlockWithNestedLesserValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), nested greater than",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -206,19 +203,19 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithNestedLesserValue_ShouldFilter(
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": {"age": 19}
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {age: {_gt: 22}}}) {
 						Name
@@ -237,9 +234,8 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithNestedLesserValue_ShouldFilter(
 
 func TestQueryJSON_WithGreaterThanFilterBlockWithNestedNullFilterValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic JSON greater than filter, with nested null filter value",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -247,18 +243,18 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithNestedNullFilterValue_ShouldFil
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": {"age": 21}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {age: {_gt: null}}}) {
 						Name
@@ -280,9 +276,10 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithNestedNullFilterValue_ShouldFil
 
 func TestQueryJSON_WithGreaterThanFilterBlockWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), greater than",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -290,19 +287,19 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithBoolValue_ReturnsError(t *testi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_gt: false}}) {
 						Name
@@ -319,9 +316,10 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithBoolValue_ReturnsError(t *testi
 
 func TestQueryJSON_WithGreaterThanFilterBlockWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), greater than",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -329,19 +327,19 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithStringValue_ReturnsError(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_gt: ""}}) {
 						Name
@@ -358,9 +356,10 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithStringValue_ReturnsError(t *tes
 
 func TestQueryJSON_WithGreaterThanFilterBlockWithObjectValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), greater than",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -368,19 +367,19 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithObjectValue_ReturnsError(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_gt: {one: 1}}}) {
 						Name
@@ -397,9 +396,10 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithObjectValue_ReturnsError(t *tes
 
 func TestQueryJSON_WithGreaterThanFilterBlockWithArrayValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic filter(custom), greater than",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -407,19 +407,19 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithArrayValue_ReturnsError(t *test
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_gt: [1,2]}}) {
 						Name
@@ -436,9 +436,10 @@ func TestQueryJSON_WithGreaterThanFilterBlockWithArrayValue_ReturnsError(t *test
 
 func TestQueryJSON_WithGreaterThanFilterWithAllTypes_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with JSON _gt filter all types",
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -446,37 +447,37 @@ func TestQueryJSON_WithGreaterThanFilterWithAllTypes_ShouldFilter(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Shahzad",
 					"Custom": "32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Andy",
 					"Custom": [1, 2]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Fred",
 					"Custom": {"one": 1}
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Custom": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "David",
 					"Custom": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {Custom: {_gt: 30}}) {
 						Name

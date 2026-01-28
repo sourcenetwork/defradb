@@ -13,21 +13,21 @@ package create
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationCreate_ReturnsVersionCID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple create mutation, with version cid",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 							create_Users(input: {name: "John"}) {
 								_version {
@@ -40,7 +40,7 @@ func TestMutationCreate_ReturnsVersionCID(t *testing.T) {
 						{
 							"_version": []map[string]any{
 								{
-									"cid": "bafyreib7afkd5hepl45wdtwwpai433bhnbd3ps5m2rv3masctda7b6mmxe",
+									"cid": "bafyreifldhofx6cwi6ashk24rcefsuiqje5a2rziwcyte54z27wmgv4pey",
 								},
 							},
 						},

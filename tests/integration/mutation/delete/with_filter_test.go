@@ -13,26 +13,26 @@ package delete
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationDeletion_WithFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete using filter - One matching document, that exists.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(filter: {name: {_eq: "Shahzad"}}) {
 						name
@@ -54,9 +54,8 @@ func TestMutationDeletion_WithFilter(t *testing.T) {
 
 func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete using filter - Multiple matching documents that exist.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -64,25 +63,25 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"age": 1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"age": 2
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 3
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(filter: {name: {_eq: "Shahzad"}}) {
 						age
@@ -91,13 +90,14 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 				Results: map[string]any{
 					"delete_User": []map[string]any{
 						{
-							"age": int64(2),
+							"age": int64(1),
 						},
 						{
-							"age": int64(1),
+							"age": int64(2),
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -107,31 +107,30 @@ func TestMutationDeletion_WithFilterMatchingMultipleDocs(t *testing.T) {
 
 func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Delete using filter - Match everything in this collection.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "Shahzad"
-				}`,
-			},
-			testUtils.CreateDoc{
-				Doc: `{
-					"name": "Fred"
-				}`,
-			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Fred"
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Shahzad"
+				}`,
+			},
+			&action.Request{
 				Request: `mutation {
 					delete_User(filter: {}) {
 						name
@@ -143,13 +142,14 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 							"name": "John",
 						},
 						{
-							"name": "Shahzad",
+							"name": "Fred",
 						},
 						{
-							"name": "Fred",
+							"name": "Shahzad",
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -159,21 +159,20 @@ func TestMutationDeletion_WithEmptyFilter(t *testing.T) {
 
 func TestMutationDeletion_WithFilterNoMatch(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "No delete with filter: because no document matches filter.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(filter: {name: {_eq: "Lone"}}) {
 						name
@@ -191,16 +190,15 @@ func TestMutationDeletion_WithFilterNoMatch(t *testing.T) {
 
 func TestMutationDeletion_WithFilterOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "No delete with filter: because the collection is empty.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_User(filter: {name: {_eq: "Lone"}}) {
 						name

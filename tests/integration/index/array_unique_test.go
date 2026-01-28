@@ -13,8 +13,7 @@ package index
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -26,26 +25,26 @@ func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T)
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						nfts: [Int!] @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"nfts": [0, 30, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts": [10, 40]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -53,7 +52,7 @@ func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T)
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -66,27 +65,25 @@ func TestArrayUniqueIndex_UponDocCreationWithUniqueElement_Succeed(t *testing.T)
 func TestArrayUniqueIndex_UponDocCreationWithUniqueElements_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						nfts: [Int!] @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"nfts": [0, 30, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"nfts": [50, 30]
 				}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-a4045a20-b9e6-5b19-82d5-5e54176895a8",
-					errors.NewKV("nfts", []int64{50, 30})).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
 		},
 	}
@@ -102,20 +99,20 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						nfts: [Int!] @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"nfts": [0, 30, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts": [10, 40]
@@ -127,7 +124,7 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 					"nfts": [10, 60]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -135,7 +132,7 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -148,20 +145,20 @@ func TestArrayUniqueIndex_UponDocUpdateWithUniqueElements_Succeed(t *testing.T) 
 func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User  {
 						name: String 
 						nfts: [Int!] @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"nfts": [0, 30, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts": [10, 40]
@@ -172,9 +169,7 @@ func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testi
 				Doc: `{
 					"nfts": [50, 30]
 				}`,
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-d065234c-4bf5-5cb8-8068-6f1fda8ed661",
-					errors.NewKV("nfts", []int64{50, 30})).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
 		},
 	}
@@ -185,20 +180,20 @@ func TestArrayUniqueIndex_UponDocUpdateWithArrayElementThatExists_Error(t *testi
 func TestArrayUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User  {
 						name: String 
 						nfts: [Int!] @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"nfts": [0, 30, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"nfts": [10, 40]
@@ -216,32 +211,32 @@ func TestArrayUniqueIndex_UponDeletingDoc_Succeed(t *testing.T) {
 func TestArrayUniqueIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						numbers: [Int] @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, null, 2, 3, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [10, 20, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {numbers: {_any: {_eq: 2}}}) {
 							name
@@ -253,7 +248,7 @@ func TestArrayUniqueIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {numbers: {_any: {_eq: null}}}) {
 							name
@@ -275,40 +270,40 @@ func TestArrayUniqueIndex_WithNilElementsAndAnyOp_Succeed(t *testing.T) {
 func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						numbers: [Int] @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, null, 2, 3, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [10, 20, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"numbers": [null, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						User(filter: {numbers: {_all: {_ge: 10}}}) {
+						User(filter: {numbers: {_all: {_geq: 10}}}) {
 							name
 						}
 					}`,
@@ -318,7 +313,7 @@ func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {numbers: {_all: {_eq: null}}}) {
 							name
@@ -339,34 +334,34 @@ func TestArrayUniqueIndex_WithNilElementsAndAllOp_Succeed(t *testing.T) {
 func TestArrayUniqueIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						numbers: [Int] @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, null, 2, 3, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [10, 20, null]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"numbers": [33, 44, 55]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						User(filter: {numbers: {_none: {_ge: 10}}}) {
+						User(filter: {numbers: {_none: {_geq: 10}}}) {
 							name
 						}
 					}`,
@@ -376,7 +371,7 @@ func TestArrayUniqueIndex_WithNilElementsAndNoneOp_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						User(filter: {numbers: {_none: {_eq: null}}}) {
 							name

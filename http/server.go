@@ -114,10 +114,11 @@ func WithTLSKeyPath(path string) ServerOpt {
 
 // Server struct holds the Handler for the HTTP API.
 type Server struct {
-	options  *ServerOptions
-	server   *http.Server
-	listener net.Listener
-	isTLS    bool
+	options   *ServerOptions
+	server    *http.Server
+	listener  net.Listener
+	isTLS     bool
+	ctxCancel context.CancelFunc
 }
 
 // NewServer instantiates a new server with the given http.Handler.
@@ -126,10 +127,11 @@ func NewServer(handler http.Handler, opts ...ServerOpt) (*Server, error) {
 	for _, opt := range opts {
 		opt(options)
 	}
-
+	ctx, cancel := context.WithCancel(context.Background())
 	// setup a mux with the default middleware stack
 	mux := chi.NewMux()
 	mux.Use(
+		InjectServerContext(ctx),
 		middleware.RequestLogger(&logFormatter{}),
 		middleware.Recoverer,
 		CorsMiddleware(options.AllowedOrigins),
@@ -144,13 +146,15 @@ func NewServer(handler http.Handler, opts ...ServerOpt) (*Server, error) {
 	}
 
 	return &Server{
-		options: options,
-		server:  server,
+		options:   options,
+		server:    server,
+		ctxCancel: cancel,
 	}, nil
 }
 
 // Shutdown gracefully shuts down the server without interrupting any active connections.
 func (s *Server) Shutdown(ctx context.Context) error {
+	s.ctxCancel()
 	return s.server.Shutdown(ctx)
 }
 
@@ -200,4 +204,15 @@ func (s *Server) Address() string {
 		return "https://" + s.listener.Addr().String()
 	}
 	return "http://" + s.listener.Addr().String()
+}
+
+// InjectServerContext sets the server context on each handler calls.
+func InjectServerContext(serverCtx context.Context) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			ctx := req.Context()
+			ctx = context.WithValue(ctx, ctxContextKey, serverCtx)
+			next.ServeHTTP(rw, req.WithContext(ctx))
+		})
+	}
 }

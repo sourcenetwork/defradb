@@ -13,14 +13,14 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id (primary side)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -33,36 +33,36 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "John Grisham",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Andrew Lone",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Go Guide for Rust developers",
-					"author_id": testUtils.NewDocIndex(1, 1),
+					"_authorID": testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Book(groupBy: [author_id]) {
-						author_id
+					Book(groupBy: [_authorID]) {
+						_authorID
 						_group {
 							name
 						}
@@ -71,23 +71,24 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-547eb3d8-7fc8-5c21-bcef-590813451e55",
-							"_group": []map[string]any{
-								{
-									"name": "Go Guide for Rust developers",
-								},
-							},
-						},
-						{
-							"author_id": "bae-ee5973cf-73c3-558f-8aec-8b590b8e77cf",
+							"_authorID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad",
 							"_group": []map[string]any{
 								{
 									"name": "Painted House",
 								},
 							},
 						},
+						{
+							"_authorID": "bae-b1a6f637-bbbb-59aa-8a54-938249e21cdd",
+							"_group": []map[string]any{
+								{
+									"name": "Go Guide for Rust developers",
+								},
+							},
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -97,9 +98,8 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id (secondary side)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -112,45 +112,45 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Book(groupBy: [author_id]) {
-						author_id
+					Book(groupBy: [_authorID]) {
+						_authorID
 					}
 				}`,
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-23a33112-7345-52f1-8816-0481747645f2",
+							"_authorID": "bae-657bb994-d88c-56f8-817d-41804cf19280",
 						},
 						{
-							"author_id": "bae-35fc1c36-4347-5bf4-a41f-bf676b145075",
+							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
 						},
 					},
 				},
@@ -163,9 +163,8 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroup(t *testing.T) 
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id (secondary side)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -178,36 +177,36 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Book(groupBy: [author_id]) {
-						author_id
+					Book(groupBy: [_authorID]) {
+						_authorID
 						author {
 							name
 						}
@@ -216,19 +215,20 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *tes
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-23a33112-7345-52f1-8816-0481747645f2",
-							"author": map[string]any{
-								"name": "Andrew Lone",
-							},
-						},
-						{
-							"author_id": "bae-35fc1c36-4347-5bf4-a41f-bf676b145075",
+							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
 						},
+						{
+							"_authorID": "bae-657bb994-d88c-56f8-817d-41804cf19280",
+							"author": map[string]any{
+								"name": "Andrew Lone",
+							},
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -238,9 +238,8 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithoutGroupWithJoin(t *tes
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id (secondary side)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -253,36 +252,36 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Book(groupBy: [author_id]) {
-						author_id
+					Book(groupBy: [_authorID]) {
+						_authorID
 						_group {
 							name
 						}
@@ -291,23 +290,24 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-b6aedb41-3a00-54dd-9a84-78d0654dbc42",
-							"_group": []map[string]any{
-								{
-									"name": "Go Guide for Rust developers",
-								},
-							},
-						},
-						{
-							"author_id": "bae-35fc1c36-4347-5bf4-a41f-bf676b145075",
+							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
 							"_group": []map[string]any{
 								{
 									"name": "Painted House",
 								},
 							},
 						},
+						{
+							"_authorID": "bae-b70527dd-79ff-5cba-bb4f-941fb4a902e4",
+							"_group": []map[string]any{
+								{
+									"name": "Go Guide for Rust developers",
+								},
+							},
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -317,9 +317,8 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 
 func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-one relation query with group by related id (secondary side)",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -332,36 +331,36 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Go Guide for Rust developers"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
-					"published_id": testUtils.NewDocIndex(0, 1),
+					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Book(groupBy: [author_id]) {
-						author_id
+					Book(groupBy: [_authorID]) {
+						_authorID
 						author {
 							name
 						}
@@ -373,18 +372,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testin
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-23a33112-7345-52f1-8816-0481747645f2",
-							"author": map[string]any{
-								"name": "Andrew Lone",
-							},
-							"_group": []map[string]any{
-								{
-									"name": "Go Guide for Rust developers",
-								},
-							},
-						},
-						{
-							"author_id": "bae-35fc1c36-4347-5bf4-a41f-bf676b145075",
+							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
@@ -394,8 +382,20 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testin
 								},
 							},
 						},
+						{
+							"_authorID": "bae-657bb994-d88c-56f8-817d-41804cf19280",
+							"author": map[string]any{
+								"name": "Andrew Lone",
+							},
+							"_group": []map[string]any{
+								{
+									"name": "Go Guide for Rust developers",
+								},
+							},
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

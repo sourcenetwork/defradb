@@ -13,14 +13,14 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestView_OneToMany(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -32,7 +32,7 @@ func TestView_OneToMany(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -51,20 +51,20 @@ func TestView_OneToMany(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							AuthorView {
 								name
@@ -92,11 +92,10 @@ func TestView_OneToMany(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestView_OneToManyWithMixedSDL_Errors(t *testing.T) {
+func TestView_OneToManyWithMixedSDL(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with mixed sdl errors",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -108,7 +107,7 @@ func TestView_OneToManyWithMixedSDL_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -123,7 +122,41 @@ func TestView_OneToManyWithMixedSDL_Errors(t *testing.T) {
 						books: [Book]
 					}
 				`,
-				ExpectedError: "relation missing field. Object: Book, RelationName: authorview_book",
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name":	"Harper Lee"
+				}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":      "To Kill a Mockingbird",
+					"_authorID": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: `query {
+							AuthorView {
+								name
+								books {
+									name
+								}
+							}
+						}`,
+				Results: map[string]any{
+					"AuthorView": []map[string]any{
+						{
+							"name": "Harper Lee",
+							"books": []map[string]any{
+								{
+									"name": "To Kill a Mockingbird",
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -133,9 +166,8 @@ func TestView_OneToManyWithMixedSDL_Errors(t *testing.T) {
 
 func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view from inner side",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -147,7 +179,7 @@ func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -166,7 +198,7 @@ func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							BookView {
 								name
@@ -185,9 +217,8 @@ func TestView_OneToManyFromInnerSide_Errors(t *testing.T) {
 
 func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view from outer to inner to outer",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -199,7 +230,7 @@ func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -221,7 +252,7 @@ func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							AuthorView {
 								name
@@ -243,9 +274,8 @@ func TestView_OneToManyOuterToInnerToOuter_Errors(t *testing.T) {
 
 func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with relation in query but not SDL",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -257,7 +287,7 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				// Query books via author but do not declare relation in SDL
 				Query: `
 					Author {
@@ -274,20 +304,20 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 				`,
 			},
 			// bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name":	"To Kill a Mockingbird",
-					"author_id": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
+					"_authorID": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							AuthorView {
 								name
@@ -309,9 +339,8 @@ func TestView_OneToManyWithRelationInQueryButNotInSDL(t *testing.T) {
 
 func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Multiple one to many views with embedded schemas",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -323,7 +352,7 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Book {
 						name
@@ -342,7 +371,7 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Book {
 						name
@@ -369,9 +398,8 @@ func TestView_OneToManyMultipleViewsWithEmbeddedSchema(t *testing.T) {
 
 func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -383,7 +411,7 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -402,7 +430,7 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					AuthorView {
 						name
@@ -421,20 +449,20 @@ func TestView_OneToManyWithDoubleSidedRelation_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							AuthorViewView {
 								name

@@ -11,12 +11,11 @@
 package client
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/sourcenetwork/immutable"
 
 	ccid "github.com/sourcenetwork/defradb/internal/core/cid"
 )
@@ -29,46 +28,31 @@ var (
 
 	pref = ccid.NewDefaultSHA256PrefixV1()
 
-	def = CollectionDefinition{
-		Description: CollectionDescription{
-			Name: immutable.Some("User"),
-			Fields: []CollectionFieldDescription{
-				{
-					Name: "Name",
-				},
-				{
-					Name: "Age",
-				},
-				{
-					Name: "Custom",
-				},
+	def = CollectionVersion{
+		Name: "User",
+		Fields: []CollectionFieldDescription{
+			{
+				Name: "Name",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_NILLABLE_STRING,
 			},
-		},
-		Schema: SchemaDescription{
-			Name: "User",
-			Fields: []SchemaFieldDescription{
-				{
-					Name: "Name",
-					Typ:  LWW_REGISTER,
-					Kind: FieldKind_NILLABLE_STRING,
-				},
-				{
-					Name: "Age",
-					Typ:  LWW_REGISTER,
-					Kind: FieldKind_NILLABLE_INT,
-				},
-				{
-					Name: "Custom",
-					Typ:  LWW_REGISTER,
-					Kind: FieldKind_NILLABLE_JSON,
-				},
+			{
+				Name: "Age",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_NILLABLE_INT,
+			},
+			{
+				Name: "Custom",
+				Typ:  LWW_REGISTER,
+				Kind: FieldKind_NILLABLE_JSON,
 			},
 		},
 	}
 )
 
 func TestNewFromJSON(t *testing.T) {
-	doc, err := NewDocFromJSON(testJSONObj, def)
+	ctx := context.Background()
+	doc, err := NewDocFromJSON(ctx, testJSONObj, def)
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
 		return
@@ -106,7 +90,8 @@ func TestNewFromJSON(t *testing.T) {
 }
 
 func TestSetWithJSON(t *testing.T) {
-	doc, err := NewDocFromJSON(testJSONObj, def)
+	ctx := context.Background()
+	doc, err := NewDocFromJSON(ctx, testJSONObj, def)
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
 		return
@@ -133,7 +118,7 @@ func TestSetWithJSON(t *testing.T) {
 		"Name": "Alice",
 		"Age": 27
 	}`)
-	err = doc.SetWithJSON(updatePatch)
+	err = doc.SetWithJSON(ctx, updatePatch)
 	if err != nil {
 		t.Error(err)
 	}
@@ -153,11 +138,13 @@ func TestSetWithJSON(t *testing.T) {
 }
 
 func TestNewDocsFromJSON_WithObjectInsteadOfArray_Error(t *testing.T) {
-	_, err := NewDocsFromJSON(testJSONObj, def)
+	ctx := context.Background()
+	_, err := NewDocsFromJSON(ctx, testJSONObj, def)
 	require.ErrorContains(t, err, "value doesn't contain array; it contains object")
 }
 
 func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
+	ctx := context.Background()
 	objWithJSONField := []byte(`{
 		"Name": "John",
 		"Age": 26,
@@ -172,7 +159,7 @@ func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
 			"object": {"one": 1}
 		}
 	}`)
-	doc, err := NewDocFromJSON(objWithJSONField, def)
+	doc, err := NewDocFromJSON(ctx, objWithJSONField, def)
 	if err != nil {
 		t.Error("Error creating new doc from JSON:", err)
 		return
@@ -206,22 +193,24 @@ func TestNewFromJSON_WithValidJSONFieldValue_NoError(t *testing.T) {
 }
 
 func TestNewFromJSON_WithInvalidJSONFieldValue_Error(t *testing.T) {
+	ctx := context.Background()
 	objWithJSONField := []byte(`{
 		"Name": "John",
 		"Age": 26,
 		"Custom": {"tree":"maple, "age": 260}
 	}`)
-	_, err := NewDocFromJSON(objWithJSONField, def)
+	_, err := NewDocFromJSON(ctx, objWithJSONField, def)
 	require.ErrorContains(t, err, "cannot parse JSON")
 }
 
 func TestNewFromJSON_WithJSONFieldValueSimpleString_Succeed(t *testing.T) {
+	ctx := context.Background()
 	objWithJSONField := []byte(`{
 		"Name": "John",
 		"Age": 26,
 		"Custom": "blah"
 	}`)
-	_, err := NewDocFromJSON(objWithJSONField, def)
+	_, err := NewDocFromJSON(ctx, objWithJSONField, def)
 	require.NoError(t, err)
 }
 

@@ -15,20 +15,19 @@ const (
 	// https://spec.graphql.org/October2021/#sec-Type-Name-Introspection
 	TypeNameFieldName = "__typename"
 
-	// This is appended to the related object name to give us the field name
-	// that corresponds to the related object's join relation id, i.e. `Author_id`.
-	RelatedObjectID = "_id"
+	Input              = "input"
+	CreateInput        = "create"
+	UpdateInput        = "update"
+	FieldArgName       = "field"
+	FieldIDName        = "fieldId"
+	FieldNameName      = "fieldName"
+	CompositeFieldName = "_C"
+	ShowDeleted        = "showDeleted"
 
-	Cid         = "cid"
-	Input       = "input"
-	CreateInput = "create"
-	UpdateInput = "update"
-	FieldName   = "field"
-	FieldIDName = "fieldId"
-	ShowDeleted = "showDeleted"
-
-	EncryptDocArgName    = "encrypt"
-	EncryptFieldsArgName = "encryptFields"
+	EncryptDocArgName         = "encrypt"
+	EncryptFieldsArgName      = "encryptFields"
+	EncryptedCollectionPrefix = "encrypted_"
+	EncryptedSearchResultName = "EncryptedSearchResult"
 
 	FilterClause  = "filter"
 	GroupByClause = "groupBy"
@@ -37,18 +36,21 @@ const (
 	OrderClause   = "order"
 	DepthClause   = "depth"
 
-	DocIDArgName = "docID"
+	DocIDArgName  = "docID"
+	CidArgName    = "cid"
+	HeightArgName = "height"
 
-	AverageFieldName = "_avg"
-	CountFieldName   = "_count"
-	DocIDFieldName   = "_docID"
-	GroupFieldName   = "_group"
-	DeletedFieldName = "_deleted"
-	SumFieldName     = "_sum"
-	VersionFieldName = "_version"
-	MaxFieldName     = "_max"
-	MinFieldName     = "_min"
-	AliasFieldName   = "_alias"
+	AverageFieldName    = "_avg"
+	CountFieldName      = "_count"
+	DocIDFieldName      = "_docID"
+	GroupFieldName      = "_group"
+	DeletedFieldName    = "_deleted"
+	SumFieldName        = "_sum"
+	VersionFieldName    = "_version"
+	MaxFieldName        = "_max"
+	MinFieldName        = "_min"
+	AliasFieldName      = "_alias"
+	SimilarityFieldName = "_similarity"
 
 	// New generated document id from a backed up document,
 	// which might have a different _docID originally.
@@ -56,24 +58,16 @@ const (
 
 	ExplainLabel = "explain"
 
-	LatestCommitsName = "latestCommits"
-	CommitsName       = "commits"
+	CommitsName = "_commits"
 
-	CommitTypeName           = "Commit"
-	LinksFieldName           = "links"
-	HeightFieldName          = "height"
-	CidFieldName             = "cid"
-	CollectionIDFieldName    = "collectionID"
-	SchemaVersionIDFieldName = "schemaVersionId"
-	FieldNameFieldName       = "fieldName"
-	FieldIDFieldName         = "fieldId"
-	DeltaFieldName           = "delta"
-
-	DeltaArgFieldName       = "FieldName"
-	DeltaArgData            = "Data"
-	DeltaArgSchemaVersionID = "SchemaVersionID"
-	DeltaArgPriority        = "Priority"
-	DeltaArgDocID           = "DocID"
+	CommitTypeName               = "Commit"
+	LinksFieldName               = "links"
+	HeadsFieldName               = "heads"
+	SignatureFieldName           = "signature"
+	SignatureTypeName            = "Signature"
+	HeightFieldName              = "height"
+	CollectionVersionIDFieldName = "collectionVersionId"
+	DeltaFieldName               = "delta"
 
 	// SelfTypeName is the name given to relation field types that reference the host type.
 	//
@@ -81,8 +75,14 @@ const (
 	// will be of type [SelfTypeName].
 	SelfTypeName = "Self"
 
-	LinksNameFieldName = "name"
-	LinksCidFieldName  = "cid"
+	LinksNameFieldName = "linkName"
+	CidFieldName       = "cid"
+
+	SignatureTypeFieldName     = "type"
+	SignatureIdentityFieldName = "identity"
+	SignatureValueFieldName    = "value"
+
+	DocIDsFieldName = "docIDs"
 
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")
@@ -104,16 +104,17 @@ var (
 	}
 
 	ReservedFields = map[string]struct{}{
-		TypeNameFieldName: {},
-		VersionFieldName:  {},
-		GroupFieldName:    {},
-		CountFieldName:    {},
-		SumFieldName:      {},
-		AverageFieldName:  {},
-		DocIDFieldName:    {},
-		DeletedFieldName:  {},
-		MaxFieldName:      {},
-		MinFieldName:      {},
+		TypeNameFieldName:   {},
+		VersionFieldName:    {},
+		GroupFieldName:      {},
+		CountFieldName:      {},
+		SumFieldName:        {},
+		AverageFieldName:    {},
+		DocIDFieldName:      {},
+		DeletedFieldName:    {},
+		MaxFieldName:        {},
+		MinFieldName:        {},
+		SimilarityFieldName: {},
 	}
 
 	Aggregates = map[string]struct{}{
@@ -124,24 +125,53 @@ var (
 		MinFieldName:     {},
 	}
 
-	CommitQueries = map[string]struct{}{
-		LatestCommitsName: {},
-		CommitsName:       {},
-	}
-
 	VersionFields = []string{
 		HeightFieldName,
 		CidFieldName,
 		DocIDArgName,
-		CollectionIDFieldName,
-		SchemaVersionIDFieldName,
-		FieldNameFieldName,
-		FieldIDFieldName,
+		CollectionVersionIDFieldName,
+		FieldNameName,
 		DeltaFieldName,
+		LinksNameFieldName,
 	}
 
 	LinksFields = []string{
 		LinksNameFieldName,
-		LinksCidFieldName,
+		CidFieldName,
+	}
+
+	SignatureFields = []string{
+		SignatureTypeFieldName,
+		SignatureIdentityFieldName,
+		SignatureValueFieldName,
 	}
 )
+
+// This is appended to the related object name to give us the field name
+// that corresponds to the related object's join relation id, i.e. `_authorID`.
+const relatedObjectIDSuffix = "ID"
+
+// ToFieldID converts a field name to its relation ID field name.
+// For example: "author" becomes "_authorID"
+func ToFieldID(fieldName string) string {
+	return "_" + fieldName + relatedObjectIDSuffix
+}
+
+// ToRelatedObjectName extracts the object field name from a relation ID field name.
+// For example: "_authorID" returns ("author", true)
+// Returns ("", false) if the field name is not a valid relation ID field.
+func ToRelatedObjectName(fieldName string) (string, bool) {
+	if len(fieldName) <= len(relatedObjectIDSuffix)+1 {
+		return "", false
+	}
+	if fieldName[0] != '_' {
+		return "", false
+	}
+	if fieldName == DocIDFieldName {
+		return "", false
+	}
+	if fieldName[len(fieldName)-len(relatedObjectIDSuffix):] != relatedObjectIDSuffix {
+		return "", false
+	}
+	return fieldName[1 : len(fieldName)-len(relatedObjectIDSuffix)], true
+}

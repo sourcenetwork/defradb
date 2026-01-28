@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -42,12 +43,10 @@ var averageTypeIndexJoinPattern = dataMap{
 func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with average on joined/related field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -58,7 +57,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 
 				ExpectedPatterns: averageTypeIndexJoinPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:     "averageNode",
 						IncludeChildNodes:  false,
@@ -73,7 +72,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 									"fieldName": "books",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -90,7 +89,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 									"fieldName":      "books",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -111,7 +110,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 						OccurancesToSkip:  0,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -124,11 +123,11 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 						OccurancesToSkip:  1,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "2",
+							"collectionID":   "bafyreifnc6yphaqxf7x7fa3phxrsuvzqvnnjz4q7fuirhty4cnrxubp6eq",
 							"collectionName": "Book",
 							"filter": dataMap{
 								"pages": dataMap{
-									"_ne": nil,
+									"_neq": nil,
 								},
 							},
 							"prefixes": []string{
@@ -147,12 +146,10 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with average on multiple joined fields with filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -191,7 +188,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:     "averageNode",
 						IncludeChildNodes:  false,
@@ -206,7 +203,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 									"fieldName": "books",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -214,8 +211,8 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 									"fieldName": "articles",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_gt": int32(3),
-											"_ne": nil,
+											"_gt":  int32(3),
+											"_neq": nil,
 										},
 									},
 								},
@@ -232,7 +229,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 									"fieldName":      "books",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -241,8 +238,8 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 									"fieldName":      "articles",
 									"filter": dataMap{
 										"pages": dataMap{
-											"_gt": int32(3),
-											"_ne": nil,
+											"_gt":  int32(3),
+											"_neq": nil,
 										},
 									},
 								},
@@ -264,7 +261,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 						OccurancesToSkip:  0,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -277,11 +274,11 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 						OccurancesToSkip:  1,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "2",
+							"collectionID":   "bafyreifnc6yphaqxf7x7fa3phxrsuvzqvnnjz4q7fuirhty4cnrxubp6eq",
 							"collectionName": "Book",
 							"filter": dataMap{
 								"pages": dataMap{
-									"_ne": nil,
+									"_neq": nil,
 								},
 							},
 							"prefixes": []string{
@@ -304,7 +301,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 						OccurancesToSkip:  2,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter":         nil,
 							"prefixes": []string{
@@ -317,12 +314,12 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 						OccurancesToSkip:  3,
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "1",
+							"collectionID":   "bafyreidpjzf5kytlap2nilnnemywjmwt74hr56e72llri2z7c6w7un7sje",
 							"collectionName": "Article",
 							"filter": dataMap{
 								"pages": dataMap{
-									"_gt": int32(3),
-									"_ne": nil,
+									"_gt":  int32(3),
+									"_neq": nil,
 								},
 							},
 							"prefixes": []string{
@@ -343,18 +340,16 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 func TestDefaultExplainRequestOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) 1-to-M relation request from many side with average filter shared.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
 						name
 						_avg(books: {field: rating})
-						books(filter: {rating: {_ne: null}}){
+						books(filter: {rating: {_neq: null}}){
 							name
 						}
 					}

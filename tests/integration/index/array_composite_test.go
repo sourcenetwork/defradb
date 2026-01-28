@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -25,7 +26,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
@@ -33,35 +34,35 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 50, 30],
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [40, 50, 30],
 					"age": 60
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [1, 2, 3],
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -72,7 +73,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAny_ShouldUseIndex(t *
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -91,7 +92,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
@@ -99,35 +100,35 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40],
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [50],
 					"age": 60
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [1, 2],
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -138,7 +139,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingAll_ShouldUseIndex(t *
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// all "Shahzad" users have in total 5 numbers
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
@@ -158,7 +159,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t 
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "age"}]) {
 						name: String 
@@ -166,35 +167,35 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t 
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40],
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [50],
 					"age": 60
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 3],
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -205,7 +206,7 @@ func TestArrayCompositeIndex_WithFilterOnIndexedArrayUsingNone_ShouldUseIndex(t 
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// all "Shahzad" users have in total 5 numbers
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
@@ -226,7 +227,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}, {field: "age"}]) {
 						name: String 
@@ -235,7 +236,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
@@ -243,7 +244,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40],
@@ -251,7 +252,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [50],
@@ -259,7 +260,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 					"age": 60
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 3],
@@ -267,7 +268,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -279,7 +280,7 @@ func TestArrayCompositeIndex_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// all "Shahzad" users have in total 5 numbers
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
@@ -300,7 +301,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "numbers"}, {field: "name"}, {field: "age"}, {field: "hobbies"}]) {
 						name: String 
@@ -309,7 +310,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
@@ -317,7 +318,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40],
@@ -325,7 +326,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [50],
@@ -333,7 +334,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 					"age": 60
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [2, 3],
@@ -341,7 +342,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 					"age": 30
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -353,7 +354,7 @@ func TestArrayCompositeIndex_With2SeparateArrayFields_Succeed(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -368,14 +369,14 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 		User(filter: {
 			numbers1: {_all: {_gt: 0}}, 
 			numbers2: {_none: {_eq: 40}}, 
-			numbers3: {_any: {_le: 200}}
+			numbers3: {_any: {_leq: 200}}
 		}) {
 			name
 		}
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "numbers1"}, {field: "numbers2"}, {field: "numbers3"}]) {
 						name: String 
@@ -384,7 +385,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 						numbers3: [Int!] 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers1": [1, 2, 3],
@@ -392,7 +393,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 					"numbers3": [100, 200, 300]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers1": [2, 3, 4],
@@ -400,7 +401,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 					"numbers3": [200, 300, 400]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Keenan",
 					"numbers1": [0, 1],
@@ -408,7 +409,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 					"numbers3": [900]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Islam",
 					"numbers1": [6, 7, 8],
@@ -416,7 +417,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 					"numbers3": [100, 700, 800]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred",
 					"numbers1": [1, 4, 5, 8],
@@ -424,7 +425,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 					"numbers3": [600, 800]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -442,7 +443,7 @@ func TestArrayCompositeIndex_WithAnyNoneAll_Succeed(t *testing.T) {
 func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}]) {
 						name: String 
@@ -450,14 +451,14 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 						hobbies: [String!] 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20, 40],
 					"hobbies": ["sports", "books"]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 30],
@@ -472,7 +473,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 					"hobbies": ["books", "movies", "books", "movies"]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_eq: 30}}}) {
 						name
@@ -482,7 +483,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 					"User": []map[string]any{{"name": "John"}},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_eq: 40}}}) {
 						name
@@ -494,8 +495,9 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 						{"name": "Shahzad"},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_eq: 50}}}) {
 						name
@@ -504,8 +506,9 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{{"name": "Shahzad"}},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_gt: 0}}, hobbies: {_any: {_eq: "sports"}}}) {
 						name
@@ -514,8 +517,9 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{{"name": "John"}},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_gt: 0}}, hobbies: {_any: {_eq: "books"}}}) {
 						name
@@ -527,8 +531,9 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 						{"name": "Shahzad"},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_gt: 0}}, hobbies: {_any: {_eq: "movies"}}}) {
 						name
@@ -537,6 +542,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 				Results: map[string]any{
 					"User": []map[string]any{{"name": "Shahzad"}},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -547,7 +553,7 @@ func TestArrayCompositeIndexUpdate_With2ArrayFields_Succeed(t *testing.T) {
 func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User @index(includes: [{field: "name"}, {field: "numbers"}, {field: "hobbies"}]) {
 						name: String 
@@ -555,14 +561,14 @@ func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testin
 						hobbies: [String!] 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [0, 30, 20],
 					"hobbies": ["sports", "books"]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"numbers": [30, 40, 30, 50],
@@ -570,7 +576,7 @@ func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testin
 				}`,
 			},
 			testUtils.DeleteDoc{DocID: 1},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_eq: 30}}}) {
 						name
@@ -580,7 +586,7 @@ func TestArrayCompositeIndexDelete_With2ConsecutiveArrayFields_Succeed(t *testin
 					"User": []map[string]any{{"name": "John"}},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User(filter: {numbers: {_any: {_gt: 0}}, hobbies: {_any: {_eq: "sports"}}}) {
 						name

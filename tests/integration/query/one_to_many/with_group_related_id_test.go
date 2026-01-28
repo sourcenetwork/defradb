@@ -13,62 +13,62 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id (from many side).",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
+					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -76,7 +76,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Voltaire",
@@ -84,7 +84,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Simon Pelloutier",
@@ -92,10 +92,10 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Book(groupBy: [author_id]) {
-						author_id
+					Book(groupBy: [_authorID]) {
+						_authorID
 						_group {
 							name
 							rating
@@ -109,36 +109,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
-							"_group": []map[string]any{
-								{
-									"name":   "Painted House",
-									"rating": 4.9,
-									"author": map[string]any{
-										"age":  int64(65),
-										"name": "John Grisham",
-									},
-								},
-								{
-									"name":   "The Client",
-									"rating": 4.5,
-									"author": map[string]any{
-										"age":  int64(65),
-										"name": "John Grisham",
-									},
-								},
-								{
-									"name":   "A Time for Mercy",
-									"rating": 4.5,
-									"author": map[string]any{
-										"age":  int64(65),
-										"name": "John Grisham",
-									},
-								},
-							},
-						},
-						{
-							"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+							"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
 							"_group": []map[string]any{
 								{
 									"name":   "Candide",
@@ -159,7 +130,36 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 							},
 						},
 						{
-							"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
+							"_group": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+									"author": map[string]any{
+										"age":  int64(65),
+										"name": "John Grisham",
+									},
+								},
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+									"author": map[string]any{
+										"age":  int64(65),
+										"name": "John Grisham",
+									},
+								},
+								{
+									"name":   "The Client",
+									"rating": 4.5,
+									"author": map[string]any{
+										"age":  int64(65),
+										"name": "John Grisham",
+									},
+								},
+							},
+						},
+						{
+							"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
 							"_group": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
@@ -173,6 +173,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -182,57 +183,56 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id, with id selection (from many side).",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
+					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -240,7 +240,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Voltaire",
@@ -248,7 +248,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Simon Pelloutier",
@@ -256,10 +256,10 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Book(groupBy: [author_id]) {
-						author_id
+					Book(groupBy: [_authorID]) {
+						_authorID
 						_group {
 							name
 							rating
@@ -273,36 +273,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b",
-							"_group": []map[string]any{
-								{
-									"name":   "Painted House",
-									"rating": 4.9,
-									"author": map[string]any{
-										"age":  int64(65),
-										"name": "John Grisham",
-									},
-								},
-								{
-									"name":   "The Client",
-									"rating": 4.5,
-									"author": map[string]any{
-										"age":  int64(65),
-										"name": "John Grisham",
-									},
-								},
-								{
-									"name":   "A Time for Mercy",
-									"rating": 4.5,
-									"author": map[string]any{
-										"age":  int64(65),
-										"name": "John Grisham",
-									},
-								},
-							},
-						},
-						{
-							"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c",
+							"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
 							"_group": []map[string]any{
 								{
 									"name":   "Candide",
@@ -323,7 +294,36 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 							},
 						},
 						{
-							"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614",
+							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
+							"_group": []map[string]any{
+								{
+									"name":   "Painted House",
+									"rating": 4.9,
+									"author": map[string]any{
+										"age":  int64(65),
+										"name": "John Grisham",
+									},
+								},
+								{
+									"name":   "A Time for Mercy",
+									"rating": 4.5,
+									"author": map[string]any{
+										"age":  int64(65),
+										"name": "John Grisham",
+									},
+								},
+								{
+									"name":   "The Client",
+									"rating": 4.5,
+									"author": map[string]any{
+										"age":  int64(65),
+										"name": "John Grisham",
+									},
+								},
+							},
+						},
+						{
+							"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
 							"_group": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
@@ -337,6 +337,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -346,57 +347,56 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id (from single side).",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
+					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -404,7 +404,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Voltaire",
@@ -412,7 +412,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Simon Pelloutier",
@@ -420,9 +420,9 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Author(groupBy: [published_id]) {
+					Author(groupBy: [_publishedID]) {
 						_group {
 							name
 							published {
@@ -432,7 +432,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 						}
 					}
 				}`,
-				ExpectedError: "Argument \"groupBy\" has invalid value [published_id].\nIn element #1: Expected type \"AuthorField\", found published_id.",
+				ExpectedError: "Argument \"groupBy\" has invalid value [_publishedID].\nIn element #1: Expected type \"AuthorField\", found _publishedID.",
 			},
 		},
 	}
@@ -442,57 +442,56 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 
 func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSide(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many query with groupBy on related id, with id selection (from single side).",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "A Time for Mercy",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "The Client",
 					"rating": 4.5,
-					"author_id": "bae-e1ea288f-09fa-55fa-b0b5-0ac8941ea35b"
+					"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Candide",
 					"rating": 4.95,
-					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Zadig",
 					"rating": 4.91,
-					"author_id": "bae-1594d2aa-d63c-51d2-8e5e-06ee0c9e2e8c"
+					"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 					"rating": 2,
-					"author_id": "bae-34a9bd41-1f0d-5748-8446-48fc36ef2614"
+					"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -500,7 +499,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Voltaire",
@@ -508,7 +507,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Simon Pelloutier",
@@ -516,10 +515,10 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 					"verified": true
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Author(groupBy: [published_id]) {
-						published_id
+					Author(groupBy: [_publishedID]) {
+						_publishedID
 						_group {
 							name
 							published {
@@ -529,7 +528,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 						}
 					}
 				}`,
-				ExpectedError: "Argument \"groupBy\" has invalid value [published_id].\nIn element #1: Expected type \"AuthorField\", found published_id.",
+				ExpectedError: "Argument \"groupBy\" has invalid value [_publishedID].\nIn element #1: Expected type \"AuthorField\", found _publishedID.",
 			},
 		},
 	}

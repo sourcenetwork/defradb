@@ -1,4 +1,4 @@
-// Copyright 2024 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -18,28 +18,36 @@ import (
 
 	"github.com/fxamacker/cbor/v2"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	libpeer "github.com/libp2p/go-libp2p/core/peer"
-	rpc "github.com/sourcenetwork/go-libp2p-pubsub-rpc"
-	"github.com/sourcenetwork/immutable"
 	grpcpeer "google.golang.org/grpc/peer"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
 const pubsubTopic = "encryption"
 
 type PubSubServer interface {
-	AddPubSubTopic(string, rpc.MessageHandler) error
-	SendPubSubMessage(context.Context, string, []byte) (<-chan rpc.Response, error)
+	AddPubSubTopic(
+		topicName string,
+		subscribe bool,
+		handler client.PubsubMessageHandler,
+	) error
+	PublishToTopic(
+		ctx context.Context,
+		topic string,
+		data []byte,
+		withMultiResponse bool,
+	) (<-chan client.PubsubResponse, error)
 }
 
 type CollectionRetriever interface {
@@ -47,15 +55,14 @@ type CollectionRetriever interface {
 }
 
 type pubSubService struct {
-	ctx             context.Context
-	peerID          libpeer.ID
-	pubsub          PubSubServer
-	keyRequestedSub *event.Subscription
-	eventBus        *event.Bus
-	encStore        *ipldEncStorage
-	acp             immutable.Option[acp.ACP]
-	colRetriever    CollectionRetriever
-	nodeDID         string
+	ctx          context.Context
+	peerID       string
+	pubsub       PubSubServer
+	encStore     *ipldEncStorage
+	nodeACP      acpDB.NACInfo
+	documentACP  immutable.Option[dac.DocumentACP]
+	colRetriever CollectionRetriever
+	nodeDID      string
 }
 
 var _ Service = (*pubSubService)(nil)
@@ -78,11 +85,11 @@ func (s *pubSubService) GetKeys(ctx context.Context, cids ...cidlink.Link) (*enc
 // "enc-keys-request" event on the event bus.
 func NewPubSubService(
 	ctx context.Context,
-	peerID libpeer.ID,
+	peerID string,
 	pubsub PubSubServer,
-	eventBus *event.Bus,
 	encstore datastore.Blockstore,
-	acp immutable.Option[acp.ACP],
+	nodeACP acpDB.NACInfo,
+	documentACP immutable.Option[dac.DocumentACP],
 	colRetriever CollectionRetriever,
 	nodeDID string,
 ) (*pubSubService, error) {
@@ -90,59 +97,18 @@ func NewPubSubService(
 		ctx:          ctx,
 		peerID:       peerID,
 		pubsub:       pubsub,
-		eventBus:     eventBus,
 		encStore:     newIPLDEncryptionStorage(encstore),
-		acp:          acp,
+		nodeACP:      nodeACP,
+		documentACP:  documentACP,
 		colRetriever: colRetriever,
 		nodeDID:      nodeDID,
 	}
-	err := pubsub.AddPubSubTopic(pubsubTopic, s.handleRequestFromPeer)
+	err := pubsub.AddPubSubTopic(pubsubTopic, true, s.handleRequestFromPeer)
 	if err != nil {
 		return nil, err
 	}
-	s.keyRequestedSub, err = eventBus.Subscribe(encryption.RequestKeysEventName)
-	if err != nil {
-		return nil, err
-	}
-	go s.handleKeyRequestedEvent()
+
 	return s, nil
-}
-
-func (s *pubSubService) handleKeyRequestedEvent() {
-	for {
-		msg, isOpen := <-s.keyRequestedSub.Message()
-		if !isOpen {
-			return
-		}
-
-		if keyReqEvent, ok := msg.Data.(encryption.RequestKeysEvent); ok {
-			go func() {
-				results, err := s.GetKeys(s.ctx, keyReqEvent.Keys...)
-				if err != nil {
-					log.ErrorContextE(s.ctx, "Failed to get encryption keys", err)
-				}
-
-				defer close(keyReqEvent.Resp)
-
-				select {
-				case <-s.ctx.Done():
-					return
-				case encResult := <-results.Get():
-					for _, encItem := range encResult.Items {
-						_, err = s.encStore.put(s.ctx, encItem.Block)
-						if err != nil {
-							log.ErrorContextE(s.ctx, "Failed to save encryption key", err)
-							return
-						}
-					}
-
-					keyReqEvent.Resp <- encResult
-				}
-			}()
-		} else {
-			log.ErrorContext(s.ctx, "Failed to cast event data to RequestKeysEvent")
-		}
-	}
 }
 
 type fetchEncryptionKeyRequest struct {
@@ -152,7 +118,7 @@ type fetchEncryptionKeyRequest struct {
 }
 
 // handleEncryptionMessage handles incoming FetchEncryptionKeyRequest messages from the pubsub network.
-func (s *pubSubService) handleRequestFromPeer(peerID libpeer.ID, topic string, msg []byte) ([]byte, error) {
+func (s *pubSubService) handleRequestFromPeer(peerID string, topic string, msg []byte) ([]byte, error) {
 	req := new(fetchEncryptionKeyRequest)
 	if err := cbor.Unmarshal(msg, req); err != nil {
 		log.ErrorContextE(s.ctx, "Failed to unmarshal pubsub message %s", err)
@@ -207,7 +173,7 @@ func (s *pubSubService) requestEncryptionKeyFromPeers(
 		return errors.Wrap("failed to marshal pubsub message", err)
 	}
 
-	respChan, err := s.pubsub.SendPubSubMessage(ctx, pubsubTopic, data)
+	respChan, err := s.pubsub.PublishToTopic(ctx, pubsubTopic, data, false)
 	if err != nil {
 		return errors.Wrap("failed publishing to encryption thread", err)
 	}
@@ -227,7 +193,7 @@ type fetchEncryptionKeyReply struct {
 
 // handleFetchEncryptionKeyResponse handles incoming FetchEncryptionKeyResponse messages
 func (s *pubSubService) handleFetchEncryptionKeyResponse(
-	resp rpc.Response,
+	resp client.PubsubResponse,
 	req *fetchEncryptionKeyRequest,
 	privateKey *ecdh.PrivateKey,
 	result chan<- encryption.Result,
@@ -257,6 +223,13 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 			return
 		}
 
+		_, err = s.encStore.put(context.Background(), decryptedData)
+		if err != nil {
+			log.ErrorContextE(s.ctx, "Failed to store encryption key", err)
+			result <- encryption.Result{Error: err}
+			return
+		}
+
 		resultEncItems = append(resultEncItems, encryption.Item{
 			Link:  keyResp.Links[i],
 			Block: decryptedData,
@@ -269,7 +242,7 @@ func (s *pubSubService) handleFetchEncryptionKeyResponse(
 }
 
 // makeAssociatedData creates the associated data for the encryption key request
-func makeAssociatedData(req *fetchEncryptionKeyRequest, peerID libpeer.ID) []byte {
+func makeAssociatedData(req *fetchEncryptionKeyRequest, peerID string) []byte {
 	return encodeToBase64(bytes.Join([][]byte{
 		req.EphemeralPublicKey,
 		[]byte(peerID),
@@ -364,7 +337,7 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 	actorIdentity string,
 	entBlock *coreblock.Encryption,
 ) (bool, error) {
-	if !s.acp.HasValue() {
+	if !s.documentACP.HasValue() {
 		return true, nil
 	}
 
@@ -374,12 +347,13 @@ func (s *pubSubService) doesIdentityHaveDocPermission(
 		return false, err
 	}
 
-	return permission.CheckAccessOfDocOnCollectionWithACP(
+	return acpDB.CheckAccessOfDocOnCollectionWithACP(
 		ctx,
-		immutable.Some(identity.Identity{DID: actorIdentity}),
-		s.acp.Value(),
+		immutable.Some(identity.FromDID(actorIdentity)),
+		s.nodeACP,
+		s.documentACP.Value(),
 		collection,
-		acp.ReadPermission,
+		acpTypes.DocumentReadPerm,
 		docID,
 	)
 }
@@ -390,17 +364,17 @@ func encodeToBase64(data []byte) []byte {
 	return encoded
 }
 
-func newGRPCPeer(peerID libpeer.ID) *grpcpeer.Peer {
+func newGRPCPeer(peerID string) *grpcpeer.Peer {
 	return &grpcpeer.Peer{
 		Addr: addr{peerID},
 	}
 }
 
 // addr implements net.Addr and holds a libp2p peer ID.
-type addr struct{ id libpeer.ID }
+type addr struct{ id string }
 
 // Network returns the name of the network that this address belongs to (libp2p).
 func (a addr) Network() string { return "libp2p" }
 
 // String returns the peer ID of this address in string form (B58-encoded).
-func (a addr) String() string { return a.id.String() }
+func (a addr) String() string { return a.id }

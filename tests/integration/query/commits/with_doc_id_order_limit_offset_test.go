@@ -13,15 +13,15 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsWithDocIDAndOrderAndLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query with docID, order, limit and offset",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -49,21 +49,21 @@ func TestQueryCommitsWithDocIDAndOrderAndLimitAndOffset(t *testing.T) {
 					"age":	24
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits(docID: "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3", order: {height: ASC}, limit: 2, offset: 4) {
+						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: ASC}, limit: 2, offset: 4) {
 							cid
 							height
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":    "bafyreiale6qsjc7qewod3c6h2odwamfwcf7vt4zlqtw7ldcm57xdkgxja4",
+							"cid":    "bafyreia4x5ju33jenbimdqbtnuqc7pby4lydpa7efyk5iu4nl6urm6ofla",
 							"height": int64(2),
 						},
 						{
-							"cid":    "bafyreig3qosmew7pkq27dijjvwe35jjpvh3ed3f5dxpzemtqhw7xka7hga",
+							"cid":    "bafyreiayx64xmsfgk2dz6mga2hcgm5ajbwrx2nhiroxyzdk7tfojjrl3fe",
 							"height": int64(3),
 						},
 					},

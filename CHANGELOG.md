@@ -1,3 +1,327 @@
+
+<a name="v0.20.0"></a>
+## [v0.20.0](https://github.com/sourcenetwork/defradb/compare/v0.19.0...v0.20.0)
+
+> 2025-10-31
+
+DefraDB v0.20 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.19.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
+
+### Features
+
+* Gate p2p ops with NAC ([#4111](https://github.com/sourcenetwork/defradb/issues/4111))
+* Allow syncing of collection versions over P2P ([#4088](https://github.com/sourcenetwork/defradb/issues/4088))
+* Gate collection doc ops with NAC ([#4100](https://github.com/sourcenetwork/defradb/issues/4100))
+* Gate sec. index ops with NAC ([#4097](https://github.com/sourcenetwork/defradb/issues/4097))
+* Gate verify signature op with NAC ([#4093](https://github.com/sourcenetwork/defradb/issues/4093))
+* Gate DAC ops with NAC ([#4083](https://github.com/sourcenetwork/defradb/issues/4083))
+* Gate collection set active version op with NAC ([#4077](https://github.com/sourcenetwork/defradb/issues/4077))
+* Include query source in collection block ([#4079](https://github.com/sourcenetwork/defradb/issues/4079))
+* Remove LensRegistry ([#4070](https://github.com/sourcenetwork/defradb/issues/4070))
+* Gate collection get op with NAC ([#4075](https://github.com/sourcenetwork/defradb/issues/4075))
+* Rename gql fields to use consistent underscoring ([#4078](https://github.com/sourcenetwork/defradb/issues/4078))
+* Searchable encryption ([#3873](https://github.com/sourcenetwork/defradb/issues/3873))
+* Remove unused context from Txn funcs ([#4056](https://github.com/sourcenetwork/defradb/issues/4056))
+* Only allow zero or one query sources ([#4050](https://github.com/sourcenetwork/defradb/issues/4050))
+* Add Android build support ([#4034](https://github.com/sourcenetwork/defradb/issues/4034))
+* Support Commit API on GQL Subscriptions ([#4019](https://github.com/sourcenetwork/defradb/issues/4019))
+* Gate collection patch op with NAC ([#3996](https://github.com/sourcenetwork/defradb/issues/3996))
+* Handle invalid CGO handles in C bindings ([#3966](https://github.com/sourcenetwork/defradb/issues/3966))
+* Gate schema add op with NAC ([#3905](https://github.com/sourcenetwork/defradb/issues/3905))
+
+### Fixes
+
+* Windows build ([#4124](https://github.com/sourcenetwork/defradb/issues/4124))
+* Allow docs to contain nillable arrays of nillable types ([#4061](https://github.com/sourcenetwork/defradb/issues/4061))
+* Version query with delete ([#4071](https://github.com/sourcenetwork/defradb/issues/4071))
+* Forbid default null value for json field type ([#4069](https://github.com/sourcenetwork/defradb/issues/4069))
+* Default json value ([#4064](https://github.com/sourcenetwork/defradb/issues/4064))
+* Add missing composite commits for change detector ([#4040](https://github.com/sourcenetwork/defradb/issues/4040))
+* Remove recursive issue in versioned fetcher ([#4029](https://github.com/sourcenetwork/defradb/issues/4029))
+* Allow configuring node identity with embedded Defra ([#4023](https://github.com/sourcenetwork/defradb/issues/4023))
+* Passive sync with node chain ([#4012](https://github.com/sourcenetwork/defradb/issues/4012))
+* Signature selection panic ([#4004](https://github.com/sourcenetwork/defradb/issues/4004))
+* Allow JSON variables in GQL ([#3992](https://github.com/sourcenetwork/defradb/issues/3992))
+* Prevent blocking on server close ([#3977](https://github.com/sourcenetwork/defradb/issues/3977))
+* GraphQL SSE event stream ([#3975](https://github.com/sourcenetwork/defradb/issues/3975))
+
+### Documentation
+
+* Update broken docs link in Readme ([#4117](https://github.com/sourcenetwork/defradb/issues/4117))
+
+### Refactoring
+
+* Utilize CGO handles for C bindings ([#3950](https://github.com/sourcenetwork/defradb/issues/3950))
+* Remove SchemaDescription ([#3842](https://github.com/sourcenetwork/defradb/issues/3842))
+* Limit previous collection versions to one or zero ([#4062](https://github.com/sourcenetwork/defradb/issues/4062))
+* Use 64bit cid encoding in blockstore ([#4047](https://github.com/sourcenetwork/defradb/issues/4047))
+* Make net.Host interface easier to consume ([#4009](https://github.com/sourcenetwork/defradb/issues/4009))
+* Standardize errors in C bindings ([#3970](https://github.com/sourcenetwork/defradb/issues/3970))
+* Remove playground source ([#3914](https://github.com/sourcenetwork/defradb/issues/3914))
+* Remove `isArray` from field definition delta ([#4121](https://github.com/sourcenetwork/defradb/issues/4121))
+* Update CLI Examples ([#4095](https://github.com/sourcenetwork/defradb/issues/4095))
+* Move business logic out of net ([#3948](https://github.com/sourcenetwork/defradb/issues/3948))
+* Remove gRPC from net ([#3907](https://github.com/sourcenetwork/defradb/issues/3907))
+* Remove CollectionDefinition ([#3939](https://github.com/sourcenetwork/defradb/issues/3939))
+* Cache collections in context ([#3954](https://github.com/sourcenetwork/defradb/issues/3954))
+
+### Testing
+
+* Test blocking off of patching secondary indexes ([#4044](https://github.com/sourcenetwork/defradb/issues/4044))
+* Add many-to-many integration tests ([#4045](https://github.com/sourcenetwork/defradb/issues/4045))
+
+### Continuous integration
+
+* Fine tune self-hosted workflows ([#4113](https://github.com/sourcenetwork/defradb/issues/4113))
+* Enable Runs-On action runners ([#4106](https://github.com/sourcenetwork/defradb/issues/4106))
+
+### Chore
+
+* Change from net to go-p2p ([#4051](https://github.com/sourcenetwork/defradb/issues/4051))
+* Reduce size of store prefixes ([#4025](https://github.com/sourcenetwork/defradb/issues/4025))
+* Allow test framework to test message relaying ([#4035](https://github.com/sourcenetwork/defradb/issues/4035))
+* Make C binding return types consistent ([#4002](https://github.com/sourcenetwork/defradb/issues/4002))
+* Update contributor section of readme ([#3981](https://github.com/sourcenetwork/defradb/issues/3981))
+* Update readme ([#3979](https://github.com/sourcenetwork/defradb/issues/3979))
+* Bump Go version to 1.24 ([#3946](https://github.com/sourcenetwork/defradb/issues/3946))
+
+### Bot
+
+* Bump github.com/ulikunitz/xz from 0.5.11 to 0.5.14 ([#3973](https://github.com/sourcenetwork/defradb/issues/3973))
+* Bump github.com/vito/go-sse from 1.1.2 to 1.1.3 ([#3616](https://github.com/sourcenetwork/defradb/issues/3616))
+* Update dependencies (bulk dependabot PRs) 2025-08-27 ([#3971](https://github.com/sourcenetwork/defradb/issues/3971))
+
+
+<a name="v0.19.0"></a>
+## [v0.19.0](https://github.com/sourcenetwork/defradb/compare/v0.18.0...v0.19.0)
+
+> 2025-08-08
+
+DefraDB v0.19 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.18.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
+
+### Features
+
+* Provide C Bindings ([#3787](https://github.com/sourcenetwork/defradb/issues/3787))
+* Add node access control (nac) system ([#3758](https://github.com/sourcenetwork/defradb/issues/3758))
+* Playground ACP ([#3871](https://github.com/sourcenetwork/defradb/issues/3871))
+* SourceHub ACP JS ([#3863](https://github.com/sourcenetwork/defradb/issues/3863))
+* Sync documents on demand ([#3834](https://github.com/sourcenetwork/defradb/issues/3834))
+* Add explicit p2p doc subscription ([#3822](https://github.com/sourcenetwork/defradb/issues/3822))
+* Add WASM support for Playground ([#3813](https://github.com/sourcenetwork/defradb/issues/3813))
+* Enable range queries for secondary indexes ([#3788](https://github.com/sourcenetwork/defradb/issues/3788))
+* JavaScript event system ([#3794](https://github.com/sourcenetwork/defradb/issues/3794))
+
+### Fixes
+
+* Allow operations on _similarity results ([#3927](https://github.com/sourcenetwork/defradb/issues/3927))
+* Playground keypair reset ([#3922](https://github.com/sourcenetwork/defradb/issues/3922))
+* Race condition on connection access ([#3814](https://github.com/sourcenetwork/defradb/issues/3814))
+
+### Refactoring
+
+* Configure P2PCollections with names instead of IDs ([#3815](https://github.com/sourcenetwork/defradb/issues/3815))
+* Simplify interfaces usage ([#3739](https://github.com/sourcenetwork/defradb/issues/3739))
+* ACP Identity ([#3808](https://github.com/sourcenetwork/defradb/issues/3808))
+
+### Chore
+
+* Update playground readme and package.json ([#3911](https://github.com/sourcenetwork/defradb/issues/3911))
+* Ignore graphiql update in the playground ([#3894](https://github.com/sourcenetwork/defradb/issues/3894))
+* Fix some function names in comment ([#3789](https://github.com/sourcenetwork/defradb/issues/3789))
+* Add TOC to playground readme and TOC check CI job ([#3827](https://github.com/sourcenetwork/defradb/issues/3827))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 2025-08-02 ([#3903](https://github.com/sourcenetwork/defradb/issues/3903))
+* Update dependencies (bulk dependabot PRs) 2025-07-14 ([#3835](https://github.com/sourcenetwork/defradb/issues/3835))
+* Update dependencies (bulk dependabot PRs) 2025-07-09 ([#3825](https://github.com/sourcenetwork/defradb/issues/3825))
+* Update dependencies (bulk dependabot PRs) 2025-07-07 ([#3821](https://github.com/sourcenetwork/defradb/issues/3821))
+* Bump eslint from 9.30.0 to 9.30.1 in /playground ([#3806](https://github.com/sourcenetwork/defradb/issues/3806))
+* Update dependencies (bulk dependabot PRs) 2025-07-03 ([#3810](https://github.com/sourcenetwork/defradb/issues/3810))
+* Update dependencies (bulk dependabot PRs) 2025-06-20 ([#3791](https://github.com/sourcenetwork/defradb/issues/3791))
+
+<a name="v0.18.0"></a>
+## [v0.18.0](https://github.com/sourcenetwork/defradb/compare/v0.17.0...v0.18.0)
+
+> 2025-06-13
+
+DefraDB v0.18 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.17.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
+
+### Features
+
+* Replace commit query fieldID with fieldName ([#3701](https://github.com/sourcenetwork/defradb/issues/3701))
+* JS client ([#3658](https://github.com/sourcenetwork/defradb/issues/3658))
+* Make Collection.Name immutable ([#3671](https://github.com/sourcenetwork/defradb/issues/3671))
+* Utilize secondary indexes for ordering ([#3652](https://github.com/sourcenetwork/defradb/issues/3652))
+
+### Fixes
+
+* Bypass composite index ordering on order mismatch ([#3781](https://github.com/sourcenetwork/defradb/issues/3781))
+* Check if collection exists in index cli commands ([#3777](https://github.com/sourcenetwork/defradb/issues/3777))
+* Correct index fetching order ([#3776](https://github.com/sourcenetwork/defradb/issues/3776))
+* Enable doc encryption for embedded client ([#3755](https://github.com/sourcenetwork/defradb/issues/3755))
+* Get indexes for a specific collection ([#3643](https://github.com/sourcenetwork/defradb/issues/3643))
+
+### Documentation
+
+* Add data flow documentation ([#3736](https://github.com/sourcenetwork/defradb/issues/3736))
+* Update outdated disclaimer about lack of encryption ([#3647](https://github.com/sourcenetwork/defradb/issues/3647))
+
+### Performance
+
+* Cache collection short ids within txn context ([#3703](https://github.com/sourcenetwork/defradb/issues/3703))
+
+### Refactoring
+
+* Remove collection field id ([#3710](https://github.com/sourcenetwork/defradb/issues/3710))
+* Store index description in collection version ([#3716](https://github.com/sourcenetwork/defradb/issues/3716))
+* Allow retrieval of txn from ctx everywhere ([#3705](https://github.com/sourcenetwork/defradb/issues/3705))
+* Unify crdt packages ([#3679](https://github.com/sourcenetwork/defradb/issues/3679))
+* Rename CollectionDescription.ID to VersionID ([#3677](https://github.com/sourcenetwork/defradb/issues/3677))
+* Rename CollectionDescription to CollectionVersion ([#3676](https://github.com/sourcenetwork/defradb/issues/3676))
+* Replace schema-only collections with boolean ([#3653](https://github.com/sourcenetwork/defradb/issues/3653))
+* Replace CollectionDescription.Root with ColID ([#3644](https://github.com/sourcenetwork/defradb/issues/3644))
+* Replace Collection ID with SchemaVersionID ([#3640](https://github.com/sourcenetwork/defradb/issues/3640))
+
+### Testing
+
+* Update test Lens modules to latest SDK ([#3773](https://github.com/sourcenetwork/defradb/issues/3773))
+
+### Chore
+
+* Improve node startup sync and feedback ([#3707](https://github.com/sourcenetwork/defradb/issues/3707))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 2025-06-09 ([#3768](https://github.com/sourcenetwork/defradb/issues/3768))
+* Update dependencies (bulk dependabot PRs) 2025-06-02 ([#3750](https://github.com/sourcenetwork/defradb/issues/3750))
+* Update dependencies (bulk dependabot PRs) 2025-05-26 ([#3737](https://github.com/sourcenetwork/defradb/issues/3737))
+* Update dependencies (bulk dependabot PRs) 2025-05-20 ([#3724](https://github.com/sourcenetwork/defradb/issues/3724))
+* Update dependencies (bulk dependabot PRs) 2025-05-13 ([#3700](https://github.com/sourcenetwork/defradb/issues/3700))
+* Bump graphiql from 3.9.0 to 4.0.1 in /playground ([#3663](https://github.com/sourcenetwork/defradb/issues/3663))
+* Update dependencies (bulk dependabot PRs) 2025-05-05 ([#3668](https://github.com/sourcenetwork/defradb/issues/3668))
+* Update dependencies (bulk dependabot PRs) 2025-05-01 ([#3655](https://github.com/sourcenetwork/defradb/issues/3655))
+* Update dependencies (bulk dependabot PRs) 2025-04-22 ([#3638](https://github.com/sourcenetwork/defradb/issues/3638))
+
+<a name="v0.17.0"></a>
+## [v0.17.0](https://github.com/sourcenetwork/defradb/compare/v0.16.0...v0.17.0)
+
+> 2025-04-16
+
+DefraDB v0.17 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.16.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
+
+### Features
+
+* Enable block verification by clients ([#3591](https://github.com/sourcenetwork/defradb/issues/3591))
+* Make replicator retry intervals configurable ([#3574](https://github.com/sourcenetwork/defradb/issues/3574))
+* Make signing algorithm configurable ([#3545](https://github.com/sourcenetwork/defradb/issues/3545))
+* JS build support ([#3548](https://github.com/sourcenetwork/defradb/issues/3548))
+* Make DAC write permission more granular ([#3218](https://github.com/sourcenetwork/defradb/issues/3218))
+* Introduce digital signatures ([#3505](https://github.com/sourcenetwork/defradb/issues/3505))
+
+### Fixes
+
+* PeerInfo sync issue ([#3606](https://github.com/sourcenetwork/defradb/issues/3606))
+* Only give badger a path if not in-memory ([#3552](https://github.com/sourcenetwork/defradb/issues/3552))
+* Consistent version query semantics ([#3477](https://github.com/sourcenetwork/defradb/issues/3477))
+
+### Refactoring
+
+* Make validator return joined errors ([#3513](https://github.com/sourcenetwork/defradb/issues/3513))
+* Replace datastore package with corekv ([#3508](https://github.com/sourcenetwork/defradb/issues/3508))
+* Changed paths for lens migration in CLI ([#3510](https://github.com/sourcenetwork/defradb/issues/3510))
+
+### Testing
+
+* Add example CLI integration tests ([#3550](https://github.com/sourcenetwork/defradb/issues/3550))
+* Incorporate gomega matchers ([#3489](https://github.com/sourcenetwork/defradb/issues/3489))
+
+### Chore
+
+* Bump acp_core and SourceHub pkg versions ([#3527](https://github.com/sourcenetwork/defradb/issues/3527))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 2025-04-14 ([#3618](https://github.com/sourcenetwork/defradb/issues/3618))
+* Update dependencies (bulk dependabot PRs) 2025-04-08 ([#3603](https://github.com/sourcenetwork/defradb/issues/3603))
+* Update dependencies (bulk dependabot PRs) 2025-03-31 ([#3587](https://github.com/sourcenetwork/defradb/issues/3587))
+* Update dependencies (bulk dependabot PRs) 2025-03-24 ([#3568](https://github.com/sourcenetwork/defradb/issues/3568))
+* Update dependencies (bulk dependabot PRs) 2025-03-18 ([#3549](https://github.com/sourcenetwork/defradb/issues/3549))
+* Update dependencies (bulk dependabot PRs) 2025-03-13 ([#3536](https://github.com/sourcenetwork/defradb/issues/3536))
+* Update dependencies (bulk dependabot PRs) 2025-03-11 ([#3528](https://github.com/sourcenetwork/defradb/issues/3528))
+* Bump [@typescript](https://github.com/typescript)-eslint/parser from 8.25.0 to 8.26.0 in /playground ([#3506](https://github.com/sourcenetwork/defradb/issues/3506))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 8.25.0 to 8.26.0 in /playground ([#3507](https://github.com/sourcenetwork/defradb/issues/3507))
+* Update dependencies (bulk dependabot PRs) 2025-03-03 ([#3504](https://github.com/sourcenetwork/defradb/issues/3504))
+* Bump github.com/go-jose/go-jose/v3 from 3.0.1-0.20221117193127-916db76e8214 to 3.0.4 ([#3492](https://github.com/sourcenetwork/defradb/issues/3492))
+* Update dependencies (bulk dependabot PRs) 2025-02-24 ([#3487](https://github.com/sourcenetwork/defradb/issues/3487))
+
+<a name="v0.16.0"></a>
+## [v0.16.0](https://github.com/sourcenetwork/defradb/compare/v0.15.0...v0.16.0)
+
+> 2025-02-21
+
+DefraDB v0.16 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
+
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.15.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
+
+### Features
+
+* Add cosine similarity query ([#3464](https://github.com/sourcenetwork/defradb/issues/3464))
+* Add contraints and embedding directives ([#3405](https://github.com/sourcenetwork/defradb/issues/3405))
+* Add open telemetry metrics and traces ([#3404](https://github.com/sourcenetwork/defradb/issues/3404))
+* Enable secondary index for compound filter conditions ([#3417](https://github.com/sourcenetwork/defradb/issues/3417))
+* Add special encoding of json array elements ([#3368](https://github.com/sourcenetwork/defradb/issues/3368))
+* P2P ACP ([#3317](https://github.com/sourcenetwork/defradb/issues/3317))
+* Multiple schema file support in schema add ([#3352](https://github.com/sourcenetwork/defradb/issues/3352))
+* Purge ACP state on DB purge ([#3363](https://github.com/sourcenetwork/defradb/issues/3363))
+* Sec. index on json ([#3330](https://github.com/sourcenetwork/defradb/issues/3330))
+* Add 'keyring list' command to CLI ([#3331](https://github.com/sourcenetwork/defradb/issues/3331))
+
+### Fixes
+
+* Consistent version query semantics ([#3477](https://github.com/sourcenetwork/defradb/issues/3477))
+* Updating of document via cli ([#3474](https://github.com/sourcenetwork/defradb/issues/3474))
+* Make --no-encryption flag work without keyring ([#3466](https://github.com/sourcenetwork/defradb/issues/3466))
+* Ensure no ACP doc check when action is node specific ([#3387](https://github.com/sourcenetwork/defradb/issues/3387))
+* Maintain indexes across schema versions ([#3367](https://github.com/sourcenetwork/defradb/issues/3367))
+* Maintain indexes across schema versions ([#3366](https://github.com/sourcenetwork/defradb/issues/3366))
+
+### Performance
+
+* Remove compound condition from 1-1 validation filter ([#3390](https://github.com/sourcenetwork/defradb/issues/3390))
+
+### Chore
+
+* Bump to GoLang v1.23 ([#3444](https://github.com/sourcenetwork/defradb/issues/3444))
+* Bump acp_core version ([#3392](https://github.com/sourcenetwork/defradb/issues/3392))
+* Import defradb/errors for Join ([#3343](https://github.com/sourcenetwork/defradb/issues/3343))
+
+### Bot
+
+* Update dependencies (bulk dependabot PRs) 2025-02-17 ([#3458](https://github.com/sourcenetwork/defradb/issues/3458))
+* Update dependencies (bulk dependabot PRs) 2025-02-10 ([#3441](https://github.com/sourcenetwork/defradb/issues/3441))
+* Bump github.com/cometbft/cometbft from 0.38.12 to 0.38.17 ([#3423](https://github.com/sourcenetwork/defradb/issues/3423))
+* Bump github.com/getkin/kin-openapi from 0.128.0 to 0.129.0 ([#3418](https://github.com/sourcenetwork/defradb/issues/3418))
+* Bump github.com/golang/glog from 1.2.3 to 1.2.4 ([#3425](https://github.com/sourcenetwork/defradb/issues/3425))
+* Update dependencies (bulk dependabot PRs) 03-02-2025 ([#3424](https://github.com/sourcenetwork/defradb/issues/3424))
+* Update dependencies (bulk dependabot PRs) 27-01-2025 ([#3415](https://github.com/sourcenetwork/defradb/issues/3415))
+* Update dependencies (bulk dependabot PRs) 20-01-2025 ([#3397](https://github.com/sourcenetwork/defradb/issues/3397))
+* Update dependencies (bulk dependabot PRs) 14-01-2025 ([#3382](https://github.com/sourcenetwork/defradb/issues/3382))
+* Update dependencies (bulk dependabot PRs) 13-01-2025 ([#3379](https://github.com/sourcenetwork/defradb/issues/3379))
+* Bump vite from 6.0.6 to 6.0.7 in /playground ([#3355](https://github.com/sourcenetwork/defradb/issues/3355))
+* Bump github.com/ipfs/boxo from 0.24.3 to 0.26.0 ([#3336](https://github.com/sourcenetwork/defradb/issues/3336))
+* Bump google.golang.org/grpc from 1.68.1 to 1.69.2 ([#3339](https://github.com/sourcenetwork/defradb/issues/3339))
+* Bump [@typescript](https://github.com/typescript)-eslint/eslint-plugin from 8.18.2 to 8.19.0 in /playground ([#3348](https://github.com/sourcenetwork/defradb/issues/3348))
+* Update dependencies (bulk dependabot PRs) 30-12-2024 ([#3347](https://github.com/sourcenetwork/defradb/issues/3347))
+* Update dependencies (bulk dependabot PRs) 18-12-2024 ([#3333](https://github.com/sourcenetwork/defradb/issues/3333))
+
 <a name="v0.15.0"></a>
 ## [v0.15.0](https://github.com/sourcenetwork/defradb/compare/v0.14.0...v0.15.0)
 
@@ -5,7 +329,7 @@
 
 DefraDB v0.15 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.14.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.14.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -72,7 +396,7 @@ To get a full outline of the changes, we invite you to review the official chang
 
 DefraDB v0.14 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.13.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.13.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -158,7 +482,7 @@ To get a full outline of the changes, we invite you to review the official chang
 
 DefraDB v0.13 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.12.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.12.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -219,7 +543,7 @@ To get a full outline of the changes, we invite you to review the official chang
 
 DefraDB v0.12 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.11.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.11.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -306,7 +630,7 @@ To get a full outline of the changes, we invite you to review the official chang
 
 DefraDB v0.11 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.10.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.10.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -372,7 +696,7 @@ To get a full outline of the changes, we invite you to review the official chang
 
 DefraDB v0.10 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.9.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.9.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -440,7 +764,7 @@ To get a full outline of the changes, we invite you to review the official chang
 
 DefraDB v0.9 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.8.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.8.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -517,7 +841,7 @@ To get a full outline of the changes, we invite you to review the official chang
 
 DefraDB v0.8 is a major pre-production release. Until the stable version 1.0 is reached, the SemVer minor patch number will denote notable releases, which will give the project freedom to experiment and explore potentially breaking changes.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.7.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.7.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -593,7 +917,7 @@ DefraDB v0.7 is a major pre-production release. Until the stable version 1.0 is 
 
 This release has focused on robustness, testing, and schema management. Some highlight new features include notable expansions to the expressiveness of schema migrations.
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.6.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.6.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -666,7 +990,7 @@ DefraDB v0.6 is a major pre-production release. Until the stable version 1.0 is 
 
 There are several new and powerful features, important bug fixes, and notable refactors in this release. Some highlight features include: The initial release of our LensVM based schema migration engine powered by WebAssembly ([#1650](https://github.com/sourcenetwork/defradb/issues/1650)), newly embedded DefraDB Playround which includes a bundled GraphQL client and schema manager, and last but not least a relation field (<type>_id) alias to improve the developer experience ([#1609](https://github.com/sourcenetwork/defradb/issues/1609)).
 
-To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.5.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+To get a full outline of the changes, we invite you to review the official changelog below. This release does include a Breaking Change to existing v0.5.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -841,7 +1165,7 @@ There many new features in this release, but most importantly, this is the first
 
 To get a full outline of the changes, we invite you to review the official changelog below. Some highlights are the first iteration of our schema update system, allowing developers to add new fields to schemas using our JSON Patch based DDL, a new DAG based delete system which will persist "soft-delete" ops into the CRDT Merkle DAG, and a early prototype for our collection level peer-to-peer synchronization.
 
-This release does include a Breaking Change to existing v0.4.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+This release does include a Breaking Change to existing v0.4.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -981,7 +1305,7 @@ DefraDB v0.4 is a major pre-production release. Until the stable version 1.0 is 
 
 There are various new features in this release - some of which are breaking - and we invite you to review the official changelog below. Some highlights are persistence of replicators, DateTime scalars, TLS support, and GQL subscriptions.
 
-This release does include a Breaking Change to existing v0.3.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+This release does include a Breaking Change to existing v0.3.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 
@@ -1154,7 +1478,7 @@ DefraDB v0.3 is a major pre-production release. Until the stable version 1.0 is 
 
 There are *several* new features in this release, and we invite you to review the official changelog below. Some highlights are various new features for Grouping & Aggregation for the query system, like top-level aggregation and group filtering. Moreover, a brand new Query Explain system was added to introspect the execution plans created by DefraDB. Lastly we introduced a revamped CLI configuration system.
 
-This release does include a Breaking Change to existing v0.2.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://discord.gg/w7jYQVJ/.
+This release does include a Breaking Change to existing v0.2.x databases. If you need help migrating an existing deployment, reach out at [hello@source.network](mailto:hello@source.network) or join our Discord at https://source.network/discord.
 
 ### Features
 

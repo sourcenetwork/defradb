@@ -5,12 +5,16 @@ Drop a collection's secondary index
 ### Synopsis
 
 Drop a collection's secondary index.
-		
-Example: drop the index 'UsersByName' for 'Users' collection:
-  defradb client index create --collection Users --name UsersByName
 
 ```
 defradb client index drop -c --collection <collection> -n --name <name> [flags]
+```
+
+### Examples
+
+```
+drop the index 'UsersByName' for 'Users' collection:  
+  defradb client index drop --collection Users --name UsersByName
 ```
 
 ### Options

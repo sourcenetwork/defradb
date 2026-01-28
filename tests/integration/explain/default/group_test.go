@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -36,12 +37,10 @@ var groupPattern = dataMap{
 func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with group-by on parent.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author (groupBy: [age]) {
@@ -54,7 +53,7 @@ func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
 
 				ExpectedPatterns: groupPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -76,12 +75,10 @@ func TestDefaultExplainRequestWithGroupByOnParent(t *testing.T) {
 func TestDefaultExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with group-by two fields on parent.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author (groupBy: [age, name]) {
@@ -94,7 +91,7 @@ func TestDefaultExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
 
 				ExpectedPatterns: groupPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,

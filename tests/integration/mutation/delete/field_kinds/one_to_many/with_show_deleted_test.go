@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -31,49 +32,48 @@ type Author {
 
 func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many delete document using single document id, show deleted.",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: schemas,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John",
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "John and the philosopher are stoned",
 					"rating":    9.9,
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "John has a chamber of secrets",
 					"rating":    9.9,
-					"author_id": testUtils.NewDocIndex(1, 0),
+					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
-					delete_Book(docID: "bae-39db1d4b-72c0-5b7b-b6f2-c20870982128") {
+					delete_Book(docID: "bae-227565a8-81b1-5c96-90e2-30dbe75ad5bd") {
 							_docID
 						}
 					}`,
 				Results: map[string]any{
 					"delete_Book": []map[string]any{
 						{
-							"_docID": "bae-39db1d4b-72c0-5b7b-b6f2-c20870982128",
+							"_docID": "bae-227565a8-81b1-5c96-90e2-30dbe75ad5bd",
 						},
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author(showDeleted: true) {
 							_deleted
@@ -107,6 +107,7 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

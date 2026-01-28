@@ -15,7 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // The parent-child distinction in these tests is as much documentation and test
@@ -25,7 +27,7 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -33,14 +35,14 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -51,12 +53,18 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.DeleteDoc{
 				NodeID: immutable.Some(0),
 				DocID:  0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_deleted
@@ -85,7 +93,7 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -93,14 +101,14 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -111,12 +119,18 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.DeleteDoc{
 				NodeID: immutable.Some(0),
 				DocID:  0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(showDeleted: true) {
 						_deleted
@@ -127,17 +141,18 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_deleted": true,
-							"Name":     "John",
-							"Age":      int64(43),
-						},
-						{
 							"_deleted": false,
 							"Name":     "Andy",
 							"Age":      int64(74),
 						},
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(43),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -150,7 +165,7 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -158,14 +173,14 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -184,12 +199,18 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.DeleteDoc{
 				NodeID: immutable.Some(0),
 				DocID:  0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(showDeleted: true) {
 						_deleted
@@ -200,17 +221,18 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_deleted": true,
-							"Name":     "John",
-							"Age":      int64(60),
-						},
-						{
 							"_deleted": false,
 							"Name":     "Andy",
 							"Age":      int64(74),
 						},
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(60),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -223,7 +245,7 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -231,14 +253,14 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -265,12 +287,18 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.DeleteDoc{
 				NodeID: immutable.Some(0),
 				DocID:  0,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(showDeleted: true) {
 						_deleted
@@ -281,17 +309,18 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_deleted": true,
-							"Name":     "John",
-							"Age":      int64(62),
-						},
-						{
 							"_deleted": false,
 							"Name":     "Andy",
 							"Age":      int64(74),
 						},
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(62),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -304,7 +333,7 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -312,14 +341,14 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -350,6 +379,12 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 1),
+				},
+			},
 			testUtils.UpdateDoc{
 				// Update John's Age on the second node only
 				NodeID: immutable.Some(1),
@@ -359,7 +394,7 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users(showDeleted: true) {
@@ -371,21 +406,22 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_deleted": true,
-							"Name":     "John",
-							"Age":      int64(62),
-						},
-						{
 							"_deleted": false,
 							"Name":     "Andy",
 							"Age":      int64(74),
 						},
+						{
+							"_deleted": true,
+							"Name":     "John",
+							"Age":      int64(62),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			// The target node currently won't receive the pre-connection updates from the source.
 			// We should look into adding a head exchange mechanic on connect.
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users(showDeleted: true) {
@@ -398,16 +434,17 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 					"Users": []map[string]any{
 						{
 							"_deleted": false,
-							"Name":     "John",
-							"Age":      int64(66),
-						},
-						{
-							"_deleted": false,
 							"Name":     "Andy",
 							"Age":      int64(74),
 						},
+						{
+							"_deleted": false,
+							"Name":     "John",
+							"Age":      int64(66),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

@@ -11,8 +11,8 @@
 package gen
 
 import (
+	"context"
 	"math/rand"
-	"strings"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -33,34 +33,37 @@ const (
 )
 
 // AutoGenerateFromSDL generates random documents from a GraphQL SDL.
-func AutoGenerateFromSDL(gqlSDL string, options ...Option) ([]GeneratedDoc, error) {
+func AutoGenerateFromSDL(ctx context.Context, gqlSDL string, options ...Option) ([]GeneratedDoc, error) {
 	genConfigs, err := parseConfig(gqlSDL)
 	if err != nil {
 		return nil, err
 	}
-	typeDefs, err := ParseSDL(gqlSDL)
+	cols, err := ParseSDL(gqlSDL)
 	if err != nil {
 		return nil, err
 	}
-	generator := newRandomDocGenerator(typeDefs, genConfigs)
-	return generator.generateDocs(options...)
+	generator := newRandomDocGenerator(cols, genConfigs)
+	return generator.generateDocs(ctx, options...)
 }
 
 // AutoGenerate generates random documents from collection definitions.
-func AutoGenerate(definitions []client.CollectionDefinition, options ...Option) ([]GeneratedDoc, error) {
+func AutoGenerate(ctx context.Context,
+	definitions []client.CollectionVersion,
+	options ...Option,
+) ([]GeneratedDoc, error) {
 	err := validateDefinitions(definitions)
 	if err != nil {
 		return nil, err
 	}
-	typeDefs := make(map[string]client.CollectionDefinition)
+	typeDefs := make(map[string]client.CollectionVersion)
 	for _, def := range definitions {
-		typeDefs[def.Description.Name.Value()] = def
+		typeDefs[def.Name] = def
 	}
 	generator := newRandomDocGenerator(typeDefs, nil)
-	return generator.generateDocs(options...)
+	return generator.generateDocs(ctx, options...)
 }
 
-func newRandomDocGenerator(types map[string]client.CollectionDefinition, config configsMap) *randomDocGenerator {
+func newRandomDocGenerator(types map[string]client.CollectionVersion, config configsMap) *randomDocGenerator {
 	if config == nil {
 		config = make(configsMap)
 	}
@@ -85,7 +88,7 @@ type randomDocGenerator struct {
 	random        rand.Rand
 }
 
-func (g *randomDocGenerator) generateDocs(options ...Option) ([]GeneratedDoc, error) {
+func (g *randomDocGenerator) generateDocs(ctx context.Context, options ...Option) ([]GeneratedDoc, error) {
 	err := g.configurator.Configure(options...)
 	if err != nil {
 		return nil, err
@@ -94,7 +97,7 @@ func (g *randomDocGenerator) generateDocs(options ...Option) ([]GeneratedDoc, er
 	g.random = *g.configurator.random
 
 	resultDocs := make([]GeneratedDoc, 0, g.getMaxTotalDemand())
-	err = g.generateRandomDocs(g.configurator.typesOrder)
+	err = g.generateRandomDocs(ctx, g.configurator.typesOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -120,17 +123,17 @@ func (g *randomDocGenerator) getMaxTotalDemand() int {
 
 // getNextPrimaryDocID returns the docID of the next primary document to be used as a relation.
 func (g *randomDocGenerator) getNextPrimaryDocID(
-	host client.CollectionDefinition,
+	host client.CollectionVersion,
 	secondaryType string,
-	field *client.FieldDefinition,
+	field *client.CollectionFieldDescription,
 ) string {
 	ind := g.configurator.usageCounter.getNextTypeIndForField(secondaryType, field)
-	otherDef, _ := client.GetDefinition(g.configurator.definitionCache, host, field.Kind)
+	otherDef, _ := GetCollection(g.configurator.definitionCache, host, field.Kind)
 
-	return g.generatedDocs[otherDef.GetName()][ind].docID
+	return g.generatedDocs[otherDef.Name][ind].docID
 }
 
-func (g *randomDocGenerator) generateRandomDocs(order []string) error {
+func (g *randomDocGenerator) generateRandomDocs(ctx context.Context, order []string) error {
 	for _, typeName := range order {
 		typeDef := g.configurator.types[typeName]
 
@@ -140,16 +143,16 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 		totalDemand := currentTypeDemand.getAverage()
 		for i := 0; i < totalDemand; i++ {
 			newDoc := make(map[string]any)
-			for _, field := range typeDef.GetFields() {
+			for _, field := range typeDef.Fields {
 				if field.Name == request.DocIDFieldName {
 					continue
 				}
-				if field.IsRelation() {
-					if field.IsPrimaryRelation && field.Kind.IsObject() {
-						if strings.HasSuffix(field.Name, request.RelatedObjectID) {
+				if field.RelationName.HasValue() {
+					if field.IsPrimary && field.Kind.IsObject() {
+						if _, ok := request.ToRelatedObjectName(field.Name); ok {
 							newDoc[field.Name] = g.getNextPrimaryDocID(typeDef, typeName, &field)
 						} else {
-							newDoc[field.Name+request.RelatedObjectID] = g.getNextPrimaryDocID(typeDef, typeName, &field)
+							newDoc[request.ToFieldID(field.Name)] = g.getNextPrimaryDocID(typeDef, typeName, &field)
 						}
 					}
 				} else {
@@ -157,7 +160,7 @@ func (g *randomDocGenerator) generateRandomDocs(order []string) error {
 					newDoc[field.Name] = g.generateRandomValue(typeName, field.Kind, fieldConf)
 				}
 			}
-			doc, err := client.NewDocFromMap(newDoc, typeDef)
+			doc, err := client.NewDocFromMap(ctx, newDoc, typeDef)
 			if err != nil {
 				return err
 			}
@@ -216,34 +219,28 @@ func (g *randomDocGenerator) getValueGenerator(fieldKind client.FieldKind, field
 	panic("Can not generate random value for unknown type: " + fieldKind.String())
 }
 
-func validateDefinitions(definitions []client.CollectionDefinition) error {
-	colIDs := make(map[uint32]struct{})
+func validateDefinitions(definitions []client.CollectionVersion) error {
+	colIDs := make(map[string]struct{})
 	colNames := make(map[string]struct{})
-	defCache := client.NewDefinitionCache(definitions)
+	defCache := NewCollectionCache(definitions)
 
 	for _, def := range definitions {
-		if def.Description.Name.Value() == "" {
+		if def.Name == "" {
 			return NewErrIncompleteColDefinition("description name is empty")
 		}
-		if def.Schema.Name == "" {
-			return NewErrIncompleteColDefinition("schema name is empty")
-		}
-		if def.Description.Name.Value() != def.Schema.Name {
-			return NewErrIncompleteColDefinition("description name and schema name do not match")
-		}
-		for _, field := range def.GetFields() {
+		for _, field := range def.Fields {
 			if field.Name == "" {
 				return NewErrIncompleteColDefinition("field name is empty")
 			}
 			if field.Kind.IsObject() {
-				_, found := client.GetDefinition(defCache, def, field.Kind)
+				_, found := GetCollection(defCache, def, field.Kind)
 				if !found {
 					return NewErrIncompleteColDefinition("field schema references unknown collection")
 				}
 			}
 		}
-		colNames[def.Description.Name.Value()] = struct{}{}
-		colIDs[def.Description.ID] = struct{}{}
+		colNames[def.Name] = struct{}{}
+		colIDs[def.VersionID] = struct{}{}
 	}
 
 	if len(colIDs) != len(definitions) {

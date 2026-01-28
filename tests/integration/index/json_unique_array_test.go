@@ -13,8 +13,7 @@ package index
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -26,14 +25,14 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						custom: JSON @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -41,7 +40,7 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Bruno",
 					"custom": map[string]any{
@@ -50,7 +49,7 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -59,7 +58,7 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"custom": map[string]any{
@@ -67,11 +66,9 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 						"numbers": []int{4},
 					},
 				},
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-8ba4aee7-0f15-5bfd-b1c8-7ae19782982b",
-					errors.NewKV("custom", map[string]any{"numbers": []int{4}})).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -79,11 +76,9 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 						"numbers": []int{5, 8, 5},
 					},
 				},
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-d7cd78f3-d14e-55a7-bfbc-8c0deb2220b4",
-					errors.NewKV("custom", map[string]any{"numbers": []int{5, 8, 5}})).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Keenan",
 					"custom": map[string]any{
@@ -91,11 +86,9 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 						"numbers": []any{6, nil},
 					},
 				},
-				ExpectedError: db.NewErrCanNotIndexNonUniqueFields(
-					"bae-bde18215-f623-568e-868d-1156c30e45d3",
-					errors.NewKV("custom", map[string]any{"numbers": []any{6, nil}})).Error(),
+				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -103,7 +96,7 @@ func TestJSONArrayUniqueIndex_ShouldAllowOnlyUniqueValuesAndUseThemForFetching(t
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},

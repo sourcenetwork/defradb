@@ -10,16 +10,17 @@
 
 package one_to_one
 
-// This test documents unwanted behaviour, see the linked ticket for more info:
-// https://github.com/sourcenetwork/defradb/issues/1709
-//
-// It is currently commented out because the panic is caught in the CLI and HTTP clients
-// and we have no good way atm to skip it.
-/*func TestQueryOneToOne_WithVersionOnOuter(t *testing.T) {
+import (
+	"testing"
+
+	"github.com/sourcenetwork/defradb/tests/action"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+)
+
+func TestQueryOneToOne_WithVersionOnOuterBeforeJoin(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Embedded commits query within one-one query",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -32,20 +33,85 @@ package one_to_one
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "فارسی دوم دبستان"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "نمی دانم",
-					"published": "bae-c052eade-23f6-5ee3-8067-20004e746be3"
+					"published": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
+				Request: `
+					query {
+						Book {
+							name
+							author {
+								name
+							}
+							_version {
+								docID
+							}
+						}
+					}
+				`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
+							"name": "فارسی دوم دبستان",
+							"_version": []map[string]any{
+								{
+									"docID": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3",
+								},
+							},
+							"author": map[string]any{
+								"name": "نمی دانم",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryOneToOne_WithVersionOnOuterAfterJoin(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						name: String
+						author: Author
+					}
+
+					type Author {
+						name: String
+						published: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+					"name": "فارسی دوم دبستان"
+				}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{
+					"name": "نمی دانم",
+					"published": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3"
+				}`,
+			},
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -59,16 +125,18 @@ package one_to_one
 						}
 					}
 				`,
-				Results: []map[string]any{
-					{
-						"name": "نمی دانم",
-						"_version": []map[string]any{
-							{
-								"docID": "bae-c052eade-23f6-5ee3-8067-20004e746be3",
-							},
-						},
-						"author": map[string]any{
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{
 							"name": "فارسی دوم دبستان",
+							"_version": []map[string]any{
+								{
+									"docID": "bae-7183862b-1638-5fc1-a3dd-b567fc1346e3",
+								},
+							},
+							"author": map[string]any{
+								"name": "نمی دانم",
+							},
 						},
 					},
 				},
@@ -76,8 +144,5 @@ package one_to_one
 		},
 	}
 
-	require.Panics(t,
-		func() { testUtils.ExecuteTestCase(t, test) },
-	)
+	testUtils.ExecuteTestCase(t, test)
 }
-*/

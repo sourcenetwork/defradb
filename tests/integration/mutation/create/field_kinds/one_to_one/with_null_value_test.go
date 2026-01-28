@@ -13,13 +13,14 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationCreateOneToOne_WithExplicitNullOnPrimarySide(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Book {
 						name: String
@@ -32,25 +33,25 @@ func TestMutationCreateOneToOne_WithExplicitNullOnPrimarySide(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Will Ferguson",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name":   "How to Be a Canadian",
 					"author": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Secrets at Maple Syrup Farm",
 					"author": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -63,14 +64,14 @@ func TestMutationCreateOneToOne_WithExplicitNullOnPrimarySide(t *testing.T) {
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{
-							"name":   "Secrets at Maple Syrup Farm",
-							"author": nil,
-						},
-						{
 							"name": "How to Be a Canadian",
 							"author": map[string]any{
 								"name": "Will Ferguson",
 							},
+						},
+						{
+							"name":   "Secrets at Maple Syrup Farm",
+							"author": nil,
 						},
 					},
 				},

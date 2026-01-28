@@ -15,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -22,14 +23,14 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc:             john21Doc,
 				EncryptedFields: []string{"age"},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							delta
 							docID
 							fieldName
@@ -37,7 +38,7 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"delta":     encrypt(testUtils.CBORValue(21), john21DocID, "age"),
 							"docID":     john21DocID,
@@ -51,10 +52,11 @@ func TestDocEncryptionField_WithEncryptionOnField_ShouldStoreOnlyFieldsDeltaEncr
 						{
 							"delta":     nil,
 							"docID":     john21DocID,
-							"fieldName": nil,
+							"fieldName": "_C",
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -75,7 +77,7 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name1: String
@@ -84,7 +86,7 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 						name4: String
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name1": "John",
 						"name2": "John",
@@ -94,10 +96,10 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 				IsDocEncrypted:  true,
 				EncryptedFields: []string{"name1", "name3"},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							cid
 							delta
 							fieldName
@@ -105,7 +107,7 @@ func TestDocEncryptionField_WithDocAndFieldEncryption_ShouldUseDedicatedEncKeyFo
 					}
 				`,
 				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					commits := testUtils.ConvertToArrayOfMaps(t, result["commits"])
+					commits := testUtils.ConvertToArrayOfMaps(t, result["_commits"])
 					name1 := deltaForField("name1", commits)
 					name2 := deltaForField("name2", commits)
 					name3 := deltaForField("name3", commits)
@@ -136,7 +138,7 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name1: String
@@ -145,7 +147,7 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 						name4: String
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name1": "John",
 						"name2": "John",
@@ -163,10 +165,10 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 					"name4": "Andy"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
-						commits(order: {height: DESC}, limit: 5) {
+						_commits(order: {height: DESC}, limit: 5) {
 							cid
 							delta
 							fieldName
@@ -175,7 +177,7 @@ func TestDocEncryptionField_UponUpdateWithDocAndFieldEncryption_ShouldUseDedicat
 					}
 				`,
 				Asserter: testUtils.ResultAsserterFunc(func(_ testing.TB, result map[string]any) (bool, string) {
-					commits := testUtils.ConvertToArrayOfMaps(t, result["commits"])
+					commits := testUtils.ConvertToArrayOfMaps(t, result["_commits"])
 					name1 := deltaForField("name1", commits)
 					name2 := deltaForField("name2", commits)
 					name3 := deltaForField("name3", commits)

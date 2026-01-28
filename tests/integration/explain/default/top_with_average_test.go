@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -47,12 +48,10 @@ var topLevelAveragePattern = dataMap{
 func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) top-level average request with filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					_avg(
@@ -64,16 +63,16 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 
 				ExpectedPatterns: topLevelAveragePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
-									"_ne": nil,
+									"_neq": nil,
 								},
 							},
 							"prefixes": []string{
@@ -91,7 +90,7 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 									"fieldName":      "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -107,7 +106,7 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 									"fieldName": "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_ne": nil,
+											"_neq": nil,
 										},
 									},
 								},
@@ -130,12 +129,10 @@ func TestDefaultExplainTopLevelAverageRequest(t *testing.T) {
 func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) top-level average request with filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					_avg(
@@ -152,17 +149,17 @@ func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 
 				ExpectedPatterns: topLevelAveragePattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "scanNode",
 						IncludeChildNodes: true, // should be leaf of it's branch, so will have no child nodes.
 						ExpectedAttributes: dataMap{
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"filter": dataMap{
 								"age": dataMap{
-									"_gt": int32(26),
-									"_ne": nil,
+									"_gt":  int32(26),
+									"_neq": nil,
 								},
 							},
 							"prefixes": []string{
@@ -180,8 +177,8 @@ func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 									"fieldName":      "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_gt": int32(26),
-											"_ne": nil,
+											"_gt":  int32(26),
+											"_neq": nil,
 										},
 									},
 								},
@@ -197,8 +194,8 @@ func TestDefaultExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 									"fieldName": "Author",
 									"filter": dataMap{
 										"age": dataMap{
-											"_gt": int32(26),
-											"_ne": nil,
+											"_gt":  int32(26),
+											"_neq": nil,
 										},
 									},
 								},

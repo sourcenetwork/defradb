@@ -13,20 +13,20 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with sum on unspecified field",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (groupBy: [Name]) {
 						Name
@@ -43,9 +43,8 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *te
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmptyCollection(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by number, no children, sum on non-rendered group, empty collection",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
@@ -64,28 +63,27 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmp
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, sum on non-rendered group integer value",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 38
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// It is important to test negative values here, due to the auto-typing of numbers
 				Doc: `{
 					"Name": "Alice",
 					"Age": -19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -113,27 +111,26 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *t
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, sum on non-rendered group nil and integer values",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Age is undefined here
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -161,44 +158,43 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and sum of sum on int",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 25,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34,
 					"Verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19,
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -226,16 +222,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_sum": int64(55),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_sum":     int64(55),
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_sum": int64(19),
 							"_group": []map[string]any{
@@ -245,8 +231,19 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 								},
 							},
 						},
+						{
+							"Name": "Carlo",
+							"_sum": int64(55),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_sum":     int64(55),
+								},
+							},
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -256,26 +253,25 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, sum on non-rendered group float (default) value",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 1.89
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -303,27 +299,26 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t
 
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, sum on non-rendered group float value",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 1.89
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"HeightM": 2.04
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -351,44 +346,43 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and sum of sum on float",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 1.82,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 1.61,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.22,
 					"Verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"HeightM": 1.74,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"HeightM": 2.04,
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -402,12 +396,12 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Alice",
-							"_sum": float64(2.04),
+							"Name": "Carlo",
+							"_sum": float64(1.74),
 							"_group": []map[string]any{
 								{
-									"Verified": false,
-									"_sum":     float64(2.04),
+									"Verified": true,
+									"_sum":     float64(1.74),
 								},
 							},
 						},
@@ -426,17 +420,18 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_sum": float64(1.74),
+							"Name": "Alice",
+							"_sum": float64(2.04),
 							"_group": []map[string]any{
 								{
-									"Verified": true,
-									"_sum":     float64(1.74),
+									"Verified": false,
+									"_sum":     float64(2.04),
 								},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -446,9 +441,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 
 func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloat(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, and sum of sum of sum of float",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 1.82,
@@ -456,7 +450,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 1.61,
@@ -464,7 +458,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.22,
@@ -472,7 +466,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 					"Verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"HeightM": 1.74,
@@ -480,7 +474,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"HeightM": 2.04,
@@ -488,7 +482,7 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -505,22 +499,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
-						{
-							"Name": "Carlo",
-							"_sum": float64(1.74),
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_sum":     float64(1.74),
-									"_group": []map[string]any{
-										{
-											"Age":  int64(55),
-											"_sum": float64(1.74),
-										},
-									},
-								},
-							},
-						},
 						{
 							"Name": "Alice",
 							"_sum": float64(2.04),
@@ -567,8 +545,25 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 								},
 							},
 						},
+						{
+							"Name": "Carlo",
+							"_sum": float64(1.74),
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_sum":     float64(1.74),
+									"_group": []map[string]any{
+										{
+											"Age":  int64(55),
+											"_sum": float64(1.74),
+										},
+									},
+								},
+							},
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

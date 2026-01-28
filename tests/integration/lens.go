@@ -17,7 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 const (
@@ -25,11 +25,11 @@ const (
 )
 
 var (
-	lensType node.LensRuntimeType
+	lensType db.LensRuntimeType
 )
 
 func init() {
-	lensType = node.LensRuntimeType(os.Getenv(lensTypeEnvName))
+	lensType = db.LensRuntimeType(os.Getenv(lensTypeEnvName))
 }
 
 // ConfigureMigration is a test action which will configure a Lens migration using the
@@ -54,17 +54,26 @@ type ConfigureMigration struct {
 }
 
 func configureMigration(
-	s *state,
+	s *state.State,
 	action ConfigureMigration,
 ) {
-	_, nodes := getNodesWithIDs(action.NodeID, s.nodes)
+	var lensID string
+
+	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
 		txn := getTransaction(s, node.Client, action.TransactionID, action.ExpectedError)
-		ctx := db.SetContextTxn(s.ctx, txn)
+		ctx := db.InitContext(s.Ctx, txn)
+		var err error
+		lensID, err = node.SetMigration(ctx, action.LensConfig)
+		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
-		err := node.SetMigration(ctx, action.LensConfig)
-		expectedErrorRaised := AssertError(s.t, s.testCase.Description, err, action.ExpectedError)
-
-		assertExpectedErrorRaised(s.t, s.testCase.Description, action.ExpectedError, expectedErrorRaised)
+		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
+
+	s.LensIDs = append(s.LensIDs, lensID)
+
+	// After setting migration the collection's Version.Previous.Value().Transform should be set.
+	// that's why we need to refresh collections, so that the in-memory collection versions are updated.
+	// Originally was added for [CreateIndex] to be able to index docs with migrated values.
+	refreshCollections(s)
 }

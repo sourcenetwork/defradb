@@ -14,8 +14,9 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/sourcenetwork/immutable"
 	"golang.org/x/exp/constraints"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 type normalNillableBoolArray struct {

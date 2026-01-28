@@ -13,6 +13,7 @@ package one_to_many
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,9 +21,8 @@ import (
 // https://github.com/sourcenetwork/defradb/issues/2113
 func TestView_OneToManyWithCount_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with count",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -34,7 +34,7 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -49,27 +49,27 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 				`,
 			},
 			// bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name":	"To Kill a Mockingbird",
-					"author_id": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
+					"_authorID": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name":	"Go Set a Watchman",
-					"author_id": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
+					"_authorID": "bae-ef9cd756-08e1-5f23-abeb-7b3e6351a68d"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 							AuthorView {
 								name
@@ -86,9 +86,8 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 
 func TestView_OneToManyWithAliasedCount(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with aliased count",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -100,7 +99,7 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -114,27 +113,27 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "To Kill a Mockingbird",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Go Set a Watchman",
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {
@@ -160,9 +159,8 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 
 func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to many view with count in query but not sdl",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						name: String
@@ -174,7 +172,7 @@ func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateView{
+			&action.CreateView{
 				Query: `
 					Author {
 						name
@@ -187,13 +185,13 @@ func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Harper Lee"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {

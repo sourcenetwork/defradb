@@ -11,45 +11,23 @@
 package tests
 
 import (
-	"context"
-	"fmt"
 	"os"
 	"strconv"
-
-	"github.com/libp2p/go-libp2p/core/peer"
-
-	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/net"
-	"github.com/sourcenetwork/defradb/node"
-	"github.com/sourcenetwork/defradb/tests/clients"
-	"github.com/sourcenetwork/defradb/tests/clients/cli"
-	"github.com/sourcenetwork/defradb/tests/clients/http"
 )
 
 const (
 	clientGoEnvName   = "DEFRA_CLIENT_GO"
 	clientHttpEnvName = "DEFRA_CLIENT_HTTP"
 	clientCliEnvName  = "DEFRA_CLIENT_CLI"
-)
-
-type ClientType string
-
-const (
-	// goClientType enables running the test suite using
-	// the go implementation of the client.DB interface.
-	GoClientType ClientType = "go"
-	// httpClientType enables running the test suite using
-	// the http implementation of the client.DB interface.
-	HTTPClientType ClientType = "http"
-	// cliClientType enables running the test suite using
-	// the cli implementation of the client.DB interface.
-	CLIClientType ClientType = "cli"
+	clientCEnvName    = "DEFRA_CLIENT_C"
 )
 
 var (
 	httpClient bool
 	goClient   bool
 	cliClient  bool
+	jsClient   bool
+	cClient    bool
 )
 
 func init() {
@@ -58,59 +36,10 @@ func init() {
 	httpClient, _ = strconv.ParseBool(os.Getenv(clientHttpEnvName))
 	goClient, _ = strconv.ParseBool(os.Getenv(clientGoEnvName))
 	cliClient, _ = strconv.ParseBool(os.Getenv(clientCliEnvName))
+	cClient, _ = strconv.ParseBool(os.Getenv(clientCEnvName))
 
-	if !goClient && !httpClient && !cliClient {
+	if !goClient && !httpClient && !cliClient && !cClient {
 		// Default is to test go client type.
 		goClient = true
 	}
-}
-
-// setupClient returns the client implementation for the current
-// testing state. The client type on the test state is used to
-// select the client implementation to use.
-func setupClient(s *state, node *node.Node) (impl clients.Client, err error) {
-	switch s.clientType {
-	case HTTPClientType:
-		impl, err = http.NewWrapper(node)
-
-	case CLIClientType:
-		impl, err = cli.NewWrapper(node, s.sourcehubAddress)
-
-	case GoClientType:
-		impl = newGoClientWrapper(node)
-
-	default:
-		err = fmt.Errorf("invalid client type: %v", s.dbt)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	return
-}
-
-type goClientWrapper struct {
-	client.DB
-	peer *net.Peer
-}
-
-func newGoClientWrapper(n *node.Node) *goClientWrapper {
-	return &goClientWrapper{
-		DB:   n.DB,
-		peer: n.Peer,
-	}
-}
-
-func (w *goClientWrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	if w.peer != nil {
-		return w.peer.Connect(ctx, addr)
-	}
-	return nil
-}
-
-func (w *goClientWrapper) Close() {
-	if w.peer != nil {
-		w.peer.Close()
-	}
-	w.DB.Close()
 }

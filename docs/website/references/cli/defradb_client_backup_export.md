@@ -11,11 +11,16 @@ Otherwise, all collections in the database will be exported.
 
 If the --pretty flag is provided, the JSON will be pretty printed.
 
-Example: export data for the 'Users' collection:
-  defradb client export --collection Users user_data.json
 
 ```
 defradb client backup export  [-c --collections | -p --pretty | -f --format] <output_path> [flags]
+```
+
+### Examples
+
+```
+Export data for the 'Users' collection:  
+  defradb client backup export --collections Users user_data.json
 ```
 
 ### Options

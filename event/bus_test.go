@@ -11,83 +11,98 @@
 package event
 
 import (
+	"errors"
 	"sync"
-	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestBus_IfPublishingWithoutSubscribers_ItShouldNotBlock(t *testing.T) {
-	bus := NewBus(0, 0)
+type BusTestSuite struct {
+	suite.Suite
+	setup func(int) Bus
+}
+
+func NewBusTestSuite(setup func(int) Bus) *BusTestSuite {
+	return &BusTestSuite{
+		setup: setup,
+	}
+}
+
+func (b *BusTestSuite) TestBus_IfPublishingWithoutSubscribers_ItShouldNotBlock() {
+	bus := b.setup(0)
 	defer bus.Close()
 
 	msg := NewMessage("test", 1)
 	bus.Publish(msg)
 
 	// just assert that we reach this line, for the sake of having an assert
-	assert.True(t, true)
+	assert.True(b.T(), true)
 }
 
-func TestBus_IfClosingAfterSubscribing_ItShouldNotBlock(t *testing.T) {
-	bus := NewBus(0, 0)
+func (b *BusTestSuite) TestBus_IfClosingAfterSubscribing_ItShouldNotBlock() {
+	bus := b.setup(0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test")
-	assert.NoError(t, err)
+	b.Assert().NoError(err)
 
 	bus.Close()
 
 	<-sub.Message()
 
 	// just assert that we reach this line, for the sake of having an assert
-	assert.True(t, true)
+	b.Assert().True(true)
 }
 
-func TestBus_IfSubscriptionIsUnsubscribedTwice_ItShouldNotPanic(t *testing.T) {
-	bus := NewBus(0, 0)
+func (b *BusTestSuite) TestBus_IfSubscriptionIsUnsubscribedTwice_ItShouldNotPanic() {
+	bus := b.setup(0)
 	defer bus.Close()
 
-	sub, err := bus.Subscribe(WildCardName)
-	assert.NoError(t, err)
+	sub, err := bus.Subscribe("test")
+	b.Assert().NoError(err)
 
 	bus.Unsubscribe(sub)
 	bus.Unsubscribe(sub)
 }
 
-func TestBus_IfSubscribedToWildCard_ItShouldNotReceiveMessageTwice(t *testing.T) {
-	bus := NewBus(0, 0)
+func (b *BusTestSuite) TestBus_IfSubscribedToWildCard_ItShouldNotReceiveMessageTwice() {
+	bus := b.setup(0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test", WildCardName)
-	assert.NoError(t, err)
+	if errors.Is(err, ErrWildcardNotSupported) {
+		b.T().Skipf("wildcard not supported")
+	}
+	b.Assert().NoError(err)
 
 	msg := NewMessage("test", 1)
 	bus.Publish(msg)
 
 	evt := <-sub.Message()
-	assert.Equal(t, evt, msg)
+	b.Assert().Equal(evt, msg)
 
 	select {
 	case <-sub.Message():
-		t.Errorf("should not receive duplicate message")
+		b.T().Errorf("should not receive duplicate message")
 	case <-time.After(100 * time.Millisecond):
 		// message is deduplicated
 	}
 }
 
-func TestBus_IfMultipleSubscriptionsToTheSameEvent_EachSubscriberRecievesEachEvent(t *testing.T) {
-	bus := NewBus(0, 0)
+func (b *BusTestSuite) TestBus_IfMultipleSubscriptionsToTheSameEvent_EachSubscriberRecievesEachEvent() {
+	bus := b.setup(0)
 	defer bus.Close()
 
-	msg1 := NewMessage("test", 1)
-	msg2 := NewMessage("test", 2)
+	msg1 := NewMessage("test", false)
+	msg2 := NewMessage("test", true)
 
 	sub1, err := bus.Subscribe("test")
-	assert.NoError(t, err)
+	b.Assert().NoError(err)
 
 	sub2, err := bus.Subscribe("test")
-	assert.NoError(t, err)
+	b.Assert().NoError(err)
 
 	// ordering of publish is not deterministic
 	// so capture each in a go routine
@@ -109,8 +124,8 @@ func TestBus_IfMultipleSubscriptionsToTheSameEvent_EachSubscriberRecievesEachEve
 	bus.Publish(msg1)
 	wg.Wait()
 
-	assert.Equal(t, msg1, event1)
-	assert.Equal(t, msg1, event2)
+	b.Assert().Equal(msg1, event1)
+	b.Assert().Equal(msg1, event2)
 
 	go func() {
 		event1 = <-sub1.Message()
@@ -126,21 +141,21 @@ func TestBus_IfMultipleSubscriptionsToTheSameEvent_EachSubscriberRecievesEachEve
 	bus.Publish(msg2)
 	wg.Wait()
 
-	assert.Equal(t, msg2, event1)
-	assert.Equal(t, msg2, event2)
+	b.Assert().Equal(msg2, event1)
+	b.Assert().Equal(msg2, event2)
 }
 
-func TestBus_IfMultipleBufferedSubscribersWithMultipleEvents_EachSubscriberRecievesEachItem(t *testing.T) {
-	bus := NewBus(0, 2)
+func (b *BusTestSuite) TestBus_IfMultipleBufferedSubscribersWithMultipleEvents_EachSubscriberRecievesEachItem() {
+	bus := b.setup(2)
 	defer bus.Close()
 
-	msg1 := NewMessage("test", 1)
-	msg2 := NewMessage("test", 2)
+	msg1 := NewMessage("test", false)
+	msg2 := NewMessage("test", true)
 
 	sub1, err := bus.Subscribe("test")
-	assert.NoError(t, err)
+	b.Assert().NoError(err)
 	sub2, err := bus.Subscribe("test")
-	assert.NoError(t, err)
+	b.Assert().NoError(err)
 
 	// both inputs are added first before read, using the internal chan buffer
 	bus.Publish(msg1)
@@ -152,19 +167,19 @@ func TestBus_IfMultipleBufferedSubscribersWithMultipleEvents_EachSubscriberRecie
 	output2Ch1 := <-sub1.Message()
 	output2Ch2 := <-sub2.Message()
 
-	assert.Equal(t, msg1, output1Ch1)
-	assert.Equal(t, msg1, output1Ch2)
+	b.Assert().Equal(msg1, output1Ch1)
+	b.Assert().Equal(msg1, output1Ch2)
 
-	assert.Equal(t, msg2, output2Ch1)
-	assert.Equal(t, msg2, output2Ch2)
+	b.Assert().Equal(msg2, output2Ch1)
+	b.Assert().Equal(msg2, output2Ch2)
 }
 
-func TestBus_IfSubscribedThenUnsubscribe_SubscriptionShouldNotReceiveEvent(t *testing.T) {
-	bus := NewBus(0, 0)
+func (b *BusTestSuite) TestBus_IfSubscribedThenUnsubscribe_SubscriptionShouldNotReceiveEvent() {
+	bus := b.setup(0)
 	defer bus.Close()
 
 	sub, err := bus.Subscribe("test")
-	assert.NoError(t, err)
+	b.Assert().NoError(err)
 	bus.Unsubscribe(sub)
 
 	msg := NewMessage("test", 1)
@@ -175,5 +190,5 @@ func TestBus_IfSubscribedThenUnsubscribe_SubscriptionShouldNotReceiveEvent(t *te
 	time.Sleep(5 * time.Millisecond)
 
 	// closing the channel will result in reads yielding the default value
-	assert.Equal(t, Message{}, <-sub.Message())
+	b.Assert().Equal(Message{}, <-sub.Message())
 }

@@ -13,38 +13,38 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with child filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 25
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -56,18 +56,18 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"_group": []map[string]any{
-								{
-									"Age": int64(55),
-								},
-							},
-						},
-						{
 							"Name": "John",
 							"_group": []map[string]any{
 								{
 									"Age": int64(32),
+								},
+							},
+						},
+						{
+							"Name": "Carlo",
+							"_group": []map[string]any{
+								{
+									"Age": int64(55),
 								},
 							},
 						},
@@ -77,6 +77,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -86,33 +87,32 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberFilter(t *testing.T) {
 
 func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with number filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 25
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name], filter: {Age: {_gt: 26}}) {
 						Name
@@ -141,6 +141,7 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -150,33 +151,32 @@ func TestQuerySimpleWithGroupByStringWithGroupNumberWithParentFilter(t *testing.
 
 func TestQuerySimpleWithGroupByStringWithUnrenderedGroupNumberWithParentFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with number filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 25
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name], filter: {Age: {_gt: 26}}) {
 						Name
@@ -192,6 +192,7 @@ func TestQuerySimpleWithGroupByStringWithUnrenderedGroupNumberWithParentFilter(t
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -203,44 +204,43 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 	t *testing.T,
 ) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by string, with child group by boolean, with child number filter that excludes all records",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 25,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 34,
 					"Verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55,
 					"Verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19,
 					"Verified": false
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -268,15 +268,6 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 							},
 						},
 						{
-							"Name": "Carlo",
-							"_group": []map[string]any{
-								{
-									"Verified": true,
-									"_group":   []map[string]any{},
-								},
-							},
-						},
-						{
 							"Name": "Alice",
 							"_group": []map[string]any{
 								{
@@ -285,8 +276,18 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 								},
 							},
 						},
+						{
+							"Name": "Carlo",
+							"_group": []map[string]any{
+								{
+									"Verified": true,
+									"_group":   []map[string]any{},
+								},
+							},
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -296,33 +297,32 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanThenInnerNumberFilterT
 
 func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with group by with child filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 25
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
@@ -337,15 +337,6 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Carlo",
-							"G1": []map[string]any{
-								{
-									"Age": int64(55),
-								},
-							},
-							"G2": []map[string]any{},
-						},
-						{
 							"Name": "John",
 							"G1": []map[string]any{
 								{
@@ -359,6 +350,15 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 							},
 						},
 						{
+							"Name": "Carlo",
+							"G1": []map[string]any{
+								{
+									"Age": int64(55),
+								},
+							},
+							"G2": []map[string]any{},
+						},
+						{
 							"Name": "Alice",
 							"G1":   []map[string]any{},
 							"G2": []map[string]any{
@@ -369,6 +369,7 @@ func TestQuerySimpleWithGroupByStringWithMultipleGroupNumberFilter(t *testing.T)
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

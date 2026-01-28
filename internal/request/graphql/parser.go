@@ -21,8 +21,8 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	defrap "github.com/sourcenetwork/defradb/internal/request/graphql/parser"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
@@ -33,17 +33,19 @@ var _ core.Parser = (*parser)(nil)
 var tracer = telemetry.NewTracer()
 
 type parser struct {
-	schemaManager *schema.SchemaManager
+	schemaManager                 *schema.SchemaManager
+	isSearchableEncryptionEnabled bool
 }
 
-func NewParser() (*parser, error) {
-	schemaManager, err := schema.NewSchemaManager()
+func NewParser(isSearchableEncryptionEnabled bool) (*parser, error) {
+	schemaManager, err := schema.NewSchemaManager(isSearchableEncryptionEnabled)
 	if err != nil {
 		return nil, err
 	}
 
 	p := &parser{
-		schemaManager: schemaManager,
+		schemaManager:                 schemaManager,
+		isSearchableEncryptionEnabled: isSearchableEncryptionEnabled,
 	}
 
 	return p, nil
@@ -109,18 +111,18 @@ func (p *parser) Parse(ctx context.Context, ast *ast.Document, options *client.G
 	return defrap.ParseRequest(*schema, ast, options)
 }
 
-func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]client.CollectionDefinition, error) {
+func (p *parser) ParseSDL(ctx context.Context, sdl string) ([]core.Collection, error) {
 	_, span := tracer.Start(ctx)
 	defer span.End()
 
 	return p.schemaManager.ParseSDL(sdl)
 }
 
-func (p *parser) SetSchema(ctx context.Context, txn datastore.Txn, collections []client.CollectionDefinition) error {
+func (p *parser) SetSchema(ctx context.Context, collections []client.CollectionVersion) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	schemaManager, err := schema.NewSchemaManager()
+	schemaManager, err := schema.NewSchemaManager(p.isSearchableEncryptionEnabled)
 	if err != nil {
 		return err
 	}
@@ -129,6 +131,8 @@ func (p *parser) SetSchema(ctx context.Context, txn datastore.Txn, collections [
 	if err != nil {
 		return err
 	}
+
+	txn := datastore.CtxMustGetTxn(ctx)
 
 	txn.OnSuccess(
 		func() {

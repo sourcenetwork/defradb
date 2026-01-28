@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -41,12 +42,10 @@ var topLevelCountPattern = dataMap{
 func TestDebugExplainTopLevelCountRequest(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) top-level count request.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					_count(Author: {})
@@ -63,12 +62,10 @@ func TestDebugExplainTopLevelCountRequest(t *testing.T) {
 func TestDebugExplainTopLevelCountRequestWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) top-level count request with filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					_count(

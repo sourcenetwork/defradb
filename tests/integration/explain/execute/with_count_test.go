@@ -13,14 +13,13 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain (execute) request with count on one to many relation.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -30,7 +29,7 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 			create2AuthorDocuments(),
 			create3BookDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name

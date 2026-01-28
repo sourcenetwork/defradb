@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,14 +12,13 @@ package cli
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 )
 
 type cliWrapper struct {
@@ -57,18 +56,20 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 	stdOutRead, stdOutWrite := io.Pipe()
 	stdErrRead, stdErrWrite := io.Pipe()
 
-	tx, ok := db.TryGetContextTxn(ctx)
+	tx, ok := datastore.CtxTryGetClientTxn(ctx)
 	if ok {
 		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
 	}
 	id := identity.FromContext(ctx)
-	if id.HasValue() && id.Value().PrivateKey != nil {
-		args = append(args, "--identity", hex.EncodeToString(id.Value().PrivateKey.Serialize()))
-		args = append(args, "--source-hub-address", w.sourceHubAddress)
+	if id.HasValue() {
+		if fullIdent, ok := id.Value().(identity.FullIdentity); ok && fullIdent.PrivateKey() != nil {
+			args = append(args, "--identity", fullIdent.PrivateKey().String())
+			args = append(args, "--source-hub-address", w.sourceHubAddress)
+		}
 	}
 	args = append(args, "--url", w.address)
 
-	cmd := cli.NewDefraCommand()
+	cmd := cli.NewDefraCommand(ctx)
 	cmd.SetOut(stdOutWrite)
 	cmd.SetErr(stdErrWrite)
 	cmd.SetArgs(args)
@@ -78,8 +79,8 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 
 	go func() {
 		err := cmd.Execute()
-		stdOutWrite.CloseWithError(err)
-		stdErrWrite.CloseWithError(err)
+		_ = stdOutWrite.CloseWithError(err)
+		_ = stdErrWrite.CloseWithError(err)
 	}()
 
 	return stdOutRead, stdErrRead, nil

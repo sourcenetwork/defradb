@@ -15,16 +15,17 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// TestP2FullPReplicator tests document syncing between a node and a replicator.
+// TestP2POneToManyReplicator tests document syncing between a node and a replicator.
 func TestP2POneToManyReplicator(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						Name: String
@@ -40,7 +41,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Saadi on the first node
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
@@ -48,17 +49,17 @@ func TestP2POneToManyReplicator(t *testing.T) {
 					"Name": "Saadi"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				// Create Gulistan on the first node
 				CollectionID: 1,
 				Doc: `{
 					"Name": "Gulistan",
-					"Author_id": "bae-6a4c24c0-7b0b-5f51-a274-132d7ca90499"
+					"_AuthorID": "bae-9ace7ed9-8229-5d2f-9e30-ffd5d2c84406"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Both Saadi and Gulistan should be synced to all nodes and linked correctly
 				Request: `query {
 					Book {

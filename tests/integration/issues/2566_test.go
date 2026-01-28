@@ -17,23 +17,28 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // This test documents https://github.com/sourcenetwork/defradb/issues/2566
 func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsitency(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
+			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
 				// https://github.com/sourcenetwork/defradb/issues/2569
-				testUtils.GoClientType,
+				state.GoClientType,
 			},
 		),
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -41,7 +46,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: fmt.Sprintf(`{
 					"Name": "John",
@@ -68,6 +73,18 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				// This is an arbitrary update on both nodes to force the sync of the document created
 				// before the peer connection was configured.
@@ -76,7 +93,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -93,7 +110,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -119,17 +136,19 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 // This test documents https://github.com/sourcenetwork/defradb/issues/2566
 func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsitency(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		SupportedClientTypes: immutable.Some(
-			[]testUtils.ClientType{
+			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
 				// https://github.com/sourcenetwork/defradb/issues/2569
-				testUtils.GoClientType,
+				state.GoClientType,
 			},
 		),
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -137,7 +156,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: fmt.Sprintf(`{
 					"Name": "John",
@@ -164,6 +183,18 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 0,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				// This is an arbitrary update on both nodes to force the sync of the document created
 				// before the peer connection was configured.
@@ -172,7 +203,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -189,7 +220,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {

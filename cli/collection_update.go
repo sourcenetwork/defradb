@@ -11,6 +11,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/spf13/cobra"
@@ -18,58 +19,46 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeCollectionUpdateCommand() *cobra.Command {
+func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 	var argDocID string
 	var filter string
 	var updater string
 	var cmd = &cobra.Command{
-		Use:   "update [-i --identity] [--filter <filter> --docID <docID> --updater <updater>] <document>",
+		Use:   "update [-i --identity] [--filter <filter> --docID <docID>] --updater <updater>",
 		Short: "Update documents by docID or filter.",
-		Long: `Update documents by docID or filter.
-		
-Example: update from string:
-  defradb client collection update --name User --docID bae-123 '{ "name": "Bob" }'
-
-Example: update by filter:
-  defradb client collection update --name User \
-  --filter '{ "_gte": { "points": 100 } }' --updater '{ "verified": true }'
-
-Example: update by docID:
-  defradb client collection update --name User \
-  --docID bae-123 --updater '{ "verified": true }'
-
-Example: update private docID, with identity:
-  defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User \
-  --docID bae-123 --updater '{ "verified": true }'
-		`,
-		Args: cobra.RangeArgs(0, 1),
+		Long:  `Update documents by docID or filter.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
 			col, ok := tryGetContextCollection(cmd)
 			if !ok {
 				return cmd.Usage()
 			}
 
+			if updater == "" {
+				return NewErrMissingRequiredFlag("updater")
+			}
+
 			switch {
-			case filter != "" || updater != "":
+			case filter != "":
 				var filterValue any
 				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
 					return err
 				}
-				res, err := col.UpdateWithFilter(cmd.Context(), filterValue, updater)
+				res, err := col.UpdateWithFilter(ctx, filterValue, updater)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, res)
-			case argDocID != "" && len(args) == 1:
+			case argDocID != "":
 				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
 					return err
 				}
-				doc, err := col.Get(cmd.Context(), docID, true)
+				doc, err := col.Get(ctx, docID, true)
 				if err != nil {
 					return err
 				}
-				if err := doc.SetWithJSON([]byte(args[0])); err != nil {
+				if err := doc.SetWithJSON(ctx, []byte(updater)); err != nil {
 					return err
 				}
 				return col.Update(cmd.Context(), doc)
@@ -78,6 +67,19 @@ Example: update private docID, with identity:
 			}
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "update by filter",
+		`defradb client collection update --name User \
+  --filter '{ "points": { "_gte": 100 } }' --updater '{ "verified": true }'`)
+
+	EmbedCLIExample(ctx, cmd, "update by docID",
+		`defradb client collection update --name User \
+  --docID bae-123 --updater '{ "verified": true }'`)
+
+	EmbedCLIExample(ctx, cmd, "update private docID, with identity",
+		`defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User \
+  --docID bae-123 --updater '{ "verified": true }'`)
+
 	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
 	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
 	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")

@@ -14,16 +14,16 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
-	user1ID := "bae-93b58e20-b3e1-55b9-b5b8-0617fabe710e"
+	user1ID := "bae-1d57efc8-a1f3-5b0e-9d08-51e03359285e"
 
 	test := testUtils.TestCase{
-		Description: "One to one update mutation, self referencing from primary",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String
@@ -32,12 +32,12 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Fred"
 				}`,
@@ -46,12 +46,12 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 				DocID: 1,
 				Doc: fmt.Sprintf(
 					`{
-						"boss_id": "%s"
+						"_bossID": "%s"
 					}`,
 					user1ID,
 				),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {
@@ -75,8 +75,9 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User {
@@ -100,6 +101,7 @@ func TestMutationUpdateOneToOne_SelfReferencingFromPrimary(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

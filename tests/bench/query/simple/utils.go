@@ -60,7 +60,7 @@ func RunQueryBenchGet(
 func runQueryBenchGetSync(
 	b *testing.B,
 	ctx context.Context,
-	db client.DB,
+	db client.TxnStore,
 	docCount int,
 	listOfDocIDs [][]client.DocID,
 	query string,

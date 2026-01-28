@@ -13,35 +13,76 @@ package db
 import (
 	"container/list"
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/ipfs/go-cid"
-	ipld "github.com/ipfs/go-ipld-format"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/blockstore"
+	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/core/crdt"
-	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/defradb/internal/merkle/clock"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
+
+func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
+	col, err := getCollectionFromCollectionID(ctx, db, evt.CollectionID)
+	if err != nil {
+		log.ErrorContextE(
+			ctx,
+			"Failed to execute merge",
+			err,
+			corelog.Any("Event", evt))
+		return err
+	}
+
+	if col.Version().IsBranchable {
+		// As collection commits link to document composite commits, all events
+		// recieved for branchable collections must be processed serially else
+		// they may otherwise cause a transaction conflict.
+		db.colMergeQueue.add(evt.CollectionID)
+		defer db.colMergeQueue.done(evt.CollectionID)
+	} else {
+		// ensure only one merge per docID
+		db.docMergeQueue.add(evt.DocID)
+		defer db.docMergeQueue.done(evt.DocID)
+	}
+
+	// retry the merge process if a conflict occurs
+	//
+	// conficts occur when a user updates a document
+	// while a merge is in progress.
+	for i := 0; i < db.MaxTxnRetries(); i++ {
+		err = db.executeMerge(ctx, col, evt)
+		if errors.Is(err, corekv.ErrTxnConflict) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return nil
+}
 
 func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.Merge) error {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	var key keys.HeadstoreKey
 	if dagMerge.DocID != "" {
@@ -50,15 +91,20 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 			FieldID: core.COMPOSITE_NAMESPACE,
 		}
 	} else {
-		key = keys.NewHeadstoreColKey(col.Description().RootID)
+		shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
+		if err != nil {
+			return err
+		}
+
+		key = keys.NewHeadstoreColKey(shortID)
 	}
 
-	mt, err := getHeadsAsMergeTarget(ctx, txn, key)
+	mt, err := getHeadsAsMergeTarget(ctx, key)
 	if err != nil {
 		return err
 	}
 
-	mp, err := db.newMergeProcessor(txn, col)
+	mp, err := db.newMergeProcessor(ctx, col)
 	if err != nil {
 		return err
 	}
@@ -84,15 +130,14 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		}
 	}
 
-	err = txn.Commit(ctx)
+	err = txn.Commit()
 	if err != nil {
 		return err
 	}
 
 	// send a complete event so we can track merges in the integration tests
 	db.events.Publish(event.NewMessage(event.MergeCompleteName, event.MergeComplete{
-		Merge:     dagMerge,
-		Decrypted: len(mp.missingEncryptionBlocks) == 0,
+		Merge: dagMerge,
 	}))
 	return nil
 }
@@ -138,7 +183,6 @@ func (m *mergeQueue) done(key string) {
 }
 
 type mergeProcessor struct {
-	txn        datastore.Txn
 	blockLS    linking.LinkSystem
 	encBlockLS linking.LinkSystem
 	col        *collection
@@ -148,31 +192,26 @@ type mergeProcessor struct {
 
 	// composites is a list of composites that need to be merged.
 	composites *list.List
-	// missingEncryptionBlocks is a list of blocks that we failed to fetch
-	missingEncryptionBlocks map[cidlink.Link]struct{}
-	// availableEncryptionBlocks is a list of blocks that we have successfully fetched
-	availableEncryptionBlocks map[cidlink.Link]*coreblock.Encryption
 }
 
 func (db *DB) newMergeProcessor(
-	txn datastore.Txn,
+	ctx context.Context,
 	col *collection,
 ) (*mergeProcessor, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	blockLS := cidlink.DefaultLinkSystem()
-	blockLS.SetReadStorage(txn.Blockstore().AsIPLDStorage())
+	blockLS.SetReadStorage(blockstore.NewIPLDStore(txn.Blockstore()))
 
 	encBlockLS := cidlink.DefaultLinkSystem()
-	encBlockLS.SetReadStorage(txn.Encstore().AsIPLDStorage())
+	encBlockLS.SetReadStorage(blockstore.NewIPLDStore(txn.Encstore()))
 
 	return &mergeProcessor{
-		txn:                       txn,
-		blockLS:                   blockLS,
-		encBlockLS:                encBlockLS,
-		col:                       col,
-		docIDs:                    make(map[string]struct{}),
-		composites:                list.New(),
-		missingEncryptionBlocks:   make(map[cidlink.Link]struct{}),
-		availableEncryptionBlocks: make(map[cidlink.Link]*coreblock.Encryption),
+		blockLS:    blockLS,
+		encBlockLS: encBlockLS,
+		col:        col,
+		docIDs:     make(map[string]struct{}),
+		composites: list.New(),
 	}, nil
 }
 
@@ -199,7 +238,7 @@ func (mp *mergeProcessor) loadComposites(
 		return nil
 	}
 
-	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.SchemaPrototype)
+	nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, cidlink.Link{Cid: blockCid}, coreblock.BlockSchemaPrototype)
 	if err != nil {
 		return err
 	}
@@ -224,7 +263,7 @@ func (mp *mergeProcessor) loadComposites(
 		newMT := newMergeTarget()
 		for _, b := range mt.heads {
 			for _, link := range b.Heads {
-				nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.SchemaPrototype)
+				nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link, coreblock.BlockSchemaPrototype)
 				if err != nil {
 					return err
 				}
@@ -256,48 +295,6 @@ func (mp *mergeProcessor) mergeComposites(ctx context.Context) error {
 		}
 	}
 
-	return mp.tryFetchMissingBlocksAndMerge(ctx)
-}
-
-func (mp *mergeProcessor) tryFetchMissingBlocksAndMerge(ctx context.Context) error {
-	for len(mp.missingEncryptionBlocks) > 0 {
-		links := make([]cidlink.Link, 0, len(mp.missingEncryptionBlocks))
-		for link := range mp.missingEncryptionBlocks {
-			links = append(links, link)
-		}
-		msg, results := encryption.NewRequestKeysMessage(links)
-		mp.col.db.events.Publish(msg)
-
-		res := <-results.Get()
-		if res.Error != nil {
-			return res.Error
-		}
-
-		if len(res.Items) == 0 {
-			return nil
-		}
-
-		for i := range res.Items {
-			_, link, err := cid.CidFromBytes(res.Items[i].Link)
-			if err != nil {
-				return err
-			}
-			var encBlock coreblock.Encryption
-			err = encBlock.Unmarshal(res.Items[i].Block)
-			if err != nil {
-				return err
-			}
-
-			mp.availableEncryptionBlocks[cidlink.Link{Cid: link}] = &encBlock
-		}
-
-		clear(mp.missingEncryptionBlocks)
-
-		err := mp.mergeComposites(ctx)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -307,37 +304,10 @@ func (mp *mergeProcessor) loadEncryptionBlock(
 ) (*coreblock.Encryption, error) {
 	nd, err := mp.encBlockLS.Load(linking.LinkContext{Ctx: ctx}, encLink, coreblock.EncryptionSchemaPrototype)
 	if err != nil {
-		if errors.Is(err, ipld.ErrNotFound{}) {
-			mp.missingEncryptionBlocks[encLink] = struct{}{}
-			return nil, nil
-		}
 		return nil, err
 	}
 
 	return coreblock.GetEncryptionBlockFromNode(nd)
-}
-
-func (mp *mergeProcessor) tryGetEncryptionBlock(
-	ctx context.Context,
-	encLink cidlink.Link,
-) (*coreblock.Encryption, error) {
-	if encBlock, ok := mp.availableEncryptionBlocks[encLink]; ok {
-		return encBlock, nil
-	}
-	if _, ok := mp.missingEncryptionBlocks[encLink]; ok {
-		return nil, nil
-	}
-
-	encBlock, err := mp.loadEncryptionBlock(ctx, encLink)
-	if err != nil {
-		return nil, err
-	}
-
-	if encBlock != nil {
-		mp.availableEncryptionBlocks[encLink] = encBlock
-	}
-
-	return encBlock, nil
 }
 
 // processEncryptedBlock decrypts the block if it is encrypted and returns the decrypted block.
@@ -349,7 +319,7 @@ func (mp *mergeProcessor) processEncryptedBlock(
 	dagBlock *coreblock.Block,
 ) (*coreblock.Block, bool, error) {
 	if dagBlock.IsEncrypted() {
-		encBlock, err := mp.tryGetEncryptionBlock(ctx, *dagBlock.Encryption)
+		encBlock, err := mp.loadEncryptionBlock(ctx, *dagBlock.Encryption)
 		if err != nil {
 			return nil, false, err
 		}
@@ -381,7 +351,7 @@ func (mp *mergeProcessor) processBlock(
 	}
 
 	if canRead {
-		crdt, err := mp.initCRDTForType(dagBlock.Delta)
+		crdt, err := mp.initCRDTForType(ctx, dagBlock.Delta)
 		if err != nil {
 			return err
 		}
@@ -392,14 +362,14 @@ func (mp *mergeProcessor) processBlock(
 			return nil
 		}
 
-		err = crdt.Clock().ProcessBlock(ctx, block, blockLink)
+		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, link := range dagBlock.Links {
-		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.SchemaPrototype)
+		nd, err := mp.blockLS.Load(linking.LinkContext{Ctx: ctx}, link.Link, coreblock.BlockSchemaPrototype)
 		if err != nil {
 			return err
 		}
@@ -441,70 +411,82 @@ func decryptBlock(
 	return newBlock, nil
 }
 
-func (mp *mergeProcessor) initCRDTForType(crdt crdt.CRDT) (merklecrdt.MerkleCRDT, error) {
-	schemaVersionKey := keys.CollectionSchemaVersionKey{
-		SchemaVersionID: mp.col.Schema().VersionID,
-		CollectionID:    mp.col.ID(),
+func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CRDT) (crdt.ReplicatedData, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	shortID, err := id.GetShortCollectionID(ctx, mp.col.Version().CollectionID)
+	if err != nil {
+		return nil, err
 	}
 
 	switch {
-	case crdt.IsComposite():
-		docID := string(crdt.GetDocID())
+	case crdtUnion.IsComposite():
+		docID := string(crdtUnion.GetDocID())
 		mp.docIDs[docID] = struct{}{}
 
-		return merklecrdt.NewMerkleCompositeDAG(
-			mp.txn,
-			schemaVersionKey,
-			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(core.COMPOSITE_NAMESPACE),
+		return crdt.NewDocComposite(
+			txn.Datastore(),
+			mp.col.Version().VersionID,
+			keys.DataStoreKey{
+				CollectionShortID: shortID,
+				DocID:             docID,
+			}.WithFieldID(core.COMPOSITE_NAMESPACE),
 		), nil
 
-	case crdt.IsCollection():
-		return merklecrdt.NewMerkleCollection(
-			mp.txn,
-			schemaVersionKey,
-			keys.NewHeadstoreColKey(mp.col.Description().RootID),
+	case crdtUnion.IsCollection():
+		return crdt.NewCollection(
+			mp.col.Version().VersionID,
+			keys.NewHeadstoreColKey(shortID),
 		), nil
 
 	default:
-		docID := string(crdt.GetDocID())
+		docID := string(crdtUnion.GetDocID())
 		mp.docIDs[docID] = struct{}{}
 
-		field := crdt.GetFieldName()
-		fd, ok := mp.col.Definition().GetFieldByName(field)
+		field := crdtUnion.GetFieldName()
+		fd, ok := mp.col.Version().GetFieldByName(field)
 		if !ok {
 			// If the field is not part of the schema, we can safely ignore it.
 			return nil, nil
 		}
 
-		return merklecrdt.FieldLevelCRDTWithStore(
-			mp.txn,
-			schemaVersionKey,
+		fieldShortID, err := id.GetShortFieldID(ctx, shortID, fd.FieldID)
+		if err != nil {
+			return nil, err
+		}
+
+		return crdt.FieldLevelCRDTWithStore(
+			txn.Datastore(),
+			mp.col.Version().VersionID,
 			fd.Typ,
 			fd.Kind,
-			base.MakeDataStoreKeyWithCollectionAndDocID(mp.col.Description(), docID).WithFieldID(fd.ID.String()),
+			keys.DataStoreKey{
+				CollectionShortID: shortID,
+				DocID:             docID,
+			}.WithFieldID(fmt.Sprint(fieldShortID)),
 			field,
 		)
 	}
 }
 
-func getCollectionFromRootSchema(ctx context.Context, db *DB, rootSchema string) (*collection, error) {
+func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	cols, err := db.getCollections(
 		ctx,
 		client.CollectionFetchOptions{
-			SchemaRoot: immutable.Some(rootSchema),
+			CollectionID: immutable.Some(collectionID),
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 	if len(cols) == 0 {
-		return nil, client.NewErrCollectionNotFoundForSchema(rootSchema)
+		return nil, client.NewErrCollectionNotFoundForSchema(collectionID)
 	}
 	// We currently only support one active collection per root schema
 	// so it is safe to return the first one.
@@ -513,8 +495,8 @@ func getCollectionFromRootSchema(ctx context.Context, db *DB, rootSchema string)
 
 // getHeadsAsMergeTarget retrieves the heads of the composite DAG for the given document
 // and returns them as a merge target.
-func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) (mergeTarget, error) {
-	cids, err := getHeads(ctx, txn, key)
+func getHeadsAsMergeTarget(ctx context.Context, key keys.HeadstoreKey) (mergeTarget, error) {
+	cids, err := getHeads(ctx, key)
 
 	if err != nil {
 		return mergeTarget{}, err
@@ -522,7 +504,7 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.Head
 
 	mt := newMergeTarget()
 	for _, cid := range cids {
-		block, err := loadBlockFromBlockStore(ctx, txn, cid)
+		block, err := loadBlockFromBlockStore(ctx, cid)
 		if err != nil {
 			return mergeTarget{}, err
 		}
@@ -535,8 +517,9 @@ func getHeadsAsMergeTarget(ctx context.Context, txn datastore.Txn, key keys.Head
 }
 
 // getHeads retrieves the heads associated with the given datastore key.
-func getHeads(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) ([]cid.Cid, error) {
-	headset := clock.NewHeadSet(txn.Headstore(), key)
+func getHeads(ctx context.Context, key keys.HeadstoreKey) ([]cid.Cid, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	headset := coreblock.NewHeadSet(txn.Headstore(), key)
 
 	cids, _, err := headset.List(ctx)
 	if err != nil {
@@ -547,7 +530,8 @@ func getHeads(ctx context.Context, txn datastore.Txn, key keys.HeadstoreKey) ([]
 }
 
 // loadBlockFromBlockStore loads a block from the blockstore.
-func loadBlockFromBlockStore(ctx context.Context, txn datastore.Txn, cid cid.Cid) (*coreblock.Block, error) {
+func loadBlockFromBlockStore(ctx context.Context, cid cid.Cid) (*coreblock.Block, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
 	b, err := txn.Blockstore().Get(ctx, cid)
 	if err != nil {
 		return nil, err
@@ -567,7 +551,7 @@ func syncIndexedDoc(
 	col *collection,
 ) error {
 	// remove transaction from old context
-	oldCtx := SetContextTxn(ctx, nil)
+	oldCtx := InitContext(ctx, nil)
 
 	oldDoc, err := col.Get(oldCtx, docID, false)
 	isNewDoc := errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized)

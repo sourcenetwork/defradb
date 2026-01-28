@@ -39,7 +39,7 @@ type CollectionUpdateRequest struct {
 	Updater string `json:"updater"`
 }
 
-func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	data, err := io.ReadAll(req.Body)
@@ -57,30 +57,32 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	if q.Get(docEncryptFieldsParam) != "" {
 		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
 	}
-	if encConf.IsDocEncrypted || len(encConf.EncryptedFields) > 0 {
-		ctx = encryption.SetContextConfig(ctx, encConf)
+
+	createOpts := []client.DocCreateOption{
+		client.CreateDocEncrypted(encConf.IsDocEncrypted),
+		client.CreateDocWithEncryptedFields(encConf.EncryptedFields),
 	}
 
 	switch {
 	case client.IsJSONArray(data):
-		docList, err := client.NewDocsFromJSON(data, col.Definition())
+		docList, err := client.NewDocsFromJSON(ctx, data, col.Version())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
 
-		if err := col.CreateMany(ctx, docList); err != nil {
+		if err := col.CreateMany(ctx, docList, createOpts...); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
 		rw.WriteHeader(http.StatusOK)
 	default:
-		doc, err := client.NewDocFromJSON(data, col.Definition())
+		doc, err := client.NewDocFromJSON(ctx, data, col.Version())
 		if err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Create(ctx, doc); err != nil {
+		if err := col.Create(ctx, doc, createOpts...); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -88,7 +90,7 @@ func (s *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	var request CollectionDeleteRequest
@@ -105,7 +107,7 @@ func (s *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 	responseJSON(rw, http.StatusOK, result)
 }
 
-func (s *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	var request CollectionUpdateRequest
@@ -122,7 +124,8 @@ func (s *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.R
 	responseJSON(rw, http.StatusOK, result)
 }
 
-func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	col := mustGetContextClientCollection(req)
 
 	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
@@ -147,7 +150,7 @@ func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	if err := doc.SetWithJSON(patch); err != nil {
+	if err := doc.SetWithJSON(ctx, patch); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
@@ -159,7 +162,7 @@ func (s *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
@@ -176,7 +179,7 @@ func (s *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (s *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("show_deleted"))
 
@@ -210,7 +213,7 @@ type DocIDResult struct {
 	Error string `json:"error"`
 }
 
-func (s *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	flusher, ok := rw.(http.Flusher)
@@ -251,7 +254,7 @@ func (s *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 	}
 }
 
-func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	var indexDesc client.IndexDescription
@@ -259,7 +262,7 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	descWithoutID := client.IndexDescriptionCreateRequest{
+	descWithoutID := client.IndexCreateRequest{
 		Name:   indexDesc.Name,
 		Fields: indexDesc.Fields,
 		Unique: indexDesc.Unique,
@@ -272,22 +275,23 @@ func (s *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 	responseJSON(rw, http.StatusOK, index)
 }
 
-func (s *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
-	store := mustGetContextClientStore(req)
-	indexesMap, err := store.GetAllIndexes(req.Context())
-
+func (h *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+	name := chi.URLParam(req, "name")
+	col, err := db.GetCollectionByName(req.Context(), name)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	indexes := make([]client.IndexDescription, 0, len(indexesMap))
-	for _, index := range indexesMap {
-		indexes = append(indexes, index...)
+	indexes, err := col.GetIndexes(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
 	}
 	responseJSON(rw, http.StatusOK, indexes)
 }
 
-func (s *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request) {
+func (h *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
 	err := col.DropIndex(req.Context(), chi.URLParam(req, "index"))
@@ -295,6 +299,63 @@ func (s *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request)
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *collectionHandler) CreateEncryptedIndex(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	var indexDesc client.EncryptedIndexDescription
+	if err := requestJSON(req, &indexDesc); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	index, err := col.CreateEncryptedIndex(req.Context(), indexDesc)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, index)
+}
+
+func (h *collectionHandler) ListEncryptedIndexes(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	indexes, err := col.ListEncryptedIndexes(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, indexes)
+}
+
+func (h *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	fieldName := chi.URLParam(req, "field")
+	if fieldName == "" {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{fmt.Errorf("field name is required")})
+		return
+	}
+
+	err := col.DeleteEncryptedIndex(req.Context(), fieldName)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+
+	err := col.Truncate(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
 	rw.WriteHeader(http.StatusOK)
 }
 
@@ -324,7 +385,13 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 		Ref: "#/components/schemas/index",
 	}
 	indexCreateRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/index_create_request",
+		Ref: "#/components/schemas/index_create",
+	}
+	encryptedIndexSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/encrypted_index",
+	}
+	encryptedIndexCreateRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/encrypted_index_create",
 	}
 
 	collectionNamePathParam := openapi3.NewPathParameter("name").
@@ -488,6 +555,64 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	collectionKeys.Responses.Set("200", successResponse)
 	collectionKeys.Responses.Set("400", errorResponse)
 
+	createEncryptedIndexRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchemaRef(encryptedIndexCreateRequestSchema))
+	createEncryptedIndexResponse := openapi3.NewResponse().
+		WithDescription("Encrypted index description").
+		WithJSONSchemaRef(encryptedIndexSchema)
+
+	createEncryptedIndex := openapi3.NewOperation()
+	createEncryptedIndex.OperationID = "encrypted_index_create"
+	createEncryptedIndex.Description = "Create an encrypted index"
+	createEncryptedIndex.Tags = []string{"encrypted_index"}
+	createEncryptedIndex.AddParameter(collectionNamePathParam)
+	createEncryptedIndex.RequestBody = &openapi3.RequestBodyRef{
+		Value: createEncryptedIndexRequest,
+	}
+	createEncryptedIndex.AddResponse(200, createEncryptedIndexResponse)
+	createEncryptedIndex.Responses.Set("400", errorResponse)
+
+	encryptedIndexArraySchema := openapi3.NewArraySchema()
+	encryptedIndexArraySchema.Items = encryptedIndexSchema
+
+	getEncryptedIndexesResponse := openapi3.NewResponse().
+		WithDescription("List of encrypted indexes").
+		WithJSONSchema(encryptedIndexArraySchema)
+
+	listEncryptedIndexes := openapi3.NewOperation()
+	listEncryptedIndexes.OperationID = "encrypted_index_list"
+	listEncryptedIndexes.Description = "List encrypted indexes"
+	listEncryptedIndexes.Tags = []string{"encrypted_index"}
+	listEncryptedIndexes.AddParameter(collectionNamePathParam)
+	listEncryptedIndexes.AddResponse(200, getEncryptedIndexesResponse)
+	listEncryptedIndexes.Responses.Set("400", errorResponse)
+
+	fieldNamePathParam := openapi3.NewPathParameter("field").
+		WithRequired(true).
+		WithDescription("Field name of the encrypted index").
+		WithSchema(openapi3.NewStringSchema())
+
+	deleteEncryptedIndex := openapi3.NewOperation()
+	deleteEncryptedIndex.OperationID = "encrypted_index_delete"
+	deleteEncryptedIndex.Description = "Delete an encrypted index"
+	deleteEncryptedIndex.Tags = []string{"encrypted_index"}
+	deleteEncryptedIndex.AddParameter(collectionNamePathParam)
+	deleteEncryptedIndex.AddParameter(fieldNamePathParam)
+	deleteEncryptedIndex.Responses = openapi3.NewResponses()
+	deleteEncryptedIndex.Responses.Set("200", successResponse)
+	deleteEncryptedIndex.Responses.Set("400", errorResponse)
+
+	truncate := openapi3.NewOperation()
+	truncate.OperationID = "truncate"
+	truncate.Description = "Truncate a collection, removing all document data within it from the server. " +
+		"Does not propagate the deletion to other Defra nodes in the network."
+	truncate.Tags = []string{"truncate"}
+	truncate.AddParameter(collectionNamePathParam)
+	truncate.Responses = openapi3.NewResponses()
+	truncate.Responses.Set("200", successResponse)
+	truncate.Responses.Set("400", errorResponse)
+
 	router.AddRoute("/collections/{name}", http.MethodGet, collectionKeys, h.GetAllDocIDs)
 	router.AddRoute("/collections/{name}", http.MethodPost, collectionCreate, h.Create)
 	router.AddRoute("/collections/{name}", http.MethodPatch, collectionUpdateWith, h.UpdateWithFilter)
@@ -498,4 +623,11 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}/{docID}", http.MethodGet, collectionGet, h.Get)
 	router.AddRoute("/collections/{name}/{docID}", http.MethodPatch, collectionUpdate, h.Update)
 	router.AddRoute("/collections/{name}/{docID}", http.MethodDelete, collectionDelete, h.Delete)
+	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodPost, createEncryptedIndex,
+		h.CreateEncryptedIndex)
+	router.AddRoute("/collections/{name}/encrypted-indexes", http.MethodGet, listEncryptedIndexes,
+		h.ListEncryptedIndexes)
+	router.AddRoute("/collections/{name}/encrypted-indexes/{field}", http.MethodDelete, deleteEncryptedIndex,
+		h.DeleteEncryptedIndex)
+	router.AddRoute("/collections/{name}/truncate", http.MethodDelete, truncate, h.Truncate)
 }

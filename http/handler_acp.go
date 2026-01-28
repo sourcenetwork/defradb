@@ -19,7 +19,7 @@ import (
 
 type acpHandler struct{}
 
-func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) AddDACPolicy(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	policyBytes, err := io.ReadAll(req.Body)
@@ -28,7 +28,7 @@ func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	addPolicyResult, err := db.AddPolicy(
+	addPolicyResult, err := db.AddDACPolicy(
 		req.Context(),
 		string(policyBytes),
 	)
@@ -40,17 +40,17 @@ func (s *acpHandler) AddPolicy(rw http.ResponseWriter, req *http.Request) {
 	responseJSON(rw, http.StatusOK, addPolicyResult)
 }
 
-func (s *acpHandler) AddDocActorRelationship(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) AddDACActorRelationship(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var message addDocActorRelationshipRequest
+	var message addDACActorRelationshipRequest
 	err := requestJSON(req, &message)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	addDocActorRelResult, err := db.AddDocActorRelationship(
+	addDocActorRelResult, err := db.AddDACActorRelationship(
 		req.Context(),
 		message.CollectionName,
 		message.DocID,
@@ -65,17 +65,17 @@ func (s *acpHandler) AddDocActorRelationship(rw http.ResponseWriter, req *http.R
 	responseJSON(rw, http.StatusOK, addDocActorRelResult)
 }
 
-func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *http.Request) {
+func (h *acpHandler) DeleteDACActorRelationship(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	var message deleteDocActorRelationshipRequest
+	var message deleteDACActorRelationshipRequest
 	err := requestJSON(req, &message)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	deleteDocActorRelResult, err := db.DeleteDocActorRelationship(
+	deleteDocActorRelResult, err := db.DeleteDACActorRelationship(
 		req.Context(),
 		message.CollectionName,
 		message.DocID,
@@ -90,81 +90,277 @@ func (s *acpHandler) DeleteDocActorRelationship(rw http.ResponseWriter, req *htt
 	responseJSON(rw, http.StatusOK, deleteDocActorRelResult)
 }
 
+func (h *acpHandler) AddNACActorRelationship(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	var message addNACActorRelationshipRequest
+	err := requestJSON(req, &message)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	addActorRelationshipResult, err := db.AddNACActorRelationship(
+		req.Context(),
+		message.Relation,
+		message.TargetActor,
+	)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, addActorRelationshipResult)
+}
+
+func (h *acpHandler) DeleteNACActorRelationship(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	var message deleteNACActorRelationshipRequest
+	err := requestJSON(req, &message)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	deleteActorRelationshipResult, err := db.DeleteNACActorRelationship(
+		req.Context(),
+		message.Relation,
+		message.TargetActor,
+	)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, deleteActorRelationshipResult)
+}
+
+func (h *acpHandler) ReEnableNAC(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	err := db.ReEnableNAC(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	err := db.DisableNAC(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (h *acpHandler) GetNACStatus(rw http.ResponseWriter, req *http.Request) {
+	db := mustGetContextClientDB(req)
+
+	statusNACResult, err := db.GetNACStatus(req.Context())
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+
+	responseJSON(rw, http.StatusOK, statusNACResult)
+}
+
 func (h *acpHandler) bindRoutes(router *Router) {
+	successResponse := &openapi3.ResponseRef{
+		Ref: "#/components/responses/success",
+	}
 	errorResponse := &openapi3.ResponseRef{
 		Ref: "#/components/responses/error",
 	}
 
-	acpPolicyAddResultSchema := &openapi3.SchemaRef{
+	addPolicyResultSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/acp_policy_add_result",
 	}
-
-	acpRelationshipAddRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/acp_relationship_add_request",
-	}
-	acpRelationshipAddResultSchema := &openapi3.SchemaRef{
+	addRelationshipResultSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/acp_relationship_add_result",
 	}
-
-	acpRelationshipDeleteRequestSchema := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/acp_relationship_delete_request",
-	}
-	acpRelationshipDeleteResultSchema := &openapi3.SchemaRef{
+	deleteRelationshipResultSchema := &openapi3.SchemaRef{
 		Ref: "#/components/schemas/acp_relationship_delete_result",
 	}
+	statusNACResultSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/acp_node_status_result",
+	}
 
-	acpAddPolicyRequest := openapi3.NewRequestBody().
+	addRelationshipDACRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/acp_document_relationship_add_request",
+	}
+	deleteRelationshipDACRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/acp_document_relationship_delete_request",
+	}
+
+	addRelationshipNACRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/acp_node_relationship_add_request",
+	}
+	deleteRelationshipNACRequestSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/acp_node_relationship_delete_request",
+	}
+
+	addPolicyDACRequest := openapi3.NewRequestBody().
 		WithRequired(true).
 		WithContent(openapi3.NewContentWithSchema(openapi3.NewStringSchema(), []string{"text/plain"}))
-	acpPolicyAddResult := openapi3.NewResponse().
-		WithDescription("Add acp policy result").
-		WithJSONSchemaRef(acpPolicyAddResultSchema)
-	acpAddPolicy := openapi3.NewOperation()
-	acpAddPolicy.OperationID = "add policy"
-	acpAddPolicy.Description = "Add a policy using acp system"
-	acpAddPolicy.Tags = []string{"acp_policy"}
-	acpAddPolicy.Responses = openapi3.NewResponses()
-	acpAddPolicy.AddResponse(200, acpPolicyAddResult)
-	acpAddPolicy.Responses.Set("400", errorResponse)
-	acpAddPolicy.RequestBody = &openapi3.RequestBodyRef{
-		Value: acpAddPolicyRequest,
+	addPolicyDACResult := openapi3.NewResponse().
+		WithDescription("Add document acp policy result").
+		WithJSONSchemaRef(addPolicyResultSchema)
+	addPolicyDAC := openapi3.NewOperation()
+	addPolicyDAC.OperationID = "add dac policy"
+	addPolicyDAC.Description = "Add a policy using document acp system"
+	addPolicyDAC.Tags = []string{"acp_document_policy"}
+	addPolicyDAC.Responses = openapi3.NewResponses()
+	addPolicyDAC.AddResponse(200, addPolicyDACResult)
+	addPolicyDAC.Responses.Set("400", errorResponse)
+	addPolicyDAC.RequestBody = &openapi3.RequestBodyRef{
+		Value: addPolicyDACRequest,
 	}
 
-	acpAddDocActorRelationshipRequest := openapi3.NewRequestBody().
+	addActorRelationshipDACRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(acpRelationshipAddRequestSchema))
-	acpAddDocActorRelationshipResult := openapi3.NewResponse().
-		WithDescription("Add acp relationship result").
-		WithJSONSchemaRef(acpRelationshipAddResultSchema)
-	acpAddDocActorRelationship := openapi3.NewOperation()
-	acpAddDocActorRelationship.OperationID = "add relationship"
-	acpAddDocActorRelationship.Description = "Add an actor relationship using acp system"
-	acpAddDocActorRelationship.Tags = []string{"acp_relationship"}
-	acpAddDocActorRelationship.Responses = openapi3.NewResponses()
-	acpAddDocActorRelationship.AddResponse(200, acpAddDocActorRelationshipResult)
-	acpAddDocActorRelationship.Responses.Set("400", errorResponse)
-	acpAddDocActorRelationship.RequestBody = &openapi3.RequestBodyRef{
-		Value: acpAddDocActorRelationshipRequest,
+		WithContent(openapi3.NewContentWithJSONSchemaRef(addRelationshipDACRequestSchema))
+	addActorRelationshipDACResult := openapi3.NewResponse().
+		WithDescription("Add document acp relationship result").
+		WithJSONSchemaRef(addRelationshipResultSchema)
+	addActorRelationshipDAC := openapi3.NewOperation()
+	addActorRelationshipDAC.OperationID = "add dac relationship"
+	addActorRelationshipDAC.Description = "Add an actor relationship using document acp system"
+	addActorRelationshipDAC.Tags = []string{"acp_document_relationship"}
+	addActorRelationshipDAC.Responses = openapi3.NewResponses()
+	addActorRelationshipDAC.AddResponse(200, addActorRelationshipDACResult)
+	addActorRelationshipDAC.Responses.Set("400", errorResponse)
+	addActorRelationshipDAC.RequestBody = &openapi3.RequestBodyRef{
+		Value: addActorRelationshipDACRequest,
 	}
 
-	acpDeleteDocActorRelationshipRequest := openapi3.NewRequestBody().
+	deleteActorRelationshipDACRequest := openapi3.NewRequestBody().
 		WithRequired(true).
-		WithContent(openapi3.NewContentWithJSONSchemaRef(acpRelationshipDeleteRequestSchema))
-	acpDeleteDocActorRelationshipResult := openapi3.NewResponse().
-		WithDescription("Delete acp relationship result").
-		WithJSONSchemaRef(acpRelationshipDeleteResultSchema)
-	acpDeleteDocActorRelationship := openapi3.NewOperation()
-	acpDeleteDocActorRelationship.OperationID = "delete relationship"
-	acpDeleteDocActorRelationship.Description = "Delete an actor relationship using acp system"
-	acpDeleteDocActorRelationship.Tags = []string{"acp_relationship"}
-	acpDeleteDocActorRelationship.Responses = openapi3.NewResponses()
-	acpDeleteDocActorRelationship.AddResponse(200, acpDeleteDocActorRelationshipResult)
-	acpDeleteDocActorRelationship.Responses.Set("400", errorResponse)
-	acpDeleteDocActorRelationship.RequestBody = &openapi3.RequestBodyRef{
-		Value: acpDeleteDocActorRelationshipRequest,
+		WithContent(openapi3.NewContentWithJSONSchemaRef(deleteRelationshipDACRequestSchema))
+	deleteActorRelationshipDACResult := openapi3.NewResponse().
+		WithDescription("Delete document acp relationship result").
+		WithJSONSchemaRef(deleteRelationshipResultSchema)
+	deleteActorRelationshipDAC := openapi3.NewOperation()
+	deleteActorRelationshipDAC.OperationID = "delete dac relationship"
+	deleteActorRelationshipDAC.Description = "Delete an actor relationship using document acp system"
+	deleteActorRelationshipDAC.Tags = []string{"acp_document_relationship"}
+	deleteActorRelationshipDAC.Responses = openapi3.NewResponses()
+	deleteActorRelationshipDAC.AddResponse(200, deleteActorRelationshipDACResult)
+	deleteActorRelationshipDAC.Responses.Set("400", errorResponse)
+	deleteActorRelationshipDAC.RequestBody = &openapi3.RequestBodyRef{
+		Value: deleteActorRelationshipDACRequest,
 	}
 
-	router.AddRoute("/acp/policy", http.MethodPost, acpAddPolicy, h.AddPolicy)
-	router.AddRoute("/acp/relationship", http.MethodPost, acpAddDocActorRelationship, h.AddDocActorRelationship)
-	router.AddRoute("/acp/relationship", http.MethodDelete, acpDeleteDocActorRelationship, h.DeleteDocActorRelationship)
+	addActorRelationshipNACRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchemaRef(addRelationshipNACRequestSchema))
+	addActorRelationshipNACResult := openapi3.NewResponse().
+		WithDescription("Add node acp relationship result").
+		WithJSONSchemaRef(addRelationshipResultSchema)
+	addActorRelationshipNAC := openapi3.NewOperation()
+	addActorRelationshipNAC.OperationID = "add nac relationship"
+	addActorRelationshipNAC.Description = "Add an actor relationship using node acp system"
+	addActorRelationshipNAC.Tags = []string{"acp_node_relationship"}
+	addActorRelationshipNAC.Responses = openapi3.NewResponses()
+	addActorRelationshipNAC.AddResponse(200, addActorRelationshipNACResult)
+	addActorRelationshipNAC.Responses.Set("400", errorResponse)
+	addActorRelationshipNAC.RequestBody = &openapi3.RequestBodyRef{
+		Value: addActorRelationshipNACRequest,
+	}
+
+	deleteActorRelationshipNACRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchemaRef(deleteRelationshipNACRequestSchema))
+	deleteActorRelationshipNACResult := openapi3.NewResponse().
+		WithDescription("Delete node acp relationship result").
+		WithJSONSchemaRef(deleteRelationshipResultSchema)
+	deleteActorRelationshipNAC := openapi3.NewOperation()
+	deleteActorRelationshipNAC.OperationID = "delete nac relationship"
+	deleteActorRelationshipNAC.Description = "Delete an actor relationship using node acp system"
+	deleteActorRelationshipNAC.Tags = []string{"acp_node_relationship"}
+	deleteActorRelationshipNAC.Responses = openapi3.NewResponses()
+	deleteActorRelationshipNAC.AddResponse(200, deleteActorRelationshipNACResult)
+	deleteActorRelationshipNAC.Responses.Set("400", errorResponse)
+	deleteActorRelationshipNAC.RequestBody = &openapi3.RequestBodyRef{
+		Value: deleteActorRelationshipNACRequest,
+	}
+
+	reEnableNAC := openapi3.NewOperation()
+	reEnableNAC.OperationID = "re-enable nac"
+	reEnableNAC.Description = "Re-enable nac"
+	reEnableNAC.Tags = []string{"acp_node_re-enable"}
+	reEnableNAC.Responses = openapi3.NewResponses()
+	reEnableNAC.Responses.Set("200", successResponse)
+	reEnableNAC.Responses.Set("400", errorResponse)
+
+	disableNAC := openapi3.NewOperation()
+	disableNAC.OperationID = "disable nac"
+	disableNAC.Description = "Disable nac"
+	disableNAC.Tags = []string{"acp_node_disable"}
+	disableNAC.Responses = openapi3.NewResponses()
+	disableNAC.Responses.Set("200", successResponse)
+	disableNAC.Responses.Set("400", errorResponse)
+
+	statusNACResult := openapi3.NewResponse().
+		WithDescription("Node acp status result").
+		WithJSONSchemaRef(statusNACResultSchema)
+	statusNAC := openapi3.NewOperation()
+	statusNAC.OperationID = "Check status of nac"
+	statusNAC.Description = "Check status of node acp system"
+	statusNAC.Tags = []string{"acp_node_status"}
+	statusNAC.Responses = openapi3.NewResponses()
+	statusNAC.AddResponse(200, statusNACResult)
+	statusNAC.Responses.Set("400", errorResponse)
+
+	router.AddRoute("/acp/document/policy", http.MethodPost, addPolicyDAC, h.AddDACPolicy)
+	router.AddRoute(
+		"/acp/document/relationship",
+		http.MethodPost,
+		addActorRelationshipDAC,
+		h.AddDACActorRelationship,
+	)
+	router.AddRoute(
+		"/acp/document/relationship",
+		http.MethodDelete,
+		deleteActorRelationshipDAC,
+		h.DeleteDACActorRelationship,
+	)
+
+	router.AddRoute(
+		"/acp/node/relationship",
+		http.MethodPost,
+		addActorRelationshipNAC,
+		h.AddNACActorRelationship,
+	)
+	router.AddRoute(
+		"/acp/node/relationship",
+		http.MethodDelete,
+		deleteActorRelationshipNAC,
+		h.DeleteNACActorRelationship,
+	)
+	router.AddRoute(
+		"/acp/node/re-enable",
+		http.MethodPost,
+		reEnableNAC,
+		h.ReEnableNAC,
+	)
+	router.AddRoute(
+		"/acp/node/disable",
+		http.MethodPost,
+		disableNAC,
+		h.DisableNAC,
+	)
+	router.AddRoute(
+		"/acp/node/status",
+		http.MethodGet,
+		statusNAC,
+		h.GetNACStatus,
+	)
 }

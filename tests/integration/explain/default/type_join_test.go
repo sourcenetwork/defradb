@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -35,12 +36,10 @@ var normalTypeJoinPattern = dataMap{
 func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with 2 single joins and 1 many join.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author {
@@ -81,7 +80,7 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 					},
 				},
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					// 1st join's assertions.
 					{
 						TargetNodeName:    "typeIndexJoin",
@@ -103,7 +102,7 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "3",
+								"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 								"collectionName": "Author",
 								"prefixes": []string{
 									"/3",
@@ -124,7 +123,7 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
-										"collectionID":   "4",
+										"collectionID":   "bafyreie2qrsugrpukipgyuxhdtneyjf4tstssauisjvjfqhps4trc4c2py",
 										"collectionName": "AuthorContact",
 										"prefixes": []string{
 											"/4",
@@ -155,7 +154,7 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 						ExpectedAttributes: dataMap{
 							"scanNode": dataMap{
 								"filter":         nil,
-								"collectionID":   "3",
+								"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 								"collectionName": "Author",
 								"prefixes": []string{
 									"/3",
@@ -176,7 +175,7 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 									"filter": nil,
 									"scanNode": dataMap{
 										"filter":         nil,
-										"collectionID":   "1",
+										"collectionID":   "bafyreidpjzf5kytlap2nilnnemywjmwt74hr56e72llri2z7c6w7un7sje",
 										"collectionName": "Article",
 										"prefixes": []string{
 											"/1",
@@ -208,7 +207,7 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 						IncludeChildNodes: true, // Shouldn't have any.
 						ExpectedAttributes: dataMap{
 							"filter":         nil,
-							"collectionID":   "3",
+							"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 							"collectionName": "Author",
 							"prefixes": []string{
 								"/3",
@@ -223,7 +222,7 @@ func TestDefaultExplainRequestWith2SingleJoinsAnd1ManyJoin(t *testing.T) {
 						IncludeChildNodes: true, // Shouldn't have any.
 						ExpectedAttributes: dataMap{
 							"filter":         nil,
-							"collectionID":   "4",
+							"collectionID":   "bafyreie2qrsugrpukipgyuxhdtneyjf4tstssauisjvjfqhps4trc4c2py",
 							"collectionName": "AuthorContact",
 							"prefixes": []string{
 								"/4",

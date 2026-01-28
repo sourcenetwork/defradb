@@ -1,27 +1,21 @@
-# DefraDB Playground
+# Playground
 
-A web based playground for DefraDB.
+The playground source code can be found at the repo below.
 
-## Developing
+https://github.com/sourcenetwork/defradb-playground
 
-Run a development server bound to `localhost:5173`.
+## Setup
 
-```bash
-npm install
-npm run dev
-```
-
-Start DefraDB with CORS allowed.
+Download the latest playground static assets.
 
 ```bash
-defradb start --allowed-origins="*"
+go generate .
 ```
 
-## Building
-
-Create a static build and output files to `./dist`.
+Or from the repo root.
 
 ```bash
-npm install
-npm run build
+make deps:playground
 ```
+
+To enable the playground include the `-tags plaground` flag when running or building from source. Then open your browser and navigate to http://localhost:9181.

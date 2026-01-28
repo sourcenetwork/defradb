@@ -13,37 +13,45 @@ package commits
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
+
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommits(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	nameCid := testUtils.NewSameValue()
+	ageCid := testUtils.NewSameValue()
+	headCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
-		Description: "Simple all commits query",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("name"),
+							"cid": gomega.And(nameCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("age"),
+							"cid": gomega.And(ageCid, uniqueCid),
 						},
 						{
-							"cid": testUtils.NewUniqueCid("head"),
+							"cid": gomega.And(headCid, uniqueCid),
 						},
 					},
 				},
@@ -56,48 +64,47 @@ func TestQueryCommits(t *testing.T) {
 
 func TestQueryCommitsMultipleDocs(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits query, multiple docs",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"Shahzad",
 						"age":	28
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": "bafyreid47btbb7bvj66qqa52wi773nst4dvd2556v34tejjiorrgcakv2a",
+							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 						},
 						{
-							"cid": "bafyreie7p6vhgmdjn6q7t4lw7o5hv5lgt52jq3kmfyvi6a5vdt6spigcqm",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 						},
 						{
-							"cid": "bafyreihyy3s7xfno4fryoqexigpsj4csqzkxf6e6kch7e5h24pgz3wq3pq",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid": "bafyreibeindczotofvlnhqgoeedqrphxxayp4ugsrcutr4kgda3uq3fy2y",
 						},
 						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid": "bafyreigbqcwozrscjscuclr3hxehca4skh5n7eqvtfsmbzcql7uz2pyk7e",
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreihaypay6hfz3czcdjzasyqthwf6kw3hhpucmsmrdx4et6wwokjw64",
 						},
 					},
 				},
@@ -108,38 +115,37 @@ func TestQueryCommitsMultipleDocs(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryCommitsWithSchemaVersionIDField(t *testing.T) {
+func TestQueryCommitsWithCollectionVersionIDField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query yielding schemaVersionId",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
-							schemaVersionId
+							collectionVersionId
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":             "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
-							"schemaVersionId": "bafkreicprhqxzlw3akyssz2v6pifwfueavp7jq2yj3dghapi3qcq6achs4",
+							"cid":                 "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
+							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 						{
-							"cid":             "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
-							"schemaVersionId": "bafkreicprhqxzlw3akyssz2v6pifwfueavp7jq2yj3dghapi3qcq6achs4",
+							"cid":                 "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
+							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 						{
-							"cid":             "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
-							"schemaVersionId": "bafkreicprhqxzlw3akyssz2v6pifwfueavp7jq2yj3dghapi3qcq6achs4",
+							"cid":                 "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
+							"collectionVersionId": "bafyreicrgjxxcviov5jawe2haq5fbtd4jxt63vsdhqpcyaaahiothj72tu",
 						},
 					},
 				},
@@ -152,25 +158,24 @@ func TestQueryCommitsWithSchemaVersionIDField(t *testing.T) {
 
 func TestQueryCommitsWithFieldNameField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query yielding fieldName",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							fieldName
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "age",
 						},
@@ -178,7 +183,7 @@ func TestQueryCommitsWithFieldNameField(t *testing.T) {
 							"fieldName": "name",
 						},
 						{
-							"fieldName": nil,
+							"fieldName": "_C",
 						},
 					},
 				},
@@ -191,10 +196,9 @@ func TestQueryCommitsWithFieldNameField(t *testing.T) {
 
 func TestQueryCommitsWithFieldNameFieldAndUpdate(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple commits query yielding fieldName",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21
@@ -205,16 +209,16 @@ func TestQueryCommitsWithFieldNameFieldAndUpdate(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							fieldName
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
 							"fieldName": "age",
 						},
@@ -225,99 +229,10 @@ func TestQueryCommitsWithFieldNameFieldAndUpdate(t *testing.T) {
 							"fieldName": "name",
 						},
 						{
-							"fieldName": nil,
+							"fieldName": "_C",
 						},
 						{
-							"fieldName": nil,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestQueryCommitsWithFieldIDField(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple commits query yielding fieldId",
-		Actions: []any{
-			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
-				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						commits {
-							fieldId
-						}
-					}
-				`,
-				Results: map[string]any{
-					"commits": []map[string]any{
-						{
-							"fieldId": "1",
-						},
-						{
-							"fieldId": "2",
-						},
-						{
-							"fieldId": "C",
-						},
-					},
-				},
-			},
-		},
-	}
-
-	testUtils.ExecuteTestCase(t, test)
-}
-
-func TestQueryCommitsWithFieldIDFieldWithUpdate(t *testing.T) {
-	test := testUtils.TestCase{
-		Description: "Simple commits query yielding fieldId",
-		Actions: []any{
-			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
-				Doc: `{
-						"name":	"John",
-						"age":	21
-					}`,
-			},
-			testUtils.UpdateDoc{
-				Doc: `{
-					"age":	22
-				}`,
-			},
-			testUtils.Request{
-				Request: `
-					query {
-						commits {
-							fieldId
-						}
-					}
-				`,
-				Results: map[string]any{
-					"commits": []map[string]any{
-						{
-							"fieldId": "1",
-						},
-						{
-							"fieldId": "1",
-						},
-						{
-							"fieldId": "2",
-						},
-						{
-							"fieldId": "C",
-						},
-						{
-							"fieldId": "C",
+							"fieldName": "_C",
 						},
 					},
 				},
@@ -329,10 +244,18 @@ func TestQueryCommitsWithFieldIDFieldWithUpdate(t *testing.T) {
 }
 
 func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	ageUpdateCid := testUtils.NewSameValue()
+	ageCreateCid := testUtils.NewSameValue()
+	nameCreateCid := testUtils.NewSameValue()
+	updateCompositeCid := testUtils.NewSameValue()
+	createCompositeCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21
@@ -340,101 +263,104 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 			},
 			testUtils.UpdateDoc{
 				Doc: `{
-					"age":	22
-				}`,
+						"age":	22
+					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
-						commits {
+						_commits {
 							cid
-							collectionID
 							delta
 							docID
-							fieldId
 							fieldName
 							height
 							links {
+								fieldName
 								cid
-								name
+							}
+							heads {
+								cid
+							}	
+							signature {
+								type
 							}
 						}
 					}
 				`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid":          testUtils.NewUniqueCid("age update"),
-							"collectionID": int64(1),
-							"delta":        testUtils.CBORValue(22),
-							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							"fieldId":      "1",
-							"fieldName":    "age",
-							"height":       int64(2),
-							"links": []map[string]any{
+							"cid":       gomega.And(ageUpdateCid, uniqueCid),
+							"delta":     testUtils.CBORValue(22),
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"fieldName": "age",
+							"height":    int64(2),
+							"links":     []map[string]any{},
+							"heads": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("age create"),
-									"name": "_head",
+									"cid": ageCreateCid,
 								},
 							},
+							"signature": nil,
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("age create"),
-							"collectionID": int64(1),
-							"delta":        testUtils.CBORValue(21),
-							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							"fieldId":      "1",
-							"fieldName":    "age",
-							"height":       int64(1),
-							"links":        []map[string]any{},
+							"cid":       gomega.And(ageCreateCid, uniqueCid),
+							"delta":     testUtils.CBORValue(21),
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"fieldName": "age",
+							"height":    int64(1),
+							"links":     []map[string]any{},
+							"heads":     []map[string]any{},
+							"signature": nil,
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("name create"),
-							"collectionID": int64(1),
-							"delta":        testUtils.CBORValue("John"),
-							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							"fieldId":      "2",
-							"fieldName":    "name",
-							"height":       int64(1),
-							"links":        []map[string]any{},
+							"cid":       gomega.And(nameCreateCid, uniqueCid),
+							"delta":     testUtils.CBORValue("John"),
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"fieldName": "name",
+							"height":    int64(1),
+							"links":     []map[string]any{},
+							"heads":     []map[string]any{},
+							"signature": nil,
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("update composite"),
-							"collectionID": int64(1),
-							"delta":        nil,
-							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							"fieldId":      "C",
-							"fieldName":    nil,
-							"height":       int64(2),
+							"cid":       gomega.And(updateCompositeCid, uniqueCid),
+							"delta":     nil,
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"fieldName": "_C",
+							"height":    int64(2),
 							"links": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("create composite"),
-									"name": "_head",
-								},
-								{
-									"cid":  testUtils.NewUniqueCid("age update"),
-									"name": "age",
+									"cid":       ageUpdateCid,
+									"fieldName": "age",
 								},
 							},
+							"heads": []map[string]any{
+								{
+									"cid": createCompositeCid,
+								},
+							},
+							"signature": nil,
 						},
 						{
-							"cid":          testUtils.NewUniqueCid("create composite"),
-							"collectionID": int64(1),
-							"delta":        nil,
-							"docID":        "bae-c9fb0fa4-1195-589c-aa54-e68333fb90b3",
-							"fieldId":      "C",
-							"fieldName":    nil,
-							"height":       int64(1),
+							"cid":       gomega.And(createCompositeCid, uniqueCid),
+							"delta":     nil,
+							"docID":     "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738",
+							"fieldName": "_C",
+							"height":    int64(1),
 							"links": []map[string]any{
 								{
-									"cid":  testUtils.NewUniqueCid("age create"),
-									"name": "age",
+									"cid":       ageCreateCid,
+									"fieldName": "age",
 								},
 								{
-									"cid":  testUtils.NewUniqueCid("name create"),
-									"name": "name",
+									"cid":       nameCreateCid,
+									"fieldName": "name",
 								},
 							},
+							"heads":      []map[string]any{},
+							"_signature": nil,
 						},
 					},
 				},
@@ -447,32 +373,31 @@ func TestQuery_CommitsWithAllFieldsWithUpdate_NoError(t *testing.T) {
 
 func TestQueryCommits_WithAlias_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple all commits with alias query",
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					history: commits {
+					history: _commits {
 						cid
 					}
 				}`,
 				Results: map[string]any{
 					"history": []map[string]any{
 						{
-							"cid": "bafyreif6dqbkr7t37jcjfxxrjnxt7cspxzvs7qwlbtjca57cc663he4s7e",
+							"cid": "bafyreiajq6jmyblg2b6vupjdapzkaodbt7kkwqp4fijekdvydnyxvr4y7q",
 						},
 						{
-							"cid": "bafyreigtnj6ntulcilkmin4pgukjwv3nwglqpiiyddz3dyfexdbltze7sy",
+							"cid": "bafyreigonvri5vfdosfgp4qxtq46snjxm7cnjlzizrod2wy3l53jbxiysm",
 						},
 						{
-							"cid": "bafyreia2vlbfkcbyogdjzmbqcjneabwwwtw7ti2xbd7yor5mbu2sk4pcoy",
+							"cid": "bafyreiejjfevlp5wrfl5o7bxbdtjj4th36lbdjov5gdkmy5n5jzs6dcmpu",
 						},
 					},
 				},

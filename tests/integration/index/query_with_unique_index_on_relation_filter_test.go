@@ -13,13 +13,14 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryWithUniqueCompositeIndex_WithFilterOnIndexedRelation_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
@@ -32,24 +33,24 @@ func TestQueryWithUniqueCompositeIndex_WithFilterOnIndexedRelation_ShouldFilter(
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"manufacturer": "Apple",
-					"owner_id":     testUtils.NewDocIndex(0, 0),
+					"_ownerID":     testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					User {
 						name
-						devices(filter: {owner_id: {_eq: "bae-1ef746f8-821e-586f-99b2-4cb1fb9b782f"}}) {
+						devices(filter: {_ownerID: {_eq: "bae-7f4197fe-c647-5cc6-91bb-5f32229fd4cd"}}) {
 							manufacturer
 						}
 					}

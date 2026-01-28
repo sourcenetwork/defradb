@@ -11,16 +11,19 @@
 package planner
 
 import (
+	"math"
 	"slices"
 	"strings"
 
 	cid "github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -60,6 +63,10 @@ type selectTopNode struct {
 
 	// selectNode is used pre-wiring of the plan (before expansion and all).
 	selectNode *selectNode
+
+	// This is added temporarity until Planner is refactored
+	// https://github.com/sourcenetwork/defradb/issues/3467
+	similarity []*similarityNode
 
 	// plan is the top of the plan graph (the wired and finalized plan graph).
 	planNode planNode
@@ -193,6 +200,12 @@ func (n *selectNode) Close() error {
 	return n.source.Close()
 }
 
+// checkForMigrations checks if there are any migrations registered for the given collection.
+// This is used to determine if the filter should be kept in selectNode for post-lens application.
+func (n *selectNode) checkForMigrations(col client.Collection) (bool, error) {
+	return description.HasMigrations(n.planner.ctx, col.Version().CollectionID, col.Version().VersionID)
+}
+
 func (n *selectNode) simpleExplain() (map[string]any, error) {
 	simpleExplainMap := map[string]any{}
 
@@ -236,14 +249,14 @@ func (n *selectNode) Explain(explainType request.ExplainType) (map[string]any, e
 // creating scanNodes, typeIndexJoinNodes, and splitting
 // the necessary filters. Its designed to work with the
 // planner.Select construction call.
-func (n *selectNode) initSource() ([]aggregateNode, error) {
+func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	if n.selectReq.CollectionName == "" {
 		n.selectReq.CollectionName = n.selectReq.Name
 	}
 
 	sourcePlan, err := n.planner.getSource(n.selectReq)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	n.source = sourcePlan.plan
 	n.origSource = sourcePlan.plan
@@ -257,14 +270,26 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 	if isScanNode {
 		origScan.showDeleted = n.selectReq.ShowDeleted
 		origScan.filter = n.filter
-		n.filter = nil
+		if n.selectReq.OrderBy != nil {
+			origScan.ordering = n.selectReq.OrderBy.Conditions
+		}
+
+		// If there are migrations, we keep the filter in selectNode so it can be applied
+		// after lens transformation. Otherwise, we nil it out as the scanNode will handle it.
+		hasMigrations, err := n.checkForMigrations(sourcePlan.collection)
+		if err != nil {
+			return nil, nil, err
+		}
+		if !hasMigrations {
+			n.filter = nil
+		}
 
 		// If we have a CID, then we need to run a TimeTravel (History-Traversing Versioned)
 		// query, which means we need to propagate the values to the underlying VersionedFetcher
 		if n.selectReq.Cid.HasValue() {
 			c, err := cid.Decode(n.selectReq.Cid.Value())
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			// This exists because the fetcher interface demands a []Prefixes, yet the versioned
@@ -279,6 +304,14 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 				},
 			)
 		} else if n.selectReq.DocIDs.HasValue() {
+			shortID, err := id.GetShortCollectionID(
+				n.planner.ctx,
+				sourcePlan.collection.Version().CollectionID,
+			)
+			if err != nil {
+				return nil, nil, err
+			}
+
 			// If we *just* have a DocID(s), run a FindByDocID(s) optimization
 			// if we have a FindByDocID filter, create a prefix for it
 			// and propagate it to the scanNode
@@ -286,47 +319,55 @@ func (n *selectNode) initSource() ([]aggregateNode, error) {
 			// contains a _docID equality condition, and upgrade it to a point lookup
 			// instead of a prefix scan + filter via the Primary Index (0), like here:
 			prefixes := make([]keys.Walkable, len(n.selectReq.DocIDs.Value()))
+
 			for i, docID := range n.selectReq.DocIDs.Value() {
-				prefixes[i] = base.MakeDataStoreKeyWithCollectionAndDocID(sourcePlan.collection.Description(), docID)
+				prefixes[i] = keys.DataStoreKey{
+					CollectionShortID: shortID,
+					DocID:             docID,
+				}
 			}
 			origScan.Prefixes(prefixes)
 		}
 	}
 
-	aggregates, err := n.initFields(n.selectReq)
+	aggregates, similarity, err := n.initFields(n.selectReq)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if isScanNode {
 		origScan.index = findIndexByFilteringField(origScan)
+		if !origScan.index.HasValue() {
+			// if we can not use index for filtering, try to use index for ordering
+			origScan.index = findIndexByOrderingField(origScan)
+		}
 		origScan.initFetcher(n.selectReq.Cid)
 	}
 
-	return aggregates, nil
+	return aggregates, similarity, nil
 }
 
 func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
-	if scanNode.filter == nil {
-		return immutable.None[client.IndexDescription]()
-	}
-	colDesc := scanNode.col.Description()
-
-	conditions := scanNode.filter.ExternalConditions
 	var indexCandidates []client.IndexDescription
-	filter.TraverseFields(conditions, func(path []string, val any) bool {
-		for _, field := range scanNode.col.Schema().Fields {
-			if field.Name != path[0] {
-				continue
+
+	if scanNode.filter != nil {
+		col := scanNode.col.Version()
+		conditions := scanNode.filter.ExternalConditions
+		filter.TraverseFields(conditions, func(path []string, val any) bool {
+			for _, field := range scanNode.col.Version().Fields {
+				if field.Name != path[0] {
+					continue
+				}
+				indexes := col.GetIndexesOnField(field.Name)
+				if len(indexes) > 0 {
+					indexCandidates = append(indexCandidates, indexes...)
+					return true
+				}
 			}
-			indexes := colDesc.GetIndexesOnField(field.Name)
-			if len(indexes) > 0 {
-				indexCandidates = append(indexCandidates, indexes...)
-				return true
-			}
-		}
-		return true
-	})
+			return true
+		})
+	}
+
 	if len(indexCandidates) == 0 {
 		return immutable.None[client.IndexDescription]()
 	}
@@ -339,12 +380,40 @@ func findIndexByFilteringField(scanNode *scanNode) immutable.Option[client.Index
 	return immutable.Some(indexCandidates[0])
 }
 
+func findIndexByOrderingField(scanNode *scanNode) immutable.Option[client.IndexDescription] {
+	if len(scanNode.ordering) > 0 {
+		col := scanNode.col.Version()
+
+		fieldNames := []string{}
+		mapping := scanNode.documentMapping
+		for _, fieldIndex := range scanNode.ordering[0].FieldIndexes {
+			fieldName, found := mapping.TryToFindNameFromIndex(fieldIndex)
+			if !found {
+				return immutable.None[client.IndexDescription]()
+			}
+
+			fieldNames = append(fieldNames, fieldName)
+			if fieldIndex < len(mapping.ChildMappings) {
+				if childMapping := mapping.ChildMappings[fieldIndex]; childMapping != nil {
+					mapping = childMapping
+				}
+			}
+		}
+
+		indexes := col.GetIndexesOnField(fieldNames[0])
+		if len(indexes) > 0 {
+			return immutable.Some(indexes[0])
+		}
+	}
+	return immutable.None[client.IndexDescription]()
+}
+
 func findIndexByFieldName(col client.Collection, fieldName string) immutable.Option[client.IndexDescription] {
-	for _, field := range col.Schema().Fields {
+	for _, field := range col.Version().Fields {
 		if field.Name != fieldName {
 			continue
 		}
-		indexes := col.Description().GetIndexesOnField(field.Name)
+		indexes := col.Version().GetIndexesOnField(field.Name)
 		if len(indexes) > 0 {
 			// At the moment we just take the first index, but later we want to run some kind of analysis to
 			// determine which index is best to use. https://github.com/sourcenetwork/defradb/issues/2680
@@ -354,8 +423,9 @@ func findIndexByFieldName(col client.Collection, fieldName string) immutable.Opt
 	return immutable.None[client.IndexDescription]()
 }
 
-func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, error) {
+func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*similarityNode, error) {
 	aggregates := []aggregateNode{}
+	similarity := []*similarityNode{}
 	// loop over the sub type
 	// at the moment, we're only testing a single sub selection
 	for _, field := range selectReq.Fields {
@@ -381,7 +451,7 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 			}
 
 			if aggregateError != nil {
-				return nil, aggregateError
+				return nil, nil, aggregateError
 			}
 
 			if plan != nil {
@@ -392,48 +462,53 @@ func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, erro
 				commitSlct := &mapper.CommitSelect{
 					Select: *f,
 				}
-				// handle _version sub selection query differently
-				// if we are executing a regular Scan query
-				// or a TimeTravel query.
+
 				if selectReq.Cid.HasValue() {
-					// for a TimeTravel query, we don't need the Latest
-					// commit. Instead, _version references the CID
-					// of that Target version we are querying.
-					// So instead of a LatestCommit subquery, we need
-					// a OneCommit subquery, with the supplied parameters.
-					commitSlct.DocID = immutable.Some(selectReq.DocIDs.Value()[0]) // @todo check length
 					commitSlct.Cid = selectReq.Cid
+
+					// We want all the commits, so set the maximum depth
+					commitSlct.Depth = immutable.Some(uint64(math.MaxUint64))
 				}
 
 				commitPlan := n.planner.DAGScan(commitSlct)
 
 				if err := n.addSubPlan(f.Index, commitPlan); err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 			} else if f.Name == request.GroupFieldName {
 				if selectReq.GroupBy == nil {
-					return nil, ErrGroupOutsideOfGroupBy
+					return nil, nil, ErrGroupOutsideOfGroupBy
 				}
 				n.groupSelects = append(n.groupSelects, f)
-			} else if f.Name == request.LinksFieldName &&
-				(selectReq.Name == request.CommitsName || selectReq.Name == request.LatestCommitsName) &&
-				f.CollectionName == "" {
+			} else if isSpecialNoOpField(f, selectReq) {
 				// no-op
-				// commit query link fields are always added and need no special treatment here
-				// WARNING: It is important to check collection name is nil and the parent select name
-				// here else we risk falsely identifying user defined fields with the name `links` as a commit links field
-			} else if !(n.collection != nil && len(n.collection.Description().QuerySources()) > 0) {
+			} else if !(n.collection != nil && n.collection.Version().Query.HasValue()) {
 				// Collections sourcing data from queries only contain embedded objects and don't require
 				// a traditional join here
 				err := n.addTypeIndexJoin(f)
 				if err != nil {
-					return nil, err
+					return nil, nil, err
 				}
 			}
+		case *mapper.Similarity:
+			var simFilter *mapper.Filter
+			selectReq.Filter, simFilter = filter.SplitByFields(selectReq.Filter, f.Field)
+			similarity = append(similarity, n.planner.Similarity(f, simFilter))
 		}
 	}
 
-	return aggregates, nil
+	return aggregates, similarity, nil
+}
+
+func isSpecialNoOpField(field *mapper.Select, parentField *mapper.Select) bool {
+	// commit query link and signature fields are always added and need no special treatment here
+	// WARNING: It is important to check collection name is nil and the parent select name
+	// here else we risk falsely identifying user defined fields with the name `links` as a commit links field
+	if field.CollectionName != "" {
+		return false
+	}
+	isCommit := parentField.Name == request.CommitsName
+	return isCommit && (field.Name == request.LinksFieldName || field.Name == request.SignatureFieldName)
 }
 
 func (n *selectNode) addTypeIndexJoin(subSelect *mapper.Select) error {
@@ -482,7 +557,7 @@ func (p *Planner) SelectFromSource(
 		s.collection = col
 	}
 
-	aggregates, err := s.initFields(selectReq)
+	aggregates, similarity, err := s.initFields(selectReq)
 	if err != nil {
 		return nil, err
 	}
@@ -508,13 +583,44 @@ func (p *Planner) SelectFromSource(
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
+		similarity: similarity,
 		docMapper:  docMapper{selectReq.DocumentMapping},
 	}
 	return top, nil
 }
 
+// SelectEncrypted constructs a plan for searchable encryption queries
+func (p *Planner) SelectEncrypted(selectReq *mapper.Select) (planNode, error) {
+	col, err := p.db.GetCollectionByName(p.ctx, selectReq.CollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedIndexes, err := col.ListEncryptedIndexes(p.ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(encryptedIndexes) == 0 {
+		return nil, client.NewErrUninitializeProperty("SelectEncrypted", "collection has no encrypted indexes")
+	}
+
+	seScan := &seScanNode{
+		p:                p,
+		collection:       col,
+		collectionID:     col.Version().CollectionID,
+		filter:           selectReq.Filter,
+		encryptedIndexes: encryptedIndexes,
+		docMapper:        docMapper{selectReq.DocumentMapping},
+	}
+
+	return seScan, nil
+}
+
 // Select constructs a SelectPlan
 func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
+	if selectReq.IsEncrypted {
+		return p.SelectEncrypted(selectReq)
+	}
 	s := &selectNode{
 		planner:   p,
 		filter:    selectReq.Filter,
@@ -526,7 +632,7 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 	orderBy := selectReq.OrderBy
 	groupBy := selectReq.GroupBy
 
-	aggregates, err := s.initSource()
+	aggregates, similarity, err := s.initSource()
 	if err != nil {
 		return nil, err
 	}
@@ -552,6 +658,7 @@ func (p *Planner) Select(selectReq *mapper.Select) (planNode, error) {
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,
+		similarity: similarity,
 		docMapper:  docMapper{selectReq.DocumentMapping},
 	}
 	return top, nil

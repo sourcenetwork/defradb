@@ -14,29 +14,29 @@ import (
 	"context"
 	"net/http/httptest"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
+	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/node"
 )
 
-var _ client.DB = (*Wrapper)(nil)
+var _ client.TxnStore = (*Wrapper)(nil)
+var _ client.P2P = (*Wrapper)(nil)
 
 // Wrapper combines an HTTP client and server into a
-// single struct that implements the client.DB interface.
+// single struct that implements the client.TxnStore interface.
 type Wrapper struct {
-	node       *node.Node
-	handler    *http.Handler
-	client     *http.Client
-	httpServer *httptest.Server
+	node         *node.Node
+	handler      *http.Handler
+	client       *http.Client
+	httpServer   *httptest.Server
+	serverCancel context.CancelFunc
 }
 
 func NewWrapper(node *node.Node) (*Wrapper, error) {
@@ -44,10 +44,12 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	httpServer := httptest.NewServer(handler)
+	ctx, cancel := context.WithCancel(context.Background())
+	handlerWithCtx := http.InjectServerContext(ctx)(handler)
+	httpServer := httptest.NewServer(handlerWithCtx)
 	client, err := http.NewClient(httpServer.URL)
 	if err != nil {
+		cancel()
 		return nil, err
 	}
 
@@ -56,35 +58,72 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 		handler,
 		client,
 		httpServer,
+		cancel,
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() peer.AddrInfo {
+func (w *Wrapper) PeerInfo() ([]string, error) {
 	return w.client.PeerInfo()
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	return w.client.SetReplicator(ctx, rep)
+func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
+	return w.client.ActivePeers(ctx)
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, rep client.ReplicatorParams) error {
-	return w.client.DeleteReplicator(ctx, rep)
+func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
+	return w.client.Connect(ctx, addresses)
+}
+
+func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+	return w.client.SetReplicator(ctx, addresses, collections...)
+}
+
+func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
+	return w.client.DeleteReplicator(ctx, id, collections...)
 }
 
 func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
 	return w.client.GetAllReplicators(ctx)
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs []string) error {
-	return w.client.AddP2PCollections(ctx, collectionIDs)
+func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
+	return w.client.AddP2PCollections(ctx, collectionIDs...)
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs []string) error {
-	return w.client.RemoveP2PCollections(ctx, collectionIDs)
+func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
+	return w.client.RemoveP2PCollections(ctx, collectionIDs...)
 }
 
 func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return w.client.GetAllP2PCollections(ctx)
+}
+
+func (w *Wrapper) AddP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+	return w.client.AddP2PDocuments(ctx, collectionIDs...)
+}
+
+func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+	return w.client.RemoveP2PDocuments(ctx, collectionIDs...)
+}
+
+func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+	return w.client.GetAllP2PDocuments(ctx)
+}
+
+func (w *Wrapper) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+) error {
+	return w.client.SyncDocuments(ctx, collectionName, docIDs)
+}
+
+func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+	return w.client.SyncCollectionVersions(ctx, versionIDs...)
+}
+
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+	return w.client.SyncBranchableCollection(ctx, collectionID)
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
@@ -95,25 +134,25 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 	return w.client.BasicExport(ctx, config)
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
+func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
 	return w.client.AddSchema(ctx, schema)
 }
 
-func (w *Wrapper) AddPolicy(
+func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
 ) (client.AddPolicyResult, error) {
-	return w.client.AddPolicy(ctx, policy)
+	return w.client.AddDACPolicy(ctx, policy)
 }
 
-func (w *Wrapper) AddDocActorRelationship(
+func (w *Wrapper) AddDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.AddDocActorRelationshipResult, error) {
-	return w.client.AddDocActorRelationship(
+) (client.AddActorRelationshipResult, error) {
+	return w.client.AddDACActorRelationship(
 		ctx,
 		collectionName,
 		docID,
@@ -122,14 +161,14 @@ func (w *Wrapper) AddDocActorRelationship(
 	)
 }
 
-func (w *Wrapper) DeleteDocActorRelationship(
+func (w *Wrapper) DeleteDACActorRelationship(
 	ctx context.Context,
 	collectionName string,
 	docID string,
 	relation string,
 	targetActor string,
-) (client.DeleteDocActorRelationshipResult, error) {
-	return w.client.DeleteDocActorRelationship(
+) (client.DeleteActorRelationshipResult, error) {
+	return w.client.DeleteDACActorRelationship(
 		ctx,
 		collectionName,
 		docID,
@@ -138,45 +177,77 @@ func (w *Wrapper) DeleteDocActorRelationship(
 	)
 }
 
-func (w *Wrapper) PatchSchema(
+func (w *Wrapper) AddNACActorRelationship(
 	ctx context.Context,
-	patch string,
-	migration immutable.Option[model.Lens],
-	setAsDefaultVersion bool,
-) error {
-	return w.client.PatchSchema(ctx, patch, migration, setAsDefaultVersion)
+	relation string,
+	targetActor string,
+) (client.AddActorRelationshipResult, error) {
+	return w.client.AddNACActorRelationship(
+		ctx,
+		relation,
+		targetActor,
+	)
+}
+
+func (w *Wrapper) DeleteNACActorRelationship(
+	ctx context.Context,
+	relation string,
+	targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
+	return w.client.DeleteNACActorRelationship(
+		ctx,
+		relation,
+		targetActor,
+	)
+}
+
+func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
+	return w.client.ReEnableNAC(ctx)
+}
+
+func (w *Wrapper) DisableNAC(ctx context.Context) error {
+	return w.client.DisableNAC(ctx)
+}
+
+func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+	return w.client.GetNACStatus(ctx)
 }
 
 func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
+	migration immutable.Option[model.Lens],
 ) error {
-	return w.client.PatchCollection(ctx, patch)
+	return w.client.PatchCollection(ctx, patch, migration)
 }
 
-func (w *Wrapper) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	return w.client.SetActiveSchemaVersion(ctx, schemaVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+	return w.client.SetActiveCollectionVersion(ctx, collectionVersionID)
 }
 
 func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
-	return w.client.AddView(ctx, query, sdl, transform)
+	transformCID immutable.Option[string],
+) ([]client.CollectionVersion, error) {
+	return w.client.AddView(ctx, query, sdl, transformCID)
 }
 
 func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
 	return w.client.RefreshViews(ctx, opts)
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) error {
+func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	return w.client.SetMigration(ctx, config)
 }
 
-func (w *Wrapper) LensRegistry() client.LensRegistry {
-	return w.client.LensRegistry()
+func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	return w.client.AddLens(ctx, lens)
+}
+
+func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	return w.client.ListLenses(ctx)
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
@@ -190,19 +261,14 @@ func (w *Wrapper) GetCollections(
 	return w.client.GetCollections(ctx, options)
 }
 
-func (w *Wrapper) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	return w.client.GetSchemaByVersionID(ctx, versionID)
-}
-
-func (w *Wrapper) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	return w.client.GetSchemas(ctx, options)
-}
-
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
 	return w.client.GetAllIndexes(ctx)
+}
+
+func (w *Wrapper) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	return w.client.ListAllEncryptedIndexes(ctx)
 }
 
 func (w *Wrapper) ExecRequest(
@@ -213,57 +279,37 @@ func (w *Wrapper) ExecRequest(
 	return w.client.ExecRequest(ctx, query, opts...)
 }
 
-func (w *Wrapper) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
-	client, err := w.client.NewTxn(ctx, readOnly)
+func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
+	clientTxn, err := w.client.NewTxn(readOnly)
 	if err != nil {
 		return nil, err
 	}
-	server, err := w.handler.Transaction(client.ID())
+	serverTxn, err := w.handler.Transaction(clientTxn.ID())
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{server, client}, nil
+	return &Transaction{w, serverTxn}, nil
 }
 
-func (w *Wrapper) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
-	client, err := w.client.NewConcurrentTxn(ctx, readOnly)
+func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
+	clientTxn, err := w.client.NewConcurrentTxn(readOnly)
 	if err != nil {
 		return nil, err
 	}
-	server, err := w.handler.Transaction(client.ID())
+	serverTxn, err := w.handler.Transaction(clientTxn.ID())
 	if err != nil {
 		return nil, err
 	}
-	return &TxWrapper{server, client}, nil
-}
-
-func (w *Wrapper) Rootstore() datastore.Rootstore {
-	return w.node.DB.Rootstore()
-}
-
-func (w *Wrapper) Encstore() datastore.Blockstore {
-	return w.node.DB.Encstore()
-}
-
-func (w *Wrapper) Blockstore() datastore.Blockstore {
-	return w.node.DB.Blockstore()
-}
-
-func (w *Wrapper) Headstore() ds.Read {
-	return w.node.DB.Headstore()
-}
-
-func (w *Wrapper) Peerstore() datastore.DSReaderWriter {
-	return w.node.DB.Peerstore()
+	return &Transaction{w, serverTxn}, nil
 }
 
 func (w *Wrapper) Close() {
-	w.httpServer.CloseClientConnections()
+	w.serverCancel()
 	w.httpServer.Close()
 	_ = w.node.Close(context.Background())
 }
 
-func (w *Wrapper) Events() *event.Bus {
+func (w *Wrapper) Events() event.Bus {
 	return w.node.DB.Events()
 }
 
@@ -275,14 +321,14 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addr peer.AddrInfo) error {
-	return w.node.Peer.Connect(ctx, addr)
-}
-
 func (w *Wrapper) Host() string {
 	return w.httpServer.URL
 }
 
 func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	return w.client.GetNodeIdentity(ctx)
+}
+
+func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+	return w.client.VerifySignature(ctx, cid, pubKey)
 }

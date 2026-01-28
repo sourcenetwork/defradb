@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -42,12 +43,10 @@ var debugAverageTypeIndexJoinManyPattern = dataMap{
 func TestDebugExplainRequestWithAverageOnJoinedField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with average on joined/related field.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {
@@ -67,12 +66,10 @@ func TestDebugExplainRequestWithAverageOnJoinedField(t *testing.T) {
 func TestDebugExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with average on multiple joined fields with filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author {

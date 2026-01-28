@@ -14,25 +14,30 @@ defined with the --secret-file flag.
 
 WARNING: This will overwrite existing keys in the keyring.
 
-Example:
-  defradb keyring generate
-
-Example: with no encryption key
-  defradb keyring generate --no-encryption
-
-Example: with no peer key
-  defradb keyring generate --no-peer-key
-
-Example: with system keyring
-  defradb keyring generate --keyring-backend system
-
 ```
 defradb keyring generate [flags]
+```
+
+### Examples
+
+```
+Generate keys:  
+  defradb keyring generate
+
+with no encryption key:  
+  defradb keyring generate --no-encryption
+
+with no peer key:  
+  defradb keyring generate --no-peer-key
+
+with system keyring:  
+  defradb keyring generate --keyring-backend system
 ```
 
 ### Options
 
 ```
+      --force           Overwrite existing keys without confirmation
   -h, --help            help for generate
       --no-encryption   Skip generating an encryption key. Encryption at rest will be disabled
       --no-peer-key     Skip generating a peer key.

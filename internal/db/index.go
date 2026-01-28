@@ -14,8 +14,9 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils/slice"
 )
@@ -26,7 +27,7 @@ import (
 type CollectionIndex interface {
 	client.CollectionIndex
 	// RemoveAll removes all documents from the index
-	RemoveAll(context.Context, datastore.Txn) error
+	RemoveAll(context.Context) error
 }
 
 func isSupportedKind(kind client.FieldKind) bool {
@@ -72,11 +73,11 @@ func NewCollectionIndex(
 	base := collectionBaseIndex{
 		collection:      collection,
 		desc:            desc,
-		fieldsDescs:     make([]client.SchemaFieldDescription, len(desc.Fields)),
+		fieldsDescs:     make([]client.CollectionFieldDescription, len(desc.Fields)),
 		fieldGenerators: make([]FieldIndexGenerator, len(desc.Fields)),
 	}
 	for i := range desc.Fields {
-		field, foundField := collection.Schema().GetFieldByName(desc.Fields[i].Name)
+		field, foundField := collection.Version().GetFieldByName(desc.Fields[i].Name)
 		if !foundField {
 			return nil, client.NewErrFieldNotExist(desc.Fields[i].Name)
 		}
@@ -126,6 +127,13 @@ type JSONFieldGenerator struct{}
 
 func (g *JSONFieldGenerator) Generate(value client.NormalValue, f func(client.NormalValue) error) error {
 	json, _ := value.JSON()
+	if json == nil {
+		val, err := client.NewNormalNil(client.FieldKind_NILLABLE_JSON)
+		if err != nil {
+			return err
+		}
+		return f(val)
+	}
 	return client.TraverseJSON(json, func(value client.JSON) error {
 		val, err := client.NewNormalValue(value)
 		if err != nil {
@@ -161,7 +169,7 @@ type collectionBaseIndex struct {
 	desc       client.IndexDescription
 	// fieldsDescs is a slice of field descriptions for the fields that form the index
 	// If there is more than 1 field, the index is composite
-	fieldsDescs     []client.SchemaFieldDescription
+	fieldsDescs     []client.CollectionFieldDescription
 	fieldGenerators []FieldIndexGenerator
 }
 
@@ -187,6 +195,7 @@ func (index *collectionBaseIndex) getDocFieldValues(doc *client.Document) ([]cli
 }
 
 func (index *collectionBaseIndex) getDocumentsIndexKey(
+	ctx context.Context,
 	doc *client.Document,
 	appendDocID bool,
 ) (keys.IndexDataStoreKey, error) {
@@ -204,38 +213,76 @@ func (index *collectionBaseIndex) getDocumentsIndexKey(
 	if appendDocID {
 		fields = append(fields, keys.IndexedField{Value: client.NewNormalString(doc.ID().String())})
 	}
-	return keys.NewIndexDataStoreKey(index.collection.Description().RootID, index.desc.ID, fields), nil
+
+	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
+	if err != nil {
+		return keys.IndexDataStoreKey{}, err
+	}
+
+	return keys.NewIndexDataStoreKey(shortID, index.desc.ID, fields), nil
 }
 
 func (index *collectionBaseIndex) deleteIndexKey(
 	ctx context.Context,
-	txn datastore.Txn,
 	key keys.IndexDataStoreKey,
 ) error {
-	exists, err := txn.Datastore().Has(ctx, key.ToDS())
+	txn := datastore.CtxMustGetTxn(ctx)
+	ds := txn.Datastore()
+	exists, err := ds.Has(ctx, &key)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		return NewErrCorruptedIndex(index.desc.Name)
 	}
-	return txn.Datastore().Delete(ctx, key.ToDS())
+	return ds.Delete(ctx, &key)
 }
 
 // RemoveAll remove all artifacts of the index from the storage, i.e. all index
 // field values for all documents.
-func (index *collectionBaseIndex) RemoveAll(ctx context.Context, txn datastore.Txn) error {
-	prefixKey := keys.IndexDataStoreKey{}
-	prefixKey.CollectionID = index.collection.Description().RootID
-	prefixKey.IndexID = index.desc.ID
-
-	keys, err := datastore.FetchKeysForPrefix(ctx, prefixKey.ToString(), txn.Datastore())
+func (index *collectionBaseIndex) RemoveAll(ctx context.Context) error {
+	shortID, err := id.GetShortCollectionID(ctx, index.collection.Version().CollectionID)
 	if err != nil {
 		return err
 	}
 
-	for _, key := range keys {
-		err := txn.Datastore().Delete(ctx, key)
+	prefixKey := keys.IndexDataStoreKey{}
+	prefixKey.CollectionShortID = shortID
+	prefixKey.IndexID = index.desc.ID
+
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+		Prefix:   &prefixKey,
+		KeysOnly: true,
+	})
+	if err != nil {
+		return err
+	}
+
+	keysToDelete := make([]keys.IndexDataStoreKey, 0)
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+		if !hasNext {
+			break
+		}
+
+		key, err := keys.DecodeIndexDataStoreKey(iter.Key(), &index.desc, index.fieldsDescs)
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		keysToDelete = append(keysToDelete, key)
+	}
+	if err := iter.Close(); err != nil {
+		return err
+	}
+
+	for _, key := range keysToDelete {
+		err := txn.Datastore().Delete(ctx, &key)
 		if err != nil {
 			return NewCanNotDeleteIndexedField(err)
 		}
@@ -257,12 +304,13 @@ func (index *collectionBaseIndex) Description() client.IndexDescription {
 // generateKeysAndProcess generates index keys for the given document and calls the provided function
 // for each generated key
 func (index *collectionBaseIndex) generateKeysAndProcess(
+	ctx context.Context,
 	doc *client.Document,
 	appendDocID bool,
 	processKey func(keys.IndexDataStoreKey) error,
 ) error {
 	// Get initial key with base values
-	baseKey, err := index.getDocumentsIndexKey(doc, appendDocID)
+	baseKey, err := index.getDocumentsIndexKey(ctx, doc, appendDocID)
 	if err != nil {
 		return err
 	}
@@ -308,34 +356,33 @@ var _ CollectionIndex = (*collectionSimpleIndex)(nil)
 // Save indexes a document by storing the indexed field value.
 func (index *collectionSimpleIndex) Save(
 	ctx context.Context,
-	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateKeysAndProcess(doc, true, func(key keys.IndexDataStoreKey) error {
-		return txn.Datastore().Put(ctx, key.ToDS(), []byte{})
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	return index.generateKeysAndProcess(ctx, doc, true, func(key keys.IndexDataStoreKey) error {
+		return txn.Datastore().Set(ctx, &key, []byte{})
 	})
 }
 
 func (index *collectionSimpleIndex) Update(
 	ctx context.Context,
-	txn datastore.Txn,
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
-	err := index.Delete(ctx, txn, oldDoc)
+	err := index.Delete(ctx, oldDoc)
 	if err != nil {
 		return err
 	}
-	return index.Save(ctx, txn, newDoc)
+	return index.Save(ctx, newDoc)
 }
 
 func (index *collectionSimpleIndex) Delete(
 	ctx context.Context,
-	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateKeysAndProcess(doc, true, func(key keys.IndexDataStoreKey) error {
-		return index.deleteIndexKey(ctx, txn, key)
+	return index.generateKeysAndProcess(ctx, doc, true, func(key keys.IndexDataStoreKey) error {
+		return index.deleteIndexKey(ctx, key)
 	})
 }
 
@@ -357,15 +404,14 @@ var _ CollectionIndex = (*collectionUniqueIndex)(nil)
 
 func (index *collectionUniqueIndex) Save(
 	ctx context.Context,
-	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateKeysAndProcess(doc, false, func(key keys.IndexDataStoreKey) error {
-		return addNewUniqueKey(ctx, txn, doc, key, index.fieldsDescs)
+	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
+		return addNewUniqueKey(ctx, doc, key, index.fieldsDescs)
 	})
 }
 
-func newUniqueIndexError(doc *client.Document, fieldsDescs []client.SchemaFieldDescription) error {
+func newUniqueIndexError(doc *client.Document, fieldsDescs []client.CollectionFieldDescription) error {
 	kvs := make([]errors.KV, 0, len(fieldsDescs))
 	for iter := range fieldsDescs {
 		fieldVal, err := doc.TryGetValue(fieldsDescs[iter].Name)
@@ -397,14 +443,15 @@ func makeUniqueKeyValueRecord(
 
 func validateUniqueKeyValue(
 	ctx context.Context,
-	txn datastore.Txn,
 	key keys.IndexDataStoreKey,
 	val []byte,
 	doc *client.Document,
-	fieldsDescs []client.SchemaFieldDescription,
+	fieldsDescs []client.CollectionFieldDescription,
 ) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	if len(val) != 0 {
-		exists, err := txn.Datastore().Has(ctx, key.ToDS())
+		exists, err := txn.Datastore().Has(ctx, &key)
 		if err != nil {
 			return err
 		}
@@ -417,20 +464,21 @@ func validateUniqueKeyValue(
 
 func addNewUniqueKey(
 	ctx context.Context,
-	txn datastore.Txn,
 	doc *client.Document,
 	key keys.IndexDataStoreKey,
-	fieldsDescs []client.SchemaFieldDescription,
+	fieldsDescs []client.CollectionFieldDescription,
 ) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+
 	key, val, err := makeUniqueKeyValueRecord(key, doc)
 	if err != nil {
 		return err
 	}
-	err = validateUniqueKeyValue(ctx, txn, key, val, doc, fieldsDescs)
+	err = validateUniqueKeyValue(ctx, key, val, doc, fieldsDescs)
 	if err != nil {
 		return err
 	}
-	err = txn.Datastore().Put(ctx, key.ToDS(), val)
+	err = txn.Datastore().Set(ctx, &key, val)
 	if err != nil {
 		return NewErrFailedToStoreIndexedField(key.ToString(), err)
 	}
@@ -439,21 +487,20 @@ func addNewUniqueKey(
 
 func (index *collectionUniqueIndex) Delete(
 	ctx context.Context,
-	txn datastore.Txn,
 	doc *client.Document,
 ) error {
-	return index.generateKeysAndProcess(doc, false, func(key keys.IndexDataStoreKey) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+	return index.generateKeysAndProcess(ctx, doc, false, func(key keys.IndexDataStoreKey) error {
 		key, _, err := makeUniqueKeyValueRecord(key, doc)
 		if err != nil {
 			return err
 		}
-		return txn.Datastore().Delete(ctx, key.ToDS())
+		return txn.Datastore().Delete(ctx, &key)
 	})
 }
 
 func (index *collectionUniqueIndex) Update(
 	ctx context.Context,
-	txn datastore.Txn,
 	oldDoc *client.Document,
 	newDoc *client.Document,
 ) error {
@@ -463,12 +510,12 @@ func (index *collectionUniqueIndex) Update(
 		return nil
 	}
 
-	err := index.Delete(ctx, txn, oldDoc)
+	err := index.Delete(ctx, oldDoc)
 	if err != nil {
 		return err
 	}
 
-	return index.Save(ctx, txn, newDoc)
+	return index.Save(ctx, newDoc)
 }
 
 func isUpdatingIndexedFields(index CollectionIndex, oldDoc, newDoc *client.Document) bool {

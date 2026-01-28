@@ -13,38 +13,38 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with logical compound filter (not)",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_not: {Age: {_eq: 55}}}) {
 						Name
@@ -54,10 +54,6 @@ func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
-							"Age":  int64(21),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
@@ -65,8 +61,13 @@ func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 							"Name": "Alice",
 							"Age":  int64(19),
 						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -76,33 +77,32 @@ func TestQuerySimple_WithNotEqualToXFilter_NoError(t *testing.T) {
 
 func TestQuerySimple_WithNotAndComparisonXFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with _not filter with _gt condition)",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_not: {Age: {_gt: 20}}}) {
 						Name
@@ -126,33 +126,32 @@ func TestQuerySimple_WithNotAndComparisonXFilter_NoError(t *testing.T) {
 
 func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with logical compound filter (not)",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_not: {_or: [{Age: {_eq: 55}}, {Name: {_eq: "Alice"}}]}}) {
 						Name
@@ -162,15 +161,16 @@ func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
-							"Age":  int64(21),
-						},
-						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -180,33 +180,32 @@ func TestQuerySimple_WithNotEqualToXorYFilter_NoError(t *testing.T) {
 
 func TestQuerySimple_WithEmptyNotFilter_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with empty logical compound filter (not) returns empty result set",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_not: {}}) {
 						Name
@@ -225,39 +224,38 @@ func TestQuerySimple_WithEmptyNotFilter_ReturnError(t *testing.T) {
 
 func TestQuerySimple_WithNotEqualToXAndNotYFilter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with logical compound filter (not)",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Frank",
 					"Age": 55
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {_not: {Age: {_eq: 55}, _not: {Name: {_eq: "Carlo"}}}}) {
 						Name
@@ -267,23 +265,24 @@ func TestQuerySimple_WithNotEqualToXAndNotYFilter_NoError(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "John",
-							"Age":  int64(21),
+							"Name": "Carlo",
+							"Age":  int64(55),
 						},
 						{
 							"Name": "Bob",
 							"Age":  int64(32),
 						},
 						{
-							"Name": "Carlo",
-							"Age":  int64(55),
-						},
-						{
 							"Name": "Alice",
 							"Age":  int64(19),
 						},
+						{
+							"Name": "John",
+							"Age":  int64(21),
+						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

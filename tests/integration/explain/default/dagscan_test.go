@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -34,15 +35,16 @@ var dagScanPattern = dataMap{
 func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) commits query-op.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
-					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
+					_commits (
+						docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9", 
+						filter: {fieldName: {_eq: "name"}}
+					) {
 						links {
 							cid
 						}
@@ -51,15 +53,14 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 
 				ExpectedPatterns: dagScanPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "dagScanNode",
 						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
 						ExpectedAttributes: dataMap{
-							"cid":     nil,
-							"fieldId": "1",
+							"cid": nil,
 							"prefixes": []string{
-								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
+								"/d/bae-9e70648f-c722-5875-97f5-574ec6f703e9",
 							},
 						},
 					},
@@ -74,15 +75,13 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) commits query-op with only docID (no field).",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
-					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84") {
+					_commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9") {
 						links {
 							cid
 						}
@@ -91,155 +90,18 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 
 				ExpectedPatterns: dagScanPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "dagScanNode",
 						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
 						ExpectedAttributes: dataMap{
-							"cid":     nil,
-							"fieldId": nil,
+							"cid": nil,
 							"prefixes": []string{
-								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84",
+								"/d/bae-9e70648f-c722-5875-97f5-574ec6f703e9",
 							},
 						},
 					},
 				},
-			},
-		},
-	}
-
-	explainUtils.ExecuteTestCase(t, test)
-}
-
-func TestDefaultExplainLatestCommitsDagScanQueryOp(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Description: "Explain (default) latestCommits query-op.",
-
-		Actions: []any{
-			explainUtils.SchemaForExplainTests,
-
-			testUtils.ExplainRequest{
-
-				Request: `query @explain {
-					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
-						cid
-						links {
-							cid
-						}
-					}
-				}`,
-
-				ExpectedPatterns: dagScanPattern,
-
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
-					{
-						TargetNodeName:    "dagScanNode",
-						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
-						ExpectedAttributes: dataMap{
-							"cid":     nil,
-							"fieldId": "1",
-							"prefixes": []string{
-								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/1",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	explainUtils.ExecuteTestCase(t, test)
-}
-
-func TestDefaultExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Description: "Explain (default) latestCommits query-op with only docID (no field).",
-
-		Actions: []any{
-			explainUtils.SchemaForExplainTests,
-
-			testUtils.ExplainRequest{
-
-				Request: `query @explain {
-					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84") {
-						cid
-						links {
-							cid
-						}
-					}
-				}`,
-
-				ExpectedPatterns: dagScanPattern,
-
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
-					{
-						TargetNodeName:    "dagScanNode",
-						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
-						ExpectedAttributes: dataMap{
-							"cid":     nil,
-							"fieldId": "C",
-							"prefixes": []string{
-								"/d/bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84/C",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	explainUtils.ExecuteTestCase(t, test)
-}
-
-func TestDefaultExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Description: "Explain (default) latestCommits query without docID.",
-
-		Actions: []any{
-			explainUtils.SchemaForExplainTests,
-
-			testUtils.ExplainRequest{
-
-				Request: `query @explain {
-					latestCommits(fieldId: "1") {
-						cid
-						links {
-							cid
-						}
-					}
-				}`,
-
-				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
-			},
-		},
-	}
-
-	explainUtils.ExecuteTestCase(t, test)
-}
-
-func TestDefaultExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Description: "Explain (default) latestCommits query without any arguments.",
-
-		Actions: []any{
-			explainUtils.SchemaForExplainTests,
-
-			testUtils.ExplainRequest{
-
-				Request: `query @explain {
-					latestCommits {
-						cid
-						links {
-							cid
-						}
-					}
-				}`,
-
-				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}

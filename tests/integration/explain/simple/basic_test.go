@@ -13,6 +13,7 @@ package test_explain_simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -21,12 +22,11 @@ type dataMap = map[string]any
 
 func TestSimpleExplainRequest(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (simple) a basic request, assert full graph.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: simple) {
 					Author {
 						_docID
@@ -45,7 +45,7 @@ func TestSimpleExplainRequest(t *testing.T) {
 										"filter": nil,
 										"scanNode": dataMap{
 											"filter":         nil,
-											"collectionID":   "3",
+											"collectionID":   "bafyreid73sgzodav5hxhrsypjapj6r2uzo7mhm3vqykjhfehj7i5hhksuu",
 											"collectionName": "Author",
 											"prefixes": []string{
 												"/3",

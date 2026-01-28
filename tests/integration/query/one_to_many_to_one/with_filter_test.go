@@ -13,16 +13,16 @@ package one_to_many_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One-to-many-to-one deep filter on rendered children.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John Grisham",
@@ -30,7 +30,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// Has written 1 Book
 				Doc: `{
@@ -39,7 +39,7 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// Has written no Book
 				Doc: `{
@@ -49,53 +49,53 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 				}`,
 			},
 			// Books
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// Has 1 Publisher
 				DocMap: map[string]any{
 					"name":      "The Rooster Bar",
 					"rating":    4,
-					"author_id": testUtils.NewDocIndex(0, 1),
+					"_authorID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// Has 1 Publisher
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
 					"rating":    4.8,
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// Has no Publisher.
 				DocMap: map[string]any{
 					"name":      "The Associate",
 					"rating":    4.2,
-					"author_id": testUtils.NewDocIndex(0, 0),
+					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			// Publishers
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of The Rooster Bar",
 					"address":    "1 Rooster Ave., Waterloo, Ontario",
 					"yearOpened": 2022,
-					"book_id":    testUtils.NewDocIndex(1, 0),
+					"_bookID":    testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of Theif Lord",
 					"address":    "1 Theif Lord, Waterloo, Ontario",
 					"yearOpened": 2020,
-					"book_id":    testUtils.NewDocIndex(1, 1),
+					"_bookID":    testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author (filter: {book: {publisher: {yearOpened: {_gt: 2021}}}}) {
 						name
@@ -129,16 +129,15 @@ func TestQueryComplexWithDeepFilterOnRenderedChildren(t *testing.T) {
 
 func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 sums of deep filter subtypes of both descending and ascending.",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
 						s1: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
-						s2: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_ge: 2020}}}})
+						s2: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_geq: 2020}}}})
 					}
 				}`,
 				Results: map[string]any{
@@ -162,6 +161,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -171,16 +171,15 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 
 func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 sum of deep filter subtypes and non-sum deep filter",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
 						s1: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
-						books2020: book(filter: {publisher: {yearOpened: {_ge: 2020}}}) {
+						books2020: book(filter: {publisher: {yearOpened: {_geq: 2020}}}) {
 							name
 						}
 					}
@@ -212,6 +211,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -221,13 +221,12 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 
 func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 two level deep filter",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Author (filter: {book: {publisher: {yearOpened: { _ge: 2020}}}}){
+					Author (filter: {book: {publisher: {yearOpened: { _geq: 2020}}}}){
 						name
 						book {
 							name
@@ -246,9 +245,9 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 									"publisher": nil,
 								},
 								{
-									"name": "Theif Lord",
+									"name": "Sooley",
 									"publisher": map[string]any{
-										"yearOpened": int64(2020),
+										"yearOpened": int64(1999),
 									},
 								},
 								{
@@ -264,9 +263,9 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 									},
 								},
 								{
-									"name": "Sooley",
+									"name": "Theif Lord",
 									"publisher": map[string]any{
-										"yearOpened": int64(1999),
+										"yearOpened": int64(2020),
 									},
 								},
 							},
@@ -285,6 +284,7 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -294,11 +294,10 @@ func TestOneToManyToOneWithTwoLevelDeepFilter(t *testing.T) {
 
 func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 two level deep filter with compound operator and relation",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John Tolkien",
@@ -306,24 +305,24 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "The Lord of the Rings",
 					"rating":    5.0,
-					"author_id": testUtils.NewDocIndex(0, 3),
+					"_authorID": testUtils.NewDocIndex(0, 3),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Allen & Unwin",
 					"address":    "1 Allen Ave., Sydney, Australia",
 					"yearOpened": 1954,
-					"book_id":    testUtils.NewDocIndex(1, 6),
+					"_bookID":    testUtils.NewDocIndex(1, 6),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author (filter: {_and: [
 						{age: {_gt: 50}},
@@ -345,15 +344,16 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author (filter: {_and: [
-						{_not: {age: {_ge: 70}}},
+						{_not: {age: {_geq: 70}}},
 						{book: {rating: {_gt: 2.5}}},
 						{_or: [
-							{book: {publisher: {yearOpened: {_le: 2020}}}},
-							{_not: {book: {rating: {_le: 4.0}}}}
+							{book: {publisher: {yearOpened: {_leq: 2020}}}},
+							{_not: {book: {rating: {_leq: 4.0}}}}
 						]}
 					]}){
 						name
@@ -375,11 +375,10 @@ func TestOneToManyToOneWithCompoundOperatorInFilterAndRelation(t *testing.T) {
 
 func TestOneToManyToOneWithCompoundOperatorInSubFilterAndRelation(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "1-N-1 with sub filter with compound operator and relation",
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author (filter: {_and: [
 						{age: {_gt: 20}},

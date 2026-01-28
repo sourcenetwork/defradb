@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,124 +13,238 @@ package tests
 import (
 	"encoding/base64"
 	"encoding/json"
-	"testing"
+	"fmt"
+	"reflect"
 	"time"
 
-	"github.com/ipfs/go-cid"
-	"github.com/sourcenetwork/immutable"
+	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/format"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// Validator instances can be substituted in place of concrete values
-// and will be asserted on using their [Validate] function instead of
-// asserting direct equality.
-//
-// They may mutate test state.
-//
-// Todo: This does not currently support chaining/nesting of Validators,
-// although we would like that long term:
-// https://github.com/sourcenetwork/defradb/issues/3189
-type Validator interface {
-	Validate(s *state, actualValue any, msgAndArgs ...any)
+func init() {
+	format.RegisterCustomFormatter(func(value any) (string, bool) {
+		if matcher, ok := value.(*docIDAt); ok {
+			return matcher.String(), true
+		}
+		return "", false
+	})
+}
+
+// TestState is a type alias for state.TestState.
+type TestState = state.TestState
+
+// TestStateMatcher is a type alias for state.TestStateMatcher.
+type TestStateMatcher = state.TestStateMatcher
+
+// StatefulMatcher is a type alias for state.StatefulMatcher.
+type StatefulMatcher = state.StatefulMatcher
+
+type testStateMatcher struct {
+	s state.TestState
+}
+
+func (matcher *testStateMatcher) SetTestState(s state.TestState) {
+	matcher.s = s
 }
 
 // AnyOf may be used as `Results` field where the value may
 // be one of several values, yet the value of that field must be the same
 // across all nodes due to strong eventual consistency.
-type AnyOf []any
-
-var _ Validator = (AnyOf)(nil)
-
-// Validate asserts that actual result is equal to at least one of the expected results.
-//
-// The comparison is relaxed when using client types other than goClientType.
-func (a AnyOf) Validate(s *state, actualValue any, msgAndArgs ...any) {
-	switch s.clientType {
-	case HTTPClientType, CLIClientType:
-		if !areResultsAnyOf(a, actualValue) {
-			assert.Contains(s.t, a, actualValue, msgAndArgs...)
-		}
-	default:
-		assert.Contains(s.t, a, actualValue, msgAndArgs...)
+func AnyOf(values ...any) *anyOf {
+	return &anyOf{
+		Values: values,
 	}
 }
 
-// assertResultsEqual asserts that actual result is equal to the expected result.
-//
-// The comparison is relaxed when using client types other than goClientType.
-func assertResultsEqual(t testing.TB, client ClientType, expected any, actual any, msgAndArgs ...any) {
-	switch client {
-	case HTTPClientType, CLIClientType:
-		if !areResultsEqual(expected, actual) {
-			assert.EqualValues(t, expected, actual, msgAndArgs...)
+type anyOf struct {
+	testStateMatcher
+	Values []any
+}
+
+var _ TestStateMatcher = (*anyOf)(nil)
+
+func (matcher *anyOf) Match(actual any) (bool, error) {
+	switch matcher.s.GetClientType() {
+	case state.HTTPClientType, state.CLIClientType, state.JSClientType, state.CClientType:
+		if !areResultsAnyOf(matcher.Values, actual) {
+			return gomega.ContainElement(actual).Match(matcher.Values)
 		}
 	default:
-		assert.EqualValues(t, expected, actual, msgAndArgs...)
+		return gomega.ContainElement(actual).Match(matcher.Values)
 	}
+	return true, nil
+}
+
+func (matcher *anyOf) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nto be one of\n\t%v", actual, matcher.Values)
+}
+
+func (matcher *anyOf) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected\n\t%v\nnot to be one of\n\t%v", actual, matcher.Values)
+}
+
+// UniqueValue ensures that values passed to Match are unique across all calls.
+// It fails if the same value is seen more than once.
+// An instance of this matcher should be given to at least 2 assert result places, otherwise
+// the matcher makes no sense.
+type UniqueValue struct {
+	testStateMatcher
+	seenValues       []map[any]bool
+	invalidValueType any
+}
+
+var _ StatefulMatcher = (*UniqueValue)(nil)
+
+// NewUniqueValue creates a new matcher that verifies each value is unique.
+// This matcher will track values across all Match calls and fail if a duplicate is found.
+func NewUniqueValue() *UniqueValue {
+	return &UniqueValue{}
+}
+
+func (matcher *UniqueValue) ResetMatcherState() {
+	matcher.seenValues = nil
+}
+
+func (matcher *UniqueValue) Match(actual any) (bool, error) {
+	nodeID := matcher.s.GetCurrentNodeID()
+	for nodeID >= len(matcher.seenValues) {
+		matcher.seenValues = append(matcher.seenValues, make(map[any]bool))
+	}
+
+	var key any
+
+	if !reflect.TypeOf(actual).Comparable() {
+		key = fmt.Sprintf("%v", actual)
+	} else {
+		key = actual
+	}
+
+	if matcher.seenValues[nodeID][key] {
+		return false, nil
+	}
+
+	matcher.seenValues[nodeID][key] = true
+	return true, nil
+}
+
+func (matcher *UniqueValue) FailureMessage(actual any) string {
+	if matcher.invalidValueType != nil {
+		return fmt.Sprintf("Expected value to be of type %T, but received: %v", matcher.invalidValueType, actual)
+	}
+	return fmt.Sprintf("Expected unique value, but received duplicate: %v", actual)
+}
+
+func (matcher *UniqueValue) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected value to be a duplicate, but was unique: %v", actual)
+}
+
+// SameValue ensures that values passed to Match are the same as the previous value.
+// An instance of this matcher should be given to at least 2 assert result places, otherwise
+// the matcher makes no sense.
+type SameValue struct {
+	value any
+}
+
+var _ StatefulMatcher = (*SameValue)(nil)
+
+// NewSameValue creates a new matcher that verifies each value is the same as the previous value.
+func NewSameValue() *SameValue {
+	return &SameValue{}
+}
+
+func (matcher *SameValue) ResetMatcherState() {
+	matcher.value = nil
+}
+
+func (matcher *SameValue) Match(actual any) (bool, error) {
+	var newValue any
+
+	if !reflect.TypeOf(actual).Comparable() {
+		newValue = fmt.Sprintf("%v", actual)
+	} else {
+		newValue = actual
+	}
+
+	if matcher.value == nil {
+		matcher.value = newValue
+		return true, nil
+	}
+
+	if matcher.value != newValue {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (matcher *SameValue) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected value to be the same as the previous value. \n\tPrevious: %v \n\tCurrent:  %v",
+		matcher.value, actual)
+}
+
+func (matcher *SameValue) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected value to be different from the previous value. \n\tPrevious: %v \n\tCurrent:  %v",
+		matcher.value, actual)
+}
+
+// DocIDAt returns a matcher that checks if the actual value is a document ID
+// at the specified collection index and document index.
+func DocIDAt(collectionIndex, docIndex int) *docIDAt {
+	return &docIDAt{
+		collectionIndex: collectionIndex,
+		docIndex:        docIndex,
+	}
+}
+
+// docIDAt is a matcher that checks if the actual value is a document ID
+// at the specified collection index and document index.
+type docIDAt struct {
+	testStateMatcher
+	collectionIndex int
+	docIndex        int
+}
+
+var _ TestStateMatcher = (*docIDAt)(nil)
+
+func (matcher *docIDAt) Match(actual any) (bool, error) {
+	actualDocID, ok := actual.(string)
+	if !ok {
+		return false, fmt.Errorf("expected a document ID string, got %T", actual)
+	}
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return actualDocID == expectedDocID, nil
+}
+
+func (matcher *docIDAt) FailureMessage(actual any) string {
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return fmt.Sprintf("Expected\n\t%v\nto be a doID: %s", actual, expectedDocID)
+}
+
+func (matcher *docIDAt) NegatedFailureMessage(actual any) string {
+	expectedDocID := matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String()
+	return fmt.Sprintf("Expected\n\t%v\nnot to be a doID: %s", actual, expectedDocID)
+}
+
+func (matcher *docIDAt) String() string {
+	return fmt.Sprintf("DocIDAt(collectionIndex: %d, docIndex: %d): %s", matcher.collectionIndex,
+		matcher.docIndex, matcher.s.GetDocID(matcher.collectionIndex, matcher.docIndex).String())
 }
 
 // areResultsAnyOf returns true if any of the expected results are of equal value.
 //
 // Values of type json.Number and immutable.Option will be reduced to their underlying types.
-func areResultsAnyOf(expected AnyOf, actual any) bool {
+func areResultsAnyOf(expected []any, actual any) bool {
 	for _, v := range expected {
 		if areResultsEqual(v, actual) {
 			return true
 		}
 	}
 	return false
-}
-
-// UniqueCid allows the referencing of Cids by an arbitrary test-defined ID.
-//
-// Instead of asserting on a specific Cid value, this type will assert that
-// no other [UniqueCid]s with different [ID]s has the first Cid value that this instance
-// describes.
-//
-// It will also ensure that all Cids described by this [UniqueCid] have the same
-// valid, Cid value.
-type UniqueCid struct {
-	// ID is the arbitrary, but hopefully descriptive, id of this [UniqueCid].
-	ID any
-}
-
-var _ Validator = (*UniqueCid)(nil)
-
-// NewUniqueCid creates a new [UniqueCid] of the given arbitrary, but hopefully descriptive,
-// id.
-//
-// All results described by [UniqueCid]s with the given id must have the same valid Cid value.
-// No other [UniqueCid] ids may describe the same Cid value.
-func NewUniqueCid(id any) *UniqueCid {
-	return &UniqueCid{
-		ID: id,
-	}
-}
-
-func (ucid *UniqueCid) Validate(s *state, actualValue any, msgAndArgs ...any) {
-	isNew := true
-	for id, value := range s.cids {
-		if id == ucid.ID {
-			require.Equal(s.t, value, actualValue)
-			isNew = false
-		} else {
-			require.NotEqual(s.t, value, actualValue, "UniqueCid must be unique!", msgAndArgs)
-		}
-	}
-
-	if isNew {
-		require.IsType(s.t, "", actualValue)
-
-		cid, err := cid.Decode(actualValue.(string))
-		if err != nil {
-			require.NoError(s.t, err)
-		}
-
-		s.cids[ucid.ID] = cid.String()
-	}
 }
 
 // areResultsEqual returns true if the expected and actual results are of equal value.
@@ -269,47 +383,60 @@ func areResultArraysEqual[S any](expected []S, actual any) bool {
 	return true
 }
 
-func assertCollectionDescriptions(
-	s *state,
-	expected []client.CollectionDescription,
-	actual []client.CollectionDescription,
-) {
-	require.Equal(s.t, len(expected), len(actual))
+// CurrentTimestampMatcher is a matcher that checks if the actual value is a
+//
+//	time.Time within 120 seconds of the current time. The reason for this window
+//
+// is to allow for some latency in our test runs.
+type CurrentTimestampMatcher struct {
+	testStateMatcher
+}
 
-	for i, expected := range expected {
-		actual := actual[i]
-		if expected.ID != 0 {
-			require.Equal(s.t, expected.ID, actual.ID)
-		}
-		if expected.RootID != 0 {
-			require.Equal(s.t, expected.RootID, actual.RootID)
-		}
-		if expected.SchemaVersionID != "" {
-			require.Equal(s.t, expected.SchemaVersionID, actual.SchemaVersionID)
-		}
+var _ TestStateMatcher = (*CurrentTimestampMatcher)(nil)
 
-		require.Equal(s.t, expected.Name, actual.Name)
-		require.Equal(s.t, expected.IsMaterialized, actual.IsMaterialized)
-		require.Equal(s.t, expected.IsBranchable, actual.IsBranchable)
+func CurrentTimestamp() *CurrentTimestampMatcher {
+	return &CurrentTimestampMatcher{}
+}
 
-		if expected.Indexes != nil || len(actual.Indexes) != 0 {
-			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
-			// This is to save each test action from having to bother declaring an empty slice (if there are no indexes)
-			require.Equal(s.t, expected.Indexes, actual.Indexes)
-		}
+func (matcher *CurrentTimestampMatcher) Match(actual any) (bool, error) {
+	var ts time.Time
 
-		if expected.Sources != nil {
-			// Dont bother asserting this if the expected is nil and the actual is nil/empty.
-			// This is to save each test action from having to bother declaring an empty slice (if there are no sources)
-			require.Equal(s.t, expected.Sources, actual.Sources)
-		}
+	// We want this to work with time.Time as well as strings that can
+	// be parsed into a time.Time
+	switch v := actual.(type) {
+	case time.Time:
+		ts = v
 
-		if expected.Fields != nil {
-			require.Equal(s.t, expected.Fields, actual.Fields)
+	case string:
+		parsed, err := time.Parse(time.RFC3339, v)
+		if err != nil {
+			return false, fmt.Errorf(
+				"expected time.Time or RFC3339 string, got unparsable string %q: %w",
+				v, err,
+			)
 		}
+		ts = parsed
 
-		if expected.VectorEmbeddings != nil {
-			require.Equal(s.t, expected.VectorEmbeddings, actual.VectorEmbeddings)
-		}
+	default:
+		return false, fmt.Errorf("expected time.Time or string, got %T", actual)
 	}
+
+	diff := time.Since(ts)
+	if diff < 0 {
+		diff = -diff
+	}
+
+	if diff > 120*time.Second {
+		return false, fmt.Errorf("timestamp %v is more than 120 seconds away from now", ts)
+	}
+
+	return true, nil
+}
+
+func (matcher *CurrentTimestampMatcher) FailureMessage(actual any) string {
+	return fmt.Sprintf("Expected timestamp %v to be within 120 seconds of now", actual)
+}
+
+func (matcher *CurrentTimestampMatcher) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected timestamp %v not to be within 120 seconds of now", actual)
 }

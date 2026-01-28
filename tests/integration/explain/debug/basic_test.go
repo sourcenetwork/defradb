@@ -13,18 +13,18 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestDebugExplainRequest(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Explain (debug) a basic request, assert full graph.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: debug) {
 					Author {
 						name

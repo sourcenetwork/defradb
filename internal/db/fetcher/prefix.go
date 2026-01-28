@@ -15,12 +15,11 @@ import (
 	"slices"
 	"strings"
 
-	dsq "github.com/ipfs/go-datastore/query"
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/iterable"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -30,8 +29,6 @@ import (
 type prefixFetcher struct {
 	// The prefixes that this prefix fetcher must fetch from.
 	prefixes []keys.DataStoreKey
-	// The Iterator this prefix fetcher will use to scan.
-	kvIter iterable.Iterator
 
 	// The index of the current prefix being fetched.
 	currentPrefix int
@@ -41,7 +38,8 @@ type prefixFetcher struct {
 	// The below properties are only held here in order to pass them on to the next
 	// child fetcher instance.
 	ctx        context.Context
-	fieldsByID map[uint32]client.FieldDefinition
+	txn        datastore.Txn
+	fieldsByID map[uint32]client.CollectionFieldDescription
 	status     client.DocumentStatus
 	execInfo   *ExecInfo
 }
@@ -53,19 +51,19 @@ func newPrefixFetcher(
 	txn datastore.Txn,
 	prefixes []keys.DataStoreKey,
 	col client.Collection,
-	fieldsByID map[uint32]client.FieldDefinition,
+	fieldsByID map[uint32]client.CollectionFieldDescription,
 	status client.DocumentStatus,
 	execInfo *ExecInfo,
 ) (*prefixFetcher, error) {
-	kvIter, err := txn.Datastore().GetIterator(dsq.Query{})
-	if err != nil {
-		return nil, err
-	}
-
 	if len(prefixes) == 0 {
+		shortID, err := id.GetShortCollectionID(ctx, col.Version().CollectionID)
+		if err != nil {
+			return nil, err
+		}
+
 		// If no prefixes are provided, scan the entire collection.
 		prefixes = append(prefixes, keys.DataStoreKey{
-			CollectionRootID: col.Description().RootID,
+			CollectionShortID: shortID,
 		})
 	} else {
 		uniquePrefixes := make(map[keys.DataStoreKey]struct{}, len(prefixes))
@@ -87,13 +85,13 @@ func newPrefixFetcher(
 		})
 	}
 
-	fetcher, err := newDocumentFetcher(ctx, fieldsByID, kvIter, prefixes[0], status, execInfo)
+	fetcher, err := newDocumentFetcher(ctx, txn, fieldsByID, prefixes[0], status, execInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	return &prefixFetcher{
-		kvIter:     kvIter,
+		txn:        txn,
 		prefixes:   prefixes,
 		ctx:        ctx,
 		fieldsByID: fieldsByID,
@@ -121,10 +119,11 @@ func (f *prefixFetcher) NextDoc() (immutable.Option[string], error) {
 		if len(f.prefixes) > f.currentPrefix {
 			prefix := f.prefixes[f.currentPrefix]
 
-			f.fetcher, err = newDocumentFetcher(f.ctx, f.fieldsByID, f.kvIter, prefix, f.status, f.execInfo)
+			fetcher, err := newDocumentFetcher(f.ctx, f.txn, f.fieldsByID, prefix, f.status, f.execInfo)
 			if err != nil {
 				return immutable.None[string](), err
 			}
+			f.fetcher = fetcher
 
 			return f.NextDoc()
 		}
@@ -138,5 +137,5 @@ func (f *prefixFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 }
 
 func (f *prefixFetcher) Close() error {
-	return f.kvIter.Close()
+	return f.fetcher.Close()
 }

@@ -13,14 +13,14 @@ package field_kinds
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with nil",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -28,7 +28,7 @@ func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -39,7 +39,7 @@ func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 					"likedIndexes": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -63,9 +63,8 @@ func TestMutationUpdate_WithArrayOfBooleansToNil(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with empty",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -73,7 +72,7 @@ func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -84,7 +83,7 @@ func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 					"likedIndexes": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -108,9 +107,8 @@ func TestMutationUpdate_WithArrayOfBooleansToEmpty(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with same size",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -118,7 +116,7 @@ func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -129,7 +127,7 @@ func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 					"likedIndexes": [true, false, true, false]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -153,9 +151,8 @@ func TestMutationUpdate_WithArrayOfBooleansToSameSize(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with smaller size",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -163,7 +160,7 @@ func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -174,7 +171,7 @@ func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 					"likedIndexes": [false, true]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -198,9 +195,8 @@ func TestMutationUpdate_WithArrayOfBooleansToSmallerSize(t *testing.T) {
 
 func TestMutationUpdate_WithArrayOfBooleansToLargerSize(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with boolean array, replace with larger size",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -208,7 +204,7 @@ func TestMutationUpdate_WithArrayOfBooleansToLargerSize(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"likedIndexes": [true, true, false, true]
@@ -219,7 +215,7 @@ func TestMutationUpdate_WithArrayOfBooleansToLargerSize(t *testing.T) {
 					"likedIndexes": [true, false, true, false, true, true]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {

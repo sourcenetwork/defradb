@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDebugExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with related and regular filter + docIDs.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(
@@ -68,12 +67,10 @@ func TestDebugExplainRequestWithRelatedAndRegularFilterAndDocIDs(t *testing.T) {
 func TestDebugExplainRequestWithManyRelatedFiltersAndDocID(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with many related filters + docID.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(

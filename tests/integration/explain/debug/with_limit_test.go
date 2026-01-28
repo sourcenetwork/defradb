@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -36,12 +37,10 @@ var limitPattern = dataMap{
 func TestDebugExplainRequestWithOnlyLimit(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with only limit.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(limit: 2) {
@@ -60,12 +59,10 @@ func TestDebugExplainRequestWithOnlyLimit(t *testing.T) {
 func TestDebugExplainRequestWithOnlyOffset(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with only offset.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(offset: 2) {
@@ -84,12 +81,10 @@ func TestDebugExplainRequestWithOnlyOffset(t *testing.T) {
 func TestDebugExplainRequestWithLimitAndOffset(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with limit and offset.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(limit: 3, offset: 1) {

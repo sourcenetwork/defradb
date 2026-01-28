@@ -38,7 +38,7 @@ $(error "No git in $(PATH), version information won't be included")
 else
 VERSION_GOINFO=$(shell go version)
 VERSION_GITCOMMIT=$(shell git rev-parse HEAD)
-VERSION_GITCOMMITDATE=$(shell git show -s --format=%cs HEAD)
+VERSION_GITCOMMITDATE=$(shell git show -s --date=short --format=%cd HEAD)
 ifneq ($(shell git symbolic-ref -q --short HEAD),master)
 VERSION_GITRELEASE=dev-$(shell git symbolic-ref -q --short HEAD)
 else
@@ -67,11 +67,13 @@ endif
 
 TEST_FLAGS=-race -shuffle=on -timeout 10m
 
+JS_TEST_DIRS=./tests/integration/... ./event/... ./node/...
+JS_TEST_FLAGS=-exec="$$(go env GOROOT)/lib/wasm/go_js_wasm_exec" -shuffle=on -timeout 10m
+
 COVERAGE_DIRECTORY=$(PWD)/coverage
 COVERAGE_FILE=coverage.txt
 COVERAGE_FLAGS=-covermode=atomic -coverpkg=./... -args -test.gocoverdir=$(COVERAGE_DIRECTORY)
 
-PLAYGROUND_DIRECTORY=playground
 CHANGE_DETECTOR_TEST_DIRECTORY=tests/change_detector
 DEFAULT_TEST_DIRECTORIES=./...
 
@@ -81,6 +83,9 @@ default:
 .PHONY: install
 install:
 	@go install $(BUILD_FLAGS) ./cmd/defradb
+
+install-wizard: install
+	@defradb wizard
 
 .PHONY: install\:manpages
 install\:manpages:
@@ -124,7 +129,7 @@ client\:add-schema:
 
 .PHONY: deps\:lint-go
 deps\:lint-go:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.3
 
 .PHONY: deps\:lint-yaml
 deps\:lint-yaml:
@@ -150,6 +155,10 @@ deps\:test:
 	rustup target add wasm32-unknown-unknown
 	@$(MAKE) -C ./tests/lenses build
 
+.PHONY: deps\:test\:js
+deps\:test\:js:
+	npm install graphql-introspection-json-to-sdl --prefix tests
+
 .PHONY: deps\:bench
 deps\:bench:
 	go install golang.org/x/perf/cmd/benchstat@latest
@@ -164,11 +173,11 @@ deps\:modules:
 
 .PHONY: deps\:mocks
 deps\:mocks:
-	go install github.com/vektra/mockery/v2@v2.43.0
+	go install github.com/vektra/mockery/v3@v3.5.2
 
 .PHONY: deps\:playground
 deps\:playground:
-	cd $(PLAYGROUND_DIRECTORY) && npm install --legacy-peer-deps && npm run build
+	go generate -tags playground ./playground/...
 
 .PHONY: deps\:ollama
 deps\:ollama:
@@ -192,7 +201,8 @@ deps:
 
 .PHONY: mocks
 mocks:
-	@$(MAKE) deps:mocks
+	@$(MAKE) deps:mocks && \
+	find . -type d -name "mocks" -exec rm -r {} + && \
 	mockery --config="tools/configs/mockery.yaml"
 
 .PHONY: ollama
@@ -204,7 +214,7 @@ ollama:
 ollama\:nomic:
 # make sure ollama is running before continuing
 	time curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://localhost:11434
-	ollama pull nomic-embed-text
+	tools/scripts/ollama-pull.sh nomic-embed-text
 
 .PHONY: dev\:start
 dev\:start:
@@ -241,7 +251,7 @@ clean\:test:
 
 .PHONY: clean\:coverage
 clean\:coverage:
-	rm -rf $(COVERAGE_DIRECTORY) 
+	rm -rf $(COVERAGE_DIRECTORY)
 	rm -f $(COVERAGE_FILE)
 
 # Example: `make tls-certs path="~/.defradb/certs"`
@@ -284,7 +294,7 @@ test\:col-named-mutations:
 
 .PHONY: test\:source-hub
 test\:source-hub:
-	DEFRA_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
+	DEFRA_DOCUMENT_ACP_TYPE=source-hub gotestsum --format pkgname -- $(DEFAULT_TEST_DIRECTORIES)
 
 .PHONY: test\:go
 test\:go:
@@ -297,6 +307,10 @@ test\:http:
 .PHONY: test\:cli
 test\:cli:
 	DEFRA_CLIENT_CLI=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
+	
+.PHONY: test\:c
+test\:c:
+	DEFRA_CLIENT_C=true go test $(DEFAULT_TEST_DIRECTORIES) $(TEST_FLAGS)
 
 .PHONY: test\:names
 test\:names:
@@ -331,9 +345,9 @@ test\:coverage:
 	@$(MAKE) clean:coverage
 	mkdir $(COVERAGE_DIRECTORY)
 ifeq ($(path),)
-	gotestsum --format testname -- ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	gotestsum --format pkgname-and-test-fails -- ./... $(TEST_FLAGS) $(COVERAGE_FLAGS)
 else
-	gotestsum --format testname -- $(path) $(TEST_FLAGS) $(COVERAGE_FLAGS)
+	gotestsum --format pkgname-and-test-fails -- $(path) $(TEST_FLAGS) $(COVERAGE_FLAGS)
 endif
 	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
@@ -347,11 +361,36 @@ test\:coverage-html:
 	@$(MAKE) test:coverage path=$(path)
 	go tool cover -html=$(COVERAGE_FILE)
 	@$(MAKE) clean:coverage
-	
+
+.PHONY: test\:coverage-js
+test\:coverage-js:
+	@$(MAKE) clean:coverage
+	mkdir $(COVERAGE_DIRECTORY)
+	GOOS=js GOARCH=wasm gotestsum --format pkgname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS) $(COVERAGE_FLAGS)
+	go tool covdata textfmt -i=$(COVERAGE_DIRECTORY) -o $(COVERAGE_FILE)
 
 .PHONY: test\:changes
 test\:changes:
-	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 15m --tags change_detector
+	gotestsum --format testname -- ./$(CHANGE_DETECTOR_TEST_DIRECTORY)/... -timeout 20m --tags change_detector
+
+.PHONY: test\:js
+test\:js:
+	GOOS=js GOARCH=wasm gotestsum --format testname -- $(JS_TEST_DIRS) $(JS_TEST_FLAGS)
+
+# This test scans all the test files to find ones that include the npx build tag
+# then runs only those tests and their respective packages
+# Note: simply include `-tags npx` isnt sufficient since go test still includes
+# all the other tests and packages that arent tagged.
+.PHONY: test\:npx
+test\:npx:
+	@npx_files=$$(grep -rl --include='*_test.go' -E '^//go:build.*\bnpx\b|^// \+build.*\bnpx\b' .); \
+	if [ -z "$$npx_files" ]; then \
+		echo "No npx-tagged tests found"; \
+		exit 0; \
+	fi; \
+	packages=$$(echo "$$npx_files" | xargs -n1 dirname | sort -u | sed 's|^\./||' | sed 's|^|./|'); \
+	test_pattern=$$(echo "$$npx_files" | xargs grep -h -E '^func (Test[A-Za-z0-9_]+)' | sed -E 's/^func (Test[A-Za-z0-9_]+).*/\1/' | paste -sd '|' -); \
+	echo "$$packages" | xargs gotestsum --format pkgname -- -tags=npx -run "^($$test_pattern)$$"
 
 .PHONY: validate\:codecov
 validate\:codecov:
@@ -363,12 +402,13 @@ validate\:circleci:
 
 .PHONY: lint
 lint:
-	golangci-lint run --config tools/configs/golangci.yaml
+	golangci-lint config verify --config=tools/configs/golangci.yaml
+	golangci-lint run --config=tools/configs/golangci.yaml
 	yamllint -c tools/configs/yamllint.yaml .
 
 .PHONY: lint\:fix
 lint\:fix:
-	golangci-lint run --config tools/configs/golangci.yaml --fix
+	golangci-lint run --config=tools/configs/golangci.yaml --fix
 
 .PHONY: lint\:todo
 lint\:todo:
@@ -376,7 +416,7 @@ lint\:todo:
 
 .PHONY: lint\:list
 lint\:list:
-	golangci-lint linters --config tools/configs/golangci.yaml
+	golangci-lint linters --config=tools/configs/golangci.yaml
 
 .PHONY: chglog
 chglog:
@@ -418,3 +458,17 @@ fix:
 	@$(MAKE) tidy
 	@$(MAKE) mocks
 	@$(MAKE) docs
+
+.PHONY build-c-shared-linux:
+build-c-shared-linux:
+	@tools/scripts/build-c-shared-linux.sh $(BUILD_FLAGS)
+
+# Usage: API_LEVEL will be the Android SDK.API level targeted by the build. 
+# For more information, see: https://apilevels.com/
+# The minimum supported API level is 21, which is the default.
+# 
+# ANDROID_NDK should be the path to the installed Android NDK on your system
+API_LEVEL ?= 21
+.PHONY: build-c-shared-android
+build-c-shared-android:
+	@tools/scripts/build-c-shared-android.sh $(ANDROID_NDK) $(API_LEVEL) "$(BUILD_FLAGS)"

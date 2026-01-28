@@ -19,50 +19,44 @@ import (
 // defaultSchema returns a new gql.Schema containing the default type definitions.
 func defaultSchema() (gql.Schema, error) {
 	orderEnum := types.OrderingEnum()
+	commitsEnum := types.CommitsEnum()
 	crdtEnum := types.CRDTEnum()
 	explainEnum := types.ExplainEnum()
 
-	commitLinkObject := types.CommitLinkObject()
-	commitObject := types.CommitObject(commitLinkObject)
 	commitsOrderArg := types.CommitsOrderArg(orderEnum)
+	commitsFilterFieldNameArg := types.CommitsFilterFieldNameArg()
+	commitsFilterArg := types.CommitsFilterArg(commitsFilterFieldNameArg)
+
+	commitObject := types.CommitObject(commitsOrderArg, commitsFilterArg, commitsEnum)
+
+	encryptedSearchResult := types.EncryptedSearchResultObject()
 
 	indexFieldInput := types.IndexFieldInputObject(orderEnum)
 
-	return gql.NewSchema(gql.SchemaConfig{
+	queryCommits := types.QueryCommits(commitObject, commitsOrderArg, commitsFilterArg, commitsEnum)
+
+	sch, err := gql.NewSchema(gql.SchemaConfig{
 		Types: defaultTypes(
 			commitObject,
-			commitLinkObject,
 			commitsOrderArg,
+			commitsEnum,
 			orderEnum,
 			crdtEnum,
 			explainEnum,
 			indexFieldInput,
+			encryptedSearchResult,
 		),
-		Query:        defaultQueryType(commitObject, commitsOrderArg),
+		Query:        defaultQueryType(queryCommits),
 		Mutation:     defaultMutationType(),
 		Directives:   defaultDirectivesType(crdtEnum, explainEnum, orderEnum, indexFieldInput),
-		Subscription: defaultSubscriptionType(),
+		Subscription: defaultSubscriptionType(queryCommits),
 	})
+
+	return sch, err
 }
 
-// @todo: Use a better default Query type
-func defaultQueryType(commitObject *gql.Object, commitsOrderArg *gql.InputObject) *gql.Object {
-	queryCommits := types.QueryCommits(commitObject, commitsOrderArg)
-	queryLatestCommits := types.QueryLatestCommits(commitObject)
-
-	return gql.NewObject(gql.ObjectConfig{
-		Name: "Query",
-		Fields: gql.Fields{
-			"_": &gql.Field{
-				Name: "_",
-				Type: gql.Boolean,
-			},
-
-			// database API queries
-			queryCommits.Name:       queryCommits,
-			queryLatestCommits.Name: queryLatestCommits,
-		},
-	})
+func defaultQueryType(fields ...*gql.Field) *gql.Object {
+	return defaultOperationType("Query", fields...)
 }
 
 func defaultMutationType() *gql.Object {
@@ -77,15 +71,19 @@ func defaultMutationType() *gql.Object {
 	})
 }
 
-func defaultSubscriptionType() *gql.Object {
+func defaultSubscriptionType(fields ...*gql.Field) *gql.Object {
+	return defaultOperationType("Subscription", fields...)
+}
+
+func defaultOperationType(name string, fields ...*gql.Field) *gql.Object {
+	fieldsCfg := make(gql.Fields, len(fields))
+	for _, field := range fields {
+		fieldsCfg[field.Name] = field
+	}
+
 	return gql.NewObject(gql.ObjectConfig{
-		Name: "Subscription",
-		Fields: gql.Fields{
-			"_": &gql.Field{
-				Name: "_",
-				Type: gql.Boolean,
-			},
-		},
+		Name:   name,
+		Fields: fieldsCfg,
 	})
 }
 
@@ -108,6 +106,7 @@ func defaultDirectivesType(
 		types.BranchableDirective(),
 		types.VectorEmbeddingDirective(),
 		types.ConstraintsDirective(),
+		types.EncryptedIndexDirective(),
 	}
 }
 
@@ -129,31 +128,30 @@ func inlineArrayTypes() []gql.Type {
 // default type map includes all the native scalar types
 func defaultTypes(
 	commitObject *gql.Object,
-	commitLinkObject *gql.Object,
 	commitsOrderArg *gql.InputObject,
+	commitsEnum *gql.Enum,
 	orderEnum *gql.Enum,
 	crdtEnum *gql.Enum,
 	explainEnum *gql.Enum,
 	indexFieldInput *gql.InputObject,
+	encryptedSearchResult *gql.Object,
 ) []gql.Type {
-	blobScalarType := types.BlobScalarType()
-	jsonScalarType := types.JSONScalarType()
-
 	idOpBlock := types.IDOperatorBlock()
 	intOpBlock := types.IntOperatorBlock()
 	float64OpBlock := types.Float64OperatorBlock()
 	float32OpBlock := types.Float32OperatorBlock()
 	booleanOpBlock := types.BooleanOperatorBlock()
 	stringOpBlock := types.StringOperatorBlock()
-	blobOpBlock := types.BlobOperatorBlock(blobScalarType)
+	blobOpBlock := types.BlobOperatorBlock(types.Blob)
 	dateTimeOpBlock := types.DateTimeOperatorBlock()
+	scalarAggregateBlock := types.ScalarAggregateNumericBlock()
 
 	notNullIntOpBlock := types.NotNullIntOperatorBlock()
 	notNullFloat64OpBlock := types.NotNullFloat64OperatorBlock()
 	notNullFloat32OpBlock := types.NotNullFloat32OperatorBlock()
 	notNullBooleanOpBlock := types.NotNullBooleanOperatorBlock()
 	notNullStringOpBlock := types.NotNullStringOperatorBlock()
-	notNullBlobOpBlock := types.NotNullBlobOperatorBlock(blobScalarType)
+	notNullBlobOpBlock := types.NotNullBlobOperatorBlock(types.Blob)
 
 	return []gql.Type{
 		// Base Scalar types
@@ -167,8 +165,8 @@ func defaultTypes(
 		gql.String,
 
 		// Custom Scalar types
-		blobScalarType,
-		jsonScalarType,
+		types.Blob,
+		types.JSON,
 
 		// Base Query types
 
@@ -207,13 +205,17 @@ func defaultTypes(
 		types.NotNullBooleanListOperatorBlock(notNullBooleanOpBlock),
 		types.NotNullStringListOperatorBlock(notNullStringOpBlock),
 
+		// aggregate input args
+		scalarAggregateBlock,
+
+		commitsEnum,
 		commitsOrderArg,
-		commitLinkObject,
 		commitObject,
 
 		crdtEnum,
 		explainEnum,
 
 		indexFieldInput,
+		encryptedSearchResult,
 	}
 }

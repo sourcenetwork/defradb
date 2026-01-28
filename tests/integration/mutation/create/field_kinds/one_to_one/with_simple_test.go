@@ -13,26 +13,27 @@ package one_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 
 	"github.com/sourcenetwork/immutable"
 )
 
 func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, with an invalid field.",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"notName": "John Grisham",
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 				ExpectedError: "the given field does not exist. Name: notName",
 			},
@@ -45,16 +46,15 @@ func TestMutationCreateOneToOne_WithInvalidField_Error(t *testing.T) {
 // reference to a document that doesnt exist.
 func TestMutationCreateOneToOneNoChild(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, from the wrong side",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
-					"published_id": "bae-be6d8024-4953-5a92-84b4-f042d25230c6"
+					"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -75,22 +75,21 @@ func TestMutationCreateOneToOneNoChild(t *testing.T) {
 
 func TestMutationCreateOneToOne(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Book {
@@ -111,7 +110,7 @@ func TestMutationCreateOneToOne(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Author {
@@ -140,19 +139,18 @@ func TestMutationCreateOneToOne(t *testing.T) {
 
 func TestMutationCreateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation from secondary side",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionSaveMutationType,
-			testUtils.CollectionNamedMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
 		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":   "Painted House",
@@ -168,18 +166,17 @@ func TestMutationCreateOneToOneSecondarySide_CollectionApi(t *testing.T) {
 
 func TestMutationCreateOneToOneSecondarySide_GQL(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation from secondary side",
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.GQLRequestMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":   "Painted House",
@@ -195,28 +192,27 @@ func TestMutationCreateOneToOneSecondarySide_GQL(t *testing.T) {
 
 func TestMutationCreateOneToOne_ErrorsGivenRelationAlreadyEstablishedViaPrimary(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "One to one create mutation, errors due to link already existing, primary side",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Saadi Shirazi",
-					"published_id": testUtils.NewDocIndex(0, 0),
+					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
-				ExpectedError: "target document is already linked to another document.",
+				ExpectedError: "can not index a doc's field(s) that violates unique index",
 			},
 		},
 	}

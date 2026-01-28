@@ -13,14 +13,14 @@ package constraints
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with size contraint",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -28,7 +28,7 @@ func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [27, 28]
@@ -39,7 +39,7 @@ func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 					"numbers": [22, 23]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
@@ -65,9 +65,8 @@ func TestMutationUpdate_WithSizeConstrain_ShouldSucceed(t *testing.T) {
 
 func TestMutationUpdate_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with array size mismatch",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -75,7 +74,7 @@ func TestMutationUpdate_WithSizeConstrainMismatch_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"numbers": [27, 28]

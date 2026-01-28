@@ -15,7 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
@@ -23,7 +25,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -31,7 +33,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -42,6 +44,12 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+			},
 			testUtils.Restart{},
 			testUtils.UpdateDoc{
 				// Update John's Age on the first node only, and allow the value to sync
@@ -51,7 +59,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildAndRestart(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age

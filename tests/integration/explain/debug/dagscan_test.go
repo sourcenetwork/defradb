@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -34,15 +35,13 @@ var dagScanPattern = dataMap{
 func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) commits query-op.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
+					_commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9", filter: {fieldName: {_eq: "name"}}) {
 						links {
 							cid
 						}
@@ -60,15 +59,13 @@ func TestDebugExplainCommitsDagScanQueryOp(t *testing.T) {
 func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) commits query-op with only docID (no field).",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					commits (docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84") {
+					_commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9") {
 						links {
 							cid
 						}
@@ -76,114 +73,6 @@ func TestDebugExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 				}`,
 
 				ExpectedFullGraph: dagScanPattern,
-			},
-		},
-	}
-
-	explainUtils.ExecuteTestCase(t, test)
-}
-
-func TestDebugExplainLatestCommitsDagScanQueryOp(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Description: "Explain (debug) latestCommits query-op.",
-
-		Actions: []any{
-			explainUtils.SchemaForExplainTests,
-
-			testUtils.ExplainRequest{
-
-				Request: `query @explain(type: debug) {
-					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84", fieldId: "1") {
-						cid
-						links {
-							cid
-						}
-					}
-				}`,
-
-				ExpectedFullGraph: dagScanPattern,
-			},
-		},
-	}
-
-	explainUtils.ExecuteTestCase(t, test)
-}
-
-func TestDebugExplainLatestCommitsDagScanQueryOpWithoutField(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Description: "Explain (debug) latestCommits query-op with only docID (no field).",
-
-		Actions: []any{
-			explainUtils.SchemaForExplainTests,
-
-			testUtils.ExplainRequest{
-
-				Request: `query @explain(type: debug) {
-					latestCommits(docID: "bae-7aabc9d2-fbbc-5911-b0d0-b49a2a1d0e84") {
-						cid
-						links {
-							cid
-						}
-					}
-				}`,
-
-				ExpectedFullGraph: dagScanPattern,
-			},
-		},
-	}
-
-	explainUtils.ExecuteTestCase(t, test)
-}
-
-func TestDebugExplainLatestCommitsDagScanWithoutDocID_Failure(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Description: "Explain (debug) latestCommits query without docID.",
-
-		Actions: []any{
-			explainUtils.SchemaForExplainTests,
-
-			testUtils.ExplainRequest{
-
-				Request: `query @explain(type: debug) {
-					latestCommits(fieldId: "1") {
-						cid
-						links {
-							cid
-						}
-					}
-				}`,
-
-				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
-			},
-		},
-	}
-
-	explainUtils.ExecuteTestCase(t, test)
-}
-
-func TestDebugExplainLatestCommitsDagScanWithoutAnyArguments_Failure(t *testing.T) {
-	test := testUtils.TestCase{
-
-		Description: "Explain (debug) latestCommits query without any arguments.",
-
-		Actions: []any{
-			explainUtils.SchemaForExplainTests,
-
-			testUtils.ExplainRequest{
-
-				Request: `query @explain(type: debug) {
-					latestCommits {
-						cid
-						links {
-							cid
-						}
-					}
-				}`,
-
-				ExpectedError: "Field \"latestCommits\" argument \"docID\" of type \"ID!\" is required but not provided.",
 			},
 		},
 	}

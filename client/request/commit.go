@@ -10,7 +10,9 @@
 
 package request
 
-import "github.com/sourcenetwork/immutable"
+import (
+	"github.com/sourcenetwork/immutable"
+)
 
 var (
 	_ Selection = (*CommitSelect)(nil)
@@ -27,16 +29,11 @@ type CommitSelect struct {
 	Offsetable
 	Orderable
 	Groupable
+	Filterable
 
 	// DocID is an optional filter which when provided will limit commits to those
 	// belonging to the given document.
 	DocID immutable.Option[string]
-
-	// FieldID is an optional filter which when provided will limit commits to those
-	// belonging to the given field.
-	//
-	// `C` may be provided for document-level (composite) commits.
-	FieldID immutable.Option[string]
 
 	// Depth limits the returned commits to being X places in the history away from the
 	// most current.
@@ -56,6 +53,24 @@ func (c CommitSelect) ToSelect() *Select {
 		Offsetable:  c.Offsetable,
 		Orderable:   c.Orderable,
 		Groupable:   c.Groupable,
+		Filterable:  c.Filterable,
+		ChildSelect: c.ChildSelect,
+	}
+}
+
+// ToSubscriptionSelect implements the subscriptionSelector interface in internal/db/subscriptions.go
+// We can safely ignore the first parameter (docID) for now
+// since its always copied from the original subscription request
+func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
+	return &CommitSelect{
+		Field: Field{
+			Name:  c.Name,
+			Alias: c.Alias,
+		},
+		DocID: c.DocID,
+		CIDFilter: CIDFilter{
+			immutable.Some(cid),
+		},
 		ChildSelect: c.ChildSelect,
 	}
 }

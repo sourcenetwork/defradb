@@ -18,21 +18,19 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 )
 
-var identity1 = identity.Identity{
-	DID: "did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn",
-}
+var identity1 = identity.FromDID(
+	"did:key:z7r8os2G88XXBNBTLj3kFR5rzUJ4VAesbX7PgsA68ak9B5RYcXF5EZEmjRzzinZndPSSwujXb4XKHG6vmKEFG6ZfsfcQn",
+)
 
-//var identity2 = identity.Identity{
-//	DID: "did:key:z7r8ooUiNXK8TT8Xjg1EWStR2ZdfxbzVfvGWbA2FjmzcnmDxz71QkP1Er8PP3zyLZpBLVgaXbZPGJPS4ppXJDPRcqrx4F",
-//}
-//
-//var invalidIdentity = identity.Identity{
-//	DID: "did:something",
-//}
+// var identity2 = identity.FromDID(
+// 	"did:key:z7r8ooUiNXK8TT8Xjg1EWStR2ZdfxbzVfvGWbA2FjmzcnmDxz71QkP1Er8PP3zyLZpBLVgaXbZPGJPS4ppXJDPRcqrx4F",
+// )
+// var invalidIdentity = identity.FromDID("did:something")
 
 var validPolicyID string = "d59f91ba65fe142d35fc7df34482eafc7e99fed7c144961ba32c4664634e61b7"
 var validPolicy string = `
@@ -45,10 +43,12 @@ actor:
 resources:
   users:
     permissions:
-      write:
-        expr: owner
       read:
         expr: owner + reader
+      update:
+        expr: owner
+      delete:
+        expr: owner
 
     relations:
       owner:
@@ -59,28 +59,28 @@ resources:
           - actor
  `
 
-// newLocalACPSetup will setup localACP instance in memory if inMem is true and a persistent store otherwise.
-// Additionally it will also start the acp instance.
-// The caller is responsible to call `Close()` on the returned [acp.ACP] instance.
-func newLocalACPSetup(b *testing.B, inMem bool) acp.ACP {
-	ctx := context.Background()
-	localACP := acp.NewLocalACP()
-
+// newLocalDocumentACPSetup will setup localACP instance in memory if inMem is true and a persistent store otherwise.
+// Additionally it will also start the document acp instance.
+// The caller is responsible to call `Close()` on the returned [dac.DocumentACP] instance.
+func newLocalDocumentACPSetup(b *testing.B, inMem bool) dac.DocumentACP {
+	var localACP dac.DocumentACP
+	var err error
 	if inMem {
-		localACP.Init(ctx, "")
+		localACP, err = dac.NewLocalDocumentACP("")
 	} else {
 		acpPath := b.TempDir()
-		localACP.Init(ctx, acpPath)
+		localACP, err = dac.NewLocalDocumentACP(acpPath)
 	}
+	require.Nil(b, err)
 
-	err := localACP.Start(ctx)
+	err = localACP.Start(context.Background())
 	require.Nil(b, err)
 
 	return localACP
 }
 
-// resetLocalACPKeepPolicy resets the local acp instance then adds our desired policy back.
-func resetLocalACPKeepPolicy(b *testing.B, ctx context.Context, localACP acp.ACP) {
+// resetLocalDocumentACPKeepPolicy resets the local document acp instance then adds our desired policy back.
+func resetLocalDocumentACPKeepPolicy(b *testing.B, ctx context.Context, localACP dac.DocumentACP) {
 	resetErr := localACP.ResetState(ctx)
 	require.Nil(b, resetErr)
 
@@ -97,7 +97,7 @@ func resetLocalACPKeepPolicy(b *testing.B, ctx context.Context, localACP acp.ACP
 	)
 }
 
-func registerXDocObjects(b *testing.B, ctx context.Context, count int, localACP acp.ACP) {
+func registerXDocObjects(b *testing.B, ctx context.Context, count int, localACP dac.DocumentACP) {
 	for index := 0; index < count; index++ {
 		err := localACP.RegisterDocObject(
 			ctx,
@@ -118,7 +118,7 @@ func BenchmarkACPRegister(b *testing.B) {
 			b.Run(
 				fmt.Sprintf("scale=%d,inMem=%t", scaleBy, inMemoryOrPersistent),
 				func(b *testing.B) {
-					localACP := newLocalACPSetup(b, inMemoryOrPersistent)
+					localACP := newLocalDocumentACPSetup(b, inMemoryOrPersistent)
 					defer localACP.Close()
 
 					b.ResetTimer()
@@ -126,7 +126,7 @@ func BenchmarkACPRegister(b *testing.B) {
 						// Since we need to re-initialize for every run use stop-start.
 						b.StopTimer()
 						ctx := context.Background()
-						resetLocalACPKeepPolicy(b, ctx, localACP)
+						resetLocalDocumentACPKeepPolicy(b, ctx, localACP)
 
 						b.StartTimer()
 						registerXDocObjects(b, ctx, scaleBy, localACP)
@@ -143,7 +143,7 @@ func BenchmarkACPIsDocRegistered(b *testing.B) {
 			b.Run(
 				fmt.Sprintf("scale=%d,inMem=%t", scaleBy, inMemoryOrPersistent),
 				func(b *testing.B) {
-					localACP := newLocalACPSetup(b, inMemoryOrPersistent)
+					localACP := newLocalDocumentACPSetup(b, inMemoryOrPersistent)
 					defer localACP.Close()
 
 					b.ResetTimer()
@@ -151,7 +151,7 @@ func BenchmarkACPIsDocRegistered(b *testing.B) {
 						// Since we need to re-initialize for every run use stop-start.
 						b.StopTimer()
 						ctx := context.Background()
-						resetLocalACPKeepPolicy(b, ctx, localACP)
+						resetLocalDocumentACPKeepPolicy(b, ctx, localACP)
 						registerXDocObjects(b, ctx, scaleBy, localACP)
 
 						b.StartTimer()
@@ -172,7 +172,7 @@ func BenchmarkACPCheckDocAccess(b *testing.B) {
 			b.Run(
 				fmt.Sprintf("scale=%d,inMem=%t", scaleBy, inMemoryOrPersistent),
 				func(b *testing.B) {
-					localACP := newLocalACPSetup(b, inMemoryOrPersistent)
+					localACP := newLocalDocumentACPSetup(b, inMemoryOrPersistent)
 					defer localACP.Close()
 
 					b.ResetTimer()
@@ -180,14 +180,14 @@ func BenchmarkACPCheckDocAccess(b *testing.B) {
 						// Since we need to re-initialize for every run use stop-start.
 						b.StopTimer()
 						ctx := context.Background()
-						resetLocalACPKeepPolicy(b, ctx, localACP)
+						resetLocalDocumentACPKeepPolicy(b, ctx, localACP)
 						registerXDocObjects(b, ctx, scaleBy, localACP)
 
 						b.StartTimer()
 						_, err := localACP.CheckDocAccess(
 							ctx,
-							acp.ReadPermission,
-							identity1.DID,
+							acpTypes.DocumentReadPerm,
+							identity1.DID(),
 							validPolicyID,
 							"users",
 							"1",

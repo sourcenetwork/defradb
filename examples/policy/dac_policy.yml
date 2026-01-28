@@ -1,0 +1,28 @@
+# The below policy contains a valid document acp resource interface that can be linked to a collection
+# object during the schema add command to have access control enabled for documents of that collection.
+#
+# Learn more about the DefraDB [ACP System](/acp/README.md)
+
+name: An Example Document ACP Policy
+
+description: A Document ACP Policy
+
+resources:
+  - name: users
+    permissions:
+      - name: read
+        expr: reader + updater + deleter
+      - name: update
+        expr: updater
+      - name: delete
+        expr: deleter
+    relations:
+      - name: reader
+        types:
+          - actor
+      - name: updater
+        types:
+          - actor
+      - name: deleter
+        types:
+          - actor

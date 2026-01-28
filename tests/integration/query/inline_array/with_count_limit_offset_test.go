@@ -13,20 +13,20 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimitGreaterThanLength(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, offsetted limited count of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, 3]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -50,15 +50,14 @@ func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimitGreaterThanLength(t 
 
 func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimit(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, offsetted limited count of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

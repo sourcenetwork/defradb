@@ -13,14 +13,13 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
 
 func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 	test := testUtils.TestCase{
-
-		Description: "Explain a one-to-one join relation query, with alias.",
 
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
@@ -29,7 +28,7 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						OnlyEmail: contact {
@@ -80,8 +79,6 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) with two one-to-one join relation.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -89,7 +86,7 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						OnlyEmail: contact {
@@ -165,8 +162,6 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (execute) with two nested level deep one to one join.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
@@ -174,7 +169,7 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					Author {
 						name
@@ -211,6 +206,69 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 												"docFetches":   uint64(2),
 												"fieldFetches": uint64(6),
 												"indexFetches": uint64(0),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	explainUtils.ExecuteTestCase(t, test)
+}
+
+func TestExecuteExplain_WithOneToOneJoinFromSecondarySide_ShouldIncludeIndex(t *testing.T) {
+	test := testUtils.TestCase{
+
+		Actions: []any{
+			explainUtils.SchemaForExplainTests,
+
+			create2AddressDocuments(),
+			create2AuthorContactDocuments(),
+			create2AuthorDocuments(),
+
+			// Query from ContactAddress (secondary side) to AuthorContact (primary side).
+			// This should use the unique index on AuthorContact._addressID to find the related contact.
+			&action.ExplainRequest{
+				Request: `query @explain(type: execute) {
+					ContactAddress {
+						city
+						contact {
+							email
+						}
+					}
+				}`,
+
+				ExpectedFullGraph: dataMap{
+					"explain": dataMap{
+						"executionSuccess": true,
+						"sizeOfResult":     1,
+						"planExecutions":   uint64(2),
+						"operationNode": []dataMap{
+							{
+								"selectTopNode": dataMap{
+									"selectNode": dataMap{
+										"iterations":    uint64(3),
+										"filterMatches": uint64(2),
+										"typeIndexJoin": dataMap{
+											"iterations": uint64(3),
+											"scanNode": dataMap{
+												"iterations":   uint64(3),
+												"docFetches":   uint64(2),
+												"fieldFetches": uint64(4),
+												"indexFetches": uint64(0),
+											},
+											// The subTypeScanNode uses the unique index (indexFetches: 2)
+											// to find AuthorContact documents by their _addressID field.
+											"subTypeScanNode": dataMap{
+												"iterations":   uint64(4),
+												"docFetches":   uint64(2),
+												"fieldFetches": uint64(6),
+												"indexFetches": uint64(2),
 											},
 										},
 									},

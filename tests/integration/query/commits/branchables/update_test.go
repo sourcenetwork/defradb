@@ -13,13 +13,26 @@ package branchables
 import (
 	"testing"
 
+	"github.com/onsi/gomega"
+
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
+	uniqueCid := testUtils.NewUniqueValue()
+
+	collectionUpdateCid := testUtils.NewSameValue()
+	collectionCreateCid := testUtils.NewSameValue()
+	updateCid := testUtils.NewSameValue()
+	createCid := testUtils.NewSameValue()
+	ageCreateCid := testUtils.NewSameValue()
+	nameUpdateCid := testUtils.NewSameValue()
+	nameCreateCid := testUtils.NewSameValue()
+
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users @branchable {
 						name: String
@@ -27,7 +40,7 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
@@ -38,73 +51,85 @@ func TestQueryCommitsBranchables_WithDocUpdate(t *testing.T) {
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-						commits {
+						_commits {
 							cid
 							links {
+								cid
+							}
+							heads {
 								cid
 							}
 						}
 					}`,
 				Results: map[string]any{
-					"commits": []map[string]any{
+					"_commits": []map[string]any{
 						{
-							"cid": testUtils.NewUniqueCid("collection, update"),
+							"cid": gomega.And(collectionUpdateCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("collection, create"),
+									"cid": updateCid,
 								},
+							},
+							"heads": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("update"),
+									"cid": collectionCreateCid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("collection, create"),
+							"cid": gomega.And(collectionCreateCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("create"),
+									"cid": createCid,
 								},
 							},
+							"heads": []map[string]any{},
 						},
 						{
-							"cid":   testUtils.NewUniqueCid("age, create"),
+							"cid":   gomega.And(ageCreateCid, uniqueCid),
 							"links": []map[string]any{},
+							"heads": []map[string]any{},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("name, update"),
-							"links": []map[string]any{
-								{
-									"cid": testUtils.NewUniqueCid("name, create"),
-								},
-							},
-						},
-						{
-							"cid":   testUtils.NewUniqueCid("name, create"),
+							"cid":   gomega.And(nameUpdateCid, uniqueCid),
 							"links": []map[string]any{},
-						},
-						{
-							"cid": testUtils.NewUniqueCid("update"),
-							"links": []map[string]any{
+							"heads": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("create"),
-								},
-								{
-									"cid": testUtils.NewUniqueCid("name, update"),
+									"cid": nameCreateCid,
 								},
 							},
 						},
 						{
-							"cid": testUtils.NewUniqueCid("create"),
+							"cid":   gomega.And(nameCreateCid, uniqueCid),
+							"links": []map[string]any{},
+							"heads": []map[string]any{},
+						},
+						{
+							"cid": gomega.And(updateCid, uniqueCid),
 							"links": []map[string]any{
 								{
-									"cid": testUtils.NewUniqueCid("age, create"),
-								},
-								{
-									"cid": testUtils.NewUniqueCid("name, create"),
+									"cid": nameUpdateCid,
 								},
 							},
+							"heads": []map[string]any{
+								{
+									"cid": createCid,
+								},
+							},
+						},
+						{
+							"cid": gomega.And(createCid, uniqueCid),
+							"links": []map[string]any{
+								{
+									"cid": ageCreateCid,
+								},
+								{
+									"cid": nameCreateCid,
+								},
+							},
+							"heads": []map[string]any{},
 						},
 					},
 				},

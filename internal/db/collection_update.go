@@ -13,10 +13,12 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
 	"github.com/valyala/fastjson"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/planner"
@@ -33,17 +35,21 @@ func (c *collection) UpdateWithFilter(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	res, err := c.updateWithFilter(ctx, filter, updater)
 	if err != nil {
 		return nil, err
 	}
-	return res, txn.Commit(ctx)
+	return res, txn.Commit()
 }
 
 func (c *collection) updateWithFilter(
@@ -108,7 +114,7 @@ func (c *collection) updateWithFilter(
 
 		// Get the document, and apply the patch
 		docAsMap := docMap.ToMap(selectionPlan.Value())
-		doc, err := client.NewDocFromMap(docAsMap, c.Definition())
+		doc, err := client.NewDocFromMap(ctx, docAsMap, c.Version())
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +122,7 @@ func (c *collection) updateWithFilter(
 		if isPatch {
 			// todo
 		} else if isMerge { // else is fine here
-			err := doc.SetWithJSON([]byte(updater))
+			err := doc.SetWithJSON(ctx, []byte(updater))
 			if err != nil {
 				return nil, err
 			}
@@ -151,12 +157,14 @@ func (c *collection) makeSelectionPlan(
 			return nil, ErrInvalidFilter
 		}
 
-		f, err = c.db.parser.NewFilterFromString(c.Name().Value(), fval)
+		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
 		if err != nil {
 			return nil, err
 		}
 	case immutable.Option[request.Filter]:
 		f = fval
+	case map[string]any:
+		f = immutable.Some(request.Filter{Conditions: fval})
 	default:
 		return nil, ErrInvalidFilter
 	}
@@ -166,13 +174,14 @@ func (c *collection) makeSelectionPlan(
 		return nil, err
 	}
 
-	txn := mustGetContextTxn(ctx)
 	planner := planner.New(
 		ctx,
 		identity.FromContext(ctx),
-		c.db.acp,
+		c.db.nodeACP,
+		c.db.documentACP,
 		c.db,
-		txn,
+		c.db.p2p,
+		c.db.getLensStore(ctx),
 	)
 
 	return planner.MakeSelectionPlan(slct)
@@ -181,7 +190,7 @@ func (c *collection) makeSelectionPlan(
 func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*request.Select, error) {
 	slct := &request.Select{
 		Field: request.Field{
-			Name: c.Name().Value(),
+			Name: c.Name(),
 		},
 		Filterable: request.Filterable{
 			Filter: filter,
@@ -191,7 +200,7 @@ func (c *collection) makeSelectLocal(filter immutable.Option[request.Filter]) (*
 		},
 	}
 
-	for _, fd := range c.Schema().Fields {
+	for _, fd := range c.Version().Fields {
 		if fd.Kind.IsObject() {
 			continue
 		}

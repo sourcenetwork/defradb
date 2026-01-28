@@ -7,15 +7,18 @@ Remove P2P collections
 Remove P2P collections from the followed pubsub topics.
 The removed collections will no longer be synchronized between nodes.
 
-Example: remove single collection
-  defradb client p2p collection remove bae123
+```
+defradb client p2p collection remove [collectionNames] [flags]
+```
 
-Example: remove multiple collections
-  defradb client p2p collection remove bae123,bae456
-		
+### Examples
 
 ```
-defradb client p2p collection remove [collectionIDs] [flags]
+remove single collection:  
+  defradb client p2p collection remove User
+
+remove multiple collections:  
+  defradb client p2p collection remove User,Address
 ```
 
 ### Options

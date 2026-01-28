@@ -13,20 +13,20 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimple(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with no filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_docID
@@ -37,7 +37,7 @@ func TestQuerySimple(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"_docID": "bae-d4303725-7db9-53d2-b324-f3ee44020e52",
+							"_docID": "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b",
 							"Name":   "John",
 							"Age":    int64(21),
 						},
@@ -52,15 +52,14 @@ func TestQuerySimple(t *testing.T) {
 
 func TestQuerySimpleWithAlias(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with alias, no filter",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						username: Name
@@ -84,21 +83,20 @@ func TestQuerySimpleWithAlias(t *testing.T) {
 
 func TestQuerySimpleWithMultipleRows(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with no filter, multiple rows",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 27
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -108,12 +106,12 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name": "Bob",
-							"Age":  int64(27),
-						},
-						{
 							"Name": "John",
 							"Age":  int64(21),
+						},
+						{
+							"Name": "Bob",
+							"Age":  int64(27),
 						},
 					},
 				},
@@ -126,9 +124,8 @@ func TestQuerySimpleWithMultipleRows(t *testing.T) {
 
 func TestQuerySimpleWithUndefinedField(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query for undefined field",
 		Actions: []any{
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -145,14 +142,13 @@ func TestQuerySimpleWithUndefinedField(t *testing.T) {
 
 func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with some default-value fields",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -182,12 +178,11 @@ func TestQuerySimpleWithSomeDefaultValues(t *testing.T) {
 
 func TestQuerySimpleWithDefaultValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with default-value fields",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{ }`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -219,9 +214,8 @@ func TestQuerySimpleWithDefaultValue(t *testing.T) {
 // It documents the fixing of the bug described in #3242.
 func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCollection1Query(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Deleted docs in collection 2 should not yield deleted docs on collection 1 query",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
                     type User {
                         name: String
@@ -231,25 +225,25 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
                     }
                 `,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "Shahzad",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name": "Andy",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
                     User {
                         _docID
@@ -265,12 +259,13 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 			testUtils.DeleteDoc{
 				CollectionID: 1,
 				DocID:        0,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
                     User {
                         _docID
@@ -286,6 +281,7 @@ func TestQuerySimple_WithDeletedDocsInCollection2_ShouldNotYieldDeletedDocsOnCol
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

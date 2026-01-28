@@ -16,10 +16,11 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -33,12 +34,13 @@ type indexFetcher struct {
 	col           client.Collection
 	indexFilter   *mapper.Filter
 	mapping       *core.DocumentMapping
-	indexedFields []client.FieldDefinition
-	fieldsByID    map[uint32]client.FieldDefinition
+	indexedFields []client.CollectionFieldDescription
+	fieldsByID    map[uint32]client.CollectionFieldDescription
 	indexDesc     client.IndexDescription
 	indexIter     indexIterator
 	currentDocID  immutable.Option[string]
 	execInfo      *ExecInfo
+	ordering      []mapper.OrderCondition
 }
 
 var _ fetcher = (*indexFetcher)(nil)
@@ -48,13 +50,21 @@ var _ fetcher = (*indexFetcher)(nil)
 func newIndexFetcher(
 	ctx context.Context,
 	txn datastore.Txn,
-	fieldsByID map[uint32]client.FieldDefinition,
+	fieldsByID map[uint32]client.CollectionFieldDescription,
 	indexDesc client.IndexDescription,
 	docFilter *mapper.Filter,
 	col client.Collection,
 	docMapper *core.DocumentMapping,
 	execInfo *ExecInfo,
+	ordering []mapper.OrderCondition,
 ) (*indexFetcher, error) {
+	// Check if the filter has an OR at the root level that spans different fields.
+	// This check MUST happen here before filter.CopyField strips out non-indexed fields,
+	// otherwise the orIndexIterator would only see partial OR branches and return incomplete results.
+	if docFilter != nil && hasOrWithMultipleFields(docFilter.Conditions, indexDesc, docMapper) {
+		return nil, nil
+	}
+
 	f := &indexFetcher{
 		ctx:        ctx,
 		txn:        txn,
@@ -63,6 +73,7 @@ func newIndexFetcher(
 		indexDesc:  indexDesc,
 		fieldsByID: fieldsByID,
 		execInfo:   execInfo,
+		ordering:   ordering,
 	}
 
 	fieldsToCopy := make([]mapper.Field, 0, len(indexDesc.Fields))
@@ -76,13 +87,13 @@ func newIndexFetcher(
 	}
 
 	for _, indexedField := range f.indexDesc.Fields {
-		field, ok := f.col.Definition().GetFieldByName(indexedField.Name)
+		field, ok := f.col.Version().GetFieldByName(indexedField.Name)
 		if ok {
 			f.indexedFields = append(f.indexedFields, field)
 		}
 	}
 
-	iter, err := f.createIndexIterator()
+	iter, err := f.createIndexIterator(f.indexFilter)
 	if err != nil || iter == nil {
 		return nil, err
 	}
@@ -121,7 +132,16 @@ func (f *indexFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
 	if !f.currentDocID.HasValue() {
 		return immutable.Option[EncodedDocument]{}, nil
 	}
-	prefix := base.MakeDataStoreKeyWithCollectionAndDocID(f.col.Description(), f.currentDocID.Value())
+
+	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	if err != nil {
+		return immutable.None[EncodedDocument](), err
+	}
+
+	prefix := keys.DataStoreKey{
+		CollectionShortID: shortID,
+		DocID:             f.currentDocID.Value(),
+	}
 	prefixFetcher, err := newPrefixFetcher(f.ctx, f.txn, []keys.DataStoreKey{prefix}, f.col,
 		f.fieldsByID, client.Active, f.execInfo)
 	if err != nil {
@@ -140,4 +160,73 @@ func (f *indexFetcher) Close() error {
 		return f.indexIter.Close()
 	}
 	return nil
+}
+
+// CanBeOrderedByIndex checks if the index can be used to order by the fields in the ordering array.
+// The first return value specifies if index can be used.
+// The second one specifies if the index should be reversed to match the ordering.
+func CanBeOrderedByIndex(
+	ordering []mapper.OrderCondition,
+	index client.IndexDescription,
+	mapping *core.DocumentMapping,
+) (bool, bool) {
+	// if there is no ordering in the query or the query requests ordering on more fields, then index
+	// contains, we can't use index
+	if len(ordering) == 0 || len(ordering) > len(index.Fields) {
+		return false, false
+	}
+
+	orderMismatchCount := 0
+
+	for i := range len(ordering) {
+		fieldIndexes := mapping.IndexesByName[index.Fields[i].Name]
+
+		// if indexed field doesn't match the ordering field, we can't use index
+		if len(fieldIndexes) == 0 || fieldIndexes[0] != ordering[i].FieldIndexes[0] {
+			return false, false
+		}
+
+		isDescending := ordering[i].Direction == mapper.DESC
+		if index.Fields[i].Descending != isDescending {
+			orderMismatchCount++
+		}
+	}
+
+	// if ordering of all fields matches, we can use index
+	// also if ordering of all indexes doesn't match we can use index by reversing it
+	allMismatches := orderMismatchCount == len(ordering)
+	return orderMismatchCount == 0 || allMismatches, allMismatches
+}
+
+// hasOrWithMultipleFields checks if the filter conditions have an _or operator at the root level
+// where branches reference fields not covered by this index.
+// This check MUST happen here before filter.CopyField strips out non-indexed fields,
+// otherwise the orIndexIterator would only see partial OR branches and return incomplete results.
+func hasOrWithMultipleFields(
+	conditions map[connor.FilterKey]any,
+	indexDesc client.IndexDescription,
+	docMapper *core.DocumentMapping,
+) bool {
+	branches := extractOrBranches(conditions)
+	if branches == nil {
+		return false
+	}
+
+	for _, branch := range branches {
+		hasNonIndexedField := false
+		filter.TraverseProperties(branch, func(prop *mapper.PropertyIndex, _ map[connor.FilterKey]any) bool {
+			for _, field := range indexDesc.Fields {
+				if docMapper.FirstIndexOfName(field.Name) == prop.Index {
+					return true
+				}
+			}
+			hasNonIndexedField = true
+			return false // Field not in index, stop traversal
+		})
+
+		if hasNonIndexedField {
+			return true
+		}
+	}
+	return false
 }

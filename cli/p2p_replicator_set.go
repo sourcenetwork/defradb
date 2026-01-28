@@ -11,40 +11,29 @@
 package cli
 
 import (
-	"encoding/json"
+	"context"
 
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/spf13/cobra"
-
-	"github.com/sourcenetwork/defradb/client"
 )
 
-func MakeP2PReplicatorSetCommand() *cobra.Command {
+func MakeP2PReplicatorSetCommand(ctx context.Context) *cobra.Command {
 	var collections []string
 	var cmd = &cobra.Command{
-		Use:   "set [-c, --collection] <peer>",
+		Use:   "set [-c, --collection] <addresses...>",
 		Short: "Add replicator(s) and start synchronization",
 		Long: `Add replicator(s) and start synchronization.
-A replicator synchronizes one or all collection(s) from this node to another.
-
-Example:
-  defradb client p2p replicator set -c Users '{"ID": "12D3", "Addrs": ["/ip4/0.0.0.0/tcp/9171"]}'
-`,
-		Args: cobra.ExactArgs(1),
+A replicator synchronizes one or all collection(s) from this instance to another.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p2p := mustGetContextP2P(cmd)
-
-			var info peer.AddrInfo
-			if err := json.Unmarshal([]byte(args[0]), &info); err != nil {
-				return err
-			}
-			rep := client.ReplicatorParams{
-				Info:        info,
-				Collections: collections,
-			}
-			return p2p.SetReplicator(cmd.Context(), rep)
+			cliClient := mustGetContextCLIClient(cmd)
+			return cliClient.SetReplicator(cmd.Context(), args, collections...)
 		},
 	}
+
+	EmbedCLIExample(ctx, cmd, "Add a replicator to replicate the \"Users\" collection to a peer",
+		`defradb client p2p replicator set -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko...`)
+
+	EmbedCLIExample(ctx, cmd, "Add a replicator to replicate the \"Orders\" collection to multiple peers",
+		`defradb client p2p replicator set -c Orders /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko... /ip4/0.0.0.0/tcp/9172/p2p/1543LK...`)
 
 	cmd.Flags().StringSliceVarP(&collections, "collection", "c",
 		[]string{}, "Collection(s) to replicate")

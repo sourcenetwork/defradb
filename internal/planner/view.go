@@ -11,10 +11,12 @@
 package planner
 
 import (
-	"github.com/ipfs/go-datastore/query"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -24,23 +26,17 @@ type viewNode struct {
 	docMapper
 
 	p      *Planner
-	desc   client.CollectionDescription
+	desc   client.CollectionVersion
 	source planNode
-
-	// This is cached as a boolean to save rediscovering this in the main Next/Value iteration loop
-	hasTransform bool
 }
 
 func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, error) {
-	// For now, we assume a single source.  This will need to change if/when we support multiple sources
-	querySource := (col.Description().Sources[0].(*client.QuerySource))
-	hasTransform := querySource.Transform.HasValue()
-
 	var source planNode
-	if col.Description().IsMaterialized {
-		source = p.newCachedViewFetcher(col.Definition(), query.DocumentMapping)
+	if col.Version().IsMaterialized {
+		source = p.newCachedViewFetcher(col.Version(), query.DocumentMapping)
 	} else {
-		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &querySource.Query)
+		viewQuery := col.Version().Query.Value().Query
+		m, err := mapper.ToSelect(p.ctx, p.db, mapper.ObjectSelection, &viewQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -50,17 +46,16 @@ func (p *Planner) View(query *mapper.Select, col client.Collection) (planNode, e
 			return nil, err
 		}
 
-		if hasTransform {
+		if col.Version().Query.Value().Transform.HasValue() {
 			source = p.Lens(source, query.DocumentMapping, col)
 		}
 	}
 
 	viewNode := &viewNode{
-		p:            p,
-		desc:         col.Description(),
-		source:       source,
-		docMapper:    docMapper{query.DocumentMapping},
-		hasTransform: hasTransform,
+		p:         p,
+		desc:      col.Version(),
+		source:    source,
+		docMapper: docMapper{query.DocumentMapping},
 	}
 
 	return viewNode, nil
@@ -84,7 +79,7 @@ func (n *viewNode) Next() (bool, error) {
 
 func (n *viewNode) Value() core.Doc {
 	// The source mapping will differ from this node's (request) mapping if either a Lens transform is
-	// involved, if the the view is materialized, or if any kind of operation is performed on the result
+	// involved, if the view is materialized, or if any kind of operation is performed on the result
 	// of the query (such as a filter or aggregate in the user-request), so we must convert the returned
 	// documents to the request mapping
 	return convertBetweenMaps(n.source.DocumentMap(), n.documentMapping, n.source.Value())
@@ -172,16 +167,16 @@ type cachedViewFetcher struct {
 	docMapper
 	documentIterator
 
-	def client.CollectionDefinition
+	def client.CollectionVersion
 	p   *Planner
 
-	queryResults query.Results
+	queryResults corekv.Iterator
 }
 
 var _ planNode = (*cachedViewFetcher)(nil)
 
 func (p *Planner) newCachedViewFetcher(
-	def client.CollectionDefinition,
+	def client.CollectionVersion,
 	mapping *core.DocumentMapping,
 ) *cachedViewFetcher {
 	return &cachedViewFetcher{
@@ -200,16 +195,19 @@ func (n *cachedViewFetcher) Init() error {
 		n.queryResults = nil
 	}
 
-	prefix := keys.NewViewCacheColPrefix(n.def.Description.RootID)
-
-	var err error
-	n.queryResults, err = n.p.txn.Datastore().Query(n.p.ctx, query.Query{
-		Prefix: prefix.ToString(),
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.def.CollectionID)
+	if err != nil {
+		return err
+	}
+	txn := datastore.CtxMustGetTxn(n.p.ctx)
+	iter, err := txn.Datastore().Iterator(n.p.ctx, datastore.IterOptions{
+		Prefix: keys.NewViewCacheColPrefix(shortID),
 	})
 	if err != nil {
 		return err
 	}
 
+	n.queryResults = iter
 	return nil
 }
 
@@ -222,13 +220,17 @@ func (n *cachedViewFetcher) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (n *cachedViewFetcher) Next() (bool, error) {
-	result, hasNext := n.queryResults.NextSync()
-	if !hasNext || result.Error != nil {
-		return false, result.Error
+	hasNext, err := n.queryResults.Next()
+	if !hasNext || err != nil {
+		return false, err
 	}
 
-	var err error
-	n.currentValue, err = core.UnmarshalViewItem(n.documentMapping, result.Value)
+	value, err := n.queryResults.Value()
+	if err != nil {
+		return false, err
+	}
+
+	n.currentValue, err = core.UnmarshalViewItem(n.documentMapping, value)
 	if err != nil {
 		return false, err
 	}

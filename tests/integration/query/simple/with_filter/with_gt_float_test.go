@@ -13,127 +13,131 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestQuerySimpleWithFloatGreaterThanFilterBlock(t *testing.T) {
-	tests := []testUtils.TestCase{
-		{
-			Description: "Simple query with basic float greater than filter",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+func TestQuerySimpleWithFloatGreaterThanFilterBlock_OneMatchingResult(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.CreateDoc{
+				Doc: `{
 						"Name": "John",
 						"HeightM": 2.1
 					}`,
-				},
-				testUtils.CreateDoc{
-					Doc: `{
+			},
+			&action.CreateDoc{
+				Doc: `{
 						"Name": "Bob",
 						"HeightM": 1.82
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			&action.Request{
+				Request: `query {
 						Users(filter: {HeightM: {_gt: 2.0999999999999}}) {
 							Name
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"Name": "John",
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "John",
 						},
 					},
 				},
 			},
 		},
-		{
-			Description: "Simple query with basic float greater than filter, no results",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloatGreaterThanFilterBlock_NoMatchingResult(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.CreateDoc{
+				Doc: `{
 						"Name": "John",
 						"HeightM": 2.1
 					}`,
-				},
-				testUtils.CreateDoc{
-					Doc: `{
+			},
+			&action.CreateDoc{
+				Doc: `{
 						"Name": "Bob",
 						"HeightM": 1.82
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			&action.Request{
+				Request: `query {
 						Users(filter: {HeightM: {_gt: 40}}) {
 							Name
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{},
-					},
+				Results: map[string]any{
+					"Users": []map[string]any{},
 				},
 			},
 		},
-		{
-			Description: "Simple query with basic float greater than filter, multiple results",
-			Actions: []any{
-				testUtils.CreateDoc{
-					Doc: `{
+	}
+
+	executeTestCase(t, test)
+}
+
+func TestQuerySimpleWithFloatGreaterThanFilterBlock_AllMatchingResult(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.CreateDoc{
+				Doc: `{
 						"Name": "John",
 						"HeightM": 2.1
 					}`,
-				},
-				testUtils.CreateDoc{
-					Doc: `{
+			},
+			&action.CreateDoc{
+				Doc: `{
 						"Name": "Bob",
 						"HeightM": 1.82
 					}`,
-				},
-				testUtils.Request{
-					Request: `query {
+			},
+			&action.Request{
+				Request: `query {
 						Users(filter: {HeightM: {_gt: 1.8199999999999}}) {
 							Name
 						}
 					}`,
-					Results: map[string]any{
-						"Users": []map[string]any{
-							{
-								"Name": "John",
-							},
-							{
-								"Name": "Bob",
-							},
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Name": "Bob",
+						},
+						{
+							"Name": "John",
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
 
-	for _, test := range tests {
-		executeTestCase(t, test)
-	}
+	executeTestCase(t, test)
 }
 
 func TestQuerySimpleWithFloatGreaterThanFilterBlockWithIntFilterValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic float greater than filter, with int filter value",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {HeightM: {_gt: 2}}) {
 						Name
@@ -155,20 +159,19 @@ func TestQuerySimpleWithFloatGreaterThanFilterBlockWithIntFilterValue(t *testing
 
 func TestQuerySimpleWithFloatGreaterThanFilterBlockWithNullFilterValue(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with basic float greater than filter, with null filter value",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {HeightM: {_gt: null}}) {
 						Name

@@ -2,22 +2,18 @@
 
 # An image to run defradb.
 
-# Stage: playground_build
-FROM docker.io/node:20 AS playground_build
-WORKDIR /repo/
-COPY playground/ ./
-RUN npm install --legacy-peer-deps
-RUN npm run build
-
 # Stage: build
 # Several steps are involved to enable caching and because of the behavior of COPY regarding directories.
-FROM docker.io/golang:1.22 AS build
+# WARNING: The build image SHOULD use the same OS version as the run image. Otherwise they may have
+# different versions of GLIBC and the dynamic linking of libraries will fail.
+# `bookworm` is Debian 12.
+FROM docker.io/golang:1.25-bookworm AS build
 WORKDIR /repo/
 COPY go.mod go.sum Makefile ./
 RUN make deps:modules
 COPY . .
-COPY --from=playground_build /repo/dist /repo/playground/dist/
-ENV BUILD_TAGS=playground
+RUN make deps:playground
+ENV BUILD_TAGS=playground,telemetry
 # manually copy libwasmer.so to fix linking issue https://github.com/wasmerio/wasmer-go/issues/281
 RUN export WASMER_ARCH=$(go env GOHOSTARCH | sed "s/arm64/aarch64/") && \
     export WASMER_PATH=$(go env GOMODCACHE)/github.com/wasmerio/wasmer-go@v1.0.4/wasmer/packaged/lib/linux-$WASMER_ARCH/libwasmer.so && \

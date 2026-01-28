@@ -13,26 +13,26 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, mixed integers, group by string",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [1, -2, 1, -1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (groupBy: [name]) {
 						name
@@ -47,10 +47,10 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 							"name": "Shahzad",
 							"_group": []map[string]any{
 								{
-									"favouriteIntegers": []int64{1, -2, 1, -1, 0},
+									"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
 								},
 								{
-									"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
+									"favouriteIntegers": []int64{1, -2, 1, -1, 0},
 								},
 							},
 						},
@@ -65,27 +65,26 @@ func TestQueryInlineArrayWithGroupByString(t *testing.T) {
 
 func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, mixed integers, group by array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Andy",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users (groupBy: [favouriteIntegers]) {
 						favouriteIntegers
@@ -97,27 +96,21 @@ func TestQueryInlineArrayWithGroupByArray(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"favouriteIntegers": []int64{1, 2, 3},
+							"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
 							"_group": []map[string]any{
-								{
-									"name": "John",
-								},
+								{"name": "Shahzad"},
+								{"name": "Andy"},
 							},
 						},
 						{
-							"favouriteIntegers": []int64{-1, 2, -1, 1, 0},
+							"favouriteIntegers": []int64{1, 2, 3},
 							"_group": []map[string]any{
-								{
-									"name": "Andy",
-								},
-								{
-
-									"name": "Shahzad",
-								},
+								{"name": "John"},
 							},
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

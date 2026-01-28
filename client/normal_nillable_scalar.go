@@ -13,8 +13,9 @@ package client
 import (
 	"time"
 
-	"github.com/sourcenetwork/immutable"
 	"golang.org/x/exp/constraints"
+
+	"github.com/sourcenetwork/immutable"
 )
 
 type baseNillableNormalValue[T any] struct {

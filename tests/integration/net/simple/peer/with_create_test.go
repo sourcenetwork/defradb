@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -23,7 +24,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -31,7 +32,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Shahzad on all nodes
 				Doc: `{
 					"Name": "Shahzad",
@@ -42,7 +43,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",
@@ -50,7 +51,7 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -67,8 +68,9 @@ func TestP2PCreateDoesNotSync(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -97,7 +99,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -105,7 +107,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Shahzad on all nodes
 				Doc: `{
 					"Name": "Shahzad",
@@ -120,21 +122,21 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Addo",
 					"Age": 28
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"Name": "Fred",
@@ -142,7 +144,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -152,20 +154,21 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(28),
-						},
-						{
 							"Age": int64(30),
 						},
 						{
 							"Age": int64(21),
 						},
+						{
+							"Age": int64(28),
+						},
 						// Peer sync should not sync new documents to nodes that is not subscribed
 						// to the P2P collection.
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -175,7 +178,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age": int64(28),
+							"Age": int64(31),
 						},
 						{
 							"Age": int64(30),
@@ -184,11 +187,208 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 							"Age": int64(21),
 						},
 						{
-							"Age": int64(31),
+							"Age": int64(28),
+						},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PCreate_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			// Having more than 3 nodes is important to test the robustness of the doc update message
+			// processing function. Having more than 3 connected nodes means that there is a chance that
+			// the message can be received multiple times simultaneously.
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+                    type Users {
+                        Name: String
+                        Age: Int
+                    }
+                `,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 2,
+				TargetNodeID: 1,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 3,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 4,
+				TargetNodeID: 3,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        2,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        3,
+				CollectionIDs: []int{0},
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        4,
+				CollectionIDs: []int{0},
+			},
+			&action.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+                    "Name": "John",
+                    "Age": 21
+                }`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				Request: `query {
+                    Users {
+                        Age
+                    }
+                }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
 						},
 					},
 				},
 			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PCreate_WithP2PCollectionOnLastNodeInNodeChain_ShouldPropagateUpdate(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+                    type Users {
+                        Name: String
+                        Age: Int
+                    }
+                `,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 2,
+				TargetNodeID: 1,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 3,
+				TargetNodeID: 2,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 4,
+				TargetNodeID: 3,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        4,
+				CollectionIDs: []int{0},
+			},
+			&action.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+                    "Name": "John",
+                    "Age": 21
+                }`,
+			},
+			testUtils.WaitForSync{},
+			&action.Request{
+				NodeID: immutable.Some(4),
+				Request: `query {
+                    Users {
+                        Age
+                    }
+                }`,
+				Results: map[string]any{
+					"Users": []map[string]any{
+						{
+							"Age": int64(21),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestP2PCreate_WithP2PCollectionAndSubscription_ShouldSucceed(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			testUtils.RandomNetworkingConfig(),
+			testUtils.RandomNetworkingConfig(),
+			&action.AddSchema{
+				Schema: `
+                    type Users {
+                        Name: String
+                        Age: Int
+                    }
+                `,
+			},
+			testUtils.ConnectPeers{
+				SourceNodeID: 1,
+				TargetNodeID: 0,
+			},
+			testUtils.SubscribeToCollection{
+				NodeID:        1,
+				CollectionIDs: []int{0},
+			},
+			&action.SubscriptionRequest{
+				NodeID: immutable.Some(1),
+				Request: `subscription {
+					Users {
+						Age
+					}
+				}`,
+				Results: []map[string]any{
+					{
+						"Users": []map[string]any{
+							{
+								"Age": int64(21),
+							},
+						},
+					},
+				},
+			},
+			&action.CreateDoc{
+				NodeID: immutable.Some(0),
+				Doc: `{
+                    "Name": "John",
+                    "Age": 21
+                }`,
+			},
+			testUtils.WaitForSync{},
 		},
 	}
 

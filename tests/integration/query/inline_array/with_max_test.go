@@ -13,20 +13,20 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of nil integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -50,15 +50,14 @@ func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of empty integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -82,15 +81,14 @@ func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -114,15 +112,14 @@ func TestQueryInlineIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T)
 
 func TestQueryInlineNillableIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of nillable integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"testScores": [-1, 2, null, 1, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -146,15 +143,14 @@ func TestQueryInlineNillableIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *te
 
 func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of nil float array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -178,15 +174,14 @@ func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of empty float array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": []
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -210,15 +205,14 @@ func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of float array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -242,15 +236,14 @@ func TestQueryInlineFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 
 func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of nillable float array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -274,17 +267,16 @@ func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *test
 
 func TestQueryInlineNillableFloatArray_WithDocIDMaxAndPopulatedArray_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, max of nillable float array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"pageRatings": [3.1425, 0.00000000001, 10, null]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
-					Users(docID: "bae-3f7e0f22-e253-53dd-b31b-df8b081292d9") {
+					Users(docID: "bae-234d84a8-37f9-57ea-9c53-34c247f3b272") {
 						name
 						_max(pageRatings: {})
 					}

@@ -11,35 +11,30 @@
 package cli
 
 import (
-	"encoding/json"
-	"io"
+	"context"
 	"os"
-	"strings"
 
-	"github.com/lens-vm/lens/host-go/config/model"
-	"github.com/sourcenetwork/immutable"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/immutable"
 )
 
-func MakeViewAddCommand() *cobra.Command {
-	var query, sdl, lens string
-	var queryFile, sdlFile, lensFile string
+func MakeViewAddCommand(ctx context.Context) *cobra.Command {
+	var query, sdl, lensCID string
+	var queryFile, sdlFile string
 	cmd := &cobra.Command{
-		Use:   "add",
+		Use:   "add [query] [sdl]",
 		Short: "Add new view",
 		Long: `Add new database view.
 
-Example: add from string flags:
-  defradb client view add --query 'Foo { name, ...}' --sdl 'type Foo { ... }' --lens '{"lenses": [...'
-Example: add from file flags:
-  defradb client view add --query-file /path/to/query --sdl-file /path/to/sdl --lens-file /path/to/lens
-
 Flag pairs <key>/<key>-file are mutually exclusive.
+
+Use --lens-cid to specify a lens transform. Store a lens first using 'defradb client lens add
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.`,
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			store := mustGetContextStore(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
 			query, err := pickDataOrReadFile(query, queryFile)
 			if err != nil {
@@ -49,32 +44,12 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			if err != nil {
 				return err
 			}
-			lensCfgJson, err := pickDataOrReadFile(lens, lensFile)
-			if err != nil {
-				return err
+			var transformCIDOpt immutable.Option[string]
+			if lensCID != "" {
+				transformCIDOpt = immutable.Some(lensCID)
 			}
 
-			if lensCfgJson == "-" {
-				data, err := io.ReadAll(cmd.InOrStdin())
-				if err != nil {
-					return err
-				}
-				lensCfgJson = string(data)
-			}
-
-			var transform immutable.Option[model.Lens]
-			if lensCfgJson != "" {
-				decoder := json.NewDecoder(strings.NewReader(lensCfgJson))
-				decoder.DisallowUnknownFields()
-
-				var lensCfg model.Lens
-				if err := decoder.Decode(&lensCfg); err != nil {
-					return NewErrInvalidLensConfig(err)
-				}
-				transform = immutable.Some(lensCfg)
-			}
-
-			defs, err := store.AddView(cmd.Context(), query, sdl, transform)
+			defs, err := cliClient.AddView(cmd.Context(), query, sdl, transformCIDOpt)
 			if err != nil {
 				return err
 			}
@@ -85,12 +60,18 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 	cmd.Flags().StringVarP(&queryFile, "query-file", "", "", "Query file")
 	cmd.Flags().StringVarP(&sdl, "sdl", "", "", "SDL")
 	cmd.Flags().StringVarP(&sdlFile, "sdl-file", "", "", "SDL file")
-	cmd.Flags().StringVarP(&lens, "lens", "", "", "Lens configuration")
-	cmd.Flags().StringVarP(&lensFile, "lens-file", "", "", "Lens configuration file")
+	cmd.Flags().StringVar(&lensCID, "lens-cid", "", "CID of an existing lens transform (use 'lens add' first)")
 
 	cmd.MarkFlagsMutuallyExclusive("query", "query-file")
 	cmd.MarkFlagsMutuallyExclusive("sdl", "sdl-file")
-	cmd.MarkFlagsMutuallyExclusive("lens", "lens-file")
+
+	EmbedCLIExample(ctx, cmd, "add a simple view from string flags",
+		`defradb client view add --query 'Foo { name, ...}' --sdl 'type Foo { ... }'`)
+	EmbedCLIExample(ctx, cmd, "add using an existing lens CID",
+		`defradb client view add --query-file /path/to/query --sdl-file /path/to/sdl --lens-cid bafyreih...`)
+	EmbedCLIExample(ctx, cmd, "add from file flags using an existing lens CID",
+		`defradb client view add --query-file /path/to/query --sdl-file /path/to/sdl --lens-cid bafyreih...`)
+
 	return cmd
 }
 

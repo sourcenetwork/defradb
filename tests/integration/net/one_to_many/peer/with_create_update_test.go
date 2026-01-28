@@ -15,7 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // This test asserts that relational documents do not fail to sync if their related
@@ -25,7 +27,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Author {
 						Name: String
@@ -37,7 +39,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Gulistan on all nodes
 				CollectionID: 1,
 				Doc: `{
@@ -48,7 +50,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Saadi on first node
 				// NodePeers do not sync new documents so this will not be synced
 				// to node 1.
@@ -58,21 +60,27 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 					"Name": "Saadi"
 				}`,
 			},
+			testUtils.SubscribeToDocument{
+				NodeID: 1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(1, 0),
+				},
+			},
 			testUtils.UpdateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				DocID:        0,
 				Doc: `{
-					"Author_id": "bae-6a4c24c0-7b0b-5f51-a274-132d7ca90499"
+					"_AuthorID": "bae-9ace7ed9-8229-5d2f-9e30-ffd5d2c84406"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Book {
 						Name
-						Author_id
+						_AuthorID
 						Author {
 							Name
 						}
@@ -82,7 +90,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 					"Book": []map[string]any{
 						{
 							"Name":      "Gulistan",
-							"Author_id": testUtils.NewDocIndex(0, 0),
+							"_AuthorID": testUtils.NewDocIndex(0, 0),
 							"Author": map[string]any{
 								"Name": "Saadi",
 							},
@@ -90,12 +98,12 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Book {
 						Name
-						Author_id
+						_AuthorID
 						Author {
 							Name
 						}
@@ -105,7 +113,7 @@ func TestP2POneToManyPeerWithCreateUpdateLinkingSyncedDocToUnsyncedDoc(t *testin
 					"Book": []map[string]any{
 						{
 							"Name":      "Gulistan",
-							"Author_id": testUtils.NewDocIndex(0, 0),
+							"_AuthorID": testUtils.NewDocIndex(0, 0),
 							// "Saadi" was not synced to node 1, the update did not
 							// result in an error and synced to relational id even though "Saadi"
 							// does not exist in this node.

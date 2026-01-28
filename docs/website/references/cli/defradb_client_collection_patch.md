@@ -1,38 +1,44 @@
 ## defradb client collection patch
 
-Patch existing collection descriptions
+Patch existing collection versions
 
 ### Synopsis
 
-Patch existing collection descriptions.
+Patch existing collection versions.
 
-Uses JSON Patch to modify collection descriptions.
-
-Example: patch from an argument string:
-  defradb client collection patch '[{ "op": "add", "path": "...", "value": {...} }]'
-
-Example: patch from file:
-  defradb client collection patch -p patch.json
-
-Example: patch from stdin:
-  cat patch.json | defradb client collection patch -
+Uses JSON Patch to modify collection versions.
 
 To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.source.network.
 
 ```
-defradb client collection patch [patch] [flags]
+defradb client collection patch [patch] [migration] [flags]
+```
+
+### Examples
+
+```
+patch from an argument string:  
+  defradb client collection patch '[{ "op": "add", "path": "...", "value": {...} }]' '{"lenses": [...'
+
+patch from file:  
+  defradb client collection patch -p patch.json
+
+patch from stdin:  
+  cat patch.json | defradb client collection patch -
 ```
 
 ### Options
 
 ```
   -h, --help                help for patch
+  -t, --lens-file string    File to load a lens config from
   -p, --patch-file string   File to load a patch from
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --collection-id string        Collection ID
       --get-inactive                Get inactive collections as well as active
   -i, --identity string             Hex formatted private key used to authenticate with ACP
       --keyring-backend string      Keyring backend to use. Options are file or system (default "file")
@@ -48,12 +54,11 @@ defradb client collection patch [patch] [flags]
       --no-keyring                  Disable the keyring and generate ephemeral keys
       --no-log-color                Disable colored log output
       --rootdir string              Directory for persistent data (default: $HOME/.defradb)
-      --schema string               Collection schema Root
       --secret-file string          Path to the file containing secrets (default ".env")
       --source-hub-address string   The SourceHub address authorized by the client to make SourceHub transactions on behalf of the actor
       --tx uint                     Transaction ID
       --url string                  URL of HTTP endpoint to listen on or connect to (default "127.0.0.1:9181")
-      --version string              Collection version ID
+      --version-id string           Collection version ID
 ```
 
 ### SEE ALSO

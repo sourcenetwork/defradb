@@ -15,7 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing.T) {
@@ -23,7 +25,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -31,7 +33,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in first node before the replicator is set up.
 				// Updates should be synced across nodes.
 				NodeID: immutable.Some(0),
@@ -52,7 +54,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -77,7 +79,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -85,7 +87,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in second node before the replicator is set up.
 				// Updates should be synced across nodes.
 				NodeID: immutable.Some(1),
@@ -106,7 +108,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -129,7 +131,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDatabaseTypes: immutable.Some(
-			[]testUtils.DatabaseType{
+			[]state.DatabaseType{
 				// This test only supports file type databases since it requires the ability to
 				// stop and start a node without losing data.
 				testUtils.BadgerFileType,
@@ -138,7 +140,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -153,7 +155,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 			testUtils.Close{
 				NodeID: immutable.Some(1),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -161,7 +163,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Fred on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -183,7 +185,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 				NodeID: immutable.Some(1),
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -199,6 +201,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -209,7 +212,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAfterCreate_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedDatabaseTypes: immutable.Some(
-			[]testUtils.DatabaseType{
+			[]state.DatabaseType{
 				// This test only supports file type databases since it requires the ability to
 				// stop and start a node without losing data.
 				testUtils.BadgerFileType,
@@ -218,7 +221,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAft
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						Name: String
@@ -230,7 +233,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAft
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -238,7 +241,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAft
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Fred on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -264,7 +267,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAft
 				NodeID: immutable.Some(1),
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Age
@@ -280,6 +283,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAft
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

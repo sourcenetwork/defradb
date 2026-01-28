@@ -1,0 +1,101 @@
+# Copyright 2025 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Docker release workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'New tag name'
+        required: true
+
+# Cancel the workflow if its in progress when there is a new commit. This will reduce unecessary resource usage.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  packages: write
+  issues: write
+
+jobs:
+  docker-build-push:
+    name: Build and push Docker image
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
+    steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
+      - name: Checkout code into the directory
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: tools/defradb.containerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ github.repository_owner }}/defradb:latest
+            ${{ github.repository_owner }}/defradb:${{ github.event.inputs.tag }}
+            ghcr.io/${{ github.repository_owner }}/defradb:latest
+            ghcr.io/${{ github.repository_owner }}/defradb:${{ github.event.inputs.tag }}
+
+  pull-docker-image:
+    name: Pull docker image job
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image_tag:
+          - ${{ github.repository_owner }}/defradb:latest
+          - ghcr.io/${{ github.repository_owner }}/defradb:latest
+
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Pull Docker image
+        run: docker pull ${{ matrix.image_tag }}
+
+      - name: Test Docker image
+        run: docker run --rm ${{ matrix.image_tag }}

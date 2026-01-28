@@ -11,10 +11,12 @@
 package cli
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionGetAllCommand() *cobra.Command {
+func MakeP2PCollectionGetAllCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "getall",
 		Short: "Get all P2P collections",
@@ -22,9 +24,9 @@ func MakeP2PCollectionGetAllCommand() *cobra.Command {
 This is the list of collections of the node that are synchronized on the pubsub network.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			p2p := mustGetContextP2P(cmd)
+			cliClient := mustGetContextCLIClient(cmd)
 
-			cols, err := p2p.GetAllP2PCollections(cmd.Context())
+			cols, err := cliClient.GetAllP2PCollections(cmd.Context())
 			if err != nil {
 				return err
 			}

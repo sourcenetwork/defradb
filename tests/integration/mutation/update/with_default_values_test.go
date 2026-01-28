@@ -13,14 +13,14 @@ package update
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithDefaultValues_DoesNotOverwrite(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with default value does not overwrite",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String 
@@ -28,7 +28,7 @@ func TestMutationUpdate_WithDefaultValues_DoesNotOverwrite(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"score": 0
@@ -39,7 +39,7 @@ func TestMutationUpdate_WithDefaultValues_DoesNotOverwrite(t *testing.T) {
 					"name": "Fred"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

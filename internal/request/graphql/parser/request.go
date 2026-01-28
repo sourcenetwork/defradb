@@ -84,9 +84,9 @@ func ParseRequest(schema gql.Schema, doc *ast.Document, options *client.GQLOptio
 		r.Mutations = append(r.Mutations, parsedMutationOpDef)
 
 	case ast.OperationTypeSubscription:
-		parsedSubscriptionOpDef, err := parseSubscriptionOperationDefinition(exe, collectedFields)
-		if err != nil {
-			return nil, []error{err}
+		parsedSubscriptionOpDef, errs := parseQueryOperationDefinition(exe, collectedFields)
+		if errs != nil {
+			return nil, errs
 		}
 
 		parsedDirectives, err := parseDirectives(astOpDef.Directives)
@@ -207,8 +207,21 @@ func parseSelectFields(
 					return nil, err
 				}
 				selection = s
+			} else if node.Name.Value == request.SimilarityFieldName {
+				s, err := parseSimilarity(exe, parent, node)
+				if err != nil {
+					return nil, err
+				}
+				selection = s
 			} else if node.SelectionSet == nil { // regular field
 				selection = parseField(node)
+			} else if node.Name.Value == request.LinksFieldName ||
+				node.Name.Value == request.HeadsFieldName { // commit links field
+				s, err := parseCommitSelect(exe, parent, node)
+				if err != nil {
+					return nil, err
+				}
+				selection = s
 			} else { // sub type with extra fields
 				s, err := parseSelect(exe, parent, node)
 				if err != nil {

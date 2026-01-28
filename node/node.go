@@ -12,222 +12,120 @@ package node
 
 import (
 	"context"
-	"fmt"
-	gohttp "net/http"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
+	lensNode "github.com/sourcenetwork/lens/host-go/node"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
-	"github.com/sourcenetwork/defradb/internal/kms"
-	"github.com/sourcenetwork/defradb/net"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
 var log = corelog.NewLogger("node")
 
-// Option is a generic option that applies to any subsystem.
-//
-// Invalid option types will be silently ignored. Valid option types are:
-// - `ACPOpt`
-// - `NodeOpt`
-// - `StoreOpt`
-// - `db.Option`
-// - `http.ServerOpt`
-// - `net.NodeOpt`
-type Option any
-
-// Options contains start configuration values.
-type Options struct {
-	disableP2P        bool
-	disableAPI        bool
-	enableDevelopment bool
-	kmsType           immutable.Option[kms.ServiceType]
+// Peer defines the minimal p2p network interface.
+type Peer interface {
+	client.Host
+	Close()
 }
 
-// DefaultOptions returns options with default settings.
-func DefaultOptions() *Options {
-	return &Options{}
-}
-
-// NodeOpt is a function for setting configuration values.
-type NodeOpt func(*Options)
-
-// WithDisableP2P sets the disable p2p flag.
-func WithDisableP2P(disable bool) NodeOpt {
-	return func(o *Options) {
-		o.disableP2P = disable
-	}
-}
-
-// WithDisableAPI sets the disable api flag.
-func WithDisableAPI(disable bool) NodeOpt {
-	return func(o *Options) {
-		o.disableAPI = disable
-	}
-}
-
-func WithKMS(kms kms.ServiceType) NodeOpt {
-	return func(o *Options) {
-		o.kmsType = immutable.Some(kms)
-	}
-}
-
-// WithEnableDevelopment sets the enable development mode flag.
-func WithEnableDevelopment(enable bool) NodeOpt {
-	return func(o *Options) {
-		o.enableDevelopment = enable
-	}
+type DB interface {
+	client.TxnStore
+	MaxTxnRetries() int
+	Rootstore() corekv.TxnStore
+	Events() event.Bus
+	NodeACP() acpDB.NACInfo
+	DocumentACP() immutable.Option[dac.DocumentACP]
+	PurgeDACState(ctx context.Context) error
+	PurgeNACState(ctx context.Context) error
+	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
+	Close()
 }
 
 // Node is a DefraDB instance with optional sub-systems.
 type Node struct {
-	DB         client.DB
-	Peer       *net.Peer
-	Server     *http.Server
-	kmsService kms.Service
-	acp        immutable.Option[acp.ACP]
-
-	options    *Options
-	dbOpts     []db.Option
-	acpOpts    []ACPOpt
-	netOpts    []net.NodeOpt
-	storeOpts  []StoreOpt
-	serverOpts []http.ServerOpt
-	lensOpts   []LenOpt
+	// DB is the database instance
+	DB DB
+	// Peer is the p2p networking subsystem instance
+	peer Peer
+	// api http server instance
+	server *http.Server
+	// config values after applying options
+	config *Config
+	// options the node was created with
+	options []Option
+	// the URL the API is served at.
+	APIURL string
 }
 
 // New returns a new node instance configured with the given options.
-func New(ctx context.Context, opts ...Option) (*Node, error) {
+func New(ctx context.Context, options ...Option) (*Node, error) {
 	n := Node{
-		options: DefaultOptions(),
+		config:  DefaultConfig(),
+		options: options,
 	}
-	for _, opt := range opts {
-		switch t := opt.(type) {
-		case NodeOpt:
-			t(n.options)
-
-		case ACPOpt:
-			n.acpOpts = append(n.acpOpts, t)
-
-		case StoreOpt:
-			n.storeOpts = append(n.storeOpts, t)
-
-		case db.Option:
-			n.dbOpts = append(n.dbOpts, t)
-
-		case http.ServerOpt:
-			n.serverOpts = append(n.serverOpts, t)
-
-		case net.NodeOpt:
-			n.netOpts = append(n.netOpts, t)
-
-		case LenOpt:
-			n.lensOpts = append(n.lensOpts, t)
-		}
+	for _, opt := range filterOptions[NodeOpt](options) {
+		opt(n.config)
 	}
 	return &n, nil
 }
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	rootstore, err := NewStore(ctx, n.storeOpts...)
+	rootstore, isValueSizeLimited, err := NewStore(ctx, filterOptions[StoreOpt](n.options)...)
+	if err != nil {
+		return err
+	}
+	documentACP, err := NewDocumentACP(ctx, filterOptions[DocumentACPOpt](n.options)...)
 	if err != nil {
 		return err
 	}
 
-	n.acp, err = NewACP(ctx, n.acpOpts...)
+	nodeACP, err := NewNodeACP(ctx, filterOptions[NodeACPOpt](n.options)...)
 	if err != nil {
 		return err
 	}
 
-	lens, err := NewLens(ctx, n.lensOpts...)
-	if err != nil {
-		return err
-	}
+	var chunkSize immutable.Option[int]
+	if isValueSizeLimited {
+		chunkSize = immutable.Some(defaultChunkSize)
 
-	coreDB, err := db.NewDB(ctx, rootstore, n.acp, lens, n.dbOpts...)
-	if err != nil {
-		return err
-	}
-	n.DB = coreDB
-
-	if !n.options.disableP2P {
-		// setup net node
-		n.Peer, err = net.NewPeer(
-			ctx,
-			coreDB.Events(),
-			n.acp,
-			coreDB,
-			n.netOpts...,
+		n.options = append(n.options,
+			db.WithLensOpts(
+				lensNode.WithBlockstoreChunkSize(defaultChunkSize),
+			),
 		)
-		if err != nil {
-			return err
-		}
-
-		ident, err := coreDB.GetNodeIdentity(ctx)
-		if err != nil {
-			return err
-		}
-
-		if n.options.kmsType.HasValue() {
-			switch n.options.kmsType.Value() {
-			case kms.PubSubServiceType:
-				n.kmsService, err = kms.NewPubSubService(
-					ctx,
-					n.Peer.PeerID(),
-					n.Peer.Server(),
-					coreDB.Events(),
-					coreDB.Encstore(),
-					n.acp,
-					db.NewCollectionRetriever(coreDB),
-					ident.Value().DID,
-				)
-			}
-			if err != nil {
-				return err
-			}
-		}
+		n.options = append(n.options,
+			db.WithBlockStoreChunkSize(defaultChunkSize),
+		)
 	}
 
-	if !n.options.disableAPI {
-		// setup http server
-		handler, err := http.NewHandler(coreDB)
-		if err != nil {
-			return err
-		}
-		n.Server, err = http.NewServer(handler, n.serverOpts...)
-		if err != nil {
-			return err
-		}
-		err = n.Server.SetListener()
-		if err != nil {
-			return err
-		}
-		log.InfoContext(ctx,
-			fmt.Sprintf("Providing HTTP API at %s PlaygroundEnabled=%t", n.Server.Address(), http.PlaygroundEnabled))
-		log.InfoContext(ctx, fmt.Sprintf("Providing GraphQL endpoint at %s/api/v0/graphql", n.Server.Address()))
-		go func() {
-			if err := n.Server.Serve(); err != nil && !errors.Is(err, gohttp.ErrServerClosed) {
-				log.ErrorContextE(ctx, "HTTP server stopped", err)
-			}
-		}()
+	err = n.startP2P(ctx, rootstore, chunkSize)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, filterOptions[db.Option](n.options)...)
+	if err != nil {
+		return err
+	}
+
+	return n.startAPI(ctx)
 }
 
 // Close stops the node sub-systems.
 func (n *Node) Close(ctx context.Context) error {
 	var err error
-	if n.Server != nil {
-		err = n.Server.Shutdown(ctx)
+	if n.server != nil {
+		err = n.server.Shutdown(ctx)
 	}
-	if n.Peer != nil {
-		n.Peer.Close()
+	if n.peer != nil {
+		n.peer.Close()
 	}
 	if n.DB != nil {
 		n.DB.Close()
@@ -238,32 +136,33 @@ func (n *Node) Close(ctx context.Context) error {
 // PurgeAndRestart causes the node to shutdown, purge all data from
 // its datastore, and restart.
 func (n *Node) PurgeAndRestart(ctx context.Context) error {
-	if !n.options.enableDevelopment {
+	if !n.config.enableDevelopment {
 		return ErrPurgeWithDevModeDisabled
 	}
-	err := n.Close(ctx)
+
+	// This will purge document acp state.
+	err := n.DB.PurgeDACState(ctx)
 	if err != nil {
 		return err
-	}
-	err = purgeStore(ctx, n.storeOpts...)
-	if err != nil {
-		return err
-	}
-	if n.acp.HasValue() {
-		acp := n.acp.Value()
-		err := acp.ResetState(ctx)
-		if err != nil {
-			// for now we will just log this error, since SourceHub ACP doesn't yet
-			// implement the ResetState.
-			log.ErrorE("Failed to reset ACP state", err)
-		}
-		// follow up close call on ACP is required since the node.Start function starts
-		// ACP again anyways so we need to gracefully close before starting again
-		err = acp.Close()
-		if err != nil {
-			return err
-		}
 	}
 
+	// This will purge node acp state.
+	err = n.DB.PurgeNACState(ctx)
+	if err != nil {
+		return err
+	}
+
+	// This will close db and all acp instances along with it.
+	err = n.Close(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = purgeStore(ctx, filterOptions[StoreOpt](n.options)...)
+	if err != nil {
+		return err
+	}
+
+	// The node is being started again. This restarts the above closed acp states too.
 	return n.Start(ctx)
 }

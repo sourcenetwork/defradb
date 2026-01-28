@@ -12,27 +12,26 @@ package keys
 
 import (
 	"fmt"
-	"strconv"
 
 	ds "github.com/ipfs/go-datastore"
 )
 
-// CollectionKey points to the json serialized description of the
+// CollectionKey points to the json serialized description of
 // the collection of the given ID.
 type CollectionKey struct {
-	CollectionID uint32
+	CollectionID string
 }
 
 var _ Key = (*CollectionKey)(nil)
 
 // Returns a formatted collection key for the system data store.
-// It assumes the name of the collection is non-empty.
-func NewCollectionKey(id uint32) CollectionKey {
+// It assumes the id of the collection is non-empty.
+func NewCollectionKey(id string) CollectionKey {
 	return CollectionKey{CollectionID: id}
 }
 
 func (k CollectionKey) ToString() string {
-	return fmt.Sprintf("%s/%s", COLLECTION_ID, strconv.Itoa(int(k.CollectionID)))
+	return fmt.Sprintf("%s/%s", COLLECTION_ID, k.CollectionID)
 }
 
 func (k CollectionKey) Bytes() []byte {

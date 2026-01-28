@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -38,12 +39,10 @@ var groupOrderPattern = dataMap{
 func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with order (descending) on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -59,7 +58,7 @@ func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 
 				ExpectedPatterns: groupOrderPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -93,12 +92,10 @@ func TestDefaultExplainRequestWithDescendingOrderOnParentGroupBy(t *testing.T) {
 func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with order (ascending) on parent groupBy.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -114,7 +111,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 
 				ExpectedPatterns: groupOrderPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,
@@ -148,12 +145,10 @@ func TestDefaultExplainRequestWithAscendingOrderOnParentGroupBy(t *testing.T) {
 func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (default) request with order on parent groupBy and inner _group selection.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					Author(
@@ -169,7 +164,7 @@ func TestDefaultExplainRequestWithOrderOnParentGroupByAndOnInnerGroupSelection(t
 
 				ExpectedPatterns: groupOrderPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "groupNode",
 						IncludeChildNodes: false,

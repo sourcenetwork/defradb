@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -20,12 +21,10 @@ import (
 func TestDebugExplainRequestWithStringEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with string equal (_eq) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {name: {_eq: "Lone"}}) {
@@ -45,12 +44,10 @@ func TestDebugExplainRequestWithStringEqualFilter(t *testing.T) {
 func TestDebugExplainRequestWithIntegerEqualFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with integer equal (_eq) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {age: {_eq: 26}}) {
@@ -70,12 +67,10 @@ func TestDebugExplainRequestWithIntegerEqualFilter(t *testing.T) {
 func TestDebugExplainRequestWithGreaterThanFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with greater than (_gt) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {age: {_gt: 20}}) {
@@ -95,12 +90,10 @@ func TestDebugExplainRequestWithGreaterThanFilter(t *testing.T) {
 func TestDebugExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with logical compound (_and) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {_and: [{age: {_gt: 20}}, {age: {_lt: 50}}]}) {
@@ -120,12 +113,10 @@ func TestDebugExplainRequestWithLogicalCompoundAndFilter(t *testing.T) {
 func TestDebugExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request with logical compound (_or) filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {_or: [{age: {_eq: 55}}, {age: {_eq: 19}}]}) {
@@ -145,12 +136,10 @@ func TestDebugExplainRequestWithLogicalCompoundOrFilter(t *testing.T) {
 func TestDebugExplainRequestWithMatchInsideList(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) request filtering values that match within (_in) a list.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
 					Author(filter: {age: {_in: [19, 40, 55]}}) {

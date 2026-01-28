@@ -1,4 +1,4 @@
-# Copyright 2023 Democratized Data Foundation
+# Copyright 2025 Democratized Data Foundation
 #
 # Use of this software is governed by the Business Source License
 # included in the file licenses/BSL.txt.
@@ -17,6 +17,11 @@ on:
         description: 'New tag name'
         required: true
 
+# Cancel the workflow if its in progress when there is a new commit. This will reduce unecessary resource usage.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
   packages: write
@@ -31,12 +36,12 @@ jobs:
 
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           check-latest: true
@@ -65,23 +70,23 @@ jobs:
 
       - name: Save cache on Linux
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
-          path: dist/linux_amd64_v1
+          path: dist/linux_amd64
           key: linux-${{ env.sha_short }}
 
       - name: Save cache on MacOS
         if: matrix.os == 'macos-latest'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: dist/darwin_arm64
           key: darwin-${{ env.sha_short }}
 
       - name: Save cache on Windows
         if: matrix.os == 'windows-latest'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
-          path: dist/windows_amd64_v1
+          path: dist/windows_amd64
           key: windows-${{ env.sha_short }}
           enableCrossOsArchive: true
 
@@ -90,7 +95,7 @@ jobs:
     needs: prepare
     steps:
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -98,7 +103,7 @@ jobs:
         run: git tag v${{ github.event.inputs.tag }}
 
       - name: Setup Go environment explicitly
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           check-latest: true
@@ -111,15 +116,15 @@ jobs:
       # Restore the cashes that were prepared for all OS
       - name: Restore from cache on Linux
         id: restore-linux
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
-          path: dist/linux_amd64_v1
+          path: dist/linux_amd64
           key: linux-${{ env.sha_short }}
           fail-on-cache-miss: true
 
       - name: Save from cache on MacOS
         id: restore-macos
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: dist/darwin_arm64
           key: darwin-${{ env.sha_short }}
@@ -127,9 +132,9 @@ jobs:
 
       - name: Restore from cache on Windows
         id: restore-windows
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
-          path: dist/windows_amd64_v1
+          path: dist/windows_amd64
           key: windows-${{ env.sha_short }}
           fail-on-cache-miss: true
           enableCrossOsArchive: true
@@ -156,10 +161,16 @@ jobs:
 
   docker-build-push:
     name: Build and push Docker image
-    runs-on: ubuntu-latest
+    runs-on: runs-on=${{ github.run_id }}-${{ github.run_attempt }}-${{ strategy.job-index }}/\
+      spot=pco/cpu=16+32/family=c6*+c7*/disk=large/extras=s3-cache
     steps:
+      - name: Enable RunsOn action
+        uses: runs-on/action@v2
+        with:
+          metrics: cpu,network,memory,disk,io
+
       - name: Checkout code into the directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 

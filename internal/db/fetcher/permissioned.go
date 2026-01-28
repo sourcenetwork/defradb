@@ -15,19 +15,21 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/permission"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
 // permissionedFetcher fetcher applies access control based filtering to documents fetched.
 type permissionedFetcher struct {
 	ctx context.Context
 
-	identity immutable.Option[acpIdentity.Identity]
-	acp      acp.ACP
-	col      client.Collection
+	identity    immutable.Option[acpIdentity.Identity]
+	nodeACP     acpDB.NACInfo
+	documentACP dac.DocumentACP
+	col         client.Collection
 
 	fetcher fetcher
 }
@@ -37,16 +39,18 @@ var _ fetcher = (*permissionedFetcher)(nil)
 func newPermissionedFetcher(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
-	acp acp.ACP,
+	nodeACP acpDB.NACInfo,
+	documentACP dac.DocumentACP,
 	col client.Collection,
 	fetcher fetcher,
 ) *permissionedFetcher {
 	return &permissionedFetcher{
-		ctx:      ctx,
-		identity: identity,
-		acp:      acp,
-		col:      col,
-		fetcher:  fetcher,
+		ctx:         ctx,
+		identity:    identity,
+		nodeACP:     nodeACP,
+		documentACP: documentACP,
+		col:         col,
+		fetcher:     fetcher,
 	}
 }
 
@@ -60,12 +64,13 @@ func (f *permissionedFetcher) NextDoc() (immutable.Option[string], error) {
 		return immutable.None[string](), nil
 	}
 
-	hasPermission, err := permission.CheckAccessOfDocOnCollectionWithACP(
+	hasPermission, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
 		f.ctx,
 		f.identity,
-		f.acp,
+		f.nodeACP,
+		f.documentACP,
 		f.col,
-		acp.ReadPermission,
+		acpTypes.DocumentReadPerm,
 		docID.Value(),
 	)
 	if err != nil {

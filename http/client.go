@@ -20,21 +20,23 @@ import (
 	"strconv"
 	"strings"
 
-	ds "github.com/ipfs/go-datastore"
-	"github.com/lens-vm/lens/host-go/config/model"
 	sse "github.com/vito/go-sse/sse"
+
+	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/graphql-go/language/ast"
+	"github.com/sourcenetwork/graphql-go/language/parser"
+	"github.com/sourcenetwork/graphql-go/language/source"
 )
 
-var _ client.DB = (*Client)(nil)
+var _ client.TxnStore = (*Client)(nil)
 
-// Client implements the client.DB interface over HTTP.
+// Client implements the client.TxnStore interface over HTTP.
 type Client struct {
 	http *httpClient
 }
@@ -47,16 +49,16 @@ func NewClient(rawURL string) (*Client, error) {
 	return &Client{httpClient}, nil
 }
 
-func (c *Client) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
 		query.Add("read_only", "true")
 	}
 
-	methodURL := c.http.baseURL.JoinPath("tx")
+	methodURL := c.http.apiURL.JoinPath("tx")
 	methodURL.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -64,19 +66,19 @@ func (c *Client) NewTxn(ctx context.Context, readOnly bool) (datastore.Txn, erro
 	if err := c.http.requestJson(req, &txRes); err != nil {
 		return nil, err
 	}
-	return &Transaction{txRes.ID, c.http}, nil
+	return &Transaction{&Client{c.http}, txRes.ID}, nil
 }
 
-func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore.Txn, error) {
+func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	query := url.Values{}
 	if readOnly {
 		query.Add("read_only", "true")
 	}
 
-	methodURL := c.http.baseURL.JoinPath("tx", "concurrent")
+	methodURL := c.http.apiURL.JoinPath("tx", "concurrent")
 	methodURL.RawQuery = query.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -84,11 +86,11 @@ func (c *Client) NewConcurrentTxn(ctx context.Context, readOnly bool) (datastore
 	if err := c.http.requestJson(req, &txRes); err != nil {
 		return nil, err
 	}
-	return &Transaction{txRes.ID, c.http}, nil
+	return &Transaction{&Client{c.http}, txRes.ID}, nil
 }
 
 func (c *Client) BasicImport(ctx context.Context, filepath string) error {
-	methodURL := c.http.baseURL.JoinPath("backup", "import")
+	methodURL := c.http.apiURL.JoinPath("backup", "import")
 
 	body, err := json.Marshal(&client.BackupConfig{Filepath: filepath})
 	if err != nil {
@@ -103,7 +105,7 @@ func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 }
 
 func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	methodURL := c.http.baseURL.JoinPath("backup", "export")
+	methodURL := c.http.apiURL.JoinPath("backup", "export")
 
 	body, err := json.Marshal(config)
 	if err != nil {
@@ -117,54 +119,33 @@ func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) e
 	return err
 }
 
-func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.CollectionDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
+func (c *Client) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
+	methodURL := c.http.apiURL.JoinPath("schema")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schema))
 	if err != nil {
 		return nil, err
 	}
-	var cols []client.CollectionDescription
+	var cols []client.CollectionVersion
 	if err := c.http.requestJson(req, &cols); err != nil {
 		return nil, err
 	}
 	return cols, nil
 }
 
-type patchSchemaRequest struct {
-	Patch               string
-	SetAsDefaultVersion bool
-	Migration           immutable.Option[model.Lens]
-}
-
-func (c *Client) PatchSchema(
-	ctx context.Context,
-	patch string,
-	migration immutable.Option[model.Lens],
-	setAsDefaultVersion bool,
-) error {
-	methodURL := c.http.baseURL.JoinPath("schema")
-
-	body, err := json.Marshal(patchSchemaRequest{patch, setAsDefaultVersion, migration})
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, methodURL.String(), bytes.NewBuffer(body))
-	if err != nil {
-		return err
-	}
-	_, err = c.http.request(req)
-	return err
+type patchCollectionRequest struct {
+	Patch     string
+	Migration immutable.Option[model.Lens]
 }
 
 func (c *Client) PatchCollection(
 	ctx context.Context,
 	patch string,
+	migration immutable.Option[model.Lens],
 ) error {
-	methodURL := c.http.baseURL.JoinPath("collections")
+	methodURL := c.http.apiURL.JoinPath("collections")
 
-	body, err := json.Marshal(patch)
+	body, err := json.Marshal(patchCollectionRequest{patch, migration})
 	if err != nil {
 		return err
 	}
@@ -177,10 +158,11 @@ func (c *Client) PatchCollection(
 	return err
 }
 
-func (c *Client) SetActiveSchemaVersion(ctx context.Context, schemaVersionID string) error {
-	methodURL := c.http.baseURL.JoinPath("schema", "default")
+func (c *Client) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+	methodURL := c.http.apiURL.JoinPath("collections", "default")
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), strings.NewReader(schemaVersionID))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(),
+		strings.NewReader(collectionVersionID))
 	if err != nil {
 		return err
 	}
@@ -189,20 +171,20 @@ func (c *Client) SetActiveSchemaVersion(ctx context.Context, schemaVersionID str
 }
 
 type addViewRequest struct {
-	Query     string
-	SDL       string
-	Transform immutable.Option[model.Lens]
+	Query        string
+	SDL          string
+	TransformCID immutable.Option[string]
 }
 
 func (c *Client) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transform immutable.Option[model.Lens],
-) ([]client.CollectionDefinition, error) {
-	methodURL := c.http.baseURL.JoinPath("view")
+	transformCID immutable.Option[string],
+) ([]client.CollectionVersion, error) {
+	methodURL := c.http.apiURL.JoinPath("view")
 
-	body, err := json.Marshal(addViewRequest{query, sdl, transform})
+	body, err := json.Marshal(addViewRequest{query, sdl, transformCID})
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +194,7 @@ func (c *Client) AddView(
 		return nil, err
 	}
 
-	var descriptions []client.CollectionDefinition
+	var descriptions []client.CollectionVersion
 	if err := c.http.requestJson(req, &descriptions); err != nil {
 		return nil, err
 	}
@@ -221,16 +203,16 @@ func (c *Client) AddView(
 }
 
 func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
-	methodURL := c.http.baseURL.JoinPath("view", "refresh")
+	methodURL := c.http.apiURL.JoinPath("view", "refresh")
 	params := url.Values{}
 	if options.Name.HasValue() {
 		params.Add("name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		params.Add("version_id", options.SchemaVersionID.Value())
+	if options.VersionID.HasValue() {
+		params.Add("version_id", options.VersionID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		params.Add("schema_root", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		params.Add("collection_id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -246,31 +228,72 @@ func (c *Client) RefreshViews(ctx context.Context, options client.CollectionFetc
 	return err
 }
 
-func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) error {
-	methodURL := c.http.baseURL.JoinPath("lens")
+func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+	methodURL := c.http.apiURL.JoinPath("collections", "migrations")
 
 	body, err := json.Marshal(config)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	_, err = c.http.request(req)
-	return err
+	var res SetMigrationResponse
+	if err := c.http.requestJson(req, &res); err != nil {
+		return "", err
+	}
+
+	return res.LensID, nil
 }
 
-func (c *Client) LensRegistry() client.LensRegistry {
-	return &LensRegistry{c.http}
+func (c *Client) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+	methodURL := c.http.apiURL.JoinPath("lens")
+
+	body, err := json.Marshal(AddLensRequest{Lens: lens})
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return "", err
+	}
+
+	var res AddLensResponse
+	if err := c.http.requestJson(req, &res); err != nil {
+		return "", err
+	}
+
+	return res.LensID, nil
+}
+
+func (c *Client) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	methodURL := c.http.apiURL.JoinPath("lens")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var res ListLensesResponse
+	if err := c.http.requestJson(req, &res); err != nil {
+		return nil, err
+	}
+
+	return res.Lenses, nil
 }
 
 func (c *Client) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
 	cols, err := c.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
 	if err != nil {
 		return nil, err
+	}
+
+	if len(cols) == 0 {
+		return nil, NewErrCollectionNotFound(name)
 	}
 
 	// cols will always have length == 1 here
@@ -281,16 +304,16 @@ func (c *Client) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	methodURL := c.http.baseURL.JoinPath("collections")
+	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
 	if options.Name.HasValue() {
 		params.Add("name", options.Name.Value())
 	}
-	if options.SchemaVersionID.HasValue() {
-		params.Add("version_id", options.SchemaVersionID.Value())
+	if options.VersionID.HasValue() {
+		params.Add("version_id", options.VersionID.Value())
 	}
-	if options.SchemaRoot.HasValue() {
-		params.Add("schema_root", options.SchemaRoot.Value())
+	if options.CollectionID.HasValue() {
+		params.Add("collection_id", options.CollectionID.Value())
 	}
 	if options.IncludeInactive.HasValue() {
 		params.Add("get_inactive", strconv.FormatBool(options.IncludeInactive.Value()))
@@ -301,7 +324,7 @@ func (c *Client) GetCollections(
 	if err != nil {
 		return nil, err
 	}
-	var descriptions []client.CollectionDefinition
+	var descriptions []client.CollectionVersion
 	if err := c.http.requestJson(req, &descriptions); err != nil {
 		return nil, err
 	}
@@ -312,46 +335,8 @@ func (c *Client) GetCollections(
 	return collections, nil
 }
 
-func (c *Client) GetSchemaByVersionID(ctx context.Context, versionID string) (client.SchemaDescription, error) {
-	schemas, err := c.GetSchemas(ctx, client.SchemaFetchOptions{ID: immutable.Some(versionID)})
-	if err != nil {
-		return client.SchemaDescription{}, err
-	}
-
-	// schemas will always have length == 1 here
-	return schemas[0], nil
-}
-
-func (c *Client) GetSchemas(
-	ctx context.Context,
-	options client.SchemaFetchOptions,
-) ([]client.SchemaDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("schema")
-	params := url.Values{}
-	if options.ID.HasValue() {
-		params.Add("version_id", options.ID.Value())
-	}
-	if options.Root.HasValue() {
-		params.Add("root", options.Root.Value())
-	}
-	if options.Name.HasValue() {
-		params.Add("name", options.Name.Value())
-	}
-	methodURL.RawQuery = params.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	var schema []client.SchemaDescription
-	if err := c.http.requestJson(req, &schema); err != nil {
-		return nil, err
-	}
-	return schema, nil
-}
-
 func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	methodURL := c.http.baseURL.JoinPath("indexes")
+	methodURL := c.http.apiURL.JoinPath("collections", "indexes")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -364,12 +349,28 @@ func (c *Client) GetAllIndexes(ctx context.Context) (map[client.CollectionName][
 	return indexes, nil
 }
 
+func (c *Client) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	methodURL := c.http.apiURL.JoinPath("encrypted-indexes")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	var indexes map[client.CollectionName][]client.EncryptedIndexDescription
+	if err := c.http.requestJson(req, &indexes); err != nil {
+		return nil, err
+	}
+	return indexes, nil
+}
+
 func (c *Client) ExecRequest(
 	ctx context.Context,
 	query string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
-	methodURL := c.http.baseURL.JoinPath("graphql")
+	methodURL := c.http.apiURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
 	gqlOptions := &client.GQLOptions{}
@@ -393,13 +394,21 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
+
 	err = c.http.setDefaultHeaders(req)
-
-	setDocEncryptionFlagIfNeeded(ctx, req)
-
 	if err != nil {
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
+	}
+
+	op, err := parseGraphQLOperation(query)
+	if err != nil {
+		result.GQL.Errors = append(result.GQL.Errors, err)
+		return result
+	}
+
+	if op == ast.OperationTypeSubscription {
+		req.Header.Set("Accept", sseAcceptHeader)
 	}
 
 	res, err := c.http.client.Do(req)
@@ -407,7 +416,7 @@ func (c *Client) ExecRequest(
 		result.GQL.Errors = append(result.GQL.Errors, err)
 		return result
 	}
-	if res.Header.Get("Content-Type") == "text/event-stream" {
+	if res.Header.Get("Content-Type") == sseAcceptHeader {
 		result.Subscription = c.execRequestSubscription(res.Body)
 		return result
 	}
@@ -457,7 +466,7 @@ func (c *Client) execRequestSubscription(r io.ReadCloser) chan client.GQLResult 
 }
 
 func (c *Client) PrintDump(ctx context.Context) error {
-	methodURL := c.http.baseURL.JoinPath("debug", "dump")
+	methodURL := c.http.apiURL.JoinPath("debug", "dump")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -468,7 +477,7 @@ func (c *Client) PrintDump(ctx context.Context) error {
 }
 
 func (c *Client) Purge(ctx context.Context) error {
-	methodURL := c.http.baseURL.JoinPath("purge")
+	methodURL := c.http.apiURL.JoinPath("purge")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, methodURL.String(), nil)
 	if err != nil {
@@ -478,40 +487,18 @@ func (c *Client) Purge(ctx context.Context) error {
 	return err
 }
 
-func (c *Client) Close() {
-	// do nothing
-}
-
-func (c *Client) Rootstore() datastore.Rootstore {
-	panic("client side database")
-}
-
-func (c *Client) Blockstore() datastore.Blockstore {
-	panic("client side database")
-}
-
-func (c *Client) Encstore() datastore.Blockstore {
-	panic("client side database")
-}
-
-func (c *Client) Peerstore() datastore.DSReaderWriter {
-	panic("client side database")
-}
-
-func (c *Client) Headstore() ds.Read {
-	panic("client side database")
-}
-
-func (c *Client) Events() *event.Bus {
-	panic("client side database")
-}
-
-func (c *Client) MaxTxnRetries() int {
-	panic("client side database")
+func (c *Client) HealthCheck(ctx context.Context) error {
+	methodURL := c.http.baseURL.JoinPath("health-check")
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+	_, err = c.http.request(req)
+	return err
 }
 
 func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
-	methodURL := c.http.baseURL.JoinPath("node", "identity")
+	methodURL := c.http.apiURL.JoinPath("node", "identity")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
@@ -522,4 +509,54 @@ func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity
 		return immutable.None[identity.PublicRawIdentity](), err
 	}
 	return ident, err
+}
+
+func (c *Client) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
+	methodURL := c.http.apiURL.JoinPath("block", "verify-signature")
+
+	params := url.Values{}
+	params.Add("cid", cid)
+	params.Add("public-key", pubKey.String())
+	params.Add("type", string(pubKey.Type()))
+	methodURL.RawQuery = params.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	err = c.http.setDefaultHeaders(req)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.http.request(req)
+	return err
+}
+
+func parseGraphQLQuery(query string) (*ast.Document, error) {
+	return parser.Parse(parser.ParseParams{
+		Source: &source.Source{
+			Body: []byte(query),
+			Name: "GraphQL",
+		},
+	})
+}
+
+func parseGraphQLOperation(query string) (string, error) {
+	doc, err := parseGraphQLQuery(query)
+	if err != nil {
+		return "", err
+	}
+
+	if len(doc.Definitions) == 0 {
+		return "", ErrInvalidGraphQLRequest
+	}
+
+	op, ok := doc.Definitions[0].(*ast.OperationDefinition)
+	if !ok {
+		return "", ErrInvalidGraphQLRequest
+	}
+
+	return op.Operation, nil
 }

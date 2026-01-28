@@ -15,11 +15,12 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
@@ -55,11 +56,13 @@ type Fetcher interface {
 		ctx context.Context,
 		identity immutable.Option[acpIdentity.Identity],
 		txn datastore.Txn,
-		acp immutable.Option[acp.ACP],
+		nodeACP acpDB.NACInfo,
+		documentACP immutable.Option[dac.DocumentACP],
 		index immutable.Option[client.IndexDescription],
 		col client.Collection,
-		fields []client.FieldDefinition,
+		fields []client.CollectionFieldDescription,
 		filter *mapper.Filter,
+		ordering []mapper.OrderCondition,
 		docmapper *core.DocumentMapping,
 		showDeleted bool,
 	) error
@@ -68,8 +71,7 @@ type Fetcher interface {
 	Close() error
 }
 
-// fetcher fetches documents from the store, performing low-level filtering
-// when appropriate (e.g. ACP).
+// fetcher fetches documents from the store, performing low-level filtering when appropriate (e.g. ACP).
 type fetcher interface {
 	// NextDoc progresses the internal iterator(s) to the next document, yielding
 	// its docID if found.

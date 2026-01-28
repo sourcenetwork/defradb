@@ -18,18 +18,31 @@ import (
 	"github.com/ipfs/go-cid"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv"
+	"github.com/sourcenetwork/corekv/memory"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/dac"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/datastore"
-	"github.com/sourcenetwork/defradb/datastore/memory"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/db/id"
+	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
+)
+
+const (
+	// 1 MB, this matches the maximum badger-in-memory value size.
+	//
+	// Nearly at least, badger panics if this is set to it's max for reasons not yet
+	// looked into.  Going one byte smaller does not have this issue.
+	chunkSize = (1 << 20) - 1
 )
 
 var (
@@ -58,7 +71,7 @@ var (
 //
 // Transient/Ephemeral datastores are intanciated for the lifetime of the
 // traversal query request, on a per object basis. This should be a basic map based
-// ds.Datastore, abstracted into a DSReaderWriter.
+// ds.Datastore, abstracted into a ReaderWriter.
 //
 // The goal of the VersionedFetcher is to implement the same external API/Interface as
 // the DocumentFetcher, and to have it return the encoded/decoded document as
@@ -86,12 +99,13 @@ type VersionedFetcher struct {
 	ctx context.Context
 
 	// Transient version store
-	root  datastore.Rootstore
+	root  corekv.TxnStore
 	store datastore.Txn
 
 	queuedCids *list.List
 
-	acp immutable.Option[acp.ACP]
+	nodeACP     acpDB.NACInfo
+	documentACP immutable.Option[dac.DocumentACP]
 
 	col client.Collection
 }
@@ -101,15 +115,18 @@ func (vf *VersionedFetcher) Init(
 	ctx context.Context,
 	identity immutable.Option[acpIdentity.Identity],
 	txn datastore.Txn,
-	acp immutable.Option[acp.ACP],
+	nodeACP acpDB.NACInfo,
+	documentACP immutable.Option[dac.DocumentACP],
 	index immutable.Option[client.IndexDescription],
 	col client.Collection,
-	fields []client.FieldDefinition,
+	fields []client.CollectionFieldDescription,
 	filter *mapper.Filter,
+	ordering []mapper.OrderCondition,
 	docmapper *core.DocumentMapping,
 	showDeleted bool,
 ) error {
-	vf.acp = acp
+	vf.nodeACP = nodeACP
+	vf.documentACP = documentACP
 	vf.col = col
 	vf.queuedCids = list.New()
 	vf.txn = txn
@@ -118,17 +135,51 @@ func (vf *VersionedFetcher) Init(
 	root := memory.NewDatastore(ctx)
 	vf.root = root
 
-	var err error
-	vf.store, err = datastore.NewTxnFrom(
-		ctx,
-		vf.root,
-		// We can take the parent txn id here
-		txn.ID(),
-		false,
-	) // were going to discard and nuke this later
+	// Copy the entire system store into the temp store so that important stuff
+	// such as collection definitions and short-ids are available.
+	iter, err := txn.Systemstore().Iterator(ctx, corekv.IterOptions{})
 	if err != nil {
 		return err
 	}
+	dst := datastore.SystemstoreFrom(root)
+	for {
+		hasValue, err := iter.Next()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		if !hasValue {
+			break
+		}
+
+		value, err := iter.Value()
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+
+		err = dst.Set(ctx, iter.Key(), value)
+		if err != nil {
+			return errors.Join(err, iter.Close())
+		}
+	}
+	err = iter.Close()
+	if err != nil {
+		return err
+	}
+
+	vf.store = datastore.NewTxnFrom(
+		vf.root,
+		// Because we have created a new root, and are not operating on the actual 'main' Defra instance,
+		// we should create a new lockset - the main lockset on `db` must not be used, as
+		// we have zero reason to be locking that whilst operating on this temporary store.
+		lock.NewLockSet(),
+		// We can take the parent txn id here
+		txn.ID(),
+		false,
+		// Chunk by default, it is a pain to figure out if it is necessary or not here, so
+		// we chose to take the performance hit and chunk.
+		immutable.Some(chunkSize),
+	) // were going to discard and nuke this later
 
 	// run the DF init, VersionedFetchers only supports the Primary (0) index
 	vf.Fetcher = NewDocumentFetcher()
@@ -136,11 +187,13 @@ func (vf *VersionedFetcher) Init(
 		ctx,
 		identity,
 		vf.store,
-		acp,
+		nodeACP,
+		documentACP,
 		index,
 		col,
 		fields,
 		filter,
+		ordering,
 		docmapper,
 		showDeleted,
 	)
@@ -310,41 +363,50 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
-	var mcrdt merklecrdt.MerkleCRDT
+	shortID, err := id.GetShortCollectionID(vf.ctx, vf.col.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+
+	var mcrdt crdt.ReplicatedData
 	switch {
 	case block.Delta.IsCollection():
-		mcrdt = merklecrdt.NewMerkleCollection(
-			vf.store,
-			keys.NewCollectionSchemaVersionKey(vf.col.Description().SchemaVersionID, vf.col.Description().ID),
-			keys.NewHeadstoreColKey(vf.col.Description().RootID),
+		mcrdt = crdt.NewCollection(
+			vf.col.Version().VersionID,
+			keys.NewHeadstoreColKey(shortID),
 		)
 
 	case block.Delta.IsComposite():
-		mcrdt = merklecrdt.NewMerkleCompositeDAG(
-			vf.store,
-			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
+		mcrdt = crdt.NewDocComposite(
+			vf.store.Datastore(),
+			block.Delta.GetCollectionVersionID(),
 			keys.DataStoreKey{
-				CollectionRootID: vf.col.Description().RootID,
-				DocID:            string(block.Delta.GetDocID()),
-				FieldID:          fmt.Sprint(core.COMPOSITE_NAMESPACE),
+				CollectionShortID: shortID,
+				DocID:             string(block.Delta.GetDocID()),
+				FieldID:           fmt.Sprint(core.COMPOSITE_NAMESPACE),
 			},
 		)
 
 	default:
-		field, ok := vf.col.Definition().GetFieldByName(block.Delta.GetFieldName())
+		field, ok := vf.col.Version().GetFieldByName(block.Delta.GetFieldName())
 		if !ok {
 			return client.NewErrFieldNotExist(block.Delta.GetFieldName())
 		}
 
-		mcrdt, err = merklecrdt.FieldLevelCRDTWithStore(
-			vf.store,
-			keys.NewCollectionSchemaVersionKey(block.Delta.GetSchemaVersionID(), vf.col.Description().RootID),
+		fieldShortID, err := id.GetShortFieldID(vf.ctx, shortID, field.FieldID)
+		if err != nil {
+			return err
+		}
+
+		mcrdt, err = crdt.FieldLevelCRDTWithStore(
+			vf.store.Datastore(),
+			block.Delta.GetCollectionVersionID(),
 			field.Typ,
 			field.Kind,
 			keys.DataStoreKey{
-				CollectionRootID: vf.col.Description().RootID,
-				DocID:            string(block.Delta.GetDocID()),
-				FieldID:          fmt.Sprint(field.ID),
+				CollectionShortID: shortID,
+				DocID:             string(block.Delta.GetDocID()),
+				FieldID:           fmt.Sprint(fieldShortID),
 			},
 			field.Name,
 		)
@@ -353,8 +415,9 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		}
 	}
 
-	err = mcrdt.Clock().ProcessBlock(
+	err = coreblock.ProcessBlock(
 		vf.ctx,
+		mcrdt,
 		block,
 		cidlink.Link{
 			Cid: c,
@@ -364,8 +427,10 @@ func (vf *VersionedFetcher) merge(c cid.Cid) error {
 		return err
 	}
 
-	// handle subgraphs
-	for _, l := range block.AllLinks() {
+	// Handle subgraphs. We range over `Links` only (not `Heads``) because the trunk is already accounted for
+	// by the initial caller or `merge`. Including `Heads` would result in unnecessary recursion and possible
+	// wrong final value for the fields.
+	for _, l := range block.Links {
 		err = vf.merge(l.Cid)
 		if err != nil {
 			return err
@@ -391,5 +456,9 @@ func (vf *VersionedFetcher) Close() error {
 		return err
 	}
 
-	return vf.Fetcher.Close()
+	if vf.Fetcher != nil {
+		return vf.Fetcher.Close()
+	}
+
+	return nil
 }

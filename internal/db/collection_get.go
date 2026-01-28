@@ -16,9 +16,11 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -30,13 +32,20 @@ func (c *collection) Get(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
+		return nil, err
+	}
+
 	// create txn
 	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
-	primaryKey := c.getPrimaryKeyFromDocID(docID)
+	defer txn.Discard()
+	primaryKey, err := c.getPrimaryKeyFromDocID(ctx, docID)
+	if err != nil {
+		return nil, err
+	}
 
 	found, isDeleted, err := c.exists(ctx, primaryKey)
 	if err != nil {
@@ -55,28 +64,48 @@ func (c *collection) Get(
 		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	return doc, txn.Commit(ctx)
+	return doc, txn.Commit()
 }
 
 func (c *collection) get(
 	ctx context.Context,
 	primaryKey keys.PrimaryDataStoreKey,
-	fields []client.FieldDefinition,
+	fields []client.CollectionFieldDescription,
 	showDeleted bool,
 ) (*client.Document, error) {
-	txn := mustGetContextTxn(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 	// create a new document fetcher
-	df := c.newFetcher()
+	df := c.newFetcher(ctx)
 	// initialize it with the primary index
-	err := df.Init(ctx, identity.FromContext(ctx), txn, c.db.acp, immutable.Option[client.IndexDescription]{},
-		c, fields, nil, nil, showDeleted)
+	err := df.Init(
+		ctx,
+		identity.FromContext(ctx),
+		txn,
+		c.db.nodeACP,
+		c.db.documentACP,
+		immutable.Option[client.IndexDescription]{},
+		c,
+		fields,
+		nil,
+		nil,
+		nil,
+		showDeleted,
+	)
 	if err != nil {
 		_ = df.Close()
 		return nil, err
 	}
 
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
 	// construct target DS key from DocID.
-	targetKey := base.MakeDataStoreKeyWithCollectionAndDocID(c.Description(), primaryKey.DocID)
+	targetKey := keys.DataStoreKey{
+		CollectionShortID: shortID,
+		DocID:             primaryKey.DocID,
+	}
 	// run the doc fetcher
 	err = df.Start(ctx, targetKey)
 	if err != nil {
@@ -100,7 +129,7 @@ func (c *collection) get(
 		return nil, nil
 	}
 
-	doc, err := fetcher.Decode(encodedDoc, c.Definition())
+	doc, err := fetcher.Decode(ctx, encodedDoc, c.Version())
 	if err != nil {
 		return nil, err
 	}

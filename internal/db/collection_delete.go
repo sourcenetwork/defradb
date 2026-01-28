@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,13 +13,16 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/acp"
+	"github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/core/crdt"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	merklecrdt "github.com/sourcenetwork/defradb/internal/merkle/crdt"
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
@@ -30,18 +33,22 @@ func (c *collection) DeleteWithFilter(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentDeletePerm); err != nil {
+		return nil, err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
 	}
-	defer txn.Discard(ctx)
+	defer txn.Discard()
 
 	res, err := c.deleteWithFilter(ctx, filter, client.Deleted)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, txn.Commit(ctx)
+	return res, txn.Commit()
 }
 
 func (c *collection) deleteWithFilter(
@@ -92,9 +99,14 @@ func (c *collection) deleteWithFilter(
 		// Extract the docID in the string format from the document value.
 		docID := doc.GetID()
 
+		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+		if err != nil {
+			return nil, err
+		}
+
 		primaryKey := keys.PrimaryDataStoreKey{
-			CollectionRootID: c.Description().RootID,
-			DocID:            docID,
+			CollectionShortID: shortID,
+			DocID:             docID,
 		}
 
 		// Delete the document that is associated with this DS key we got from the filter.
@@ -131,7 +143,7 @@ func (c *collection) applyDelete(
 	// Stop deletion of document if the correct permissions aren't there.
 	canDelete, err := c.checkAccessOfDocWithACP(
 		ctx,
-		acp.WritePermission,
+		acpTypes.DocumentDeletePerm,
 		primaryKey.DocID,
 	)
 
@@ -142,50 +154,68 @@ func (c *collection) applyDelete(
 		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
-	txn := mustGetContextTxn(ctx)
+	txn := datastore.CtxMustGetTxn(ctx)
 
-	merkleCRDT := merklecrdt.NewMerkleCompositeDAG(
-		txn,
-		keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
+	ident := identity.FromContext(ctx)
+	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
+		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
+	}
+
+	if !c.db.signingDisabled {
+		ctx = coreblock.ContextWithEnabledSigning(ctx)
+	}
+
+	merkleCRDT := crdt.NewDocComposite(
+		txn.Datastore(),
+		c.Version().VersionID,
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
-	link, b, err := merkleCRDT.Delete(ctx)
+	link, b, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
 	if err != nil {
 		return err
 	}
 
 	// publish an update event if the txn succeeds
 	updateEvent := event.Update{
-		DocID:      primaryKey.DocID,
-		Cid:        link.Cid,
-		SchemaRoot: c.Schema().Root,
-		Block:      b,
+		DocID:        primaryKey.DocID,
+		Cid:          link.Cid,
+		CollectionID: c.Version().CollectionID,
+		Block:        b,
 	}
 	txn.OnSuccess(func() {
-		c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+		c.db.sendUpdate(updateEvent)
 	})
 
-	if c.def.Description.IsBranchable {
-		collectionCRDT := merklecrdt.NewMerkleCollection(
-			txn,
-			keys.NewCollectionSchemaVersionKey(c.Schema().VersionID, c.ID()),
-			keys.NewHeadstoreColKey(c.def.Description.RootID),
+	if c.def.IsBranchable {
+		shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+		if err != nil {
+			return err
+		}
+
+		collectionCRDT := crdt.NewCollection(
+			c.Version().VersionID,
+			keys.NewHeadstoreColKey(shortID),
 		)
 
-		link, headNode, err := collectionCRDT.Save(ctx, []coreblock.DAGLink{{Link: link}})
+		link, headNode, err := coreblock.AddDelta(
+			ctx,
+			collectionCRDT,
+			collectionCRDT.Delta(),
+			[]coreblock.DAGLink{{Link: link}}...,
+		)
 		if err != nil {
 			return err
 		}
 
 		updateEvent := event.Update{
-			Cid:        link.Cid,
-			SchemaRoot: c.Schema().Root,
-			Block:      headNode,
+			Cid:          link.Cid,
+			CollectionID: c.Version().CollectionID,
+			Block:        headNode,
 		}
 
 		txn.OnSuccess(func() {
-			c.db.events.Publish(event.NewMessage(event.UpdateName, updateEvent))
+			c.db.sendUpdate(updateEvent)
 		})
 	}
 

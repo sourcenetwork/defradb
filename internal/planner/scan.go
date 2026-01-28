@@ -16,8 +16,9 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/base"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
+	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
@@ -41,14 +42,15 @@ type scanNode struct {
 	p   *Planner
 	col client.Collection
 
-	fields []client.FieldDefinition
+	fields []client.CollectionFieldDescription
 
 	showDeleted bool
 
 	prefixes []keys.Walkable
 
-	filter *mapper.Filter
-	slct   *mapper.Select
+	filter   *mapper.Filter
+	ordering []mapper.OrderCondition
+	slct     *mapper.Select
 
 	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
@@ -61,16 +63,19 @@ func (n *scanNode) Kind() string {
 }
 
 func (n *scanNode) Init() error {
+	txn := datastore.CtxMustGetTxn(n.p.ctx)
 	// init the fetcher
 	if err := n.fetcher.Init(
 		n.p.ctx,
 		n.p.identity,
-		n.p.txn,
-		n.p.acp,
+		txn,
+		n.p.nodeACP,
+		n.p.documentACP,
 		n.index,
 		n.col,
 		n.fields,
 		n.filter,
+		n.ordering,
 		n.slct.DocumentMapping,
 		n.showDeleted,
 	); err != nil {
@@ -95,7 +100,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 			n.tryAddFieldWithName(requestable.GetName())
 		// select might have its own select fields and filters fields
 		case *mapper.Select:
-			n.tryAddFieldWithName(requestable.Field.Name + request.RelatedObjectID) // foreign key for type joins
+			n.tryAddFieldWithName(request.ToFieldID(requestable.Field.Name)) // foreign key for type joins
 			err := n.initFields(requestable.Fields)
 			if err != nil {
 				return err
@@ -106,7 +111,7 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 				if target.Filter != nil {
 					fieldDescs, err := parser.ParseFilterFieldsForDescription(
 						target.Filter.ExternalConditions,
-						n.col.Definition(),
+						n.col.Version(),
 					)
 					if err != nil {
 						return err
@@ -121,13 +126,15 @@ func (n *scanNode) initFields(fields []mapper.Requestable) error {
 					n.tryAddFieldWithName(target.Field.Name)
 				}
 			}
+		case *mapper.Similarity:
+			n.tryAddFieldWithName(requestable.SimilarityTarget.Name)
 		}
 	}
 	return nil
 }
 
 func (n *scanNode) tryAddFieldWithName(fieldName string) bool {
-	fd, ok := n.col.Definition().GetFieldByName(fieldName)
+	fd, ok := n.col.Version().GetFieldByName(fieldName)
 	if !ok {
 		// skip fields that are not part of the
 		// schema description. The scanner (and fetcher)
@@ -140,7 +147,7 @@ func (n *scanNode) tryAddFieldWithName(fieldName string) bool {
 
 // addField adds a field to the list of fields to be fetched.
 // It will not add the field if it is already in the list.
-func (n *scanNode) addField(field client.FieldDefinition) {
+func (n *scanNode) addField(field client.CollectionFieldDescription) {
 	found := false
 	for i := range n.fields {
 		if n.fields[i].Name == field.Name {
@@ -153,16 +160,16 @@ func (n *scanNode) addField(field client.FieldDefinition) {
 	}
 }
 
-func (scan *scanNode) initFetcher(cid immutable.Option[string]) {
+func (n *scanNode) initFetcher(cid immutable.Option[string]) {
 	var f fetcher.Fetcher
 	if cid.HasValue() {
 		f = new(fetcher.VersionedFetcher)
 	} else {
 		f = fetcher.NewDocumentFetcher()
 
-		f = lens.NewFetcher(f, scan.p.db.LensRegistry())
+		f = lens.NewFetcher(f, n.p.lensStore)
 	}
-	scan.fetcher = f
+	n.fetcher = f
 }
 
 // Start starts the internal logic of the scanner
@@ -173,7 +180,14 @@ func (n *scanNode) Start() error {
 
 func (n *scanNode) initScan() error {
 	if len(n.prefixes) == 0 {
-		prefix := base.MakeDataStoreKeyWithCollectionDescription(n.col.Description())
+		shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
+		if err != nil {
+			return err
+		}
+
+		prefix := keys.DataStoreKey{
+			CollectionShortID: shortID,
+		}
 		n.prefixes = []keys.Walkable{prefix}
 	}
 
@@ -205,7 +219,12 @@ func (n *scanNode) Next() (bool, error) {
 		return false, nil
 	}
 
-	n.currentValue, err = fetcher.DecodeToDoc(doc, n.documentMapping, false)
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
+	if err != nil {
+		return false, err
+	}
+
+	n.currentValue, err = fetcher.DecodeToDoc(n.p.ctx, shortID, doc, n.documentMapping, false)
 	if err != nil {
 		return false, err
 	}
@@ -249,8 +268,8 @@ func (n *scanNode) simpleExplain() (map[string]any, error) {
 	}
 
 	// Add the collection attributes.
-	simpleExplainMap[collectionNameLabel] = n.col.Name().Value()
-	simpleExplainMap[collectionIDLabel] = n.col.Description().IDString()
+	simpleExplainMap[collectionNameLabel] = n.col.Name()
+	simpleExplainMap[collectionIDLabel] = n.col.Version().VersionID
 
 	// Add the prefixes attribute.
 	simpleExplainMap[prefixesLabel] = n.explainPrefixes()
@@ -284,7 +303,6 @@ func (n *scanNode) Explain(explainType request.ExplainType) (map[string]any, err
 
 func (p *Planner) Scan(
 	mapperSelect *mapper.Select,
-	colDesc client.CollectionDescription,
 ) (*scanNode, error) {
 	scan := &scanNode{
 		p:         p,

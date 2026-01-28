@@ -13,6 +13,7 @@ package test_explain_debug
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -36,12 +37,10 @@ var updatePattern = dataMap{
 func TestDebugExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with update using boolean filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
 					update_Author(
@@ -69,12 +68,10 @@ func TestDebugExplainMutationRequestWithUpdateUsingBooleanFilter(t *testing.T) {
 func TestDebugExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with update using ids.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
 					update_Author(
@@ -101,12 +98,10 @@ func TestDebugExplainMutationRequestWithUpdateUsingIds(t *testing.T) {
 func TestDebugExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with update using document id.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
 					update_Author(
@@ -130,12 +125,10 @@ func TestDebugExplainMutationRequestWithUpdateUsingId(t *testing.T) {
 func TestDebugExplainMutationRequestWithUpdateUsingIdsAndFilter(t *testing.T) {
 	test := testUtils.TestCase{
 
-		Description: "Explain (debug) mutation request with update using both ids and filter.",
-
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `mutation @explain(type: debug) {
 					update_Author(

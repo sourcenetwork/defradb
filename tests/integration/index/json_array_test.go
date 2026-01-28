@@ -13,6 +13,7 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -24,14 +25,14 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -39,7 +40,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"custom": map[string]any{
@@ -47,7 +48,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -55,7 +56,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Keenan",
 					"custom": map[string]any{
@@ -63,7 +64,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Bruno",
 					"custom": map[string]any{
@@ -71,7 +72,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -79,7 +80,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Chris",
 					"custom": map[string]any{
@@ -87,7 +88,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"custom": map[string]any{
@@ -95,7 +96,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -103,7 +104,7 @@ func TestJSONArrayIndex_WithDifferentElementValuesAndTypes_ShouldFetchCorrectlyU
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -121,14 +122,14 @@ func TestJSONArrayIndex_WithAnyEqFilter_ShouldNotConsiderThem(t *testing.T) {
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -136,7 +137,7 @@ func TestJSONArrayIndex_WithAnyEqFilter_ShouldNotConsiderThem(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"custom": map[string]any{
@@ -144,7 +145,7 @@ func TestJSONArrayIndex_WithAnyEqFilter_ShouldNotConsiderThem(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"custom": map[string]any{
@@ -152,7 +153,7 @@ func TestJSONArrayIndex_WithAnyEqFilter_ShouldNotConsiderThem(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -160,7 +161,7 @@ func TestJSONArrayIndex_WithAnyEqFilter_ShouldNotConsiderThem(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -168,7 +169,7 @@ func TestJSONArrayIndex_WithAnyEqFilter_ShouldNotConsiderThem(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -176,7 +177,7 @@ func TestJSONArrayIndex_WithAnyEqFilter_ShouldNotConsiderThem(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
 			},
@@ -194,14 +195,14 @@ func TestJSONArrayIndex_WithAnyAndComparisonFilter_ShouldNotConsiderThem(t *test
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -209,7 +210,7 @@ func TestJSONArrayIndex_WithAnyAndComparisonFilter_ShouldNotConsiderThem(t *test
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"custom": map[string]any{
@@ -217,7 +218,7 @@ func TestJSONArrayIndex_WithAnyAndComparisonFilter_ShouldNotConsiderThem(t *test
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -225,7 +226,7 @@ func TestJSONArrayIndex_WithAnyAndComparisonFilter_ShouldNotConsiderThem(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -233,9 +234,9 @@ func TestJSONArrayIndex_WithAnyAndComparisonFilter_ShouldNotConsiderThem(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -251,14 +252,14 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -266,7 +267,7 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -274,7 +275,7 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"custom": map[string]any{
@@ -282,7 +283,7 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"custom": map[string]any{
@@ -290,7 +291,7 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -298,17 +299,18 @@ func TestJSONArrayIndex_WithNoneEqFilter_ShouldFetchCorrectlyUsingIndex(t *testi
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Islam"},
 						{"name": "John"},
 						{"name": "Fred"},
+						{"name": "Islam"},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// We don't use index for _none operator
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
@@ -327,14 +329,14 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -342,7 +344,7 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -350,7 +352,7 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"custom": map[string]any{
@@ -358,7 +360,7 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"custom": map[string]any{
@@ -366,7 +368,7 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -374,7 +376,7 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Bruno",
 					"custom": map[string]any{
@@ -382,17 +384,18 @@ func TestJSONArrayIndex_WithNoneEqAndComparisonFilter_ShouldFetchCorrectlyUsingI
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
-						{"name": "Islam"},
 						{"name": "John"},
 						{"name": "Fred"},
+						{"name": "Islam"},
 					},
 				},
+				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// We don't use index for _none operator
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
@@ -411,14 +414,14 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -426,7 +429,7 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -434,7 +437,7 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"custom": map[string]any{
@@ -442,7 +445,7 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"custom": map[string]any{
@@ -450,7 +453,7 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Bruno",
 					"custom": map[string]any{
@@ -458,7 +461,7 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -466,7 +469,7 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -474,7 +477,7 @@ func TestJSONArrayIndex_WithAllEqFilter_ShouldFetchCorrectlyUsingIndex(t *testin
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 4 docs have the value 4 in the numbers array
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
@@ -493,14 +496,14 @@ func TestJSONArrayIndex_WithAllEqAndComparisonFilter_ShouldFetchCorrectlyUsingIn
 	}`
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String 
 						custom: JSON @index
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"custom": map[string]any{
@@ -508,7 +511,7 @@ func TestJSONArrayIndex_WithAllEqAndComparisonFilter_ShouldFetchCorrectlyUsingIn
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Shahzad",
 					"custom": map[string]any{
@@ -516,7 +519,7 @@ func TestJSONArrayIndex_WithAllEqAndComparisonFilter_ShouldFetchCorrectlyUsingIn
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"custom": map[string]any{
@@ -524,7 +527,7 @@ func TestJSONArrayIndex_WithAllEqAndComparisonFilter_ShouldFetchCorrectlyUsingIn
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"custom": map[string]any{
@@ -532,7 +535,7 @@ func TestJSONArrayIndex_WithAllEqAndComparisonFilter_ShouldFetchCorrectlyUsingIn
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -540,9 +543,9 @@ func TestJSONArrayIndex_WithAllEqAndComparisonFilter_ShouldFetchCorrectlyUsingIn
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
 	}

@@ -36,7 +36,13 @@ func TraverseFields(conditions map[string]any, f func([]string, any) bool) {
 }
 
 func traverseFields(path []string, key string, value any, f func([]string, any) bool) bool {
-	isKeyOp := func(k string) bool { return len(k) > 0 && k[0] == '_' && k != request.DocIDFieldName }
+	isKeyOp := func(k string) bool {
+		if len(k) == 0 || k[0] != '_' || k == request.DocIDFieldName {
+			return false
+		}
+		_, ok := request.ToRelatedObjectName(k)
+		return !ok
+	}
 	isOpComplex := func(k string) bool {
 		switch k {
 		// all these ops should have a map or an array as value and can not have a single value

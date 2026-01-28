@@ -13,24 +13,24 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 // Note: this test should follow a different code path to `_avg` on it's own
 // utilising the existing `_sum` node instead of adding a new one.  This test cannot
-// verify that that code path is taken, but it does verfiy that the correct result
+// verify that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple inline array with no filter, average and sum of populated integer array",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [-1, 0, 9, 0]
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(groupBy: [name]) {
 						name

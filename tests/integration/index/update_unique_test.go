@@ -13,14 +13,14 @@ package index
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestUniqueIndexUpdate_UponUpdatingDocNonIndexedField_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "updating non-indexed fields on a doc with a unique index should succeed",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type User {
 						name: String @index(unique: true)
@@ -28,7 +28,7 @@ func TestUniqueIndexUpdate_UponUpdatingDocNonIndexedField_ShouldSucceed(t *testi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{

@@ -13,7 +13,20 @@ package crypto
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/rand"
 )
+
+// GenerateAES256 generates a new random AES-256 bit key.
+func GenerateAES256() ([]byte, error) {
+	return randomBytes(32)
+}
+
+// randomBytes returns a random slice of bytes of the given size.
+func randomBytes(size int) ([]byte, error) {
+	data := make([]byte, size)
+	_, err := rand.Read(data)
+	return data, err
+}
 
 // EncryptAES encrypts data using AES-GCM with a provided key and additional data.
 // It generates a nonce internally and optionally prepends it to the cipherText.

@@ -13,14 +13,14 @@ package update
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_WithIds(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple update mutation with ids",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						name: String
@@ -28,30 +28,30 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
-				// bae-0289c22a-aec7-5b59-adfc-60968698fcdf
+			&action.CreateDoc{
+				// bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202
 				Doc: `{
 					"name": "John",
 					"points": 42.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bob",
 					"points": 66.6
 				}`,
 			},
-			testUtils.CreateDoc{
-				// bae-fcc8673d-25f9-5f24-a529-4bc997035278
+			&action.CreateDoc{
+				// bae-b76814bb-7ac8-5430-bac9-fbd7fc86db40
 				Doc: `{
 					"name": "Fred",
 					"points": 33
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(
-						docID: ["bae-0289c22a-aec7-5b59-adfc-60968698fcdf", "bae-fcc8673d-25f9-5f24-a529-4bc997035278"],
+						docID: ["bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202", "bae-b76814bb-7ac8-5430-bac9-fbd7fc86db40"],
 						input: {points: 59}
 					) {
 						name
@@ -70,6 +70,7 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

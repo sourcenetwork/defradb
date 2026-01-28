@@ -13,19 +13,19 @@ package simple
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQuerySimpleWithTypeName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with typename",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name
@@ -49,14 +49,13 @@ func TestQuerySimpleWithTypeName(t *testing.T) {
 
 func TestQuerySimpleWithAliasedTypeName(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "Simple query with aliased typename",
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						Name

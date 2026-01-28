@@ -13,21 +13,21 @@ package field_kinds
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestMutationUpdate_IfBoolFieldSetToNull_ShouldBeNil(t *testing.T) {
 	test := testUtils.TestCase{
-		Description: "If bool field is set to null, should set to nil",
 		Actions: []any{
-			testUtils.SchemaUpdate{
+			&action.AddSchema{
 				Schema: `
 					type Users {
 						valid: Boolean
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"valid": true
 				}`,
@@ -37,7 +37,7 @@ func TestMutationUpdate_IfBoolFieldSetToNull_ShouldBeNil(t *testing.T) {
 					"valid": null
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						Users {
