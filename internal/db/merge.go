@@ -275,7 +275,7 @@ func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, 
 		}
 
 		for docID := range mp.docIDs {
-			allDocIDs[docID] = struct{}{}
+			allDocIDs[docID.String()] = struct{}{}
 		}
 	}
 
@@ -327,7 +327,7 @@ func (db *DB) SyncIndexesAfterMerge(ctx context.Context, results []*MergeBatchRe
 				newTxn.Discard()
 				return err
 			}
-			err = syncIndexedDoc(newCtx, oldCtx, docID, col)
+			err = syncIndexedDoc(newCtx, oldCtx, docID, col, nil)
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to sync index for doc", err,
 					corelog.String("DocID", docIDStr))
@@ -383,12 +383,8 @@ func (db *DB) mergeWithTxn(ctx context.Context, col *collection, evt event.Merge
 	}
 	defer oldTxn.Discard()
 
-	for docID := range mp.docIDs {
-		docID, err := client.NewDocIDFromString(docID)
-		if err != nil {
-			return err
-		}
-		err = syncIndexedDoc(ctx, oldCtx, docID, col)
+	for docID, oldDoc := range mp.docIDs {
+		err = syncIndexedDoc(ctx, oldCtx, docID, col, oldDoc)
 		if err != nil {
 			return err
 		}
@@ -493,7 +489,7 @@ func (db *DB) executeMergeBatchInTxn(ctx context.Context, col *collection, evts 
 		}
 
 		for docID := range mp.docIDs {
-			allDocIDs[docID] = struct{}{}
+			allDocIDs[docID.String()] = struct{}{}
 		}
 	}
 
@@ -509,7 +505,7 @@ func (db *DB) executeMergeBatchInTxn(ctx context.Context, col *collection, evts 
 		if err != nil {
 			return err
 		}
-		err = syncIndexedDoc(ctx, oldCtx, docID, col)
+		err = syncIndexedDoc(ctx, oldCtx, docID, col, nil)
 		if err != nil {
 			return err
 		}
@@ -575,7 +571,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	}
 
 	for docID, oldDoc := range mp.docIDs {
-		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
+		err = syncIndexedDoc(ctx, ctx, docID, mp.col, oldDoc)
 		if err != nil {
 			return err
 		}
@@ -1078,7 +1074,7 @@ func loadBlockFromBlockStore(ctx context.Context, cid cid.Cid) (*coreblock.Block
 
 func syncIndexedDoc(
 	ctx context.Context,
-	oldCtx context.Context,
+	_ context.Context,
 	docID client.DocID,
 	col *collection,
 	oldDoc *client.Document,
