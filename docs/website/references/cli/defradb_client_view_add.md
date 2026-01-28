@@ -6,14 +6,12 @@ Add new view
 
 Add new database view.
 
-Flag pairs <key>/<key>-file are mutually exclusive.
-
 Use --lens-cid to specify a lens transform. Store a lens first using 'defradb client lens add
 
 Learn more about the DefraDB GraphQL Schema Language on https://docs.source.network.
 
 ```
-defradb client view add [flags]
+defradb client view add [query|query-file] [sdl|sdl-file] [flags]
 ```
 
 ### Examples

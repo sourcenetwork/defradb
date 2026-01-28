@@ -23,11 +23,9 @@ func MakeViewAddCommand(ctx context.Context) *cobra.Command {
 	var query, sdl, lensCID string
 	var queryFile, sdlFile string
 	cmd := &cobra.Command{
-		Use:   "add",
+		Use:   "add [query|query-file] [sdl|sdl-file]",
 		Short: "Add new view",
 		Long: `Add new database view.
-
-Flag pairs <key>/<key>-file are mutually exclusive.
 
 Use --lens-cid to specify a lens transform. Store a lens first using 'defradb client lens add
 
