@@ -24,7 +24,7 @@ import (
 func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [-1, 0, 9, 0]

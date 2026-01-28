@@ -71,13 +71,13 @@ func TestView_OneToManyWithTransformOnOuter(t *testing.T) {
 				`,
 				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Ferdowsi"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "Shahnameh",
@@ -161,7 +161,7 @@ func TestView_OneToManyWithTransformAddingInnerDocs(t *testing.T) {
 				`,
 				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Ferdowsi"

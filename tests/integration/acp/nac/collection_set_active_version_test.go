@@ -36,7 +36,7 @@ func TestNAC_GatesCollectionSetActiveVersion_AuthorizedIdentity_AllowAccess(t *t
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Patch: `
 					[
@@ -76,7 +76,7 @@ func TestNAC_GatesCollectionSetActiveVersion_NoIdentity_NotAuthorizedError(t *te
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Patch: `
 					[
@@ -117,7 +117,7 @@ func TestNAC_GatesCollectionSetActiveVersion_WrongIdentity_NotAuthorizedError(t 
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Patch: `
 					[

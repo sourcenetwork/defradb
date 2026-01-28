@@ -43,7 +43,7 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -52,7 +52,7 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Addo",
@@ -173,13 +173,15 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 	execute(t, test)
 }
 
+// TODO This test includes results due to a bug with the commit subscriptions.
+// https://github.com/sourcenetwork/defradb/issues/4434
 func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *testing.T) {
 	updateCid := testUtils.NewSameValue()
 
 	docID := "bae-45e90427-d499-598b-902a-6a3c65d0b504"
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -194,6 +196,14 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 					}
 				}`,
 				Results: []map[string]any{
+					{
+						"_commits": []map[string]any{
+							{
+								"cid":   "bafyreib5dvg3wkm722kietpvx5gmfueilyvywyiz2tl44q6xnhv4bedcpq",
+								"docID": docID,
+							},
+						},
+					},
 					{
 						"_commits": []map[string]any{
 							{

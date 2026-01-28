@@ -28,14 +28,14 @@ func TestMutationUpdate_WithId(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202
 				Doc: `{
 					"name": "John",
 					"points": 42.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bob",
 					"points": 66.6
@@ -74,7 +74,7 @@ func TestMutationUpdate_WithNonExistantId(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202
 				Doc: `{
 					"name": "John",

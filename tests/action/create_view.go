@@ -65,31 +65,29 @@ func (a *CreateView) Execute() {
 		}
 
 	default:
-		if a.s.ViewType == state.MaterializedViewType {
-			typeIndex := strings.Index(sdl, "\ttype ")
-			if typeIndex == -1 {
-				a.s.T.Fatal("materialized view SDL must contain '\ttype ' declaration")
-				return
-			}
-
-			subStrSquigglyIndex := strings.Index(sdl[typeIndex:], "{")
-			if subStrSquigglyIndex == -1 {
-				a.s.T.Fatal("materialized view SDL type declaration must contain '{'")
-				return
-			}
-
-			squigglyIndex := typeIndex + subStrSquigglyIndex
-			sdl = strings.Join([]string{
-				sdl[:squigglyIndex],
-				"@",
-				types.MaterializedDirectiveLabel,
-				"(if: ",
-				fmt.Sprint(a.s.ViewType == state.MaterializedViewType),
-				") ",
-				sdl[squigglyIndex:],
-				"",
-			}, "")
+		typeIndex := strings.Index(sdl, "\ttype ")
+		if typeIndex == -1 {
+			a.s.T.Fatal("materialized view SDL must contain '\ttype ' declaration")
+			return
 		}
+
+		subStrSquigglyIndex := strings.Index(sdl[typeIndex:], "{")
+		if subStrSquigglyIndex == -1 {
+			a.s.T.Fatal("materialized view SDL type declaration must contain '{'")
+			return
+		}
+
+		squigglyIndex := typeIndex + subStrSquigglyIndex
+		sdl = strings.Join([]string{
+			sdl[:squigglyIndex],
+			"@",
+			types.MaterializedDirectiveLabel,
+			"(if: ",
+			fmt.Sprint(a.s.ViewType == state.MaterializedViewType),
+			") ",
+			sdl[squigglyIndex:],
+			"",
+		}, "")
 	}
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
@@ -108,4 +106,6 @@ func (a *CreateView) Execute() {
 
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
+
+	refreshCollections(a.s)
 }

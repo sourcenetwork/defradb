@@ -43,7 +43,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "John Grisham",
@@ -51,7 +51,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"verified": true,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "Cornelia Funke",
@@ -59,7 +59,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"verified": false,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "After Guantánamo, Another Injustice",
@@ -67,7 +67,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"rating":    3,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "To my dear readers",
@@ -75,7 +75,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"rating":    2,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Twinklestar's Favourite Xmas Cookie",
@@ -83,7 +83,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"rating":    1,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -91,7 +91,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"score":     1,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -99,7 +99,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"score":     2,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
@@ -107,7 +107,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithAndWithoutFilter(t 
 					"score":     3,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -168,7 +168,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "John Grisham",
@@ -176,7 +176,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"verified": true,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":     "Cornelia Funke",
@@ -184,7 +184,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"verified": false,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "After Guantánamo, Another Injustice",
@@ -192,7 +192,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"rating":    3,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "To my dear readers",
@@ -200,7 +200,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"rating":    2,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Twinklestar's Favourite Xmas Cookie",
@@ -208,7 +208,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"rating":    1,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -216,7 +216,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"score":     1,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -224,7 +224,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"score":     2,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Sooley",
@@ -232,7 +232,7 @@ func TestQueryOneToManyMultipleWithAverageOnMultipleJoinsWithFilters(t *testing.
 					"score":     3,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",

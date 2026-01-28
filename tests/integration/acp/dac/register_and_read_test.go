@@ -59,7 +59,7 @@ resources:
 				`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 
 				Doc: `
@@ -138,7 +138,7 @@ resources:
 				`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 
 				Doc: `
@@ -219,7 +219,7 @@ resources:
 				`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -302,7 +302,7 @@ resources:
 				`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),
@@ -377,7 +377,7 @@ resources:
  				`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 
 				Identity: testUtils.ClientIdentity(1),

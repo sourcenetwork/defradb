@@ -23,35 +23,35 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 			&action.AddSchema{
 				Schema: bookAuthorGQLSchema,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House",
 					"rating": 4.9
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Some Book",
 					"rating": 4.0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Some Other Book",
 					"rating": 3.5
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Yet Another Book",
 					"rating": 3.0
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
@@ -60,7 +60,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Some Writer",
@@ -69,7 +69,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Some Other Writer",
@@ -78,7 +78,7 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 					"_publishedID": testUtils.NewDocIndex(0, 2),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Yet Another Writer",

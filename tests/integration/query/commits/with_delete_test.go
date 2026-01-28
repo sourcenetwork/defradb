@@ -37,7 +37,7 @@ func TestQueryCommits_AfterDocDeletion_ShouldStillFetch(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21

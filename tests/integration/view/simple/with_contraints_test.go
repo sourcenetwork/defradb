@@ -53,7 +53,7 @@ func TestView_SimpleWithSizeConstraint_CacheLessView_DoesNotErrorOnSizeViolation
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"Alice",
 					"pointsListInt": [1, 2, 3],
@@ -127,7 +127,7 @@ func TestView_SimpleWithSizeConstraint_MaterializedView_DoesNotErrorOnSizeViolat
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"Alice",
 					"pointsListInt": [1, 2, 3],
