@@ -43,6 +43,7 @@ runs:
       with:
         repository: sourcenetwork/sourcehub
         path: _sourcehub
+        fetch-depth: 0
 
     - name: Build SourceHub image name
       id: image-name
