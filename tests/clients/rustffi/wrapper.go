@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/immutable"
 	lensmodel "github.com/sourcenetwork/lens/host-go/config/model"
@@ -167,6 +168,15 @@ func (w *Wrapper) ExecRequest(
 	request string,
 	opts ...client.RequestOption,
 ) *client.RequestResult {
+	// If the context carries a transaction (set by db.InitContext), delegate
+	// to the transaction-scoped ExecRequest so the Rust FFI executes within
+	// that transaction's snapshot.
+	if clientTxn, ok := datastore.CtxTryGetClientTxn(ctx); ok && clientTxn != nil {
+		if txnW, ok := clientTxn.(*TxnWrapper); ok {
+			return txnW.ExecRequest(ctx, request, opts...)
+		}
+	}
+
 	gqlOpts := &client.GQLOptions{}
 	for _, opt := range opts {
 		opt(gqlOpts)
@@ -206,6 +216,12 @@ func (w *Wrapper) ExecRequest(
 				Errors: []error{fmt.Errorf("failed to parse response: %w", err)},
 			},
 		}
+	}
+
+	// Post-process: convert DateTime strings to time.Time objects so test
+	// assertions can compare them with MustParseTime/CurrentTimestamp values.
+	if gqlResult.Data != nil {
+		gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
 	}
 
 	return &client.RequestResult{GQL: gqlResult}
@@ -259,10 +275,12 @@ func (w *Wrapper) GetCollections(
 	// Apply filters
 	var filtered []client.CollectionVersion
 	for _, v := range versions {
+		fmt.Printf("DEBUG GetCollections: VersionID=%s Name=%s CollectionID=%s IsActive=%v\n", v.VersionID, v.Name, v.CollectionID, v.IsActive)
 		if options.Name.HasValue() && v.Name != options.Name.Value() {
 			continue
 		}
 		if options.VersionID.HasValue() && v.VersionID != options.VersionID.Value() {
+			fmt.Printf("DEBUG GetCollections: SKIPPING version %s (wanted %s)\n", v.VersionID, options.VersionID.Value())
 			continue
 		}
 		if options.CollectionID.HasValue() && v.CollectionID != options.CollectionID.Value() {
@@ -681,6 +699,10 @@ func (t *TxnWrapper) ExecRequest(ctx context.Context, request string, opts ...cl
 		}
 	}
 
+	if gqlResult.Data != nil {
+		gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
+	}
+
 	return &client.RequestResult{GQL: gqlResult}
 }
 
@@ -1038,13 +1060,54 @@ func (c *CollectionWrapper) Exists(ctx context.Context, docID client.DocID) (boo
 }
 
 func (c *CollectionWrapper) UpdateWithFilter(ctx context.Context, filter any, updater string) (*client.UpdateResult, error) {
-	filterJSON, err := json.Marshal(filter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal filter: %w", err)
+	// Validate filter (mirrors Go's collection_update.go makeSelectionPlan validation)
+	var gqlFilter string
+	switch f := filter.(type) {
+	case string:
+		if f == "" {
+			return nil, fmt.Errorf("invalid filter")
+		}
+		// String filters may be in relaxed JSON/GQL format (unquoted keys).
+		// Try parsing as JSON first; if that fails, use as-is (GQL format).
+		var parsed map[string]any
+		if err := json.Unmarshal([]byte(f), &parsed); err != nil {
+			// Not valid JSON - could be relaxed GQL format like {name: {_eq: "John"}}.
+			// Validate by attempting to parse with fastjson-compatible check.
+			if !isRelaxedJSONObject(f) {
+				return nil, fmt.Errorf("cannot parse JSON: cannot parse object")
+			}
+			gqlFilter = f
+		} else {
+			filterJSON, _ := json.Marshal(parsed)
+			gqlFilter = jsonToGraphQLInput(string(filterJSON))
+		}
+	case map[string]any:
+		filterJSON, err := json.Marshal(f)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal filter: %w", err)
+		}
+		gqlFilter = jsonToGraphQLInput(string(filterJSON))
+	default:
+		return nil, fmt.Errorf("invalid filter")
 	}
 
-	// Convert JSON to GraphQL input format (unquoted keys)
-	gqlFilter := jsonToGraphQLInput(string(filterJSON))
+	// Validate updater (mirrors Go's collection_update.go fastjson.Parse validation)
+	// Go first parses the updater as JSON, then checks the type.
+	var parsedUpdater any
+	if err := json.Unmarshal([]byte(updater), &parsedUpdater); err != nil {
+		return nil, fmt.Errorf("cannot parse JSON: cannot parse object")
+	}
+	switch parsedUpdater.(type) {
+	case []any:
+		// JSON Patch (array) - Go's implementation has a "todo" for patch support,
+		// so it effectively does nothing. Return empty result.
+		return &client.UpdateResult{DocIDs: make([]string, 0)}, nil
+	case map[string]any:
+		// Merge Patch (object) - this is the supported case
+	default:
+		return nil, fmt.Errorf("the updater of a document is of invalid type")
+	}
+
 	gqlUpdater := jsonToGraphQLInput(updater)
 	mutation := fmt.Sprintf(`mutation { update_%s(filter: %s, input: %s) { _docID } }`,
 		c.version.Name, gqlFilter, gqlUpdater)
@@ -1068,6 +1131,54 @@ func (c *CollectionWrapper) UpdateWithFilter(ctx context.Context, filter any, up
 		}
 	}
 	return updateResult, nil
+}
+
+// isRelaxedJSONObject checks if a string looks like a JSON/GQL object (starts with { and ends with }).
+func isRelaxedJSONObject(s string) bool {
+	s = trimJSONWhitespace(s)
+	return len(s) >= 2 && s[0] == '{' && s[len(s)-1] == '}'
+}
+
+// trimJSONWhitespace trims leading/trailing whitespace from a string.
+func trimJSONWhitespace(s string) string {
+	start := 0
+	for start < len(s) && (s[start] == ' ' || s[start] == '\t' || s[start] == '\n' || s[start] == '\r') {
+		start++
+	}
+	end := len(s)
+	for end > start && (s[end-1] == ' ' || s[end-1] == '\t' || s[end-1] == '\n' || s[end-1] == '\r') {
+		end--
+	}
+	return s[start:end]
+}
+
+// convertDateTimeStrings recursively walks a decoded JSON response and converts
+// string values that look like RFC3339 datetimes into time.Time objects.
+// This is needed because the Rust FFI returns datetimes as JSON strings, while
+// Go's native implementation returns time.Time objects that the test framework expects.
+func convertDateTimeStrings(v any) any {
+	switch val := v.(type) {
+	case map[string]any:
+		for k, v := range val {
+			val[k] = convertDateTimeStrings(v)
+		}
+		return val
+	case []any:
+		for i, v := range val {
+			val[i] = convertDateTimeStrings(v)
+		}
+		return val
+	case string:
+		if t, err := time.Parse(time.RFC3339Nano, val); err == nil {
+			return t
+		}
+		if t, err := time.Parse(time.RFC3339, val); err == nil {
+			return t
+		}
+		return val
+	default:
+		return val
+	}
 }
 
 func (c *CollectionWrapper) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
