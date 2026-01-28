@@ -85,6 +85,10 @@ func NewCollectionIndex(
 		if !isSupportedKind(field.Kind) {
 			return nil, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
+		// Delta-based CRDTs (pncounter, pcounter) are not supported yet
+		if field.Typ == client.PN_COUNTER || field.Typ == client.P_COUNTER {
+			return nil, NewErrCannotIndexDeltaCRDTField(field.Name, field.Typ.String())
+		}
 		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}
 	if desc.Unique {
