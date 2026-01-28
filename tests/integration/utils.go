@@ -286,11 +286,6 @@ func executeTestCase(
 		performAction(s, testCase, i, testCase.Actions[i])
 	}
 
-	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
-	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
-	// by them. So the matchers need to be reset between the test runs.
-	resetMatchers(s)
-
 	// Notify any active subscriptions that all requests have been sent.
 	close(s.AllActionsDone)
 
@@ -305,6 +300,11 @@ func executeTestCase(
 			assert.Fail(t, "timeout occurred while waiting for data stream")
 		}
 	}
+
+	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
+	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
+	// by them. So the matchers need to be reset between the test runs.
+	resetMatchers(s)
 }
 
 func performAction(
