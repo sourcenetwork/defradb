@@ -48,7 +48,7 @@ func TestNAC_AdminRelation_CanVerifySignature(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",
@@ -112,7 +112,7 @@ func TestNAC_AdminRelation_GoClient_CanVerifySignature(t *testing.T) {
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",

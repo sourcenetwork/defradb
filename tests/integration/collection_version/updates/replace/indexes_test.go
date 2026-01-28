@@ -25,7 +25,7 @@ func TestColVersionUpdateReplaceIndexes_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

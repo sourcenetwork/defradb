@@ -28,7 +28,7 @@ func TestUniqueIndexUpdate_UponUpdatingDocNonIndexedField_ShouldSucceed(t *testi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{

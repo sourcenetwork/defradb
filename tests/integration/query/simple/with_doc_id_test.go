@@ -20,7 +20,7 @@ import (
 func TestQuerySimpleWithDocIDFilter_TargetNotFound(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
@@ -46,7 +46,7 @@ func TestQuerySimpleWithDocIDFilter_TargetNotFound(t *testing.T) {
 func TestQuerySimpleWithDocIDFilter_SingleDocumentTargetFound(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
@@ -77,13 +77,13 @@ func TestQuerySimpleWithDocIDFilter_SingleDocumentTargetFound(t *testing.T) {
 func TestQuerySimpleWithDocIDFilter_MultipleDocumentsTargetFound(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"Name": "John",
 						"Age": 21
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"Name": "Bob",
 						"Age": 32

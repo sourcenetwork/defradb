@@ -139,6 +139,31 @@ func (s *Select) ToSubscriptionSelect(docID, cid string) Selection {
 	}
 }
 
+// CheckCIDFilter checks if the given cid passes the CID filter.
+// Returns true if the cid passes the filter, false otherwise.
+// If no CID filter is set, it always passes.
+func (s *Select) CheckCIDFilter(cid string) bool {
+	if s.CID.HasValue() && s.CID.Value() != cid {
+		return false
+	}
+	return true
+}
+
+// CheckDocIDFilter checks if the given docID passes the DocID filter.
+// Returns true if the docID passes the filter, false otherwise.
+// If no DocID filter is set, it always passes.
+func (s *Select) CheckDocIDFilter(docID string) bool {
+	if s.DocIDs.HasValue() {
+		for _, id := range s.DocIDs.Value() {
+			if id == docID {
+				return true
+			}
+		}
+		return false
+	}
+	return true
+}
+
 // selectJson is a private object used for handling json deserialization
 // of [Select] objects.
 //

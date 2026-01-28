@@ -72,7 +72,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{ // Note: Is a public document (without an identity).
+			&action.CreateDoc{ // Note: Is a public document (without an identity).
 				CollectionID: 0,
 
 				Doc: `

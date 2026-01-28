@@ -29,7 +29,7 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -74,7 +74,7 @@ func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -121,7 +121,7 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
