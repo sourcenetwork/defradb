@@ -94,9 +94,10 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		logs, err := container.Logs(ctx)
 		require.NoError(s.T, err)
 		buf := bytes.Buffer{}
+		// errors during cleanup don't affect anything
 		buf.ReadFrom(logs) //nolint:errcheck
 		s.T.Logf("container logs: %v", buf.String())
-		testcontainers.TerminateContainer(container)
+		testcontainers.TerminateContainer(container) //nolint:errcheck
 	})
 
 	grpcEndpoint, err := container.PortEndpoint(ctx, "9090", "")
