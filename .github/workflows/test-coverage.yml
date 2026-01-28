@@ -161,7 +161,7 @@ jobs:
       # We have to install it ourselves because it contains replace commands in its go.mod file.
       - name: Get SourceHub Docker Image
         id: sourcehub-image
-        uses: ./.github/composites/install-sourcehub
+        uses: ./.github/composites/get-sourcehub-image
 
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
