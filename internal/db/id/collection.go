@@ -24,7 +24,11 @@ import (
 // only in locations where using the full CID would be a waste of storage space.
 //
 // GetShortCollectionID should be preferred over this method because it utilizes the cache.
-func GetUncachedShortCollectionID(ctx context.Context, collectionID string, systemStore corekv.ReaderWriter) (uint32, error) {
+func GetUncachedShortCollectionID(
+	ctx context.Context,
+	collectionID string,
+	systemStore corekv.ReaderWriter,
+) (uint32, error) {
 	key := keys.NewCollectionID(collectionID)
 	valueBytes, err := systemStore.Get(ctx, key.Bytes())
 	if err != nil {

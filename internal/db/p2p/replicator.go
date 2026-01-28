@@ -184,12 +184,16 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 		return err
 	}
 	prefix := keys.PrimaryDataStoreKey{CollectionShortID: shortID}
-	opts := corekv.IterOptions{Prefix: prefix.Bytes(), KeysOnly: true}
-	iter, err := p.db.Multistore().Datastore().(unsafeDatastore).Unsafe().Iterator(ctx, opts)
+	ds := p.db.Multistore().Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
+	iter, err := ds.Iterator(ctx, corekv.IterOptions{Prefix: prefix.Bytes(), KeysOnly: true})
 	if err != nil {
 		return err
 	}
-	defer iter.Close()
+	defer func() {
+		if iterErr := iter.Close(); iterErr != nil {
+			log.ErrorE("Failed to close docID iter", iterErr)
+		}
+	}()
 
 	for {
 		hasNext, err := iter.Next()

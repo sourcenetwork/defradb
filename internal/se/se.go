@@ -43,7 +43,7 @@ func storeArtifacts(
 	artifacts []secore.Artifact,
 ) error {
 	ss := ms.Systemstore()
-	ds := ms.Datastore().(unsafeDatastore).Unsafe()
+	ds := ms.Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
 
 	for _, artifact := range artifacts {
 		colID, err := id.GetUncachedShortCollectionID(ctx, artifact.CollectionID, ss)
@@ -75,7 +75,7 @@ func fetchDocIDs(
 	queries []fieldQuery,
 ) ([]string, error) {
 	ss := ms.Systemstore()
-	ds := ms.Datastore().(unsafeDatastore).Unsafe()
+	ds := ms.Datastore().(unsafeDatastore).Unsafe() //nolint:forcetypeassert
 
 	docIDSet := make(map[string]struct{})
 
