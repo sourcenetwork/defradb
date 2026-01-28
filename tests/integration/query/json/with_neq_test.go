@@ -15,13 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryJSON_WithNotEqualFilterWithObject_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -77,8 +74,6 @@ func TestQueryJSON_WithNotEqualFilterWithObject_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNotEqualFilterWithNestedObjects_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -132,8 +127,6 @@ func TestQueryJSON_WithNotEqualFilterWithNestedObjects_ShouldFilter(t *testing.T
 
 func TestQueryJSON_WithNotEqualFilterWithNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -228,8 +221,6 @@ func TestQueryJSON_WithNeFilterAgainstNumberField_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNeFilterAgainstStringField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -274,6 +265,7 @@ func TestQueryJSON_WithNeFilterAgainstStringField_ShouldFilter(t *testing.T) {
 						{"name": "Andy"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -282,8 +274,6 @@ func TestQueryJSON_WithNeFilterAgainstStringField_ShouldFilter(t *testing.T) {
 
 func TestQueryJSON_WithNeFilterAgainstBooleanField_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -328,6 +318,7 @@ func TestQueryJSON_WithNeFilterAgainstBooleanField_ShouldFilter(t *testing.T) {
 						{"name": "Andy"},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -384,5 +375,60 @@ func TestQueryJSON_WithNeFilterAgainstNullField_ShouldFilter(t *testing.T) {
 			},
 		},
 	}
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryJSON_WithNotEqualFilterWithNestedObject_ShouldFilter(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type User {
+						name: String
+						custom: JSON 
+					}
+				`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "John",
+					"custom": {"nested": {"foo": "bar"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "David",
+					"custom": {"nested": {"foo": "baz"}}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Bruno",
+					"custom": {"nested": "scalar"}
+				}`,
+			},
+			&action.CreateDoc{
+				Doc: `{
+					"name": "Andy",
+					"custom": {"other": {"foo": "bar"}}
+				}`,
+			},
+			&action.Request{
+				Request: `query {
+					User(filter: {custom: {nested: {_neq: {foo: "bar"}}}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{"name": "David"},
+						{"name": "Bruno"},
+					},
+				},
+				NonOrderedResults: true,
+			},
+		},
+	}
+
 	testUtils.ExecuteTestCase(t, test)
 }
