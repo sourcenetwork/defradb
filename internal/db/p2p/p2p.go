@@ -69,15 +69,15 @@ const (
 	// syncWorkerCount is the number of workers processing sync requests.
 	syncWorkerCount = 16
 	// syncQueueSize is the maximum number of pending sync requests.
-	syncQueueSize = 1_000_000
+	syncQueueSize = 100_000
 	// batchSyncSize is the number of sync operations to batch before committing.
-	batchSyncSize = 100
+	batchSyncSize = 50
 	// batchSyncTimeout is the maximum time to wait for a sync batch to fill.
 	batchSyncTimeout = 50 * time.Millisecond
 	// batchSyncWorkers is the number of parallel sync batch processors.
 	batchSyncWorkers = 16
 	// maxConcurrentHandlers limits concurrent pubsub message handlers.
-	maxConcurrentHandlers = 100
+	maxConcurrentHandlers = 32
 )
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
@@ -606,6 +606,10 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 		return nil, p.ctx.Err()
 	}
 
+	if from == p.host.ID() {
+		return nil, nil
+	}
+
 	log.Info("Received new pubsub message",
 		corelog.String("PeerID", p.host.ID()),
 		corelog.Any("SenderId", from),
@@ -646,60 +650,9 @@ func (p *P2P) processDocuments(ctx context.Context, req *protocol.PushLogRequest
 		return nil
 	}
 
-	bstore := p.db.Multistore().Blockstore()
-
-	type docWithCID struct {
-		doc     *protocol.DocumentInfo
-		rootCID cid.Cid
-	}
-	docsWithCIDs := make([]docWithCID, 0, len(req.Documents))
-	docsWithoutCIDs := make([]*protocol.DocumentInfo, 0)
-
+	var lastErr error
 	for i := range req.Documents {
 		doc := &req.Documents[i]
-		if len(doc.CAR) > 0 {
-			rootCID, err := parseCARRootCID(doc.CAR)
-			if err != nil {
-				log.ErrorE("Failed to parse CAR root CID", err, corelog.String("DocID", doc.DocID))
-				docsWithoutCIDs = append(docsWithoutCIDs, doc)
-			} else {
-				docsWithCIDs = append(docsWithCIDs, docWithCID{doc: doc, rootCID: rootCID})
-			}
-		} else {
-			docsWithoutCIDs = append(docsWithoutCIDs, doc)
-		}
-	}
-
-	existsMap := make(map[string]bool, len(docsWithCIDs))
-	if len(docsWithCIDs) > 0 {
-		txn := p.db.Rootstore().NewTxn(true)
-		txnCtx := corekv.SetCtxTxn(ctx, txn)
-		for _, d := range docsWithCIDs {
-			exists, err := bstore.Has(txnCtx, d.rootCID)
-			if err == nil {
-				existsMap[d.rootCID.String()] = exists
-			}
-		}
-		txn.Discard()
-	}
-
-	var lastErr error
-	for _, d := range docsWithCIDs {
-		if existsMap[d.rootCID.String()] {
-			continue
-		}
-		if err := p.processSingleDocument(ctx, req, d.doc, false); err != nil {
-			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-				log.Info("Context done during pushlog request processing", corelog.Any("Error", err))
-				return err
-			}
-			log.ErrorE("Failed to process document", err, corelog.String("DocID", d.doc.DocID))
-			lastErr = err
-		}
-	}
-
-	// Process documents without CIDs
-	for _, doc := range docsWithoutCIDs {
 		if err := p.processSingleDocument(ctx, req, doc, false); err != nil {
 			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 				log.Info("Context done during pushlog request processing", corelog.Any("Error", err))
@@ -727,58 +680,9 @@ func (p *P2P) processDocumentsAsReplicator(ctx context.Context, req *protocol.Pu
 		return nil
 	}
 
-	bstore := p.db.Multistore().Blockstore()
-
-	type docWithCID struct {
-		doc     *protocol.DocumentInfo
-		rootCID cid.Cid
-	}
-	docsWithCIDs := make([]docWithCID, 0, len(req.Documents))
-	docsWithoutCIDs := make([]*protocol.DocumentInfo, 0)
-
+	var lastErr error
 	for i := range req.Documents {
 		doc := &req.Documents[i]
-		if len(doc.CAR) > 0 {
-			rootCID, err := parseCARRootCID(doc.CAR)
-			if err != nil {
-				log.ErrorE("Failed to parse CAR root CID", err, corelog.String("DocID", doc.DocID))
-				docsWithoutCIDs = append(docsWithoutCIDs, doc)
-			} else {
-				docsWithCIDs = append(docsWithCIDs, docWithCID{doc: doc, rootCID: rootCID})
-			}
-		} else {
-			docsWithoutCIDs = append(docsWithoutCIDs, doc)
-		}
-	}
-
-	existsMap := make(map[string]bool, len(docsWithCIDs))
-	if len(docsWithCIDs) > 0 {
-		txn := p.db.Rootstore().NewTxn(true)
-		txnCtx := corekv.SetCtxTxn(ctx, txn)
-		for _, d := range docsWithCIDs {
-			exists, err := bstore.Has(txnCtx, d.rootCID)
-			if err == nil {
-				existsMap[d.rootCID.String()] = exists
-			}
-		}
-		txn.Discard()
-	}
-
-	var lastErr error
-	for _, d := range docsWithCIDs {
-		if existsMap[d.rootCID.String()] {
-			continue
-		}
-		if err := p.processSingleDocument(ctx, req, d.doc, true); err != nil {
-			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-				return err
-			}
-			log.ErrorE("Failed to process replicator document", err, corelog.String("DocID", d.doc.DocID))
-			lastErr = err
-		}
-	}
-
-	for _, doc := range docsWithoutCIDs {
 		if err := p.processSingleDocument(ctx, req, doc, true); err != nil {
 			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 				return err
@@ -809,12 +713,32 @@ func (p *P2P) processSingleDocument(
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	block, err := coreblock.GetFromBytes(doc.Block)
+
+	headCID, err := cid.Cast(doc.CID)
 	if err != nil {
 		return err
 	}
 
-	headCID, err := cid.Cast(doc.CID)
+	if len(doc.CAR) > 0 {
+		mergeEvt := event.Merge{
+			DocID:        doc.DocID,
+			ByPeer:       req.SenderID,
+			FromPeer:     req.Creator,
+			Cid:          headCID,
+			CollectionID: req.CollectionID,
+		}
+
+		p.syncBatcher.enqueue(doc.CAR, mergeEvt, func(updateEvt event.Update) {
+			updateEvt.Block = doc.Block
+			p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
+			if err := p.SendUpdate(updateEvt); err != nil {
+				log.ErrorE("Failed to send update after sync", err, slog.Any("PeerID", p.host.ID()))
+			}
+		})
+		return nil
+	}
+
+	block, err := coreblock.GetFromBytes(doc.Block)
 	if err != nil {
 		return err
 	}
@@ -833,14 +757,6 @@ func (p *P2P) processSingleDocument(
 		txn := p.db.Rootstore().NewTxn(true)
 		defer txn.Discard()
 		txnCtx := corekv.SetCtxTxn(ctx, txn)
-
-		isMerged, err := p.db.Multistore().Blockstore().IsMerged(txnCtx, headCID)
-		if err != nil {
-			return err
-		}
-		if isMerged {
-			return nil
-		}
 
 		// Check if we have the collection
 		hasCollection, err := p.hasCollection(txnCtx, req.CollectionID)
@@ -863,17 +779,14 @@ func (p *P2P) processSingleDocument(
 			}
 		}
 
-		// For non-CAR syncs, we still need to sync the DAG first
-		if len(doc.CAR) == 0 {
-			hasBlock, err := p.db.Multistore().Blockstore().Has(ctx, headCID)
+		hasBlock, err := p.db.Multistore().Blockstore().Has(ctx, headCID)
+		if err != nil {
+			return err
+		}
+		if !hasBlock {
+			err = p.syncDAG(ctx, block)
 			if err != nil {
 				return err
-			}
-			if !hasBlock {
-				err = p.syncDAG(ctx, block)
-				if err != nil {
-					return err
-				}
 			}
 		}
 
@@ -908,6 +821,10 @@ func (p *P2P) processSingleDocument(
 }
 
 func (p *P2P) SendUpdate(evt event.Update) error {
+	if evt.IsRelay {
+		return nil
+	}
+
 	// push to each peer (replicator)
 	p.pushLogToReplicators(evt)
 
@@ -1123,7 +1040,7 @@ func (sb *syncBatcher) processBatches() {
 		txnCtx := corekv.SetCtxTxn(sb.ctx, txn)
 
 		if len(allRegularBlocks) > 0 {
-			bstore := datastore.P2PBlockstoreFrom(sb.p2p.db.Rootstore(), immutable.None[int]())
+			bstore := datastore.CARImportBlockstoreFrom(sb.p2p.db.Rootstore())
 			if err := bstore.PutMany(txnCtx, allRegularBlocks); err != nil {
 				log.ErrorE("Batch CAR import failed", err)
 				for _, req := range batch {

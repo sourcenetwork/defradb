@@ -19,6 +19,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-car/v2"
 	"github.com/ipld/go-car/v2/storage"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -52,15 +53,23 @@ func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []ro
 	rootCIDs := make([]cid.Cid, 0, len(rootBlocks))
 
 	for _, rb := range rootBlocks {
-		rootLink, err := rb.block.GenerateLink()
+		var rootCID cid.Cid
+		var err error
+		if rb.rawBytes != nil {
+			rootCID, err = coreblock.GetCIDFromBytes(rb.rawBytes)
+		} else {
+			var rootLink cidlink.Link
+			rootLink, err = rb.block.GenerateLink()
+			rootCID = rootLink.Cid
+		}
 		if err != nil {
 			return nil, err
 		}
-		rootCIDs = append(rootCIDs, rootLink.Cid)
+		rootCIDs = append(rootCIDs, rootCID)
 		if rb.rawBytes != nil {
-			cidStr := rootLink.Cid.String()
+			cidStr := rootCID.String()
 			collectedBlocks[cidStr] = &collectedBlock{
-				cid:      rootLink.Cid,
+				cid:      rootCID,
 				rawBytes: rb.rawBytes,
 			}
 			if rb.block.Signature != nil {
@@ -107,7 +116,7 @@ func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []ro
 				}
 			}
 		} else {
-			if err := p.collectDAGBlocksWithBytes(txnCtx, bstore, encStore, rootLink.Cid, collectedBlocks); err != nil {
+			if err := p.collectDAGBlocksWithBytes(txnCtx, bstore, encStore, rootCID, collectedBlocks); err != nil {
 				return nil, err
 			}
 		}
@@ -275,18 +284,6 @@ func parseCAR(carData []byte) (*parsedCAR, error) {
 		regularBlocks: regularBlocks,
 		encBlocks:     encBlocks,
 	}, nil
-}
-
-// parseCARRootCID extracts root CID from a CAR file without fully parsing it.
-func parseCARRootCID(carData []byte) (cid.Cid, error) {
-	reader, err := car.NewBlockReader(bytes.NewReader(carData))
-	if err != nil {
-		return cid.Cid{}, err
-	}
-	if len(reader.Roots) == 0 {
-		return cid.Cid{}, ErrEmptyCARRoots
-	}
-	return reader.Roots[0], nil
 }
 
 // importCARBatch imports multiple parsed CAR files in a single transaction.

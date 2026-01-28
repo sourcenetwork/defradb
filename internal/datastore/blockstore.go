@@ -23,7 +23,7 @@ import (
 )
 
 // mergedCacheSize is the number of merged CID entries to cache.
-const mergedCacheSize = 1_000_000
+const mergedCacheSize = 100_000
 
 // Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
 type Blockstore interface {
@@ -165,15 +165,27 @@ func (bs *blindWriteBlockstore) PutMany(ctx context.Context, blocks []blocks.Blo
 	return nil
 }
 
-// carImportBlockstore is optimized for CAR imports.
+// carImportBlockstore is optimized for CAR imports with CID verification.
 type carImportBlockstore struct {
 	*bstore
 }
 
 var _ Blockstore = (*carImportBlockstore)(nil)
 
-// Put stores a block without checking if it already exists.
+// verifyCID checks that the block's content hashes to its claimed CID.
+func verifyCID(b blocks.Block) bool {
+	computedCID, err := b.Cid().Prefix().Sum(b.RawData())
+	if err != nil {
+		return false
+	}
+	return computedCID.Equals(b.Cid())
+}
+
+// Put stores a block after verifying its CID matches the content.
 func (bs *carImportBlockstore) Put(ctx context.Context, block blocks.Block) error {
+	if !verifyCID(block) {
+		return nil
+	}
 	err := bs.store.Set(ctx, newToMergeKey(block.Cid().Bytes()), []byte{objectMarker})
 	if err != nil {
 		return err
@@ -181,9 +193,12 @@ func (bs *carImportBlockstore) Put(ctx context.Context, block blocks.Block) erro
 	return bs.store.Set(ctx, block.Cid().Bytes(), block.RawData())
 }
 
-// PutMany stores multiple blocks without checking if they already exist.
+// PutMany stores multiple blocks after verifying each CID matches its content.
 func (bs *carImportBlockstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
 	for _, b := range blocks {
+		if !verifyCID(b) {
+			continue
+		}
 		err := bs.store.Set(ctx, newToMergeKey(b.Cid().Bytes()), []byte{objectMarker})
 		if err != nil {
 			return err

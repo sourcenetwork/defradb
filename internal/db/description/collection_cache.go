@@ -34,7 +34,7 @@ func ContextWithCollectionCache(ctx context.Context, cache *CollectionCache) con
 	return context.WithValue(ctx, collectionCacheKey{}, cache)
 }
 
-// getCollectionCache retrieves the collection short-id cache from the given context.
+// CollectionCacheFromContext retrieves the collection short-id cache from the given context.
 func CollectionCacheFromContext(ctx context.Context) *CollectionCache {
 	return ctx.Value(collectionCacheKey{}).(*CollectionCache) //nolint:forcetypeassert
 }
@@ -240,6 +240,6 @@ func (cache *CollectionCache) AddAllActive(cols []client.CollectionVersion) {
 // PopulateCacheFromData populates the collection cache in the given context
 // with the provided collection data.
 func PopulateCacheFromData(ctx context.Context, cols []client.CollectionVersion) {
-	cache := getCollectionCache(ctx)
+	cache := CollectionCacheFromContext(ctx)
 	cache.AddAll(cols)
 }

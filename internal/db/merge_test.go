@@ -305,8 +305,8 @@ func TestMergeQueue(t *testing.T) {
 
 	testDocID := "test"
 
-	q.add(testDocID)
-	go q.add(testDocID)
+	q.add(t.Context(), testDocID)
+	go q.add(t.Context(), testDocID)
 	// give time for the goroutine to block
 	time.Sleep(10 * time.Millisecond)
 	require.Len(t, q.keys, 1)

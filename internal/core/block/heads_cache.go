@@ -79,13 +79,6 @@ func (c *headsCache) set(namespace string, heads []cid.Cid, maxHeight uint64) {
 	}
 }
 
-// invalidate removes the cached entry for the given namespace.
-func (c *headsCache) invalidate(namespace string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	delete(c.cache, namespace)
-}
-
 // updateOnWrite updates the cache when a new head is written.
 func (c *headsCache) updateOnWrite(namespace string, newCid cid.Cid, height uint64) {
 	c.mu.Lock()
@@ -159,17 +152,6 @@ func (c *headsCache) updateOnReplace(namespace string, oldCid, newCid cid.Cid, h
 	c.cache[namespace] = &headsCacheEntry{
 		heads:     newHeads,
 		maxHeight: height,
-	}
-}
-
-// invalidateByPrefix removes all cached entries that start with the given prefix.
-func (c *headsCache) invalidateByPrefix(prefix string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	for key := range c.cache {
-		if len(key) >= len(prefix) && key[:len(prefix)] == prefix {
-			delete(c.cache, key)
-		}
 	}
 }
 
@@ -250,7 +232,128 @@ func PrefetchDocHeads(ctx context.Context, store corekv.ReaderWriter, docID stri
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 
+	if len(headsMap) == 0 {
+		compositeKey := keys.HeadstoreDocKey{
+			DocID:   docID,
+			FieldID: "C",
+		}
+		cache.cache[string(compositeKey.Bytes())] = &headsCacheEntry{
+			heads:     nil,
+			maxHeight: 0,
+		}
+		return nil
+	}
+
 	for namespaceKey, entry := range headsMap {
+		if len(entry.heads) > 1 {
+			sort.Slice(entry.heads, func(i, j int) bool {
+				ci := entry.heads[i].Bytes()
+				cj := entry.heads[j].Bytes()
+				return bytes.Compare(ci, cj) < 0
+			})
+		}
+		cache.cache[namespaceKey] = entry
+	}
+
+	return nil
+}
+
+// BatchPrefetchDocHeads fetches heads for multiple documents using a single iterator.
+func BatchPrefetchDocHeads(ctx context.Context, store corekv.ReaderWriter, docIDs []string) error {
+	cache := getHeadsCache(ctx)
+	if cache == nil || len(docIDs) == 0 {
+		return nil
+	}
+
+	if IsNewDocCreateMode(ctx) {
+		return nil
+	}
+
+	sortedDocIDs := make([]string, len(docIDs))
+	copy(sortedDocIDs, docIDs)
+	sort.Strings(sortedDocIDs)
+
+	iter, err := store.Iterator(ctx, corekv.IterOptions{
+		Prefix: []byte("/d/"),
+	})
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	allHeadsMap := make(map[string]*headsCacheEntry)
+	for _, docID := range sortedDocIDs {
+		docPrefix := keys.HeadstoreDocKey{DocID: docID}
+		prefixBytes := docPrefix.Bytes()
+		iter.Seek(prefixBytes)
+
+		for {
+			hasNext, err := iter.Next()
+			if err != nil {
+				return err
+			}
+			if !hasNext {
+				break
+			}
+
+			key := iter.Key()
+			if !bytes.HasPrefix(key, prefixBytes) {
+				break
+			}
+
+			headKey, err := keys.NewHeadstoreDocKey(string(key))
+			if err != nil {
+				continue
+			}
+
+			value, err := iter.Value()
+			if err != nil {
+				return err
+			}
+
+			height, n := binary.Uvarint(value)
+			if n <= 0 {
+				continue
+			}
+
+			fieldNamespace := keys.HeadstoreDocKey{
+				DocID:   headKey.DocID,
+				FieldID: headKey.FieldID,
+			}
+			namespaceKey := string(fieldNamespace.Bytes())
+
+			entry, exists := allHeadsMap[namespaceKey]
+			if !exists {
+				entry = &headsCacheEntry{
+					heads:     make([]cid.Cid, 0, 1),
+					maxHeight: 0,
+				}
+				allHeadsMap[namespaceKey] = entry
+			}
+
+			entry.heads = append(entry.heads, headKey.Cid)
+			if height > entry.maxHeight {
+				entry.maxHeight = height
+			}
+		}
+
+		compositeKey := keys.HeadstoreDocKey{
+			DocID:   docID,
+			FieldID: "C",
+		}
+		keyStr := string(compositeKey.Bytes())
+		if _, exists := allHeadsMap[keyStr]; !exists {
+			allHeadsMap[keyStr] = &headsCacheEntry{
+				heads:     nil,
+				maxHeight: 0,
+			}
+		}
+	}
+
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+
+	for namespaceKey, entry := range allHeadsMap {
 		if len(entry.heads) > 1 {
 			sort.Slice(entry.heads, func(i, j int) bool {
 				ci := entry.heads[i].Bytes()

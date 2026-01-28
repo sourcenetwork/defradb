@@ -58,11 +58,15 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 		// As collection commits link to document composite commits, all events
 		// recieved for branchable collections must be processed serially else
 		// they may otherwise cause a transaction conflict.
-		db.colMergeQueue.add(evt.CollectionID)
+		if err := db.colMergeQueue.add(ctx, evt.CollectionID); err != nil {
+			return err
+		}
 		defer db.colMergeQueue.done(evt.CollectionID)
 	} else {
 		// ensure only one merge per docID
-		db.docMergeQueue.add(evt.DocID)
+		if err := db.docMergeQueue.add(ctx, evt.DocID); err != nil {
+			return err
+		}
 		defer db.docMergeQueue.done(evt.DocID)
 	}
 
@@ -186,11 +190,18 @@ func (db *DB) executeMergeBatchWithTxn(ctx context.Context, col *collection, evt
 	copy(sortedDocIDs, docIDs)
 	sort.Strings(sortedDocIDs)
 
+	addedDocIDs := make([]string, 0, len(sortedDocIDs))
 	for _, docID := range sortedDocIDs {
-		db.docMergeQueue.add(docID)
+		if err := db.docMergeQueue.add(ctx, docID); err != nil {
+			for _, added := range addedDocIDs {
+				db.docMergeQueue.done(added)
+			}
+			return err
+		}
+		addedDocIDs = append(addedDocIDs, docID)
 	}
 	defer func() {
-		for _, docID := range sortedDocIDs {
+		for _, docID := range addedDocIDs {
 			db.docMergeQueue.done(docID)
 		}
 	}()
@@ -216,6 +227,17 @@ func (db *DB) executeMergeBatchInTxnNoCommit(ctx context.Context, col *collectio
 // executeMergeBatchWritesOnly performs batch merge writes only, returning docIDs for later index sync.
 func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, evts []event.Merge) (*MergeBatchResult, error) {
 	allDocIDs := make(map[string]struct{})
+
+	docIDsToFetch := make([]string, 0, len(evts))
+	for _, evt := range evts {
+		if evt.DocID != "" {
+			docIDsToFetch = append(docIDsToFetch, evt.DocID)
+		}
+	}
+	if len(docIDsToFetch) > 0 {
+		txn := datastore.CtxMustGetTxn(ctx)
+		_ = coreblock.BatchPrefetchDocHeads(ctx, txn.Headstore(), docIDsToFetch)
+	}
 
 	for _, dagMerge := range evts {
 		var key keys.HeadstoreKey
@@ -388,11 +410,18 @@ func (db *DB) executeMergeBatch(ctx context.Context, col *collection, evts []eve
 	copy(sortedDocIDs, docIDs)
 	sort.Strings(sortedDocIDs)
 
+	addedDocIDs := make([]string, 0, len(sortedDocIDs))
 	for _, docID := range sortedDocIDs {
-		db.docMergeQueue.add(docID)
+		if err := db.docMergeQueue.add(ctx, docID); err != nil {
+			for _, added := range addedDocIDs {
+				db.docMergeQueue.done(added)
+			}
+			return err
+		}
+		addedDocIDs = append(addedDocIDs, docID)
 	}
 	defer func() {
-		for _, docID := range sortedDocIDs {
+		for _, docID := range addedDocIDs {
 			db.docMergeQueue.done(docID)
 		}
 	}()
@@ -415,6 +444,16 @@ func (db *DB) executeMergeBatchInTxn(ctx context.Context, col *collection, evts 
 		return err
 	}
 	defer txn.Discard()
+
+	docIDsToFetch := make([]string, 0, len(evts))
+	for _, evt := range evts {
+		if evt.DocID != "" {
+			docIDsToFetch = append(docIDsToFetch, evt.DocID)
+		}
+	}
+	if len(docIDsToFetch) > 0 {
+		_ = coreblock.BatchPrefetchDocHeads(ctx, txn.Headstore(), docIDsToFetch)
+	}
 
 	allDocIDs := make(map[string]struct{})
 
@@ -582,19 +621,23 @@ func newMergeQueue() *mergeQueue {
 
 // add adds a key to the queue. If the key is already in the queue, it will
 // wait for the key to be removed from the queue. For every add call, done must
-// be called to remove the key from the queue. Otherwise, subsequent add calls will
-// block forever.
-func (m *mergeQueue) add(key string) {
+// be called to remove the key from the queue. Returns an error if the context
+// is cancelled while waiting.
+func (m *mergeQueue) add(ctx context.Context, key string) error {
 	for {
 		m.mutex.Lock()
 		done, ok := m.keys[key]
 		if !ok {
 			m.keys[key] = make(chan struct{})
 			m.mutex.Unlock()
-			return
+			return nil
 		}
 		m.mutex.Unlock()
-		<-done
+		select {
+		case <-done:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 }
 
