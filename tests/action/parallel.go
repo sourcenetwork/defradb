@@ -44,25 +44,35 @@ func (a *Parallel) SetState(s *state.State) {
 func (a *Parallel) Execute() {
 	// startLock is responsible for ensuring that all child actions are scheduled/ready before
 	// any of them begin execution.
-	startWG := sync.WaitGroup{}
-	startWG.Add(len(a.Children))
+	startLock := sync.RWMutex{}
+	startLock.Lock()
 
 	// finishedWG is responsible for ensuring that all child actions complete their execution
 	// before this action-function unblocks/completes.
 	finishedWG := sync.WaitGroup{}
 
+	// childrenReady is responsible for ensuring that all child routines have been set up and are
+	// now waiting for the start lock to be unlocked.
+	childrenReady := sync.WaitGroup{}
 	for _, childAction := range a.Children {
+		childrenReady.Add(1)
 		finishedWG.Go(func() {
+			childrenReady.Done()
+
 			// Block behind the startWG until all child actions are ready to proceed
-			startWG.Done()
+			startLock.RLock()
+			defer startLock.RUnlock()
 
 			childAction.Execute()
 		})
 	}
 
+	// Wait for all the children to be ready before allowing them to start.
+	childrenReady.Wait()
+
 	// Release the start lock once all child actions are queued so that they may all begin at
 	// as close a point in time as the runtime/machine allows.
-	startWG.Wait()
+	startLock.Unlock()
 
 	finishedWG.Wait()
 }
