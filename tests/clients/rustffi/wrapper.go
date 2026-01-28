@@ -75,9 +75,12 @@ func NewWrapperWithP2P(listenAddr string) (*Wrapper, error) {
 // extractCollectionNameFromPatch extracts the collection name from a JSON patch path.
 // Patch format: [{"op": "add", "path": "/CollectionName/Fields/-", "value": {...}}]
 // All operations must target the same collection.
+// For move/copy operations, use the "from" path to determine the source collection.
 func extractCollectionNameFromPatch(patch string) (string, error) {
 	var ops []struct {
+		Op   string `json:"op"`
 		Path string `json:"path"`
+		From string `json:"from"`
 	}
 	if err := json.Unmarshal([]byte(patch), &ops); err != nil {
 		return "", fmt.Errorf("failed to parse patch JSON: %w", err)
@@ -86,15 +89,10 @@ func extractCollectionNameFromPatch(patch string) (string, error) {
 		return "", fmt.Errorf("patch contains no operations")
 	}
 
-	var collectionName string
-	for i, op := range ops {
-		// Path format: /CollectionName/Fields/- or /CollectionName/Fields/0
-		path := op.Path
+	extractName := func(path string) string {
 		if len(path) == 0 || path[0] != '/' {
-			return "", fmt.Errorf("invalid patch path in operation %d: %s", i, path)
+			return ""
 		}
-
-		// Remove leading slash and extract first component
 		path = path[1:]
 		name := path
 		for j, c := range path {
@@ -102,6 +100,28 @@ func extractCollectionNameFromPatch(patch string) (string, error) {
 				name = path[:j]
 				break
 			}
+		}
+		return name
+	}
+
+	var collectionName string
+	for i, op := range ops {
+		// For move/copy, prefer "from" path as it indicates the source collection
+		// For other operations, use "path"
+		var pathToUse string
+		if (op.Op == "move" || op.Op == "copy") && op.From != "" {
+			pathToUse = op.From
+		} else {
+			pathToUse = op.Path
+		}
+
+		if len(pathToUse) == 0 || pathToUse[0] != '/' {
+			return "", fmt.Errorf("invalid patch path in operation %d: %s", i, pathToUse)
+		}
+
+		name := extractName(pathToUse)
+		if name == "" {
+			return "", fmt.Errorf("could not extract collection name from operation %d", i)
 		}
 
 		if collectionName == "" {
