@@ -279,7 +279,7 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, er
 		return nil, NewErrCollectionNotBranchable(collectionID)
 	}
 
-	shortID, err := dbid.NewShortCollectionID(p.ctx, col.CollectionID, p.db.Multistore().Systemstore())
+	shortID, err := dbid.GetUncachedShortCollectionID(p.ctx, col.CollectionID, p.db.Multistore().Systemstore())
 	if err != nil {
 		return nil, err
 	}

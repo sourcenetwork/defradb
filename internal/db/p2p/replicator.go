@@ -179,7 +179,7 @@ func (p *P2P) pushHeadsForAllDocs(ctx context.Context, col client.Collection, pe
 	type unsafeDatastore interface {
 		Unsafe() corekv.ReaderWriter
 	}
-	shortID, err := id.NewShortCollectionID(ctx, col.Version().CollectionID, p.db.Multistore().Systemstore())
+	shortID, err := id.GetUncachedShortCollectionID(ctx, col.Version().CollectionID, p.db.Multistore().Systemstore())
 	if err != nil {
 		return err
 	}

@@ -423,13 +423,9 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		if err != nil {
 			return nil, err
 		}
-		_, exists := mp.docIDs[docID]
-		if !exists {
-			doc, err := mp.col.Get(ctx, docID, false)
-			if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-				return nil, err
-			}
-			mp.docIDs[docID] = doc
+		err = mp.trackMergedDocument(ctx, docID)
+		if err != nil {
+			return nil, err
 		}
 		return crdt.NewDocComposite(
 			txn.Datastore(),
@@ -451,13 +447,9 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 		if err != nil {
 			return nil, err
 		}
-		_, exists := mp.docIDs[docID]
-		if !exists {
-			doc, err := mp.col.Get(ctx, docID, false)
-			if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-				return nil, err
-			}
-			mp.docIDs[docID] = doc
+		err = mp.trackMergedDocument(ctx, docID)
+		if err != nil {
+			return nil, err
 		}
 
 		field := crdtUnion.GetFieldName()
@@ -484,6 +476,21 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 			field,
 		)
 	}
+}
+
+// trackMergedDocument tracks the current version of the document so we
+// can correctly sync indexes after a merge.
+func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.DocID) error {
+	_, exists := mp.docIDs[docID]
+	if exists {
+		return nil
+	}
+	doc, err := mp.col.Get(ctx, docID, false)
+	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
+		return nil
+	}
+	mp.docIDs[docID] = doc
+	return nil
 }
 
 func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID string) (*collection, error) {

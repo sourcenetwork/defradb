@@ -217,7 +217,7 @@ func (c *collection) GetAllDocIDs(
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	shortID, err := id.NewShortCollectionID(ctx, c.Version().CollectionID, c.db.Multistore().Systemstore())
+	shortID, err := id.GetUncachedShortCollectionID(ctx, c.Version().CollectionID, c.db.Multistore().Systemstore())
 	if err != nil {
 		return nil, err
 	}

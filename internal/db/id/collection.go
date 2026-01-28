@@ -20,11 +20,11 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-// NewShortCollectionID returns the local, shortened, internal, collection id, which is used
+// GetUncachedShortCollectionID returns the local, shortened, internal, collection id, which is used
 // only in locations where using the full CID would be a waste of storage space.
 //
 // GetShortCollectionID should be preferred over this method because it utilizes the cache.
-func NewShortCollectionID(ctx context.Context, collectionID string, systemStore corekv.ReaderWriter) (uint32, error) {
+func GetUncachedShortCollectionID(ctx context.Context, collectionID string, systemStore corekv.ReaderWriter) (uint32, error) {
 	key := keys.NewCollectionID(collectionID)
 	valueBytes, err := systemStore.Get(ctx, key.Bytes())
 	if err != nil {
@@ -51,7 +51,7 @@ func GetShortCollectionID(
 		return shortID, nil
 	}
 	txn := datastore.CtxMustGetTxn(ctx)
-	shortID, err := NewShortCollectionID(ctx, collectionID, txn.Systemstore())
+	shortID, err := GetUncachedShortCollectionID(ctx, collectionID, txn.Systemstore())
 	if err != nil {
 		return 0, err
 	}

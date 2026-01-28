@@ -46,7 +46,7 @@ func storeArtifacts(
 	ds := ms.Datastore().(unsafeDatastore).Unsafe()
 
 	for _, artifact := range artifacts {
-		colID, err := id.NewShortCollectionID(ctx, artifact.CollectionID, ss)
+		colID, err := id.GetUncachedShortCollectionID(ctx, artifact.CollectionID, ss)
 		if err != nil {
 			return err
 		}
@@ -79,7 +79,7 @@ func fetchDocIDs(
 
 	docIDSet := make(map[string]struct{})
 
-	colID, err := id.NewShortCollectionID(ctx, collectionID, ss)
+	colID, err := id.GetUncachedShortCollectionID(ctx, collectionID, ss)
 	if err != nil {
 		return nil, err
 	}
