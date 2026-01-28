@@ -35,7 +35,7 @@ runs:
       run: |
         SOURCEHUB_COMMIT=$(sed -rn 's/.*sourcehub.*-([0-9a-f]+)/\1/p' go.mod)
         echo "short=$SOURCEHUB_COMMIT" >> "$GITHUB_ENV"
-   
+
     # Fetch sourcehub repo to get the full commit sha.
     # note: go.mod's automatically generated placeholder version only stores the short commit.
     - name: Checkout sourcehub code into the directory
