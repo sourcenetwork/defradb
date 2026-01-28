@@ -31,21 +31,18 @@ runs:
     # Uses the go.mod file to determine the version of SorceHub to be fetched for jobs
     - name: Get SourceHub short commit
       id: sourcehub-commit
+      shell: bash
       run: |
         SOURCEHUB_COMMIT=$(sed -rn 's/.*sourcehub.*-([0-9a-f]+)/\1/p' go.mod)
         echo "short=$SOURCEHUB_COMMIT" >> "$GITHUB_ENV"
    
-    # We fetch the full depth then checkout a given commit
-    # because the checkout action attempts to checkout a git tag
-    # when given a short commit hash.
-    # Unfortunately, go.mod's automatically generated placeholder version
-    # only stores the short commit.
+    # Fetch sourcehub repo to get the full commit sha.
+    # note: go.mod's automatically generated placeholder version only stores the short commit.
     - name: Checkout sourcehub code into the directory
       uses: actions/checkout@v6
       with:
         repository: sourcenetwork/sourcehub
         path: _sourcehub
-        #fetch-depth: 0
 
     - name: Build SourceHub image name
       id: image-name
