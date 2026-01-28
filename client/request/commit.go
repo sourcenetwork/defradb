@@ -59,11 +59,9 @@ func (c CommitSelect) ToSelect() *Select {
 }
 
 // ToSubscriptionSelect implements the subscriptionSelector interface in internal/db/subscriptions.go
-func (c CommitSelect) ToSubscriptionSelect(docID, cid string) Selection {
-	if c.DocID.HasValue() && c.DocID.Value() != docID {
-		return nil
-	}
-
+// We can safely ignore the first parameter (docID) for now
+// since its always copied from the original subscription request
+func (c CommitSelect) ToSubscriptionSelect(_, cid string) Selection {
 	return &CommitSelect{
 		Field: Field{
 			Name:  c.Name,
@@ -75,4 +73,24 @@ func (c CommitSelect) ToSubscriptionSelect(docID, cid string) Selection {
 		},
 		ChildSelect: c.ChildSelect,
 	}
+}
+
+// CheckCIDFilter checks if the given cid passes the CID filter.
+// Returns true if the cid passes the filter, false otherwise.
+// If no CID filter is set, it always passes.
+func (c CommitSelect) CheckCIDFilter(cid string) bool {
+	if c.CID.HasValue() && c.CID.Value() != cid {
+		return false
+	}
+	return true
+}
+
+// CheckDocIDFilter checks if the given docID passes the DocID filter.
+// Returns true if the docID passes the filter, false otherwise.
+// If no DocID filter is set, it always passes.
+func (c CommitSelect) CheckDocIDFilter(docID string) bool {
+	if c.DocID.HasValue() && c.DocID.Value() != docID {
+		return false
+	}
+	return true
 }

@@ -23,6 +23,8 @@ import (
 
 type subscriptionSelector interface {
 	ToSubscriptionSelect(docID, cid string) request.Selection
+	CheckCIDFilter(cid string) bool
+	CheckDocIDFilter(docID string) bool
 }
 
 // handleSubscription checks for a subscription within the given request and
@@ -63,6 +65,10 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 					continue // invalid event value
 				}
 			}
+			// Skip events that do not pass the subscription's docID and cid filters
+			if !subRequest.CheckDocIDFilter(evt.DocID) || !subRequest.CheckCIDFilter(evt.Cid.String()) {
+				continue
+			}
 			txn, err := db.NewTxn(false)
 			if err != nil {
 				log.ErrorContext(ctx, err.Error())
@@ -80,10 +86,6 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				db.getLensStore(ctx),
 			)
 			s := subRequest.ToSubscriptionSelect(evt.DocID, evt.Cid.String())
-			if s == nil {
-				txn.Discard()
-				continue
-			}
 
 			result, err := p.RunSelection(ctx, s)
 			if err == nil && len(result) == 0 {
