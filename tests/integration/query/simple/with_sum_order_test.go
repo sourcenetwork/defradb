@@ -20,14 +20,14 @@ import (
 func TestQuerySimpleWithSumWithOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Age": 30,
 					"HeightM": 1.8
 				}`,
 			}, // Sum: 31.8
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Age": 25,
 					"HeightM": 1.6

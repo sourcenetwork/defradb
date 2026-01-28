@@ -21,7 +21,7 @@ func TestQueryCommits_WithFilterFieldNameIn_ReturnsMatchingCommits(t *testing.T)
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 21
@@ -50,7 +50,7 @@ func TestQueryCommits_WithFilterFieldNameInComposite_ReturnsCompositeCommit(t *t
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 21
@@ -78,7 +78,7 @@ func TestQueryCommits_WithFilterFieldNameInEmpty_ReturnsNoCommits(t *testing.T) 
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 21
@@ -104,7 +104,7 @@ func TestQueryCommits_WithFilterFieldNameNotIn_ExcludesMatchingCommits(t *testin
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 21
@@ -132,7 +132,7 @@ func TestQueryCommits_WithFilterFieldNameNotInComposite_ExcludesCompositeCommit(
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 21
@@ -161,7 +161,7 @@ func TestQueryCommits_WithFilterFieldNameNotInEmpty_ReturnsAllCommits(t *testing
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 21
@@ -191,7 +191,7 @@ func TestQueryCommits_WithFilterFieldNameInAndCondition_ReturnsFilteredCommits(t
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 21
@@ -219,7 +219,7 @@ func TestQueryCommits_WithFilterFieldNameNotInOrCondition_ReturnsFilteredCommits
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 21

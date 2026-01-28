@@ -41,7 +41,7 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
