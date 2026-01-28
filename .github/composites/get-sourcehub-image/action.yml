@@ -52,3 +52,4 @@ runs:
       run: |
         commit=$(git rev-parse $short)
         echo "image=ghcr.io/sourcenetwork/sourcehub:$commit" >> "$GITHUB_ENV"
+        echo "image=ghcr.io/sourcenetwork/sourcehub:$commit" >> "$GITHUB_OUTPUT"

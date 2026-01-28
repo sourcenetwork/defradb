@@ -92,11 +92,15 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 	s.T.Cleanup(func() {
 		s.T.Helper()
 		logs, err := container.Logs(ctx)
-		require.NoError(s.T, err)
-		buf := bytes.Buffer{}
-		// errors during cleanup don't affect anything
-		buf.ReadFrom(logs) //nolint:errcheck
-		s.T.Logf("container logs: %v", buf.String())
+		if err != nil {
+			s.T.Logf("could not read container logs")
+		} else {
+			buf := bytes.Buffer{}
+			// errors during cleanup don't affect anything
+			buf.ReadFrom(logs) //nolint:errcheck
+			s.T.Logf("container logs: %v", buf.String())
+			logs.Close() //nolint:errcheck
+		}
 		testcontainers.TerminateContainer(container) //nolint:errcheck
 	})
 
