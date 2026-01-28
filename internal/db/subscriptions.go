@@ -64,10 +64,6 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				}
 			}
 
-			if ctx.Err() != nil {
-				return
-			}
-
 			txn, err := db.NewTxn(false)
 			if err != nil {
 				log.ErrorContext(ctx, err.Error())

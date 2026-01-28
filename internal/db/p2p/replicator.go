@@ -389,20 +389,13 @@ func (p *P2P) handleReplicatorRetries(ctx context.Context) {
 }
 
 func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string) error {
-	// Check if context is cancelled before attempting database operations.
-	// This prevents attempts to write to a closed database during shutdown,
-	// which can cause a panic ("send on closed channel").
-	if ctx.Err() != nil {
-		return ctx.Err()
-	}
-
 	// This method can be called concurrently for the same peerID which can cause some
 	// transaction conflicts. Since this is not a performance critical operation, it's
 	// safe to use a mutex to prevent unnecessary conflicts.
 	p.handleRetryMutex.Lock()
 	defer p.handleRetryMutex.Unlock()
 
-	// Double-check context after acquiring the mutex, as shutdown may have
+	// Check context after acquiring the mutex, as shutdown may have
 	// occurred while we were waiting.
 	if ctx.Err() != nil {
 		return ctx.Err()
