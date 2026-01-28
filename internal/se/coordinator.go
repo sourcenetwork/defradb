@@ -217,6 +217,12 @@ func (coordinator *Coordinator) handleReplicationFailure(
 	docID, collectionID, peerID string,
 	fieldNames []string,
 ) error {
+	// Check if context is cancelled before attempting database operations.
+	// This prevents attempts to write to a closed database during shutdown.
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
 	clientTxn, err := coordinator.db.NewTxn(false)
 	if err != nil {
 		return err
