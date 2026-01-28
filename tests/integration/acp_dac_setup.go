@@ -19,18 +19,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/google/uuid"
-	"github.com/sourcenetwork/defradb/keyring"
-	"github.com/sourcenetwork/defradb/node"
-	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/sourcehub/sdk"
-
-	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-
-	"github.com/sourcenetwork/immutable"
-
 	cdc "github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocdc "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -38,6 +26,15 @@ import (
 	cosmoskeyring "github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmossecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cosmostypes "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/google/uuid"
+	"github.com/sourcenetwork/defradb/keyring"
+	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/sourcehub/sdk"
+	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
 	tclog "github.com/testcontainers/testcontainers-go/log"
 )
 
@@ -81,7 +78,7 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		testcontainers.WithExposedPorts("9090/tcp"),
 		testcontainers.WithLogger(testLogger),
 		testcontainers.WithEnv(map[string]string{
-			// STANDALONE configures the SH container to create a isolated chain,
+			// STANDALONE configures the SH container to create an isolated chain,
 			// instead of connecting to an existing one.
 			"STANDALONE": "1",
 		}),
@@ -206,9 +203,9 @@ func getAccountDataFromMnemonic(t testing.TB, mnemonic string) []byte {
 	kb := cosmoskeyring.NewInMemory(codec)
 	rec, err := kb.NewAccount("key", faucetMnemonic, "", cosmostypes.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
 	require.NoError(t, err)
-	keyRecBz := rec.Item.(*cosmoskeyring.Record_Local_).Local.PrivKey.Value
+	privKeyRecByes := rec.Item.(*cosmoskeyring.Record_Local_).Local.PrivKey.Value
 	privKey := cosmossecp256k1.PrivKey{}
-	err = privKey.Unmarshal(keyRecBz)
+	err = privKey.Unmarshal(privKeyRecByes)
 	require.NoError(t, err)
 	return privKey.Bytes()
 }
