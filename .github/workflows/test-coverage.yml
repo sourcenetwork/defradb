@@ -158,8 +158,7 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      # We have to install it ourselves because it contains replace commands in its go.mod file.
-      - name: Get SourceHub Docker Image
+      - name: Get SourceHub Docker Image Name
         id: sourcehub-image
         uses: ./.github/composites/get-sourcehub-image
 
