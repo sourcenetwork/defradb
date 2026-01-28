@@ -8,9 +8,9 @@
 # by the Apache License, Version 2.0, included in the file
 # licenses/APL.txt.
 
-name: 'Install SourceHub'
+name: 'Get SourceHub Docker Image Tag'
 
-description: 'Composite action to install sourcehub'
+description: 'Composite action to figure out the correct docker image to use for SourceHub'
 
 inputs:
   ref:
@@ -18,29 +18,40 @@ inputs:
     required: true
     default: 'coverage_default'
 
+outputs:
+  image:
+    description: "SourceHub image to use"
+    value: ${{ steps.image-name.outputs.image }}
+
 runs:
   # This is a composite action, setting this is required.
   using: "composite"
 
   steps:
-    - name: Checkout sourcehub code into the directory
-      uses: actions/checkout@v6
-      with:
-        repository: sourcenetwork/sourcehub
-        path: _sourceHub
-        fetch-depth: 0
-
+    # Uses the go.mod file to determine the version of SorceHub to be fetched for jobs
+    - name: Get SourceHub short commit
+      id: sourcehub-commit
+      run: |
+        SOURCEHUB_COMMIT=$(sed -rn 's/.*sourcehub.*-([0-9a-f]+)/\1/p' go.mod)
+        echo "short=$SOURCEHUB_COMMIT" >> "$GITHUB_ENV"
+   
     # We fetch the full depth then checkout a given commit
     # because the checkout action attempts to checkout a git tag
     # when given a short commit hash.
     # Unfortunately, go.mod's automatically generated placeholder version
     # only stores the short commit.
-    - name: Checkout repository at given version
-      working-directory: _sourceHub
-      shell: bash
-      run: git checkout ${{ inputs.ref }}
+    - name: Checkout sourcehub code into the directory
+      uses: actions/checkout@v6
+      with:
+        repository: sourcenetwork/sourcehub
+        path: _sourcehub
+        #fetch-depth: 0
 
-    - name: Install SourceHub CLI
-      working-directory: _sourceHub
-      shell: bash # It's required for run step to specify shell in a composite action.
-      run: make install
+    - name: Build SourceHub image name
+      id: image-name
+      working-directory: _sourcehub
+      shell: bash
+      run: |
+        short_commit=${{ steps.sourcehub-commit.outputs.short }})
+        commit=$(git rev-parse $short_commit)
+        echo "image=ghcr.io/sourcenetwork/sourcehub:$commit" >> "$GITHUB_ENV"

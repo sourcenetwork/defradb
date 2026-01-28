@@ -41,6 +41,15 @@ import (
 	tclog "github.com/testcontainers/testcontainers-go/log"
 )
 
+const (
+	// faucetMnemonic is the mnemonic for a static faucet account present in the
+	// STANDALONE version of the SourceHub image
+	faucetMnemonic = "comic very pond victory suit tube ginger antique life then core warm loyal deliver iron fashion erupt husband weekend monster sunny artist empty uphold"
+
+	// faucetAddr is the account address matching the faucetMnemonic
+	faucetAddr = "source12d9hjf0639k995venpv675sju9ltsvf8u5c9jt"
+)
+
 func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, error) {
 	var isDocumentACPTest bool
 	for _, a := range testCase.Actions {
@@ -63,9 +72,8 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 
 	testLogger := tclog.TestLogger(s.T)
 	ctx := context.Background()
-	img := fmt.Sprintf("ghcr.io/sourcenetwork/sourcehub:refactor-df-defra") // TODO
 	container, err := testcontainers.Run(ctx,
-		img,
+		sourcehubImage,
 		testcontainers.WithName(name.String()),
 		testcontainers.WithExposedPorts("26657/tcp"),
 		testcontainers.WithExposedPorts("9090/tcp"),
@@ -78,6 +86,8 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		return nil, err
 	}
 
+	// cleanup by fetching the container logs
+	// and writing it to the test logger to ease debug if the test fails
 	s.T.Cleanup(func() {
 		logs, err := container.Logs(context.Background())
 		require.NoError(s.T, err)
@@ -86,6 +96,7 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		s.T.Logf("container logs: %v", buf.String())
 		testcontainers.TerminateContainer(container)
 	})
+
 	grpcEndpoint, err := container.PortEndpoint(ctx, "9090", "")
 	if err != nil {
 		return nil, err
@@ -94,31 +105,16 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 	if err != nil {
 		return nil, err
 	}
+	s.T.Logf("sourcehub endpoints: grpc=%v, rpc=%v", grpcEndpoint, rpcEndpoint)
 
-	s.T.Logf(
-		"sourcehub endpoints: grpc=%v, rpc=%v", grpcEndpoint, rpcEndpoint,
-	)
-
-	faucetMnemonic := "comic very pond victory suit tube ginger antique life then core warm loyal deliver iron fashion erupt husband weekend monster sunny artist empty uphold"
-
-	faucetAddr := "source12d9hjf0639k995venpv675sju9ltsvf8u5c9jt"
 	s.SourcehubAddress = faucetAddr
-	err = waitForSourceHub(s.T, container, grpcEndpoint, rpcEndpoint, faucetAddr)
+
+	err = waitForSourceHub(s.T, grpcEndpoint, rpcEndpoint, faucetAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	registry := cdctypes.NewInterfaceRegistry()
-	cryptocdc.RegisterInterfaces(registry)
-	codec := cdc.NewProtoCodec(registry)
-	kb := cosmoskeyring.NewInMemory(codec)
-	rec, err := kb.NewAccount("key", faucetMnemonic, "", cosmostypes.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
-	require.NoError(s.T, err)
-	keyRecBz := rec.Item.(*cosmoskeyring.Record_Local_).Local.PrivKey.Value
-	privKey := cosmossecp256k1.PrivKey{}
-	err = privKey.Unmarshal(keyRecBz)
-	require.NoError(s.T, err)
-
+	privKeyBytes := getAccountDataFromMnemonic(s.T, faucetMnemonic)
 	kr, err := keyring.OpenFileKeyring(
 		s.T.TempDir(),
 		[]byte("secret"),
@@ -127,17 +123,7 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		return nil, err
 	}
 
-	// Generate the keys using the index as the seed so that multiple
-	// runs yield the same private key.  This is important for stuff like
-	// the change detector.
-	//source := rand.NewSource(0)
-	//r := rand.New(source)
-
-	//acpKey, err := secp256k1.GeneratePrivateKeyFromRand(r)
-	//require.NoError(s.T, err)
-	//acpKeyHex := hex.EncodeToString(acpKey.Serialize())
-
-	err = kr.Set("validator", privKey.Bytes())
+	err = kr.Set("validator", privKeyBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +141,7 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 	}, nil
 }
 
-func waitForSourceHub(t testing.TB, container testcontainers.Container, grpcEndpoint, cometRpcEndpoint string, valAddr string) error {
+func waitForSourceHub(t testing.TB, grpcEndpoint, cometRpcEndpoint string, accAddr string) error {
 	timeout := time.After(5 * time.Second)
 	i := 1
 	startTs := time.Now()
@@ -168,7 +154,7 @@ func waitForSourceHub(t testing.TB, container testcontainers.Container, grpcEndp
 			t.Logf("time out waiting for sourcehub to start")
 			return fmt.Errorf("error setting up SourceHub: connection not ready after deadline")
 		case <-timer:
-			ok := probeSourceHub(grpcEndpoint, cometRpcEndpoint, valAddr)
+			ok := probeSourceHub(grpcEndpoint, cometRpcEndpoint, accAddr)
 			if ok {
 				elapsed := time.Since(startTs)
 				t.Logf("sourcehub ready to receive connections: after %v", elapsed)
@@ -186,14 +172,10 @@ func probeSourceHub(grpcAddr, cometRpcAddr, valAddr string) bool {
 		sdk.WithGRPCAddr(grpcAddr),
 		sdk.WithCometRPCAddr(cometRpcAddr),
 	)
-	defer func() {
-		recover()
-	}()
-	defer client.Close()
-
 	if err != nil {
 		return false
 	}
+	defer client.Close()
 
 	// probe rpc service
 	height := int64(1)
@@ -207,4 +189,22 @@ func probeSourceHub(grpcAddr, cometRpcAddr, valAddr string) bool {
 		Address: valAddr,
 	})
 	return err == nil
+}
+
+// getAccountDataFromMnemonic returns the private key bytes
+// from a given sourcehub mnemonic.
+// assumes the mnemonic is for a secp256k1 key
+func getAccountDataFromMnemonic(t testing.TB, mnemonic string) []byte {
+	registry := cdctypes.NewInterfaceRegistry()
+	cryptocdc.RegisterInterfaces(registry)
+	codec := cdc.NewProtoCodec(registry)
+
+	kb := cosmoskeyring.NewInMemory(codec)
+	rec, err := kb.NewAccount("key", faucetMnemonic, "", cosmostypes.GetConfig().GetFullBIP44Path(), hd.Secp256k1)
+	require.NoError(t, err)
+	keyRecBz := rec.Item.(*cosmoskeyring.Record_Local_).Local.PrivKey.Value
+	privKey := cosmossecp256k1.PrivKey{}
+	err = privKey.Unmarshal(keyRecBz)
+	require.NoError(t, err)
+	return privKey.Bytes()
 }

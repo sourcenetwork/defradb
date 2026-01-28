@@ -23,10 +23,12 @@ import (
 
 const (
 	documentACPTypeEnvName = "DEFRA_DOCUMENT_ACP_TYPE"
+	sourcehubImageEnvName  = "DEFRA_SOURCEHUB_IMAGE"
 )
 
 var (
 	documentACPType state.DocumentACPType
+	sourcehubImage  string
 )
 
 const (
@@ -44,6 +46,10 @@ func init() {
 	documentACPType = state.DocumentACPType(os.Getenv(documentACPTypeEnvName))
 	if documentACPType == "" {
 		documentACPType = state.LocalDocumentACPType
+	}
+	sourcehubImage = os.Getenv(sourcehubImageEnvName)
+	if sourcehubImage == "" {
+		sourcehubImage = "ghcr.io/sourcenetwork/sourcehub:dev"
 	}
 }
 
