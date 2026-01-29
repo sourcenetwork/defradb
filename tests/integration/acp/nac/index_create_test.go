@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -62,6 +63,14 @@ func TestNAC_GatesIndexCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesIndexCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// See: https://github.com/sourcenetwork/defradb/issues/4383
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.GoClientType,
+				state.JSClientType,
+			},
+		),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -85,7 +94,49 @@ func TestNAC_GatesIndexCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_GatesIndexCreate_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+	test := testUtils.TestCase{
+		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// See: https://github.com/sourcenetwork/defradb/issues/4383
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.CClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
+			},
+		),
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
+			&action.AddSchema{
+				Identity: testUtils.ClientIdentity(1),
+				Schema: `
+					type User {
+						name: String
+					}
+				`,
+			},
+
+			// We haven't authorized non-identities. So, this should error.
+			&action.CreateIndex{
+				Identity:      testUtils.NoIdentity(),
+				CollectionID:  0,
+				FieldName:     "name",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -95,6 +146,14 @@ func TestNAC_GatesIndexCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesIndexCreate_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// See: https://github.com/sourcenetwork/defradb/issues/4383
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.GoClientType,
+				state.JSClientType,
+			},
+		),
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -118,7 +177,49 @@ func TestNAC_GatesIndexCreate_WrongIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestNAC_GatesIndexCreate_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+	test := testUtils.TestCase{
+		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// See: https://github.com/sourcenetwork/defradb/issues/4383
+		SupportedClientTypes: immutable.Some(
+			[]state.ClientType{
+				state.CClientType,
+				state.HTTPClientType,
+				state.CLIClientType,
+			},
+		),
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
+			// will lose setup state when the restart happens (i.e. the restart that started nac).
+			&action.AddSchema{
+				Identity: testUtils.ClientIdentity(1),
+				Schema: `
+					type User {
+						name: String
+					}
+				`,
+			},
+
+			// Wrong user/identity will also not be authorized.
+			&action.CreateIndex{
+				Identity:      testUtils.ClientIdentity(2),
+				CollectionID:  0,
+				FieldName:     "name",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

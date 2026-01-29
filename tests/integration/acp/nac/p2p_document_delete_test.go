@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -27,9 +28,7 @@ func TestNAC_GatesP2PDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T)
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.GoClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -92,9 +91,7 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.GoClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -143,7 +140,7 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentDeletePerm),
 			},
 		},
 	}
@@ -158,9 +155,7 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.GoClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -209,7 +204,7 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentDeletePerm),
 			},
 		},
 	}

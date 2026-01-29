@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/testo/multiplier"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -1950,4 +1951,8 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 			require.NoError(s.T, err)
 		}
 	}
+}
+
+func FormatExpectedErrorWithPermission(permission acpTypes.NodeResourcePermission) string {
+	return fmt.Sprintf("%s. Permission: %s", client.ErrNotAuthorizedToPerformOperation, permission.String())
 }

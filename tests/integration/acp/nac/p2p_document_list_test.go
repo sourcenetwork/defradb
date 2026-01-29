@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -136,7 +137,7 @@ func TestNAC_GatesP2PDocumentList_NoIdentity_NotAuthorizedError(t *testing.T) {
 			testUtils.GetAllP2PDocuments{
 				Identity:      testUtils.NoIdentity(),
 				NodeID:        1,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm),
 			},
 		},
 	}
@@ -197,7 +198,7 @@ func TestNAC_GatesP2PDocumentList_WrongIdentity_NotAuthorizedError(t *testing.T)
 			testUtils.GetAllP2PDocuments{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm),
 			},
 		},
 	}
