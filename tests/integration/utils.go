@@ -287,7 +287,7 @@ func executeTestCase(
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
-	refreshCollections(s)
+	refreshCollections(s, immutable.None[int]())
 	refreshDocuments(s, testCase, startActionIndex)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
@@ -861,7 +861,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
 	// will reference the old (closed) database instances.
-	refreshCollections(s)
+	refreshCollections(s, immutable.None[int]())
 }
 
 func restartNodes(
@@ -908,6 +908,7 @@ func refreshTokens(
 // result-index will be nil.
 func refreshCollections(
 	s *state.State,
+	transactionID immutable.Option[int],
 ) {
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
@@ -916,7 +917,9 @@ func refreshCollections(
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
-		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
+		txn := getTransaction(s, node, transactionID, "")
+		ctx := db.InitContext(s.Ctx, txn)
+		ctx = getContextWithIdentity(ctx, s, nodeIdentity, nodeID)
 		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})
 		require.Nil(s.T, err)
 
@@ -1066,7 +1069,7 @@ func setActiveCollectionVersion(
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(s)
+	refreshCollections(s, immutable.None[int]())
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
