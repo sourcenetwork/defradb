@@ -529,8 +529,10 @@ endif
 		go test ./tests/integration/$$pkg/... -v -count=1 -timeout $(FFI_TIMEOUT) 2>&1 | tee $$report_file; \
 		echo ""; \
 		echo "=== Results for $$pkg ==="; \
-		passed=$$(grep -c "^--- PASS:" $$report_file 2>/dev/null || echo 0); \
-		failed=$$(grep -c "^--- FAIL:" $$report_file 2>/dev/null || echo 0); \
+		passed=$$(grep -c "^--- PASS:" $$report_file 2>/dev/null || true); \
+		failed=$$(grep -c "^--- FAIL:" $$report_file 2>/dev/null || true); \
+		passed=$${passed:-0}; \
+		failed=$${failed:-0}; \
 		total=$$((passed + failed)); \
 		echo "  Passed: $$passed"; \
 		echo "  Failed: $$failed"; \
@@ -599,8 +601,8 @@ test\:ffi-report:
 	for f in $(FFI_REPORT_DIR)/*.log; do \
 		if [ -f "$$f" ]; then \
 			name=$$(basename $$f .log); \
-			passed=$$(grep -c "^--- PASS:" $$f 2>/dev/null || echo 0); \
-			failed=$$(grep -c "^--- FAIL:" $$f 2>/dev/null || echo 0); \
+			passed=$$(grep -c "^--- PASS:" $$f 2>/dev/null; true); \
+			failed=$$(grep -c "^--- FAIL:" $$f 2>/dev/null; true); \
 			total=$$((passed + failed)); \
 			total_passed=$$((total_passed + passed)); \
 			total_failed=$$((total_failed + failed)); \
@@ -635,8 +637,8 @@ endif
 	total_passed=0; total_failed=0; \
 	for f in $$history_dir/*.log; do \
 		if [ -f "$$f" ]; then \
-			passed=$$(grep -c "^--- PASS:" $$f 2>/dev/null || echo 0); \
-			failed=$$(grep -c "^--- FAIL:" $$f 2>/dev/null || echo 0); \
+			passed=$$(grep -c "^--- PASS:" $$f 2>/dev/null; true); \
+			failed=$$(grep -c "^--- FAIL:" $$f 2>/dev/null; true); \
 			total_passed=$$((total_passed + passed)); \
 			total_failed=$$((total_failed + failed)); \
 		fi; \
