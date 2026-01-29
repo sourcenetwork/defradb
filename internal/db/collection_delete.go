@@ -171,9 +171,83 @@ func (c *collection) applyDelete(
 		primaryKey.ToDataStoreKey().WithFieldID(core.COMPOSITE_NAMESPACE),
 	)
 
+	docID, err := client.NewDocIDFromString(primaryKey.DocID)
+	if err != nil {
+		return err
+	}
+	err = c.deleteIndexedDocWithID(ctx, docID)
+	if err != nil {
+		return err
+	}
+
 	link, b, err := coreblock.AddDelta(ctx, merkleCRDT, merkleCRDT.DeleteDelta())
 	if err != nil {
 		return err
+	}
+
+	// Delete Primary Key
+	err = txn.Datastore().Delete(ctx, primaryKey.ToDS())
+	if err != nil {
+		return err
+	}
+
+	// Delete ValueKey (Object Marker)
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	if err != nil {
+		return err
+	}
+
+	valueKey := keys.DataStoreKey{
+		CollectionShortID: shortID,
+		DocID:             primaryKey.DocID,
+		InstanceType:      keys.ValueKey,
+	}
+	err = txn.Datastore().Delete(ctx, valueKey.ToDS())
+	if err != nil {
+		return err
+	}
+
+	// Delete Fields (including Composite and Legacy fields)
+	// We iterate over all keys with the prefix /[CollectionShortID]/[DocID] to ensure
+	// we catch everything, not just fields in the current schema version.
+
+	// Construct the prefix for field data: /[CollectionShortID]/[DocID]
+	// Note: InstanceType is empty for field data, so we don't set it.
+	fieldPrefix := keys.DataStoreKey{
+		CollectionShortID: shortID,
+		DocID:             primaryKey.DocID,
+	}
+
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+		Prefix: fieldPrefix,
+	})
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+
+	var keysToDelete []keys.DataStoreKey
+	for {
+		hasNext, err := iter.Next()
+		if err != nil {
+			return err
+		}
+		if !hasNext {
+			break
+		}
+
+		k, err := keys.NewDataStoreKey(string(iter.Key()))
+		if err != nil {
+			return err
+		}
+		keysToDelete = append(keysToDelete, k)
+	}
+
+	for _, k := range keysToDelete {
+		err = txn.Datastore().Delete(ctx, k.ToDS())
+		if err != nil {
+			return err
+		}
 	}
 
 	// publish an update event if the txn succeeds
