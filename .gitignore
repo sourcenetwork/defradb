@@ -74,6 +74,9 @@ crash.log
 # Rust FFI test reports
 reports/
 
+# Rust FFI test history (see make test:ffi-history)
+ffi-test-history/
+
 # Rust FFI library files (built from defradb.rs)
 tests/clients/rustffi/*.a
 tests/clients/rustffi/*.dylib
