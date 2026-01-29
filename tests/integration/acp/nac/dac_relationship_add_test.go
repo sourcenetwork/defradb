@@ -90,7 +90,7 @@ func TestNAC_GatesAddingDACRelationship_NoIdentity_NotAuthorizedError(t *testing
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationAddPerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationAddPerm),
 			},
 		},
 	}
@@ -130,7 +130,7 @@ func TestNAC_GatesAddingDACRelationship_WrongIdentity_NotAuthorizedError(t *test
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationAddPerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationAddPerm),
 			},
 		},
 	}

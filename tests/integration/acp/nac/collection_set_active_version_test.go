@@ -103,7 +103,7 @@ func TestNAC_GatesCollectionSetActiveVersion_NoIdentity_NotAuthorizedError(t *te
 			testUtils.SetActiveCollectionVersion{
 				Identity:      testUtils.NoIdentity(),
 				VersionID:     "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 		},
 	}
@@ -151,7 +151,7 @@ func TestNAC_GatesCollectionSetActiveVersion_NoIdentity_CLIClient_NotAuthorizedE
 			testUtils.SetActiveCollectionVersion{
 				Identity:      testUtils.NoIdentity(),
 				VersionID:     "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -202,7 +202,7 @@ func TestNAC_GatesCollectionSetActiveVersion_WrongIdentity_NotAuthorizedError(t 
 			testUtils.SetActiveCollectionVersion{
 				Identity:      testUtils.ClientIdentity(2),
 				VersionID:     "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 		},
 	}
@@ -250,7 +250,7 @@ func TestNAC_GatesCollectionSetActiveVersion_WrongIdentity_CLIClient_NotAuthoriz
 			testUtils.SetActiveCollectionVersion{
 				Identity:      testUtils.ClientIdentity(2),
 				VersionID:     "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

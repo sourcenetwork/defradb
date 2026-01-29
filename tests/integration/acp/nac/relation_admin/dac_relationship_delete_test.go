@@ -66,7 +66,7 @@ func TestNAC_AdminRelation_WithDACManagerRelation_CanDeleteDACActorRelationship(
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationDeletePerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationDeletePerm),
 			},
 
 			// Grant access to user.
@@ -140,7 +140,7 @@ func TestNAC_AdminRelation_WithoutDACManagerRelation_CanNotDeleteDACActorRelatio
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationDeletePerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationDeletePerm),
 			},
 
 			// Grant access to user.

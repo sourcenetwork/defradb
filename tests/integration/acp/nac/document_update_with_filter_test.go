@@ -110,7 +110,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_NotAuthorizedError(t *test
 				CollectionID:  0,
 				Filter:        `{name: {_eq: "Shahzad"}}`,
 				Updater:       `{"name": "Lone"}`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentUpdatePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentUpdatePerm),
 			},
 			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),
@@ -168,7 +168,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_NoIdentity_CLIandCandHTTPClient_NotAu
 				CollectionID:  0,
 				Filter:        `{name: {_eq: "Shahzad"}}`,
 				Updater:       `{"name": "Lone"}`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),
@@ -225,7 +225,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_NotAuthorizedError(t *t
 				CollectionID:  0,
 				Filter:        `{name: {_eq: "Shahzad"}}`,
 				Updater:       `{"name": "Lone"}`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentUpdatePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentUpdatePerm),
 			},
 			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),
@@ -283,7 +283,7 @@ func TestNAC_GatesDocumentUpdateWithFilter_WrongIdentity_CLIandCandHTTPClient_No
 				CollectionID:  0,
 				Filter:        `{name: {_eq: "Shahzad"}}`,
 				Updater:       `{"name": "Lone"}`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 			&action.Request{ // Should not be updated
 				Identity: testUtils.ClientIdentity(1),

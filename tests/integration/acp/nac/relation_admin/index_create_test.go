@@ -53,7 +53,7 @@ func TestNAC_AdminRelation_CanIndexCreate(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm),
 			},
 
 			// Grant access to user.
@@ -110,7 +110,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanIndexCreate(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

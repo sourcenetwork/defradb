@@ -92,7 +92,7 @@ func TestNAC_GatesIndexDrop_NoIdentity_NotAuthorizedError(t *testing.T) {
 			&action.DropIndex{
 				Identity:      testUtils.NoIdentity(),
 				IndexName:     "User_name_ASC",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexDropPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexDropPerm),
 			},
 		},
 	}
@@ -133,7 +133,7 @@ func TestNAC_GatesIndexDrop_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t
 			&action.DropIndex{
 				Identity:      testUtils.NoIdentity(),
 				IndexName:     "User_name_ASC",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -173,7 +173,7 @@ func TestNAC_GatesIndexDrop_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			&action.DropIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				IndexName:     "User_name_ASC",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexDropPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexDropPerm),
 			},
 		},
 	}
@@ -214,7 +214,7 @@ func TestNAC_GatesIndexDrop_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedErro
 			&action.DropIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				IndexName:     "User_name_ASC",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

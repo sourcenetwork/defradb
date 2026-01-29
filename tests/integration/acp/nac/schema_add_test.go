@@ -38,7 +38,7 @@ func TestNAC_GatesSchemaAdd_AllowIfAuthorizedElseError(t *testing.T) {
 						name: String
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 
 			// Wrong user/identity will also not be authorized.
@@ -49,7 +49,7 @@ func TestNAC_GatesSchemaAdd_AllowIfAuthorizedElseError(t *testing.T) {
 						name: String
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 
 			// This should work as the identity is authorized.

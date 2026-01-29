@@ -71,7 +71,7 @@ func TestNAC_GatesP2PReplicatorCreate_NoIdentity_NotAuthorizedError(t *testing.T
 				Identity:      testUtils.NoIdentity(),
 				SourceNodeID:  1,
 				TargetNodeID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm),
 			},
 		},
 	}
@@ -97,7 +97,7 @@ func TestNAC_GatesP2PReplicatorCreate_WrongIdentity_NotAuthorizedError(t *testin
 				Identity:      testUtils.ClientIdentity(2),
 				SourceNodeID:  1,
 				TargetNodeID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm),
 			},
 		},
 	}

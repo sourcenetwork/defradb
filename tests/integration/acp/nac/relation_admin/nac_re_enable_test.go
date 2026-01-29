@@ -34,7 +34,7 @@ func TestNAC_AdminRelation_CanReEnableNAC(t *testing.T) {
 			// This user, can not perform this gated operation yet.
 			testUtils.ReEnableNAC{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACReEnablePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACReEnablePerm),
 			},
 
 			// Grant access to user, but for that we need to temporarily re-enable and

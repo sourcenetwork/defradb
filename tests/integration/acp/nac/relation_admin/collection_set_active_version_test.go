@@ -63,7 +63,7 @@ func TestNAC_AdminRelation_CanCollectionSetActiveVersion(t *testing.T) {
 			testUtils.SetActiveCollectionVersion{
 				Identity:      testUtils.ClientIdentity(2),
 				VersionID:     "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 
 			// Grant access to user.
@@ -125,7 +125,7 @@ func TestNAC_AdminRelation_CLIClient_CanCollectionSetActiveVersion(t *testing.T)
 			testUtils.SetActiveCollectionVersion{
 				Identity:      testUtils.ClientIdentity(2),
 				VersionID:     "bafyreigvzkfdc4y2ppvvpmmdw3t7kv4nd5dgfh5jfytef3kbzem6po55zu",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

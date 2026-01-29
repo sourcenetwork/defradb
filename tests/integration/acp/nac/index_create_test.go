@@ -94,7 +94,7 @@ func TestNAC_GatesIndexCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm),
 			},
 		},
 	}
@@ -136,7 +136,7 @@ func TestNAC_GatesIndexCreate_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -177,7 +177,7 @@ func TestNAC_GatesIndexCreate_WrongIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexCreatePerm),
 			},
 		},
 	}
@@ -219,7 +219,7 @@ func TestNAC_GatesIndexCreate_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedEr
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

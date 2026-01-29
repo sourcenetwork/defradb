@@ -37,7 +37,7 @@ func TestNAC_AdminRelation_CanCollectionGetByID(t *testing.T) {
 				FilterOptions: client.CollectionFetchOptions{
 					CollectionID: immutable.Some("does not exist"),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

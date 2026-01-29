@@ -46,7 +46,7 @@ func TestNAC_AdminRelation_CanCollectionGetByName(t *testing.T) {
 					Name:            immutable.Some("Users"),
 					IncludeInactive: immutable.Some(false),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

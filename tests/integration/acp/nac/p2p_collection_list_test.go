@@ -119,7 +119,7 @@ func TestNAC_GatesP2PCollectionList_NoIdentity_NotAuthorizedError(t *testing.T) 
 			testUtils.GetAllP2PCollections{
 				Identity:      testUtils.NoIdentity(),
 				NodeID:        1,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionListPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionListPerm),
 			},
 		},
 	}
@@ -172,7 +172,7 @@ func TestNAC_GatesP2PCollectionList_WrongIdentity_NotAuthorizedError(t *testing.
 			testUtils.GetAllP2PCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionListPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionListPerm),
 			},
 		},
 	}

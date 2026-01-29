@@ -58,7 +58,7 @@ func TestNAC_AdminRelation_WithDACManagerRelation_CanAddDACActorRelationship(t *
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationAddPerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationAddPerm),
 			},
 
 			// Grant access to user.
@@ -124,7 +124,7 @@ func TestNAC_AdminRelation_WithoutManagerDACRelation_CanNotAddDACActorRelationsh
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationAddPerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationAddPerm),
 			},
 
 			// Grant access to user.

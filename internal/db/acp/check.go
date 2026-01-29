@@ -236,5 +236,5 @@ func CheckNodeOperationAccess(
 		return nil
 	}
 
-	return client.NewErrNotAuthorizedMissingPermission(permission.String())
+	return client.NewErrNotAuthorizedToPerformOperation(nodeResourcePerm)
 }

@@ -41,7 +41,7 @@ func TestNAC_AdminRelation_CanDeleteNACRelationship(t *testing.T) {
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.ClientIdentity(3),
 				Relation:          "admin",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 
 			// Grant access to user.

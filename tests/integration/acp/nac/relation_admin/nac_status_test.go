@@ -31,7 +31,7 @@ func TestNAC_AdminRelation_CanGetNACStatus(t *testing.T) {
 			// This user, can not perform this gated operation yet.
 			testUtils.GetNACStatus{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			// Grant access to user.

@@ -32,7 +32,7 @@ func TestNAC_AdminRelation_CanAddNACRelationship(t *testing.T) {
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.AllClientIdentities(), // Target doesn't matter so much
 				Relation:          "admin",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationAddPerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationAddPerm),
 			},
 
 			// Grant access to user.

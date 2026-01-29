@@ -55,7 +55,7 @@ func TestNAC_GatesCollectionPatch_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
-		// TO DO: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -88,7 +88,7 @@ func TestNAC_GatesCollectionPatch_NoIdentity_NotAuthorizedError(t *testing.T) {
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 		},
 	}
@@ -129,7 +129,7 @@ func TestNAC_GatesCollectionPatch_NoIdentity_CLIClient_NotAuthorizedError(t *tes
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -173,7 +173,7 @@ func TestNAC_GatesCollectionPatch_WrongIdentity_NotAuthorizedError(t *testing.T)
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 		},
 	}
@@ -214,7 +214,7 @@ func TestNAC_GatesCollectionPatch_WrongIdentity_CLIClient_NotAuthorizedError(t *
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

@@ -52,7 +52,7 @@ func TestNAC_GatesAddingDACPolicy_NoIdentity_NotAuthorizedError(t *testing.T) {
 			testUtils.AddDACPolicy{
 				Identity:      testUtils.NoIdentity(),
 				Policy:        examplePolicy,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACPolicyAddPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACPolicyAddPerm),
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func TestNAC_GatesAddingDACPolicy_WrongIdentity_NotAuthorizedError(t *testing.T)
 			testUtils.AddDACPolicy{
 				Identity:      testUtils.ClientIdentity(2),
 				Policy:        examplePolicy,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACPolicyAddPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACPolicyAddPerm),
 			},
 		},
 	}

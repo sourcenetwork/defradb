@@ -50,7 +50,7 @@ func TestNAC_AdminRelation_CanCollectionTruncate(t *testing.T) {
 			&action.Truncate{
 				Identity:        testUtils.ClientIdentity(2),
 				CollectionIndex: 0,
-				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionTruncatePerm.String()),
+				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionTruncatePerm),
 			},
 
 			// Grant access to user.
@@ -103,7 +103,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanCollectionTruncate(t *testing
 			&action.Truncate{
 				Identity:        testUtils.ClientIdentity(2),
 				CollectionIndex: 0,
-				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

@@ -56,7 +56,7 @@ func TestNAC_DisableWithoutIdentityOnNodeThatHasConfigured_Error(t *testing.T) {
 			},
 
 			testUtils.DisableNAC{
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACDisablePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACDisablePerm),
 			},
 
 			testUtils.GetNACStatus{ // Did not disable.
@@ -80,7 +80,7 @@ func TestNAC_DisableWithWrongIdentityOnNodeThatHasConfigured_Error(t *testing.T)
 
 			testUtils.DisableNAC{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACDisablePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACDisablePerm),
 			},
 
 			testUtils.GetNACStatus{ // Did not disable.
@@ -104,7 +104,7 @@ func TestNAC_DisableWithIdentityOnNodeThatHasNACConfiguredAndEnabled_Successful(
 
 			// Can not do this request without identity before disabling.
 			testUtils.GetNACStatus{
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			testUtils.DisableNAC{

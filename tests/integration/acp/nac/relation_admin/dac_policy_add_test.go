@@ -40,7 +40,7 @@ func TestNAC_AdminRelation_CanAddDACPolicy(t *testing.T) {
 			testUtils.AddDACPolicy{
 				Identity:      testUtils.ClientIdentity(2),
 				Policy:        examplePolicy,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACPolicyAddPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACPolicyAddPerm),
 			},
 
 			// Grant access to user.

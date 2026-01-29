@@ -46,7 +46,7 @@ func TestNAC_AdminRelation_CanP2PReplicatorCreate(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				SourceNodeID:  1,
 				TargetNodeID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm),
 			},
 
 			// Grant access to user.

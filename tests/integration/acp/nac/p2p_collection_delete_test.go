@@ -120,7 +120,7 @@ func TestNAC_GatesP2PCollectionDelete_NoIdentity_NotAuthorizedError(t *testing.T
 				Identity:      testUtils.NoIdentity(),
 				NodeID:        1,
 				CollectionIDs: []int{0},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionDeletePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionDeletePerm),
 			},
 		},
 	}
@@ -174,7 +174,7 @@ func TestNAC_GatesP2PCollectionDelete_WrongIdentity_NotAuthorizedError(t *testin
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionDeletePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionDeletePerm),
 			},
 		},
 	}

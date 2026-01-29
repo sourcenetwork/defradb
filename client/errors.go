@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -270,6 +271,6 @@ func NewErrNotFound(kv errors.KV) error {
 	return errors.New(errNotFound, kv)
 }
 
-func NewErrNotAuthorizedMissingPermission(permission string) error {
-	return errors.WithStack(ErrNotAuthorizedToPerformOperation, errors.NewKV("Permission", permission))
+func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {
+	return errors.New(ErrNotAuthorizedToPerformOperation.Error(), errors.NewKV("Permission", permission.String()))
 }

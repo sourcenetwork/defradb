@@ -61,7 +61,7 @@ func TestNAC_GatesCollectionGetByID_NoIdentity_NotAuthorizedError(t *testing.T) 
 				FilterOptions: client.CollectionFetchOptions{
 					CollectionID: immutable.Some("does not exist"),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -85,7 +85,7 @@ func TestNAC_GatesCollectionGetByID_WrongIdentity_NotAuthorizedError(t *testing.
 				FilterOptions: client.CollectionFetchOptions{
 					CollectionID: immutable.Some("does not exist"),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

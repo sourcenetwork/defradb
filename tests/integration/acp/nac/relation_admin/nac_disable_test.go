@@ -31,7 +31,7 @@ func TestNAC_AdminRelation_CanDisableNAC(t *testing.T) {
 			// This user, can not perform this gated operation yet.
 			testUtils.DisableNAC{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACDisablePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACDisablePerm),
 			},
 
 			// Grant access to user.

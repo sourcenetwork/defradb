@@ -71,7 +71,7 @@ func TestNAC_GatesP2PPeerConnect_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:      testUtils.NoIdentity(),
 				SourceNodeID:  1,
 				TargetNodeID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PPeerConnectPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PPeerConnectPerm),
 			},
 		},
 	}
@@ -97,7 +97,7 @@ func TestNAC_GatesP2PPeerConnect_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				Identity:      testUtils.ClientIdentity(2),
 				SourceNodeID:  1,
 				TargetNodeID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PPeerConnectPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PPeerConnectPerm),
 			},
 		},
 	}

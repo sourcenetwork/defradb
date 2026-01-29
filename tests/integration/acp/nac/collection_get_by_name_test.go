@@ -83,7 +83,7 @@ func TestNAC_GatesCollectionGetByName_NoIdentity_NotAuthorizedError(t *testing.T
 					Name:            immutable.Some("Users"),
 					IncludeInactive: immutable.Some(false),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -108,7 +108,7 @@ func TestNAC_GatesCollectionGetByName_WrongIdentity_NotAuthorizedError(t *testin
 					Name:            immutable.Some("Users"),
 					IncludeInactive: immutable.Some(false),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

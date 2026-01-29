@@ -140,7 +140,7 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentDeletePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentDeletePerm),
 			},
 		},
 	}
@@ -204,7 +204,7 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentDeletePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentDeletePerm),
 			},
 		},
 	}

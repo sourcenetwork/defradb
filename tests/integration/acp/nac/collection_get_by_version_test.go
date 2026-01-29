@@ -63,7 +63,7 @@ func TestNAC_GatesCollectionGetByVersion_NoIdentity_NotAuthorizedError(t *testin
 					VersionID:       immutable.Some("does not exist"),
 					IncludeInactive: immutable.Some(false),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -88,7 +88,7 @@ func TestNAC_GatesCollectionGetByVersion_WrongIdentity_NotAuthorizedError(t *tes
 					VersionID:       immutable.Some("does not exist"),
 					IncludeInactive: immutable.Some(false),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

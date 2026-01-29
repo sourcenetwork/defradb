@@ -46,7 +46,7 @@ func TestNAC_AdminRelation_CanP2PPeerConnect(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				SourceNodeID:  1,
 				TargetNodeID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PPeerConnectPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PPeerConnectPerm),
 			},
 
 			// Grant access to user.

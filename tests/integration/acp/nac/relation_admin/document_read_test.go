@@ -45,7 +45,7 @@ func TestNAC_AdminRelation_CanDocumentRead(t *testing.T) {
 			&action.Request{
 				Identity:      testUtils.ClientIdentity(2),
 				Request:       `query{ User { name } }`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

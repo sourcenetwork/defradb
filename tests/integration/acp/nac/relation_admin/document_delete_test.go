@@ -62,7 +62,7 @@ func TestNAC_AdminRelation_CanDocumentDelete(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				DocID:         0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentDeletePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentDeletePerm),
 			},
 
 			// Grant access to user.
@@ -128,7 +128,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanDocumentDelete(t *testing.T) 
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				DocID:         0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

@@ -59,7 +59,7 @@ func TestNAC_ReEnableWithNoIdentityWhenTemporarilyDisabled_Error(t *testing.T) {
 			},
 
 			testUtils.ReEnableNAC{
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACReEnablePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACReEnablePerm),
 			},
 
 			testUtils.GetNACStatus{ // Still disabled
@@ -85,7 +85,7 @@ func TestNAC_ReEnableWithWrongIdentityWhenTemporarilyDisabled_Error(t *testing.T
 
 			testUtils.ReEnableNAC{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACReEnablePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACReEnablePerm),
 			},
 
 			testUtils.GetNACStatus{ // Still disabled
@@ -115,7 +115,7 @@ func TestNAC_ReEnableWithValidIdentityWhenTemporarilyDisabled_NACReEnabled(t *te
 			},
 
 			testUtils.GetNACStatus{ // NAC was successfully re-enabled so this won't work
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			testUtils.GetNACStatus{ // This works and shows that nac is enabled.
@@ -235,7 +235,7 @@ func TestNAC_ReEnableSuccessfullyThenRestartWithNoArgs_RemainsReEnabled(t *testi
 
 			// Can not do this as nac is enabled.
 			testUtils.GetNACStatus{
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 		},
 	}
@@ -282,7 +282,7 @@ func TestNAC_ReEnableSuccessfullyThenRestartWithStartArgs_RemainsReEnabled(t *te
 
 			// Can not do this as nac is enabled.
 			testUtils.GetNACStatus{
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 		},
 	}
@@ -323,7 +323,7 @@ func TestNAC_ReEnableTemporarilyDisabledNACAfterRestart_ReEnabledSuccessfully(t 
 			},
 
 			testUtils.GetNACStatus{ // This should then not work.
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			// This will work and show the status.

@@ -137,7 +137,7 @@ func TestNAC_GatesP2PDocumentList_NoIdentity_NotAuthorizedError(t *testing.T) {
 			testUtils.GetAllP2PDocuments{
 				Identity:      testUtils.NoIdentity(),
 				NodeID:        1,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm),
 			},
 		},
 	}
@@ -198,7 +198,7 @@ func TestNAC_GatesP2PDocumentList_WrongIdentity_NotAuthorizedError(t *testing.T)
 			testUtils.GetAllP2PDocuments{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm),
 			},
 		},
 	}

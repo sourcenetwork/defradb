@@ -53,7 +53,7 @@ func TestNAC_AdminRelation_CanIndexList(t *testing.T) {
 			&action.GetIndexes{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexListPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexListPerm),
 			},
 
 			// Grant access to user.
@@ -109,7 +109,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanIndexList(t *testing.T) {
 			&action.GetIndexes{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

@@ -64,7 +64,7 @@ func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *te
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.ClientIdentity(3),
 				Relation:          "admin",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 
 			// Without an requestor identity.
@@ -72,7 +72,7 @@ func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *te
 				RequestorIdentity: testUtils.NoIdentity(),
 				TargetIdentity:    testUtils.ClientIdentity(3),
 				Relation:          "admin",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 
 			// Without target identity.
@@ -80,7 +80,7 @@ func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *te
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.NoIdentity(),
 				Relation:          "admin",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 
 			// Without both identities.
@@ -88,7 +88,7 @@ func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *te
 				RequestorIdentity: testUtils.NoIdentity(),
 				TargetIdentity:    testUtils.NoIdentity(),
 				Relation:          "admin",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 
 			// Authorized requestor identity but without target identity.
@@ -220,7 +220,7 @@ func TestNAC_DeleteRelationshipWithValidIdentity_RelationshipDeleted(t *testing.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.ClientIdentity(3),
 				Relation:          "admin",
-				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm.String()),
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 		},
 	}
@@ -267,13 +267,13 @@ func TestNAC_DeleteRelationshipForAllIdentities_AllImplicitIdentitiesAccessRevok
 			// Check any normal identity is no longer allowed to perform gated operation(s).
 			testUtils.GetNACStatus{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			// Check if an empty identity can no longer perform gated operation(s).
 			testUtils.GetNACStatus{
 				Identity:      testUtils.NoIdentity(),
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			// Check that explicitly allowed identities still have access to perform gated operation(s).

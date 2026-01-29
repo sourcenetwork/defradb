@@ -67,7 +67,7 @@ func TestNAC_AdminRelation_CanP2PCollectionDelete(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionDeletePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionDeletePerm),
 			},
 
 			// Grant access to user.

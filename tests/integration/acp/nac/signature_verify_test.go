@@ -134,7 +134,7 @@ func TestNAC_GatesVerifySignature_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:       testUtils.NoIdentity(),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
-				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm.String()),
+				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm),
 			},
 
 			// We haven't authorized non-identities. So, this should error with client identity signer also.
@@ -142,7 +142,7 @@ func TestNAC_GatesVerifySignature_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:       testUtils.NoIdentity(),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
-				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm.String()),
+				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm),
 			},
 		},
 	}
@@ -166,7 +166,7 @@ func TestNAC_GatesVerifySignature_WrongIdentity_NotAuthorizedError(t *testing.T)
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
-				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm.String()),
+				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm),
 			},
 
 			// Wrong user/identity with client identity signer will also not be authorized.
@@ -174,7 +174,7 @@ func TestNAC_GatesVerifySignature_WrongIdentity_NotAuthorizedError(t *testing.T)
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
-				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm.String()),
+				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm),
 			},
 		},
 	}

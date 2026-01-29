@@ -55,6 +55,7 @@ func TestNAC_GatesDocumentRead_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesDocumentRead_NoIdentity_NotAuthorizedError(t *testing.T) {
 	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -79,7 +80,7 @@ func TestNAC_GatesDocumentRead_NoIdentity_NotAuthorizedError(t *testing.T) {
 			&action.Request{
 				Identity:      testUtils.NoIdentity(),
 				Request:       `query{ User { name } }`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -112,7 +113,7 @@ func TestNAC_GatesDocumentRead_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			&action.Request{
 				Identity:      testUtils.ClientIdentity(2),
 				Request:       `query{ User { name } }`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

@@ -62,7 +62,7 @@ func TestNAC_AdminRelation_CanP2PCollectionCreate(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionCreatePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionCreatePerm),
 			},
 
 			// Grant access to user.

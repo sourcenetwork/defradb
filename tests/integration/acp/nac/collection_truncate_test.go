@@ -78,7 +78,7 @@ func TestNAC_GatesCollectionTruncate_NoIdentity_NotAuthorizedError(t *testing.T)
 			&action.Truncate{
 				Identity:        testUtils.NoIdentity(),
 				CollectionIndex: 0,
-				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionTruncatePerm.String()),
+				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionTruncatePerm),
 			},
 		},
 	}
@@ -86,7 +86,7 @@ func TestNAC_GatesCollectionTruncate_NoIdentity_NotAuthorizedError(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesCollectionTruncate_NoIdentity_CLIandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesCollectionTruncate_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
@@ -117,7 +117,7 @@ func TestNAC_GatesCollectionTruncate_NoIdentity_CLIandHTTPClient_NotAuthorizedEr
 			&action.Truncate{
 				Identity:        testUtils.NoIdentity(),
 				CollectionIndex: 0,
-				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -154,7 +154,7 @@ func TestNAC_GatesCollectionTruncate_WrongIdentity_NotAuthorizedError(t *testing
 			&action.Truncate{
 				Identity:        testUtils.ClientIdentity(2),
 				CollectionIndex: 0,
-				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionTruncatePerm.String()),
+				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionTruncatePerm),
 			},
 		},
 	}
@@ -192,7 +192,7 @@ func TestNAC_GatesCollectionTruncate_WrongIdentity_CLIandHTTPClient_NotAuthorize
 			&action.Truncate{
 				Identity:        testUtils.ClientIdentity(2),
 				CollectionIndex: 0,
-				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError:   testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

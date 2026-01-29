@@ -108,7 +108,7 @@ func TestNAC_GatesDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				DocID:         0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentDeletePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentDeletePerm),
 			},
 			&action.Request{ // Should not be deleted.
 				Identity: testUtils.ClientIdentity(1),
@@ -165,7 +165,7 @@ func TestNAC_GatesDocumentDelete_NoIdentity_CLIandCandHTTPClient_NotAuthorizedEr
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
 				DocID:         0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 			&action.Request{ // Should not be deleted.
 				Identity: testUtils.ClientIdentity(1),
@@ -221,7 +221,7 @@ func TestNAC_GatesDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				DocID:         0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentDeletePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDocumentDeletePerm),
 			},
 			&action.Request{ // Should not be deleted
 				Identity: testUtils.ClientIdentity(1),
@@ -278,7 +278,7 @@ func TestNAC_GatesDocumentDelete_WrongIdentity_CLIandCandHTTPClient_NotAuthorize
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				DocID:         0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 			&action.Request{ // Should not be deleted
 				Identity: testUtils.ClientIdentity(1),

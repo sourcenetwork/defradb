@@ -36,7 +36,7 @@ func TestNAC_AdminRelation_CanAddSchema(t *testing.T) {
 						name: String
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 
 			// Grant access to user.

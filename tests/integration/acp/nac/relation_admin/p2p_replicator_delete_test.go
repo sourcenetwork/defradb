@@ -51,7 +51,7 @@ func TestNAC_AdminRelation_CanP2PReplicatorDelete(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				SourceNodeID:  1,
 				TargetNodeID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorDeletePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorDeletePerm),
 			},
 
 			// Grant access to user.

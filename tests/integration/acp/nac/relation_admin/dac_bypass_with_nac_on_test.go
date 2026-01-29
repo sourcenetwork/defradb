@@ -53,7 +53,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanDACBypass(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -132,7 +132,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -212,7 +212,7 @@ func TestNAC_AdminRelation_PublicDocument_CanAccessPublicDocument(t *testing.T) 
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -318,7 +318,7 @@ func TestNAC_AdminRelation_DACByPassRevokation_CanNotDACBypass(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

@@ -74,7 +74,7 @@ func TestNAC_AdminRelation_CanP2PDocumentList(t *testing.T) {
 			testUtils.GetAllP2PDocuments{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm),
 			},
 
 			// Grant access to user.

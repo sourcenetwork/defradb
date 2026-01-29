@@ -93,7 +93,7 @@ func TestNAC_GatesIndexList_NoIdentity_NotAuthorizedError(t *testing.T) {
 			&action.GetIndexes{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexListPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexListPerm),
 			},
 		},
 	}
@@ -134,7 +134,7 @@ func TestNAC_GatesIndexList_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t
 			&action.GetIndexes{
 				Identity:      testUtils.NoIdentity(),
 				CollectionID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -173,7 +173,7 @@ func TestNAC_GatesIndexList_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			&action.GetIndexes{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexListPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexListPerm),
 			},
 		},
 	}
@@ -214,7 +214,7 @@ func TestNAC_GatesIndexList_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedErro
 			&action.GetIndexes{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

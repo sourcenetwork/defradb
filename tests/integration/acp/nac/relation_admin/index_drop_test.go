@@ -52,7 +52,7 @@ func TestNAC_AdminRelation_CanIndexDrop(t *testing.T) {
 			&action.DropIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				IndexName:     "User_name_ASC",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexDropPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexDropPerm),
 			},
 
 			// Grant access to user.
@@ -107,7 +107,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanIndexDrop(t *testing.T) {
 			&action.DropIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				IndexName:     "User_name_ASC",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

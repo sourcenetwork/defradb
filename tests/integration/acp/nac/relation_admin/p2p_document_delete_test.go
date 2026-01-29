@@ -77,7 +77,7 @@ func TestNAC_AdminRelation_CanP2PDocumentDelete(t *testing.T) {
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentDeletePerm.String()),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentDeletePerm),
 			},
 
 			// Grant access to user.
