@@ -149,7 +149,7 @@ func setupNode(
 		return nil, err
 	}
 
-	c, err := setupClient(s, nodeObj)
+	c, err := setupClient(s, nodeObj, identity)
 	require.Nil(s.T, err)
 
 	eventState, err := state.NewEventState(c.Events())
