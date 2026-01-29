@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQuerySimpleWithInvalidCid(t *testing.T) {
@@ -121,6 +122,9 @@ func TestQuerySimpleWithCid_MultipleDocs(t *testing.T) {
 
 func TestQuerySimple_WithCIDAndCounterAfterUpdate_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

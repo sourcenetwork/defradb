@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQuerySimpleWithIntGEFilterBlockWithEqualValue(t *testing.T) {
@@ -90,8 +89,6 @@ func TestQuerySimpleWithIntGEFilterBlockWithGreaterValue(t *testing.T) {
 
 func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.CreateDoc{
 				Doc: `{
@@ -120,6 +117,7 @@ func TestQuerySimpleWithIntGEFilterBlockWithNilValue(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
