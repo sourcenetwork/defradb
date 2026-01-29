@@ -484,12 +484,19 @@ build-c-shared-android:
 # Usage:
 #   make test:ffi RUST_LIB=/path/to/defradb.rs FFI_PKG=query/simple
 #   make test:ffi RUST_LIB=/path/to/defradb.rs FFI_PKG="query/simple mutation/create"
-#   make test:ffi-report  # View last test report
+#   make test:ffi-report      # View last test report
+#   make test:ffi-save        # Save current reports to history
+#   make test:ffi-history     # View test history
 #
 # Environment:
 #   RUST_LIB    - Path to Rust defradb.rs repo (required)
 #   FFI_PKG     - Test package(s), space-separated (default: query/simple)
 #   FFI_TIMEOUT - Test timeout (default: 300s)
+#
+# History:
+#   Test results are saved to ffi-test-history/ (gitignored) with metadata
+#   about which Rust branch/commit produced the results. Use test:ffi-save
+#   after a test run to save results, or test:ffi-history to view past runs.
 #
 # Parallel Worktree Support:
 #   Each RUST_LIB path gets its own GOCACHE, so multiple Claude sessions can
@@ -499,6 +506,7 @@ build-c-shared-android:
 FFI_PKG ?= query/simple
 FFI_TIMEOUT ?= 300s
 FFI_REPORT_DIR ?= /tmp/ffi-test-reports
+FFI_HISTORY_DIR ?= $(CURDIR)/ffi-test-history
 
 .PHONY: test\:ffi
 test\:ffi:
@@ -589,15 +597,72 @@ endif
 test\:ffi-report:
 	@echo "=== FFI Test Reports ==="
 	@echo ""
-	@for f in $(FFI_REPORT_DIR)/*.log; do \
+	@total_passed=0; total_failed=0; \
+	for f in $(FFI_REPORT_DIR)/*.log; do \
 		if [ -f "$$f" ]; then \
 			name=$$(basename $$f .log); \
 			passed=$$(grep -c "^--- PASS:" $$f 2>/dev/null || echo 0); \
 			failed=$$(grep -c "^--- FAIL:" $$f 2>/dev/null || echo 0); \
 			total=$$((passed + failed)); \
+			total_passed=$$((total_passed + passed)); \
+			total_failed=$$((total_failed + failed)); \
 			if [ "$$total" -gt 0 ]; then \
 				pct=$$((passed * 100 / total)); \
 				printf "%-45s %3d/%3d (%3d%%)\n" "$$name" $$passed $$total $$pct; \
+			fi; \
+		fi; \
+	done; \
+	echo ""; \
+	grand_total=$$((total_passed + total_failed)); \
+	if [ "$$grand_total" -gt 0 ]; then \
+		grand_pct=$$((total_passed * 100 / grand_total)); \
+		printf "%-45s %3d/%3d (%3d%%)\n" "TOTAL" $$total_passed $$grand_total $$grand_pct; \
+	fi
+
+.PHONY: test\:ffi-save
+test\:ffi-save:
+ifndef RUST_LIB
+	$(error RUST_LIB is required. Usage: make test:ffi-save RUST_LIB=/path/to/defradb.rs)
+endif
+	@mkdir -p $(FFI_HISTORY_DIR)
+	@rust_branch=$$(cd $(RUST_LIB) && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"); \
+	rust_commit=$$(cd $(RUST_LIB) && git rev-parse --short HEAD 2>/dev/null || echo "unknown"); \
+	rust_lib_name=$$(basename $(RUST_LIB)); \
+	timestamp=$$(date +%Y%m%d-%H%M%S); \
+	history_dir=$(FFI_HISTORY_DIR)/$$timestamp-$$rust_lib_name-$$rust_branch-$$rust_commit; \
+	mkdir -p $$history_dir; \
+	echo "Saving FFI test results to $$history_dir"; \
+	cp $(FFI_REPORT_DIR)/*.log $$history_dir/ 2>/dev/null || true; \
+	echo "{ \"timestamp\": \"$$timestamp\", \"rust_lib\": \"$(RUST_LIB)\", \"rust_branch\": \"$$rust_branch\", \"rust_commit\": \"$$rust_commit\" }" > $$history_dir/metadata.json; \
+	total_passed=0; total_failed=0; \
+	for f in $$history_dir/*.log; do \
+		if [ -f "$$f" ]; then \
+			passed=$$(grep -c "^--- PASS:" $$f 2>/dev/null || echo 0); \
+			failed=$$(grep -c "^--- FAIL:" $$f 2>/dev/null || echo 0); \
+			total_passed=$$((total_passed + passed)); \
+			total_failed=$$((total_failed + failed)); \
+		fi; \
+	done; \
+	grand_total=$$((total_passed + total_failed)); \
+	echo "{ \"passed\": $$total_passed, \"failed\": $$total_failed, \"total\": $$grand_total }" >> $$history_dir/metadata.json; \
+	echo "Saved: $$total_passed passed, $$total_failed failed ($$grand_total total)"
+
+.PHONY: test\:ffi-history
+test\:ffi-history:
+	@echo "=== FFI Test History ==="
+	@echo ""
+	@if [ ! -d $(FFI_HISTORY_DIR) ]; then \
+		echo "No history found. Run 'make test:ffi-save RUST_LIB=...' after tests."; \
+		exit 0; \
+	fi; \
+	for d in $$(ls -1d $(FFI_HISTORY_DIR)/*/ 2>/dev/null | sort -r | head -20); do \
+		if [ -f "$$d/metadata.json" ]; then \
+			name=$$(basename $$d); \
+			passed=$$(grep -o '"passed": [0-9]*' $$d/metadata.json | grep -o '[0-9]*' || echo 0); \
+			total=$$(grep -o '"total": [0-9]*' $$d/metadata.json | grep -o '[0-9]*' || echo 0); \
+			if [ "$$total" -gt 0 ]; then \
+				pct=$$((passed * 100 / total)); \
+				printf "%-60s %4d/%4d (%3d%%)\n" "$$name" $$passed $$total $$pct; \
 			fi; \
 		fi; \
 	done
