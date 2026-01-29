@@ -49,7 +49,7 @@ import (
 )
 
 func init() {
-	multiplier.Init("DEFRA_MULTIPLIERS")
+	multiplier.Init(multipliersEnvName)
 }
 
 const (
@@ -57,6 +57,7 @@ const (
 	viewTypeEnvName         = "DEFRA_VIEW_TYPE"
 	skipNetworkTestsEnvName = "DEFRA_SKIP_NETWORK_TESTS"
 	vectorEmbeddingEnvName  = "DEFRA_VECTOR_EMBEDDING"
+	multipliersEnvName      = "DEFRA_MULTIPLIERS"
 )
 
 // ViewType is a type alias for backward compatibility.
@@ -255,6 +256,10 @@ func executeTestCase(
 
 	if kms != NoneKMSType {
 		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
+	}
+
+	if value, ok := os.LookupEnv(multipliersEnvName); ok {
+		logAttrs = append(logAttrs, corelog.String("multipliers", value))
 	}
 
 	log.InfoContext(ctx, t.Name(), logAttrs...)
