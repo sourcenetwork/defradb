@@ -272,5 +272,5 @@ func NewErrNotFound(kv errors.KV) error {
 }
 
 func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {
-	return errors.New(ErrNotAuthorizedToPerformOperation.Error(), errors.NewKV("Permission", permission.String()))
+	return errors.WithStack(ErrNotAuthorizedToPerformOperation, errors.NewKV("Permission", permission))
 }
