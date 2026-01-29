@@ -560,6 +560,25 @@ func (n *Node) SetMigration(config string) (string, error) {
 	return value, nil
 }
 
+// LensAdd adds a lens transform to the database.
+// The lensJSON parameter should be a JSON string matching Go's model.Lens format.
+func (n *Node) LensAdd(lensJSON string) (string, error) {
+	cLens := C.CString(lensJSON)
+	defer C.free(unsafe.Pointer(cLens))
+
+	result := C.lens_add(n.ptr, cLens)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: lens_add failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
 // ============================================================================
 // Index Functions
 // ============================================================================
@@ -1327,4 +1346,38 @@ func (n *Node) P2PGetAllCollections() ([]string, error) {
 	}
 
 	return collections, nil
+}
+
+// BasicExportDB exports the database to a JSON file.
+func (n *Node) BasicExportDB(configJSON string) error {
+	cConfig := C.CString(configJSON)
+	defer C.free(unsafe.Pointer(cConfig))
+
+	result := C.basic_export(n.ptr, cConfig)
+	if result.status != 0 {
+		msg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: basic_export failed: %s", msg)
+	}
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+	return nil
+}
+
+// BasicImportDB imports documents from a JSON backup file.
+func (n *Node) BasicImportDB(filepath string) error {
+	cFilepath := C.CString(filepath)
+	defer C.free(unsafe.Pointer(cFilepath))
+
+	result := C.basic_import(n.ptr, cFilepath)
+	if result.status != 0 {
+		msg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: basic_import failed: %s", msg)
+	}
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+	return nil
 }

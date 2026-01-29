@@ -123,6 +123,14 @@ func NewWrapperWithP2P(listenAddr string) (*Wrapper, error) {
 	}, nil
 }
 
+// EnableNACForInit enables NAC on the underlying Rust FFI node with the given
+// owner DID. This mirrors Go's initializeNodeACP() and should only be called
+// during test setup to ensure the Rust FFI node has the same NAC state as the
+// Go node it's being tested alongside.
+func (w *Wrapper) EnableNACForInit(ownerDID string) error {
+	return w.node.EnableNAC(ownerDID)
+}
+
 // extractCollectionNameFromPatch extracts the collection name from a JSON patch path.
 // Patch format: [{"op": "add", "path": "/CollectionName/Fields/-", "value": {...}}]
 // All operations must target the same collection.
@@ -425,7 +433,11 @@ func (w *Wrapper) AddDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	added, err := w.node.AddDACActorRelationship("", targetActor, collectionName, docID, relation)
+	requestorDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		requestorDID = id.Value().DID()
+	}
+	added, err := w.node.AddDACActorRelationship(requestorDID, targetActor, collectionName, docID, relation)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
@@ -439,7 +451,11 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	deleted, err := w.node.DeleteDACActorRelationship("", targetActor, collectionName, docID, relation)
+	requestorDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		requestorDID = id.Value().DID()
+	}
+	deleted, err := w.node.DeleteDACActorRelationship(requestorDID, targetActor, collectionName, docID, relation)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
@@ -451,7 +467,11 @@ func (w *Wrapper) AddNACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.AddActorRelationshipResult, error) {
-	added, err := w.node.AddNACActorRelationship("", targetActor)
+	requestorDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		requestorDID = id.Value().DID()
+	}
+	added, err := w.node.AddNACActorRelationship(requestorDID, targetActor)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
@@ -463,7 +483,11 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	relation string,
 	targetActor string,
 ) (client.DeleteActorRelationshipResult, error) {
-	deleted, err := w.node.DeleteNACActorRelationship("", targetActor)
+	requestorDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		requestorDID = id.Value().DID()
+	}
+	deleted, err := w.node.DeleteNACActorRelationship(requestorDID, targetActor)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
@@ -471,11 +495,19 @@ func (w *Wrapper) DeleteNACActorRelationship(
 }
 
 func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
-	return w.node.ReEnableNAC("")
+	requestorDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		requestorDID = id.Value().DID()
+	}
+	return w.node.ReEnableNAC(requestorDID)
 }
 
 func (w *Wrapper) DisableNAC(ctx context.Context) error {
-	return w.node.DisableNAC("")
+	requestorDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		requestorDID = id.Value().DID()
+	}
+	return w.node.DisableNAC(requestorDID)
 }
 
 func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
@@ -552,7 +584,11 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 }
 
 func (w *Wrapper) AddLens(ctx context.Context, lens lensmodel.Lens) (string, error) {
-	return "", fmt.Errorf("AddLens not yet implemented in FFI")
+	lensJSON, err := json.Marshal(lens)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal lens: %w", err)
+	}
+	return w.node.LensAdd(string(lensJSON))
 }
 
 func (w *Wrapper) ListLenses(ctx context.Context) (map[string]lensmodel.Lens, error) {
@@ -564,11 +600,15 @@ func (w *Wrapper) ListLenses(ctx context.Context) (map[string]lensmodel.Lens, er
 // ============================================================================
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
-	return fmt.Errorf("BasicImport not yet implemented in FFI")
+	return w.node.BasicImportDB(filepath)
 }
 
 func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	return fmt.Errorf("BasicExport not yet implemented in FFI")
+	configJSON, err := json.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal backup config: %w", err)
+	}
+	return w.node.BasicExportDB(string(configJSON))
 }
 
 // ============================================================================
@@ -588,7 +628,12 @@ func (w *Wrapper) ListAllEncryptedIndexes(ctx context.Context) (map[client.Colle
 // ============================================================================
 
 func (w *Wrapper) PeerInfo() ([]string, error) {
-	return w.node.P2PPeerInfo()
+	addrs, err := w.node.P2PPeerInfo()
+	if err != nil {
+		// Return empty addresses when P2P is not enabled
+		return []string{}, nil
+	}
+	return addrs, nil
 }
 
 func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
@@ -1014,9 +1059,24 @@ func (c *CollectionWrapper) Create(ctx context.Context, doc *client.Document, op
 		return fmt.Errorf("failed to convert document to JSON: %w", err)
 	}
 
+	// Extract encryption options
+	createDocOpts := client.DocCreateOptions{}
+	createDocOpts.Apply(opts)
+
 	// Convert JSON to GraphQL input format (unquoted keys)
 	gqlInput := jsonToGraphQLInput(string(docJSON))
-	mutation := fmt.Sprintf(`mutation { create_%s(input: %s) { _docID } }`, c.version.Name, gqlInput)
+	params := fmt.Sprintf("input: %s", gqlInput)
+	if createDocOpts.EncryptDoc {
+		params += ", encrypt: true"
+	}
+	if len(createDocOpts.EncryptedFields) > 0 {
+		fields := make([]string, len(createDocOpts.EncryptedFields))
+		for i, f := range createDocOpts.EncryptedFields {
+			fields[i] = f
+		}
+		params += ", encryptFields: [" + strings.Join(fields, ", ") + "]"
+	}
+	mutation := fmt.Sprintf(`mutation { create_%s(%s) { _docID } }`, c.version.Name, params)
 	result := c.wrapper.ExecRequest(ctx, mutation)
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
