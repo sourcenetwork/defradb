@@ -43,8 +43,7 @@ func open(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	opts := []node.Option{
-		node.WithStoreType(node.BadgerStore),
-		node.WithBadgerInMemory(true),
+		node.WithStoreType(node.LevelStore),
 		node.WithDisableP2P(true),
 		node.WithDisableAPI(true),
 		db.WithNodeIdentity(ident),
