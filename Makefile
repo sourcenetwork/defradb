@@ -512,6 +512,10 @@ ifndef RUST_LIB
 	$(error RUST_LIB is required. Usage: make test:ffi RUST_LIB=/path/to/defradb.rs FFI_PKG=query/simple)
 endif
 	@mkdir -p $(FFI_REPORT_DIR)
+	@rust_branch=$$(cd $(RUST_LIB) && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"); \
+	rust_commit=$$(cd $(RUST_LIB) && git rev-parse --short HEAD 2>/dev/null || echo "unknown"); \
+	rust_lib_name=$$(basename $(RUST_LIB)); \
+	echo "{\"timestamp\":\"$$(date +%Y-%m-%d\ %H:%M:%S)\",\"rust_lib\":\"$$rust_lib_name\",\"rust_branch\":\"$$rust_branch\",\"rust_commit\":\"$$rust_commit\"}" > $(FFI_REPORT_DIR)/metadata.json
 	@rust_lib_name=$$(basename $(RUST_LIB)); \
 	for pkg in $(FFI_PKG); do \
 		pkg_safe=$$(echo $$pkg | tr '/' '-'); \
@@ -596,6 +600,13 @@ endif
 .PHONY: test\:ffi-report
 test\:ffi-report:
 	@echo "=== FFI Test Reports ==="
+	@if [ -f $(FFI_REPORT_DIR)/metadata.json ]; then \
+		ts=$$(grep -o '"timestamp":"[^"]*"' $(FFI_REPORT_DIR)/metadata.json | cut -d'"' -f4); \
+		lib=$$(grep -o '"rust_lib":"[^"]*"' $(FFI_REPORT_DIR)/metadata.json | cut -d'"' -f4); \
+		branch=$$(grep -o '"rust_branch":"[^"]*"' $(FFI_REPORT_DIR)/metadata.json | cut -d'"' -f4); \
+		commit=$$(grep -o '"rust_commit":"[^"]*"' $(FFI_REPORT_DIR)/metadata.json | cut -d'"' -f4); \
+		echo "Run: $$ts | $$lib ($$branch @ $$commit)"; \
+	fi
 	@echo ""
 	@total_passed=0; total_failed=0; \
 	for f in $(FFI_REPORT_DIR)/*.log; do \
