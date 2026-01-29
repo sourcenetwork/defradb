@@ -259,7 +259,7 @@ func executeTestCase(
 	}
 
 	if value, ok := os.LookupEnv(multipliersEnvName); ok {
-		logAttrs = append(logAttrs, corelog.Any("multipliers", value))
+		logAttrs = append(logAttrs, corelog.String("multipliers", value))
 	}
 
 	log.InfoContext(ctx, t.Name(), logAttrs...)
