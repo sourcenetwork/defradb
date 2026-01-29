@@ -49,7 +49,6 @@ import (
 )
 
 func init() {
-	os.Setenv(multipliersEnvName, "secondary-index")
 	multiplier.Init(multipliersEnvName)
 }
 
@@ -159,9 +158,9 @@ func ExecuteTestCase(
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
 	var clients []state.ClientType
-	//if httpClient {
-	clients = append(clients, state.HTTPClientType)
-	//}
+	if httpClient {
+		clients = append(clients, state.HTTPClientType)
+	}
 	if goClient {
 		clients = append(clients, state.GoClientType)
 	}
