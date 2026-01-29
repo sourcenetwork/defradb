@@ -689,6 +689,24 @@ struct FfiResult parse_duration(const char *duration_str);
 struct FfiResult parse_string_array(const char *input);
 
 /*
+ Export documents to a JSON backup file.
+
+ # Safety
+
+ `config_json` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult basic_export(uintptr_t node_ptr, const char *config_json);
+
+/*
+ Import documents from a JSON backup file.
+
+ # Safety
+
+ `filepath` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
+
+/*
  Create a new index on a collection.
 
  # Arguments

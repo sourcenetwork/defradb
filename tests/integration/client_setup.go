@@ -16,6 +16,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sourcenetwork/immutable"
+
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	cbindings "github.com/sourcenetwork/defradb/cbindings"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/clients"
@@ -44,7 +47,15 @@ func init() {
 // setupClient returns the client implementation for the current
 // testing state. The client type on the test state is used to
 // select the client implementation to use.
-func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
+//
+// The identity parameter is the identity used during Go node startup.
+// For the Rust FFI client, this is used to mirror NAC initialization
+// so the Rust node has the same access control state as the Go node.
+func setupClient(
+	s *state.State,
+	nodeObj *node.Node,
+	identity immutable.Option[acpIdentity.Identity],
+) (clients.Client, error) {
 	switch s.ClientType {
 	case state.HTTPClientType:
 		return http.NewWrapper(nodeObj)
@@ -59,16 +70,48 @@ func setupClient(s *state.State, nodeObj *node.Node) (clients.Client, error) {
 		return cbindings.NewCWrapper(nodeObj)
 
 	case state.RustFFIClientType:
-		if s.IsNetworkEnabled {
-			// Use the same IP as Go P2P with a random port
-			listenAddr := "/ip4/" + getIPString() + "/tcp/0"
-			return rustffi.NewWrapperWithP2P(listenAddr)
-		}
-		return rustffi.NewWrapper()
+		return setupRustFFIClient(s, nodeObj, identity)
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
 	}
+}
+
+// setupRustFFIClient creates a Rust FFI wrapper and mirrors the Go node's NAC
+// state onto it. This ensures the Rust FFI node has the same access control
+// configuration as the Go node, matching Go's initializeNodeACP() flow.
+func setupRustFFIClient(
+	s *state.State,
+	nodeObj *node.Node,
+	identity immutable.Option[acpIdentity.Identity],
+) (*rustffi.Wrapper, error) {
+	var wrapper *rustffi.Wrapper
+	var err error
+
+	if s.IsNetworkEnabled {
+		listenAddr := "/ip4/" + getIPString() + "/tcp/0"
+		wrapper, err = rustffi.NewWrapperWithP2P(listenAddr)
+	} else {
+		wrapper, err = rustffi.NewWrapper()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Mirror the Go node's NAC state onto the Rust FFI node.
+	// The Go node may have NAC enabled (via WithEnableNodeACP + identity in context
+	// during Start). The Rust FFI node starts fresh without NAC, so we check the
+	// Go node's status and enable NAC on the Rust node with the same owner identity.
+	nacStatus, nacErr := nodeObj.DB.GetNACStatus(s.Ctx)
+	if nacErr == nil && nacStatus.Status == "enabled" && identity.HasValue() {
+		ownerDID := identity.Value().DID()
+		if err := wrapper.EnableNACForInit(ownerDID); err != nil {
+			wrapper.Close()
+			return nil, fmt.Errorf("failed to enable NAC on Rust FFI node: %w", err)
+		}
+	}
+
+	return wrapper, nil
 }
 
 type goClientWrapper struct {
