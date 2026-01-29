@@ -431,7 +431,7 @@ func TestSubscription_WithClose_WontBlock(t *testing.T) {
 
 func TestSubscription_WithCounterCRDT_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
-		// Delta-based CRDT fields (pncounter/pcounter) cannot be indexed.
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
 		// https://github.com/sourcenetwork/defradb/issues/4439
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{

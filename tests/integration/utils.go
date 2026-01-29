@@ -49,7 +49,8 @@ import (
 )
 
 func init() {
-	multiplier.Init("DEFRA_MULTIPLIERS")
+	os.Setenv(multipliersEnvName, "secondary-index")
+	multiplier.Init(multipliersEnvName)
 }
 
 const (
@@ -57,6 +58,7 @@ const (
 	viewTypeEnvName         = "DEFRA_VIEW_TYPE"
 	skipNetworkTestsEnvName = "DEFRA_SKIP_NETWORK_TESTS"
 	vectorEmbeddingEnvName  = "DEFRA_VECTOR_EMBEDDING"
+	multipliersEnvName      = "DEFRA_MULTIPLIERS"
 )
 
 // ViewType is a type alias for backward compatibility.
@@ -157,9 +159,9 @@ func ExecuteTestCase(
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
 	var clients []state.ClientType
-	if httpClient {
-		clients = append(clients, state.HTTPClientType)
-	}
+	//if httpClient {
+	clients = append(clients, state.HTTPClientType)
+	//}
 	if goClient {
 		clients = append(clients, state.GoClientType)
 	}
@@ -182,9 +184,6 @@ func ExecuteTestCase(
 	}
 	if inMemoryStore {
 		databases = append(databases, DefraIMType)
-	}
-	if levelStore {
-		databases = append(databases, LevelStoreType)
 	}
 
 	var kmsList []state.KMSType
@@ -257,6 +256,10 @@ func executeTestCase(
 		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
 	}
 
+	if value, ok := os.LookupEnv(multipliersEnvName); ok {
+		logAttrs = append(logAttrs, corelog.Any("multipliers", value))
+	}
+
 	log.InfoContext(ctx, t.Name(), logAttrs...)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
@@ -282,7 +285,7 @@ func executeTestCase(
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
-	refreshCollections(s, immutable.None[int]())
+	refreshCollections(s)
 	refreshDocuments(s, testCase, startActionIndex)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
@@ -856,7 +859,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
 	// will reference the old (closed) database instances.
-	refreshCollections(s, immutable.None[int]())
+	refreshCollections(s)
 }
 
 func restartNodes(
@@ -903,7 +906,6 @@ func refreshTokens(
 // result-index will be nil.
 func refreshCollections(
 	s *state.State,
-	transactionID immutable.Option[int],
 ) {
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
@@ -912,9 +914,7 @@ func refreshCollections(
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
-		txn := getTransaction(s, node, transactionID, "")
-		ctx := db.InitContext(s.Ctx, txn)
-		ctx = getContextWithIdentity(ctx, s, nodeIdentity, nodeID)
+		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
 		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})
 		require.Nil(s.T, err)
 
@@ -1064,7 +1064,7 @@ func setActiveCollectionVersion(
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(s, immutable.None[int]())
+	refreshCollections(s)
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
