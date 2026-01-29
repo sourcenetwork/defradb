@@ -511,6 +511,8 @@ test\:ffi:
 ifndef RUST_LIB
 	$(error RUST_LIB is required. Usage: make test:ffi RUST_LIB=/path/to/defradb.rs FFI_PKG=query/simple)
 endif
+	@echo "=== Generating defra.h from $(RUST_LIB) ==="
+	@cd $(RUST_LIB) && cbindgen --config crates/ffi/cbindgen.toml --crate ffi --output $(CURDIR)/tests/clients/rustffi/defra.h 2>&1
 	@mkdir -p $(FFI_REPORT_DIR)
 	@rust_lib_name=$$(basename $(RUST_LIB)); \
 	rust_branch=$$(cd $(RUST_LIB) && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"); \
