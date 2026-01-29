@@ -58,7 +58,7 @@ const (
 	errCorruptedIndex                            string = "corrupted index. Please delete and recreate the index"
 	errInvalidFieldValue                         string = "invalid field value"
 	errUnsupportedIndexFieldType                 string = "unsupported index field type"
-	errCannotIndexDeltaCRDTField                 string = "indexing delta-based CRDT fields is not yet supported"
+	errCannotIndexAccumulatedCRDTField           string = "indexing accumulated CRDT fields is not yet supported"
 	errIndexDescriptionHasNoFields               string = "index description has no fields"
 	errCreateFile                                string = "failed to create file"
 	errRemoveFile                                string = "failed to remove file"
@@ -468,11 +468,11 @@ func NewErrUnsupportedIndexFieldType(kind client.FieldKind) error {
 	)
 }
 
-// NewErrCannotIndexDeltaCRDTField returns a new error indicating that the given field
-// cannot be indexed because it uses a delta-based CRDT type.
-func NewErrCannotIndexDeltaCRDTField(fieldName, crdtType string) error {
+// NewErrCannotIndexAccumulatedCRDTField returns a new error indicating that the given field
+// cannot be indexed because it uses an accumulated CRDT type.
+func NewErrCannotIndexAccumulatedCRDTField(fieldName, crdtType string) error {
 	return errors.New(
-		errCannotIndexDeltaCRDTField,
+		errCannotIndexAccumulatedCRDTField,
 		errors.NewKV("Field", fieldName),
 		errors.NewKV("CRDTType", crdtType),
 	)

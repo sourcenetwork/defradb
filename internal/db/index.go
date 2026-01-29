@@ -87,7 +87,7 @@ func NewCollectionIndex(
 		}
 		// Delta-based CRDTs (pncounter, pcounter) are not supported yet
 		if field.Typ == client.PN_COUNTER || field.Typ == client.P_COUNTER {
-			return nil, NewErrCannotIndexDeltaCRDTField(field.Name, field.Typ.String())
+			return nil, NewErrCannotIndexAccumulatedCRDTField(field.Name, field.Typ.String())
 		}
 		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}

@@ -34,7 +34,7 @@ func TestIndexCreate_WithPNCounterField_ShouldError(t *testing.T) {
 				CollectionID:  0,
 				IndexName:     "points_index",
 				FieldName:     "points",
-				ExpectedError: db.NewErrCannotIndexDeltaCRDTField("points", "pncounter").Error(),
+				ExpectedError: db.NewErrCannotIndexAccumulatedCRDTField("points", "pncounter").Error(),
 			},
 		},
 	}
@@ -57,7 +57,7 @@ func TestIndexCreate_WithPCounterField_ShouldError(t *testing.T) {
 				CollectionID:  0,
 				IndexName:     "points_index",
 				FieldName:     "points",
-				ExpectedError: db.NewErrCannotIndexDeltaCRDTField("points", "pcounter").Error(),
+				ExpectedError: db.NewErrCannotIndexAccumulatedCRDTField("points", "pcounter").Error(),
 			},
 		},
 	}
@@ -75,7 +75,7 @@ func TestIndexCreate_WithPNCounterFieldViaDirective_ShouldError(t *testing.T) {
 						points: Int @crdt(type: pncounter) @index
 					}
 				`,
-				ExpectedError: db.NewErrCannotIndexDeltaCRDTField("points", "pncounter").Error(),
+				ExpectedError: db.NewErrCannotIndexAccumulatedCRDTField("points", "pncounter").Error(),
 			},
 		},
 	}
@@ -93,7 +93,7 @@ func TestIndexCreate_WithPCounterFieldViaDirective_ShouldError(t *testing.T) {
 						points: Int @crdt(type: pcounter) @index
 					}
 				`,
-				ExpectedError: db.NewErrCannotIndexDeltaCRDTField("points", "pcounter").Error(),
+				ExpectedError: db.NewErrCannotIndexAccumulatedCRDTField("points", "pcounter").Error(),
 			},
 		},
 	}
@@ -116,7 +116,7 @@ func TestIndexCreate_WithPNCounterFloatField_ShouldError(t *testing.T) {
 				CollectionID:  0,
 				IndexName:     "score_index",
 				FieldName:     "score",
-				ExpectedError: db.NewErrCannotIndexDeltaCRDTField("score", "pncounter").Error(),
+				ExpectedError: db.NewErrCannotIndexAccumulatedCRDTField("score", "pncounter").Error(),
 			},
 		},
 	}
@@ -183,7 +183,7 @@ func TestIndexCreate_WithCompositeIndexIncludingPNCounter_ShouldError(t *testing
 				CollectionID:  0,
 				IndexName:     "composite_index",
 				Fields:        []client.IndexedFieldDescription{{Name: "name"}, {Name: "points"}},
-				ExpectedError: db.NewErrCannotIndexDeltaCRDTField("points", "pncounter").Error(),
+				ExpectedError: db.NewErrCannotIndexAccumulatedCRDTField("points", "pncounter").Error(),
 			},
 		},
 	}
@@ -207,7 +207,7 @@ func TestIndexCreate_WithUniqueIndexOnPNCounter_ShouldError(t *testing.T) {
 				IndexName:     "unique_points_index",
 				FieldName:     "points",
 				Unique:        true,
-				ExpectedError: db.NewErrCannotIndexDeltaCRDTField("points", "pncounter").Error(),
+				ExpectedError: db.NewErrCannotIndexAccumulatedCRDTField("points", "pncounter").Error(),
 			},
 		},
 	}
@@ -225,7 +225,7 @@ func TestIndexCreate_WithCollectionLevelIndexOnPNCounter_ShouldError(t *testing.
 						points: Int @crdt(type: pncounter)
 					}
 				`,
-				ExpectedError: db.NewErrCannotIndexDeltaCRDTField("points", "pncounter").Error(),
+				ExpectedError: db.NewErrCannotIndexAccumulatedCRDTField("points", "pncounter").Error(),
 			},
 		},
 	}
