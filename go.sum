@@ -2316,6 +2316,8 @@ github.com/sourcenetwork/corekv/blockstore v0.3.1 h1:uBvRaA1MFRZ1XOZCipFQOsBPnaB
 github.com/sourcenetwork/corekv/blockstore v0.3.1/go.mod h1:xBNbUMGpDrnvbs39Q+SQTs3MEpUo5jfuc0SH44O0qTs=
 github.com/sourcenetwork/corekv/chunk v0.3.1 h1:XYsrE1DKJgnY+l4JP/ti7xHD+GsUlU09VOnRsDzFosw=
 github.com/sourcenetwork/corekv/chunk v0.3.1/go.mod h1:8oLb1RQ27FUQSrpHx0OTx9r2Kme3WOB2d8JkeCx5veY=
+github.com/sourcenetwork/corekv/leveldb v0.3.1 h1:cb2jnKlxWEJQjsLy0v8JNMGEpWw8hXVi+a6ALeaHNfs=
+github.com/sourcenetwork/corekv/leveldb v0.3.1/go.mod h1:FYu7xskgj8CJOQR4rw9y0LR+KO8o4wfUE6lSLIu2JAE=
 github.com/sourcenetwork/corekv/memory v0.3.1 h1:+8REYpiwFMsiTkEe3RE/ZGI3Alrhgc/nOzKbkONZXXc=
 github.com/sourcenetwork/corekv/memory v0.3.1/go.mod h1:2vIJDWlvhwyO41tynkCkFFYTYrIsf1QGvAxBqVFV0bI=
 github.com/sourcenetwork/corekv/namespace v0.3.1 h1:XllaUw6cteZkJYC5tgcJ40c6hIMh7DUn2tk/fPjV35A=
@@ -2328,12 +2330,14 @@ github.com/sourcenetwork/go-p2p v0.1.8 h1:GMxb0DovBwJTlsZ+1anzEXg4UcmSLzJtKreRzn
 github.com/sourcenetwork/go-p2p v0.1.8/go.mod h1:9SMhAzncaPfjwR8eXjwQRiAMZDpZc47gmaeb1TT+aq4=
 github.com/sourcenetwork/goji v0.0.9 h1:ObFC1PxstjGMoiCgJ+tqUALl0+sZFu5HHU7dCfpfgYc=
 github.com/sourcenetwork/goji v0.0.9/go.mod h1:A/dsoaCbLQ1a5PQfUVCA1zYMHnNAprVhZEmQHIlCfjE=
+github.com/sourcenetwork/goleveldb v0.0.0-20251217012629-27249d06b81b h1:DS+7xsNq0Q7AjBRMBr13CFn55eMPaGaJC8p5TMbcxmo=
+github.com/sourcenetwork/goleveldb v0.0.0-20251217012629-27249d06b81b/go.mod h1:PCRDM9+nPBLx2jHaJtJ67Q3Lj4DYFEK/WEwCs36bbgo=
 github.com/sourcenetwork/graphql-go v0.7.4-0.20251208194504-a831d1b53d40 h1:wiL6+capi8zP/jUeyPr6OrtHEpaCo23O2SnryyX2yvo=
 github.com/sourcenetwork/graphql-go v0.7.4-0.20251208194504-a831d1b53d40/go.mod h1:rkahXkgRH/3vZErN1Bx+qt1+w+CV5fgaJyKKWgISe4U=
 github.com/sourcenetwork/immutable v0.3.0 h1:gHPtGvLrTBTK5YpDAhMU+u+S8v1F6iYmc3nbZLryMdc=
 github.com/sourcenetwork/immutable v0.3.0/go.mod h1:GD7ceuh/HD7z6cdIwzKK2ctzgZ1qqYFJpsFp+8qYnbI=
-github.com/sourcenetwork/lens/host-go v0.9.4 h1:VPBnlRoOoAKviA2tOXKZQzUos2P+GYOVxjMGpNOwngU=
-github.com/sourcenetwork/lens/host-go v0.9.4/go.mod h1:LHIuko88fgxOX996hvRNuBbgdTeFIPLQO6OXj24vmsM=
+github.com/sourcenetwork/lens/host-go v0.10.0 h1:mv7mxP3LTP6YKjyYzWBKPetEZ+o0I2kJOVHpnLNPqLI=
+github.com/sourcenetwork/lens/host-go v0.10.0/go.mod h1:LHIuko88fgxOX996hvRNuBbgdTeFIPLQO6OXj24vmsM=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 h1:d0jNogSYqMt+dC05tnd+x7lmzEcBHpKoIU5woZSSHFM=
 github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8/go.mod h1:/WJdZWouiY199DypsN0xaP5PF0zy3rka3FxH5Y8o9Bc=
 github.com/sourcenetwork/raccoondb/v2 v2.0.0 h1:Gb0SjsZUbrbkHCEg7PyyNs0+2IzPxjE/BkEQnlu1nfA=

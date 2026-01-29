@@ -46,6 +46,7 @@ require (
 	github.com/sourcenetwork/corekv/badger v0.3.1
 	github.com/sourcenetwork/corekv/blockstore v0.3.1
 	github.com/sourcenetwork/corekv/chunk v0.3.1
+	github.com/sourcenetwork/corekv/leveldb v0.3.1
 	github.com/sourcenetwork/corekv/memory v0.3.1
 	github.com/sourcenetwork/corekv/namespace v0.3.1
 	github.com/sourcenetwork/corelog v0.0.8
@@ -53,7 +54,7 @@ require (
 	github.com/sourcenetwork/goji v0.0.9
 	github.com/sourcenetwork/graphql-go v0.7.4-0.20251208194504-a831d1b53d40
 	github.com/sourcenetwork/immutable v0.3.0
-	github.com/sourcenetwork/lens/host-go v0.9.4
+	github.com/sourcenetwork/lens/host-go v0.10.0
 	github.com/sourcenetwork/sourcehub v0.3.3-0.20251204195821-6e21a42984ba
 	github.com/sourcenetwork/testo v0.2.0
 	github.com/spf13/cobra v1.10.2
@@ -364,6 +365,7 @@ require (
 	github.com/skip-mev/block-sdk/v2 v2.1.5 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/sourcenetwork/go-libp2p-pubsub-rpc v0.0.14 // indirect
+	github.com/sourcenetwork/goleveldb v0.0.0-20251217012629-27249d06b81b // indirect
 	github.com/sourcenetwork/raccoondb v0.2.1-0.20240722161350-d4a78b691ec8 // indirect
 	github.com/sourcenetwork/raccoondb/v2 v2.0.0 // indirect
 	github.com/sourcenetwork/zanzi v0.3.1-0.20251104182341-4b1bd0f7be5a // indirect
