@@ -538,12 +538,52 @@ endif
 		echo "Full output: $$report_file"; \
 	done
 
+# All test packages organized by priority (see issue #18)
+# P0 Foundation: query/simple, mutation/*
+# P1 Core Query: inline_array, commits, json
+# P2 Relations: one_to_*, many_to_many
+# P3 Features: explain, acp, index, versions, etc.
+FFI_PKG_P0 := query/simple mutation/create mutation/update mutation/delete mutation/mix mutation/special mutation/upsert
+FFI_PKG_P1 := query/inline_array query/commits query/json
+FFI_PKG_P2 := query/one_to_one query/one_to_many query/one_to_many_multiple query/one_to_many_to_many query/one_to_many_to_one query/one_to_one_multiple query/one_to_one_to_many query/one_to_one_to_one query/one_to_two_many query/many_to_many
+FFI_PKG_P3 := index explain collection collection_version view acp backup encryption net node signature subscription searchable_encryption issues
+
+FFI_PKG_ALL := $(FFI_PKG_P0) $(FFI_PKG_P1) $(FFI_PKG_P2) $(FFI_PKG_P3)
+
 .PHONY: test\:ffi-all
 test\:ffi-all:
 ifndef RUST_LIB
 	$(error RUST_LIB is required. Usage: make test:ffi-all RUST_LIB=/path/to/defradb.rs)
 endif
-	@$(MAKE) test:ffi RUST_LIB=$(RUST_LIB) FFI_PKG="query/simple query/one_to_many query/one_to_one query/inline_array query/json query/commits mutation/create mutation/update mutation/delete index collection_version explain collection"
+	@$(MAKE) test:ffi RUST_LIB=$(RUST_LIB) FFI_PKG="$(FFI_PKG_ALL)"
+
+.PHONY: test\:ffi-p0
+test\:ffi-p0:
+ifndef RUST_LIB
+	$(error RUST_LIB is required. Usage: make test:ffi-p0 RUST_LIB=/path/to/defradb.rs)
+endif
+	@$(MAKE) test:ffi RUST_LIB=$(RUST_LIB) FFI_PKG="$(FFI_PKG_P0)"
+
+.PHONY: test\:ffi-p1
+test\:ffi-p1:
+ifndef RUST_LIB
+	$(error RUST_LIB is required. Usage: make test:ffi-p1 RUST_LIB=/path/to/defradb.rs)
+endif
+	@$(MAKE) test:ffi RUST_LIB=$(RUST_LIB) FFI_PKG="$(FFI_PKG_P1)"
+
+.PHONY: test\:ffi-p2
+test\:ffi-p2:
+ifndef RUST_LIB
+	$(error RUST_LIB is required. Usage: make test:ffi-p2 RUST_LIB=/path/to/defradb.rs)
+endif
+	@$(MAKE) test:ffi RUST_LIB=$(RUST_LIB) FFI_PKG="$(FFI_PKG_P2)"
+
+.PHONY: test\:ffi-p3
+test\:ffi-p3:
+ifndef RUST_LIB
+	$(error RUST_LIB is required. Usage: make test:ffi-p3 RUST_LIB=/path/to/defradb.rs)
+endif
+	@$(MAKE) test:ffi RUST_LIB=$(RUST_LIB) FFI_PKG="$(FFI_PKG_P3)"
 
 .PHONY: test\:ffi-report
 test\:ffi-report:
