@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -1152,10 +1153,11 @@ func trimJSONWhitespace(s string) string {
 	return s[start:end]
 }
 
-// convertDateTimeStrings recursively walks a decoded JSON response and converts
-// string values that look like RFC3339 datetimes into time.Time objects.
-// This is needed because the Rust FFI returns datetimes as JSON strings, while
-// Go's native implementation returns time.Time objects that the test framework expects.
+// convertDateTimeStrings recursively walks a decoded JSON response and converts:
+// - string values that look like RFC3339 datetimes into time.Time objects
+// - json.Number values into int64 or float64 as appropriate
+// This is needed because the Rust FFI returns datetimes as JSON strings and numbers
+// as json.Number, while Go's native implementation returns time.Time and int64/float64.
 func convertDateTimeStrings(v any) any {
 	switch val := v.(type) {
 	case map[string]any:
@@ -1174,6 +1176,15 @@ func convertDateTimeStrings(v any) any {
 		}
 		if t, err := time.Parse(time.RFC3339, val); err == nil {
 			return t
+		}
+		return val
+	case json.Number:
+		// Try int64 first, then float64
+		if i, err := val.Int64(); err == nil {
+			return i
+		}
+		if f, err := val.Float64(); err == nil {
+			return f
 		}
 		return val
 	default:
@@ -1212,8 +1223,19 @@ func (c *CollectionWrapper) DeleteWithFilter(ctx context.Context, filter any) (*
 }
 
 func (c *CollectionWrapper) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
-	// Query the document by ID
-	query := fmt.Sprintf(`{ %s(docID: "%s") { _docID } }`, c.version.Name, docID.String())
+	// Query the document by ID - must request ALL fields so SetWithJSON can properly
+	// track which fields are dirty (modified) vs unchanged
+	var fieldNames []string
+	for _, field := range c.version.Fields {
+		// Skip ALL relation fields (both single objects and arrays of objects)
+		// Relations can't be directly queried as scalar values
+		if field.Kind.IsObject() {
+			continue
+		}
+		fieldNames = append(fieldNames, field.Name)
+	}
+
+	query := fmt.Sprintf(`{ %s(docID: "%s") { %s } }`, c.version.Name, docID.String(), strings.Join(fieldNames, " "))
 	result := c.wrapper.ExecRequest(ctx, query)
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
@@ -1222,18 +1244,21 @@ func (c *CollectionWrapper) Get(ctx context.Context, docID client.DocID, showDel
 	// Parse the result to check if document exists
 	data, ok := result.GQL.Data.(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("document not found: %s", docID.String())
+		return nil, c.checkIfDocumentDeleted(ctx, docID)
 	}
 
 	docs, ok := data[c.version.Name].([]any)
 	if !ok || len(docs) == 0 {
-		return nil, fmt.Errorf("document not found: %s", docID.String())
+		return nil, c.checkIfDocumentDeleted(ctx, docID)
 	}
 
 	docData, ok := docs[0].(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("document not found: %s", docID.String())
 	}
+
+	// Convert JSON types (json.Number -> int64/float64, datetime strings -> time.Time)
+	docData = convertDateTimeStrings(docData).(map[string]any)
 
 	// Create a new document from the retrieved data
 	doc, err := client.NewDocFromMap(ctx, docData, c.version)
@@ -1242,6 +1267,24 @@ func (c *CollectionWrapper) Get(ctx context.Context, docID client.DocID, showDel
 	}
 
 	return doc, nil
+}
+
+// checkIfDocumentDeleted checks if a document is deleted and returns the appropriate error
+func (c *CollectionWrapper) checkIfDocumentDeleted(ctx context.Context, docID client.DocID) error {
+	deletedQuery := fmt.Sprintf(`{ %s(docID: "%s", showDeleted: true) { _docID _deleted } }`, c.version.Name, docID.String())
+	deletedResult := c.wrapper.ExecRequest(ctx, deletedQuery)
+	if len(deletedResult.GQL.Errors) == 0 {
+		if deletedData, ok := deletedResult.GQL.Data.(map[string]any); ok {
+			if deletedDocs, ok := deletedData[c.version.Name].([]any); ok && len(deletedDocs) > 0 {
+				if docData, ok := deletedDocs[0].(map[string]any); ok {
+					if deleted, ok := docData["_deleted"].(bool); ok && deleted {
+						return fmt.Errorf("a document with the given ID has been deleted")
+					}
+				}
+			}
+		}
+	}
+	return fmt.Errorf("document not found: %s", docID.String())
 }
 
 func (c *CollectionWrapper) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
