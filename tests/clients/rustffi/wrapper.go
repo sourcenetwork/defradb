@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	gocid "github.com/ipfs/go-cid"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -1124,10 +1125,12 @@ func (c *CollectionWrapper) Update(ctx context.Context, doc *client.Document) er
 		return result.GQL.Errors[0]
 	}
 
-	// Publish update event
+	// Publish update event with CID from latest composite commit
+	compositeCid := c.getLatestCompositeCID(ctx, doc.ID().String())
 	c.wrapper.events.Publish(event.NewMessage(event.UpdateName, event.Update{
 		DocID:        doc.ID().String(),
 		CollectionID: c.version.CollectionID,
+		Cid:          compositeCid,
 	}))
 
 	return nil
@@ -1151,6 +1154,32 @@ func (c *CollectionWrapper) Save(ctx context.Context, doc *client.Document, opts
 		return c.Create(ctx, doc, opts...)
 	}
 	return c.Update(ctx, doc)
+}
+
+// getLatestCompositeCID queries _commits to get the latest composite CID for a document.
+// This is needed for update/delete events so the test framework can resolve CID template variables.
+func (c *CollectionWrapper) getLatestCompositeCID(ctx context.Context, docID string) gocid.Cid {
+	query := fmt.Sprintf(
+		`{ _commits(docID: "%s", filter: {fieldName: {_eq: "_C"}}, order: {height: DESC}, limit: 1) { cid } }`,
+		docID,
+	)
+	result := c.wrapper.ExecRequest(ctx, query)
+	if len(result.GQL.Errors) > 0 {
+		return gocid.Undef
+	}
+	if data, ok := result.GQL.Data.(map[string]any); ok {
+		if commits, ok := data["_commits"].([]any); ok && len(commits) > 0 {
+			if commit, ok := commits[0].(map[string]any); ok {
+				if cidStr, ok := commit["cid"].(string); ok {
+					parsed, err := gocid.Decode(cidStr)
+					if err == nil {
+						return parsed
+					}
+				}
+			}
+		}
+	}
+	return gocid.Undef
 }
 
 // isDocumentDeleted checks if a document is marked as deleted using showDeleted query.
@@ -1179,15 +1208,17 @@ func (c *CollectionWrapper) Delete(ctx context.Context, docID client.DocID) (boo
 		return false, result.GQL.Errors[0]
 	}
 
-	// Publish update event for delete (Go DefraDB emits update events for deletes too)
+	// Publish update event for delete with CID (Go DefraDB emits update events for deletes too)
 	if data, ok := result.GQL.Data.(map[string]any); ok {
 		mutationKey := "delete_" + c.version.Name
 		if mutResult, ok := data[mutationKey].([]any); ok && len(mutResult) > 0 {
 			if docData, ok := mutResult[0].(map[string]any); ok {
 				if deletedDocID, ok := docData["_docID"].(string); ok {
+					compositeCid := c.getLatestCompositeCID(ctx, deletedDocID)
 					c.wrapper.events.Publish(event.NewMessage(event.UpdateName, event.Update{
 						DocID:        deletedDocID,
 						CollectionID: c.version.CollectionID,
+						Cid:          compositeCid,
 					}))
 				}
 			}
