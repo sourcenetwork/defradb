@@ -512,14 +512,13 @@ ifndef RUST_LIB
 	$(error RUST_LIB is required. Usage: make test:ffi RUST_LIB=/path/to/defradb.rs FFI_PKG=query/simple)
 endif
 	@mkdir -p $(FFI_REPORT_DIR)
-	@rust_branch=$$(cd $(RUST_LIB) && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"); \
-	rust_commit=$$(cd $(RUST_LIB) && git rev-parse --short HEAD 2>/dev/null || echo "unknown"); \
-	rust_lib_name=$$(basename $(RUST_LIB)); \
-	echo "{\"timestamp\":\"$$(date +%Y-%m-%d\ %H:%M:%S)\",\"rust_lib\":\"$$rust_lib_name\",\"rust_branch\":\"$$rust_branch\",\"rust_commit\":\"$$rust_commit\"}" > $(FFI_REPORT_DIR)/metadata.json
 	@rust_lib_name=$$(basename $(RUST_LIB)); \
+	rust_branch=$$(cd $(RUST_LIB) && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"); \
+	rust_commit=$$(cd $(RUST_LIB) && git rev-parse --short HEAD 2>/dev/null || echo "unknown"); \
 	for pkg in $(FFI_PKG); do \
 		pkg_safe=$$(echo $$pkg | tr '/' '-'); \
 		report_file=$(FFI_REPORT_DIR)/$$rust_lib_name-$$pkg_safe.log; \
+		meta_file=$(FFI_REPORT_DIR)/$$rust_lib_name-$$pkg_safe.meta; \
 		cache_dir=/tmp/gocache-$$rust_lib_name-$$pkg_safe; \
 		echo ""; \
 		echo "=== Testing $$pkg ==="; \
@@ -531,6 +530,7 @@ endif
 		DEFRA_CLIENT_RUST_FFI=true \
 		GOCACHE=$$cache_dir \
 		go test ./tests/integration/$$pkg/... -v -count=1 -timeout $(FFI_TIMEOUT) 2>&1 | tee $$report_file; \
+		echo "{\"timestamp\":\"$$(date +%Y-%m-%d\ %H:%M:%S)\",\"rust_lib\":\"$$rust_lib_name\",\"rust_branch\":\"$$rust_branch\",\"rust_commit\":\"$$rust_commit\"}" > $$meta_file; \
 		echo ""; \
 		echo "=== Results for $$pkg ==="; \
 		passed=$$(grep -c "^--- PASS:" $$report_file 2>/dev/null || true); \
@@ -600,13 +600,6 @@ endif
 .PHONY: test\:ffi-report
 test\:ffi-report:
 	@echo "=== FFI Test Reports ==="
-	@if [ -f $(FFI_REPORT_DIR)/metadata.json ]; then \
-		ts=$$(grep -o '"timestamp":"[^"]*"' $(FFI_REPORT_DIR)/metadata.json | cut -d'"' -f4); \
-		lib=$$(grep -o '"rust_lib":"[^"]*"' $(FFI_REPORT_DIR)/metadata.json | cut -d'"' -f4); \
-		branch=$$(grep -o '"rust_branch":"[^"]*"' $(FFI_REPORT_DIR)/metadata.json | cut -d'"' -f4); \
-		commit=$$(grep -o '"rust_commit":"[^"]*"' $(FFI_REPORT_DIR)/metadata.json | cut -d'"' -f4); \
-		echo "Run: $$ts | $$lib ($$branch @ $$commit)"; \
-	fi
 	@echo ""
 	@total_passed=0; total_failed=0; \
 	for f in $(FFI_REPORT_DIR)/*.log; do \
@@ -614,12 +607,22 @@ test\:ffi-report:
 			name=$$(basename $$f .log); \
 			passed=$$(grep -c "^--- PASS:" $$f 2>/dev/null; true); \
 			failed=$$(grep -c "^--- FAIL:" $$f 2>/dev/null; true); \
+			passed=$${passed:-0}; \
+			failed=$${failed:-0}; \
 			total=$$((passed + failed)); \
 			total_passed=$$((total_passed + passed)); \
 			total_failed=$$((total_failed + failed)); \
+			meta=""; \
+			meta_file="$(FFI_REPORT_DIR)/$$name.meta"; \
+			if [ -f "$$meta_file" ]; then \
+				branch=$$(grep -o '"rust_branch":"[^"]*"' $$meta_file | cut -d'"' -f4); \
+				commit=$$(grep -o '"rust_commit":"[^"]*"' $$meta_file | cut -d'"' -f4); \
+				ts=$$(grep -o '"timestamp":"[^"]*"' $$meta_file | cut -d'"' -f4); \
+				meta="$$branch@$$commit $$ts"; \
+			fi; \
 			if [ "$$total" -gt 0 ]; then \
 				pct=$$((passed * 100 / total)); \
-				printf "%-45s %3d/%3d (%3d%%)\n" "$$name" $$passed $$total $$pct; \
+				printf "%-40s %3d/%3d (%3d%%)  %s\n" "$$name" $$passed $$total $$pct "$$meta"; \
 			fi; \
 		fi; \
 	done; \
@@ -627,7 +630,7 @@ test\:ffi-report:
 	grand_total=$$((total_passed + total_failed)); \
 	if [ "$$grand_total" -gt 0 ]; then \
 		grand_pct=$$((total_passed * 100 / grand_total)); \
-		printf "%-45s %3d/%3d (%3d%%)\n" "TOTAL" $$total_passed $$grand_total $$grand_pct; \
+		printf "%-40s %3d/%3d (%3d%%)\n" "TOTAL" $$total_passed $$grand_total $$grand_pct; \
 	fi
 
 .PHONY: test\:ffi-save
