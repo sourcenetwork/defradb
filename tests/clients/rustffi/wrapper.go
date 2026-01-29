@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -24,12 +23,62 @@ import (
 )
 
 // jsonToGraphQLInput converts a JSON object to GraphQL input format.
+// jsonToGraphQLInput converts JSON object syntax to GraphQL input syntax.
 // JSON uses quoted keys: {"Age": 21, "Name": "John"}
 // GraphQL uses unquoted keys: {Age: 21, Name: "John"}
+// This function properly handles nested string values containing JSON.
 func jsonToGraphQLInput(jsonStr string) string {
-	// Match quoted keys followed by colon: "key":
-	re := regexp.MustCompile(`"([^"]+)"\s*:`)
-	return re.ReplaceAllString(jsonStr, "$1:")
+	var data any
+	if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+		// If parsing fails, return as-is (shouldn't happen for valid JSON)
+		return jsonStr
+	}
+	return valueToGQLInput(data)
+}
+
+// valueToGQLInput converts a Go value to GraphQL input syntax.
+func valueToGQLInput(v any) string {
+	switch val := v.(type) {
+	case nil:
+		return "null"
+	case bool:
+		if val {
+			return "true"
+		}
+		return "false"
+	case float64:
+		// Check if it's actually an integer
+		if val == float64(int64(val)) {
+			return fmt.Sprintf("%d", int64(val))
+		}
+		return fmt.Sprintf("%v", val)
+	case json.Number:
+		return val.String()
+	case string:
+		// Properly escape the string for GraphQL
+		escaped := strings.ReplaceAll(val, `\`, `\\`)
+		escaped = strings.ReplaceAll(escaped, `"`, `\"`)
+		escaped = strings.ReplaceAll(escaped, "\n", `\n`)
+		escaped = strings.ReplaceAll(escaped, "\r", `\r`)
+		escaped = strings.ReplaceAll(escaped, "\t", `\t`)
+		return `"` + escaped + `"`
+	case []any:
+		parts := make([]string, len(val))
+		for i, item := range val {
+			parts[i] = valueToGQLInput(item)
+		}
+		return "[" + strings.Join(parts, ",") + "]"
+	case map[string]any:
+		parts := make([]string, 0, len(val))
+		for k, item := range val {
+			parts = append(parts, k+":"+valueToGQLInput(item))
+		}
+		return "{" + strings.Join(parts, ",") + "}"
+	default:
+		// Fallback: use JSON marshaling
+		b, _ := json.Marshal(val)
+		return string(b)
+	}
 }
 
 // Verify interface compliance at compile time
