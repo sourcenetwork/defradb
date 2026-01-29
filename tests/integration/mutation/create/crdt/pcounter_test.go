@@ -15,10 +15,14 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestPCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -58,6 +62,9 @@ func TestPCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 
 func TestPCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -97,6 +104,9 @@ func TestPCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 
 func TestPCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
