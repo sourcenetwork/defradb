@@ -158,20 +158,14 @@ jobs:
       - name: Setup defradb
         uses: ./.github/composites/setup-defradb
 
-      # Uses the go.mod file to determine the version of SorceHub to be fetched for jobs
-      - name: Get SourceHub version
-        run: |
-          SOURCEHUB_COMMIT=$(sed -rn 's/.*sourcehub.*-([0-9a-f]+)/\1/p' go.mod)
-          echo "SOURCEHUB_COMMIT=$SOURCEHUB_COMMIT" >> "$GITHUB_ENV"
-
-      # We have to install it ourselves because it contains replace commands in its go.mod file.
-      - name: Install sourcehub
-        uses: ./.github/composites/install-sourcehub
-        with:
-          ref: ${{ env.SOURCEHUB_COMMIT }}
+      - name: Get SourceHub Docker Image Name
+        id: sourcehub-image
+        uses: ./.github/composites/get-sourcehub-image
 
       - name: Test coverage & save coverage report in an artifact
         uses: ./.github/composites/test-coverage-with-artifact
+        env:
+          DEFRA_SOURCEHUB_IMAGE: ${{ steps.sourcehub-image.outputs.image }}
         with:
           coverage-artifact-name: "coverage_document_acp\
             _${{ matrix.document-acp-type }}\

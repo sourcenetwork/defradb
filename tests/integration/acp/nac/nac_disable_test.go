@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -55,7 +56,7 @@ func TestNAC_DisableWithoutIdentityOnNodeThatHasConfigured_Error(t *testing.T) {
 			},
 
 			testUtils.DisableNAC{
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACDisablePerm),
 			},
 
 			testUtils.GetNACStatus{ // Did not disable.
@@ -79,7 +80,7 @@ func TestNAC_DisableWithWrongIdentityOnNodeThatHasConfigured_Error(t *testing.T)
 
 			testUtils.DisableNAC{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACDisablePerm),
 			},
 
 			testUtils.GetNACStatus{ // Did not disable.
@@ -103,7 +104,7 @@ func TestNAC_DisableWithIdentityOnNodeThatHasNACConfiguredAndEnabled_Successful(
 
 			// Can not do this request without identity before disabling.
 			testUtils.GetNACStatus{
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			testUtils.DisableNAC{

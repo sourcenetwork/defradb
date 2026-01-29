@@ -419,6 +419,12 @@ func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string)
 	p.handleRetryMutex.Lock()
 	defer p.handleRetryMutex.Unlock()
 
+	// Check context after acquiring the mutex, as shutdown may have
+	// occurred while we were waiting.
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
 	err := updateReplicatorStatus(ctx, peerID, false, p.db.Multistore().Peerstore())
 	if err != nil {
 		return err
@@ -432,6 +438,12 @@ func (p *P2P) handleReplicatorFailure(ctx context.Context, peerID, docID string)
 }
 
 func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string, success bool) error {
+	// Check if context is cancelled before attempting database operations.
+	// This prevents attempts to write to a closed database during shutdown.
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
 	if success {
 		done, err := deleteReplicatorRetryIfNoMoreDocs(ctx, peerID, p.db.Multistore().Peerstore())
 		if err != nil {
@@ -598,6 +610,9 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 }
 
 func (p *P2P) setReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRetryIDKey, rInfo retryInfo) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	rInfo.Retrying = true
 	rInfo.NumRetries++
 	b, err := cbor.Marshal(rInfo)
@@ -614,6 +629,9 @@ func setReplicatorNextRetry(
 	retryIntervals []time.Duration,
 	peerstore corekv.ReaderWriter,
 ) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	key := keys.NewReplicatorRetryIDKey(peerID)
 	b, err := peerstore.Get(ctx, key.Bytes())
 	if err != nil {
@@ -805,6 +823,9 @@ func deleteReplicatorRetryIfNoMoreDocs(
 	peerID string,
 	peerstore corekv.ReaderWriter,
 ) (bool, error) {
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
 	entries, err := datastore.FetchKeysForPrefix(
 		ctx,
 		keys.NewReplicatorRetryDocIDKey(peerID, "").Bytes(),
@@ -823,6 +844,9 @@ func deleteReplicatorRetryIfNoMoreDocs(
 
 // deleteReplicatorRetryAndDocs deletes the replicator retry and all retry docs.
 func (p *P2P) deleteReplicatorRetryAndDocs(ctx context.Context, peerID string) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	key := keys.NewReplicatorRetryIDKey(peerID)
 	err := p.db.Multistore().Peerstore().Delete(ctx, key.Bytes())
 	if err != nil {

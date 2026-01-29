@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -119,7 +120,7 @@ func TestNAC_GatesP2PCollectionDelete_NoIdentity_NotAuthorizedError(t *testing.T
 				Identity:      testUtils.NoIdentity(),
 				NodeID:        1,
 				CollectionIDs: []int{0},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionDeletePerm),
 			},
 		},
 	}
@@ -173,7 +174,7 @@ func TestNAC_GatesP2PCollectionDelete_WrongIdentity_NotAuthorizedError(t *testin
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionDeletePerm),
 			},
 		},
 	}
