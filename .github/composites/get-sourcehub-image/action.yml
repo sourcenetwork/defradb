@@ -1,4 +1,4 @@
-# Copyright 2024 Democratized Data Foundation
+# Copyright 2026 Democratized Data Foundation
 #
 # Use of this software is governed by the Business Source License
 # included in the file licenses/BSL.txt.
@@ -11,12 +11,6 @@
 name: 'Get SourceHub Docker Image Tag'
 
 description: 'Composite action to figure out the correct docker image to use for SourceHub'
-
-inputs:
-  ref:
-    description: 'The branch, tag or SHA to install'
-    required: true
-    default: 'coverage_default'
 
 outputs:
   image:
