@@ -474,3 +474,90 @@ API_LEVEL ?= 21
 .PHONY: build-c-shared-android
 build-c-shared-android:
 	@tools/scripts/build-c-shared-android.sh $(ANDROID_NDK) $(API_LEVEL) "$(BUILD_FLAGS)"
+
+# ============================================================================
+# Rust FFI Testing
+# ============================================================================
+#
+# Run Go integration tests against the Rust FFI implementation.
+#
+# Usage:
+#   make test:ffi RUST_LIB=/path/to/defradb.rs FFI_PKG=query/simple
+#   make test:ffi RUST_LIB=/path/to/defradb.rs FFI_PKG="query/simple mutation/create"
+#   make test:ffi-report  # View last test report
+#
+# Environment:
+#   RUST_LIB    - Path to Rust defradb.rs repo (required)
+#   FFI_PKG     - Test package(s), space-separated (default: query/simple)
+#   FFI_TIMEOUT - Test timeout (default: 300s)
+#
+# Parallel Worktree Support:
+#   Each RUST_LIB path gets its own GOCACHE, so multiple Claude sessions can
+#   run tests against different Rust worktrees simultaneously without cache
+#   collisions. Cache dir is derived from RUST_LIB basename + package name.
+
+FFI_PKG ?= query/simple
+FFI_TIMEOUT ?= 300s
+FFI_REPORT_DIR ?= /tmp/ffi-test-reports
+
+.PHONY: test\:ffi
+test\:ffi:
+ifndef RUST_LIB
+	$(error RUST_LIB is required. Usage: make test:ffi RUST_LIB=/path/to/defradb.rs FFI_PKG=query/simple)
+endif
+	@mkdir -p $(FFI_REPORT_DIR)
+	@rust_lib_name=$$(basename $(RUST_LIB)); \
+	for pkg in $(FFI_PKG); do \
+		pkg_safe=$$(echo $$pkg | tr '/' '-'); \
+		report_file=$(FFI_REPORT_DIR)/$$rust_lib_name-$$pkg_safe.log; \
+		cache_dir=/tmp/gocache-$$rust_lib_name-$$pkg_safe; \
+		echo ""; \
+		echo "=== Testing $$pkg ==="; \
+		echo "Clearing GOCACHE: $$cache_dir"; \
+		rm -rf $$cache_dir; \
+		echo "Running tests..."; \
+		CGO_ENABLED=1 \
+		CGO_LDFLAGS="-L$(RUST_LIB)/target/release -lffi -ldl -lpthread -lm" \
+		DEFRA_CLIENT_RUST_FFI=true \
+		GOCACHE=$$cache_dir \
+		go test ./tests/integration/$$pkg/... -v -count=1 -timeout $(FFI_TIMEOUT) 2>&1 | tee $$report_file; \
+		echo ""; \
+		echo "=== Results for $$pkg ==="; \
+		passed=$$(grep -c "^--- PASS:" $$report_file 2>/dev/null || echo 0); \
+		failed=$$(grep -c "^--- FAIL:" $$report_file 2>/dev/null || echo 0); \
+		total=$$((passed + failed)); \
+		echo "  Passed: $$passed"; \
+		echo "  Failed: $$failed"; \
+		echo "  Total:  $$total"; \
+		if [ "$$failed" -gt 0 ]; then \
+			echo ""; \
+			echo "Failed tests:"; \
+			grep "^--- FAIL:" $$report_file | sed 's/--- FAIL: /  - /' | sed 's/ (.*//' ; \
+		fi; \
+		echo ""; \
+		echo "Full output: $$report_file"; \
+	done
+
+.PHONY: test\:ffi-all
+test\:ffi-all:
+ifndef RUST_LIB
+	$(error RUST_LIB is required. Usage: make test:ffi-all RUST_LIB=/path/to/defradb.rs)
+endif
+	@$(MAKE) test:ffi RUST_LIB=$(RUST_LIB) FFI_PKG="query/simple query/one_to_many query/one_to_one query/inline_array query/json query/commits mutation/create mutation/update mutation/delete index collection_version explain collection"
+
+.PHONY: test\:ffi-report
+test\:ffi-report:
+	@echo "=== FFI Test Reports ==="
+	@echo ""
+	@for f in $(FFI_REPORT_DIR)/*.log; do \
+		if [ -f "$$f" ]; then \
+			name=$$(basename $$f .log); \
+			passed=$$(grep -c "^--- PASS:" $$f 2>/dev/null || echo 0); \
+			failed=$$(grep -c "^--- FAIL:" $$f 2>/dev/null || echo 0); \
+			total=$$((passed + failed)); \
+			if [ "$$total" -gt 0 ]; then \
+				pct=$$((passed * 100 / total)); \
+				printf "%-45s %3d/%3d (%3d%%)\n" "$$name" $$passed $$total $$pct; \
+			fi; \
+		fi; \
+	done
