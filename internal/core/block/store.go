@@ -273,36 +273,60 @@ func updateHeads(
 		linksToProcess = block.Heads
 	}
 
-	for _, l := range linksToProcess {
-		linkCid := l.Cid
-		isHead, err := headset.IsHead(ctx, linkCid)
-		if err != nil {
-			return NewErrCheckingHead(linkCid, err)
-		}
+	if len(linksToProcess) == 0 {
+		return nil
+	}
 
-		// Marking the block as merged removes the to-merge index. It signals that nothing
-		// else needs to be done for that block.
-		err = txn.Blockstore().MarkAsMerged(ctx, linkCid)
-		if err != nil {
-			return NewErrMarkingAsMerged(blockLink.Cid, err)
-		}
+	// Collect all link CIDs for batch operations
+	linkCids := make([]cid.Cid, len(linksToProcess))
+	for i, l := range linksToProcess {
+		linkCids[i] = l.Cid
+	}
 
-		if isHead {
+	// Batch check which links are heads
+	isHeadMap, err := headset.BatchIsHead(ctx, linkCids)
+	if err != nil {
+		return NewErrCheckingHead(linkCids[0], err)
+	}
+
+	// Batch mark all links as merged
+	err = txn.Blockstore().BatchMarkAsMerged(ctx, linkCids)
+	if err != nil {
+		return NewErrMarkingAsMerged(blockLink.Cid, err)
+	}
+
+	// Collect non-head CIDs for batch Has check
+	var nonHeadCids []cid.Cid
+	for _, linkCid := range linkCids {
+		if !isHeadMap[linkCid.String()] {
+			nonHeadCids = append(nonHeadCids, linkCid)
+		}
+	}
+
+	// Batch check Has for non-head links
+	var knownMap map[string]bool
+	if len(nonHeadCids) > 0 {
+		knownMap, err = txn.Blockstore().BatchHas(ctx, nonHeadCids)
+		if err != nil {
+			return NewErrCouldNotFindBlock(nonHeadCids[0], err)
+		}
+	}
+
+	// Process each link based on batch results
+	for _, linkCid := range linkCids {
+		cidStr := linkCid.String()
+
+		if isHeadMap[cidStr] {
 			// reached one of the current heads, replace it with the tip
 			// of current branch
 			err = headset.Replace(ctx, linkCid, blockLink.Cid, priority)
 			if err != nil {
 				return NewErrReplacingHead(linkCid, blockLink.Cid, err)
 			}
-
 			continue
 		}
 
-		known, err := txn.Blockstore().Has(ctx, linkCid)
-		if err != nil {
-			return NewErrCouldNotFindBlock(linkCid, err)
-		}
-		if known {
+		if knownMap != nil && knownMap[cidStr] {
 			// we reached a non-head node in the known tree.
 			// This means our root block is a new head
 			err := headset.Write(ctx, blockLink.Cid, priority)

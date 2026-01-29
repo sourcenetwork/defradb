@@ -58,6 +58,19 @@ func (hh *heads) IsHead(ctx context.Context, c cid.Cid) (bool, error) {
 	return hh.store.Has(ctx, hh.key(c).Bytes())
 }
 
+// BatchIsHead checks multiple CIDs for head status in a single operation.
+func (hh *heads) BatchIsHead(ctx context.Context, cids []cid.Cid) (map[string]bool, error) {
+	result := make(map[string]bool, len(cids))
+	for _, c := range cids {
+		isHead, err := hh.store.Has(ctx, hh.key(c).Bytes())
+		if err != nil {
+			return nil, err
+		}
+		result[c.String()] = isHead
+	}
+	return result, nil
+}
+
 // Replace replaces a head with a new CID.
 func (hh *heads) Replace(ctx context.Context, old cid.Cid, new cid.Cid, height uint64) error {
 	log.InfoContext(

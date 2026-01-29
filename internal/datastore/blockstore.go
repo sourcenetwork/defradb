@@ -30,9 +30,13 @@ type Blockstore interface {
 	ipfsBlockstore.Blockstore
 	// Mark the block as merged by removing the to-merge index.
 	MarkAsMerged(ctx context.Context, k cid.Cid) error
+	// BatchMarkAsMerged marks multiple blocks as merged in a single operation.
+	BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error
 	// Check if the block has been merged. It will return false if either the CID is not found
 	// or the CID is found AND the to-merge index is also found.
 	IsMerged(ctx context.Context, k cid.Cid) (bool, error)
+	// BatchHas checks if multiple CIDs exist in the blockstore.
+	BatchHas(ctx context.Context, cids []cid.Cid) (map[string]bool, error)
 }
 
 func newBlockstore(store corekv.ReaderWriter) *bstore {
@@ -101,6 +105,33 @@ func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
 		bs.mergedCache.Add(cid.String(), struct{}{})
 	}
 	return nil
+}
+
+// BatchMarkAsMerged marks multiple blocks as merged in a single operation.
+func (bs *bstore) BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error {
+	for _, c := range cids {
+		err := bs.store.Delete(ctx, newToMergeKey(c.Bytes()))
+		if err != nil {
+			return err
+		}
+		if bs.mergedCache != nil {
+			bs.mergedCache.Add(c.String(), struct{}{})
+		}
+	}
+	return nil
+}
+
+// BatchHas checks if multiple CIDs exist in the blockstore.
+func (bs *bstore) BatchHas(ctx context.Context, cids []cid.Cid) (map[string]bool, error) {
+	result := make(map[string]bool, len(cids))
+	for _, c := range cids {
+		has, err := bs.Has(ctx, c)
+		if err != nil {
+			return nil, err
+		}
+		result[c.String()] = has
+	}
+	return result, nil
 }
 
 type p2pBlockStore struct {

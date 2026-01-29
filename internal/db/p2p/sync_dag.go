@@ -16,6 +16,7 @@ import (
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -124,6 +125,10 @@ func (p *P2P) loadBlockLinks(
 		return err
 	}
 
+	txn := p.db.Rootstore().NewTxn(true)
+	defer txn.Discard()
+	txnCtx := corekv.SetCtxTxn(ctx, txn)
+
 	for len(stack) > 0 {
 		current := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
@@ -131,7 +136,7 @@ func (p *P2P) loadBlockLinks(
 		if err != nil {
 			return err
 		}
-		merged, err := bstore.IsMerged(ctx, link.Cid)
+		merged, err := bstore.IsMerged(txnCtx, link.Cid)
 		if err != nil {
 			return err
 		}
