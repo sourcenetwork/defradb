@@ -615,47 +615,205 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// this test expectedly fails. We skip it for now
-func _TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldIncludeAll(t *testing.T) {
+func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ShouldIncludeOrphans(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
 					type Book {
-						name: String
+						title: String
 						publisher: Publisher
 					}
 					type Publisher {
-						year: Int @index
+						name: String
+						establishedYear: Int @index
 						book: Book @primary
 					}
 				`,
 			},
 			&action.CreateDoc{
 				CollectionID: 0,
-				Doc:          `{"name": "Book1"}`,
+				Doc:          `{"title": "Book1"}`,
 			},
 			&action.CreateDoc{
 				CollectionID: 0,
-				Doc:          `{"name": "Book2"}`, // No publisher - orphan
+				Doc:          `{"title": "Book2"}`, // No publisher - orphan
 			},
 			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
-					"year": 2020,
+					"name":            "Publisher1",
+					"establishedYear": 2020,
+					"book":            testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Book(order: {publisher: {establishedYear: ASC}}) {
+						title
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{"title": "Book2"}, // null establishedYear first in ASC
+						{"title": "Book1"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithOrderByRelationField_WithParentSecondaryDESC_ShouldIncludeOrphans(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						title: String
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						establishedYear: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"title": "Book1"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"title": "Book2"}`, // No publisher - orphan
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":            "Publisher1",
+					"establishedYear": 2020,
+					"book":            testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Book(order: {publisher: {establishedYear: DESC}}) {
+						title
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{"title": "Book1"},
+						{"title": "Book2"}, // null establishedYear last in DESC
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ShouldIncludeOrphans(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						title: String
+						rating: Int @index
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"title":  "Book1",
+					"rating": 5,
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{"name": "OrphanPublisher"}`, // No book - orphan
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "LinkedPublisher",
 					"book": testUtils.NewDocIndex(0, 0),
 				},
 			},
 			&action.Request{
 				Request: `query {
-					Book(order: {publisher: {year: ASC}}) {
+					Publisher(order: {book: {rating: ASC}}) {
 						name
 					}
 				}`,
 				Results: map[string]any{
-					"Book": []map[string]any{
-						{"name": "Book2"}, // null year first in ASC
-						{"name": "Book1"},
+					"Publisher": []map[string]any{
+						{"name": "OrphanPublisher"}, // null rating first in ASC (orphan - no book)
+						{"name": "LinkedPublisher"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithOrderByRelationField_WithParentPrimaryDESC_ShouldIncludeOrphans(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						title: String
+						rating: Int @index
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"title":  "Book1",
+					"rating": 5,
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc: `{"name": "OrphanPublisher"}`, // No book - orphan
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "LinkedPublisher",
+					"book": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Publisher(order: {book: {rating: DESC}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{"name": "LinkedPublisher"},
+						{"name": "OrphanPublisher"}, // null rating last in DESC (orphan - no book)
 					},
 				},
 			},

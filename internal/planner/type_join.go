@@ -19,7 +19,6 @@ import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
-	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/filter"
@@ -487,25 +486,60 @@ func fetchDocWithIDAndItsSubDocs(node planNode, docID string) (immutable.Option[
 	return immutable.Some(node.Value()), nil
 }
 
+// joinIterationState holds the mutable state that changes during iteration.
+// This is separated from configuration to make Init() semantics clearer.
+type joinIterationState struct {
+	// docsToYield contains documents read and ready to be yielded by this node.
+	docsToYield []core.Doc
+	// encounteredDocIDs tracks which secondary docs we've already processed
+	// to avoid yielding duplicates when multiple primary docs reference the same secondary.
+	encounteredDocIDs []string
+	// orphansToYield contains parent documents that don't have related children.
+	// These are fetched when the join is inverted for ordering.
+	orphansToYield []core.Doc
+	// orphansFetched tracks whether orphans have been fetched for this iteration.
+	orphansFetched bool
+	// bufferedParentDocs holds parent documents during ASC ordering with inverted join.
+	// For ASC ordering, orphans (NULL values) come first, so we buffer regular parents
+	// until all children are processed, then yield orphans first followed by buffered parents.
+	bufferedParentDocs []core.Doc
+	// childIterationComplete indicates that we've finished iterating through all children.
+	// This is used for ASC ordering to know when to switch from buffering to yielding.
+	childIterationComplete bool
+}
+
+// reset clears all iteration state for a fresh iteration.
+func (s *joinIterationState) reset() {
+	s.docsToYield = nil
+	s.encounteredDocIDs = nil
+	s.orphansToYield = nil
+	s.orphansFetched = false
+	s.bufferedParentDocs = nil
+	s.childIterationComplete = false
+}
+
 type invertibleTypeJoin struct {
 	docMapper
 
-	skipChild bool
-
-	parentSide joinSide
-	childSide  joinSide
-
-	// the filter of the subnode to store in case it's replaced by an index filter
-	subFilter *mapper.Filter
-
-	// the ordering of the subnode to apply when fetching child documents
-	subOrdering []mapper.OrderCondition
-
+	// Configuration (set during construction, shouldn't change during iteration)
+	skipChild           bool
+	parentSide          joinSide
+	childSide           joinSide
+	// filter for sub-queries
+	subFilter           *mapper.Filter          
+	// ordering for sub-queries
+	subOrdering         []mapper.OrderCondition 
 	secondaryFetchLimit uint
 
-	// docsToYield contains documents read and ready to be yielded by this node.
-	docsToYield       []core.Doc
-	encounteredDocIDs []string
+	// invertedForOrdering indicates this join was inverted to use an index for ordering.
+	// When true, we need to handle orphan parents (parents without children).
+	invertedForOrdering bool
+	// invertedOrderDirection is the direction of the ordering when inverted.
+	// ASC means orphans (NULL values) should come first, DESC means last.
+	invertedOrderDirection mapper.SortDirection
+
+	// Iteration state (mutable during execution, reset on Init())
+	state joinIterationState
 }
 
 func (join *invertibleTypeJoin) replaceRoot(node planNode) {
@@ -513,10 +547,10 @@ func (join *invertibleTypeJoin) replaceRoot(node planNode) {
 }
 
 func (join *invertibleTypeJoin) Init() error {
-	// Clear state from previous iterations to ensure fresh iteration when reinitializing.
+	// Clear iteration state from previous iterations to ensure fresh iteration when reinitializing.
 	// This is important for aggregates where we iterate multiple times for different parent docs.
-	join.encounteredDocIDs = nil
-	join.docsToYield = nil
+	join.state.reset()
+
 	if err := join.childSide.plan.Init(); err != nil {
 		return err
 	}
@@ -543,6 +577,61 @@ func (join *invertibleTypeJoin) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (join *invertibleTypeJoin) Source() planNode { return join.parentSide.plan }
+
+// fetchOrphanParents fetches parent documents that have no related children.
+// This is needed when the join is inverted for ordering, as orphan parents
+// would otherwise be skipped (they have NULL values for the ordered field).
+//
+// The approach depends on which side has the foreign key:
+// - If parent is PRIMARY (has FK field): Query for docs where FK is NULL
+// - If parent is SECONDARY (no FK field): Fetch all parents and exclude those already encountered
+func (join *invertibleTypeJoin) fetchOrphanParents() error {
+	join.state.orphansFetched = true
+
+	parentScan := getNode[*scanNode](join.parentSide.plan)
+	if parentScan == nil {
+		return nil
+	}
+
+	if !join.parentSide.relFieldDef.HasValue() {
+		return nil
+	}
+
+	fetcher := newSubQueryFetcher(
+		parentScan.p.ctx,
+		parentScan.p.identity,
+		parentScan.p.nodeACP,
+		parentScan.p.documentACP,
+		join.parentSide.col,
+		join.documentMapping,
+		parentScan.p.lensStore,
+		parentScan.fields,
+		&parentScan.execInfo,
+	)
+
+	var orphans []core.Doc
+	var err error
+
+	if join.parentSide.isPrimary() {
+		relIDFieldName := request.ToFieldID(join.parentSide.relFieldDef.Value().Name)
+
+		if !join.parentSide.relIDFieldMapIndex.HasValue() {
+			return nil
+		}
+		relIDFieldMapIndex := join.parentSide.relIDFieldMapIndex.Value()
+
+		orphans, err = fetcher.fetchOrphans(relIDFieldName, relIDFieldMapIndex, join.subFilter)
+	} else {
+		orphans, err = fetcher.fetchAllExcluding(join.subFilter, join.state.encounteredDocIDs)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	join.state.orphansToYield = orphans
+	return nil
+}
 
 type primaryObjectsRetriever struct {
 	relIDFieldDef client.CollectionFieldDescription
@@ -626,32 +715,22 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	oldIndex := r.primaryScan.index
 	oldOrdering := r.primaryScan.ordering
 
-	// we first try to find an index based on sub-filter fields
-	r.primaryScan.index = findIndexByFilteringField(r.primaryScan)
+	result := selectIndex(selectIndexOptions{
+		collection:          r.primaryScan.col,
+		filter:              r.primaryScan.filter,
+		ordering:            r.ordering,
+		relationIDFieldName: r.relIDFieldDef.Name,
+		docMapping:          r.primaryScan.documentMapping,
+	})
 
-	if !r.primaryScan.index.HasValue() {
-		// if no index can be used for sub-filter fall back to relation ID field index
-		r.primaryScan.index = findIndexByFieldName(r.primaryScan.col, r.relIDFieldDef.Name)
-	}
+	r.primaryScan.index = result.index
 
-	// Check if the selected index can satisfy ordering. Use the same function (CanBeOrderedByIndex)
-	// that isOrderedByIndex uses to ensure consistent behavior between plan expansion and execution.
-	if r.primaryScan.index.HasValue() && len(r.ordering) > 0 {
-		canOrder, _ := fetcher.CanBeOrderedByIndex(r.ordering, r.primaryScan.index.Value(), r.primaryScan.documentMapping)
-		if canOrder {
-			r.primaryScan.ordering = r.ordering
-		} else {
-			// Clear ordering so the fetcher doesn't try to use it with an incompatible index.
-			// The orderNode (added during plan expansion) will handle in-memory sorting.
-			r.primaryScan.ordering = nil
-		}
-	} else if !r.primaryScan.index.HasValue() && len(r.ordering) > 0 {
-		// if there is no index for filter, we try to find one for ordering
-		orderIndex, canOrderByIndex := r.findOrderingIndex()
-		if canOrderByIndex {
-			r.primaryScan.index = orderIndex
-			r.primaryScan.ordering = r.ordering
-		}
+	if result.canSatisfyOrder {
+		r.primaryScan.ordering = r.ordering
+	} else {
+		// Clear ordering so the fetcher doesn't try to use it with an incompatible index.
+		// The orderNode (added during plan expansion) will handle in-memory sorting.
+		r.primaryScan.ordering = nil
 	}
 
 	r.primaryScan.initFetcher(immutable.None[string]())
@@ -735,22 +814,60 @@ func fetchPrimaryDocsReferencingSecondaryDoc(
 }
 
 func (join *invertibleTypeJoin) Next() (bool, error) {
-	if len(join.docsToYield) > 0 {
+	if len(join.state.docsToYield) > 0 {
 		// If there is one or more documents in the queue, drop the first one -
 		// it will have been yielded by the last `Next()` call.
-		join.docsToYield = join.docsToYield[1:]
-		if len(join.docsToYield) > 0 {
+		join.state.docsToYield = join.state.docsToYield[1:]
+		if len(join.state.docsToYield) > 0 {
 			// If there are still documents in the queue, return true yielding the next
 			// one in the queue.
 			return true, nil
 		}
 	}
 
+	// For ASC ordering with inverted join, we need to yield orphans FIRST.
+	// But we don't know which parents are orphans until we've iterated all children.
+	// So we buffer parent docs during iteration, then yield orphans followed by buffered docs.
+	if join.invertedForOrdering && join.invertedOrderDirection == mapper.ASC {
+		if join.state.childIterationComplete {
+			if !join.state.orphansFetched {
+				if err := join.fetchOrphanParents(); err != nil {
+					return false, err
+				}
+				join.state.docsToYield = append(join.state.orphansToYield, join.state.bufferedParentDocs...)
+				join.state.orphansToYield = nil
+				join.state.bufferedParentDocs = nil
+				if len(join.state.docsToYield) > 0 {
+					return true, nil
+				}
+			}
+			return false, nil
+		}
+
+		return join.nextWithBuffering()
+	}
+
 	firstSide := join.getFirstSide()
 	hasFirstValue, err := firstSide.plan.Next()
 
-	if err != nil || !hasFirstValue {
+	if err != nil {
 		return false, err
+	}
+
+	if !hasFirstValue {
+		// If no more values from first side, check for DESC orphans
+		// For DESC ordering, fetch and yield orphans last (NULL values come last)
+		if join.invertedForOrdering && join.invertedOrderDirection == mapper.DESC && !join.state.orphansFetched {
+			if err := join.fetchOrphanParents(); err != nil {
+				return false, err
+			}
+			if len(join.state.orphansToYield) > 0 {
+				join.state.docsToYield = append(join.state.docsToYield, join.state.orphansToYield...)
+				join.state.orphansToYield = nil
+				return true, nil
+			}
+		}
+		return false, nil
 	}
 
 	if firstSide.isPrimary() {
@@ -762,31 +879,84 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 			return false, err
 		}
 		if join.parentSide.isPrimary() {
-			join.docsToYield = append(join.docsToYield, primaryDocs...)
+			join.state.docsToYield = append(join.state.docsToYield, primaryDocs...)
 		} else {
-			join.docsToYield = append(join.docsToYield, secondaryDoc)
+			join.state.docsToYield = append(join.state.docsToYield, secondaryDoc)
 		}
 
 		// If we reach this line and there are no docs to yield, it likely means that a child
 		// document was found but not a parent - this can happen when inverting the join, for
 		// example when working with a secondary index.
-		if len(join.docsToYield) == 0 {
-			return false, nil
+		if len(join.state.docsToYield) == 0 {
+			return join.Next()
 		}
 	}
 
 	return true, nil
 }
 
+// nextWithBuffering iterates through children and buffers parent documents.
+// This is used for ASC ordering where orphans must come first - we need to
+// collect all parents before we can determine which are orphans.
+func (join *invertibleTypeJoin) nextWithBuffering() (bool, error) {
+	firstSide := join.getFirstSide()
+	hasFirstValue, err := firstSide.plan.Next()
+
+	if err != nil {
+		return false, err
+	}
+
+	if !hasFirstValue {
+		// Mark iteration as complete - next call will handle orphans
+		join.state.childIterationComplete = true
+		return join.Next()
+	}
+
+	if firstSide.isPrimary() {
+		return join.fetchRelatedSecondaryDocWithChildrenBuffered(firstSide.plan.Value())
+	} else {
+		primaryDocs, secondaryDoc, err := fetchPrimaryDocsReferencingSecondaryDoc(
+			join.getPrimarySide(), join.getSecondarySide(), firstSide.plan.Value(), join.subFilter, join.subOrdering)
+		if err != nil {
+			return false, err
+		}
+		if join.parentSide.isPrimary() {
+			join.state.bufferedParentDocs = append(join.state.bufferedParentDocs, primaryDocs...)
+		} else {
+			join.state.bufferedParentDocs = append(join.state.bufferedParentDocs, secondaryDoc)
+		}
+
+		return join.nextWithBuffering()
+	}
+}
+
 func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc core.Doc) (bool, error) {
+	return join.fetchRelatedSecondaryDocWithChildrenInternal(primaryDoc, false)
+}
+
+// fetchRelatedSecondaryDocWithChildrenBuffered is like fetchRelatedSecondaryDocWithChildren
+// but buffers the parent documents instead of yielding them immediately.
+// This is used for ASC ordering where orphans must come first.
+func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildrenBuffered(primaryDoc core.Doc) (bool, error) {
+	return join.fetchRelatedSecondaryDocWithChildrenInternal(primaryDoc, true)
+}
+
+func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildrenInternal(primaryDoc core.Doc, buffer bool) (bool, error) {
 	firstSide := join.getFirstSide()
 	secondSide := join.getSecondSide()
 
 	secondaryDocID := getForeignKey(firstSide.plan, firstSide.relFieldDef.Value().Name)
 	if secondaryDocID == "" {
 		if firstSide.isParent {
-			join.docsToYield = append(join.docsToYield, firstSide.plan.Value())
+			if buffer {
+				join.state.bufferedParentDocs = append(join.state.bufferedParentDocs, firstSide.plan.Value())
+				return join.nextWithBuffering()
+			}
+			join.state.docsToYield = append(join.state.docsToYield, firstSide.plan.Value())
 			return true, nil
+		}
+		if buffer {
+			return join.nextWithBuffering()
 		}
 		return join.Next()
 	}
@@ -794,10 +964,13 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 	if secondSide.isParent {
 		// child primary docs reference the same secondary parent doc. So if we already encountered
 		// the secondary parent doc, we continue to the next primary doc.
-		if slices.Contains(join.encounteredDocIDs, secondaryDocID) {
+		if slices.Contains(join.state.encounteredDocIDs, secondaryDocID) {
+			if buffer {
+				return join.nextWithBuffering()
+			}
 			return join.Next()
 		}
-		join.encounteredDocIDs = append(join.encounteredDocIDs, secondaryDocID)
+		join.state.encounteredDocIDs = append(join.state.encounteredDocIDs, secondaryDocID)
 	}
 
 	secondaryDocOpt, err := fetchDocWithIDAndItsSubDocs(secondSide.plan, secondaryDocID)
@@ -807,8 +980,15 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 
 	if !secondaryDocOpt.HasValue() {
 		if firstSide.isParent {
-			join.docsToYield = append(join.docsToYield, firstSide.plan.Value())
+			if buffer {
+				join.state.bufferedParentDocs = append(join.state.bufferedParentDocs, firstSide.plan.Value())
+				return join.nextWithBuffering()
+			}
+			join.state.docsToYield = append(join.state.docsToYield, firstSide.plan.Value())
 			return true, nil
+		}
+		if buffer {
+			return join.nextWithBuffering()
 		}
 		return join.Next()
 	}
@@ -831,7 +1011,11 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 		}
 		secondaryDoc.Fields[join.parentSide.relFieldMapIndex.Value()] = primaryDocs
 
-		join.docsToYield = append(join.docsToYield, secondaryDoc)
+		if buffer {
+			join.state.bufferedParentDocs = append(join.state.bufferedParentDocs, secondaryDoc)
+			return join.nextWithBuffering()
+		}
+		join.state.docsToYield = append(join.state.docsToYield, secondaryDoc)
 	} else {
 		var parentDoc core.Doc
 		var childDoc core.Doc
@@ -843,16 +1027,20 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 			childDoc = primaryDoc
 		}
 		parentDoc.Fields[join.parentSide.relFieldMapIndex.Value()] = childDoc
-		join.docsToYield = append(join.docsToYield, parentDoc)
+		if buffer {
+			join.state.bufferedParentDocs = append(join.state.bufferedParentDocs, parentDoc)
+			return join.nextWithBuffering()
+		}
+		join.state.docsToYield = append(join.state.docsToYield, parentDoc)
 	}
 	return true, nil
 }
 
 func (join *invertibleTypeJoin) Value() core.Doc {
-	if len(join.docsToYield) == 0 {
+	if len(join.state.docsToYield) == 0 {
 		return core.Doc{}
 	}
-	return join.docsToYield[0]
+	return join.state.docsToYield[0]
 }
 
 func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
@@ -871,6 +1059,11 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 
 	join.childSide.isFirst = join.parentSide.isFirst
 	join.parentSide.isFirst = !join.parentSide.isFirst
+
+	if len(ordering) > 0 {
+		join.invertedForOrdering = true
+		join.invertedOrderDirection = ordering[0].Direction
+	}
 
 	return nil
 }
@@ -907,22 +1100,4 @@ func getNode[T planNode](plan planNode) T {
 	}
 	var zero T
 	return zero
-}
-
-// findOrderingIndex finds an index that can satisfy the ordering requirement.
-// Returns the index and whether it can provide ordering.
-func (r *primaryObjectsRetriever) findOrderingIndex() (immutable.Option[client.IndexDescription], bool) {
-	if len(r.ordering) == 0 {
-		return immutable.None[client.IndexDescription](), false
-	}
-
-	indexes := r.primaryScan.col.Version().Indexes
-	for _, idx := range indexes {
-		canOrder, _ := fetcher.CanBeOrderedByIndex(r.ordering, idx, r.primaryScan.documentMapping)
-		if canOrder {
-			return immutable.Some(idx), true
-		}
-	}
-
-	return immutable.None[client.IndexDescription](), false
 }
