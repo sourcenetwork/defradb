@@ -36,7 +36,7 @@ func TestNAC_AdminRelation_CanCollectionSetActiveVersion(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Identity: testUtils.ClientIdentity(1),
 				Patch: `
 					[

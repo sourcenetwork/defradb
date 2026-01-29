@@ -17,11 +17,15 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -34,7 +38,7 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -48,7 +52,7 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Shahzad",
@@ -117,6 +121,9 @@ func TestP2PPeerReplicatorWithCreate_PNCounter_NoError(t *testing.T) {
 
 func TestP2PPeerReplicatorWithUpdate_PNCounter_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			testUtils.RandomNetworkingConfig(),
 			testUtils.RandomNetworkingConfig(),
@@ -129,7 +136,7 @@ func TestP2PPeerReplicatorWithUpdate_PNCounter_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10

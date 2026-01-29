@@ -27,7 +27,7 @@ func TestMutationDeletion_WithIDsAndEmptyFilter(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,

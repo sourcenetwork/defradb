@@ -28,7 +28,7 @@ func TestMutationUpdate_WithArrayOfFloatsToNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -72,7 +72,7 @@ func TestMutationUpdate_WithArrayOfFloatsToEmpty(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -116,7 +116,7 @@ func TestMutationUpdate_WithArrayOfFloatsToSameSize(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -160,7 +160,7 @@ func TestMutationUpdate_WithArrayOfFloatsToSmallerSize(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]
@@ -204,7 +204,7 @@ func TestMutationUpdate_WithArrayOfFloatsToLargerSize(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, 0.00000000001, 10]

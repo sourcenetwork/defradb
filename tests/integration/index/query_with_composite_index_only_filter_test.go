@@ -710,7 +710,7 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t 
 						email: String
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -718,7 +718,7 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnFirst_ShouldFetch(t 
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -756,7 +756,7 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t
 						email: String
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -764,14 +764,14 @@ func TestQueryWithCompositeIndex_WithEqualFilterOnNilValueOnSecond_ShouldFetch(t
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"Bob"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -812,7 +812,7 @@ func TestQueryWithCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t 
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -821,7 +821,7 @@ func TestQueryWithCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t 
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -830,7 +830,7 @@ func TestQueryWithCompositeIndex_IfMiddleFieldIsNotInFilter_ShouldIgnoreValue(t 
 						"age":	38
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -887,7 +887,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						about: String
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -897,7 +897,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						"about": "bob1"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -907,7 +907,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						"about": "bob2"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -917,7 +917,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						"about": "bob3"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -927,7 +927,7 @@ func TestQueryWithCompositeIndex_IfConsecutiveEqOps_ShouldUseAllToOptimizeQuery(
 						"about": "bob4"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{

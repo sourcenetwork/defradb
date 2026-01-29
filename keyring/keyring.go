@@ -10,11 +10,16 @@
 
 package keyring
 
+const (
+	KeyringBackendSystem = "system"
+	KeyringBackendFile   = "file"
+)
+
 // Keyring provides a simple set/get interface for a keyring service.
 type Keyring interface {
 	// Set stores the given key in the keystore under the given name.
 	//
-	// If a key with the given name already exists it will be overriden.
+	// If a key with the given name already exists it will be overridden.
 	Set(name string, key []byte) error
 	// Get returns the key with the given name from the keystore.
 	//

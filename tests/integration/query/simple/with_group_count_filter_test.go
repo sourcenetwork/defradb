@@ -20,19 +20,19 @@ import (
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
@@ -67,19 +67,19 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithFilter
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
@@ -131,19 +131,19 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCountWithFilter(t 
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWithMatchingFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
@@ -187,19 +187,19 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWithDifferentFilter(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
@@ -243,19 +243,19 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithFilterAndChildCountWit
 func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountsWithDifferentFilters(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19

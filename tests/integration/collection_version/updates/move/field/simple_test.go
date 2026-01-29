@@ -28,7 +28,7 @@ func TestSchemaUpdatesMoveFieldErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "move", "from": "/Users/Fields/1", "path": "/Users/Fields/-" }
@@ -52,7 +52,7 @@ func TestSchemaUpdatesMoveFieldErrorsMultiple(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "move", "from": "/Users/Fields/1", "path": "/Users/Fields/-" }

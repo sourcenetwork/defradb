@@ -29,7 +29,7 @@ func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -37,7 +37,7 @@ func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -45,7 +45,7 @@ func TestCreateUniqueIndex_IfFieldValuesAreNotUnique_ReturnError(t *testing.T) {
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -80,7 +80,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -88,7 +88,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingFieldValue_ReturnError(t *te
 						"age":	21
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -139,7 +139,7 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -147,7 +147,7 @@ func TestUniqueIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -193,7 +193,7 @@ func TestUniqueIndexCreate_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -201,14 +201,14 @@ func TestUniqueIndexCreate_WithMultipleNilFields_ShouldSucceed(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"Andy"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -253,7 +253,7 @@ func TestUniqueIndexCreate_AddingDocWithNilValue_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -277,7 +277,7 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ShouldSucceed(t *te
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -285,14 +285,14 @@ func TestUniqueIndexCreate_UponAddingDocWithExistingNilValue_ShouldSucceed(t *te
 						"age":	21
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
 						"name":	"Keenan"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -315,13 +315,13 @@ func TestUniqueQueryWithIndex_UponAddingDocWithSameDateTime_Error(t *testing.T) 
 						birthday: DateTime @index(unique: true)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Fred",
 						"birthday": "2000-07-23T03:00:00-00:00"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"Andy",
 						"birthday": "2000-07-23T03:00:00-00:00"

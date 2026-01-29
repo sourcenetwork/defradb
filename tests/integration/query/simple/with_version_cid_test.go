@@ -27,12 +27,12 @@ func TestQuerySimpleWithVersionAndCid(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "Chris",
 				},

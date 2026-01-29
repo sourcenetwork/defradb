@@ -42,11 +42,11 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Chris"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -54,7 +54,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -62,7 +62,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -70,7 +70,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -128,11 +128,11 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Chris"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -140,7 +140,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -148,7 +148,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -204,46 +204,46 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterAndOrderOnIndexedField_ShouldUseIn
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Chris"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Discman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Someman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Jumpman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Galaxy",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPod",
@@ -300,15 +300,15 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -316,7 +316,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -324,7 +324,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -332,7 +332,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -395,15 +395,15 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -411,7 +411,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -419,7 +419,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -427,7 +427,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -482,36 +482,36 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterOnParentAndSubType_ShouldFilter
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPod",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Galaxy",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Pixel",
@@ -565,29 +565,29 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterValueOnParentAndSubType_ShouldR
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPod",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Pixel",
@@ -643,15 +643,15 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -659,7 +659,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -667,7 +667,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -675,7 +675,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -683,7 +683,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Pixel",
@@ -742,15 +742,15 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -758,7 +758,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -766,7 +766,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Pixel",
@@ -823,15 +823,15 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -839,7 +839,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -847,7 +847,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -855,7 +855,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",

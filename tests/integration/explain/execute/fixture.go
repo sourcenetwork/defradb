@@ -11,13 +11,14 @@
 package test_explain_execute
 
 import (
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 type dataMap = map[string]any
 
-func create3ArticleDocuments() []testUtils.CreateDoc {
-	return []testUtils.CreateDoc{
+func create3ArticleDocuments() []*action.CreateDoc {
+	return []*action.CreateDoc{
 		{
 			CollectionID: 0,
 			DocMap: map[string]any{
@@ -45,8 +46,8 @@ func create3ArticleDocuments() []testUtils.CreateDoc {
 	}
 }
 
-func create3BookDocuments() []testUtils.CreateDoc {
-	return []testUtils.CreateDoc{
+func create3BookDocuments() []*action.CreateDoc {
+	return []*action.CreateDoc{
 		{
 			CollectionID: 1,
 			DocMap: map[string]any{
@@ -76,8 +77,8 @@ func create3BookDocuments() []testUtils.CreateDoc {
 	}
 }
 
-func create2AuthorDocuments() []testUtils.CreateDoc {
-	return []testUtils.CreateDoc{
+func create2AuthorDocuments() []*action.CreateDoc {
+	return []*action.CreateDoc{
 		{
 			CollectionID: 2,
 			DocMap: map[string]any{
@@ -99,8 +100,8 @@ func create2AuthorDocuments() []testUtils.CreateDoc {
 	}
 }
 
-func create2AuthorContactDocuments() []testUtils.CreateDoc {
-	return []testUtils.CreateDoc{
+func create2AuthorContactDocuments() []*action.CreateDoc {
+	return []*action.CreateDoc{
 		{
 			CollectionID: 3,
 			DocMap: map[string]any{
@@ -120,8 +121,8 @@ func create2AuthorContactDocuments() []testUtils.CreateDoc {
 	}
 }
 
-func create2AddressDocuments() []testUtils.CreateDoc {
-	return []testUtils.CreateDoc{
+func create2AddressDocuments() []*action.CreateDoc {
+	return []*action.CreateDoc{
 		{
 			CollectionID: 4,
 			// _docID: bae-186c2484-c3ea-5993-95d6-cb886e1b13a1

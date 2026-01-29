@@ -27,12 +27,12 @@ func TestMutationDeletion_WithIDs(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -71,12 +71,12 @@ func TestMutationDeletion_WithEmptyIDs(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -178,7 +178,7 @@ func TestMutationDeletion_WithIDsKnownAndUnknown(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,

@@ -32,12 +32,12 @@ func TestSchemaMigrationQueryWithTxn(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -95,12 +95,12 @@ func TestSchemaMigrationQueryWithTxnAndCommit(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }

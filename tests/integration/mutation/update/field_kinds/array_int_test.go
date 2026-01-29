@@ -28,7 +28,7 @@ func TestMutationUpdate_WithArrayOfIntsToNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -72,7 +72,7 @@ func TestMutationUpdate_WithArrayOfIntsToEmpty(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -116,7 +116,7 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizePositiveValues(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -160,7 +160,7 @@ func TestMutationUpdate_WithArrayOfIntsToSameSizeMixedValues(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -204,7 +204,7 @@ func TestMutationUpdate_WithArrayOfIntsToSmallerSizePositiveValues(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]
@@ -248,7 +248,7 @@ func TestMutationUpdate_WithArrayOfIntsToLargerSizePositiveValues(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteIntegers": [1, 2, 3, 5, 8]

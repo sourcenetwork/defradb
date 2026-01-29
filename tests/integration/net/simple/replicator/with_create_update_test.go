@@ -37,7 +37,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in node `0` after the replicator has
 				// been set up. Its creation and future updates should be synced
 				// across all configured nodes.
@@ -92,7 +92,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in node `0` after the replicator has
 				// been set up. Its creation and future updates should be synced
 				// across all configured nodes.
@@ -153,7 +153,7 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in all nodes
 				Doc: `{
 					"Name": "John",
@@ -167,7 +167,7 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in the second node (target) only
 				NodeID: immutable.Some(1),
 				Doc: `{

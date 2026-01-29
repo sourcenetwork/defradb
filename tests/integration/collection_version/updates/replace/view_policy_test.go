@@ -72,7 +72,7 @@ func TestColVersionUpdateReplaceIsMaterialized_GivenPolicyOnNonMAterializedView_
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

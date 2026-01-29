@@ -21,7 +21,7 @@ func TestQueryCommits_WithFirstCommitCid_ShouldSucceed(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -62,7 +62,7 @@ func TestQueryCommits_WithFirstCommitCidForFieldCommit_ShouldSucceed(t *testing.
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -100,7 +100,7 @@ func TestQueryCommitsWithInvalidCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -130,7 +130,7 @@ func TestQueryCommitsWithInvalidShortCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -160,7 +160,7 @@ func TestQueryCommitsWithUnknownCid(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",

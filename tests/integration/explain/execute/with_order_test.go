@@ -76,7 +76,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 			explainUtils.SchemaForExplainTests,
 
 			// Authors
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -85,7 +85,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -94,7 +94,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{
@@ -103,7 +103,7 @@ func TestExecuteExplainRequestWithMultiOrderFieldsOnParent(t *testing.T) {
 				}`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 
 				Doc: `{

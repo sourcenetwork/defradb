@@ -27,14 +27,14 @@ func TestSchemaUpdates_AddFieldSizeContraint_ShouldSucceed(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "foo", "Kind": 9, "Typ":1, "Size": 2} }
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",

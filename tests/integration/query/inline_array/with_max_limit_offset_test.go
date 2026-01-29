@@ -20,7 +20,7 @@ import (
 func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimit_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad",
 					"favouriteIntegers": [-1, 2, 5, 1, 0]
