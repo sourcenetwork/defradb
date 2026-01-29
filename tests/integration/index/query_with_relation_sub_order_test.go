@@ -614,3 +614,52 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldIncludeAll(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						name: String
+						publisher: Publisher
+					}
+					type Publisher {
+						year: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "Book1"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "Book2"}`, // No publisher - orphan
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"year": 2020,
+					"book": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: `query {
+					Book(order: {publisher: {year: ASC}}) {
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{"name": "Book2"}, // null year first in ASC
+						{"name": "Book1"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
