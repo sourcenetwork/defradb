@@ -1077,13 +1077,39 @@ func (c *CollectionWrapper) Save(ctx context.Context, doc *client.Document, opts
 	// Check if doc exists in the database by querying for it
 	exists, err := c.Exists(ctx, doc.ID())
 	if err != nil {
-		// If error checking existence, try create
+		// If error checking existence, check if deleted before creating
+		if c.isDocumentDeleted(ctx, doc.ID()) {
+			return fmt.Errorf("a document with the given ID has been deleted")
+		}
 		return c.Create(ctx, doc, opts...)
 	}
 	if !exists {
+		// Document doesn't exist - check if it was deleted
+		if c.isDocumentDeleted(ctx, doc.ID()) {
+			return fmt.Errorf("a document with the given ID has been deleted")
+		}
 		return c.Create(ctx, doc, opts...)
 	}
 	return c.Update(ctx, doc)
+}
+
+// isDocumentDeleted checks if a document is marked as deleted using showDeleted query.
+func (c *CollectionWrapper) isDocumentDeleted(ctx context.Context, docID client.DocID) bool {
+	query := fmt.Sprintf(`{ %s(docID: "%s", showDeleted: true) { _docID _deleted } }`, c.version.Name, docID.String())
+	result := c.wrapper.ExecRequest(ctx, query)
+	if len(result.GQL.Errors) > 0 {
+		return false
+	}
+	if data, ok := result.GQL.Data.(map[string]any); ok {
+		if docs, ok := data[c.version.Name].([]any); ok && len(docs) > 0 {
+			if docData, ok := docs[0].(map[string]any); ok {
+				if deleted, ok := docData["_deleted"].(bool); ok {
+					return deleted
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (c *CollectionWrapper) Delete(ctx context.Context, docID client.DocID) (bool, error) {
@@ -1092,6 +1118,22 @@ func (c *CollectionWrapper) Delete(ctx context.Context, docID client.DocID) (boo
 	if len(result.GQL.Errors) > 0 {
 		return false, result.GQL.Errors[0]
 	}
+
+	// Publish update event for delete (Go DefraDB emits update events for deletes too)
+	if data, ok := result.GQL.Data.(map[string]any); ok {
+		mutationKey := "delete_" + c.version.Name
+		if mutResult, ok := data[mutationKey].([]any); ok && len(mutResult) > 0 {
+			if docData, ok := mutResult[0].(map[string]any); ok {
+				if deletedDocID, ok := docData["_docID"].(string); ok {
+					c.wrapper.events.Publish(event.NewMessage(event.UpdateName, event.Update{
+						DocID:        deletedDocID,
+						CollectionID: c.version.CollectionID,
+					}))
+				}
+			}
+		}
+	}
+
 	return true, nil
 }
 
