@@ -181,7 +181,7 @@ char *defra_version(void);
  Returns a JSON object with NAC status information:
  ```json
  {
-   "status": "enabled" | "disabled temporarily" | "not configured",
+   "status": "enabled" | "disabled_temporarily" | "not_configured",
    "configured_enabled": true | false,
    "dev_mode": true | false,
    "owner": "did:key:..." | null
@@ -368,24 +368,6 @@ struct FfiResult get_node_identity(uintptr_t node_ptr);
  ```
  */
 struct FfiResult create_identity(void);
-
-/*
- Export the database to a JSON backup file.
-
- # Safety
-
- `config_json` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult basic_export(uintptr_t node_ptr, const char *config_json);
-
-/*
- Import documents from a JSON backup file.
-
- # Safety
-
- `filepath` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
 
 /*
  Get a collection by name.
@@ -705,6 +687,24 @@ struct FfiResult parse_duration(const char *duration_str);
  `input` must be a valid null-terminated UTF-8 string.
  */
 struct FfiResult parse_string_array(const char *input);
+
+/*
+ Export documents to a JSON backup file.
+
+ # Safety
+
+ `config_json` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult basic_export(uintptr_t node_ptr, const char *config_json);
+
+/*
+ Import documents from a JSON backup file.
+
+ # Safety
+
+ `filepath` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
 
 /*
  Create a new index on a collection.
@@ -1035,7 +1035,7 @@ struct FfiResult p2p_get_all_collections(uintptr_t node_ptr);
  # Arguments
 
  * `node_ptr` - Handle to the node
- * `identity_did` - Optional DID string for ACP permission checks (null for anonymous)
+ * `identity_did` - DID of the caller for ACP permission checks (null for anonymous)
  * `request_query` - GraphQL query string (required)
  * `operation_name` - Optional operation name for multi-operation documents (null if not used)
  * `variables` - Optional JSON string of variables (null if not used)
@@ -1199,6 +1199,7 @@ struct FfiResult rollback_txn(uintptr_t node_ptr, const char *txn_id);
 
  * `node_ptr` - Handle to the node
  * `txn_id` - Transaction ID from `begin_txn`
+ * `identity_did` - DID of the caller for ACP permission checks (null for anonymous)
  * `request_query` - GraphQL query string (required)
  * `operation_name` - Optional operation name (null if not used)
  * `variables` - Optional JSON string of variables (null if not used)
