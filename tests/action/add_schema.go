@@ -11,8 +11,6 @@
 package action
 
 import (
-	"fmt"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -67,11 +65,6 @@ func (a *AddSchema) Execute() {
 		resetStateContext(a.s)
 
 		for _, result := range results {
-			fmt.Printf("DEBUG AddSchema: Name=%s VersionID=%s CollectionID=%s Fields=%d\n",
-				result.Name, result.VersionID, result.CollectionID, len(result.Fields))
-			for i, f := range result.Fields {
-				fmt.Printf("  DEBUG Field[%d]: Name=%s Kind=%v\n", i, f.Name, f.Kind)
-			}
 			appendCollectionVersion(a.s, result.VersionID)
 		}
 

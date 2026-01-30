@@ -117,10 +117,6 @@ func (a *CreateDoc) Execute() {
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 
-	for _, docID := range docIDs {
-		fmt.Printf("DEBUG CreateDoc: CollectionID=%d DocID=%s\n", a.CollectionID, docID.String())
-	}
-
 	if a.CollectionID >= len(a.s.DocIDs) {
 		// Expand the slice if required, so that the document can be accessed by collection index
 		a.s.DocIDs = append(a.s.DocIDs, make([][]client.DocID, a.CollectionID-len(a.s.DocIDs)+1)...)
