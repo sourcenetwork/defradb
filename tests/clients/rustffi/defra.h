@@ -1046,6 +1046,7 @@ struct FfiResult p2p_get_all_collections(uintptr_t node_ptr);
  All string pointers must be either null or valid null-terminated UTF-8 strings.
  */
 struct FfiResult exec_request(uintptr_t node_ptr,
+                              const char *identity_did,
                               const char *request_query,
                               const char *operation_name,
                               const char *variables);
@@ -1209,6 +1210,7 @@ struct FfiResult rollback_txn(uintptr_t node_ptr, const char *txn_id);
  */
 struct FfiResult exec_request_in_txn(uintptr_t node_ptr,
                                      const char *txn_id,
+                                     const char *identity_did,
                                      const char *request_query,
                                      const char *operation_name,
                                      const char *variables);

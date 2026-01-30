@@ -1734,10 +1734,15 @@ func assertContains(t testing.TB, contains map[string]any, actual map[string]any
 func assertBackupContent(t testing.TB, expectedContent, filepath string) {
 	b, err := os.ReadFile(filepath)
 	assert.NoError(t, err)
+
+	actual := string(b)
+	if expectedContent != actual {
+		fmt.Printf("DEBUG BackupContent MISMATCH:\n  Expected: %s\n  Actual:   %s\n", expectedContent, actual)
+	}
 	assert.Equal(
 		t,
 		expectedContent,
-		string(b),
+		actual,
 	)
 }
 
