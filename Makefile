@@ -519,8 +519,8 @@ endif
 	rust_commit=$$(cd $(RUST_LIB) && git rev-parse --short HEAD 2>/dev/null || echo "unknown"); \
 	for pkg in $(FFI_PKG); do \
 		pkg_safe=$$(echo $$pkg | tr '/' '-'); \
-		report_file=$(FFI_REPORT_DIR)/$$rust_lib_name-$$pkg_safe.log; \
-		meta_file=$(FFI_REPORT_DIR)/$$rust_lib_name-$$pkg_safe.meta; \
+		report_file=$(FFI_REPORT_DIR)/$$pkg_safe.log; \
+		meta_file=$(FFI_REPORT_DIR)/$$pkg_safe.meta; \
 		cache_dir=/tmp/gocache-$$rust_lib_name-$$pkg_safe; \
 		echo ""; \
 		echo "=== Testing $$pkg ==="; \
