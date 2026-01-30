@@ -615,7 +615,12 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ShouldIncludeOrphans(t *testing.T) {
+func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryASC_ShouldIncludeOrphans(t *testing.T) {
+	req := `query @exhaustive {
+		Book(order: {publisher: {establishedYear: ASC}}) {
+			title
+		}
+	}`
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -637,7 +642,7 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ShouldIncludeOrpha
 			},
 			&action.CreateDoc{
 				CollectionID: 0,
-				Doc:          `{"title": "Book2"}`, // No publisher - orphan
+				Doc:          `{"title": "Book2"}`,
 			},
 			&action.CreateDoc{
 				CollectionID: 1,
@@ -648,17 +653,18 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ShouldIncludeOrpha
 				},
 			},
 			&action.Request{
-				Request: `query {
-					Book(order: {publisher: {establishedYear: ASC}}) {
-						title
-					}
-				}`,
+				Request: req,
 				Results: map[string]any{
 					"Book": []map[string]any{
-						{"title": "Book2"}, // null establishedYear first in ASC
+						{"title": "Book2"},
 						{"title": "Book1"},
 					},
 				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Secondary parent: join fetches 1 publisher + 1 book, orphanNode scans 2 books to find orphans
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(4),
 			},
 		},
 	}
@@ -666,7 +672,12 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ShouldIncludeOrpha
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithOrderByRelationField_WithParentSecondaryDESC_ShouldIncludeOrphans(t *testing.T) {
+func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryDESC_ShouldIncludeOrphans(t *testing.T) {
+	req := `query @exhaustive {
+		Book(order: {publisher: {establishedYear: DESC}}) {
+			title
+		}
+	}`
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -688,7 +699,7 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryDESC_ShouldIncludeOrph
 			},
 			&action.CreateDoc{
 				CollectionID: 0,
-				Doc:          `{"title": "Book2"}`, // No publisher - orphan
+				Doc:          `{"title": "Book2"}`,
 			},
 			&action.CreateDoc{
 				CollectionID: 1,
@@ -699,17 +710,18 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryDESC_ShouldIncludeOrph
 				},
 			},
 			&action.Request{
-				Request: `query {
-					Book(order: {publisher: {establishedYear: DESC}}) {
-						title
-					}
-				}`,
+				Request: req,
 				Results: map[string]any{
 					"Book": []map[string]any{
 						{"title": "Book1"},
-						{"title": "Book2"}, // null establishedYear last in DESC
+						{"title": "Book2"},
 					},
 				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Secondary parent: join fetches 1 publisher + 1 book, orphanNode scans 2 books to find orphans
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(4),
 			},
 		},
 	}
@@ -717,7 +729,12 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryDESC_ShouldIncludeOrph
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ShouldIncludeOrphans(t *testing.T) {
+func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryASC_ShouldIncludeOrphans(t *testing.T) {
+	req := `query @exhaustive {
+		Publisher(order: {book: {rating: ASC}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -742,7 +759,7 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ShouldIncludeOrphans
 			},
 			&action.CreateDoc{
 				CollectionID: 1,
-				Doc: `{"name": "OrphanPublisher"}`, // No book - orphan
+				Doc:          `{"name": "OrphanPublisher"}`,
 			},
 			&action.CreateDoc{
 				CollectionID: 1,
@@ -752,17 +769,18 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ShouldIncludeOrphans
 				},
 			},
 			&action.Request{
-				Request: `query {
-					Publisher(order: {book: {rating: ASC}}) {
-						name
-					}
-				}`,
+				Request: req,
 				Results: map[string]any{
 					"Publisher": []map[string]any{
-						{"name": "OrphanPublisher"}, // null rating first in ASC (orphan - no book)
+						{"name": "OrphanPublisher"},
 						{"name": "LinkedPublisher"},
 					},
 				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Primary parent: join fetches 1 book + 1 publisher, orphanNode uses index to find 1 orphan
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3).WithDocFetches(3),
 			},
 		},
 	}
@@ -770,7 +788,12 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ShouldIncludeOrphans
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestQueryWithOrderByRelationField_WithParentPrimaryDESC_ShouldIncludeOrphans(t *testing.T) {
+func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryDESC_ShouldIncludeOrphans(t *testing.T) {
+	req := `query @exhaustive {
+		Publisher(order: {book: {rating: DESC}}) {
+			name
+		}
+	}`
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -795,7 +818,7 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryDESC_ShouldIncludeOrphan
 			},
 			&action.CreateDoc{
 				CollectionID: 1,
-				Doc: `{"name": "OrphanPublisher"}`, // No book - orphan
+				Doc:          `{"name": "OrphanPublisher"}`,
 			},
 			&action.CreateDoc{
 				CollectionID: 1,
@@ -805,17 +828,134 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryDESC_ShouldIncludeOrphan
 				},
 			},
 			&action.Request{
-				Request: `query {
-					Publisher(order: {book: {rating: DESC}}) {
-						name
-					}
-				}`,
+				Request: req,
 				Results: map[string]any{
 					"Publisher": []map[string]any{
 						{"name": "LinkedPublisher"},
-						{"name": "OrphanPublisher"}, // null rating last in DESC (orphan - no book)
+						{"name": "OrphanPublisher"},
 					},
 				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Primary parent: join fetches 1 book + 1 publisher, orphanNode uses index to find 1 orphan
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3).WithDocFetches(3),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ExcludesOrphans(t *testing.T) {
+	// No @exhaustive directive - orphans should be excluded for performance
+	req := `query {
+		Book(order: {publisher: {establishedYear: ASC}}) {
+			title
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						title: String
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						establishedYear: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"title": "Book1"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"title": "Book2"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":            "Publisher1",
+					"establishedYear": 2020,
+					"book":            testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{"title": "Book1"},
+					},
+				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Without @exhaustive: join fetches 1 publisher + 1 book, no orphan scanning
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ExcludesOrphans(t *testing.T) {
+	// No @exhaustive directive - orphans should be excluded for performance
+	req := `query {
+		Publisher(order: {book: {rating: ASC}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						title: String
+						rating: Int @index
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				DocMap: map[string]any{
+					"title":  "Book1",
+					"rating": 5,
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				Doc:          `{"name": "OrphanPublisher"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name": "LinkedPublisher",
+					"book": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Publisher": []map[string]any{
+						{"name": "LinkedPublisher"},
+					},
+				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Without @exhaustive: join fetches 1 book + 1 publisher, no orphan scanning
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2).WithDocFetches(2),
 			},
 		},
 	}

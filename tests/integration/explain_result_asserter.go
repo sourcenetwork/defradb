@@ -96,8 +96,14 @@ func (a *ExplainResultAsserter) Assert(t testing.TB, result map[string]any) {
 
 	scanNode, ok := selectNode["scanNode"].(dataMap)
 	subScanNode := map[string]any{}
+	orphanNodeMetrics := map[string]any{} 
 	if indexJoin, isJoin := selectNode["typeIndexJoin"].(dataMap); isJoin {
-		scanNode, ok = indexJoin["scanNode"].(dataMap)
+		if orphanNode, hasOrphan := indexJoin["orphanNode"].(dataMap); hasOrphan {
+			scanNode, ok = orphanNode["scanNode"].(dataMap)
+			orphanNodeMetrics = orphanNode
+		} else {
+			scanNode, ok = indexJoin["scanNode"].(dataMap)
+		}
 		subScanNode, _ = indexJoin["subTypeScanNode"].(dataMap)
 	}
 	require.True(t, ok, "Expected scanNode")
@@ -108,6 +114,9 @@ func (a *ExplainResultAsserter) Assert(t testing.TB, result map[string]any) {
 		actual := readNumberProp(t, val, prop)
 		if subScanNode[prop] != nil {
 			actual += readNumberProp(t, subScanNode[prop], "subTypeScanNode."+prop)
+		}
+		if orphanNodeMetrics[prop] != nil {
+			actual += readNumberProp(t, orphanNodeMetrics[prop], "orphanNode."+prop)
 		}
 		return actual
 	}

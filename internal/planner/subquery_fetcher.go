@@ -47,8 +47,8 @@ type subQueryFetcher struct {
 	// fields to fetch for each document
 	fields []client.CollectionFieldDescription
 
-	// execInfo accumulates stats across all fetches
-	execInfo *scanExecInfo
+	// execInfo accumulates fetch stats across all fetches
+	execInfo *fetcher.ExecInfo
 }
 
 // newSubQueryFetcher creates a fetcher for sub-query execution.
@@ -62,7 +62,7 @@ func newSubQueryFetcher(
 	docMapping *core.DocumentMapping,
 	lensStore lensStore.Store,
 	fields []client.CollectionFieldDescription,
-	execInfo *scanExecInfo,
+	execInfo *fetcher.ExecInfo,
 ) *subQueryFetcher {
 	return &subQueryFetcher{
 		ctx:         ctx,
@@ -225,14 +225,13 @@ func (f *subQueryFetcher) collectAllDocsExcluding(fetch fetcher.Fetcher, shortID
 	}
 
 	for {
-		encDoc, execInfo, err := fetch.FetchNext(f.ctx)
+		encDoc, fetchExecInfo, err := fetch.FetchNext(f.ctx)
 		if err != nil {
 			return nil, err
 		}
 
 		if f.execInfo != nil {
-			f.execInfo.iterations++
-			f.execInfo.fetches.Add(execInfo)
+			f.execInfo.Add(fetchExecInfo)
 		}
 
 		if encDoc == nil {

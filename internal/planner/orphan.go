@@ -13,9 +13,19 @@ package planner
 import (
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
+
+// orphanExecInfo contains execution information for the orphanNode.
+type orphanExecInfo struct {
+	// Total number of times orphanNode.Next was executed.
+	iterations uint64
+
+	// Information about fetches performed when fetching orphan documents.
+	fetches fetcher.ExecInfo
+}
 
 // orphanNode handles fetching orphan parent documents (parents without children)
 // when a join is inverted for ordering. Orphan parents have NULL values for the
@@ -43,6 +53,8 @@ type orphanNode struct {
 	docsToYield     []core.Doc
 	sourceExhausted bool
 	orphansFetched  bool
+
+	execInfo orphanExecInfo
 }
 
 func newOrphanNode(source planNode, join *invertibleTypeJoin, orderDirection mapper.SortDirection) *orphanNode {
@@ -92,6 +104,8 @@ func (n *orphanNode) Value() core.Doc {
 }
 
 func (n *orphanNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
 	if len(n.docsToYield) > 0 {
 		n.docsToYield = n.docsToYield[1:]
 		if len(n.docsToYield) > 0 {
@@ -188,7 +202,7 @@ func (n *orphanNode) fetchOrphans() error {
 		n.documentMapping,
 		parentScan.p.lensStore,
 		parentScan.fields,
-		&parentScan.execInfo,
+		&n.execInfo.fetches,
 	)
 
 	var orphans []core.Doc
@@ -213,4 +227,30 @@ func (n *orphanNode) fetchOrphans() error {
 
 	n.orphanDocs = orphans
 	return nil
+}
+
+func (n *orphanNode) simpleExplain() (map[string]any, error) {
+	simpleExplainMap := map[string]any{}
+
+	simpleExplainMap["orderDirection"] = string(n.orderDirection)
+
+	return simpleExplainMap, nil
+}
+
+func (n *orphanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return n.simpleExplain()
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations":   n.execInfo.iterations,
+			"docFetches":   n.execInfo.fetches.DocsFetched,
+			"fieldFetches": n.execInfo.fetches.FieldsFetched,
+			"indexFetches": n.execInfo.fetches.IndexesFetched,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
 }

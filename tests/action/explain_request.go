@@ -46,6 +46,7 @@ var (
 		"minNode":        {},
 		"multiScanNode":  {},
 		"orderNode":      {},
+		"orphanNode":     {},
 		"parallelNode":   {},
 		"pipeNode":       {},
 		"scanNode":       {},

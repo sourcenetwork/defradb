@@ -104,6 +104,11 @@ type Planner struct {
 	p2p       P2P
 	ctx       context.Context
 	lensStore lensStore.Store
+
+	// exhaustive is set when the @exhaustive directive is present on the query.
+	// When true, orphan parent documents will be included when ordering by relation
+	// fields with indexes. When false (default), orphans are excluded for performance.
+	exhaustive bool
 }
 
 func New(
@@ -286,25 +291,24 @@ func (p *Planner) expandMultiNode(multiNode MultiNode, parentPlan *selectTopNode
 
 // expandTypeIndexJoinPlan does a plan graph expansion and other optimizations on typeIndexJoin.
 func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
+	// expandJoin expands the join and wraps it with orphanNode if @exhaustive is set
+	// and ordering by relation field is active.
+	expandJoin := func(node planNode, join *invertibleTypeJoin) error {
+		orderDir, err := p.expandTypeJoin(join, parentPlan)
+		if err != nil {
+			return err
+		}
+		if orderDir.HasValue() && p.exhaustive {
+			plan.joinPlan = newOrphanNode(node, join, orderDir.Value())
+		}
+		return nil
+	}
+
 	switch node := plan.joinPlan.(type) {
 	case *typeJoinOne:
-		orderDir, err := p.expandTypeJoin(&node.invertibleTypeJoin, parentPlan)
-		if err != nil {
-			return err
-		}
-		if orderDir.HasValue() {
-			plan.joinPlan = newOrphanNode(node, &node.invertibleTypeJoin, orderDir.Value())
-		}
-		return nil
+		return expandJoin(node, &node.invertibleTypeJoin)
 	case *typeJoinMany:
-		orderDir, err := p.expandTypeJoin(&node.invertibleTypeJoin, parentPlan)
-		if err != nil {
-			return err
-		}
-		if orderDir.HasValue() {
-			plan.joinPlan = newOrphanNode(node, &node.invertibleTypeJoin, orderDir.Value())
-		}
-		return nil
+		return expandJoin(node, &node.invertibleTypeJoin)
 	}
 	return client.NewErrUnhandledType("join plan", plan.joinPlan)
 }
@@ -797,6 +801,10 @@ func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
 	} else {
 		return nil, ErrMissingQueryOrMutation
 	}
+
+	// Set exhaustive flag from operation directives
+	p.exhaustive = operation.Directives.Exhaustive
+
 	m, err := mapper.ToOperation(p.ctx, p.db, operation)
 	if err != nil {
 		return nil, err

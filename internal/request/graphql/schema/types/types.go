@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	ExplainLabel  string = "explain"
-	PrimaryLabel  string = "primary"
-	RelationLabel string = "relation"
+	ExplainLabel    string = "explain"
+	ExhaustiveLabel string = "exhaustive"
+	PrimaryLabel    string = "primary"
+	RelationLabel   string = "relation"
 
 	ExplainArgNameType string = "type"
 	ExplainArgSimple   string = "simple"
@@ -174,6 +175,20 @@ func ExplainDirective(explainEnum *gql.Enum) *gql.Directive {
 		Locations: []string{
 			gql.DirectiveLocationQuery,
 			gql.DirectiveLocationMutation,
+		},
+	})
+}
+
+// ExhaustiveDirective @exhaustive signals that complete/exhaustive results are desired
+// even at performance cost. When ordering by a relation field that has an index, orphan
+// parents (parents without children) will be included in results.
+func ExhaustiveDirective() *gql.Directive {
+	return gql.NewDirective(gql.DirectiveConfig{
+		Name:        ExhaustiveLabel,
+		Description: "@exhaustive signals that complete/exhaustive results are desired even at performance cost.",
+
+		Locations: []string{
+			gql.DirectiveLocationQuery,
 		},
 	})
 }
