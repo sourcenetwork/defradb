@@ -152,7 +152,7 @@ func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionN
 
 	txn.OnSuccessAsync(func() {
 		for id, addresses := range replicatorMap {
-			p.updateReplicators(ctx, id, addresses, storedRepCollectionIDs[id])
+			p.updateReplicators(context.Background(), id, addresses, storedRepCollectionIDs[id])
 			for _, col := range addedCols[id] {
 				err := p.pushHeadsForAllDocs(context.Background(), col, id)
 				if err != nil {
@@ -318,8 +318,8 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 		}
 	}
 
-	txn.OnSuccess(func() {
-		p.updateReplicators(ctx, storedRep.ID, storedRep.Addresses, storedCollectionIDs)
+	txn.OnSuccessAsync(func() {
+		p.updateReplicators(context.Background(), storedRep.ID, storedRep.Addresses, storedCollectionIDs)
 		p.db.Events().Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
 	})
 
