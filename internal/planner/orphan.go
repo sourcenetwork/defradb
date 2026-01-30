@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -122,7 +122,6 @@ func (n *orphanNode) Next() (bool, error) {
 // nextASC handles ASC ordering where orphans come first.
 // We must buffer all source docs, then fetch orphans, then yield orphans followed by buffered docs.
 func (n *orphanNode) nextASC() (bool, error) {
-	// If source is exhausted, we're in the yielding phase
 	if n.sourceExhausted {
 		if !n.orphansFetched {
 			if err := n.fetchOrphans(); err != nil {

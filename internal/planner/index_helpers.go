@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -190,7 +190,7 @@ func selectIndex(opts selectIndexOptions) indexSelectionResult {
 		if idx.HasValue() {
 			return indexSelectionResult{
 				index:           idx,
-				canSatisfyOrder: true, // By definition, this index was selected for ordering
+				canSatisfyOrder: true,
 				source:          indexSourceOrdering,
 			}
 		}
