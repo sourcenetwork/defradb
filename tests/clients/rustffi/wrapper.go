@@ -707,7 +707,29 @@ func (w *Wrapper) AddLens(ctx context.Context, lens lensmodel.Lens) (string, err
 }
 
 func (w *Wrapper) ListLenses(ctx context.Context) (map[string]lensmodel.Lens, error) {
-	return nil, fmt.Errorf("ListLenses not yet implemented in FFI")
+	raw, err := w.node.LensList()
+	if err != nil {
+		return nil, err
+	}
+
+	// Rust returns map[string]LensModule (single module per ID).
+	// Go expects map[string]model.Lens (which wraps []LensModule).
+	var rustMap map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(raw), &rustMap); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse lens list: %w", err)
+	}
+
+	result := make(map[string]lensmodel.Lens, len(rustMap))
+	for id, moduleJSON := range rustMap {
+		var module lensmodel.LensModule
+		if err := json.Unmarshal(moduleJSON, &module); err != nil {
+			return nil, fmt.Errorf("ffi: failed to parse lens module %s: %w", id, err)
+		}
+		result[id] = lensmodel.Lens{
+			Lenses: []lensmodel.LensModule{module},
+		}
+	}
+	return result, nil
 }
 
 // ============================================================================
