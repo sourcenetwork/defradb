@@ -2008,9 +2008,6 @@ func assertBackupContent(t testing.TB, expectedContent, filepath string) {
 	assert.NoError(t, err)
 
 	actual := string(b)
-	if expectedContent != actual {
-		fmt.Printf("DEBUG BackupContent MISMATCH:\n  Expected: %s\n  Actual:   %s\n", expectedContent, actual)
-	}
 	assert.Equal(
 		t,
 		expectedContent,
