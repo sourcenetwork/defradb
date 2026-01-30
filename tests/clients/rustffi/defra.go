@@ -170,7 +170,14 @@ type ErrorLocation struct {
 
 // ExecRequest executes a GraphQL query or mutation.
 // Returns the raw JSON response string.
-func (n *Node) ExecRequest(query string, operationName string, variables string) (string, error) {
+// identityDID is the DID of the caller for ACP permission checks (empty string for anonymous).
+func (n *Node) ExecRequest(identityDID string, query string, operationName string, variables string) (string, error) {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
 	cQuery := C.CString(query)
 	defer C.free(unsafe.Pointer(cQuery))
 
@@ -186,7 +193,7 @@ func (n *Node) ExecRequest(query string, operationName string, variables string)
 		defer C.free(unsafe.Pointer(cVars))
 	}
 
-	result := C.exec_request(n.ptr, cQuery, cOpName, cVars)
+	result := C.exec_request(n.ptr, cIdentityDID, cQuery, cOpName, cVars)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -215,7 +222,7 @@ func (n *Node) QueryWithVars(query string, operationName string, variables map[s
 		varsJSON = string(varsBytes)
 	}
 
-	responseJSON, err := n.ExecRequest(query, operationName, varsJSON)
+	responseJSON, err := n.ExecRequest("", query, operationName, varsJSON)
 	if err != nil {
 		return nil, err
 	}
@@ -302,9 +309,16 @@ func (t *Transaction) Rollback() error {
 }
 
 // ExecRequest executes a GraphQL query or mutation within the transaction.
-func (t *Transaction) ExecRequest(query string, operationName string, variables string) (string, error) {
+// identityDID is the DID of the caller for ACP permission checks (empty string for anonymous).
+func (t *Transaction) ExecRequest(identityDID string, query string, operationName string, variables string) (string, error) {
 	cTxnID := C.CString(t.id)
 	defer C.free(unsafe.Pointer(cTxnID))
+
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
 
 	cQuery := C.CString(query)
 	defer C.free(unsafe.Pointer(cQuery))
@@ -321,7 +335,7 @@ func (t *Transaction) ExecRequest(query string, operationName string, variables 
 		defer C.free(unsafe.Pointer(cVars))
 	}
 
-	result := C.exec_request_in_txn(t.node.ptr, cTxnID, cQuery, cOpName, cVars)
+	result := C.exec_request_in_txn(t.node.ptr, cTxnID, cIdentityDID, cQuery, cOpName, cVars)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -336,7 +350,7 @@ func (t *Transaction) ExecRequest(query string, operationName string, variables 
 
 // Query executes a GraphQL query within the transaction.
 func (t *Transaction) Query(query string) (*QueryResult, error) {
-	responseJSON, err := t.ExecRequest(query, "", "")
+	responseJSON, err := t.ExecRequest("", query, "", "")
 	if err != nil {
 		return nil, err
 	}
