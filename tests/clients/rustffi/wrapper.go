@@ -1097,6 +1097,14 @@ func (c *CollectionWrapper) Create(ctx context.Context, doc *client.Document, op
 		if mutResult, ok := data[mutationKey].([]any); ok && len(mutResult) > 0 {
 			if docData, ok := mutResult[0].(map[string]any); ok {
 				if docID, ok := docData["_docID"].(string); ok {
+					// Update the Go-side document's ID to match Rust's computed ID.
+					// This is needed when Rust applies defaults (e.g. UTC_NOW) that
+					// change the document content and therefore its content-addressed ID.
+					newDocID, err := client.NewDocIDFromString(docID)
+					if err == nil && doc.ID().String() != docID {
+						doc.SetDocID(newDocID)
+					}
+
 					// Get CID for the event
 					compositeCid := c.getLatestCompositeCID(ctx, docID)
 

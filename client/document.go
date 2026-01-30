@@ -970,6 +970,12 @@ func (doc *Document) GenerateDocID() (DocID, error) {
 	return NewDocIDV0(cid), nil
 }
 
+// SetDocID sets the document's ID. This is used by FFI wrappers that need
+// to update the Go-side document ID after Rust applies defaults (e.g. UTC_NOW).
+func (doc *Document) SetDocID(docID DocID) {
+	doc.setDocID(docID)
+}
+
 // setDocID sets the `doc.id` (should NOT be public).
 func (doc *Document) setDocID(docID DocID) {
 	doc.mu.Lock()
