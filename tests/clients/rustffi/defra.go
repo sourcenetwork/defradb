@@ -426,6 +426,23 @@ func (n *Node) DeleteCollection(name string) error {
 	return nil
 }
 
+// TruncateCollection deletes all documents from a collection while preserving the schema.
+func (n *Node) TruncateCollection(name string) error {
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+
+	result := C.truncate_collection(n.ptr, cName)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: truncate_collection failed: %s", err)
+	}
+
+	C.defra_free_string(result.value)
+	return nil
+}
+
 // FindCollectionByID finds a collection by its collection ID (schema version ID).
 // Returns the collection's schema as JSON if found, or "null" if not found.
 func (n *Node) FindCollectionByID(collectionID string) (string, error) {
@@ -1015,6 +1032,7 @@ type SubscriptionEvent struct {
 	DocID        string `json:"doc_id,omitempty"`
 	CID          string `json:"cid,omitempty"`
 	CollectionID string `json:"collection_id,omitempty"`
+	ByPeer       string `json:"by_peer,omitempty"`
 	IsRetry      bool   `json:"is_retry,omitempty"`
 	IsRelay      bool   `json:"is_relay,omitempty"`
 }
@@ -1116,6 +1134,23 @@ func (s *Subscription) Close() error {
 	}
 
 	return nil
+}
+
+// SubscribeMergeComplete creates a subscription to P2P merge complete events.
+// The subscription must be closed with Close() when done.
+func (n *Node) SubscribeMergeComplete() (*Subscription, error) {
+	result := C.create_merge_complete_subscription(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: create_merge_complete_subscription failed: %s", err)
+	}
+
+	return &Subscription{
+		node:   n,
+		handle: result.subscription_handle,
+	}, nil
 }
 
 // ============================================================================
@@ -1360,6 +1395,77 @@ func (n *Node) P2PGetAllCollections() ([]string, error) {
 	}
 
 	return collections, nil
+}
+
+// P2PAddDocuments adds documents to P2P replication by subscribing to their GossipSub topics.
+func (n *Node) P2PAddDocuments(docIDs []string) error {
+	docIDsJSON, err := json.Marshal(docIDs)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal doc IDs: %w", err)
+	}
+
+	cDocIDs := C.CString(string(docIDsJSON))
+	defer C.free(unsafe.Pointer(cDocIDs))
+
+	result := C.p2p_add_documents(n.ptr, cDocIDs)
+
+	if result.status != 0 {
+		errStr := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_add_documents failed: %s", errStr)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// P2PRemoveDocuments removes documents from P2P replication.
+func (n *Node) P2PRemoveDocuments(docIDs []string) error {
+	docIDsJSON, err := json.Marshal(docIDs)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal doc IDs: %w", err)
+	}
+
+	cDocIDs := C.CString(string(docIDsJSON))
+	defer C.free(unsafe.Pointer(cDocIDs))
+
+	result := C.p2p_remove_documents(n.ptr, cDocIDs)
+
+	if result.status != 0 {
+		errStr := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_remove_documents failed: %s", errStr)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// P2PGetAllDocuments returns all documents configured for P2P replication.
+func (n *Node) P2PGetAllDocuments() ([]string, error) {
+	result := C.p2p_get_all_documents(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: p2p_get_all_documents failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var docIDs []string
+	if err := json.Unmarshal([]byte(value), &docIDs); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse documents: %w", err)
+	}
+
+	return docIDs, nil
 }
 
 // BasicExportDB exports the database to a JSON file.

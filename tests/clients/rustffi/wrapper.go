@@ -87,9 +87,10 @@ var _ clients.Client = (*Wrapper)(nil)
 
 // Wrapper wraps an FFI Node to implement the DefraDB client.TxnStore interface.
 type Wrapper struct {
-	node     *Node
-	events   *eventBus
-	txnIDGen uint64
+	node             *Node
+	events           *eventBus
+	txnIDGen         uint64
+	stopMergePoller  chan struct{}
 }
 
 // NewWrapper creates a new Rust FFI client wrapper.
@@ -118,9 +119,68 @@ func NewWrapperWithP2P(listenAddr string) (*Wrapper, error) {
 		return nil, fmt.Errorf("failed to create FFI node with P2P: %w", err)
 	}
 
+	eb := newEventBus()
+	stopCh := make(chan struct{})
+
+	// Start merge complete event poller that bridges Rust events to Go eventBus
+	mergeSub, err := node.SubscribeMergeComplete()
+	if err != nil {
+		node.Close()
+		return nil, fmt.Errorf("failed to create merge complete subscription: %w", err)
+	}
+
+	go func() {
+		defer mergeSub.Close()
+		fmt.Println("[FFI-MERGE-POLLER] Started merge complete poller")
+		for {
+			select {
+			case <-stopCh:
+				fmt.Println("[FFI-MERGE-POLLER] Stop signal received")
+				return
+			default:
+			}
+
+			result, err := mergeSub.Poll()
+			if err != nil {
+				fmt.Printf("[FFI-MERGE-POLLER] Poll error: %v\n", err)
+				continue
+			}
+			if result.IsClosed {
+				fmt.Println("[FFI-MERGE-POLLER] Subscription closed")
+				return
+			}
+			if result.HasEvent && result.Event != nil {
+				fmt.Printf("[FFI-MERGE-POLLER] Got event: type=%s doc_id=%s cid=%s collection=%s by_peer=%s\n",
+					result.Event.Type, result.Event.DocID, result.Event.CID,
+					result.Event.CollectionID, result.Event.ByPeer)
+				if result.Event.Type == "merge_complete" {
+					cidObj, cidErr := gocid.Decode(result.Event.CID)
+					if cidErr != nil {
+						fmt.Printf("[FFI-MERGE-POLLER] CID decode error: %v\n", cidErr)
+						continue
+					}
+					mc := event.MergeComplete{
+						Merge: event.Merge{
+							DocID:        result.Event.DocID,
+							Cid:          cidObj,
+							CollectionID: result.Event.CollectionID,
+							ByPeer:       result.Event.ByPeer,
+						},
+					}
+					fmt.Printf("[FFI-MERGE-POLLER] Publishing MergeComplete to Go event bus: doc=%s cid=%s\n",
+						mc.Merge.DocID, mc.Merge.Cid)
+					eb.Publish(event.NewMessage(event.MergeCompleteName, mc))
+					continue
+				}
+			}
+			time.Sleep(10 * time.Millisecond)
+		}
+	}()
+
 	return &Wrapper{
-		node:   node,
-		events: newEventBus(),
+		node:            node,
+		events:          eb,
+		stopMergePoller: stopCh,
 	}, nil
 }
 
@@ -178,6 +238,9 @@ func extractCollectionNameFromPatch(patch string) (string, error) {
 // ============================================================================
 
 func (w *Wrapper) Close() {
+	if w.stopMergePoller != nil {
+		close(w.stopMergePoller)
+	}
 	if w.node != nil {
 		w.node.Close()
 	}
@@ -445,6 +508,12 @@ func (w *Wrapper) AddDACActorRelationship(
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
+
+	// Emit update event when relationship is newly added (matches Go behavior)
+	if added {
+		w.publishRelationshipEvent(ctx, collectionName, docID)
+	}
+
 	return client.AddActorRelationshipResult{ExistedAlready: !added}, nil
 }
 
@@ -463,7 +532,34 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
+
+	// Emit update event when relationship is deleted (matches Go behavior)
+	if deleted {
+		w.publishRelationshipEvent(ctx, collectionName, docID)
+	}
+
 	return client.DeleteActorRelationshipResult{RecordFound: deleted}, nil
+}
+
+// publishRelationshipEvent emits an update event after a DAC relationship change.
+// This matches Go DefraDB behavior where relationship add/delete triggers an update event
+// so the test framework's waitForUpdateEvents can synchronize.
+func (w *Wrapper) publishRelationshipEvent(ctx context.Context, collectionName string, docID string) {
+	col, err := w.GetCollectionByName(ctx, client.CollectionName(collectionName))
+	if err != nil {
+		return
+	}
+	cw, ok := col.(*CollectionWrapper)
+	if !ok {
+		return
+	}
+
+	compositeCid := cw.getLatestCompositeCID(ctx, docID)
+	w.events.Publish(event.NewMessage(event.UpdateName, event.Update{
+		DocID:        docID,
+		CollectionID: cw.version.CollectionID,
+		Cid:          compositeCid,
+	}))
 }
 
 func (w *Wrapper) AddNACActorRelationship(
@@ -696,18 +792,15 @@ func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 }
 
 func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
-	// Document-level P2P not yet implemented in Rust FFI
-	return fmt.Errorf("P2P document sync not yet implemented in FFI client")
+	return w.node.P2PAddDocuments(docIDs)
 }
 
 func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
-	// Document-level P2P not yet implemented in Rust FFI
-	return fmt.Errorf("P2P document sync not yet implemented in FFI client")
+	return w.node.P2PRemoveDocuments(docIDs)
 }
 
 func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
-	// Document-level P2P not yet implemented in Rust FFI
-	return nil, fmt.Errorf("P2P document sync not yet implemented in FFI client")
+	return w.node.P2PGetAllDocuments()
 }
 
 func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
@@ -1634,5 +1727,5 @@ func (c *CollectionWrapper) ListEncryptedIndexes(ctx context.Context) ([]client.
 }
 
 func (c *CollectionWrapper) Truncate(ctx context.Context) error {
-	return fmt.Errorf("Truncate not yet implemented in FFI")
+	return c.wrapper.node.TruncateCollection(c.version.Name)
 }
