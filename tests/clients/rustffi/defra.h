@@ -640,17 +640,7 @@ struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
 struct FfiResult set_migration(uintptr_t node_ptr, const char *config);
 
 /*
- Truncate a collection (delete all documents, preserve schema).
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `name` - The collection name to truncate
-
- # Returns
-
- - Status 0: Success (value is "{}")
- - Status 1: Error (error field contains message)
+ Truncate all documents in a collection.
 
  # Safety
 
@@ -1063,7 +1053,7 @@ struct FfiResult p2p_remove_collections(uintptr_t node_ptr, const char *collecti
 struct FfiResult p2p_get_all_collections(uintptr_t node_ptr);
 
 /*
- Add documents to P2P replication.
+ Add documents to P2P replication by doc IDs.
 
  # Safety
 
@@ -1072,7 +1062,7 @@ struct FfiResult p2p_get_all_collections(uintptr_t node_ptr);
 struct FfiResult p2p_add_documents(uintptr_t node_ptr, const char *doc_ids_json);
 
 /*
- Remove documents from P2P replication.
+ Remove documents from P2P replication by doc IDs.
 
  # Safety
 
@@ -1081,7 +1071,7 @@ struct FfiResult p2p_add_documents(uintptr_t node_ptr, const char *doc_ids_json)
 struct FfiResult p2p_remove_documents(uintptr_t node_ptr, const char *doc_ids_json);
 
 /*
- Get all documents configured for P2P replication.
+ Get all documents in P2P replication.
 
  # Safety
 

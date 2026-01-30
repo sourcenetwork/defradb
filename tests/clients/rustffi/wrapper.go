@@ -192,29 +192,33 @@ func (w *Wrapper) EnableNACForInit(ownerDID string) error {
 	return w.node.EnableNAC(ownerDID)
 }
 
-// extractCollectionNameFromPatch extracts the collection name from a JSON patch path.
+// groupPatchByCollection groups a JSON patch into per-collection patches.
 // Patch format: [{"op": "add", "path": "/CollectionName/Fields/-", "value": {...}}]
-// All operations must target the same collection.
-func extractCollectionNameFromPatch(patch string) (string, error) {
-	var ops []struct {
-		Path string `json:"path"`
-	}
+// Returns an ordered list of (collection_name, patch_json) pairs preserving
+// the first-seen order of collection names.
+func groupPatchByCollection(patch string) ([]struct{ Name, Patch string }, error) {
+	var ops []json.RawMessage
 	if err := json.Unmarshal([]byte(patch), &ops); err != nil {
-		return "", fmt.Errorf("failed to parse patch JSON: %w", err)
+		return nil, fmt.Errorf("failed to parse patch JSON: %w", err)
 	}
 	if len(ops) == 0 {
-		return "", fmt.Errorf("patch contains no operations")
+		return nil, fmt.Errorf("patch contains no operations")
 	}
 
-	var collectionName string
-	for i, op := range ops {
-		// Path format: /CollectionName/Fields/- or /CollectionName/Fields/0
+	// Group raw operations by collection name, preserving order
+	groups := map[string][]json.RawMessage{}
+	var order []string
+	for i, raw := range ops {
+		var op struct {
+			Path string `json:"path"`
+		}
+		if err := json.Unmarshal(raw, &op); err != nil {
+			return nil, fmt.Errorf("failed to parse patch operation %d: %w", i, err)
+		}
 		path := op.Path
 		if len(path) == 0 || path[0] != '/' {
-			return "", fmt.Errorf("invalid patch path in operation %d: %s", i, path)
+			return nil, fmt.Errorf("invalid patch path in operation %d: %s", i, path)
 		}
-
-		// Remove leading slash and extract first component
 		path = path[1:]
 		name := path
 		for j, c := range path {
@@ -223,14 +227,21 @@ func extractCollectionNameFromPatch(patch string) (string, error) {
 				break
 			}
 		}
-
-		if collectionName == "" {
-			collectionName = name
-		} else if collectionName != name {
-			return "", fmt.Errorf("patch contains operations for multiple collections (%s, %s); only single-collection patches are supported", collectionName, name)
+		if _, exists := groups[name]; !exists {
+			order = append(order, name)
 		}
+		groups[name] = append(groups[name], raw)
 	}
-	return collectionName, nil
+
+	result := make([]struct{ Name, Patch string }, 0, len(order))
+	for _, name := range order {
+		patchBytes, err := json.Marshal(groups[name])
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal patch for %s: %w", name, err)
+		}
+		result = append(result, struct{ Name, Patch string }{name, string(patchBytes)})
+	}
+	return result, nil
 }
 
 // ============================================================================
@@ -434,14 +445,18 @@ func (w *Wrapper) PatchCollection(
 	patch string,
 	migration immutable.Option[lensmodel.Lens],
 ) error {
-	// Extract collection name from JSON patch path
-	// Patch format: [{"op": "add", "path": "/CollectionName/Fields/-", "value": {...}}]
-	collectionName, err := extractCollectionNameFromPatch(patch)
+	// Group patch operations by collection name and apply each group separately.
+	// Relation patches touch multiple collections (e.g., Book and Author).
+	groups, err := groupPatchByCollection(patch)
 	if err != nil {
 		return err
 	}
-	_, err = w.node.PatchCollection(collectionName, patch)
-	return err
+	for _, g := range groups {
+		if _, err := w.node.PatchCollection(g.Name, g.Patch); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
@@ -506,7 +521,7 @@ func (w *Wrapper) AddDACActorRelationship(
 	}
 	added, err := w.node.AddDACActorRelationship(requestorDID, targetActor, collectionName, docID, relation)
 	if err != nil {
-		return client.AddActorRelationshipResult{}, err
+		return client.AddActorRelationshipResult{}, fmt.Errorf("failed to add document actor relationship with acp: %w", err)
 	}
 
 	// Emit update event when relationship is newly added (matches Go behavior)
@@ -530,7 +545,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	}
 	deleted, err := w.node.DeleteDACActorRelationship(requestorDID, targetActor, collectionName, docID, relation)
 	if err != nil {
-		return client.DeleteActorRelationshipResult{}, err
+		return client.DeleteActorRelationshipResult{}, fmt.Errorf("failed to delete document actor relationship with acp: %w", err)
 	}
 
 	// Emit update event when relationship is deleted (matches Go behavior)
@@ -1621,6 +1636,11 @@ func (c *CollectionWrapper) checkIfDocumentDeleted(ctx context.Context, docID cl
 				}
 			}
 		}
+	}
+	// When the collection has an ACP policy, use the generic message to avoid
+	// revealing whether the document exists (matches Go DefraDB behavior).
+	if c.version.Policy.HasValue() {
+		return fmt.Errorf("document not found or not authorized to access")
 	}
 	return fmt.Errorf("document not found: %s", docID.String())
 }
