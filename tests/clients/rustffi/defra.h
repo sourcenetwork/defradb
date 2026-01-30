@@ -640,6 +640,25 @@ struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
 struct FfiResult set_migration(uintptr_t node_ptr, const char *config);
 
 /*
+ Truncate a collection (delete all documents, preserve schema).
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `name` - The collection name to truncate
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `name` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult truncate_collection(uintptr_t node_ptr, const char *name);
+
+/*
  Create document(s) in a collection.
 
  This function automatically detects whether the input is a single document
@@ -1044,6 +1063,33 @@ struct FfiResult p2p_remove_collections(uintptr_t node_ptr, const char *collecti
 struct FfiResult p2p_get_all_collections(uintptr_t node_ptr);
 
 /*
+ Add documents to P2P replication.
+
+ # Safety
+
+ `doc_ids_json` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult p2p_add_documents(uintptr_t node_ptr, const char *doc_ids_json);
+
+/*
+ Remove documents from P2P replication.
+
+ # Safety
+
+ `doc_ids_json` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult p2p_remove_documents(uintptr_t node_ptr, const char *doc_ids_json);
+
+/*
+ Get all documents configured for P2P replication.
+
+ # Safety
+
+ The caller must free the returned string with `defra_free_string`.
+ */
+struct FfiResult p2p_get_all_documents(uintptr_t node_ptr);
+
+/*
  Execute a GraphQL query or mutation.
 
  Returns a JSON object with the query result in GraphQL format:
@@ -1119,6 +1165,20 @@ struct FfiResult get_collections(uintptr_t node_ptr);
  */
 struct CreateSubscriptionResult create_subscription(uintptr_t node_ptr,
                                                     const char *collection_filter);
+
+/*
+ Create a subscription to P2P merge complete events.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+
+ # Returns
+
+ A handle that can be used with `poll_subscription` and `close_subscription`.
+ Events will contain merge complete data (doc_id, cid, collection_id, by_peer).
+ */
+struct CreateSubscriptionResult create_merge_complete_subscription(uintptr_t node_ptr);
 
 /*
  Poll a subscription for the next event (non-blocking).
