@@ -610,6 +610,21 @@ func (n *Node) LensAdd(lensJSON string) (string, error) {
 	return value, nil
 }
 
+// LensList returns all lens transforms as a map of ID -> LensModule JSON.
+func (n *Node) LensList() (string, error) {
+	result := C.lens_list(n.ptr)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: lens_list failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
 // ============================================================================
 // Index Functions
 // ============================================================================
