@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"runtime"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -340,12 +339,10 @@ func (w *Wrapper) GetCollections(
 	// Apply filters
 	var filtered []client.CollectionVersion
 	for _, v := range versions {
-		fmt.Printf("DEBUG GetCollections: VersionID=%s Name=%s CollectionID=%s IsActive=%v\n", v.VersionID, v.Name, v.CollectionID, v.IsActive)
 		if options.Name.HasValue() && v.Name != options.Name.Value() {
 			continue
 		}
 		if options.VersionID.HasValue() && v.VersionID != options.VersionID.Value() {
-			fmt.Printf("DEBUG GetCollections: SKIPPING version %s (wanted %s)\n", v.VersionID, options.VersionID.Value())
 			continue
 		}
 		if options.CollectionID.HasValue() && v.CollectionID != options.CollectionID.Value() {
@@ -974,20 +971,6 @@ func newEventBus() *eventBus {
 }
 
 func (e *eventBus) Publish(msg event.Message) {
-	if msg.Name == event.UpdateName {
-		if upd, ok := msg.Data.(event.Update); ok {
-			// Print stack trace to identify where the event was published from
-			var buf [4096]byte
-			n := runtime.Stack(buf[:], false)
-			// Extract just the caller info (2nd frame)
-			lines := strings.Split(string(buf[:n]), "\n")
-			caller := ""
-			if len(lines) > 4 {
-				caller = strings.TrimSpace(lines[4])
-			}
-			fmt.Printf("DEBUG eventBus.Publish: name=%s docID=%s collectionID=%s caller=%s\n", msg.Name, upd.DocID, upd.CollectionID, caller)
-		}
-	}
 	// Deliver message to all matching subscribers
 	for _, sub := range e.subs {
 		if es, ok := sub.(*eventSubscription); ok {
@@ -1462,7 +1445,6 @@ func (c *CollectionWrapper) DeleteWithFilter(ctx context.Context, filter any) (*
 }
 
 func (c *CollectionWrapper) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
-	fmt.Printf("DEBUG Get: requested docID=%s collection=%s\n", docID.String(), c.version.Name)
 	// Query the document by ID - must request ALL fields so SetWithJSON can properly
 	// track which fields are dirty (modified) vs unchanged
 	var fieldNames []string
@@ -1476,9 +1458,7 @@ func (c *CollectionWrapper) Get(ctx context.Context, docID client.DocID, showDel
 	}
 
 	query := fmt.Sprintf(`{ %s(docID: "%s") { %s } }`, c.version.Name, docID.String(), strings.Join(fieldNames, " "))
-	fmt.Printf("DEBUG Get: query=%s\n", query)
 	result := c.wrapper.ExecRequest(ctx, query)
-	fmt.Printf("DEBUG Get: raw result data=%v errors=%v\n", result.GQL.Data, result.GQL.Errors)
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -1513,12 +1493,10 @@ func (c *CollectionWrapper) Get(ctx context.Context, docID client.DocID, showDel
 	}
 
 	// Create a new document from the retrieved data
-	fmt.Printf("DEBUG Get: docData after filter=%v\n", docData)
 	doc, err := client.NewDocFromMap(ctx, docData, c.version)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create document: %w", err)
 	}
-	fmt.Printf("DEBUG Get: resulting doc.ID()=%s\n", doc.ID().String())
 
 	// Clean the document so only subsequent Set() calls mark fields as dirty.
 	// Without this, all fields loaded from the query are "dirty" and ToJSONPatch()

@@ -181,7 +181,7 @@ char *defra_version(void);
  Returns a JSON object with NAC status information:
  ```json
  {
-   "status": "enabled" | "disabled_temporarily" | "not_configured",
+   "status": "enabled" | "disabled temporarily" | "not configured",
    "configured_enabled": true | false,
    "dev_mode": true | false,
    "owner": "did:key:..." | null
@@ -368,6 +368,24 @@ struct FfiResult get_node_identity(uintptr_t node_ptr);
  ```
  */
 struct FfiResult create_identity(void);
+
+/*
+ Export the database to a JSON backup file.
+
+ # Safety
+
+ `config_json` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult basic_export(uintptr_t node_ptr, const char *config_json);
+
+/*
+ Import documents from a JSON backup file.
+
+ # Safety
+
+ `filepath` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
 
 /*
  Get a collection by name.
@@ -859,26 +877,6 @@ struct NewNodeResult new_node(struct NodeInitOptions options);
 struct FfiResult node_close(uintptr_t node_ptr);
 
 /*
- Export the database to a JSON file.
-
- # Safety
-
- `node_ptr` must be a valid handle from `new_node`.
- `config_json` must be a valid null-terminated C string.
- */
-struct FfiResult basic_export(uintptr_t node_ptr, const char *config_json);
-
-/*
- Import documents from a JSON backup file.
-
- # Safety
-
- `node_ptr` must be a valid handle from `new_node`.
- `filepath` must be a valid null-terminated C string.
- */
-struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
-
-/*
  Create a new DefraDB node with P2P enabled.
 
  This creates an in-memory database instance with P2P networking.
@@ -1037,6 +1035,7 @@ struct FfiResult p2p_get_all_collections(uintptr_t node_ptr);
  # Arguments
 
  * `node_ptr` - Handle to the node
+ * `identity_did` - Optional DID string for ACP permission checks (null for anonymous)
  * `request_query` - GraphQL query string (required)
  * `operation_name` - Optional operation name for multi-operation documents (null if not used)
  * `variables` - Optional JSON string of variables (null if not used)

@@ -13,7 +13,6 @@ package tests
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -161,7 +160,6 @@ func waitForUpdateEvents(
 			expect[k] = struct{}{}
 		}
 
-		fmt.Printf("DEBUG waitForUpdateEvents: node=%d expecting=%v\n", i, expect)
 		for len(expect) > 0 {
 			var evt event.Update
 		relayCheck:
@@ -195,7 +193,6 @@ func waitForUpdateEvents(
 			}
 
 			// make sure the event is expected
-			fmt.Printf("DEBUG waitForUpdateEvents: received event docID=%s collectionID=%s\n", evt.DocID, evt.CollectionID)
 			_, ok := expect[getUpdateEventKey(evt)]
 			require.True(s.T, ok, "unexpected document update", getUpdateEventKey(evt))
 			delete(expect, getUpdateEventKey(evt))
