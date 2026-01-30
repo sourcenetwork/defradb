@@ -327,6 +327,10 @@ type State struct {
 
 	// LenIDs of lenses added to Defra.
 	LensIDs []string
+
+	// AsyncWG tracks the progress of in-flight `action.Async`s.  Calling `Wait` on it will wait for
+	// all started `action.Async`s to finish executing.
+	AsyncWG sync.WaitGroup
 }
 
 func (s *State) GetClientType() ClientType {
