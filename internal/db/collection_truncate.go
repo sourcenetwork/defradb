@@ -438,13 +438,10 @@ func deleteBlocks(ctx context.Context, head cid.Cid) error {
 
 		switch {
 		case decodedBlock.Delta.IsField():
-			// At the time of writing, field blocks do not have any heads that will not already be linked
-			// to by other DAGs being deleted, so we have decided that the compute that we will save by not
-			// trying to `Get` them is worth the risk of potentially missing blocks in the future should
-			// this change.
-			for _, link := range decodedBlock.Links {
-				toDelete[link.Cid] = struct{}{}
-			}
+			// At the time of writing, field blocks do not have any links besides Encryption and Signature,
+			// that will not already be linked to by other DAGs being deleted, so we have decided that the
+			// compute that we will save by not trying to `Get` them is worth the risk of potentially missing
+			// blocks in the future should this change.
 
 		default:
 			for _, link := range decodedBlock.AllLinks() {
