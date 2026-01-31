@@ -26,6 +26,7 @@ const (
 	errSetDocField                    string = "failed to set document field during update"
 	errCheckOrphanPointLookup         string = "failed to check orphan point lookup"
 	errRefreshView                    string = "failed to refresh view"
+	errNoSupportingIndexForCursor     string = "no supporting index for cursor order field"
 )
 
 var (
@@ -50,6 +51,7 @@ var (
 	ErrFailedToCreateNormalValue           = errors.New(errFailedToCreateNormalValue)
 	ErrFailedToGenerateSearchTag           = errors.New(errFailedToGenerateSearchTag)
 	ErrIncorrectOrMissingCID               = errors.New("cid either does not exist or belong to document")
+	ErrNoSupportingIndexForCursor          = errors.New(errNoSupportingIndexForCursor)
 )
 
 func NewErrUnknownDependency(name string) error {
@@ -122,4 +124,8 @@ func NewErrCheckOrphanPointLookup(inner error) error {
 
 func NewErrRefreshView(inner error) error {
 	return errors.Wrap(errRefreshView, inner)
+}
+
+func NewErrNoSupportingIndexForCursor(fieldName string) error {
+	return errors.New(errNoSupportingIndexForCursor, errors.NewKV("Field", fieldName))
 }

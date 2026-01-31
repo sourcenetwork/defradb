@@ -47,6 +47,9 @@ type Select struct {
 	// IsEncrypted indicates that this is an encrypted query that should
 	// use searchable encryption to query remote nodes.
 	IsEncrypted bool
+
+	// IsCursor indicates this query uses cursor pagination, requiring index-backed ordering.
+	IsCursor bool
 }
 
 func (s *Select) AsTargetable() (*Targetable, bool) {
@@ -70,6 +73,7 @@ func (s *Select) cloneTo(index int) *Select {
 		Fields:          s.Fields,
 		SkipResolve:     s.SkipResolve,
 		IsEncrypted:     s.IsEncrypted,
+		IsCursor:        s.IsCursor,
 	}
 }
 
