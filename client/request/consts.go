@@ -53,6 +53,16 @@ const (
 	AverageFieldName    = "AVG"
 	CountFieldName      = "COUNT"
 
+	// Cursor pagination fields
+	CursorFieldName      = "_cursor"
+	CursorQueryTypeName  = "CursorQuery"
+	PageInfoFieldName    = "_pageInfo"
+	PageInfoTypeName     = "PageInfo"
+	HasNextFieldName     = "hasNext"
+	HasPrevFieldName     = "hasPrev"
+	StartCursorFieldName = "startCursor"
+	EndCursorFieldName   = "endCursor"
+
 	// New generated document id from a backed up document,
 	// which might have a different _docID originally.
 	NewDocIDFieldName = "_docIDNew"
