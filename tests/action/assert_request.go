@@ -110,7 +110,11 @@ func assertRequestResults(
 
 	if asserter != nil {
 		asserter.Assert(s.T, resultantData)
-		return true
+		// If no expected results, we're done after running the asserter
+		if expectedResults == nil {
+			return true
+		}
+		// Continue to process expected results (for cursor capture, etc.)
 	}
 
 	// merge all keys so we can check for missing values
