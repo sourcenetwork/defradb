@@ -156,14 +156,22 @@ nodeLoop:
 func resolveVariables(s *state.State, vars map[string]any) map[string]any {
 	resolved := make(map[string]any, len(vars))
 	for k, v := range vars {
-		if index, ok := v.(DocIndex); ok {
+		switch ref := v.(type) {
+		case DocIndex:
 			s.DocIDsLock.RLock()
-			docID := s.DocIDs[index.CollectionIndex][index.Index]
+			docID := s.DocIDs[ref.CollectionIndex][ref.Index]
 			s.DocIDsLock.RUnlock()
 			resolved[k] = docID.String()
-		} else {
+		case state.CapturedVar:
+			captured, ok := s.GetCapturedVariable(string(ref))
+			if !ok {
+				s.T.Fatalf("captured variable %q not found", ref)
+			}
+			resolved[k] = captured
+		default:
 			resolved[k] = v
 		}
 	}
 	return resolved
 }
+

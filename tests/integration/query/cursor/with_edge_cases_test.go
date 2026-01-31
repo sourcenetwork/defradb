@@ -15,7 +15,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -60,13 +60,12 @@ func TestCursorEdgeCase_EmptyCollectionReturnsEmptyArray(t *testing.T) {
 }
 
 func TestCursorEdgeCase_AfterCursorAtEndReturnsEmpty(t *testing.T) {
-	capturedEndCursor := new(string)
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -82,79 +81,52 @@ func TestCursorEdgeCase_AfterCursorAtEndReturnsEmpty(t *testing.T) {
 						}
 					}
 				}`,
-				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor, ok := result["_cursor"].(map[string]any)
-					require.True(t, ok, "expected _cursor field")
-
-					usersRaw := cursor["User"]
-					var userCount int
-					switch users := usersRaw.(type) {
-					case []any:
-						userCount = len(users)
-					case []map[string]any:
-						userCount = len(users)
-					default:
-						t.Fatalf("unexpected User type: %T", usersRaw)
-					}
-					require.Equal(t, 3, userCount, "expected 3 users")
-
-					pageInfo, ok := cursor["_pageInfo"].(map[string]any)
-					require.True(t, ok, "expected _pageInfo field")
-
-					endCursor, ok := pageInfo["endCursor"].(string)
-					require.True(t, ok, "expected endCursor to be a string")
-					require.NotEmpty(t, endCursor, "expected endCursor to be non-empty")
-					*capturedEndCursor = endCursor
-
-					require.Equal(t, false, pageInfo["hasNext"], "hasNext should be false")
-					require.Equal(t, false, pageInfo["hasPrev"], "hasPrev should be false")
-
-					return true, ""
-				}),
-			},
-			&dynamicRequest{
-				requestFn: func() string {
-					return fmt.Sprintf(`query {
-						_cursor {
-							User(first: 3, after: "%s", order: {age: ASC}) {
-								name
-								age
-							}
-							_pageInfo {
-								hasNext
-								hasPrev
-								startCursor
-								endCursor
-							}
-						}
-					}`, *capturedEndCursor)
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "Alice", "age": int64(25)},
+							{"name": "Bob", "age": int64(30)},
+							{"name": "Carol", "age": int64(35)},
+						},
+						"_pageInfo": map[string]any{
+							"hasNext":     false,
+							"hasPrev":     false,
+							"startCursor": testUtils.ValidCursor(),
+							"endCursor":   testUtils.CaptureCursor("page1End"),
+						},
+					},
 				},
-				asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor, ok := result["_cursor"].(map[string]any)
-					require.True(t, ok, "expected _cursor field")
+			},
 
-					usersRaw := cursor["User"]
-					var userCount int
-					switch users := usersRaw.(type) {
-					case []any:
-						userCount = len(users)
-					case []map[string]any:
-						userCount = len(users)
-					default:
-						t.Fatalf("unexpected User type: %T", usersRaw)
-					}
-					require.Equal(t, 0, userCount, "expected empty results after cursor at end")
-
-					pageInfo, ok := cursor["_pageInfo"].(map[string]any)
-					require.True(t, ok, "expected _pageInfo field")
-
-					require.Equal(t, false, pageInfo["hasNext"], "hasNext should be false")
-					require.Equal(t, true, pageInfo["hasPrev"], "hasPrev should be true")
-					require.Nil(t, pageInfo["startCursor"], "startCursor should be nil for empty results")
-					require.Nil(t, pageInfo["endCursor"], "endCursor should be nil for empty results")
-
-					return true, ""
+			&action.Request{
+				Variables: immutable.Some(map[string]any{
+					"cursor": testUtils.CapturedVar("page1End"),
 				}),
+				Request: `query($cursor: String) {
+					_cursor {
+						User(first: 3, after: $cursor, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							hasNext
+							hasPrev
+							startCursor
+							endCursor
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{},
+						"_pageInfo": map[string]any{
+							"hasNext":     false,
+							"hasPrev":     true,
+							"startCursor": nil,
+							"endCursor":   nil,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -238,13 +210,12 @@ func TestCursorEdgeCase_MissingDocIDInCursorReturnsError(t *testing.T) {
 }
 
 func TestCursorEdgeCase_DeletedCursorDocContinuesToNext(t *testing.T) {
-	capturedEndCursor := new(string)
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -254,77 +225,56 @@ func TestCursorEdgeCase_DeletedCursorDocContinuesToNext(t *testing.T) {
 						}
 						_pageInfo {
 							hasNext
-							hasPrev
-							startCursor
 							endCursor
 						}
 					}
 				}`,
-				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor, ok := result["_cursor"].(map[string]any)
-					require.True(t, ok, "expected _cursor field")
-
-					pageInfo, ok := cursor["_pageInfo"].(map[string]any)
-					require.True(t, ok, "expected _pageInfo field")
-
-					endCursor, ok := pageInfo["endCursor"].(string)
-					require.True(t, ok, "expected endCursor to be a string")
-					*capturedEndCursor = endCursor
-
-					require.Equal(t, true, pageInfo["hasNext"], "hasNext should be true")
-
-					return true, ""
-				}),
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "Alice", "age": int64(25)},
+							{"name": "Bob", "age": int64(30)},
+						},
+						"_pageInfo": map[string]any{
+							"hasNext":   true,
+							"endCursor": testUtils.CaptureCursor("bobCursor"),
+						},
+					},
+				},
 			},
+
 			testUtils.DeleteDoc{
 				CollectionID: 0,
 				DocID:        1,
 			},
-			&dynamicRequest{
-				requestFn: func() string {
-					return fmt.Sprintf(`query {
-						_cursor {
-							User(first: 2, after: "%s", order: {age: ASC}) {
-								name
-								age
-							}
-							_pageInfo {
-								hasNext
-								hasPrev
-								startCursor
-								endCursor
-							}
-						}
-					}`, *capturedEndCursor)
-				},
-				asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor, ok := result["_cursor"].(map[string]any)
-					require.True(t, ok, "expected _cursor field")
 
-					usersRaw := cursor["User"]
-					var users []map[string]any
-					switch u := usersRaw.(type) {
-					case []any:
-						for _, item := range u {
-							if m, ok := item.(map[string]any); ok {
-								users = append(users, m)
-							}
-						}
-					case []map[string]any:
-						users = u
-					}
-					require.Len(t, users, 1, "expected 1 user (Carol)")
-					require.Equal(t, "Carol", users[0]["name"], "expected Carol")
-					require.Equal(t, int64(35), users[0]["age"], "expected age 35")
-
-					pageInfo, ok := cursor["_pageInfo"].(map[string]any)
-					require.True(t, ok, "expected _pageInfo field")
-
-					require.Equal(t, false, pageInfo["hasNext"], "hasNext should be false")
-					require.Equal(t, true, pageInfo["hasPrev"], "hasPrev should be true")
-
-					return true, ""
+			&action.Request{
+				Variables: immutable.Some(map[string]any{
+					"cursor": testUtils.CapturedVar("bobCursor"),
 				}),
+				Request: `query($cursor: String) {
+					_cursor {
+						User(first: 2, after: $cursor, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							hasNext
+							hasPrev
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "Carol", "age": int64(35)},
+						},
+						"_pageInfo": map[string]any{
+							"hasNext": false,
+							"hasPrev": true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -339,10 +289,12 @@ func TestCursorEdgeCase_DeletedResultDocExcludedFromResults(t *testing.T) {
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
 			testUtils.CreateDoc{Doc: `{"name": "Dave", "age": 40}`},
 			testUtils.CreateDoc{Doc: `{"name": "Eve", "age": 45}`},
+
 			testUtils.DeleteDoc{
 				CollectionID: 0,
-				DocID:        2,
+				DocID:        2, // Carol
 			},
+
 			&action.Request{
 				Request: `query {
 					_cursor {
@@ -377,17 +329,54 @@ func TestCursorEdgeCase_DeletedResultDocExcludedFromResults(t *testing.T) {
 }
 
 func TestCursorEdgeCase_AllRemainingDocsDeletedReturnsEmpty(t *testing.T) {
-	capturedEndCursor := new(string)
-
 	test := testUtils.TestCase{
 		Actions: []any{
 			testUtils.CreateDoc{Doc: `{"name": "Alice", "age": 25}`},
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
+
 			&action.Request{
 				Request: `query {
 					_cursor {
 						User(first: 1, order: {age: ASC}) {
+							name
+							age
+						}
+						_pageInfo {
+							hasNext
+							endCursor
+						}
+					}
+				}`,
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "Alice", "age": int64(25)},
+						},
+						"_pageInfo": map[string]any{
+							"hasNext":   true,
+							"endCursor": testUtils.CaptureCursor("aliceCursor"),
+						},
+					},
+				},
+			},
+
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+				DocID:        1,
+			},
+			testUtils.DeleteDoc{
+				CollectionID: 0,
+				DocID:        2,
+			},
+
+			&action.Request{
+				Variables: immutable.Some(map[string]any{
+					"cursor": testUtils.CapturedVar("aliceCursor"),
+				}),
+				Request: `query($cursor: String) {
+					_cursor {
+						User(first: 10, after: $cursor, order: {age: ASC}) {
 							name
 							age
 						}
@@ -399,73 +388,17 @@ func TestCursorEdgeCase_AllRemainingDocsDeletedReturnsEmpty(t *testing.T) {
 						}
 					}
 				}`,
-				Asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor, ok := result["_cursor"].(map[string]any)
-					require.True(t, ok, "expected _cursor field")
-
-					pageInfo, ok := cursor["_pageInfo"].(map[string]any)
-					require.True(t, ok, "expected _pageInfo field")
-
-					endCursor, ok := pageInfo["endCursor"].(string)
-					require.True(t, ok, "expected endCursor to be a string")
-					*capturedEndCursor = endCursor
-
-					require.Equal(t, true, pageInfo["hasNext"], "hasNext should be true")
-
-					return true, ""
-				}),
-			},
-			testUtils.DeleteDoc{
-				CollectionID: 0,
-				DocID:        1,
-			},
-			testUtils.DeleteDoc{
-				CollectionID: 0,
-				DocID:        2,
-			},
-			&dynamicRequest{
-				requestFn: func() string {
-					return fmt.Sprintf(`query {
-						_cursor {
-							User(first: 10, after: "%s", order: {age: ASC}) {
-								name
-								age
-							}
-							_pageInfo {
-								hasNext
-								hasPrev
-								startCursor
-								endCursor
-							}
-						}
-					}`, *capturedEndCursor)
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{},
+						"_pageInfo": map[string]any{
+							"hasNext":     false,
+							"hasPrev":     true,
+							"startCursor": nil,
+							"endCursor":   nil,
+						},
+					},
 				},
-				asserter: testUtils.ResultAsserterFunc(func(t testing.TB, result map[string]any) (bool, string) {
-					cursor, ok := result["_cursor"].(map[string]any)
-					require.True(t, ok, "expected _cursor field")
-
-					usersRaw := cursor["User"]
-					var userCount int
-					switch users := usersRaw.(type) {
-					case []any:
-						userCount = len(users)
-					case []map[string]any:
-						userCount = len(users)
-					default:
-						t.Fatalf("unexpected User type: %T", usersRaw)
-					}
-					require.Equal(t, 0, userCount, "expected empty results")
-
-					pageInfo, ok := cursor["_pageInfo"].(map[string]any)
-					require.True(t, ok, "expected _pageInfo field")
-
-					require.Equal(t, false, pageInfo["hasNext"], "hasNext should be false")
-					require.Equal(t, true, pageInfo["hasPrev"], "hasPrev should be true")
-					require.Nil(t, pageInfo["startCursor"], "startCursor should be nil for empty results")
-					require.Nil(t, pageInfo["endCursor"], "endCursor should be nil for empty results")
-
-					return true, ""
-				}),
 			},
 		},
 	}

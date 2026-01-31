@@ -2128,6 +2128,8 @@ func resetMatchers(s *state.State) {
 	for _, matcher := range s.StatefulMatchers {
 		matcher.ResetMatcherState()
 	}
+	// Clear captured variables between test runs to prevent cross-test pollution
+	s.CapturedVariables = nil
 }
 
 func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
