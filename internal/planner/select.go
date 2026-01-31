@@ -342,6 +342,12 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	}
 
 	if isScanNode {
+		if n.selectReq.IsCursor {
+			if err := validateCursorOrderIndex(origScan); err != nil {
+				return nil, nil, err
+			}
+		}
+
 		// The VersionedFetcher (used when CIDs are present) operates on a temporary
 		// in-memory store that doesn't contain index data, so secondary index
 		// selection must be skipped for CID-based queries.
@@ -358,6 +364,59 @@ func (n *selectNode) initSource() ([]aggregateNode, []*similarityNode, error) {
 	}
 
 	return aggregates, similarity, nil
+}
+
+// validateCursorOrderIndex ensures that ordering fields have a supporting index.
+// Returns an error if cursor pagination is used with non-indexed ordering fields.
+func validateCursorOrderIndex(scanNode *scanNode) error {
+	if len(scanNode.ordering) == 0 {
+		return nil
+	}
+
+	col := scanNode.col.Version()
+	mapping := scanNode.documentMapping
+
+	var fieldNames []string
+	currentMapping := mapping
+	for _, fieldIndex := range scanNode.ordering[0].FieldIndexes {
+		fieldName, found := currentMapping.TryToFindNameFromIndex(fieldIndex)
+		if !found {
+			return nil
+		}
+
+		fieldNames = append(fieldNames, fieldName)
+		if fieldIndex < len(currentMapping.ChildMappings) {
+			if childMapping := currentMapping.ChildMappings[fieldIndex]; childMapping != nil {
+				currentMapping = childMapping
+			}
+		}
+	}
+
+	if len(fieldNames) == 0 {
+		return nil
+	}
+
+	if fieldNames[0] == request.DocIDFieldName {
+		return nil
+	}
+
+	indexes := col.GetIndexesOnField(fieldNames[0])
+	for _, idx := range indexes {
+		if len(idx.Fields) >= len(fieldNames) {
+			match := true
+			for i, name := range fieldNames {
+				if idx.Fields[i].Name != name {
+					match = false
+					break
+				}
+			}
+			if match {
+				return nil
+			}
+		}
+	}
+
+	return NewErrNoSupportingIndexForCursor(fieldNames[0])
 }
 
 func (n *selectNode) initFields(selectReq *mapper.Select) ([]aggregateNode, []*similarityNode, error) {
