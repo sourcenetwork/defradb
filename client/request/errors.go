@@ -15,7 +15,9 @@ import (
 )
 
 const (
-	errSelectOfNonGroupField string = "cannot select a non-group-by field at group-level"
+	errSelectOfNonGroupField    string = "cannot select a non-group-by field at group-level"
+	errCursorMustContainQuery   string = "_cursor block must contain exactly one collection query"
+	errMultipleQueriesInCursor  string = "_cursor block cannot contain multiple collection queries"
 )
 
 // Errors returnable from this package.
@@ -23,7 +25,9 @@ const (
 // This list is incomplete and undefined errors may also be returned.
 // Errors returned from this package may be tested against these errors with errors.Is.
 var (
-	ErrSelectOfNonGroupField = errors.New(errSelectOfNonGroupField)
+	ErrSelectOfNonGroupField   = errors.New(errSelectOfNonGroupField)
+	ErrCursorMustContainQuery  = errors.New(errCursorMustContainQuery)
+	ErrMultipleQueriesInCursor = errors.New(errMultipleQueriesInCursor)
 )
 
 // NewErrSelectOfNonGroupField returns an error indicating that a non-group-by field

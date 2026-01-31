@@ -125,6 +125,10 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 	// for each built type generate query inputs
 	queryType := g.manager.schema.QueryType()
 	subscriptionType := g.manager.schema.SubscriptionType()
+
+	// Get CursorQuery type to add collection fields
+	cursorQueryType, hasCursorQuery := g.manager.schema.TypeMap()[request.CursorQueryTypeName].(*gql.Object)
+
 	generatedQueryFields := make([]*gql.Field, 0)
 	for _, t := range g.typeDefs {
 		f, err := g.GenerateQueryInputForGQLType(ctx, t)
@@ -158,6 +162,18 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 
 		queryType.AddFieldConfig(f.Name, f)
 		subscriptionType.AddFieldConfig(f.Name, f)
+
+		// Add collection field to CursorQuery
+		if hasCursorQuery {
+			typeName := t.Name()
+			config := queryInputTypeConfig{
+				filter:  g.manager.schema.TypeMap()[typeName+filterInputNameSuffix].(*gql.InputObject),
+				groupBy: g.manager.schema.TypeMap()[typeName+typeFieldEnumSuffix].(*gql.Enum),
+				order:   g.manager.schema.TypeMap()[typeName+"OrderArg"].(*gql.InputObject),
+			}
+			cursorField := g.genCursorCollectionField(t, config)
+			cursorQueryType.AddFieldConfig(cursorField.Name, cursorField)
+		}
 
 		if encryptedField != nil {
 			queryType.AddFieldConfig(encryptedField.Name, encryptedField)
@@ -1601,6 +1617,33 @@ func (g *Generator) genTypeQueryableFieldList(
 	}
 
 	return field
+}
+
+// genCursorCollectionField generates a collection field for CursorQuery without limit/offset.
+func (g *Generator) genCursorCollectionField(
+	obj *gql.Object,
+	config queryInputTypeConfig,
+) *gql.Field {
+	return &gql.Field{
+		Name:        obj.Name(),
+		Description: obj.Description(),
+		Type:        gql.NewList(obj),
+		Args: gql.FieldConfigArgument{
+			request.DocIDArgName: schemaTypes.NewArgConfig(
+				gql.NewList(gql.NewNonNull(gql.ID)),
+				docIDsArgDescription,
+			),
+			"cid":    schemaTypes.NewArgConfig(gql.String, cidArgDescription),
+			"filter": schemaTypes.NewArgConfig(config.filter, selectFilterArgDescription),
+			"groupBy": schemaTypes.NewArgConfig(
+				gql.NewList(gql.NewNonNull(config.groupBy)),
+				schemaTypes.GroupByArgDescription,
+			),
+			"order":             schemaTypes.NewArgConfig(gql.NewList(config.order), schemaTypes.OrderArgDescription),
+			request.ShowDeleted: schemaTypes.NewArgConfig(gql.Boolean, showDeletedArgDescription),
+			
+		},
+	}
 }
 
 func (g *Generator) genVectorOpsFields() error {
