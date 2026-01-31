@@ -255,7 +255,10 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		plan.planNode = plan.order
 	}
 
-	if plan.limit != nil {
+	if plan.cursor != nil {
+		plan.cursor.plan = plan.planNode
+		plan.planNode = plan.cursor
+	} else if plan.limit != nil {
 		p.expandLimitPlan(plan, parentPlan)
 	}
 

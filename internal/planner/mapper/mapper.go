@@ -87,6 +87,21 @@ func ToOperation(
 			operation.Mutations = append(operation.Mutations, m)
 			operation.addSelection(i, t.Field, m.Select)
 
+		case *request.CursorSelect:
+			// Convert the inner Select to a mapper Select
+			s, err := toSelect(ctx, store, collectionRepository, ObjectSelection, i, t.Select, "")
+			if err != nil {
+				return nil, err
+			}
+			// Mark as cursor query and transfer pagination params
+			s.IsCursor = true
+			s.Targetable.CursorFirst = t.First
+			s.Targetable.CursorAfter = t.After
+			s.CursorPageInfo = t.PageInfoSelect
+			operation.Selects = append(operation.Selects, s)
+			operation.CursorSelects = append(operation.CursorSelects, s)
+			operation.addSelection(i, t.Field, *s)
+
 		default:
 			return nil, ErrInvalidSelect
 		}

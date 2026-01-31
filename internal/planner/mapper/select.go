@@ -13,6 +13,7 @@ package mapper
 import (
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 )
 
@@ -50,6 +51,9 @@ type Select struct {
 
 	// IsCursor indicates this query uses cursor pagination, requiring index-backed ordering.
 	IsCursor bool
+
+	// CursorPageInfo tracks which _pageInfo fields were selected (nil = not selected).
+	CursorPageInfo *request.PageInfoSelect
 }
 
 func (s *Select) AsTargetable() (*Targetable, bool) {
@@ -74,6 +78,7 @@ func (s *Select) cloneTo(index int) *Select {
 		SkipResolve:     s.SkipResolve,
 		IsEncrypted:     s.IsEncrypted,
 		IsCursor:        s.IsCursor,
+		CursorPageInfo:  s.CursorPageInfo,
 	}
 }
 
