@@ -46,7 +46,8 @@ type indexFetcher struct {
 var _ fetcher = (*indexFetcher)(nil)
 
 // newIndexFetcher creates a new IndexFetcher.
-// It can return nil, if there is no efficient way to fetch indexes with given filter conditions.
+// It can return nil if there is no efficient way to fetch with given filter conditions.
+// If startKey is provided, the iterator opens at that position for cursor-based pagination.
 func newIndexFetcher(
 	ctx context.Context,
 	txn datastore.Txn,
@@ -57,6 +58,7 @@ func newIndexFetcher(
 	docMapper *core.DocumentMapping,
 	execInfo *ExecInfo,
 	ordering []mapper.OrderCondition,
+	startKey immutable.Option[keys.Walkable],
 ) (*indexFetcher, error) {
 	// Check if the filter has an OR at the root level that spans different fields.
 	// This check MUST happen here before filter.CopyField strips out non-indexed fields,
@@ -96,6 +98,20 @@ func newIndexFetcher(
 	iter, err := f.createIndexIterator(f.indexFilter)
 	if err != nil || iter == nil {
 		return nil, err
+	}
+
+	if startKey.HasValue() {
+		if matchIter, ok := iter.(*indexMatchIterator); ok {
+			matchIter.startKey = startKey.Value()
+			matchIter.prefixKey = nil
+			if matchIter.endKey == nil {
+				baseKey, err := f.newIndexDataStoreKey()
+				if err != nil {
+					return nil, err
+				}
+				matchIter.endKey = baseKey.PrefixEnd()
+			}
+		}
 	}
 
 	f.indexIter = iter

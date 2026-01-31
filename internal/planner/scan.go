@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
+	"github.com/sourcenetwork/defradb/internal/cursor"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
@@ -56,6 +57,8 @@ type scanNode struct {
 	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
 
+	cursorPayload *cursor.CursorPayload
+
 	execInfo scanExecInfo
 }
 
@@ -65,6 +68,7 @@ func (n *scanNode) Kind() string {
 
 func (n *scanNode) Init() error {
 	txn := datastore.CtxMustGetTxn(n.p.ctx)
+
 	// init the fetcher
 	if err := n.fetcher.Init(
 		n.p.ctx,
@@ -215,12 +219,74 @@ func (n *scanNode) initScan() error {
 		n.prefixes = []keys.Walkable{prefix}
 	}
 
+	if n.cursorPayload != nil && len(n.cursorPayload.Keys) > 0 && n.index.HasValue() {
+		if seekKey := n.buildCursorSeekKey(); seekKey != nil {
+			n.prefixes = append(n.prefixes, seekKey)
+		}
+	}
+
 	err := n.fetcher.Start(n.p.ctx, n.prefixes...)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// buildCursorSeekKey constructs an IndexDataStoreKey from the cursor payload.
+// Returns nil if cursor payload is missing or has no Keys.
+func (n *scanNode) buildCursorSeekKey() *keys.IndexDataStoreKey {
+	if n.cursorPayload == nil || len(n.cursorPayload.Keys) == 0 || !n.index.HasValue() {
+		return nil
+	}
+
+	indexDesc := n.index.Value()
+
+	shortID, err := id.GetShortCollectionID(n.p.ctx, n.col.Version().CollectionID)
+	if err != nil {
+		return nil
+	}
+
+	fields := make([]keys.IndexedField, 0, len(indexDesc.Fields)+1)
+	for _, idxField := range indexDesc.Fields {
+		val, ok := n.cursorPayload.Keys[idxField.Name]
+		if !ok {
+			break
+		}
+
+		if colField, found := n.col.Version().GetFieldByName(idxField.Name); found {
+			if colField.Kind == client.FieldKind_NILLABLE_INT {
+				if floatVal, isFloat := val.(float64); isFloat {
+					val = int64(floatVal)
+				}
+			}
+		}
+
+		normVal, err := client.NewNormalValue(val)
+		if err != nil {
+			return nil
+		}
+
+		fields = append(fields, keys.IndexedField{
+			Value:      normVal,
+			Descending: idxField.Descending,
+		})
+	}
+
+	if !indexDesc.Unique {
+		docIDVal, err := client.NewNormalValue(n.cursorPayload.DocID)
+		if err != nil {
+			return nil
+		}
+		fields = append(fields, keys.IndexedField{
+			Value:      docIDVal,
+			Descending: false,
+		})
+	}
+
+	key := keys.NewIndexDataStoreKey(shortID, indexDesc.ID, fields)
+	key.Offset = 1
+	return &key
 }
 
 // Next gets the next result.
