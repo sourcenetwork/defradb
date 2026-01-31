@@ -126,7 +126,7 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 	queryType := g.manager.schema.QueryType()
 	subscriptionType := g.manager.schema.SubscriptionType()
 
-	// Get CursorQuery type to add collection fields
+	// Get CursorQuery type from TypeMap to add collection fields
 	cursorQueryType, hasCursorQuery := g.manager.schema.TypeMap()[request.CursorQueryTypeName].(*gql.Object)
 
 	generatedQueryFields := make([]*gql.Field, 0)
@@ -163,8 +163,9 @@ func (g *Generator) generate(ctx context.Context, collections []client.Collectio
 		queryType.AddFieldConfig(f.Name, f)
 		subscriptionType.AddFieldConfig(f.Name, f)
 
-		// Add collection field to CursorQuery
+		// Also add collection field to CursorQuery (without limit/offset args)
 		if hasCursorQuery {
+			// Look up the filter/groupBy/order types that were just registered
 			typeName := t.Name()
 			config := queryInputTypeConfig{
 				filter:  g.manager.schema.TypeMap()[typeName+filterInputNameSuffix].(*gql.InputObject),
@@ -1619,7 +1620,7 @@ func (g *Generator) genTypeQueryableFieldList(
 	return field
 }
 
-// genCursorCollectionField generates a collection field for CursorQuery without limit/offset.
+// genCursorCollectionField generates a collection query field for use inside CursorQuery.
 func (g *Generator) genCursorCollectionField(
 	obj *gql.Object,
 	config queryInputTypeConfig,
@@ -1641,7 +1642,8 @@ func (g *Generator) genCursorCollectionField(
 			),
 			"order":             schemaTypes.NewArgConfig(gql.NewList(config.order), schemaTypes.OrderArgDescription),
 			request.ShowDeleted: schemaTypes.NewArgConfig(gql.Boolean, showDeletedArgDescription),
-			
+			request.FirstClause: schemaTypes.NewArgConfig(gql.Int, schemaTypes.FirstArgDescription),
+			request.AfterClause: schemaTypes.NewArgConfig(gql.String, schemaTypes.AfterArgDescription),
 		},
 	}
 }

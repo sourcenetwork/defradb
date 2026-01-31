@@ -18,6 +18,8 @@ const (
 	errSelectOfNonGroupField    string = "cannot select a non-group-by field at group-level"
 	errCursorMustContainQuery   string = "_cursor block must contain exactly one collection query"
 	errMultipleQueriesInCursor  string = "_cursor block cannot contain multiple collection queries"
+	errFirstMustBeNonNegative   string = "first must be non-negative"
+	errInvalidCursor            string = "invalid cursor"
 )
 
 // Errors returnable from this package.
@@ -28,6 +30,8 @@ var (
 	ErrSelectOfNonGroupField   = errors.New(errSelectOfNonGroupField)
 	ErrCursorMustContainQuery  = errors.New(errCursorMustContainQuery)
 	ErrMultipleQueriesInCursor = errors.New(errMultipleQueriesInCursor)
+	ErrFirstMustBeNonNegative  = errors.New(errFirstMustBeNonNegative)
+	ErrInvalidCursor           = errors.New(errInvalidCursor)
 )
 
 // NewErrSelectOfNonGroupField returns an error indicating that a non-group-by field
