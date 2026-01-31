@@ -249,6 +249,11 @@ type Targetable struct {
 	// value
 	OrderBy *OrderBy
 
+	// CursorFirst limits cursor pagination results to the first N items.
+	CursorFirst immutable.Option[uint64]
+	// CursorAfter is the opaque cursor token to resume pagination after.
+	CursorAfter immutable.Option[string]
+
 	ShowDeleted bool
 }
 
@@ -260,6 +265,8 @@ func (t *Targetable) cloneTo(index int) *Targetable {
 		Limit:       t.Limit,
 		GroupBy:     t.GroupBy,
 		OrderBy:     t.OrderBy,
+		CursorFirst: t.CursorFirst,
+		CursorAfter: t.CursorAfter,
 		ShowDeleted: t.ShowDeleted,
 	}
 }

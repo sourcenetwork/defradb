@@ -58,6 +58,7 @@ type selectTopNode struct {
 	group      *groupNode
 	order      *orderNode
 	limit      *limitNode
+	cursor     *cursorNode
 	aggregates []aggregateNode
 
 	// selectNode is used pre-wiring of the plan (before expansion and all).
@@ -713,6 +714,11 @@ func (p *Planner) SelectTopNode(selectReq *mapper.Select) (*selectTopNode, error
 		return nil, err
 	}
 
+	cursorPlan, err := p.Cursor(selectReq)
+	if err != nil {
+		return nil, err
+	}
+
 	orderPlan, err := p.OrderBy(selectReq, orderBy)
 	if err != nil {
 		return nil, err
@@ -721,6 +727,7 @@ func (p *Planner) SelectTopNode(selectReq *mapper.Select) (*selectTopNode, error
 	top := &selectTopNode{
 		selectNode: s,
 		limit:      limitPlan,
+		cursor:     cursorPlan,
 		order:      orderPlan,
 		group:      groupPlan,
 		aggregates: aggregates,

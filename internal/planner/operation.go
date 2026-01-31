@@ -116,7 +116,34 @@ func (n *operationNode) Next() (bool, error) {
 				}
 				docs = append(docs, child.Value())
 			}
-			n.currentValue.Fields[i] = docs
+
+			// Check if this child is a cursor query that needs _pageInfo wrapping
+			if topNode, ok := child.(*selectTopNode); ok && topNode.cursor != nil {
+				// Render docs using the child's own DocumentMapping
+				childMap := child.DocumentMap()
+				renderedDocs := make([]map[string]any, 0, len(docs))
+				for _, doc := range docs {
+					if !doc.Hidden {
+						renderedDocs = append(renderedDocs, childMap.ToMap(doc))
+					}
+				}
+
+				// Build the cursor wrapper with rendered docs and _pageInfo
+				wrapper := map[string]any{}
+				wrapper[topNode.selectNode.collection.Name()] = renderedDocs
+
+				pageInfo, err := topNode.cursor.PageInfo()
+				if err != nil {
+					return false, err
+				}
+				if len(pageInfo) > 0 {
+					wrapper["_pageInfo"] = pageInfo
+				}
+
+				n.currentValue.Fields[i] = wrapper
+			} else {
+				n.currentValue.Fields[i] = docs
+			}
 		}
 	}
 

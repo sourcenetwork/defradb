@@ -35,6 +35,9 @@ type Operation struct {
 	// Exhaustive is the @exhaustive directive flag from the query.
 	// When true, orphan parents are included when ordering by relation fields.
 	Exhaustive bool
+
+	// CursorSelects is the list of cursor-wrapped selections in the operation.
+	CursorSelects []*Select
 }
 
 // addSelection adds a new selection to the operation's document mapping.
