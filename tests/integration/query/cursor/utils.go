@@ -18,8 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// userCollectionGQLSchema defines a User type with indexed age field
-// for cursor pagination tests. The @index on age enables index-aware path testing.
+// userCollectionGQLSchema defines a User type with indexed age field for cursor pagination tests.
 var userCollectionGQLSchema = `
 	type User {
 		name: String
@@ -45,11 +44,29 @@ func executeTestCase(t *testing.T, test testUtils.TestCase) {
 	)
 }
 
-// makeExplainQuery wraps a query with @explain(type: execute) for index verification
+// makeExplainQuery wraps a query with @explain(type: execute) for index verification.
 func makeExplainQuery(req string) string {
 	ind := strings.Index(req, "query")
 	if ind < 0 {
 		panic("Invalid query: " + req)
 	}
 	return "query @explain(type: execute) " + req[ind+5:]
+}
+
+// extractUsers extracts user documents from query results, handling both []any and []map[string]any types.
+func extractUsers(usersRaw any) []map[string]any {
+	switch users := usersRaw.(type) {
+	case []any:
+		result := make([]map[string]any, 0, len(users))
+		for _, item := range users {
+			if m, ok := item.(map[string]any); ok {
+				result = append(result, m)
+			}
+		}
+		return result
+	case []map[string]any:
+		return users
+	default:
+		return nil
+	}
 }
