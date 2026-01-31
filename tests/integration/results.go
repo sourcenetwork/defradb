@@ -296,6 +296,127 @@ func (m *validCID) NegatedFailureMessage(actual any) string {
 	return fmt.Sprintf("Expected\n\t%v\nnot to be a valid CID string", actual)
 }
 
+// ValidCursor returns a matcher that verifies a cursor token is properly encoded.
+// Use WithKeys() or WithKeyFields() to also validate encoded key values.
+func ValidCursor() *validCursor {
+	return &validCursor{}
+}
+
+type validCursor struct {
+	expectedKeys      map[string]any
+	expectedKeyFields []string
+	lastPayload       *cursorPayload
+	lastError         string
+}
+
+type cursorPayload struct {
+	DocID     string         `json:"d"`
+	Keys      map[string]any `json:"k,omitempty"`
+	Direction string         `json:"o"`
+}
+
+var _ gomega.OmegaMatcher = (*validCursor)(nil)
+
+// WithKeys validates the cursor contains the specified key-value pairs.
+func (m *validCursor) WithKeys(keys map[string]any) *validCursor {
+	m.expectedKeys = keys
+	return m
+}
+
+// WithKeyFields validates the cursor contains the specified field names.
+func (m *validCursor) WithKeyFields(fields ...string) *validCursor {
+	m.expectedKeyFields = fields
+	return m
+}
+
+func (m *validCursor) Match(actual any) (bool, error) {
+	m.lastPayload = nil
+	m.lastError = ""
+
+	str, ok := actual.(string)
+	if !ok {
+		m.lastError = fmt.Sprintf("expected a string cursor, got %T", actual)
+		return false, nil
+	}
+	if str == "" {
+		m.lastError = "expected a non-empty cursor string"
+		return false, nil
+	}
+
+	decoded, err := base64.RawURLEncoding.DecodeString(str)
+	if err != nil {
+		m.lastError = fmt.Sprintf("invalid base64url encoding: %v", err)
+		return false, nil
+	}
+
+	var payload cursorPayload
+	if err := json.Unmarshal(decoded, &payload); err != nil {
+		m.lastError = fmt.Sprintf("invalid JSON: %v", err)
+		return false, nil
+	}
+	m.lastPayload = &payload
+
+	if payload.DocID == "" {
+		m.lastError = "missing DocID field"
+		return false, nil
+	}
+
+	if len(m.expectedKeyFields) > 0 {
+		for _, field := range m.expectedKeyFields {
+			if _, exists := payload.Keys[field]; !exists {
+				m.lastError = fmt.Sprintf("missing expected key field %q", field)
+				return false, nil
+			}
+		}
+	}
+
+	if len(m.expectedKeys) > 0 {
+		for key, expectedValue := range m.expectedKeys {
+			actualValue, exists := payload.Keys[key]
+			if !exists {
+				m.lastError = fmt.Sprintf("missing expected key %q", key)
+				return false, nil
+			}
+			if !keysEqual(expectedValue, actualValue) {
+				m.lastError = fmt.Sprintf("key %q: expected %v (%T), got %v (%T)",
+					key, expectedValue, expectedValue, actualValue, actualValue)
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
+}
+
+// keysEqual compares values, handling JSON number type normalization.
+func keysEqual(expected, actual any) bool {
+	switch exp := expected.(type) {
+	case int64:
+		if act, ok := actual.(float64); ok {
+			return float64(exp) == act
+		}
+	case int:
+		if act, ok := actual.(float64); ok {
+			return float64(exp) == act
+		}
+	}
+	return reflect.DeepEqual(expected, actual)
+}
+
+func (m *validCursor) FailureMessage(actual any) string {
+	if m.lastError != "" {
+		if m.lastPayload != nil {
+			return fmt.Sprintf("Cursor validation failed: %s\nPayload: %+v", m.lastError, m.lastPayload)
+		}
+		return fmt.Sprintf("Cursor validation failed: %s\nActual: %v", m.lastError, actual)
+	}
+	return fmt.Sprintf("Cursor validation failed unexpectedly for: %v", actual)
+}
+
+func (m *validCursor) NegatedFailureMessage(actual any) string {
+	return fmt.Sprintf("Expected value NOT to be a valid cursor, but it was: %v", actual)
+}
+
 // areResultsAnyOf returns true if any of the expected results are of equal value.
 //
 // Values of type json.Number and immutable.Option will be reduced to their underlying types.

@@ -193,10 +193,10 @@ func (n *cursorNode) PageInfo() (map[string]any, error) {
 	}
 
 	if sel.HasNext {
-		info["hasNextPage"] = n.hasNextPage
+		info[request.HasNextFieldName] = n.hasNextPage
 	}
 	if sel.HasPrev {
-		info["hasPreviousPage"] = n.hasPreviousPage
+		info[request.HasPrevFieldName] = n.hasPreviousPage
 	}
 	if sel.StartCursor {
 		if n.firstDocID != "" {
