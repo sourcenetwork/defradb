@@ -302,13 +302,15 @@ func ValidCursor() *validCursor {
 	return &validCursor{}
 }
 
+// validCursor is a gomega matcher that validates cursor tokens.
 type validCursor struct {
-	expectedKeys      map[string]any
-	expectedKeyFields []string
-	lastPayload       *cursorPayload
-	lastError         string
+	expectedKeys      map[string]any // exact key-value pairs to validate
+	expectedKeyFields []string       // key field names to check (values ignored)
+	lastPayload       *cursorPayload // decoded payload for error messages
+	lastError         string         // validation error for failure messages
 }
 
+// cursorPayload mirrors the cursor.CursorPayload structure for decoding.
 type cursorPayload struct {
 	DocID     string         `json:"d"`
 	Keys      map[string]any `json:"k,omitempty"`
@@ -317,13 +319,15 @@ type cursorPayload struct {
 
 var _ gomega.OmegaMatcher = (*validCursor)(nil)
 
-// WithKeys validates the cursor contains the specified key-value pairs.
+// WithKeys returns a matcher that also validates the cursor contains the specified key-value pairs.
+// Values are compared using reflect.DeepEqual after normalizing JSON number types.
 func (m *validCursor) WithKeys(keys map[string]any) *validCursor {
 	m.expectedKeys = keys
 	return m
 }
 
-// WithKeyFields validates the cursor contains the specified field names.
+// WithKeyFields returns a matcher that validates the cursor contains the specified field names
+// in its Keys map, without checking the values.
 func (m *validCursor) WithKeyFields(fields ...string) *validCursor {
 	m.expectedKeyFields = fields
 	return m
@@ -343,12 +347,14 @@ func (m *validCursor) Match(actual any) (bool, error) {
 		return false, nil
 	}
 
+	// Verify valid base64url encoding (RawURLEncoding used by cursor package)
 	decoded, err := base64.RawURLEncoding.DecodeString(str)
 	if err != nil {
 		m.lastError = fmt.Sprintf("invalid base64url encoding: %v", err)
 		return false, nil
 	}
 
+	// Verify JSON structure with required DocID field
 	var payload cursorPayload
 	if err := json.Unmarshal(decoded, &payload); err != nil {
 		m.lastError = fmt.Sprintf("invalid JSON: %v", err)
@@ -361,6 +367,7 @@ func (m *validCursor) Match(actual any) (bool, error) {
 		return false, nil
 	}
 
+	// Validate expected key fields if specified
 	if len(m.expectedKeyFields) > 0 {
 		for _, field := range m.expectedKeyFields {
 			if _, exists := payload.Keys[field]; !exists {
@@ -370,6 +377,7 @@ func (m *validCursor) Match(actual any) (bool, error) {
 		}
 	}
 
+	// Validate expected key-value pairs if specified
 	if len(m.expectedKeys) > 0 {
 		for key, expectedValue := range m.expectedKeys {
 			actualValue, exists := payload.Keys[key]
@@ -388,7 +396,7 @@ func (m *validCursor) Match(actual any) (bool, error) {
 	return true, nil
 }
 
-// keysEqual compares values, handling JSON number type normalization.
+// keysEqual compares values, normalizing JSON number types.
 func keysEqual(expected, actual any) bool {
 	switch exp := expected.(type) {
 	case int64:
@@ -415,6 +423,49 @@ func (m *validCursor) FailureMessage(actual any) string {
 
 func (m *validCursor) NegatedFailureMessage(actual any) string {
 	return fmt.Sprintf("Expected value NOT to be a valid cursor, but it was: %v", actual)
+}
+
+// CapturedVar is a type alias for state.CapturedVar for convenience.
+type CapturedVar = state.CapturedVar
+
+// CaptureCursor returns a matcher that validates and captures cursor values.
+func CaptureCursor(name string) *captureCursor {
+	return &captureCursor{
+		name:        name,
+		validCursor: ValidCursor(),
+	}
+}
+
+type captureCursor struct {
+	testStateMatcher
+	name        string
+	validCursor *validCursor
+}
+
+var _ TestStateMatcher = (*captureCursor)(nil)
+var _ StatefulMatcher = (*captureCursor)(nil)
+
+func (m *captureCursor) Match(actual any) (bool, error) {
+	ok, err := m.validCursor.Match(actual)
+	if !ok || err != nil {
+		return ok, err
+	}
+
+	if m.s != nil {
+		str, _ := actual.(string)
+		m.s.SetCapturedVariable(m.name, str)
+	}
+	return true, nil
+}
+
+func (m *captureCursor) ResetMatcherState() {}
+
+func (m *captureCursor) FailureMessage(actual any) string {
+	return m.validCursor.FailureMessage(actual)
+}
+
+func (m *captureCursor) NegatedFailureMessage(actual any) string {
+	return m.validCursor.NegatedFailureMessage(actual)
 }
 
 // areResultsAnyOf returns true if any of the expected results are of equal value.

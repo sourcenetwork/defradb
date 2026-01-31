@@ -23,8 +23,9 @@ import (
 
 // mockTestState is a simple mock implementation of TestState interface for testing
 type mockTestState struct {
-	clientType    state.ClientType
-	currentNodeID int
+	clientType        state.ClientType
+	currentNodeID     int
+	capturedVariables map[string]any
 }
 
 func (m *mockTestState) GetClientType() state.ClientType {
@@ -41,6 +42,21 @@ func (m *mockTestState) GetIdentity(_ state.Identity) acpIdentity.Identity {
 
 func (m *mockTestState) GetDocID(_ int, _ int) client.DocID {
 	return client.DocID{}
+}
+
+func (m *mockTestState) SetCapturedVariable(name string, value any) {
+	if m.capturedVariables == nil {
+		m.capturedVariables = make(map[string]any)
+	}
+	m.capturedVariables[name] = value
+}
+
+func (m *mockTestState) GetCapturedVariable(name string) (any, bool) {
+	if m.capturedVariables == nil {
+		return nil, false
+	}
+	v, ok := m.capturedVariables[name]
+	return v, ok
 }
 
 func TestAnyOfMatcher(t *testing.T) {
