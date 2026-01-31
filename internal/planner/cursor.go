@@ -36,14 +36,19 @@ type cursorNode struct {
 	afterPayload *cursor.CursorPayload
 
 	// Internal state machine
-	pastCursor bool   // true once cursor position has been passed
-	collected  uint64 // count of results yielded so far
+	pastCursor      bool   // true once cursor position has been passed
+	collected       uint64 // count of results yielded so far
+	indexSeekActive bool
+
+	orderFields []mapper.OrderCondition
 
 	// _pageInfo state (populated during iteration)
 	hasNextPage     bool
 	hasPreviousPage bool
 	firstDocID      string
 	lastDocID       string
+	firstDoc        core.Doc
+	lastDoc         core.Doc
 	pageInfoSelect  *request.PageInfoSelect
 
 	execInfo cursorExecInfo
@@ -92,6 +97,8 @@ func (n *cursorNode) Init() error {
 	n.hasPreviousPage = false
 	n.firstDocID = ""
 	n.lastDocID = ""
+	n.firstDoc = core.Doc{}
+	n.lastDoc = core.Doc{}
 	return n.plan.Init()
 }
 
@@ -104,10 +111,10 @@ func (n *cursorNode) Source() planNode                   { return n.plan }
 func (n *cursorNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
-	// If no after cursor, skip phase is already complete
-	if !n.afterCursor.HasValue() {
+	if !n.afterCursor.HasValue() || n.indexSeekActive {
 		n.pastCursor = true
-	} else {
+	}
+	if n.afterCursor.HasValue() {
 		n.hasPreviousPage = true
 	}
 
@@ -144,10 +151,35 @@ func (n *cursorNode) Next() (bool, error) {
 		docID := doc.GetID()
 		if n.collected == 1 {
 			n.firstDocID = docID
+			n.firstDoc = doc.Clone()
 		}
 		n.lastDocID = docID
+		n.lastDoc = doc.Clone()
 		return true, nil
 	}
+}
+
+// buildEnrichedPayload creates a CursorPayload with DocID and index key values from order fields.
+func (n *cursorNode) buildEnrichedPayload(docID string, doc core.Doc) cursor.CursorPayload {
+	payload := cursor.CursorPayload{DocID: docID}
+	if len(n.orderFields) == 0 {
+		return payload
+	}
+	payload.Keys = make(map[string]any, len(n.orderFields))
+	for _, oc := range n.orderFields {
+		if len(oc.FieldIndexes) == 0 {
+			continue
+		}
+		fieldIdx := oc.FieldIndexes[0]
+		name, ok := n.documentMapping.TryToFindNameFromIndex(fieldIdx)
+		if !ok {
+			continue
+		}
+		if fieldIdx < len(doc.Fields) {
+			payload.Keys[name] = doc.Fields[fieldIdx]
+		}
+	}
+	return payload
 }
 
 // PageInfo returns the _pageInfo metadata for this cursor query page.
@@ -168,9 +200,7 @@ func (n *cursorNode) PageInfo() (map[string]any, error) {
 	}
 	if sel.StartCursor {
 		if n.firstDocID != "" {
-			encoded, err := cursor.Encode(cursor.CursorPayload{
-				DocID: n.firstDocID,
-			})
+			encoded, err := cursor.Encode(n.buildEnrichedPayload(n.firstDocID, n.firstDoc))
 			if err != nil {
 				return nil, err
 			}
@@ -181,9 +211,7 @@ func (n *cursorNode) PageInfo() (map[string]any, error) {
 	}
 	if sel.EndCursor {
 		if n.lastDocID != "" {
-			encoded, err := cursor.Encode(cursor.CursorPayload{
-				DocID: n.lastDocID,
-			})
+			encoded, err := cursor.Encode(n.buildEnrichedPayload(n.lastDocID, n.lastDoc))
 			if err != nil {
 				return nil, err
 			}

@@ -27,6 +27,7 @@ const (
 	errCheckOrphanPointLookup         string = "failed to check orphan point lookup"
 	errRefreshView                    string = "failed to refresh view"
 	errNoSupportingIndexForCursor     string = "no supporting index for cursor order field"
+	errCursorIndexDirectionMismatch   string = "cursor index does not support required scan direction"
 )
 
 var (
@@ -52,6 +53,7 @@ var (
 	ErrFailedToGenerateSearchTag           = errors.New(errFailedToGenerateSearchTag)
 	ErrIncorrectOrMissingCID               = errors.New("cid either does not exist or belong to document")
 	ErrNoSupportingIndexForCursor          = errors.New(errNoSupportingIndexForCursor)
+	ErrCursorIndexDirectionMismatch        = errors.New(errCursorIndexDirectionMismatch)
 )
 
 func NewErrUnknownDependency(name string) error {

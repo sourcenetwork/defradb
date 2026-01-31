@@ -256,6 +256,20 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	}
 
 	if plan.cursor != nil {
+		if err := p.validateCursorIndex(plan); err != nil {
+			return err
+		}
+		if ob := plan.selectNode.selectReq.OrderBy; ob != nil {
+			plan.cursor.orderFields = ob.Conditions
+		}
+		if plan.cursor.afterPayload != nil {
+			if scan := getNode[*scanNode](plan.selectNode); scan != nil {
+				scan.cursorPayload = plan.cursor.afterPayload
+			}
+			if len(plan.cursor.afterPayload.Keys) > 0 {
+				plan.cursor.indexSeekActive = true
+			}
+		}
 		plan.cursor.plan = plan.planNode
 		plan.planNode = plan.cursor
 	} else if plan.limit != nil {
@@ -904,7 +918,33 @@ func (p *Planner) MakeSelectionPlan(selection *request.Select) (planNode, error)
 //
 // Note: Caller is responsible to call the `Close()` method to free the allocated
 // resources of the returned plan.
-//
+
+// validateCursorIndex checks that a cursor query has a compatible index for ordering.
+func (p *Planner) validateCursorIndex(plan *selectTopNode) error {
+	scan := getNode[*scanNode](plan.selectNode)
+	if scan == nil {
+		return ErrNoSupportingIndexForCursor
+	}
+
+	if len(scan.ordering) == 0 {
+		return nil
+	}
+
+	if !scan.index.HasValue() {
+		return ErrNoSupportingIndexForCursor
+	}
+
+	ok, reversed := fetcher.CanBeOrderedByIndex(scan.ordering, scan.index.Value(), scan.documentMapping)
+	if !ok {
+		return ErrNoSupportingIndexForCursor
+	}
+	if reversed {
+		return ErrCursorIndexDirectionMismatch
+	}
+
+	return nil
+}
+
 // @TODO {defradb/issues/368}: Test this exported function.
 func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
 	// TODO handle multiple operation statements
