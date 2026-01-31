@@ -149,6 +149,15 @@ func assertRequestResults(
 		case gomega.OmegaMatcher:
 			execGomegaMatcher(exp, s, actual, stack)
 
+		case map[string]any:
+			actualMap, ok := actual.(map[string]any)
+			if ordered {
+				require.True(s.T, ok, "expected value to be a map %v. Path: %s", actual, stack)
+			} else if !ok {
+				return false
+			}
+			assertRequestResultDoc(s, nodeID, actualMap, exp, stack, ordered)
+
 		default:
 			assertResultsEqual(
 				s.T,
