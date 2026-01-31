@@ -35,6 +35,8 @@ const (
 	OffsetClause  = "offset"
 	OrderClause   = "order"
 	DepthClause   = "depth"
+	FirstClause   = "first"
+	AfterClause   = "after"
 
 	DocIDArgName  = "docID"
 	CidArgName    = "cid"

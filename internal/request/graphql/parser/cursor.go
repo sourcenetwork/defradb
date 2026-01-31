@@ -13,12 +13,12 @@ package parser
 import (
 	gql "github.com/sourcenetwork/graphql-go"
 	"github.com/sourcenetwork/graphql-go/language/ast"
+	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client/request"
 )
 
 // parseCursorSelect parses a _cursor query block into a CursorSelect.
-// Exactly one collection query is allowed inside _cursor, plus optionally _pageInfo.
 func parseCursorSelect(
 	exe *gql.ExecutionContext,
 	parent *gql.Object,
@@ -58,6 +58,7 @@ func parseCursorSelect(
 			fieldName := innerField.Name.Value
 
 			if fieldName == request.PageInfoFieldName {
+				cursor.PageInfoSelect = parsePageInfoSelect(innerField)
 				continue
 			}
 
@@ -77,8 +78,52 @@ func parseCursorSelect(
 			}
 
 			cursor.Select = parsed
+
+			arguments := gql.GetArgumentValues(innerFieldDef.Args, innerField.Arguments, exe.VariableValues)
+			for _, argument := range innerField.Arguments {
+				name := argument.Name.Value
+				value := arguments[name]
+
+				switch name {
+				case request.FirstClause:
+					if v, ok := value.(int32); ok {
+						if v < 0 {
+							return nil, request.ErrFirstMustBeNonNegative
+						}
+						cursor.First = immutable.Some(uint64(v))
+					}
+				case request.AfterClause:
+					if v, ok := value.(string); ok {
+						cursor.After = immutable.Some(v)
+					}
+				}
+			}
 		}
 	}
 
 	return cursor, nil
+}
+
+// parsePageInfoSelect extracts which _pageInfo fields were selected.
+func parsePageInfoSelect(field *ast.Field) *request.PageInfoSelect {
+	if field.SelectionSet == nil {
+		return nil
+	}
+
+	pageInfo := &request.PageInfoSelect{}
+	for _, selection := range field.SelectionSet.Selections {
+		if f, ok := selection.(*ast.Field); ok {
+			switch f.Name.Value {
+			case request.HasNextFieldName:
+				pageInfo.HasNext = true
+			case request.HasPrevFieldName:
+				pageInfo.HasPrev = true
+			case request.StartCursorFieldName:
+				pageInfo.StartCursor = true
+			case request.EndCursorFieldName:
+				pageInfo.EndCursor = true
+			}
+		}
+	}
+	return pageInfo
 }
