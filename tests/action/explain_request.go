@@ -39,6 +39,7 @@ var (
 		"averageNode":    {},
 		"countNode":      {},
 		"addNode":        {},
+		"cursorNode":     {},
 		"dagScanNode":    {},
 		"deleteNode":     {},
 		"groupNode":      {},

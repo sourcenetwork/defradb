@@ -236,6 +236,19 @@ func (n *cursorNode) simpleExplain() (map[string]any, error) {
 	} else {
 		m["after"] = nil
 	}
+
+	if n.afterPayload != nil {
+		cursorInfo := map[string]any{
+			"docID": n.afterPayload.DocID,
+		}
+		if len(n.afterPayload.Keys) > 0 {
+			cursorInfo["keys"] = n.afterPayload.Keys
+		}
+		m["cursorValue"] = cursorInfo
+	} else {
+		m["cursorValue"] = nil
+	}
+
 	return m, nil
 }
 
