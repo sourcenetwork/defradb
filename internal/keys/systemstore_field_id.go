@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	ds "github.com/ipfs/go-datastore"
+
 	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
@@ -41,15 +42,18 @@ func NewFieldIDPrefix(collectionShortID uint32) FieldID {
 }
 
 func NewFieldIDFromBytes(key []byte) (FieldID, error) {
-	if len(key) == 0 {
-		return FieldID{}, ErrEmptyKey
-	}
-
 	if !bytes.HasPrefix(key, []byte(FIELD_SHORT_ID)) {
 		return FieldID{}, ErrInvalidKey
 	}
 
-	key = bytes.TrimPrefix(key, []byte(FIELD_SHORT_ID+"/"))
+	key = bytes.TrimPrefix(key, []byte(FIELD_SHORT_ID))
+	if len(key) == 0 {
+		return FieldID{}, nil
+	}
+	if key[0] != '/' {
+		return FieldID{}, ErrInvalidKey
+	}
+	key = key[1:]
 
 	key, colID, err := encoding.DecodeUvarintAscending(key)
 	if err != nil {

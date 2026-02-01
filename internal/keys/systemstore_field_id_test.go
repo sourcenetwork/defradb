@@ -70,6 +70,15 @@ func TestNewFieldIDFromBytes(t *testing.T) {
 		errorMsg    string
 	}{
 		{
+			name:  "only prefix",
+			input: FIELD_SHORT_ID,
+			expected: FieldID{
+				CollectionShortID: 0,
+				FieldID:           "",
+			},
+			expectError: false,
+		},
+		{
 			name:  "full valid key",
 			input: FIELD_SHORT_ID + "/\x89/idx456",
 			expected: FieldID{
@@ -98,7 +107,7 @@ func TestNewFieldIDFromBytes(t *testing.T) {
 			input:       "",
 			expected:    FieldID{},
 			expectError: true,
-			errorMsg:    "received empty key string",
+			errorMsg:    "invalid key string",
 		},
 		{
 			name:        "only slash",
