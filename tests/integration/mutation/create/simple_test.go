@@ -171,9 +171,6 @@ func TestMutationCreate_GivenEmptyInput(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// TestMutationCreate_With10Collections documents a bug where having more than 9 collections
-// caused field short ID assignment to break, resulting in potentially the wrong value being
-// assigned to certain fields and some fields bing missed entirely.
 func TestMutationCreate_With10Collections(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
@@ -224,8 +221,8 @@ func TestMutationCreate_With10Collections(t *testing.T) {
 				Results: map[string]any{
 					"create_Foo1": []map[string]any{
 						{
-							"about": nil,
-							"name":  testUtils.AnyOf("John", "something"),
+							"about": "something",
+							"name":  "John",
 						},
 					},
 				},
