@@ -202,7 +202,7 @@ func (w *Wrapper) EnableNACForInit(ownerDID string) error {
 // setup to mirror Go's nodeIdentity shortcut (checkNodeAccess grants automatic
 // access to the node's own identity).
 func (w *Wrapper) AddNACAdminForInit(ownerDID, targetDID string) error {
-	_, err := w.node.AddNACActorRelationship(ownerDID, targetDID)
+	_, err := w.node.AddNACActorRelationship(ownerDID, "admin", targetDID)
 	return err
 }
 
@@ -630,7 +630,7 @@ func (w *Wrapper) AddNACActorRelationship(
 	if id := identity.FromContext(ctx); id.HasValue() {
 		requestorDID = id.Value().DID()
 	}
-	added, err := w.node.AddNACActorRelationship(requestorDID, targetActor)
+	added, err := w.node.AddNACActorRelationship(requestorDID, relation, targetActor)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
@@ -646,7 +646,7 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	if id := identity.FromContext(ctx); id.HasValue() {
 		requestorDID = id.Value().DID()
 	}
-	deleted, err := w.node.DeleteNACActorRelationship(requestorDID, targetActor)
+	deleted, err := w.node.DeleteNACActorRelationship(requestorDID, relation, targetActor)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
@@ -1211,17 +1211,23 @@ func newEventBus() *eventBus {
 
 func (e *eventBus) Publish(msg event.Message) {
 	// Deliver message to all matching subscribers
+	delivered := 0
+	total := len(e.subs)
 	for _, sub := range e.subs {
 		if es, ok := sub.(*eventSubscription); ok {
 			// Check if subscription wants this event
 			if es.wantsEvent(msg.Name) {
 				select {
 				case es.ch <- msg:
+					delivered++
 				default:
-					// Channel full, skip
+					fmt.Printf("[GO-EVENT-BUS] Channel full for event=%s\n", msg.Name)
 				}
 			}
 		}
+	}
+	if msg.Name == event.MergeCompleteName || msg.Name == event.ReplicatorCompletedName {
+		fmt.Printf("[GO-EVENT-BUS] Publish event=%s total_subs=%d delivered=%d\n", msg.Name, total, delivered)
 	}
 }
 
@@ -1231,6 +1237,7 @@ func (e *eventBus) Subscribe(events ...event.Name) (event.Subscription, error) {
 		events: events,
 	}
 	e.subs = append(e.subs, sub)
+	fmt.Printf("[GO-EVENT-BUS] Subscribe events=%v total_subs=%d\n", events, len(e.subs))
 	return sub, nil
 }
 

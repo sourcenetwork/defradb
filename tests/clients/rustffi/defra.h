@@ -187,6 +187,8 @@ char *defra_version(void);
    "owner": "did:key:..." | null
  }
  ```
+
+ This function is NAC-gated with the `NacStatus` permission.
  */
 struct FfiResult get_nac_status(uintptr_t node_ptr, const char *identity_did);
 
@@ -225,9 +227,12 @@ struct FfiResult re_enable_nac(uintptr_t node_ptr, const char *requestor_did);
 struct FfiResult enable_nac(uintptr_t node_ptr, const char *owner_did);
 
 /*
- Add a NAC actor relationship (grant admin to target).
+ Add a NAC actor relationship.
 
- The requestor must be an admin. Returns JSON with success status:
+ The requestor must be an admin. The relation can be "admin" or a
+ specific permission name (e.g., "document-read").
+
+ Returns JSON with success status:
  ```json
  { "added": true }  // or false if already exists
  ```
@@ -238,12 +243,14 @@ struct FfiResult enable_nac(uintptr_t node_ptr, const char *owner_did);
  */
 struct FfiResult add_nac_actor_relationship(uintptr_t node_ptr,
                                             const char *requestor_did,
+                                            const char *relation,
                                             const char *target_did);
 
 /*
- Delete a NAC actor relationship (remove admin from target).
+ Delete a NAC actor relationship.
 
  The requestor must be an admin. The owner cannot be removed.
+
  Returns JSON with success status:
  ```json
  { "deleted": true }  // or false if didn't exist
@@ -255,6 +262,7 @@ struct FfiResult add_nac_actor_relationship(uintptr_t node_ptr,
  */
 struct FfiResult delete_nac_actor_relationship(uintptr_t node_ptr,
                                                const char *requestor_did,
+                                               const char *relation,
                                                const char *target_did);
 
 /*
@@ -655,6 +663,7 @@ struct FfiResult set_migration(uintptr_t node_ptr, const char *identity_did, con
  # Arguments
 
  * `node_ptr` - Handle to the node
+ * `identity_did` - Identity DID for NAC authorization
  * `name` - The collection name to truncate
 
  # Returns
@@ -664,7 +673,7 @@ struct FfiResult set_migration(uintptr_t node_ptr, const char *identity_did, con
 
  # Safety
 
- `name` must be a valid null-terminated UTF-8 string.
+ `name` and `identity_did` must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult truncate_collection(uintptr_t node_ptr,
                                      const char *identity_did,
@@ -1087,12 +1096,7 @@ struct FfiResult p2p_remove_collections(uintptr_t node_ptr,
 struct FfiResult p2p_get_all_collections(uintptr_t node_ptr, const char *identity_did);
 
 /*
- Add documents to P2P replication by subscribing to their GossipSub topics.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `doc_ids_json` - JSON array of document IDs
+ Add documents to P2P replication.
 
  # Safety
 
@@ -1103,12 +1107,7 @@ struct FfiResult p2p_add_documents(uintptr_t node_ptr,
                                    const char *doc_ids_json);
 
 /*
- Remove documents from P2P replication by unsubscribing from their GossipSub topics.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `doc_ids_json` - JSON array of document IDs
+ Remove documents from P2P replication.
 
  # Safety
 
@@ -1119,9 +1118,7 @@ struct FfiResult p2p_remove_documents(uintptr_t node_ptr,
                                       const char *doc_ids_json);
 
 /*
- Get all P2P documents.
-
- Returns a JSON array of document IDs.
+ Get all documents configured for P2P replication.
 
  # Safety
 

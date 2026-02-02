@@ -12,6 +12,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -210,6 +211,8 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 
 		expect := node.P2P.ExpectedDAGHeads
 
+		fmt.Printf("[WAIT-MERGE] Node %d: ExpectedDAGHeads=%v ActualDAGHeads=%v\n", nodeID, expect, node.P2P.ActualDAGHeads)
+
 		// remove any heads that are already merged
 		// up to the expected head
 		for key, val := range node.P2P.ActualDAGHeads {
@@ -217,6 +220,8 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 				delete(expect, key)
 			}
 		}
+
+		fmt.Printf("[WAIT-MERGE] Node %d: after prune, waiting for %d events: %v\n", nodeID, len(expect), expect)
 
 		// wait for all expected heads to be merged
 		//
@@ -232,14 +237,19 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 					require.Fail(s.T, "subscription closed waiting for merge complete event")
 				}
 				evt = msg.Data.(event.MergeComplete)
+				fmt.Printf("[WAIT-MERGE] Node %d: Got merge doc=%s cid=%s\n", nodeID, evt.Merge.DocID, evt.Merge.Cid)
 
 			case <-time.After(30 * eventTimeout):
+				fmt.Printf("[WAIT-MERGE] Node %d: TIMEOUT! expecting=%v\n", nodeID, expect)
 				require.Fail(s.T, "timeout waiting for merge complete event")
 			}
 
 			head, ok := expect[getMergeEventKey(evt.Merge)]
 			if ok && head.String() == evt.Merge.Cid.String() {
+				fmt.Printf("[WAIT-MERGE] Node %d: MATCHED key=%s\n", nodeID, getMergeEventKey(evt.Merge))
 				delete(expect, getMergeEventKey(evt.Merge))
+			} else {
+				fmt.Printf("[WAIT-MERGE] Node %d: NO MATCH key=%s got_cid=%s want_cid=%s found=%v\n", nodeID, getMergeEventKey(evt.Merge), evt.Merge.Cid, head, ok)
 			}
 			node.P2P.ActualDAGHeads[getMergeEventKey(evt.Merge)] = state.DocHeadState{
 				CID: evt.Merge.Cid,
