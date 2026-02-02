@@ -155,7 +155,7 @@ func deleteCollectionSubscription(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.RemoveP2PCollections(ctx, collectionNames...)
+	err := node.DeleteP2PCollections(ctx, collectionNames...)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}
@@ -185,7 +185,7 @@ func listP2PCollections(
 
 	node := s.Nodes[action.NodeID]
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	cols, err := node.GetAllP2PCollections(ctx)
+	cols, err := node.ListP2PCollections(ctx)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

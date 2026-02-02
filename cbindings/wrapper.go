@@ -47,9 +47,9 @@ extern Result P2PActivePeers(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PgetAllReplicators(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
 extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
-extern Result P2PcollectionAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
-extern Result P2PcollectionRemove(uintptr_t nodePtr, char* collections, uintptr_t identity);
-extern Result P2PcollectionGetAll(uintptr_t nodePtr, uintptr_t identity);
+extern Result P2PcollectionCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PcollectionDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PcollectionList(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2Pconnect(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
 extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections, uintptr_t identity);
@@ -194,7 +194,7 @@ func (w *CWrapper) CreateP2PCollections(ctx context.Context, collectionIDs ...st
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PcollectionAdd(C.uintptr_t(w.handle), colStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PcollectionCreate(C.uintptr_t(w.handle), colStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -208,7 +208,7 @@ func (w *CWrapper) DeleteP2PCollections(ctx context.Context, collectionIDs ...st
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PcollectionRemove(C.uintptr_t(w.handle), colStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PcollectionDelete(C.uintptr_t(w.handle), colStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -219,7 +219,7 @@ func (w *CWrapper) DeleteP2PCollections(ctx context.Context, collectionIDs ...st
 func (w *CWrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
 	cIdentity := identityFromContext(ctx)
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PcollectionGetAll(C.uintptr_t(w.handle), cIdentity))
+	res := ConvertAndFreeCResult(C.P2PcollectionList(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

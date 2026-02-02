@@ -181,7 +181,7 @@ resources:
 					`,
 			},
 
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},

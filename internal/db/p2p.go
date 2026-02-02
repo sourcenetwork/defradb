@@ -161,7 +161,7 @@ func (db *DB) DeleteP2PCollections(ctx context.Context, collectionNames ...strin
 	}
 	defer txn.Discard()
 
-	err = db.p2p.RemoveP2PCollections(ctx, collectionNames...)
+	err = db.p2p.DeleteP2PCollections(ctx, collectionNames...)
 	if err != nil {
 		return err
 	}
@@ -185,7 +185,7 @@ func (db *DB) ListP2PCollections(ctx context.Context) ([]string, error) {
 	}
 	defer txn.Discard()
 
-	return db.p2p.GetAllP2PCollections(ctx)
+	return db.p2p.ListP2PCollections(ctx)
 }
 
 // AddP2PDocuments adds the given docIDs to the P2P system and

@@ -147,16 +147,16 @@ func (w *Wrapper) CreateP2PCollections(ctx context.Context, collectionIDs ...str
 	return err
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
-	args := []string{"client", "p2p", "collection", "remove"}
+func (w *Wrapper) DeleteP2PCollections(ctx context.Context, collectionIDs ...string) error {
+	args := []string{"client", "p2p", "collection", "delete"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	args := []string{"client", "p2p", "collection", "getall"}
+func (w *Wrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
+	args := []string{"client", "p2p", "collection", "list"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
