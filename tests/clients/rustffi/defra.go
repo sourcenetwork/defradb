@@ -1158,6 +1158,9 @@ type SubscriptionEvent struct {
 	ByPeer       string `json:"by_peer,omitempty"`
 	IsRetry      bool   `json:"is_retry,omitempty"`
 	IsRelay      bool   `json:"is_relay,omitempty"`
+	PeerID       string `json:"peer_id,omitempty"`
+	Topic        string `json:"topic,omitempty"`
+	EventType    string `json:"event_type,omitempty"`
 }
 
 // PollResult represents the result of polling a subscription.
@@ -1390,6 +1393,9 @@ func (n *Node) P2PSetReplicator(identityDID string, peerAddr string, collections
 	cPeerAddr := C.CString(peerAddr)
 	defer C.free(unsafe.Pointer(cPeerAddr))
 
+	if collections == nil {
+		collections = []string{}
+	}
 	collectionsJSON, err := json.Marshal(collections)
 	if err != nil {
 		return fmt.Errorf("ffi: failed to marshal collections: %w", err)
