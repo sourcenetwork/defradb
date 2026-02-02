@@ -102,7 +102,7 @@ func waitForUnsubscribeToCollectionEvent(s *state.State, action DeleteCollection
 // p2p topic completed event on the local event bus.
 //
 // Expected document heads will be updated for the subscriber node.
-func waitForSubscribeToDocumentEvent(s *state.State, action SubscribeToDocument) {
+func waitForSubscribeToDocumentEvent(s *state.State, action CreateDocumentSubscription) {
 	// update peer documents of target node
 	for _, colDocIndex := range action.DocIDs {
 		if colDocIndex.Doc == NonExistentDocID {
@@ -114,7 +114,7 @@ func waitForSubscribeToDocumentEvent(s *state.State, action SubscribeToDocument)
 
 // waitForUnsubscribeToDocumentEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
-func waitForUnsubscribeToDocumentEvent(s *state.State, action UnsubscribeToDocument) {
+func waitForUnsubscribeToDocumentEvent(s *state.State, action DeleteDocumentSubscription) {
 	for _, colDocIndex := range action.DocIDs {
 		if colDocIndex.Doc == NonExistentDocID {
 			continue // don't track non existent documents

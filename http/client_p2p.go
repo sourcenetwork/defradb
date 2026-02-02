@@ -175,7 +175,7 @@ func (c *Client) ListP2PCollections(ctx context.Context) ([]string, error) {
 	return cols, nil
 }
 
-func (c *Client) AddP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+func (c *Client) CreateP2PDocuments(ctx context.Context, collectionIDs ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
 	body, err := json.Marshal(collectionIDs)
@@ -190,7 +190,7 @@ func (c *Client) AddP2PDocuments(ctx context.Context, collectionIDs ...string) e
 	return err
 }
 
-func (c *Client) RemoveP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+func (c *Client) DeleteP2PDocuments(ctx context.Context, collectionIDs ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
 	body, err := json.Marshal(collectionIDs)
@@ -205,7 +205,7 @@ func (c *Client) RemoveP2PDocuments(ctx context.Context, collectionIDs ...string
 	return err
 }
 
-func (c *Client) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (c *Client) ListP2PDocuments(ctx context.Context) ([]string, error) {
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
