@@ -1,30 +1,20 @@
-## defradb client p2p collection add
+## defradb client p2p collection list
 
-Add P2P collections
+List P2P collections
 
 ### Synopsis
 
-Add P2P collections to the synchronized pubsub topics.
-The collections are synchronized between nodes of a pubsub network.
+List P2P collections in the pubsub topics.
+This is the list of collections of the node that are synchronized on the pubsub network.
 
 ```
-defradb client p2p collection add [collectionNames] [flags]
-```
-
-### Examples
-
-```
-add single collection:  
-  defradb client p2p collection add User
-
-add multiple collections:  
-  defradb client p2p collection add User,Address
+defradb client p2p collection list [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for add
+  -h, --help   help for list
 ```
 
 ### Options inherited from parent commands

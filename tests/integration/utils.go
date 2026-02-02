@@ -351,14 +351,14 @@ func performAction(
 	case DeleteReplicator:
 		deleteReplicator(s, action)
 
-	case SubscribeToCollection:
-		subscribeToCollection(s, action)
+	case CreateCollectionSubscription:
+		createCollectionSubscription(s, action)
 
-	case UnsubscribeToCollection:
-		unsubscribeToCollection(s, action)
+	case DeleteCollectionSubscription:
+		deleteCollectionSubscription(s, action)
 
-	case GetAllP2PCollections:
-		getAllP2PCollections(s, action)
+	case ListP2PCollections:
+		listP2PCollections(s, action)
 
 	case SubscribeToDocument:
 		subscribeToDocument(s, action)

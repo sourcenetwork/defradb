@@ -58,7 +58,7 @@ func TestNAC_AdminRelation_CanP2PCollectionCreate(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},
@@ -74,7 +74,7 @@ func TestNAC_AdminRelation_CanP2PCollectionCreate(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},

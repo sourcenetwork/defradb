@@ -56,14 +56,14 @@ func TestNAC_GatesP2PCollectionDelete_AuthorizedIdentity_AllowAccess(t *testing.
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
@@ -109,14 +109,14 @@ func TestNAC_GatesP2PCollectionDelete_NoIdentity_NotAuthorizedError(t *testing.T
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				Identity:      testUtils.NoIdentity(),
 				NodeID:        1,
 				CollectionIDs: []int{0},
@@ -163,14 +163,14 @@ func TestNAC_GatesP2PCollectionDelete_WrongIdentity_NotAuthorizedError(t *testin
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},

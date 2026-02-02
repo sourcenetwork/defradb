@@ -17,12 +17,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionAddCommand(ctx context.Context) *cobra.Command {
+func MakeP2PCollectionDeleteCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "add [collectionNames]",
-		Short: "Add P2P collections",
-		Long: `Add P2P collections to the synchronized pubsub topics.
-The collections are synchronized between nodes of a pubsub network.`,
+		Use:   "delete [collectionNames]",
+		Short: "Delete P2P collections",
+		Long: `Delete P2P collections from the followed pubsub topics.
+The removed collections will no longer be synchronized between nodes.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -36,15 +36,15 @@ The collections are synchronized between nodes of a pubsub network.`,
 				collectionNames = append(collectionNames, id)
 			}
 
-			return cliClient.AddP2PCollections(cmd.Context(), collectionNames...)
+			return cliClient.DeleteP2PCollections(cmd.Context(), collectionNames...)
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "add single collection",
-		`defradb client p2p collection add User`)
+	EmbedCLIExample(ctx, cmd, "delete single collection",
+		`defradb client p2p collection delete User`)
 
-	EmbedCLIExample(ctx, cmd, "add multiple collections",
-		`defradb client p2p collection add User,Address`)
+	EmbedCLIExample(ctx, cmd, "delete multiple collections",
+		`defradb client p2p collection delete User,Address`)
 
 	return cmd
 }

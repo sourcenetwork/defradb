@@ -114,8 +114,8 @@ func P2PdeleteReplicator(nodePtr C.uintptr_t, collections *C.char, id *C.char, i
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionAdd
-func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export P2PcollectionCreate
+func P2PcollectionCreate(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -127,15 +127,15 @@ func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.ui
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.AddP2PCollections(ctx, colArgs...)
+	err = node.DB.CreateP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionRemove
-func P2PcollectionRemove(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export P2PcollectionDelete
+func P2PcollectionDelete(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -147,15 +147,15 @@ func P2PcollectionRemove(nodePtr C.uintptr_t, collections *C.char, identityPtr C
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.RemoveP2PCollections(ctx, colArgs...)
+	err = node.DB.DeleteP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionGetAll
-func P2PcollectionGetAll(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+//export P2PcollectionList
+func P2PcollectionList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -165,7 +165,7 @@ func P2PcollectionGetAll(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result 
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	cols, err := node.DB.GetAllP2PCollections(ctx)
+	cols, err := node.DB.ListP2PCollections(ctx)
 
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
