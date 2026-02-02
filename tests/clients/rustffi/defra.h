@@ -615,20 +615,6 @@ struct FfiResult add_view(uintptr_t node_ptr,
 struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
 
 /*
- Truncate a collection, removing all documents.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `name` - Collection name
-
- # Safety
-
- `name` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult truncate_collection(uintptr_t node_ptr, const char *name);
-
-/*
  Set migration for collection versions.
 
  Sets the migration for all collections using the given source-destination
@@ -652,6 +638,15 @@ struct FfiResult truncate_collection(uintptr_t node_ptr, const char *name);
  `config` must be a valid null-terminated UTF-8 string.
  */
 struct FfiResult set_migration(uintptr_t node_ptr, const char *config);
+
+/*
+ Truncate all documents in a collection.
+
+ # Safety
+
+ `name` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult truncate_collection(uintptr_t node_ptr, const char *name);
 
 /*
  Create document(s) in a collection.
@@ -1058,12 +1053,7 @@ struct FfiResult p2p_remove_collections(uintptr_t node_ptr, const char *collecti
 struct FfiResult p2p_get_all_collections(uintptr_t node_ptr);
 
 /*
- Add documents to P2P replication by subscribing to their GossipSub topics.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `doc_ids_json` - JSON array of document IDs
+ Add documents to P2P replication by doc IDs.
 
  # Safety
 
@@ -1072,12 +1062,7 @@ struct FfiResult p2p_get_all_collections(uintptr_t node_ptr);
 struct FfiResult p2p_add_documents(uintptr_t node_ptr, const char *doc_ids_json);
 
 /*
- Remove documents from P2P replication by unsubscribing from their GossipSub topics.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `doc_ids_json` - JSON array of document IDs
+ Remove documents from P2P replication by doc IDs.
 
  # Safety
 
@@ -1086,9 +1071,7 @@ struct FfiResult p2p_add_documents(uintptr_t node_ptr, const char *doc_ids_json)
 struct FfiResult p2p_remove_documents(uintptr_t node_ptr, const char *doc_ids_json);
 
 /*
- Get all P2P documents.
-
- Returns a JSON array of document IDs.
+ Get all documents in P2P replication.
 
  # Safety
 
