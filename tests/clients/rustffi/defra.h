@@ -176,6 +176,19 @@ void defra_init(void);
 char *defra_version(void);
 
 /*
+ Verify the signature of a block identified by CID.
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings or null.
+ */
+struct FfiResult block_verify_signature(uintptr_t node_ptr,
+                                        const char *key_type,
+                                        const char *public_key,
+                                        const char *block_cid,
+                                        const char *identity);
+
+/*
  Get the current NAC status.
 
  Returns a JSON object with NAC status information:
@@ -187,8 +200,6 @@ char *defra_version(void);
    "owner": "did:key:..." | null
  }
  ```
-
- This function is NAC-gated with the `NacStatus` permission.
  */
 struct FfiResult get_nac_status(uintptr_t node_ptr, const char *identity_did);
 
@@ -227,12 +238,9 @@ struct FfiResult re_enable_nac(uintptr_t node_ptr, const char *requestor_did);
 struct FfiResult enable_nac(uintptr_t node_ptr, const char *owner_did);
 
 /*
- Add a NAC actor relationship.
+ Add a NAC actor relationship (grant admin to target).
 
- The requestor must be an admin. The relation can be "admin" or a
- specific permission name (e.g., "document-read").
-
- Returns JSON with success status:
+ The requestor must be an admin. Returns JSON with success status:
  ```json
  { "added": true }  // or false if already exists
  ```
@@ -247,10 +255,9 @@ struct FfiResult add_nac_actor_relationship(uintptr_t node_ptr,
                                             const char *target_did);
 
 /*
- Delete a NAC actor relationship.
+ Delete a NAC actor relationship (remove admin from target).
 
  The requestor must be an admin. The owner cannot be removed.
-
  Returns JSON with success status:
  ```json
  { "deleted": true }  // or false if didn't exist
@@ -416,31 +423,6 @@ struct FfiResult basic_export(uintptr_t node_ptr, const char *config_json);
  `filepath` must be a valid null-terminated UTF-8 string.
  */
 struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
-
-/*
- Verify the signature of a block.
-
- Loads a block from the blockstore by CID, checks that it has a signature,
- loads the signature block, and verifies the signature using the provided
- public key.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `key_type` - Key type string (e.g., "ed25519", "secp256k1")
- * `public_key` - Hex-encoded public key string
- * `block_cid` - CID string of the block to verify
- * `identity_did` - Optional DID of the caller (unused, reserved for future ACP checks)
-
- # Safety
-
- All string pointers must be either null or valid null-terminated UTF-8 strings.
- */
-struct FfiResult block_verify_signature(uintptr_t node_ptr,
-                                        const char *key_type,
-                                        const char *public_key,
-                                        const char *block_cid,
-                                        const char *identity_did);
 
 /*
  Get a collection by name.
@@ -688,7 +670,6 @@ struct FfiResult set_migration(uintptr_t node_ptr, const char *identity_did, con
  # Arguments
 
  * `node_ptr` - Handle to the node
- * `identity_did` - Identity DID for NAC authorization
  * `name` - The collection name to truncate
 
  # Returns
@@ -698,7 +679,7 @@ struct FfiResult set_migration(uintptr_t node_ptr, const char *identity_did, con
 
  # Safety
 
- `name` and `identity_did` must be valid null-terminated UTF-8 strings.
+ `name` must be a valid null-terminated UTF-8 string.
  */
 struct FfiResult truncate_collection(uintptr_t node_ptr,
                                      const char *identity_did,
