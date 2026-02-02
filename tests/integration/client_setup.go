@@ -57,6 +57,7 @@ func setupClient(
 	s *state.State,
 	nodeObj *node.Node,
 	identity immutable.Option[acpIdentity.Identity],
+	nodeIndex int,
 ) (clients.Client, error) {
 	// The test suite completely bypasses the way production consumes the node options,
 	// including the configuration of IsDevMode, so we have to hard code it here for now.
@@ -77,7 +78,7 @@ func setupClient(
 		return cbindings.NewCWrapper(nodeObj)
 
 	case state.RustFFIClientType:
-		return setupRustFFIClient(s, nodeObj, identity)
+		return setupRustFFIClient(s, nodeObj, identity, nodeIndex)
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
@@ -91,6 +92,7 @@ func setupRustFFIClient(
 	s *state.State,
 	nodeObj *node.Node,
 	identity immutable.Option[acpIdentity.Identity],
+	nodeIndex int,
 ) (*rustffi.Wrapper, error) {
 	var wrapper *rustffi.Wrapper
 	var err error
@@ -106,15 +108,33 @@ func setupRustFFIClient(
 	}
 
 	// Mirror the Go node's NAC state onto the Rust FFI node.
-	// The Go node may have NAC enabled (via WithEnableNodeACP + identity in context
-	// during Start). The Rust FFI node starts fresh without NAC, so we check the
-	// Go node's status and enable NAC on the Rust node with the same owner identity.
+	//
+	// The Go node has two NAC authorization paths (see checkNodeAccess in db_nac.go):
+	// 1. nodeIdentity shortcut: if caller DID == db.nodeIdentity DID, access granted
+	// 2. ACP owner check: the identity from context during Start() creates the NAC
+	//    policy and becomes the owner in the Zanzibar store
+	//
+	// We mirror this by:
+	// - Enabling NAC with the context identity (action.Identity) as owner
+	// - Adding NodeIdentity as admin (mirrors the nodeIdentity shortcut)
 	nacStatus, nacErr := nodeObj.DB.GetNACStatus(s.Ctx)
 	if nacErr == nil && nacStatus.Status == "enabled" && identity.HasValue() {
 		ownerDID := identity.Value().DID()
-		if err := wrapper.EnableNACForInit(ownerDID); err != nil {
-			wrapper.Close()
-			return nil, fmt.Errorf("failed to enable NAC on Rust FFI node: %w", err)
+		if ownerDID != "" {
+			if err := wrapper.EnableNACForInit(ownerDID); err != nil {
+				wrapper.Close()
+				return nil, fmt.Errorf("failed to enable NAC on Rust FFI node: %w", err)
+			}
+			// Mirror Go's nodeIdentity shortcut: the Go node grants automatic
+			// access to db.nodeIdentity (set via WithNodeIdentity). Add that
+			// identity as admin on the Rust FFI node so refreshCollections works.
+			nodeIdentityDID := getIdentityDID(s, NodeIdentity(nodeIndex))
+			if nodeIdentityDID != "" && nodeIdentityDID != ownerDID {
+				if err := wrapper.AddNACAdminForInit(ownerDID, nodeIdentityDID); err != nil {
+					wrapper.Close()
+					return nil, fmt.Errorf("failed to add node identity as NAC admin: %w", err)
+				}
+			}
 		}
 	}
 
