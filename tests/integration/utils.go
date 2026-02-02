@@ -994,11 +994,13 @@ func refreshDocuments(
 	// For now just do the initial setup using the collections on the first node,
 	// this may need to become more involved at a later date depending on testing
 	// requirements.
+	s.DocIDsLock.Lock()
 	s.DocIDs = make([][]client.DocID, len(s.Nodes[0].Collections))
 
 	for i := range s.Nodes[0].Collections {
 		s.DocIDs[i] = []client.DocID{}
 	}
+	s.DocIDsLock.Unlock()
 
 	for i := 0; i < startActionIndex; i++ {
 		// We need to add the existing documents in the order in which the test case lists them
@@ -1020,11 +1022,18 @@ func refreshDocuments(
 				// the test will fail later anyway
 				continue
 			}
+
+			s.Nodes[firstNodesID].CompositesLock.Lock()
 			if s.Nodes[firstNodesID].Composites == nil {
 				s.Nodes[firstNodesID].Composites = make(map[string][]cid.Cid)
 			}
+			s.Nodes[firstNodesID].CompositesLock.Unlock()
+
 			for _, doc := range docs {
+				s.DocIDsLock.Lock()
 				s.DocIDs[action.CollectionID] = append(s.DocIDs[action.CollectionID], doc.ID())
+				s.DocIDsLock.Unlock()
+
 				// We fetch the list of composite commits for the document so that
 				// they can be referenced later in the test if required.
 				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: ID!) {
@@ -1038,10 +1047,13 @@ func refreshDocuments(
 					if commits, ok := data["_commits"].([]map[string]any); ok {
 						for _, commit := range commits {
 							cid := cid.MustParse(commit[request.CidFieldName].(string))
+
+							s.Nodes[firstNodesID].CompositesLock.Lock()
 							s.Nodes[firstNodesID].Composites[doc.ID().String()] = append(
 								s.Nodes[firstNodesID].Composites[doc.ID().String()],
 								cid,
 							)
+							s.Nodes[firstNodesID].CompositesLock.Unlock()
 						}
 					}
 				}
@@ -1087,7 +1099,10 @@ func substituteRelations(
 			continue
 		}
 
+		s.DocIDsLock.RLock()
 		docID := s.DocIDs[index.CollectionIndex][index.Index]
+		s.DocIDsLock.RUnlock()
+
 		action.DocMap[k] = docID.String()
 	}
 }
@@ -1098,7 +1113,9 @@ func deleteDoc(
 	s *state.State,
 	action DeleteDoc,
 ) {
+	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
 
 	var expectedErrorRaised bool
 
@@ -1188,7 +1205,11 @@ func updateDocViaColSave(
 ) error {
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
-	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true)
+	s.DocIDsLock.RLock()
+	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
+
+	doc, err := collection.Get(ctx, docID, true)
 	if err != nil {
 		return err
 	}
@@ -1208,7 +1229,11 @@ func updateDocViaColUpdate(
 ) error {
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
-	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true)
+	s.DocIDsLock.RLock()
+	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
+
+	doc, err := collection.Get(ctx, docID, true)
 	if err != nil {
 		return err
 	}
@@ -1226,7 +1251,9 @@ func updateDocViaGQL(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
+	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
 
 	input, err := jsonToGQL(action.Doc)
 	require.NoError(s.T, err)

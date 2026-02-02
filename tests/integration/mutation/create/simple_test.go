@@ -170,3 +170,65 @@ func TestMutationCreate_GivenEmptyInput(t *testing.T) {
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestMutationCreate_With10Collections(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Foo1 {
+						# The name used for the fields is important as the field shortID
+						# is serially assigned based on the alphabetical order of field names.
+						about: String
+						name: String
+					}
+					type Foo2 {
+						name: String
+					}
+					type Foo3 {
+						name: String
+					}
+					type Foo4 {
+						name: String
+					}
+					type Foo5 {
+						name: String
+					}
+					type Foo6 {
+						name: String
+					}
+					type Foo7 {
+						name: String
+					}
+					type Foo8 {
+						name: String
+					}
+					type Foo9 {
+						name: String
+					}
+					type Foo10 {
+						name: String
+					}
+				`,
+			},
+			&action.Request{
+				Request: `mutation {
+					create_Foo1(input: {about: "something", name: "John"}) {
+						about
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"create_Foo1": []map[string]any{
+						{
+							"about": "something",
+							"name":  "John",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
