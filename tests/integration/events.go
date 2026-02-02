@@ -166,6 +166,8 @@ func waitForUpdateEvents(
 						require.Fail(s.T, "subscription closed waiting for update event", "Node %d", i)
 					}
 					evt = msg.Data.(event.Update)
+
+					node.CompositesLock.Lock()
 					// We keep track of the list of cids for all documents in the test
 					// in case we want to use them in subsequent test actions without having
 					// to know in advance what the CID will be.
@@ -173,6 +175,7 @@ func waitForUpdateEvents(
 						node.Composites = make(map[string][]cid.Cid)
 					}
 					node.Composites[evt.DocID] = append(node.Composites[evt.DocID], evt.Cid)
+					node.CompositesLock.Unlock()
 
 					if !evt.IsRelay {
 						break relayCheck
@@ -250,6 +253,7 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 
 func waitForSESync(s *state.State, action WaitForSESync) {
 	var docIDsToWait []string
+	s.DocIDsLock.RLock()
 	if len(action.DocIDs) > 0 {
 		for _, docIndex := range action.DocIDs {
 			if len(s.DocIDs[0]) <= docIndex {
@@ -263,6 +267,7 @@ func waitForSESync(s *state.State, action WaitForSESync) {
 			docIDsToWait = append(docIDsToWait, docID.String())
 		}
 	}
+	s.DocIDsLock.RUnlock()
 
 	// SE sync events are only published on replicator nodes (nodes that receive artifacts)
 	// We wait for events from any non-source node with active replicators
@@ -306,11 +311,13 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	}
 	docIndex := -1
 	if collectionID != -1 {
+		s.DocIDsLock.RLock()
 		for i, docID := range s.DocIDs[collectionID] {
 			if docID.String() == evt.DocID {
 				docIndex = i
 			}
 		}
+		s.DocIDsLock.RUnlock()
 	}
 
 	node := s.Nodes[nodeID]
@@ -369,7 +376,9 @@ func updateConnectedNodes(
 // getEventsForUpdateDoc returns a map of docIDs that should be
 // published to the local event bus after an UpdateDoc action.
 func getEventsForUpdateDoc(s *state.State, action UpdateDoc) map[string]struct{} {
+	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
 
 	docMap := make(map[string]any)
 	err := json.Unmarshal([]byte(action.Doc), &docMap)

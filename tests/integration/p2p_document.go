@@ -115,7 +115,10 @@ func subscribeToDocument(
 			continue
 		}
 
+		s.DocIDsLock.RLock()
 		docID := s.DocIDs[colDocIndex.Col][colDocIndex.Doc]
+		s.DocIDsLock.RUnlock()
+
 		docIDs = append(docIDs, docID.String())
 	}
 
@@ -150,7 +153,10 @@ func unsubscribeToDocument(
 			continue
 		}
 
+		s.DocIDsLock.RLock()
 		docID := s.DocIDs[colDocIndex.Col][colDocIndex.Doc]
+		s.DocIDsLock.RUnlock()
+
 		docIDs = append(docIDs, docID.String())
 	}
 
@@ -179,7 +185,10 @@ func getAllP2PDocuments(
 ) {
 	expectedDocuments := []string{}
 	for _, colDocIndex := range action.ExpectedDocIDs {
+		s.DocIDsLock.RLock()
 		docID := s.DocIDs[colDocIndex.Col][colDocIndex.Doc]
+		s.DocIDsLock.RUnlock()
+
 		expectedDocuments = append(expectedDocuments, docID.String())
 	}
 

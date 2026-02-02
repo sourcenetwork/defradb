@@ -43,13 +43,13 @@ func TestP2PCollectionAddAndRemoveSingle(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name": "Fred"
@@ -106,13 +106,13 @@ func TestP2PCollectionAddAndRemoveMultiple(t *testing.T) {
 				// Unsubscribe from Users, but remain subscribed to Giraffes
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				Doc: `{
@@ -179,7 +179,7 @@ func TestP2PCollectionAddSingleAndRemoveErroneous(t *testing.T) {
 				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
@@ -232,7 +232,7 @@ func TestP2PCollectionAddSingleAndRemoveNone(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"

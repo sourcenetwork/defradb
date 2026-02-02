@@ -320,8 +320,8 @@ func (w *Wrapper) AddView(
 	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	args := []string{"client", "view", "add"}
-	args = append(args, query)
-	args = append(args, sdl)
+	args = append(args, "--query", query)
+	args = append(args, "--sdl", sdl)
 
 	if transformCID.HasValue() {
 		args = append(args, "--lens-cid", transformCID.Value())

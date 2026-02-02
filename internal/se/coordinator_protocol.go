@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/corelog"
 
 	"github.com/sourcenetwork/defradb/event"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
 
@@ -49,14 +48,6 @@ func (coordinator *Coordinator) processPushSEArtifactsRequest(
 	ctx context.Context,
 	req *PushSEArtifactsRequest,
 ) error {
-	clientTxn, err := coordinator.db.NewTxn(false)
-	if err != nil {
-		return err
-	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-	ctx = datastore.CtxSetTxn(ctx, txn)
-
 	sb := strings.Builder{}
 	for i, netArtifact := range req.Artifacts {
 		if i > 0 {
@@ -77,7 +68,8 @@ func (coordinator *Coordinator) processPushSEArtifactsRequest(
 		}
 	}
 
-	if err := storeArtifacts(ctx, txn.Datastore(), artifacts); err != nil {
+	err := storeArtifacts(ctx, coordinator.db.Multistore(), artifacts)
+	if err != nil {
 		return err
 	}
 
@@ -108,7 +100,7 @@ func (coordinator *Coordinator) processPushSEArtifactsRequest(
 		}))
 	}
 
-	return txn.Commit()
+	return nil
 }
 
 func (coordinator *Coordinator) processQuerySEArtifactsRequest(
@@ -134,18 +126,9 @@ func (coordinator *Coordinator) querySEArtifactsFromDatastore(
 	ctx context.Context,
 	req *QuerySEArtifactsRequest,
 ) ([]string, error) {
-	clientTxn, err := coordinator.db.NewTxn(true)
-	if err != nil {
-		return nil, err
-	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-	ctx = datastore.CtxSetTxn(ctx, txn)
-
 	queries := make([]fieldQuery, len(req.Queries))
 	for i, q := range req.Queries {
 		queries[i] = fieldQuery(q)
 	}
-
-	return fetchDocIDs(ctx, txn.Datastore(), req.CollectionID, queries)
+	return fetchDocIDs(ctx, coordinator.db.Multistore(), req.CollectionID, queries)
 }

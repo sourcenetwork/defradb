@@ -22,13 +22,13 @@ import (
 func TestQuerySimple_WithFragments_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 21
@@ -72,13 +72,13 @@ func TestQuerySimple_WithFragments_Succeeds(t *testing.T) {
 func TestQuerySimple_WithNestedFragments_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 21
@@ -120,13 +120,13 @@ func TestQuerySimple_WithNestedFragments_Succeeds(t *testing.T) {
 func TestQuerySimple_WithFragmentSpreadAndSelect_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 21
@@ -165,13 +165,13 @@ func TestQuerySimple_WithFragmentSpreadAndSelect_Succeeds(t *testing.T) {
 func TestQuerySimple_WithMissingFragment_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 21
@@ -194,13 +194,13 @@ func TestQuerySimple_WithMissingFragment_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithFragmentWithInvalidField_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 21
@@ -226,13 +226,13 @@ func TestQuerySimple_WithFragmentWithInvalidField_ReturnsError(t *testing.T) {
 func TestQuerySimple_WithFragmentWithAggregate_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 21
@@ -258,13 +258,13 @@ func TestQuerySimple_WithFragmentWithAggregate_Succeeds(t *testing.T) {
 func TestQuerySimple_WithFragmentWithVariables_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 21
@@ -303,13 +303,13 @@ func TestQuerySimple_WithFragmentWithVariables_Succeeds(t *testing.T) {
 func TestQuerySimple_WithInlineFragment_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 40
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 21

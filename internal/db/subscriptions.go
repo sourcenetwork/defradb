@@ -23,6 +23,8 @@ import (
 
 type subscriptionSelector interface {
 	ToSubscriptionSelect(docID, cid string) request.Selection
+	CheckCIDFilter(cid string) bool
+	CheckDocIDFilter(docID string) bool
 }
 
 // handleSubscription checks for a subscription within the given request and
@@ -62,6 +64,12 @@ func (db *DB) handleSubscription(ctx context.Context, r *request.Request) (<-cha
 				if !ok {
 					continue // invalid event value
 				}
+			}
+			// Skip events that do not pass the subscription's docID and cid filters
+			// This is an optimization to avoid running the selection planner and
+			// related query logic when we know the event will not be relevant to the subscription.
+			if !subRequest.CheckDocIDFilter(evt.DocID) || !subRequest.CheckCIDFilter(evt.Cid.String()) {
+				continue
 			}
 			txn, err := db.NewTxn(false)
 			if err != nil {

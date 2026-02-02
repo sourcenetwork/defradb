@@ -95,7 +95,7 @@ resources:
 				CollectionIDs: []int{0},
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,

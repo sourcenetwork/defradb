@@ -20,7 +20,7 @@ import (
 func TestQueryOneToMany_WithCount_NothingToCount(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -53,7 +53,7 @@ func TestQueryOneToMany_WithCount_NothingToCount(t *testing.T) {
 func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
@@ -61,7 +61,7 @@ func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "A Time for Mercy",
@@ -69,7 +69,7 @@ func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
 						"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Theif Lord",
@@ -77,7 +77,7 @@ func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
 						"_authorID": "bae-3d5a3204-4e55-5236-992a-ce27da27902b"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -85,7 +85,7 @@ func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
 						"verified": true
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "Cornelia Funke",
@@ -123,7 +123,7 @@ func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
 func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -131,7 +131,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -139,7 +139,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -147,7 +147,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -155,7 +155,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",
@@ -193,7 +193,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham",
@@ -201,7 +201,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "Cornelia Funke",
@@ -209,7 +209,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
 					"verified": false
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Painted House",
@@ -217,7 +217,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "A Time for Mercy",
@@ -225,7 +225,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "Theif Lord",

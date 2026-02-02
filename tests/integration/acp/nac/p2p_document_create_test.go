@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -50,7 +51,7 @@ func TestNAC_GatesP2PDocumentCreate_AuthorizedIdentity_AllowAccess(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -106,7 +107,7 @@ func TestNAC_GatesP2PDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -125,7 +126,7 @@ func TestNAC_GatesP2PDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) 
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentCreatePerm),
 			},
 		},
 	}
@@ -163,7 +164,7 @@ func TestNAC_GatesP2PDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -182,7 +183,7 @@ func TestNAC_GatesP2PDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentCreatePerm),
 			},
 		},
 	}

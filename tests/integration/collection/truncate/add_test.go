@@ -27,7 +27,7 @@ func TestCollectionTruncateAdd_RemovesDocument(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -62,7 +62,7 @@ func TestCollectionTruncateAdd_RemovesBlocks(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -99,7 +99,7 @@ func TestCollectionTruncateAdd_CreatesDocWithSameDocIDAsOriginal(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -122,7 +122,7 @@ func TestCollectionTruncateAdd_CreatesDocWithSameDocIDAsOriginal(t *testing.T) {
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -162,7 +162,7 @@ func TestCollectionTruncateAdd_CreatesDocWithSameCIDAsOriginal(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -185,7 +185,7 @@ func TestCollectionTruncateAdd_CreatesDocWithSameCIDAsOriginal(t *testing.T) {
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -223,7 +223,7 @@ func TestCollectionTruncateAdd_CreatesDocWithBlocksAtHeight1(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",
@@ -232,7 +232,7 @@ func TestCollectionTruncateAdd_CreatesDocWithBlocksAtHeight1(t *testing.T) {
 			&action.Truncate{
 				CollectionIndex: 0,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name": "John",

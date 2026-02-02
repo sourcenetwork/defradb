@@ -47,12 +47,12 @@ func TestColVersionUpdateReplaceQuerySourceQuery(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the view query definition so that it now queries the `Users` collection
 				Patch: `
 					[
@@ -115,12 +115,12 @@ func TestColVersionUpdateReplaceQuerySourceQueryName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the view query definition so that it now queries the `Users` collection
 				Patch: `
 					[
