@@ -120,7 +120,7 @@ func createCollectionSubscription(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.AddP2PCollections(ctx, collectionNames...)
+	err := node.CreateP2PCollections(ctx, collectionNames...)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
 	}
@@ -128,7 +128,7 @@ func createCollectionSubscription(
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
-	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
+	// The `n.Peer.CreateP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
 	time.Sleep(100 * time.Millisecond)

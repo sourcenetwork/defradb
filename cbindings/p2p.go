@@ -127,7 +127,7 @@ func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.ui
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.AddP2PCollections(ctx, colArgs...)
+	err = node.DB.CreateP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

@@ -189,7 +189,7 @@ func (w *CWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, 
 	return replicators, nil
 }
 
-func (w *CWrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *CWrapper) CreateP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	cIdentity := identityFromContext(ctx)
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	defer C.free(unsafe.Pointer(colStr))
@@ -202,7 +202,7 @@ func (w *CWrapper) AddP2PCollections(ctx context.Context, collectionIDs ...strin
 	return nil
 }
 
-func (w *CWrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *CWrapper) DeleteP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	cIdentity := identityFromContext(ctx)
 	defer C.free(unsafe.Pointer(colStr))
@@ -216,7 +216,7 @@ func (w *CWrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...st
 	return nil
 }
 
-func (w *CWrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (w *CWrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
 	cIdentity := identityFromContext(ctx)
 	defer C.IdentityFree(cIdentity)
 	res := ConvertAndFreeCResult(C.P2PcollectionGetAll(C.uintptr_t(w.handle), cIdentity))

@@ -107,7 +107,7 @@ func (h *p2pHandler) CreateP2PCollections(rw http.ResponseWriter, req *http.Requ
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.AddP2PCollections(req.Context(), collectionIDs...)
+	err := db.CreateP2PCollections(req.Context(), collectionIDs...)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -123,7 +123,7 @@ func (h *p2pHandler) DeleteP2PCollections(rw http.ResponseWriter, req *http.Requ
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.RemoveP2PCollections(req.Context(), collectionIDs...)
+	err := db.DeleteP2PCollections(req.Context(), collectionIDs...)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -134,7 +134,7 @@ func (h *p2pHandler) DeleteP2PCollections(rw http.ResponseWriter, req *http.Requ
 func (h *p2pHandler) ListP2PCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	cols, err := db.GetAllP2PCollections(req.Context())
+	cols, err := db.ListP2PCollections(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
