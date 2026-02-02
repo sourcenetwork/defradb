@@ -1,20 +1,30 @@
-## defradb client p2p document getall
+## defradb client p2p document delete
 
-Get all P2P documents
+Delete P2P documents
 
 ### Synopsis
 
-Get all P2P documents in the pubsub topics.
-This is the list of documents of the node that are synchronized on the pubsub network.
+Delete P2P documents from the followed pubsub topics.
+The removed documents will no longer be synchronized between nodes.
 
 ```
-defradb client p2p document getall [flags]
+defradb client p2p document delete [docIDs] [flags]
+```
+
+### Examples
+
+```
+delete single document:  
+  defradb client p2p document delete bae123
+
+delete multiple documents:  
+  defradb client p2p document delete bae123,bae456
 ```
 
 ### Options
 
 ```
-  -h, --help   help for getall
+  -h, --help   help for delete
 ```
 
 ### Options inherited from parent commands

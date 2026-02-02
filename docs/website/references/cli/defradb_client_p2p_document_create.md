@@ -1,30 +1,30 @@
-## defradb client p2p document add
+## defradb client p2p document create
 
-Add P2P documents
+Create P2P documents
 
 ### Synopsis
 
-Add P2P documents to the synchronized pubsub topics.
+Create P2P documents to the synchronized pubsub topics.
 The documents are synchronized between nodes of a pubsub network.
 
 ```
-defradb client p2p document add [docIDs] [flags]
+defradb client p2p document create [docIDs] [flags]
 ```
 
 ### Examples
 
 ```
-add single document:  
-  defradb client p2p document add bae123
+create single document:  
+  defradb client p2p document create bae123
 
-add multiple documents:  
+create multiple documents:  
   defradb client p2p document add bae123,bae456
 ```
 
 ### Options
 
 ```
-  -h, --help   help for add
+  -h, --help   help for create
 ```
 
 ### Options inherited from parent commands
