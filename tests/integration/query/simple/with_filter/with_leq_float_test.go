@@ -20,13 +20,13 @@ import (
 func TestQuerySimpleWithFloatLEFilterBlockWithEqualValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
@@ -55,13 +55,13 @@ func TestQuerySimpleWithFloatLEFilterBlockWithEqualValue(t *testing.T) {
 func TestQuerySimpleWithFloatLEFilterBlockWithGreaterValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
@@ -90,13 +90,13 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterValue(t *testing.T) {
 func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"HeightM": 1.82
@@ -125,13 +125,13 @@ func TestQuerySimpleWithFloatLEFilterBlockWithGreaterIntValue(t *testing.T) {
 func TestQuerySimpleWithFloatLEFilterBlockWithNullValue(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"HeightM": 2.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob"
 				}`,

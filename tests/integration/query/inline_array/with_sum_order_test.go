@@ -21,14 +21,14 @@ func TestQueryInlineIntegerArray_WithSumAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"testScores": [3, 4, 5],
 					"pageRatings": [1.0, 2.0, 3.0]
 				}`, // Sum: 18
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"testScores": [30, 40, 50],
 					"pageRatings": [10.0, 20.0, 30.0]
@@ -82,14 +82,14 @@ func TestQueryInlineIntegerArray_WithNullAndSumAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"testScores": [3, 4, 5, null],
 					"pageRatings": [1.0, 2.0, 3.0, null]
 				}`, // Sum: 18
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"testScores": [30, 40, 50, null],
 					"pageRatings": [10.0, 20.0, 30.0, null]

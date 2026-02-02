@@ -25,7 +25,7 @@ func TestColVersionUpdateAddCollections_WithUndefinedID_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/hgfgsagasga", "value": {"Name": "Dogs"} }
@@ -47,7 +47,7 @@ func TestColVersionUpdateAddCollections_WithEmptyID_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/hgfgsagasga", "value": {"VersionID": "", "Name": "Dogs"} }
@@ -69,7 +69,7 @@ func TestColVersionUpdateAddCollections_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -94,7 +94,7 @@ func TestColVersionUpdateAddCollections_WithNoIndex_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/-", "value": {"Name": "Dogs"} }

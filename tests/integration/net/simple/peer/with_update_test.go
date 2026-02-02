@@ -35,7 +35,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChild(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -95,7 +95,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromParent(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -154,7 +154,7 @@ func TestP2PWithSingleDocumentUpdatePerNode(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -227,7 +227,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncToNonPeerNode(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -320,7 +320,7 @@ func TestP2PWithSingleDocumentSingleUpdateDoesNotSyncFromUnmappedNode(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -406,7 +406,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNode(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -501,7 +501,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
@@ -516,7 +516,7 @@ func TestP2PWithSingleDocumentSingleUpdateFromChildWithP2PCollection(t *testing.
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Fred",
@@ -570,7 +570,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Shahzad on all nodes
 				Doc: `{
 					"Name": "John",
@@ -585,7 +585,7 @@ func TestP2PWithMultipleDocumentUpdatesPerNodeWithP2PCollection(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "Fred",

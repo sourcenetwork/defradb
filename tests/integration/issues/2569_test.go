@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -26,6 +27,9 @@ import (
 
 func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This issue only affects the http and the cli clients
@@ -42,7 +46,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g
@@ -71,6 +75,9 @@ func TestP2PUpdate_WithPNCounterFloatOverflowIncrement_PreventsQuerying(t *testi
 
 func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This issue only affects the http and the cli clients
@@ -87,7 +94,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g
@@ -116,6 +123,9 @@ func TestP2PUpdate_WithPNCounterFloatOverflowDecrement_PreventsQuerying(t *testi
 
 func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This issue only affects the http and the cli clients
@@ -124,12 +134,12 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 			},
 		),
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// We limit the test to Collection mutation calls, as the test framework
 				// will make a `Get` call before submitting the document, which is where the error
 				// will surface (not the update itelf)
-				testUtils.CollectionSaveMutationType,
-				testUtils.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
 			},
 		),
 		Actions: []any{
@@ -141,7 +151,7 @@ func TestP2PUpdate_WithPNCounterFloatOverflow_PreventsCollectionGet(t *testing.T
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g

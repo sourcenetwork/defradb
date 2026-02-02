@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -66,7 +67,7 @@ func TestNAC_AdminRelation_CanP2PCollectionDelete(t *testing.T) {
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionDeletePerm),
 			},
 
 			// Grant access to user.

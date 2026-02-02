@@ -73,7 +73,7 @@ resources:
 			},
 
 			// Creating two documents because need one to do the test on after one is deleted.
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -85,7 +85,7 @@ resources:
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,

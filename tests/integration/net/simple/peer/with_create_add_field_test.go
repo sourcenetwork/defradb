@@ -31,7 +31,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the schema on the node that we will directly create a doc on
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -48,7 +48,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",
@@ -108,7 +108,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the schema on the node that we will sync docs to
 				NodeID: immutable.Some(1),
 				Patch: `
@@ -125,7 +125,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t *testing.T) {
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John"
@@ -167,7 +167,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the schema on all nodes
 				Patch: `
 					[
@@ -183,7 +183,7 @@ func TestP2PPeerCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(t *testing.T) 
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"Name": "John",
@@ -235,7 +235,7 @@ func TestP2PPeerCreateWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesN
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the schema on the first node only
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -244,7 +244,7 @@ func TestP2PPeerCreateWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesN
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create the doc with a value in the new field on the first node only, and allow the values to sync
 				NodeID: immutable.Some(0),
 				Doc: `{
@@ -253,7 +253,7 @@ func TestP2PPeerCreateWithNewFieldDocSyncedBeforeReceivingNodeSchemaUpdatedDoesN
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Update the schema on the second node
 				NodeID: immutable.Some(1),
 				Patch: `

@@ -27,7 +27,7 @@ func TestSchemaUpdatesReplaceCollectionErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Replace Users with Book
 				Patch: `
 					[

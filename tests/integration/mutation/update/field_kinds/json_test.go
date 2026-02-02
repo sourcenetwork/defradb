@@ -27,7 +27,7 @@ func TestMutationUpdate_IfJSONFieldSetToNull_ShouldBeNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"custom": {"foo": "bar"}
 				}`,

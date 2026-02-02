@@ -23,11 +23,13 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/lens/host-go/p2p"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
 
@@ -173,7 +175,7 @@ func (p *P2P) syncCollectionVersion(
 
 		var transform immutable.Option[string]
 		if linkBlock.Delta.CollectionDefinitionDelta.QueryTransform != nil {
-			err = p.lens.P2P.Value().SyncLens(ctx, linkBlock.Delta.CollectionDefinitionDelta.QueryTransform.String())
+			err = p.getLensP2P(ctx).SyncLens(ctx, linkBlock.Delta.CollectionDefinitionDelta.QueryTransform.String())
 			if err != nil {
 				return client.CollectionVersion{}, err
 			}
@@ -217,4 +219,18 @@ func (p *P2P) syncCollectionVersion(
 	}
 
 	return col, nil
+}
+
+type wrappedTxn struct {
+	datastore.Txn
+	corekv.ReaderWriter
+}
+
+func (p *P2P) getLensP2P(ctx context.Context) p2p.P2P {
+	clientTxn := datastore.CtxMustGetClientTxn(ctx)
+	dsTxn := datastore.MustGetFromClientTxn(clientTxn)
+	return p.lens.P2P.Value().WithTxn(&wrappedTxn{
+		Txn:          dsTxn,
+		ReaderWriter: dsTxn.Rootstore(),
+	})
 }

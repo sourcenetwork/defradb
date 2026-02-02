@@ -28,7 +28,7 @@ func TestQueryCommitsBranchables_WithCidAndDocIDParam(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21

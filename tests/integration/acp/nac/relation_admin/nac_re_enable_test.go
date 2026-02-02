@@ -13,6 +13,7 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -33,7 +34,7 @@ func TestNAC_AdminRelation_CanReEnableNAC(t *testing.T) {
 			// This user, can not perform this gated operation yet.
 			testUtils.ReEnableNAC{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACReEnablePerm),
 			},
 
 			// Grant access to user, but for that we need to temporarily re-enable and

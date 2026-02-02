@@ -41,7 +41,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNonNodeOwner_OwnsTheDocument_CanAcc
 				Identity: testUtils.ClientIdentity(2),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -95,7 +95,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNonNodeOwner_DoesNotOwnTheDocument_
 				Identity: testUtils.ClientIdentity(2),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -146,7 +146,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByNonNodeOwner_PublicDocument_CanAcce
 				Identity: testUtils.NoIdentity(),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.NoIdentity(),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,

@@ -27,7 +27,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToEmptyString_Errors(t *testing.T)
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -53,7 +53,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToUnknownVersion_Errors(t *testing
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -79,7 +79,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToOriginal_NewFieldIsNotQueriable(
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
@@ -115,7 +115,7 @@ func TestSchema_WithUpdateAndSetDefaultVersionToNew_AllowsQueryingOfNewField(t *
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },

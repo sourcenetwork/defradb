@@ -13,11 +13,14 @@ package test_acp_nac
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestNAC_GatesSchemaAdd_AllowIfAuthorizedElseError(t *testing.T) {
+	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -35,7 +38,7 @@ func TestNAC_GatesSchemaAdd_AllowIfAuthorizedElseError(t *testing.T) {
 						name: String
 					}
 				`,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 
 			// Wrong user/identity will also not be authorized.
@@ -46,7 +49,7 @@ func TestNAC_GatesSchemaAdd_AllowIfAuthorizedElseError(t *testing.T) {
 						name: String
 					}
 				`,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionPatchPerm),
 			},
 
 			// This should work as the identity is authorized.

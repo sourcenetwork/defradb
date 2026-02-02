@@ -13,6 +13,7 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -36,7 +37,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanDACBypass(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -52,7 +53,7 @@ func TestNAC_AdminRelation_DoesNotOwnTheDocument_CanDACBypass(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -112,7 +113,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
 			testUtils.DisableNAC{
 				Identity: testUtils.ClientIdentity(1),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -131,7 +132,7 @@ func TestNAC_AdminRelation_OwnThePrivateDocument_CanDACBypass(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -192,7 +193,7 @@ func TestNAC_AdminRelation_PublicDocument_CanAccessPublicDocument(t *testing.T) 
 			testUtils.DisableNAC{
 				Identity: testUtils.ClientIdentity(1),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.NoIdentity(),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -211,7 +212,7 @@ func TestNAC_AdminRelation_PublicDocument_CanAccessPublicDocument(t *testing.T) 
 						}
 					}
 				`,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user (to DAC bypass).
@@ -265,7 +266,7 @@ func TestNAC_AdminRelation_DACByPassRevokation_CanNotDACBypass(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -317,7 +318,7 @@ func TestNAC_AdminRelation_DACByPassRevokation_CanNotDACBypass(t *testing.T) {
 						}
 					}
 				`,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

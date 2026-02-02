@@ -27,7 +27,7 @@ func TestMutationUpdate_IfFloatFieldSetToNull_ShouldBeNil(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"rate": 0.55
 				}`,

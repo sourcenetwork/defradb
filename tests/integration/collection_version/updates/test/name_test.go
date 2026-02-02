@@ -25,7 +25,7 @@ func TestColVersionUpdateTestNameByVersionID(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -50,7 +50,7 @@ func TestColVersionUpdateTestNameByVersionID_Fails(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -78,7 +78,7 @@ func TestColVersionUpdateTestName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Name", "value": "Users" }
@@ -100,7 +100,7 @@ func TestColVersionUpdateTestName_Fails(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "test", "path": "/Users/Name", "value": "Book" }
