@@ -180,13 +180,13 @@ char *defra_version(void);
 
  # Safety
 
- All string pointers must be valid null-terminated UTF-8 strings or null.
+ All string parameters must be valid null-terminated UTF-8 strings or null.
  */
 struct FfiResult block_verify_signature(uintptr_t node_ptr,
                                         const char *key_type,
-                                        const char *public_key,
+                                        const char *pub_key,
                                         const char *block_cid,
-                                        const char *identity);
+                                        const char *identity_did);
 
 /*
  Get the current NAC status.
@@ -980,9 +980,9 @@ struct NewNodeResult new_node_with_p2p(struct NodeInitOptions options, const cha
 struct FfiResult p2p_peer_info(uintptr_t node_ptr);
 
 /*
- Get list of connected peers.
+ Get list of connected peers with full multiaddrs.
 
- Returns a JSON array of peer IDs.
+ Returns a JSON array of multiaddr strings (Go-compatible format).
 
  # Safety
 
@@ -1102,7 +1102,12 @@ struct FfiResult p2p_remove_collections(uintptr_t node_ptr,
 struct FfiResult p2p_get_all_collections(uintptr_t node_ptr, const char *identity_did);
 
 /*
- Add documents to P2P replication.
+ Add documents to P2P replication by subscribing to their GossipSub topics.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `doc_ids_json` - JSON array of document IDs
 
  # Safety
 
@@ -1113,7 +1118,12 @@ struct FfiResult p2p_add_documents(uintptr_t node_ptr,
                                    const char *doc_ids_json);
 
 /*
- Remove documents from P2P replication.
+ Remove documents from P2P replication by unsubscribing from their GossipSub topics.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `doc_ids_json` - JSON array of document IDs
 
  # Safety
 
@@ -1124,7 +1134,9 @@ struct FfiResult p2p_remove_documents(uintptr_t node_ptr,
                                       const char *doc_ids_json);
 
 /*
- Get all documents configured for P2P replication.
+ Get all P2P documents.
+
+ Returns a JSON array of document IDs.
 
  # Safety
 
