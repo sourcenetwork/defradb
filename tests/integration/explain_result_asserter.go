@@ -48,6 +48,10 @@ func readNumberProp(t testing.TB, val any, prop string) uint64 {
 	switch v := val.(type) {
 	case uint64:
 		return v
+	case int64:
+		return uint64(v)
+	case float64:
+		return uint64(v)
 	case json.Number:
 		n, err := v.Int64()
 		require.NoError(t, err, fmt.Sprintf("Expected %s property to be a uint64", prop))
