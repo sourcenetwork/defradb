@@ -25,6 +25,17 @@ import (
 // mergedCacheSize is the number of merged CID entries to cache.
 const mergedCacheSize = 100_000
 
+// globalMergedCache is a global cache for CIDs that are known to be merged.
+var globalMergedCache = mustNewMergedCache(mergedCacheSize)
+
+func mustNewMergedCache(size int) *lru.Cache[string, struct{}] {
+	cache, err := lru.New[string, struct{}](size)
+	if err != nil {
+		panic(err)
+	}
+	return cache
+}
+
 // Blockstore proxies the ipld.DAGService under the /core namespace for future-proofing
 type Blockstore interface {
 	ipfsBlockstore.Blockstore
@@ -40,20 +51,15 @@ type Blockstore interface {
 }
 
 func newBlockstore(store corekv.ReaderWriter) *bstore {
-	mergedCache, _ := lru.New[string, struct{}](mergedCacheSize)
 	return &bstore{
-		Blockstore:  blockstore.NewBlockstore(store),
-		store:       store,
-		mergedCache: mergedCache,
+		Blockstore: blockstore.NewBlockstore(store),
+		store:      store,
 	}
 }
 
 type bstore struct {
 	*blockstore.Blockstore
-
 	store corekv.ReaderWriter
-	// mergedCache caches CIDs that are known to be merged.
-	mergedCache *lru.Cache[string, struct{}]
 }
 
 var _ Blockstore = (*bstore)(nil)
@@ -73,10 +79,8 @@ func newToMergeKey(cid []byte) []byte {
 
 func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
 	cidStr := cid.String()
-	if bs.mergedCache != nil {
-		if _, ok := bs.mergedCache.Get(cidStr); ok {
-			return true, nil
-		}
+	if _, ok := globalMergedCache.Get(cidStr); ok {
+		return true, nil
 	}
 	hasBlock, err := bs.Has(ctx, cid)
 	if err != nil {
@@ -90,8 +94,8 @@ func (bs *bstore) IsMerged(ctx context.Context, cid cid.Cid) (bool, error) {
 		return false, err
 	}
 	merged := !notMerged
-	if merged && bs.mergedCache != nil {
-		bs.mergedCache.Add(cidStr, struct{}{})
+	if merged {
+		globalMergedCache.Add(cidStr, struct{}{})
 	}
 	return merged, nil
 }
@@ -101,9 +105,7 @@ func (bs *bstore) MarkAsMerged(ctx context.Context, cid cid.Cid) error {
 	if err != nil {
 		return err
 	}
-	if bs.mergedCache != nil {
-		bs.mergedCache.Add(cid.String(), struct{}{})
-	}
+	globalMergedCache.Add(cid.String(), struct{}{})
 	return nil
 }
 
@@ -114,9 +116,7 @@ func (bs *bstore) BatchMarkAsMerged(ctx context.Context, cids []cid.Cid) error {
 		if err != nil {
 			return err
 		}
-		if bs.mergedCache != nil {
-			bs.mergedCache.Add(c.String(), struct{}{})
-		}
+		globalMergedCache.Add(c.String(), struct{}{})
 	}
 	return nil
 }
