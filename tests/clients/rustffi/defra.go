@@ -934,16 +934,19 @@ func (n *Node) ReEnableNAC(requestorDID string) error {
 	return nil
 }
 
-// AddNACActorRelationship grants admin to target.
+// AddNACActorRelationship adds a NAC relationship for the given relation.
 // Returns true if added, false if already exists.
-func (n *Node) AddNACActorRelationship(requestorDID, targetDID string) (bool, error) {
+func (n *Node) AddNACActorRelationship(requestorDID, relation, targetDID string) (bool, error) {
 	cRequestorDID := C.CString(requestorDID)
 	defer C.free(unsafe.Pointer(cRequestorDID))
+
+	cRelation := C.CString(relation)
+	defer C.free(unsafe.Pointer(cRelation))
 
 	cTargetDID := C.CString(targetDID)
 	defer C.free(unsafe.Pointer(cTargetDID))
 
-	result := C.add_nac_actor_relationship(n.ptr, cRequestorDID, cTargetDID)
+	result := C.add_nac_actor_relationship(n.ptr, cRequestorDID, cRelation, cTargetDID)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -964,16 +967,19 @@ func (n *Node) AddNACActorRelationship(requestorDID, targetDID string) (bool, er
 	return response.Added, nil
 }
 
-// DeleteNACActorRelationship revokes admin from target.
+// DeleteNACActorRelationship removes a NAC relationship for the given relation.
 // Returns true if deleted, false if didn't exist.
-func (n *Node) DeleteNACActorRelationship(requestorDID, targetDID string) (bool, error) {
+func (n *Node) DeleteNACActorRelationship(requestorDID, relation, targetDID string) (bool, error) {
 	cRequestorDID := C.CString(requestorDID)
 	defer C.free(unsafe.Pointer(cRequestorDID))
+
+	cRelation := C.CString(relation)
+	defer C.free(unsafe.Pointer(cRelation))
 
 	cTargetDID := C.CString(targetDID)
 	defer C.free(unsafe.Pointer(cTargetDID))
 
-	result := C.delete_nac_actor_relationship(n.ptr, cRequestorDID, cTargetDID)
+	result := C.delete_nac_actor_relationship(n.ptr, cRequestorDID, cRelation, cTargetDID)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)

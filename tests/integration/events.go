@@ -13,6 +13,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -272,8 +273,10 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 					require.Fail(s.T, "subscription closed waiting for merge complete event")
 				}
 				evt = msg.Data.(event.MergeComplete)
+				fmt.Printf("[WAIT-MERGE] Node %d: Got merge doc=%s cid=%s\n", nodeID, evt.Merge.DocID, evt.Merge.Cid)
 
 			case <-time.After(30 * eventTimeout):
+				fmt.Printf("[WAIT-MERGE] Node %d: TIMEOUT! expecting=%v\n", nodeID, expect)
 				require.Fail(s.T, "timeout waiting for merge complete event")
 			}
 
