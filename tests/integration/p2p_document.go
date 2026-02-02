@@ -125,7 +125,7 @@ func createDocumentSubscription(
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
 	err := node.CreateP2PDocuments(ctx, docIDs...)
 	if err == nil {
-		waitForSubscribeToDocumentEvent(s, action)
+		waitForCreateDocumentSubscriptionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
@@ -163,7 +163,7 @@ func deleteDocumentSubscription(
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
 	err := node.DeleteP2PDocuments(ctx, docIDs...)
 	if err == nil {
-		waitForUnsubscribeToDocumentEvent(s, action)
+		waitForDeleteDocumentSubscriptionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
