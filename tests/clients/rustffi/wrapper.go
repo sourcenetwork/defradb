@@ -177,6 +177,16 @@ func NewWrapperWithP2P(listenAddr string) (*Wrapper, error) {
 					eb.Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
 					continue
 				}
+				if result.Event.Type == "topic_peer_event" {
+					fmt.Printf("[FFI-MERGE-POLLER] Publishing TopicPeerEvent to Go event bus: peer=%s topic=%s type=%s\n",
+						result.Event.PeerID, result.Event.Topic, result.Event.EventType)
+					eb.Publish(event.NewMessage(event.TopicPeerEventName, event.TopicPeerEvent{
+						PeerID:    result.Event.PeerID,
+						Topic:     result.Event.Topic,
+						EventType: result.Event.EventType,
+					}))
+					continue
+				}
 			}
 			time.Sleep(10 * time.Millisecond)
 		}
@@ -429,6 +439,29 @@ func (w *Wrapper) GetCollections(
 		identityDID = id.Value().DID()
 	}
 
+	// If VersionID is specified, use the dedicated FFI function which returns
+	// "key not found" for missing versions (matches Go behavior).
+	if options.VersionID.HasValue() {
+		versionJSON, err := w.node.GetCollectionByVersionID(identityDID, options.VersionID.Value())
+		if err != nil {
+			return nil, err
+		}
+		if versionJSON == "null" || versionJSON == "" {
+			return nil, fmt.Errorf("key not found")
+		}
+		var version client.CollectionVersion
+		if err := json.Unmarshal([]byte(versionJSON), &version); err != nil {
+			return nil, fmt.Errorf("failed to parse collection version: %w", err)
+		}
+		// Apply IncludeInactive filter
+		if !options.IncludeInactive.HasValue() || !options.IncludeInactive.Value() {
+			if !version.IsActive {
+				return []client.Collection{}, nil
+			}
+		}
+		return []client.Collection{&CollectionWrapper{wrapper: w, version: version}}, nil
+	}
+
 	responseJSON, err := w.node.GetCollections(identityDID)
 	if err != nil {
 		return nil, err
@@ -443,9 +476,6 @@ func (w *Wrapper) GetCollections(
 	var filtered []client.CollectionVersion
 	for _, v := range versions {
 		if options.Name.HasValue() && v.Name != options.Name.Value() {
-			continue
-		}
-		if options.VersionID.HasValue() && v.VersionID != options.VersionID.Value() {
 			continue
 		}
 		if options.CollectionID.HasValue() && v.CollectionID != options.CollectionID.Value() {
@@ -1210,6 +1240,15 @@ func newEventBus() *eventBus {
 }
 
 func (e *eventBus) Publish(msg event.Message) {
+	if e.closed {
+		return
+	}
+	// Recover from send-on-closed-channel if Close() races with Publish()
+	defer func() {
+		if r := recover(); r != nil {
+			// Channel was closed between our check and the send; safe to ignore.
+		}
+	}()
 	// Deliver message to all matching subscribers
 	delivered := 0
 	total := len(e.subs)
@@ -1251,6 +1290,9 @@ func (e *eventBus) Unsubscribe(sub event.Subscription) {
 }
 
 func (e *eventBus) Close() {
+	if e.closed {
+		return // already closed, prevent double-close panic
+	}
 	e.closed = true
 	for _, sub := range e.subs {
 		if es, ok := sub.(*eventSubscription); ok {
