@@ -366,7 +366,12 @@ func (w *Wrapper) ExecRequest(
 }
 
 func (w *Wrapper) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
-	responseJSON, err := w.node.AddSchema(sdl)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	responseJSON, err := w.node.AddSchema(identityDID, sdl)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +385,12 @@ func (w *Wrapper) AddSchema(ctx context.Context, sdl string) ([]client.Collectio
 }
 
 func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	responseJSON, err := w.node.GetCollectionByName(name)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	responseJSON, err := w.node.GetCollectionByName(identityDID, name)
 	if err != nil {
 		return nil, err
 	}
@@ -400,7 +410,12 @@ func (w *Wrapper) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	responseJSON, err := w.node.GetCollections()
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	responseJSON, err := w.node.GetCollections(identityDID)
 	if err != nil {
 		return nil, err
 	}
@@ -437,7 +452,12 @@ func (w *Wrapper) GetCollections(
 }
 
 func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, versionID string) error {
-	return w.node.SetActiveCollectionVersion(versionID)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return w.node.SetActiveCollectionVersion(identityDID, versionID)
 }
 
 func (w *Wrapper) PatchCollection(
@@ -447,12 +467,17 @@ func (w *Wrapper) PatchCollection(
 ) error {
 	// Group patch operations by collection name and apply each group separately.
 	// Relation patches touch multiple collections (e.g., Book and Author).
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
 	groups, err := groupPatchByCollection(patch)
 	if err != nil {
 		return err
 	}
 	for _, g := range groups {
-		if _, err := w.node.PatchCollection(g.Name, g.Patch); err != nil {
+		if _, err := w.node.PatchCollection(identityDID, g.Name, g.Patch); err != nil {
 			return err
 		}
 	}
@@ -460,7 +485,12 @@ func (w *Wrapper) PatchCollection(
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	result, err := w.node.GetAllIndexes()
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	result, err := w.node.GetAllIndexes(identityDID)
 	if err != nil {
 		return nil, err
 	}
@@ -626,7 +656,12 @@ func (w *Wrapper) DisableNAC(ctx context.Context) error {
 }
 
 func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
-	status, err := w.node.GetNACStatus()
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	status, err := w.node.GetNACStatus(identityDID)
 	if err != nil {
 		return client.NACStatusResult{}, err
 	}
@@ -665,7 +700,12 @@ func (w *Wrapper) AddView(
 		transformStr = transformCID.Value()
 	}
 
-	responseJSON, err := w.node.AddView(gqlQuery, sdl, transformStr)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	responseJSON, err := w.node.AddView(identityDID, gqlQuery, sdl, transformStr)
 	if err != nil {
 		return nil, err
 	}
@@ -695,7 +735,12 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal config: %w", err)
 	}
-	return w.node.SetMigration(string(configJSON))
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return w.node.SetMigration(identityDID, string(configJSON))
 }
 
 func (w *Wrapper) AddLens(ctx context.Context, lens lensmodel.Lens) (string, error) {
@@ -778,8 +823,13 @@ func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
 }
 
 func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
 	for _, addr := range addresses {
-		if err := w.node.P2PConnect(addr); err != nil {
+		if err := w.node.P2PConnect(identityDID, addr); err != nil {
 			return err
 		}
 	}
@@ -790,16 +840,31 @@ func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collect
 	if len(addresses) == 0 {
 		return fmt.Errorf("at least one address is required")
 	}
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
 	// Use the first address as the peer address
-	return w.node.P2PSetReplicator(addresses[0], collections)
+	return w.node.P2PSetReplicator(identityDID, addresses[0], collections)
 }
 
 func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
-	return w.node.P2PDeleteReplicator(id)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return w.node.P2PDeleteReplicator(identityDID, id)
 }
 
 func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	replicators, err := w.node.P2PGetAllReplicators()
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	replicators, err := w.node.P2PGetAllReplicators(identityDID)
 	if err != nil {
 		return nil, err
 	}
@@ -817,27 +882,57 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 }
 
 func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
-	return w.node.P2PAddCollections(collectionNames)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return w.node.P2PAddCollections(identityDID, collectionNames)
 }
 
 func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
-	return w.node.P2PRemoveCollections(collectionNames)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return w.node.P2PRemoveCollections(identityDID, collectionNames)
 }
 
 func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
-	return w.node.P2PGetAllCollections()
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return w.node.P2PGetAllCollections(identityDID)
 }
 
 func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
-	return w.node.P2PAddDocuments(docIDs)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return w.node.P2PAddDocuments(identityDID, docIDs)
 }
 
 func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
-	return w.node.P2PRemoveDocuments(docIDs)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return w.node.P2PRemoveDocuments(identityDID, docIDs)
 }
 
 func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
-	return w.node.P2PGetAllDocuments()
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return w.node.P2PGetAllDocuments(identityDID)
 }
 
 func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
@@ -1706,7 +1801,12 @@ func (c *CollectionWrapper) CreateIndex(ctx context.Context, req client.IndexCre
 		}
 	}
 
-	index, err := c.wrapper.node.CreateIndex(c.version.Name, req.Name, fields, req.Unique)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	index, err := c.wrapper.node.CreateIndex(identityDID, c.version.Name, req.Name, fields, req.Unique)
 	if err != nil {
 		return client.IndexDescription{}, err
 	}
@@ -1728,11 +1828,21 @@ func (c *CollectionWrapper) CreateIndex(ctx context.Context, req client.IndexCre
 }
 
 func (c *CollectionWrapper) DropIndex(ctx context.Context, indexName string) error {
-	return c.wrapper.node.DropIndex(c.version.Name, indexName)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return c.wrapper.node.DropIndex(identityDID, c.version.Name, indexName)
 }
 
 func (c *CollectionWrapper) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	indexes, err := c.wrapper.node.GetIndexes(c.version.Name)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	indexes, err := c.wrapper.node.GetIndexes(identityDID, c.version.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -1769,5 +1879,10 @@ func (c *CollectionWrapper) ListEncryptedIndexes(ctx context.Context) ([]client.
 }
 
 func (c *CollectionWrapper) Truncate(ctx context.Context) error {
-	return c.wrapper.node.TruncateCollection(c.version.Name)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return c.wrapper.node.TruncateCollection(identityDID, c.version.Name)
 }
