@@ -77,7 +77,7 @@ func waitForReplicatorDeleteEvent(s *state.State, cfg DeleteReplicator) {
 // p2p topic completed event on the local event bus.
 //
 // Expected document heads will be updated for the subscriber node.
-func waitForSubscribeToCollectionEvent(s *state.State, action SubscribeToCollection) {
+func waitForSubscribeToCollectionEvent(s *state.State, action CreateCollectionSubscription) {
 	// update peer collections of target node
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
@@ -89,7 +89,7 @@ func waitForSubscribeToCollectionEvent(s *state.State, action SubscribeToCollect
 
 // waitForUnsubscribeToCollectionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
-func waitForUnsubscribeToCollectionEvent(s *state.State, action UnsubscribeToCollection) {
+func waitForUnsubscribeToCollectionEvent(s *state.State, action DeleteCollectionSubscription) {
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
 			continue // don't track non existent collections

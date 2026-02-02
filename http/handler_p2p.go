@@ -99,7 +99,7 @@ func (h *p2pHandler) GetAllReplicators(rw http.ResponseWriter, req *http.Request
 	responseJSON(rw, http.StatusOK, reps)
 }
 
-func (h *p2pHandler) AddP2PCollections(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) CreateP2PCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var collectionIDs []string
@@ -115,7 +115,7 @@ func (h *p2pHandler) AddP2PCollections(rw http.ResponseWriter, req *http.Request
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *p2pHandler) RemoveP2PCollections(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) DeleteP2PCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	var collectionIDs []string
@@ -131,7 +131,7 @@ func (h *p2pHandler) RemoveP2PCollections(rw http.ResponseWriter, req *http.Requ
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *p2pHandler) GetAllP2PCollections(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) ListP2PCollections(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	cols, err := db.GetAllP2PCollections(req.Context())
@@ -537,9 +537,9 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	router.AddRoute("/p2p/replicators", http.MethodGet, getReplicators, h.GetAllReplicators)
 	router.AddRoute("/p2p/replicators", http.MethodPost, setReplicator, h.SetReplicator)
 	router.AddRoute("/p2p/replicators", http.MethodDelete, deleteReplicator, h.DeleteReplicator)
-	router.AddRoute("/p2p/collections", http.MethodGet, getPeerCollections, h.GetAllP2PCollections)
-	router.AddRoute("/p2p/collections", http.MethodPost, addPeerCollections, h.AddP2PCollections)
-	router.AddRoute("/p2p/collections", http.MethodDelete, removePeerCollections, h.RemoveP2PCollections)
+	router.AddRoute("/p2p/collections", http.MethodGet, getPeerCollections, h.ListP2PCollections)
+	router.AddRoute("/p2p/collections", http.MethodPost, addPeerCollections, h.CreateP2PCollections)
+	router.AddRoute("/p2p/collections", http.MethodDelete, removePeerCollections, h.DeleteP2PCollections)
 	router.AddRoute("/p2p/collections/sync-versions", http.MethodPost, syncCollectionVersions, h.SyncCollectionVersions)
 	router.AddRoute("/p2p/collections/sync-branchable", http.MethodPost, syncBranchableCollection,
 		h.SyncBranchableCollection)
