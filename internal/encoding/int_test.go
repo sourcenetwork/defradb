@@ -225,6 +225,8 @@ func TestEncodeDecodeUvarintDescending(t *testing.T) {
 }
 
 func TestDecode_IntTypes_WithInvalidKey_ShouldError(t *testing.T) {
+	// The key needs to start with a `/` and be at least 8 bytes long
+	// to trigger the check on the starting byte.
 	invalidKey := []byte("/\x89\x89\x89\x89\x89\x89\x89\x89")
 	_, _, err := DecodeUint32Ascending(invalidKey)
 	require.ErrorIs(t, err, ErrInsufficientBytesToDecode)
