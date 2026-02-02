@@ -1140,6 +1140,36 @@ func (n *Node) GetNodeIdentity() (string, error) {
 }
 
 // ============================================================================
+// Block Functions
+// ============================================================================
+
+// BlockVerifySignature verifies the signature of a block identified by CID.
+func (n *Node) BlockVerifySignature(keyType, publicKey, blockCid string) error {
+	cKeyType := C.CString(keyType)
+	defer C.free(unsafe.Pointer(cKeyType))
+
+	cPubKey := C.CString(publicKey)
+	defer C.free(unsafe.Pointer(cPubKey))
+
+	cBlockCid := C.CString(blockCid)
+	defer C.free(unsafe.Pointer(cBlockCid))
+
+	result := C.block_verify_signature(n.ptr, cKeyType, cPubKey, cBlockCid, nil)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: block_verify_signature failed: %s", err)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// ============================================================================
 // Subscription Functions
 // ============================================================================
 

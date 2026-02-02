@@ -418,6 +418,31 @@ struct FfiResult basic_export(uintptr_t node_ptr, const char *config_json);
 struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
 
 /*
+ Verify the signature of a block.
+
+ Loads a block from the blockstore by CID, checks that it has a signature,
+ loads the signature block, and verifies the signature using the provided
+ public key.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `key_type` - Key type string (e.g., "ed25519", "secp256k1")
+ * `public_key` - Hex-encoded public key string
+ * `block_cid` - CID string of the block to verify
+ * `identity_did` - Optional DID of the caller (unused, reserved for future ACP checks)
+
+ # Safety
+
+ All string pointers must be either null or valid null-terminated UTF-8 strings.
+ */
+struct FfiResult block_verify_signature(uintptr_t node_ptr,
+                                        const char *key_type,
+                                        const char *public_key,
+                                        const char *block_cid,
+                                        const char *identity_did);
+
+/*
  Get a collection by name.
 
  Returns a JSON object containing the collection's schema (CollectionVersion)

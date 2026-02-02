@@ -762,7 +762,7 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 }
 
 func (w *Wrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	return fmt.Errorf("VerifySignature not yet implemented in FFI")
+	return w.node.BlockVerifySignature(string(pubKey.Type()), pubKey.String(), blockCid)
 }
 
 // ============================================================================
