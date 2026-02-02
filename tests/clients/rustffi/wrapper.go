@@ -172,6 +172,11 @@ func NewWrapperWithP2P(listenAddr string) (*Wrapper, error) {
 					eb.Publish(event.NewMessage(event.MergeCompleteName, mc))
 					continue
 				}
+				if result.Event.Type == "replicator_completed" {
+					fmt.Println("[FFI-MERGE-POLLER] Publishing ReplicatorCompleted to Go event bus")
+					eb.Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
+					continue
+				}
 			}
 			time.Sleep(10 * time.Millisecond)
 		}
@@ -190,6 +195,15 @@ func NewWrapperWithP2P(listenAddr string) (*Wrapper, error) {
 // Go node it's being tested alongside.
 func (w *Wrapper) EnableNACForInit(ownerDID string) error {
 	return w.node.EnableNAC(ownerDID)
+}
+
+// AddNACAdminForInit grants admin access to the target DID on the Rust FFI
+// node. The requestor must be the current NAC owner. This is used during test
+// setup to mirror Go's nodeIdentity shortcut (checkNodeAccess grants automatic
+// access to the node's own identity).
+func (w *Wrapper) AddNACAdminForInit(ownerDID, targetDID string) error {
+	_, err := w.node.AddNACActorRelationship(ownerDID, targetDID)
+	return err
 }
 
 // groupPatchByCollection groups a JSON patch into per-collection patches.

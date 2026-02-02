@@ -810,6 +810,7 @@ func setStartingNodes(
 			s,
 			acpIdentity.None,
 			testCase,
+			0,
 			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))),
 		)
 		require.Nil(s.T, err)
@@ -835,6 +836,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 			s,
 			getIdentityOption(s, action.Identity),
 			testCase,
+			nodeIndex,
 			opts...,
 		)
 		databaseDir = originalPath
@@ -967,7 +969,7 @@ func configureNode(
 	nodeOpts = append(nodeOpts, netNodeOpts...)
 	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
 
-	node, err := setupNode(s, acpIdentity.None, testCase, nodeOpts...) //disable change detector, or allow it?
+	node, err := setupNode(s, acpIdentity.None, testCase, len(s.Nodes), nodeOpts...)
 	require.NoError(s.T, err)
 
 	s.Nodes = append(s.Nodes, node)

@@ -188,7 +188,7 @@ char *defra_version(void);
  }
  ```
  */
-struct FfiResult get_nac_status(uintptr_t node_ptr);
+struct FfiResult get_nac_status(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Temporarily disable NAC.
@@ -429,7 +429,9 @@ struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
 
  `name` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult get_collection_by_name(uintptr_t node_ptr, const char *name);
+struct FfiResult get_collection_by_name(uintptr_t node_ptr,
+                                        const char *identity_did,
+                                        const char *name);
 
 /*
  Check if a collection exists by name.
@@ -450,7 +452,7 @@ struct FfiResult get_collection_by_name(uintptr_t node_ptr, const char *name);
 
  `name` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult has_collection(uintptr_t node_ptr, const char *name);
+struct FfiResult has_collection(uintptr_t node_ptr, const char *identity_did, const char *name);
 
 /*
  Delete a collection by name.
@@ -471,7 +473,7 @@ struct FfiResult has_collection(uintptr_t node_ptr, const char *name);
 
  `name` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult delete_collection(uintptr_t node_ptr, const char *name);
+struct FfiResult delete_collection(uintptr_t node_ptr, const char *identity_did, const char *name);
 
 /*
  Find a collection by its collection ID (schema version ID).
@@ -493,7 +495,9 @@ struct FfiResult delete_collection(uintptr_t node_ptr, const char *name);
 
  `collection_id` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult find_collection_by_id(uintptr_t node_ptr, const char *collection_id);
+struct FfiResult find_collection_by_id(uintptr_t node_ptr,
+                                       const char *identity_did,
+                                       const char *collection_id);
 
 /*
  Set the active collection version.
@@ -515,7 +519,9 @@ struct FfiResult find_collection_by_id(uintptr_t node_ptr, const char *collectio
 
  `version_id` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult set_active_collection_version(uintptr_t node_ptr, const char *version_id);
+struct FfiResult set_active_collection_version(uintptr_t node_ptr,
+                                               const char *identity_did,
+                                               const char *version_id);
 
 /*
  Patch a collection's schema using JSON patch operations.
@@ -539,6 +545,7 @@ struct FfiResult set_active_collection_version(uintptr_t node_ptr, const char *v
  `collection_name` and `patch` must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult patch_collection(uintptr_t node_ptr,
+                                  const char *identity_did,
                                   const char *collection_name,
                                   const char *patch);
 
@@ -561,7 +568,9 @@ struct FfiResult patch_collection(uintptr_t node_ptr,
 
  `version_id` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult get_collection_by_version_id(uintptr_t node_ptr, const char *version_id);
+struct FfiResult get_collection_by_version_id(uintptr_t node_ptr,
+                                              const char *identity_did,
+                                              const char *version_id);
 
 /*
  Add a view to the database.
@@ -585,6 +594,7 @@ struct FfiResult get_collection_by_version_id(uintptr_t node_ptr, const char *ve
  All string pointers must be valid null-terminated UTF-8 strings or null.
  */
 struct FfiResult add_view(uintptr_t node_ptr,
+                          const char *identity_did,
                           const char *gql_query,
                           const char *sdl,
                           const char *transform);
@@ -637,16 +647,28 @@ struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
 
  `config` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult set_migration(uintptr_t node_ptr, const char *config);
+struct FfiResult set_migration(uintptr_t node_ptr, const char *identity_did, const char *config);
 
 /*
- Truncate all documents in a collection.
+ Truncate a collection (delete all documents, preserve schema).
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `name` - The collection name to truncate
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
 
  # Safety
 
  `name` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult truncate_collection(uintptr_t node_ptr, const char *name);
+struct FfiResult truncate_collection(uintptr_t node_ptr,
+                                     const char *identity_did,
+                                     const char *name);
 
 /*
  Create document(s) in a collection.
@@ -670,6 +692,7 @@ struct FfiResult truncate_collection(uintptr_t node_ptr, const char *name);
  All string pointers must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult collection_create(uintptr_t node_ptr,
+                                   const char *identity_did,
                                    const char *collection_name,
                                    const char *json_data);
 
@@ -768,6 +791,7 @@ struct FfiResult parse_string_array(const char *input);
  All string pointers must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult create_index(uintptr_t node_ptr,
+                              const char *identity_did,
                               const char *collection_name,
                               const char *index_json);
 
@@ -789,6 +813,7 @@ struct FfiResult create_index(uintptr_t node_ptr,
  All string pointers must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult drop_index(uintptr_t node_ptr,
+                            const char *identity_did,
                             const char *collection_name,
                             const char *index_name);
 
@@ -808,7 +833,9 @@ struct FfiResult drop_index(uintptr_t node_ptr,
 
  `collection_name` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult get_indexes(uintptr_t node_ptr, const char *collection_name);
+struct FfiResult get_indexes(uintptr_t node_ptr,
+                             const char *identity_did,
+                             const char *collection_name);
 
 /*
  Get all indexes across all collections.
@@ -828,7 +855,7 @@ struct FfiResult get_indexes(uintptr_t node_ptr, const char *collection_name);
  }
  ```
  */
-struct FfiResult get_all_indexes(uintptr_t node_ptr);
+struct FfiResult get_all_indexes(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Add a lens transform to the database.
@@ -960,7 +987,7 @@ struct FfiResult p2p_active_peers(uintptr_t node_ptr);
 
  `addr` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult p2p_connect(uintptr_t node_ptr, const char *addr);
+struct FfiResult p2p_connect(uintptr_t node_ptr, const char *identity_did, const char *addr);
 
 /*
  Set (add/update) a replicator for collections.
@@ -976,6 +1003,7 @@ struct FfiResult p2p_connect(uintptr_t node_ptr, const char *addr);
  All string pointers must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult p2p_set_replicator(uintptr_t node_ptr,
+                                    const char *identity_did,
                                     const char *peer_addr,
                                     const char *collections_json);
 
@@ -991,7 +1019,9 @@ struct FfiResult p2p_set_replicator(uintptr_t node_ptr,
 
  `peer_id_str` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult p2p_delete_replicator(uintptr_t node_ptr, const char *peer_id_str);
+struct FfiResult p2p_delete_replicator(uintptr_t node_ptr,
+                                       const char *identity_did,
+                                       const char *peer_id_str);
 
 /*
  Get all replicators.
@@ -1011,7 +1041,7 @@ struct FfiResult p2p_delete_replicator(uintptr_t node_ptr, const char *peer_id_s
 
  The caller must free the returned string with `defra_free_string`.
  */
-struct FfiResult p2p_get_all_replicators(uintptr_t node_ptr);
+struct FfiResult p2p_get_all_replicators(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Add collections to P2P replication.
@@ -1025,7 +1055,9 @@ struct FfiResult p2p_get_all_replicators(uintptr_t node_ptr);
 
  `collections_json` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult p2p_add_collections(uintptr_t node_ptr, const char *collections_json);
+struct FfiResult p2p_add_collections(uintptr_t node_ptr,
+                                     const char *identity_did,
+                                     const char *collections_json);
 
 /*
  Remove collections from P2P replication.
@@ -1039,7 +1071,9 @@ struct FfiResult p2p_add_collections(uintptr_t node_ptr, const char *collections
 
  `collections_json` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult p2p_remove_collections(uintptr_t node_ptr, const char *collections_json);
+struct FfiResult p2p_remove_collections(uintptr_t node_ptr,
+                                        const char *identity_did,
+                                        const char *collections_json);
 
 /*
  Get all P2P collections.
@@ -1050,34 +1084,50 @@ struct FfiResult p2p_remove_collections(uintptr_t node_ptr, const char *collecti
 
  The caller must free the returned string with `defra_free_string`.
  */
-struct FfiResult p2p_get_all_collections(uintptr_t node_ptr);
+struct FfiResult p2p_get_all_collections(uintptr_t node_ptr, const char *identity_did);
 
 /*
- Add documents to P2P replication by doc IDs.
+ Add documents to P2P replication by subscribing to their GossipSub topics.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `doc_ids_json` - JSON array of document IDs
 
  # Safety
 
  `doc_ids_json` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult p2p_add_documents(uintptr_t node_ptr, const char *doc_ids_json);
+struct FfiResult p2p_add_documents(uintptr_t node_ptr,
+                                   const char *identity_did,
+                                   const char *doc_ids_json);
 
 /*
- Remove documents from P2P replication by doc IDs.
+ Remove documents from P2P replication by unsubscribing from their GossipSub topics.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `doc_ids_json` - JSON array of document IDs
 
  # Safety
 
  `doc_ids_json` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult p2p_remove_documents(uintptr_t node_ptr, const char *doc_ids_json);
+struct FfiResult p2p_remove_documents(uintptr_t node_ptr,
+                                      const char *identity_did,
+                                      const char *doc_ids_json);
 
 /*
- Get all documents in P2P replication.
+ Get all P2P documents.
+
+ Returns a JSON array of document IDs.
 
  # Safety
 
  The caller must free the returned string with `defra_free_string`.
  */
-struct FfiResult p2p_get_all_documents(uintptr_t node_ptr);
+struct FfiResult p2p_get_all_documents(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Execute a GraphQL query or mutation.
@@ -1128,14 +1178,14 @@ struct FfiResult exec_request(uintptr_t node_ptr,
 
  `schema_sdl` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult add_schema(uintptr_t node_ptr, const char *schema_sdl);
+struct FfiResult add_schema(uintptr_t node_ptr, const char *identity_did, const char *schema_sdl);
 
 /*
  Get all collections from the database.
 
  Returns a JSON array of collection descriptions.
  */
-struct FfiResult get_collections(uintptr_t node_ptr);
+struct FfiResult get_collections(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Create a subscription to database events.
