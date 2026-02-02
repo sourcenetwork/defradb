@@ -521,8 +521,44 @@ func (w *Wrapper) PatchCollection(
 		return err
 	}
 	for _, g := range groups {
-		if _, err := w.node.PatchCollection(identityDID, g.Name, g.Patch); err != nil {
+		// If migration provided, capture old version ID before patching
+		var oldVersionID string
+		if migration.HasValue() {
+			oldCollJSON, err := w.node.GetCollectionByName(identityDID, g.Name)
+			if err == nil {
+				var oldVersion client.CollectionVersion
+				if err := json.Unmarshal([]byte(oldCollJSON), &oldVersion); err == nil {
+					oldVersionID = oldVersion.VersionID
+				}
+			}
+		}
+
+		newSchemaJSON, err := w.node.PatchCollection(identityDID, g.Name, g.Patch)
+		if err != nil {
 			return err
+		}
+
+		// If migration was provided, register it linking old → new version.
+		// This matches Go's patchCollection behavior in collection_define.go.
+		if migration.HasValue() && oldVersionID != "" {
+			var newVersion client.CollectionVersion
+			if err := json.Unmarshal([]byte(newSchemaJSON), &newVersion); err != nil {
+				return fmt.Errorf("failed to parse new collection version: %w", err)
+			}
+			if newVersion.VersionID != "" {
+				config := client.LensConfig{
+					SourceCollectionVersionID:      oldVersionID,
+					DestinationCollectionVersionID: newVersion.VersionID,
+					Lens:                           migration.Value(),
+				}
+				configJSON, err := json.Marshal(config)
+				if err != nil {
+					return fmt.Errorf("failed to marshal migration config: %w", err)
+				}
+				if _, err := w.node.SetMigration(identityDID, string(configJSON)); err != nil {
+					return fmt.Errorf("failed to set migration after patch: %w", err)
+				}
+			}
 		}
 	}
 	return nil
