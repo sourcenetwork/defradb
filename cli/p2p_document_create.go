@@ -44,7 +44,7 @@ The documents are synchronized between nodes of a pubsub network.`,
 		`defradb client p2p document create bae123`)
 
 	EmbedCLIExample(ctx, cmd, "create multiple documents",
-		`defradb client p2p document add bae123,bae456`)
+		`defradb client p2p document create bae123,bae456`)
 
 	return cmd
 }
