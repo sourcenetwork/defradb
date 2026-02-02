@@ -14,13 +14,11 @@ RUN make deps:modules
 COPY . .
 RUN make deps:playground
 ENV BUILD_TAGS=playground,telemetry
-
 RUN make build
 
 # Stage: RUN
 FROM debian:bookworm-slim
 COPY --from=build /repo/build/defradb /defradb
-
 
 # Documents which ports are normally used.
 # To publish the ports: `docker run -p 9181:9181` ...
