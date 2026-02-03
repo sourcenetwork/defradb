@@ -1042,8 +1042,11 @@ func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 }
 
 func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
-	// Document sync not yet implemented in Rust FFI
-	return fmt.Errorf("P2P document sync not yet implemented in FFI client")
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+	return w.node.P2PSyncDocuments(identityDID, collectionName, docIDs)
 }
 
 func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
