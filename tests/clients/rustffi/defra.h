@@ -1253,6 +1253,10 @@ struct FfiResult p2p_sync_documents(uintptr_t node_ptr,
                                     const char *collection_name,
                                     const char *doc_ids_json);
 
+struct FfiResult p2p_sync_branchable_collection(uintptr_t node_ptr,
+                                                const char *identity_did,
+                                                const char *collection_id);
+
 /*
  Execute a GraphQL query or mutation.
 
