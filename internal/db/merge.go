@@ -40,7 +40,7 @@ import (
 
 const (
 	// mergeBlockBatchSize is the maximum number of blocks to process in a single transaction during merge operations.
-	mergeBlockBatchSize = 100
+	mergeBlockBatchSize = 50
 )
 
 func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
@@ -99,8 +99,9 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error {
 	}
 
 	type indexSyncWork struct {
-		col    *collection
-		docIDs []string
+		col     *collection
+		docIDs  []string
+		oldDocs map[string]*client.Document
 	}
 	var pendingIndexSync []indexSyncWork
 
@@ -137,8 +138,9 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error {
 
 		if batchResult != nil && len(batchResult.DocIDs) > 0 && len(col.indexes) > 0 {
 			pendingIndexSync = append(pendingIndexSync, indexSyncWork{
-				col:    col,
-				docIDs: batchResult.DocIDs,
+				col:     col,
+				docIDs:  batchResult.DocIDs,
+				oldDocs: batchResult.OldDocs,
 			})
 		}
 	}
@@ -150,7 +152,7 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error {
 		}
 
 		for _, work := range pendingIndexSync {
-			if err := db.syncIndexesForBatch(context.Background(), work.col, work.docIDs); err != nil {
+			if err := db.syncIndexesForBatch(context.Background(), work.col, work.docIDs, work.oldDocs); err != nil {
 				log.ErrorContextE(ctx, "Index sync after merge failed (indexes may be stale)", err,
 					corelog.Int("DocCount", len(work.docIDs)))
 			}
@@ -196,6 +198,7 @@ func (db *DB) executeMergeBatchWithTxn(ctx context.Context, col *collection, evt
 type MergeBatchResult struct {
 	CollectionID string
 	DocIDs       []string
+	OldDocs      map[string]*client.Document
 }
 
 // executeMergeBatchInTxnNoCommit performs batch merge using existing transaction.
@@ -205,7 +208,7 @@ func (db *DB) executeMergeBatchInTxnNoCommit(ctx context.Context, col *collectio
 }
 
 // syncIndexesForBatch syncs indexes for documents after merge writes have been committed.
-func (db *DB) syncIndexesForBatch(ctx context.Context, col *collection, docIDs []string) error {
+func (db *DB) syncIndexesForBatch(ctx context.Context, col *collection, docIDs []string, oldDocs map[string]*client.Document) error {
 	if len(col.indexes) == 0 || len(docIDs) == 0 {
 		return nil
 	}
@@ -219,7 +222,8 @@ func (db *DB) syncIndexesForBatch(ctx context.Context, col *collection, docIDs [
 		if err != nil {
 			return err
 		}
-		err = syncIndexedDoc(indexCtx, indexCtx, docID, col, nil)
+		oldDoc := oldDocs[docIDStr]
+		err = syncIndexedDoc(indexCtx, indexCtx, docID, col, oldDoc)
 		if err != nil {
 			return err
 		}
@@ -229,7 +233,7 @@ func (db *DB) syncIndexesForBatch(ctx context.Context, col *collection, docIDs [
 
 // executeMergeBatchWritesOnly performs batch merge writes only, returning docIDs for later index sync.
 func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, evts []event.Merge) (*MergeBatchResult, error) {
-	allDocIDs := make(map[string]struct{})
+	allDocIDs := make(map[string]*client.Document)
 
 	for _, dagMerge := range evts {
 		var key keys.HeadstoreKey
@@ -271,8 +275,9 @@ func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, 
 			return nil, err
 		}
 
-		for docID := range mp.docIDs {
-			allDocIDs[docID.String()] = struct{}{}
+		for docID, oldDoc := range mp.docIDs {
+			docIDStr := docID.String()
+			allDocIDs[docIDStr] = oldDoc
 		}
 	}
 
@@ -285,6 +290,7 @@ func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, 
 	return &MergeBatchResult{
 		CollectionID: col.Version().CollectionID,
 		DocIDs:       sortedDocIDs,
+		OldDocs:      allDocIDs,
 	}, nil
 }
 
@@ -913,11 +919,17 @@ func syncIndexedDoc(
 	if err != nil && !errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 		return err
 	}
+	return syncDocIndex(ctx, col, oldDoc, newDoc)
+}
+
+// syncDocIndex updates the index for a document given its old and new state.
+func syncDocIndex(ctx context.Context, col *collection, oldDoc, newDoc *client.Document) error {
 	if oldDoc != nil && newDoc != nil {
 		return col.updateDocIndex(ctx, oldDoc, newDoc)
-	} else if oldDoc == nil {
+	} else if oldDoc == nil && newDoc != nil {
 		return col.indexNewDoc(ctx, newDoc)
-	} else {
+	} else if oldDoc != nil && newDoc == nil {
 		return col.deleteIndexedDoc(ctx, oldDoc)
 	}
+	return nil
 }

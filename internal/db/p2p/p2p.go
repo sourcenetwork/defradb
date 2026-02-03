@@ -176,8 +176,7 @@ type P2P struct {
 	// handlerSem limits concurrent pubsub message handlers.
 	handlerSem chan struct{}
 
-	// seenBloom is a bloom filter for fast "definitely not seen" checks on CIDs.
-	// Reduces Has() calls by ~80% when most incoming CIDs are new.
+	// seenBloom is a bloom filter for not seen checks on CIDs.
 	seenBloom *bbloom.Bloom
 	bloomMu   sync.RWMutex
 }
@@ -231,7 +230,7 @@ func New(
 	nodeIdentity immutable.Option[identity.Identity],
 	collectionRetriever kms.CollectionRetriever,
 ) (*P2P, error) {
-	seenBloom, _ := bbloom.New(float64(100_000_000), float64(0.01))
+	seenBloom, _ := bbloom.New(float64(1_000_000), float64(0.01))
 
 	p := P2P{
 		ctx:                  ctx,

@@ -51,6 +51,9 @@ type headsCacheEntry struct {
 
 // InitHeadsCache initializes the context with a heads cache.
 func InitHeadsCache(ctx context.Context) context.Context {
+	if getHeadsCache(ctx) != nil {
+		return ctx
+	}
 	return context.WithValue(ctx, headsCacheKey{}, &headsCache{
 		cache: make(map[string]*headsCacheEntry),
 	})
