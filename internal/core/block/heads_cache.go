@@ -282,27 +282,60 @@ func BatchPrefetchDocHeads(ctx context.Context, store corekv.ReaderWriter, docID
 	defer iter.Close()
 
 	allHeadsMap := make(map[string]*headsCacheEntry)
+
+	firstPrefix := keys.HeadstoreDocKey{DocID: sortedDocIDs[0]}.Bytes()
+	iter.Seek(firstPrefix)
+
+	hasMore := true
+	var currentKey []byte
+
+	hasMore, err = iter.Next()
+	if err != nil {
+		return err
+	}
+	if hasMore {
+		currentKey = iter.Key()
+	}
+
 	for _, docID := range sortedDocIDs {
+		if !hasMore {
+			compositeKey := keys.HeadstoreDocKey{
+				DocID:   docID,
+				FieldID: "C",
+			}
+			keyStr := string(compositeKey.Bytes())
+			if _, exists := allHeadsMap[keyStr]; !exists {
+				allHeadsMap[keyStr] = &headsCacheEntry{
+					heads:     nil,
+					maxHeight: 0,
+				}
+			}
+			continue
+		}
+
 		docPrefix := keys.HeadstoreDocKey{DocID: docID}
 		prefixBytes := docPrefix.Bytes()
-		iter.Seek(prefixBytes)
 
-		for {
-			hasNext, err := iter.Next()
+		for hasMore && bytes.Compare(currentKey, prefixBytes) < 0 {
+			hasMore, err = iter.Next()
 			if err != nil {
 				return err
 			}
-			if !hasNext {
-				break
+			if hasMore {
+				currentKey = iter.Key()
 			}
+		}
 
-			key := iter.Key()
-			if !bytes.HasPrefix(key, prefixBytes) {
-				break
-			}
-
-			headKey, err := keys.NewHeadstoreDocKey(string(key))
+		for hasMore && bytes.HasPrefix(currentKey, prefixBytes) {
+			headKey, err := keys.NewHeadstoreDocKey(string(currentKey))
 			if err != nil {
+				hasMore, err = iter.Next()
+				if err != nil {
+					return err
+				}
+				if hasMore {
+					currentKey = iter.Key()
+				}
 				continue
 			}
 
@@ -312,28 +345,34 @@ func BatchPrefetchDocHeads(ctx context.Context, store corekv.ReaderWriter, docID
 			}
 
 			height, n := binary.Uvarint(value)
-			if n <= 0 {
-				continue
-			}
-
-			fieldNamespace := keys.HeadstoreDocKey{
-				DocID:   headKey.DocID,
-				FieldID: headKey.FieldID,
-			}
-			namespaceKey := string(fieldNamespace.Bytes())
-
-			entry, exists := allHeadsMap[namespaceKey]
-			if !exists {
-				entry = &headsCacheEntry{
-					heads:     make([]cid.Cid, 0, 1),
-					maxHeight: 0,
+			if n > 0 {
+				fieldNamespace := keys.HeadstoreDocKey{
+					DocID:   headKey.DocID,
+					FieldID: headKey.FieldID,
 				}
-				allHeadsMap[namespaceKey] = entry
+				namespaceKey := string(fieldNamespace.Bytes())
+
+				entry, exists := allHeadsMap[namespaceKey]
+				if !exists {
+					entry = &headsCacheEntry{
+						heads:     make([]cid.Cid, 0, 1),
+						maxHeight: 0,
+					}
+					allHeadsMap[namespaceKey] = entry
+				}
+
+				entry.heads = append(entry.heads, headKey.Cid)
+				if height > entry.maxHeight {
+					entry.maxHeight = height
+				}
 			}
 
-			entry.heads = append(entry.heads, headKey.Cid)
-			if height > entry.maxHeight {
-				entry.maxHeight = height
+			hasMore, err = iter.Next()
+			if err != nil {
+				return err
+			}
+			if hasMore {
+				currentKey = iter.Key()
 			}
 		}
 

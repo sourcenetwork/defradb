@@ -104,8 +104,6 @@ type DB interface {
 	GetCollections(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error)
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
-	// MergeBatch merges multiple events in a single transaction for improved performance.
-	MergeBatch(ctx context.Context, evts []event.Merge) error
 	// MergeBatchWithTxn merges multiple events using an existing transaction from context.
 	MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error
 	// Events returns the event bus for the database.
