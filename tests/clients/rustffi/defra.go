@@ -878,6 +878,135 @@ func (n *Node) GetAllIndexes(identityDID string) (map[string][]IndexDescription,
 }
 
 // ============================================================================
+// Encrypted Index Functions (Searchable Encryption)
+// ============================================================================
+
+// EncryptedIndexDescription represents an encrypted index for searchable encryption.
+type EncryptedIndexDescription struct {
+	FieldName string `json:"FieldName"`
+	Type      string `json:"Type"`
+}
+
+// CreateEncryptedIndex creates an encrypted index on a collection field.
+func (n *Node) CreateEncryptedIndex(identityDID string, collectionName string, fieldName string) (*EncryptedIndexDescription, error) {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	cCollName := C.CString(collectionName)
+	defer C.free(unsafe.Pointer(cCollName))
+
+	cFieldName := C.CString(fieldName)
+	defer C.free(unsafe.Pointer(cFieldName))
+
+	result := C.create_encrypted_index(n.ptr, cIdentityDID, cCollName, cFieldName)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: create_encrypted_index failed: %s", errMsg)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var encIdx EncryptedIndexDescription
+	if err := json.Unmarshal([]byte(value), &encIdx); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse encrypted index: %w", err)
+	}
+
+	return &encIdx, nil
+}
+
+// DeleteEncryptedIndex deletes an encrypted index from a collection.
+func (n *Node) DeleteEncryptedIndex(identityDID string, collectionName string, fieldName string) error {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	cCollName := C.CString(collectionName)
+	defer C.free(unsafe.Pointer(cCollName))
+
+	cFieldName := C.CString(fieldName)
+	defer C.free(unsafe.Pointer(cFieldName))
+
+	result := C.delete_encrypted_index(n.ptr, cIdentityDID, cCollName, cFieldName)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: delete_encrypted_index failed: %s", errMsg)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
+// ListEncryptedIndexes returns all encrypted indexes for a collection.
+func (n *Node) ListEncryptedIndexes(identityDID string, collectionName string) ([]EncryptedIndexDescription, error) {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	cCollName := C.CString(collectionName)
+	defer C.free(unsafe.Pointer(cCollName))
+
+	result := C.list_encrypted_indexes(n.ptr, cIdentityDID, cCollName)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: list_encrypted_indexes failed: %s", errMsg)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var indexes []EncryptedIndexDescription
+	if err := json.Unmarshal([]byte(value), &indexes); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse encrypted indexes: %w", err)
+	}
+
+	return indexes, nil
+}
+
+// ListAllEncryptedIndexes returns all encrypted indexes across all collections.
+func (n *Node) ListAllEncryptedIndexes(identityDID string) (map[string][]EncryptedIndexDescription, error) {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.list_all_encrypted_indexes(n.ptr, cIdentityDID)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: list_all_encrypted_indexes failed: %s", errMsg)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+
+	var indexes map[string][]EncryptedIndexDescription
+	if err := json.Unmarshal([]byte(value), &indexes); err != nil {
+		return nil, fmt.Errorf("ffi: failed to parse encrypted indexes: %w", err)
+	}
+
+	return indexes, nil
+}
+
+// ============================================================================
 // NAC (Node Access Control) Functions
 // ============================================================================
 

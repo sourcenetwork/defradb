@@ -451,7 +451,7 @@ struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
  * `key_type` - Key type string (e.g., "ed25519", "secp256k1")
  * `public_key` - Hex-encoded public key string
  * `block_cid` - CID string of the block to verify
- * `identity_did` - Optional DID of the caller (unused, reserved for future ACP checks)
+ * `identity_did` - DID of the caller for NAC permission check
 
  # Safety
 
@@ -1189,16 +1189,20 @@ struct FfiResult p2p_get_all_documents(uintptr_t node_ptr, const char *identity_
 /*
  Sync specific documents from peers.
 
+ This implements the DocSync pull-based protocol: sends requests to connected peers
+ asking for the heads of specific documents, then fetches the missing DAG blocks
+ via Bitswap and merges them.
+
  # Arguments
 
  * `node_ptr` - Handle to the node
- * `identity_did` - DID of the requesting identity (for NAC)
+ * `identity_did` - Identity DID for NAC permission check
  * `collection_name` - Name of the collection containing the documents
  * `doc_ids_json` - JSON array of document IDs to sync
 
  # Safety
 
- All string parameters must be valid null-terminated UTF-8 strings or null.
+ All string pointers must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult p2p_sync_documents(uintptr_t node_ptr,
                                     const char *identity_did,

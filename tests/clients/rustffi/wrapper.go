@@ -908,7 +908,28 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 }
 
 func (w *Wrapper) ListAllEncryptedIndexes(ctx context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	return nil, fmt.Errorf("ListAllEncryptedIndexes not yet implemented in FFI")
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	ffiIndexes, err := w.node.ListAllEncryptedIndexes(identityDID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[client.CollectionName][]client.EncryptedIndexDescription)
+	for collName, indexes := range ffiIndexes {
+		clientIndexes := make([]client.EncryptedIndexDescription, len(indexes))
+		for i, idx := range indexes {
+			clientIndexes[i] = client.EncryptedIndexDescription{
+				FieldName: idx.FieldName,
+				Type:      client.EncryptedIndexType(idx.Type),
+			}
+		}
+		result[client.CollectionName(collName)] = clientIndexes
+	}
+	return result, nil
 }
 
 // ============================================================================
@@ -1995,15 +2016,50 @@ func (c *CollectionWrapper) GetIndexes(ctx context.Context) ([]client.IndexDescr
 }
 
 func (c *CollectionWrapper) CreateEncryptedIndex(ctx context.Context, desc client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error) {
-	return client.EncryptedIndexDescription{}, fmt.Errorf("encrypted indexes not yet implemented in FFI")
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	ffiIdx, err := c.wrapper.node.CreateEncryptedIndex(identityDID, c.version.Name, desc.FieldName)
+	if err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
+
+	return client.EncryptedIndexDescription{
+		FieldName: ffiIdx.FieldName,
+		Type:      client.EncryptedIndexType(ffiIdx.Type),
+	}, nil
 }
 
 func (c *CollectionWrapper) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
-	return fmt.Errorf("encrypted indexes not yet implemented in FFI")
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	return c.wrapper.node.DeleteEncryptedIndex(identityDID, c.version.Name, fieldName)
 }
 
 func (c *CollectionWrapper) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
-	return nil, fmt.Errorf("encrypted indexes not yet implemented in FFI")
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	ffiIndexes, err := c.wrapper.node.ListEncryptedIndexes(identityDID, c.version.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]client.EncryptedIndexDescription, len(ffiIndexes))
+	for i, idx := range ffiIndexes {
+		result[i] = client.EncryptedIndexDescription{
+			FieldName: idx.FieldName,
+			Type:      client.EncryptedIndexType(idx.Type),
+		}
+	}
+	return result, nil
 }
 
 func (c *CollectionWrapper) Truncate(ctx context.Context) error {
