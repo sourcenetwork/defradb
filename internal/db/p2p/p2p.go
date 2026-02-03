@@ -1115,12 +1115,14 @@ func (sb *syncBatcher) processBatches() {
 		}
 
 		if err := txn.Commit(); err != nil {
-			log.ErrorE("Batch sync commit failed", err)
-			for _, req := range validRequests {
-				req.resultCh <- err
+			if !strings.Contains(err.Error(), "discarded") {
+				log.ErrorE("Batch sync commit failed", err)
+				for _, req := range validRequests {
+					req.resultCh <- err
+				}
+				batch = batch[:0]
+				return
 			}
-			batch = batch[:0]
-			return
 		}
 
 		for _, req := range validRequests {

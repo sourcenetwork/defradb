@@ -98,6 +98,12 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error {
 		byCollection[evt.CollectionID] = append(byCollection[evt.CollectionID], evt)
 	}
 
+	type indexSyncWork struct {
+		col    *collection
+		docIDs []string
+	}
+	var pendingIndexSync []indexSyncWork
+
 	for collectionID, colEvts := range byCollection {
 		col, err := getCollectionFromCollectionID(ctx, db, collectionID)
 		if err != nil {
@@ -118,7 +124,7 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error {
 			continue
 		}
 
-		err = db.executeMergeBatchWithTxn(ctx, col, colEvts)
+		batchResult, err := db.executeMergeBatchWithTxn(ctx, col, colEvts)
 		if err != nil {
 			log.ErrorContextE(
 				ctx,
@@ -126,6 +132,28 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error {
 				err,
 				corelog.String("CollectionID", collectionID),
 				corelog.Int("EventCount", len(colEvts)))
+			continue
+		}
+
+		if batchResult != nil && len(batchResult.DocIDs) > 0 && len(col.indexes) > 0 {
+			pendingIndexSync = append(pendingIndexSync, indexSyncWork{
+				col:    col,
+				docIDs: batchResult.DocIDs,
+			})
+		}
+	}
+
+	if len(pendingIndexSync) > 0 {
+		txn := datastore.CtxMustGetTxn(ctx)
+		if err := txn.Commit(); err != nil {
+			return err
+		}
+
+		for _, work := range pendingIndexSync {
+			if err := db.syncIndexesForBatch(context.Background(), work.col, work.docIDs); err != nil {
+				log.ErrorContextE(ctx, "Index sync after merge failed (indexes may be stale)", err,
+					corelog.Int("DocCount", len(work.docIDs)))
+			}
 		}
 	}
 
@@ -133,7 +161,7 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error {
 }
 
 // executeMergeBatchWithTxn merges events using an existing transaction from context.
-func (db *DB) executeMergeBatchWithTxn(ctx context.Context, col *collection, evts []event.Merge) error {
+func (db *DB) executeMergeBatchWithTxn(ctx context.Context, col *collection, evts []event.Merge) (*MergeBatchResult, error) {
 	docIDs := make([]string, 0, len(evts))
 	for _, evt := range evts {
 		if evt.DocID != "" {
@@ -151,7 +179,7 @@ func (db *DB) executeMergeBatchWithTxn(ctx context.Context, col *collection, evt
 			for _, added := range addedDocIDs {
 				db.docMergeQueue.done(added)
 			}
-			return err
+			return nil, err
 		}
 		addedDocIDs = append(addedDocIDs, docID)
 	}
@@ -171,30 +199,32 @@ type MergeBatchResult struct {
 }
 
 // executeMergeBatchInTxnNoCommit performs batch merge using existing transaction.
-func (db *DB) executeMergeBatchInTxnNoCommit(ctx context.Context, col *collection, evts []event.Merge) error {
-	result, err := db.executeMergeBatchWritesOnly(ctx, col, evts)
-	if err != nil {
-		return err
-	}
-	if len(col.indexes) == 0 || result == nil || len(result.DocIDs) == 0 {
+// Index sync is deferred to syncIndexesForBatch which should be called after commit.
+func (db *DB) executeMergeBatchInTxnNoCommit(ctx context.Context, col *collection, evts []event.Merge) (*MergeBatchResult, error) {
+	return db.executeMergeBatchWritesOnly(ctx, col, evts)
+}
+
+// syncIndexesForBatch syncs indexes for documents after merge writes have been committed.
+func (db *DB) syncIndexesForBatch(ctx context.Context, col *collection, docIDs []string) error {
+	if len(col.indexes) == 0 || len(docIDs) == 0 {
 		return nil
 	}
-	oldCtx, oldTxn, err := ensureContextTxn(context.Background(), db, true)
+	indexCtx, indexTxn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
-	defer oldTxn.Discard()
-	for _, docIDStr := range result.DocIDs {
+	defer indexTxn.Discard()
+	for _, docIDStr := range docIDs {
 		docID, err := client.NewDocIDFromString(docIDStr)
 		if err != nil {
 			return err
 		}
-		err = syncIndexedDoc(ctx, oldCtx, docID, col, nil)
+		err = syncIndexedDoc(indexCtx, indexCtx, docID, col, nil)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
+	return indexTxn.Commit()
 }
 
 // executeMergeBatchWritesOnly performs batch merge writes only, returning docIDs for later index sync.
@@ -778,6 +808,12 @@ func (mp *mergeProcessor) initCRDTForType(ctx context.Context, crdtUnion crdt.CR
 // trackMergedDocument tracks the current version of the document so we
 // can correctly sync indexes after a merge.
 func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.DocID) error {
+	// Skip tracking for collections without indexes - no need to read old doc
+	if len(mp.col.indexes) == 0 {
+		mp.docIDs[docID] = nil
+		return nil
+	}
+
 	_, exists := mp.docIDs[docID]
 	if exists {
 		return nil
