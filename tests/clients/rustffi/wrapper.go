@@ -228,6 +228,14 @@ func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity ident
 					}))
 					continue
 				}
+				if result.Event.Type == "se_artifact_received" {
+					fmt.Printf("[FFI-MERGE-POLLER] Publishing SEArtifactReceived to Go event bus: doc=%s\n",
+						result.Event.DocID)
+					eb.Publish(event.NewMessage(event.SEArtifactReceivedName, event.SEArtifactReceived{
+						DocID: result.Event.DocID,
+					}))
+					continue
+				}
 			}
 			time.Sleep(10 * time.Millisecond)
 		}
