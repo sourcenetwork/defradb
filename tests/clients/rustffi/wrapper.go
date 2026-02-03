@@ -95,10 +95,23 @@ type Wrapper struct {
 
 // NewWrapper creates a new Rust FFI client wrapper.
 // This creates a standalone Rust FFI node (not wrapping a Go node).
-func NewWrapper() (*Wrapper, error) {
+// If nodeIdentity is provided and enableSigning is true, the identity's private key
+// will be passed to the Rust FFI for block signing.
+func NewWrapper(enableSigning bool, nodeIdentity identity.Identity) (*Wrapper, error) {
 	Init() // Initialize FFI library
 
-	node, err := NewNode(NodeOptions{InMemory: true})
+	opts := NodeOptions{InMemory: true, EnableSigning: enableSigning}
+
+	// If signing is enabled and we have a full identity with a private key, use it
+	if enableSigning && nodeIdentity != nil {
+		if fullIdent, ok := nodeIdentity.(identity.FullIdentity); ok {
+			privKey := fullIdent.PrivateKey()
+			opts.SigningKeyType = string(privKey.Type())
+			opts.SigningPrivateKey = privKey.Raw()
+		}
+	}
+
+	node, err := NewNode(opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create FFI node: %w", err)
 	}
@@ -111,10 +124,23 @@ func NewWrapper() (*Wrapper, error) {
 
 // NewWrapperWithP2P creates a new Rust FFI client wrapper with P2P enabled.
 // listenAddr should be a multiaddr like "/ip4/127.0.0.1/tcp/0"
-func NewWrapperWithP2P(listenAddr string) (*Wrapper, error) {
+// If nodeIdentity is provided and enableSigning is true, the identity's private key
+// will be passed to the Rust FFI for block signing.
+func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity identity.Identity) (*Wrapper, error) {
 	Init() // Initialize FFI library
 
-	node, err := NewNodeWithP2P(NodeOptions{InMemory: true}, listenAddr)
+	opts := NodeOptions{InMemory: true, EnableSigning: enableSigning}
+
+	// If signing is enabled and we have a full identity with a private key, use it
+	if enableSigning && nodeIdentity != nil {
+		if fullIdent, ok := nodeIdentity.(identity.FullIdentity); ok {
+			privKey := fullIdent.PrivateKey()
+			opts.SigningKeyType = string(privKey.Type())
+			opts.SigningPrivateKey = privKey.Raw()
+		}
+	}
+
+	node, err := NewNodeWithP2P(opts, listenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create FFI node with P2P: %w", err)
 	}
