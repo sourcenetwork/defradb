@@ -109,6 +109,14 @@ func setupRustFFIClient(
 		return nil, err
 	}
 
+	// Forward SE artifact events from Go's event bus to the wrapper's event bus.
+	// Go's SE coordinator publishes to Go's event bus, but the test framework
+	// subscribes to the wrapper's event bus via c.Events().
+	if err := wrapper.ForwardSEEvents(nodeObj.DB.Events()); err != nil {
+		wrapper.Close()
+		return nil, fmt.Errorf("failed to forward SE events: %w", err)
+	}
+
 	// Mirror the Go node's NAC state onto the Rust FFI node.
 	//
 	// The Go node has two NAC authorization paths (see checkNodeAccess in db_nac.go):
