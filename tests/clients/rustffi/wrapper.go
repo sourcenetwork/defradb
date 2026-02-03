@@ -444,7 +444,7 @@ func (w *Wrapper) ExecRequest(
 		identityDID = id.Value().DID()
 	}
 
-	responseJSON, err := w.node.ExecRequest(identityDID, request, gqlOpts.OperationName, varsJSON)
+	execResult, err := w.node.ExecRequestFull(identityDID, request, gqlOpts.OperationName, varsJSON)
 	if err != nil {
 		return &client.RequestResult{
 			GQL: client.GQLResult{
@@ -453,11 +453,20 @@ func (w *Wrapper) ExecRequest(
 		}
 	}
 
+	// Handle subscription results
+	if execResult.IsSubscription {
+		subChan := make(chan client.GQLResult)
+		go w.pollGraphQLSubscription(ctx, execResult.SubscriptionID, subChan)
+		return &client.RequestResult{
+			Subscription: subChan,
+		}
+	}
+
 	// Use json.Decoder with UseNumber() to preserve numeric precision.
 	// This ensures integers stay as json.Number rather than being converted to float64,
 	// which is required for test assertions to pass.
 	var gqlResult client.GQLResult
-	decoder := json.NewDecoder(bytes.NewReader([]byte(responseJSON)))
+	decoder := json.NewDecoder(bytes.NewReader([]byte(execResult.Response)))
 	decoder.UseNumber()
 	if err := decoder.Decode(&gqlResult); err != nil {
 		return &client.RequestResult{
@@ -474,6 +483,60 @@ func (w *Wrapper) ExecRequest(
 	}
 
 	return &client.RequestResult{GQL: gqlResult}
+}
+
+// pollGraphQLSubscription polls a GraphQL subscription and sends results to the channel.
+func (w *Wrapper) pollGraphQLSubscription(ctx context.Context, subscriptionID string, ch chan client.GQLResult) {
+	defer close(ch)
+	defer CloseGraphQLSubscription(subscriptionID)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		result, err := PollGraphQLSubscription(subscriptionID)
+		if err != nil {
+			select {
+			case ch <- client.GQLResult{Errors: []error{err}}:
+			case <-ctx.Done():
+			}
+			return
+		}
+
+		if result.IsClosed {
+			return
+		}
+
+		if result.HasResult {
+			var gqlResult client.GQLResult
+			decoder := json.NewDecoder(bytes.NewReader([]byte(result.Result)))
+			decoder.UseNumber()
+			if err := decoder.Decode(&gqlResult); err != nil {
+				select {
+				case ch <- client.GQLResult{Errors: []error{fmt.Errorf("failed to parse subscription result: %w", err)}}:
+				case <-ctx.Done():
+				}
+				continue
+			}
+
+			// Post-process: convert DateTime strings to time.Time objects
+			if gqlResult.Data != nil {
+				gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
+			}
+
+			select {
+			case ch <- gqlResult:
+			case <-ctx.Done():
+				return
+			}
+		}
+
+		// Small sleep to avoid busy-waiting
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func (w *Wrapper) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
