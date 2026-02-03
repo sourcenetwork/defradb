@@ -1064,10 +1064,9 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_ExcludesOrphans(t 
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// The index on Publisher.establishedYear is used by the nested Book->Publisher join
-				// to provide ordering, but the explain output only reports the outer join's stats.
-				// The subTypeScanNode reports Book scan stats (no index), not Publisher scan stats.
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+				// The index on Publisher.establishedYear is used by the nested Book->Publisher join.
+				// With recursive aggregation, the indexFetches from the Publisher scanNode are now included.
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
 		},
 	}
@@ -1182,10 +1181,9 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// docFetches: 1 author + 2 books (OrphanBook excluded because it has no publisher).
-				// indexFetches: 0 for Book scanNode - index is on Publisher.establishedYear,
-				// tracked in the nested join to Publisher, not in Book's scan.
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(3).WithIndexFetches(0),
+				// docFetches: 1 author + 2 books + 2 publishers = 5 (recursively aggregated)
+				// indexFetches: 2 from Publisher index (recursively aggregated from nested join)
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(5).WithIndexFetches(2),
 			},
 		},
 	}

@@ -187,17 +187,32 @@ func TestExecuteExplainRequestWithOrderFieldOnChild(t *testing.T) {
 										"filterMatches": uint64(2),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(8),
-												"indexFetches": uint64(0),
-											},
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(5),
-												"docFetches":   uint64(6),
-												"fieldFetches": uint64(18),
-												"indexFetches": uint64(0),
+											"typeJoinMany": dataMap{
+												"root": dataMap{
+													"scanNode": dataMap{
+														"iterations":   uint64(3),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(8),
+														"indexFetches": uint64(0),
+													},
+												},
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"orderNode": dataMap{
+															"iterations": uint64(5),
+															"selectNode": dataMap{
+																"iterations":    uint64(5),
+																"filterMatches": uint64(3),
+																"scanNode": dataMap{
+																	"iterations":   uint64(5),
+																	"docFetches":   uint64(6),
+																	"fieldFetches": uint64(18),
+																	"indexFetches": uint64(0),
+																},
+															},
+														},
+													},
+												},
 											},
 										},
 									},
@@ -250,17 +265,32 @@ func TestExecuteExplainRequestWithOrderFieldOnBothParentAndChild(t *testing.T) {
 											"filterMatches": uint64(2),
 											"typeIndexJoin": dataMap{
 												"iterations": uint64(3),
-												"scanNode": dataMap{
-													"iterations":   uint64(3),
-													"docFetches":   uint64(2),
-													"fieldFetches": uint64(8),
-													"indexFetches": uint64(0),
-												},
-												"subTypeScanNode": dataMap{
-													"iterations":   uint64(5),
-													"docFetches":   uint64(6),
-													"fieldFetches": uint64(18),
-													"indexFetches": uint64(0),
+												"typeJoinMany": dataMap{
+													"root": dataMap{
+														"scanNode": dataMap{
+															"iterations":   uint64(3),
+															"docFetches":   uint64(2),
+															"fieldFetches": uint64(8),
+															"indexFetches": uint64(0),
+														},
+													},
+													"subType": dataMap{
+														"selectTopNode": dataMap{
+															"orderNode": dataMap{
+																"iterations": uint64(5),
+																"selectNode": dataMap{
+																	"iterations":    uint64(5),
+																	"filterMatches": uint64(3),
+																	"scanNode": dataMap{
+																		"iterations":   uint64(5),
+																		"docFetches":   uint64(6),
+																		"fieldFetches": uint64(18),
+																		"indexFetches": uint64(0),
+																	},
+																},
+															},
+														},
+													},
 												},
 											},
 										},
@@ -395,19 +425,59 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationField(t *testing.
 										"filterMatches": uint64(1),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(2),
-											// Author scanNode
-											"scanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(1),
-												"fieldFetches": uint64(1),
-												"indexFetches": uint64(0),
-											},
-											// Book scanNode
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
-												"indexFetches": uint64(0),
+											"typeJoinMany": dataMap{
+												// Author scanNode
+												"root": dataMap{
+													"scanNode": dataMap{
+														"iterations":   uint64(2),
+														"docFetches":   uint64(1),
+														"fieldFetches": uint64(1),
+														"indexFetches": uint64(0),
+													},
+												},
+												// Nested Book -> Publisher join with limit/order
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"limitNode": dataMap{
+															"iterations": uint64(3),
+															"orderNode": dataMap{
+																"iterations": uint64(2),
+																"selectNode": dataMap{
+																	"iterations":    uint64(3),
+																	"filterMatches": uint64(2),
+																	"typeIndexJoin": dataMap{
+																		"iterations": uint64(3),
+																		"typeJoinOne": dataMap{
+																			"root": dataMap{
+																				"scanNode": dataMap{
+																					"iterations":   uint64(3),
+																					"docFetches":   uint64(2),
+																					"fieldFetches": uint64(4),
+																					"indexFetches": uint64(0),
+																				},
+																			},
+																			// Publisher uses relation index (indexFetches: 2)
+																			"subType": dataMap{
+																				"selectTopNode": dataMap{
+																					"selectNode": dataMap{
+																						"iterations":    uint64(4),
+																						"filterMatches": uint64(2),
+																						"scanNode": dataMap{
+																							"iterations":   uint64(4),
+																							"docFetches":   uint64(2),
+																							"fieldFetches": uint64(6),
+																							"indexFetches": uint64(2),
+																						},
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
 											},
 										},
 									},
@@ -508,17 +578,59 @@ func TestExecuteExplainRequestWithSubqueryOrderByNestedRelationFieldASC(t *testi
 										"filterMatches": uint64(1),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(2),
-											"scanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(1),
-												"fieldFetches": uint64(1),
-												"indexFetches": uint64(0),
-											},
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
-												"indexFetches": uint64(0),
+											"typeJoinMany": dataMap{
+												// Author scanNode
+												"root": dataMap{
+													"scanNode": dataMap{
+														"iterations":   uint64(2),
+														"docFetches":   uint64(1),
+														"fieldFetches": uint64(1),
+														"indexFetches": uint64(0),
+													},
+												},
+												// Nested Book -> Publisher join with limit/order
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"limitNode": dataMap{
+															"iterations": uint64(3),
+															"orderNode": dataMap{
+																"iterations": uint64(2),
+																"selectNode": dataMap{
+																	"iterations":    uint64(3),
+																	"filterMatches": uint64(2),
+																	"typeIndexJoin": dataMap{
+																		"iterations": uint64(3),
+																		"typeJoinOne": dataMap{
+																			"root": dataMap{
+																				"scanNode": dataMap{
+																					"iterations":   uint64(3),
+																					"docFetches":   uint64(2),
+																					"fieldFetches": uint64(4),
+																					"indexFetches": uint64(0),
+																				},
+																			},
+																			// Publisher uses relation index (indexFetches: 2)
+																			"subType": dataMap{
+																				"selectTopNode": dataMap{
+																					"selectNode": dataMap{
+																						"iterations":    uint64(4),
+																						"filterMatches": uint64(2),
+																						"scanNode": dataMap{
+																							"iterations":   uint64(4),
+																							"docFetches":   uint64(2),
+																							"fieldFetches": uint64(6),
+																							"indexFetches": uint64(2),
+																						},
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
 											},
 										},
 									},

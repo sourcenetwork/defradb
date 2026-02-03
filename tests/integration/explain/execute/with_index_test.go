@@ -227,20 +227,30 @@ func TestExecuteExplainWithIndexOnRelationOrder(t *testing.T) {
 												"docFetches":   uint64(0),
 												"fieldFetches": uint64(0),
 												"indexFetches": uint64(0),
-												// Nested scanNode within orphanNode
-												"scanNode": dataMap{
-													"iterations":   uint64(4),
-													"docFetches":   uint64(2),
-													"fieldFetches": uint64(4),
-													// Index used for ordering via inverted join
-													"indexFetches": uint64(2),
+												"typeJoinOne": dataMap{
+													"root": dataMap{
+														"scanNode": dataMap{
+															"iterations":   uint64(4),
+															"docFetches":   uint64(2),
+															"fieldFetches": uint64(4),
+															"indexFetches": uint64(2),
+														},
+													},
+													"subType": dataMap{
+														"selectTopNode": dataMap{
+															"selectNode": dataMap{
+																"iterations":    uint64(3),
+																"filterMatches": uint64(2),
+																"scanNode": dataMap{
+																	"iterations":   uint64(3),
+																	"docFetches":   uint64(2),
+																	"fieldFetches": uint64(4),
+																	"indexFetches": uint64(2),
+																},
+															},
+														},
+													},
 												},
-											},
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
-												"indexFetches": uint64(2),
 											},
 										},
 									},
@@ -341,19 +351,53 @@ func TestExecuteExplainWithIndexOnSubqueryNestedRelationOrder(t *testing.T) {
 										"filterMatches": uint64(1),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(2),
-											"scanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(1),
-												"fieldFetches": uint64(1),
-												"indexFetches": uint64(0),
-											},
-											// Book scanNode - note: index is used by nested Publisher join
-											// but subTypeScanNode reports Book stats only
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
-												"indexFetches": uint64(0),
+											"typeJoinMany": dataMap{
+												"root": dataMap{
+													"scanNode": dataMap{
+														"iterations":   uint64(2),
+														"docFetches":   uint64(1),
+														"fieldFetches": uint64(1),
+														"indexFetches": uint64(0),
+													},
+												},
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"limitNode": dataMap{
+															"iterations": uint64(3),
+															"selectNode": dataMap{
+																"iterations":    uint64(2),
+																"filterMatches": uint64(2),
+																"typeIndexJoin": dataMap{
+																	"iterations": uint64(2),
+																	"typeJoinOne": dataMap{
+																		"root": dataMap{
+																			"scanNode": dataMap{
+																				"iterations":   uint64(2),
+																				"docFetches":   uint64(2),
+																				"fieldFetches": uint64(4),
+																				"indexFetches": uint64(0),
+																			},
+																		},
+																		"subType": dataMap{
+																			"selectTopNode": dataMap{
+																				"selectNode": dataMap{
+																					"iterations":    uint64(2),
+																					"filterMatches": uint64(2),
+																					"scanNode": dataMap{
+																						"iterations":   uint64(2),
+																						"docFetches":   uint64(2),
+																						"fieldFetches": uint64(6),
+																						"indexFetches": uint64(2),
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
 											},
 										},
 									},
