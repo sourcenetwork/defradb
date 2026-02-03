@@ -91,6 +91,7 @@ type Wrapper struct {
 	events           *eventBus
 	txnIDGen         uint64
 	stopMergePoller  chan struct{}
+	stopSEForwarder  chan struct{}
 }
 
 // NewWrapper creates a new Rust FFI client wrapper.
@@ -299,6 +300,9 @@ func groupPatchByCollection(patch string) ([]struct{ Name, Patch string }, error
 // ============================================================================
 
 func (w *Wrapper) Close() {
+	if w.stopSEForwarder != nil {
+		close(w.stopSEForwarder)
+	}
 	if w.stopMergePoller != nil {
 		close(w.stopMergePoller)
 	}
@@ -308,6 +312,37 @@ func (w *Wrapper) Close() {
 	if w.events != nil {
 		w.events.Close()
 	}
+}
+
+// ForwardSEEvents subscribes to Go's event bus for SE artifact received events
+// and forwards them to the wrapper's custom event bus. This bridges Go's SE
+// coordinator events to the Rust FFI wrapper so WaitForSESync works.
+func (w *Wrapper) ForwardSEEvents(goBus event.Bus) error {
+	sub, err := goBus.Subscribe(event.SEArtifactReceivedName)
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to SE events on Go bus: %w", err)
+	}
+
+	stopCh := make(chan struct{})
+	w.stopSEForwarder = stopCh
+
+	go func() {
+		defer goBus.Unsubscribe(sub)
+		for {
+			select {
+			case <-stopCh:
+				return
+			case msg, ok := <-sub.Message():
+				if !ok {
+					return
+				}
+				fmt.Printf("[SE-FORWARDER] Forwarding SE event to wrapper bus: %s\n", msg.Name)
+				w.events.Publish(msg)
+			}
+		}
+	}()
+
+	return nil
 }
 
 func (w *Wrapper) MaxTxnRetries() int {
@@ -1076,8 +1111,11 @@ func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...stri
 }
 
 func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
-	// Branchable collection sync not yet implemented in Rust FFI
-	return fmt.Errorf("P2P branchable collection sync not yet implemented in FFI client")
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+	return w.node.P2PSyncBranchableCollection(identityDID, collectionID)
 }
 
 // ============================================================================
