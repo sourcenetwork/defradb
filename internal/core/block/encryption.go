@@ -73,3 +73,27 @@ func (enc *Encryption) Unmarshal(b []byte) error {
 func (enc *Encryption) GenerateNode() ipld.Node {
 	return bindnode.Wrap(enc, EncryptionSchema).Representation()
 }
+
+// GenerateHint generates the encryption hint for this encryption block.
+// The hint can be used to quickly check if a block can be decrypted with this key.
+func (enc *Encryption) GenerateHint() []byte {
+	fieldNameBytes := []byte{}
+	if enc.FieldName != nil {
+		fieldNameBytes = []byte(*enc.FieldName)
+	}
+	return GenerateEncryptionHint(enc.Key, enc.DocID, fieldNameBytes)
+}
+
+// MatchesHint checks if this encryption block's key would produce the given hint.
+// This is useful for quickly determining if this encryption block can decrypt
+// a block with the given hint.
+func (enc *Encryption) MatchesHint(hint []byte) bool {
+	if len(hint) != EncryptionHintLength {
+		return false
+	}
+	fieldNameBytes := []byte{}
+	if enc.FieldName != nil {
+		fieldNameBytes = []byte(*enc.FieldName)
+	}
+	return MatchesEncryptionHint(hint, enc.Key, enc.DocID, fieldNameBytes)
+}

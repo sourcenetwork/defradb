@@ -83,6 +83,13 @@ func AddDelta(
 			return cidlink.Link{}, nil, err
 		}
 		dagBlock.Encryption = &encLink
+
+		// Generate encryption hint for quick key matching during P2P sync
+		fieldNameBytes := []byte{}
+		if encBlock.FieldName != nil {
+			fieldNameBytes = []byte(*encBlock.FieldName)
+		}
+		dagBlock.EncryptionHint = GenerateEncryptionHint(encBlock.Key, encBlock.DocID, fieldNameBytes)
 	}
 
 	if EnabledSigningFromContext(ctx) {

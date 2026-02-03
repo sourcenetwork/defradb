@@ -153,6 +153,12 @@ type Block struct {
 	// Signature contains the link to the block's signature.
 	// It needs to be a pointer so that it can be translated from and to `optional` in the IPLD schema.
 	Signature *cidlink.Link
+
+	// EncryptionHint is a truncated HMAC hint for quick local key matching.
+	// Format: HMAC-SHA256(key, docID || fieldName)[:16]
+	// This allows quick filtering during P2P sync to check if we likely have
+	// the decryption key without fetching the full Encryption block.
+	EncryptionHint []byte
 }
 
 // IsEncrypted returns true if the block is encrypted.
@@ -160,14 +166,21 @@ func (block *Block) IsEncrypted() bool {
 	return block.Encryption != nil
 }
 
+// HasEncryptionHint returns true if the block has an encryption hint.
+// The hint can be used for quick local key matching during P2P sync.
+func (block *Block) HasEncryptionHint() bool {
+	return len(block.EncryptionHint) == EncryptionHintLength
+}
+
 // Clone returns a shallow copy of the block with cloned delta.
 func (block *Block) Clone() *Block {
 	return &Block{
-		Delta:      block.Delta.Clone(),
-		Heads:      block.Heads,
-		Links:      block.Links,
-		Encryption: block.Encryption,
-		Signature:  block.Signature,
+		Delta:          block.Delta.Clone(),
+		Heads:          block.Heads,
+		Links:          block.Links,
+		Encryption:     block.Encryption,
+		Signature:      block.Signature,
+		EncryptionHint: block.EncryptionHint,
 	}
 }
 
@@ -192,11 +205,12 @@ func (block *Block) AllLinks() []cidlink.Link {
 func (block *Block) IPLDSchemaBytes() []byte {
 	return []byte(`
 		type Block struct {
-			delta      CRDT
-			heads      optional [Link]
-			links      optional [DAGLink]
-			encryption optional Link
-			signature  optional Link
+			delta          CRDT
+			heads          optional [Link]
+			links          optional [DAGLink]
+			encryption     optional Link
+			signature      optional Link
+			encryptionHint optional Bytes
 		}
 	`)
 }
