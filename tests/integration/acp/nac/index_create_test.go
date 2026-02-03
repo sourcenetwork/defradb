@@ -28,6 +28,7 @@ func TestNAC_GatesIndexCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

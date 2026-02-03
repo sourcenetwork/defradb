@@ -104,6 +104,7 @@ func TestQuerySimple_WithMaxAndMaxValueInt_Succeeds(t *testing.T) {
 			state.GoClientType,
 			state.CLIClientType,
 			state.HTTPClientType,
+			state.RustFFIClientType,
 		}),
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GraphQL does not support 64 bit int

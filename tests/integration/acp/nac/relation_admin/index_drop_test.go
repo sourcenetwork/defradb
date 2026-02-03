@@ -28,6 +28,7 @@ func TestNAC_AdminRelation_CanIndexDrop(t *testing.T) {
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

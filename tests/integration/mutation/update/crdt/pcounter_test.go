@@ -128,6 +128,7 @@ func TestPCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64
 			state.GoClientType,
 			state.CLIClientType,
 			state.HTTPClientType,
+			state.RustFFIClientType,
 		}),
 		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a type error in this case

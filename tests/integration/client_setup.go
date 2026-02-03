@@ -57,6 +57,7 @@ func setupClient(
 	identity immutable.Option[acpIdentity.Identity],
 	nodeIndex int,
 	enableSigning bool,
+	dbPath string,
 ) (clients.Client, error) {
 	switch s.ClientType {
 	case state.HTTPClientType:
@@ -72,7 +73,7 @@ func setupClient(
 		return cbindings.NewCWrapper(nodeObj)
 
 	case state.RustFFIClientType:
-		return setupRustFFIClient(s, nodeObj, identity, nodeIndex, enableSigning)
+		return setupRustFFIClient(s, nodeObj, identity, nodeIndex, enableSigning, dbPath)
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
@@ -88,6 +89,7 @@ func setupRustFFIClient(
 	identity immutable.Option[acpIdentity.Identity],
 	nodeIndex int,
 	enableSigning bool,
+	dbPath string,
 ) (*rustffi.Wrapper, error) {
 	var wrapper *rustffi.Wrapper
 	var err error
@@ -99,11 +101,18 @@ func setupRustFFIClient(
 		nodeIdentity = state.GetIdentity(s, NodeIdentity(nodeIndex))
 	}
 
+	// For file-based storage, use a subdirectory so Rust's redb doesn't collide
+	// with Go's badger store at the same path.
+	rustDBPath := ""
+	if dbPath != "" {
+		rustDBPath = dbPath + "/rustffi"
+	}
+
 	if s.IsNetworkEnabled {
 		listenAddr := "/ip4/" + getIPString() + "/tcp/0"
-		wrapper, err = rustffi.NewWrapperWithP2P(listenAddr, enableSigning, nodeIdentity)
+		wrapper, err = rustffi.NewWrapperWithP2P(listenAddr, enableSigning, nodeIdentity, rustDBPath)
 	} else {
-		wrapper, err = rustffi.NewWrapper(enableSigning, nodeIdentity)
+		wrapper, err = rustffi.NewWrapper(enableSigning, nodeIdentity, rustDBPath)
 	}
 	if err != nil {
 		return nil, err

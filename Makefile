@@ -535,6 +535,8 @@ endif
 		echo "Running tests..."; \
 		CGO_ENABLED=1 \
 		DEFRA_CLIENT_RUST_FFI=true \
+		$(if $(DEFRA_MUTATION_TYPE),DEFRA_MUTATION_TYPE=$(DEFRA_MUTATION_TYPE)) \
+		$(if $(DEFRA_BADGER_FILE),DEFRA_BADGER_FILE=$(DEFRA_BADGER_FILE)) \
 		GOCACHE=$$cache_dir \
 		go test ./tests/integration/$$pkg/... -v -count=1 -timeout $(FFI_TIMEOUT) 2>&1 | tee $$report_file; \
 		echo "{\"timestamp\":\"$$(date +%Y-%m-%d\ %H:%M:%S)\",\"rust_lib\":\"$$rust_lib_name\",\"rust_branch\":\"$$rust_branch\",\"rust_commit\":\"$$rust_commit\"}" > $$meta_file; \
@@ -575,6 +577,19 @@ ifndef RUST_LIB
 	$(error RUST_LIB is required. Usage: make test:ffi-all RUST_LIB=/path/to/defradb.rs)
 endif
 	@$(MAKE) test:ffi RUST_LIB=$(RUST_LIB) FFI_PKG="$(FFI_PKG_ALL)"
+
+# Run FFI tests with both default (collection-save) and GQL mutation types.
+# This catches tests that only run with GQLRequestMutationType.
+.PHONY: test\:ffi-full
+test\:ffi-full:
+ifndef RUST_LIB
+	$(error RUST_LIB is required. Usage: make test:ffi-full RUST_LIB=/path/to/defradb.rs FFI_PKG=acp)
+endif
+	@echo "=== Pass 1: default mutation type ==="
+	@$(MAKE) test:ffi RUST_LIB=$(RUST_LIB) FFI_PKG="$(FFI_PKG)"
+	@echo ""
+	@echo "=== Pass 2: GQL mutation type ==="
+	@DEFRA_MUTATION_TYPE=gql $(MAKE) test:ffi RUST_LIB=$(RUST_LIB) FFI_PKG="$(FFI_PKG)"
 
 .PHONY: test\:ffi-p0
 test\:ffi-p0:

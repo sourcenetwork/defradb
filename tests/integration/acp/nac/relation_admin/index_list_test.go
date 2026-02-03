@@ -29,6 +29,7 @@ func TestNAC_AdminRelation_CanIndexList(t *testing.T) {
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
