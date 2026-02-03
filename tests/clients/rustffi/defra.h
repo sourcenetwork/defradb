@@ -77,20 +77,25 @@ typedef struct NodeInitOptions {
   int in_memory;
   /*
    Enable block signing (1=true, 0=false).
+   When enabled, the node uses a signing key for block signatures.
+   If signing_private_key is provided, that key is used.
+   Otherwise, a random secp256k1 key pair is generated.
    */
   int enable_signing;
   /*
-   Signing private key bytes (null if not provided).
+   Optional: signing key type string (e.g. "secp256k1", "ed25519").
+   Null to auto-generate secp256k1.
+   */
+  const char *signing_key_type;
+  /*
+   Optional: raw private key bytes for signing.
+   Null to auto-generate.
    */
   const uint8_t *signing_private_key;
   /*
-   Length of the signing private key.
+   Length of signing_private_key in bytes. 0 if null.
    */
   uintptr_t signing_private_key_len;
-  /*
-   Signing key type (e.g., "secp256k1", null for default).
-   */
-  const char *signing_key_type;
 } NodeInitOptions;
 
 /*
@@ -192,19 +197,6 @@ void defra_init(void);
 char *defra_version(void);
 
 /*
- Verify the signature of a block identified by CID.
-
- # Safety
-
- All string parameters must be valid null-terminated UTF-8 strings or null.
- */
-struct FfiResult block_verify_signature(uintptr_t node_ptr,
-                                        const char *key_type,
-                                        const char *pub_key,
-                                        const char *block_cid,
-                                        const char *identity_did);
-
-/*
  Get the current NAC status.
 
  Returns a JSON object with NAC status information:
@@ -216,6 +208,8 @@ struct FfiResult block_verify_signature(uintptr_t node_ptr,
    "owner": "did:key:..." | null
  }
  ```
+
+ This function is NAC-gated with the `NacStatus` permission.
  */
 struct FfiResult get_nac_status(uintptr_t node_ptr, const char *identity_did);
 
@@ -254,9 +248,12 @@ struct FfiResult re_enable_nac(uintptr_t node_ptr, const char *requestor_did);
 struct FfiResult enable_nac(uintptr_t node_ptr, const char *owner_did);
 
 /*
- Add a NAC actor relationship (grant admin to target).
+ Add a NAC actor relationship.
 
- The requestor must be an admin. Returns JSON with success status:
+ The requestor must be an admin. The relation can be "admin" or a
+ specific permission name (e.g., "document-read").
+
+ Returns JSON with success status:
  ```json
  { "added": true }  // or false if already exists
  ```
@@ -271,9 +268,10 @@ struct FfiResult add_nac_actor_relationship(uintptr_t node_ptr,
                                             const char *target_did);
 
 /*
- Delete a NAC actor relationship (remove admin from target).
+ Delete a NAC actor relationship.
 
  The requestor must be an admin. The owner cannot be removed.
+
  Returns JSON with success status:
  ```json
  { "deleted": true }  // or false if didn't exist
@@ -441,6 +439,31 @@ struct FfiResult basic_export(uintptr_t node_ptr, const char *config_json);
 struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
 
 /*
+ Verify the signature of a block.
+
+ Loads a block from the blockstore by CID, checks that it has a signature,
+ loads the signature block, and verifies the signature using the provided
+ public key.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `key_type` - Key type string (e.g., "ed25519", "secp256k1")
+ * `public_key` - Hex-encoded public key string
+ * `block_cid` - CID string of the block to verify
+ * `identity_did` - Optional DID of the caller (unused, reserved for future ACP checks)
+
+ # Safety
+
+ All string pointers must be either null or valid null-terminated UTF-8 strings.
+ */
+struct FfiResult block_verify_signature(uintptr_t node_ptr,
+                                        const char *key_type,
+                                        const char *public_key,
+                                        const char *block_cid,
+                                        const char *identity_did);
+
+/*
  Get a collection by name.
 
  Returns a JSON object containing the collection's schema (CollectionVersion)
@@ -604,6 +627,30 @@ struct FfiResult get_collection_by_version_id(uintptr_t node_ptr,
                                               const char *version_id);
 
 /*
+ Truncate a collection: delete all documents while preserving the schema.
+
+ This removes all document data, CRDT heads, blocks, and index entries
+ for the collection. The collection schema remains intact.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `name` - The collection name to truncate
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `name` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult truncate_collection(uintptr_t node_ptr,
+                                     const char *identity_did,
+                                     const char *name);
+
+/*
  Add a view to the database.
 
  Creates a new Defra View from a GQL query and SDL schema.
@@ -679,27 +726,6 @@ struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
  `config` must be a valid null-terminated UTF-8 string.
  */
 struct FfiResult set_migration(uintptr_t node_ptr, const char *identity_did, const char *config);
-
-/*
- Truncate a collection (delete all documents, preserve schema).
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `name` - The collection name to truncate
-
- # Returns
-
- - Status 0: Success (value is "{}")
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `name` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult truncate_collection(uintptr_t node_ptr,
-                                     const char *identity_did,
-                                     const char *name);
 
 /*
  Create document(s) in a collection.
@@ -1163,20 +1189,16 @@ struct FfiResult p2p_get_all_documents(uintptr_t node_ptr, const char *identity_
 /*
  Sync specific documents from peers.
 
- This implements the DocSync pull-based protocol: sends requests to connected peers
- asking for the heads of specific documents, then fetches the missing DAG blocks
- via Bitswap and merges them.
-
  # Arguments
 
  * `node_ptr` - Handle to the node
- * `identity_did` - Identity DID for NAC permission check
+ * `identity_did` - DID of the requesting identity (for NAC)
  * `collection_name` - Name of the collection containing the documents
  * `doc_ids_json` - JSON array of document IDs to sync
 
  # Safety
 
- All string pointers must be valid null-terminated UTF-8 strings.
+ All string parameters must be valid null-terminated UTF-8 strings or null.
  */
 struct FfiResult p2p_sync_documents(uintptr_t node_ptr,
                                     const char *identity_did,
