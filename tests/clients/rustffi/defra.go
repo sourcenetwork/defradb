@@ -17,7 +17,7 @@ package rustffi
 
 /*
 #cgo CFLAGS: -I${SRCDIR}
-#cgo LDFLAGS: -lffi -ldl -lpthread -lm
+#cgo LDFLAGS: -L${SRCDIR} -ldefra_ffi -Wl,-rpath,${SRCDIR}
 
 #include "defra.h"
 #include <stdlib.h>

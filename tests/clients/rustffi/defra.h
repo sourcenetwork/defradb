@@ -451,7 +451,7 @@ struct FfiResult basic_import(uintptr_t node_ptr, const char *filepath);
  * `key_type` - Key type string (e.g., "ed25519", "secp256k1")
  * `public_key` - Hex-encoded public key string
  * `block_cid` - CID string of the block to verify
- * `identity_did` - DID of the caller for NAC permission check
+ * `identity_did` - Optional DID of the caller (unused, reserved for future ACP checks)
 
  # Safety
 
@@ -913,6 +913,50 @@ struct FfiResult get_indexes(uintptr_t node_ptr,
  ```
  */
 struct FfiResult get_all_indexes(uintptr_t node_ptr, const char *identity_did);
+
+/*
+ Create an encrypted index on a collection (stub - not implemented).
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult create_encrypted_index(uintptr_t node_ptr,
+                                        const char *identity_did,
+                                        const char *collection_name,
+                                        const char *field_name);
+
+/*
+ Delete an encrypted index from a collection (stub - not implemented).
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult delete_encrypted_index(uintptr_t node_ptr,
+                                        const char *identity_did,
+                                        const char *collection_name,
+                                        const char *field_name);
+
+/*
+ List encrypted indexes for a collection (stub - not implemented).
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult list_encrypted_indexes(uintptr_t node_ptr,
+                                        const char *identity_did,
+                                        const char *collection_name);
+
+/*
+ List all encrypted indexes across all collections (stub - not implemented).
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult list_all_encrypted_indexes(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Add a lens transform to the database.
