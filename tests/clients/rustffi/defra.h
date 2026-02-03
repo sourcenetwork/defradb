@@ -1253,6 +1253,13 @@ struct FfiResult p2p_sync_documents(uintptr_t node_ptr,
                                     const char *collection_name,
                                     const char *doc_ids_json);
 
+/*
+ Sync a branchable collection via P2P (stub).
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings.
+ */
 struct FfiResult p2p_sync_branchable_collection(uintptr_t node_ptr,
                                                 const char *identity_did,
                                                 const char *collection_id);
