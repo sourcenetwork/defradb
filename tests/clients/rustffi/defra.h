@@ -1268,6 +1268,25 @@ struct FfiResult p2p_sync_branchable_collection(uintptr_t node_ptr,
                                                 const char *collection_id);
 
 /*
+ Sync specific collection versions from peers.
+
+ Fetches and merges the specified collection versions from connected peers.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `identity_did` - DID of the requestor for access control
+ * `version_ids_json` - JSON array of CID strings to sync, e.g. `["bafyrei...", "bafyrei..."]`
+
+ # Safety
+
+ `identity_did` and `version_ids_json` must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult p2p_sync_collection_versions(uintptr_t node_ptr,
+                                              const char *identity_did,
+                                              const char *version_ids_json);
+
+/*
  Execute a GraphQL query or mutation.
 
  Returns a JSON object with the query result in GraphQL format:
@@ -1397,6 +1416,47 @@ struct PollSubscriptionResult poll_subscription(uintptr_t subscription_handle);
  After this call, the subscription handle is no longer valid.
  */
 struct CloseSubscriptionResult close_subscription(uintptr_t subscription_handle);
+
+/*
+ Poll a GraphQL subscription for the next event (non-blocking).
+
+ This is an alternative API that accepts a string subscription ID instead of a numeric handle.
+ The ID is parsed as a decimal number.
+
+ # Arguments
+
+ * `subscription_id` - String subscription ID (decimal number)
+
+ # Returns
+
+ Same as `poll_subscription`.
+
+ # Safety
+
+ The subscription_id must be a valid null-terminated UTF-8 string.
+ */
+struct PollSubscriptionResult poll_graphql_subscription(const char *subscription_id);
+
+/*
+ Close a GraphQL subscription and release resources.
+
+ This is an alternative API that accepts a string subscription ID instead of a numeric handle.
+ The ID is parsed as a decimal number.
+
+ # Arguments
+
+ * `subscription_id` - String subscription ID (decimal number)
+
+ # Returns
+
+ Same as `close_subscription`.
+
+ # Safety
+
+ The subscription_id must be a valid null-terminated UTF-8 string.
+ After this call, the subscription ID is no longer valid.
+ */
+struct CloseSubscriptionResult close_graphql_subscription(const char *subscription_id);
 
 /*
  Begin a new transaction.
