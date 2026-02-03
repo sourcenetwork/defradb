@@ -18,7 +18,7 @@ create single document:
   defradb client p2p document create bae123
 
 create multiple documents:  
-  defradb client p2p document add bae123,bae456
+  defradb client p2p document create bae123,bae456
 ```
 
 ### Options
