@@ -1122,7 +1122,8 @@ struct FfiResult p2p_set_replicator(uintptr_t node_ptr,
  */
 struct FfiResult p2p_delete_replicator(uintptr_t node_ptr,
                                        const char *identity_did,
-                                       const char *peer_id_str);
+                                       const char *peer_id_str,
+                                       const char *collections_json);
 
 /*
  Get all replicators.
@@ -1252,6 +1253,19 @@ struct FfiResult p2p_sync_documents(uintptr_t node_ptr,
                                     const char *identity_did,
                                     const char *collection_name,
                                     const char *doc_ids_json);
+
+/*
+ Sync a branchable collection from peers.
+
+ Subscribes to the collection's GossipSub topic for P2P replication.
+
+ # Safety
+
+ `identity_did` and `collection_id` must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult p2p_sync_branchable_collection(uintptr_t node_ptr,
+                                                const char *identity_did,
+                                                const char *collection_id);
 
 /*
  Execute a GraphQL query or mutation.

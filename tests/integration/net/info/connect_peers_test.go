@@ -32,6 +32,7 @@ func TestNetInfoPeers_NoP2PConfigured(t *testing.T) {
 				state.CLIClientType,
 				state.GoClientType,
 				state.HTTPClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

@@ -98,10 +98,17 @@ type Wrapper struct {
 // This creates a standalone Rust FFI node (not wrapping a Go node).
 // If nodeIdentity is provided and enableSigning is true, the identity's private key
 // will be passed to the Rust FFI for block signing.
-func NewWrapper(enableSigning bool, nodeIdentity identity.Identity) (*Wrapper, error) {
+// If dbPath is non-empty, the node uses file-based (redb) storage at that path.
+func NewWrapper(enableSigning bool, nodeIdentity identity.Identity, dbPath string) (*Wrapper, error) {
 	Init() // Initialize FFI library
 
-	opts := NodeOptions{InMemory: true, EnableSigning: enableSigning}
+	opts := NodeOptions{EnableSigning: enableSigning}
+	if dbPath != "" {
+		opts.DBPath = dbPath
+		opts.InMemory = false
+	} else {
+		opts.InMemory = true
+	}
 
 	// If signing is enabled and we have a full identity with a private key, use it
 	if enableSigning && nodeIdentity != nil {
@@ -127,10 +134,17 @@ func NewWrapper(enableSigning bool, nodeIdentity identity.Identity) (*Wrapper, e
 // listenAddr should be a multiaddr like "/ip4/127.0.0.1/tcp/0"
 // If nodeIdentity is provided and enableSigning is true, the identity's private key
 // will be passed to the Rust FFI for block signing.
-func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity identity.Identity) (*Wrapper, error) {
+// If dbPath is non-empty, the node uses file-based (redb) storage at that path.
+func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity identity.Identity, dbPath string) (*Wrapper, error) {
 	Init() // Initialize FFI library
 
-	opts := NodeOptions{InMemory: true, EnableSigning: enableSigning}
+	opts := NodeOptions{EnableSigning: enableSigning}
+	if dbPath != "" {
+		opts.DBPath = dbPath
+		opts.InMemory = false
+	} else {
+		opts.InMemory = true
+	}
 
 	// If signing is enabled and we have a full identity with a private key, use it
 	if enableSigning && nodeIdentity != nil {
@@ -302,15 +316,19 @@ func groupPatchByCollection(patch string) ([]struct{ Name, Patch string }, error
 func (w *Wrapper) Close() {
 	if w.stopSEForwarder != nil {
 		close(w.stopSEForwarder)
+		w.stopSEForwarder = nil
 	}
 	if w.stopMergePoller != nil {
 		close(w.stopMergePoller)
+		w.stopMergePoller = nil
 	}
 	if w.node != nil {
 		w.node.Close()
+		w.node = nil
 	}
 	if w.events != nil {
 		w.events.Close()
+		w.events = nil
 	}
 }
 
@@ -514,12 +532,6 @@ func (w *Wrapper) GetCollections(
 		if err := json.Unmarshal([]byte(versionJSON), &version); err != nil {
 			return nil, fmt.Errorf("failed to parse collection version: %w", err)
 		}
-		// Apply IncludeInactive filter
-		if !options.IncludeInactive.HasValue() || !options.IncludeInactive.Value() {
-			if !version.IsActive {
-				return []client.Collection{}, nil
-			}
-		}
 		return []client.Collection{&CollectionWrapper{wrapper: w, version: version}}, nil
 	}
 
@@ -545,6 +557,11 @@ func (w *Wrapper) GetCollections(
 		}
 		if options.CollectionID.HasValue() && v.CollectionID != options.CollectionID.Value() {
 			continue
+		}
+		if options.CollectionSetID.HasValue() {
+			if !v.CollectionSet.HasValue() || v.CollectionSet.Value().CollectionSetID != options.CollectionSetID.Value() {
+				continue
+			}
 		}
 		filtered = append(filtered, v)
 	}
@@ -1011,17 +1028,21 @@ func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collect
 		identityDID = id.Value().DID()
 	}
 
-	// Use the first address as the peer address
-	return w.node.P2PSetReplicator(identityDID, addresses[0], collections)
+	for _, addr := range addresses {
+		if err := w.node.P2PSetReplicator(identityDID, addr, collections); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
+func (w *Wrapper) DeleteReplicator(ctx context.Context, peerID string, collections ...string) error {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
 	}
 
-	return w.node.P2PDeleteReplicator(identityDID, id)
+	return w.node.P2PDeleteReplicator(identityDID, peerID, collections)
 }
 
 func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {

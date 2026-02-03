@@ -1629,7 +1629,9 @@ func (n *Node) P2PSetReplicator(identityDID string, peerAddr string, collections
 }
 
 // P2PDeleteReplicator removes a replicator by peer ID.
-func (n *Node) P2PDeleteReplicator(identityDID string, peerID string) error {
+// If collections is non-empty, only those collections are removed from the replicator.
+// If collections is empty, the entire replicator is deleted.
+func (n *Node) P2PDeleteReplicator(identityDID string, peerID string, collections []string) error {
 	var cIdentityDID *C.char
 	if identityDID != "" {
 		cIdentityDID = C.CString(identityDID)
@@ -1639,7 +1641,11 @@ func (n *Node) P2PDeleteReplicator(identityDID string, peerID string) error {
 	cPeerID := C.CString(peerID)
 	defer C.free(unsafe.Pointer(cPeerID))
 
-	result := C.p2p_delete_replicator(n.ptr, cIdentityDID, cPeerID)
+	collectionsJSON, _ := json.Marshal(collections)
+	cCollections := C.CString(string(collectionsJSON))
+	defer C.free(unsafe.Pointer(cCollections))
+
+	result := C.p2p_delete_replicator(n.ptr, cIdentityDID, cPeerID, cCollections)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
