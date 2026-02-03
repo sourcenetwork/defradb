@@ -212,10 +212,35 @@ type ErrorLocation struct {
 	Column int `json:"column"`
 }
 
+// ExecRequestResult contains the result of a GraphQL request.
+// For subscriptions, SubscriptionID will be set instead of Response.
+type ExecRequestResult struct {
+	// Response contains the JSON response for queries/mutations.
+	Response string
+	// SubscriptionID is set when the request is a subscription.
+	// Use PollGraphQLSubscription and CloseGraphQLSubscription to manage it.
+	SubscriptionID string
+	// IsSubscription indicates whether this is a subscription result.
+	IsSubscription bool
+}
+
 // ExecRequest executes a GraphQL query or mutation.
 // Returns the raw JSON response string.
 // identityDID is the DID of the caller for ACP permission checks (empty string for anonymous).
 func (n *Node) ExecRequest(identityDID string, query string, operationName string, variables string) (string, error) {
+	result, err := n.ExecRequestFull(identityDID, query, operationName, variables)
+	if err != nil {
+		return "", err
+	}
+	if result.IsSubscription {
+		return "", fmt.Errorf("ffi: exec_request returned subscription, use ExecRequestFull for subscription support")
+	}
+	return result.Response, nil
+}
+
+// ExecRequestFull executes a GraphQL query, mutation, or subscription.
+// Returns an ExecRequestResult that indicates whether the result is a subscription.
+func (n *Node) ExecRequestFull(identityDID string, query string, operationName string, variables string) (*ExecRequestResult, error) {
 	var cIdentityDID *C.char
 	if identityDID != "" {
 		cIdentityDID = C.CString(identityDID)
@@ -239,15 +264,83 @@ func (n *Node) ExecRequest(identityDID string, query string, operationName strin
 
 	result := C.exec_request(n.ptr, cIdentityDID, cQuery, cOpName, cVars)
 
+	switch result.status {
+	case 0: // Success - query/mutation result
+		value := C.GoString(result.value)
+		C.defra_free_string(result.value)
+		return &ExecRequestResult{Response: value}, nil
+
+	case 1: // Error
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: exec_request failed: %s", err)
+
+	case 2: // Subscription
+		subID := C.GoString(result.value)
+		C.defra_free_string(result.value)
+		return &ExecRequestResult{
+			SubscriptionID: subID,
+			IsSubscription: true,
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("ffi: exec_request returned unknown status: %d", result.status)
+	}
+}
+
+// GraphQLSubscriptionResult represents a result from polling a GraphQL subscription.
+type GraphQLSubscriptionResult struct {
+	// HasResult indicates if there's a new result available.
+	HasResult bool
+	// Result contains the JSON result when HasResult is true.
+	Result string
+	// IsClosed indicates if the subscription has been closed.
+	IsClosed bool
+}
+
+// PollGraphQLSubscription polls a GraphQL subscription for new results.
+func PollGraphQLSubscription(subscriptionID string) (*GraphQLSubscriptionResult, error) {
+	cSubID := C.CString(subscriptionID)
+	defer C.free(unsafe.Pointer(cSubID))
+
+	result := C.poll_graphql_subscription(cSubID)
+
+	switch result.status {
+	case 0: // Result available
+		value := C.GoString(result.value)
+		C.defra_free_string(result.value)
+		return &GraphQLSubscriptionResult{HasResult: true, Result: value}, nil
+
+	case 1: // Error
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return nil, fmt.Errorf("ffi: poll_graphql_subscription failed: %s", err)
+
+	case 2: // No result available
+		return &GraphQLSubscriptionResult{HasResult: false}, nil
+
+	case 3: // Subscription closed
+		return &GraphQLSubscriptionResult{IsClosed: true}, nil
+
+	default:
+		return nil, fmt.Errorf("ffi: poll_graphql_subscription returned unknown status: %d", result.status)
+	}
+}
+
+// CloseGraphQLSubscription closes a GraphQL subscription and releases resources.
+func CloseGraphQLSubscription(subscriptionID string) error {
+	cSubID := C.CString(subscriptionID)
+	defer C.free(unsafe.Pointer(cSubID))
+
+	result := C.close_graphql_subscription(cSubID)
+
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return "", fmt.Errorf("ffi: exec_request failed: %s", err)
+		return fmt.Errorf("ffi: close_graphql_subscription failed: %s", err)
 	}
 
-	value := C.GoString(result.value)
-	C.defra_free_string(result.value)
-	return value, nil
+	return nil
 }
 
 // Query executes a GraphQL query and returns a parsed result.

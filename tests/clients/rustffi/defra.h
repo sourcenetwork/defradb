@@ -818,7 +818,7 @@ struct FfiResult parse_duration(const char *duration_str);
 struct FfiResult parse_string_array(const char *input);
 
 /*
- Create a new encrypted index on a collection field.
+ Create an encrypted index on a collection.
 
  # Safety
 
@@ -846,7 +846,7 @@ struct FfiResult delete_encrypted_index(uintptr_t node_ptr,
 
  # Safety
 
- `collection_name` must be a valid null-terminated UTF-8 string.
+ All string pointers must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult list_encrypted_indexes(uintptr_t node_ptr,
                                         const char *identity_did,
@@ -854,6 +854,10 @@ struct FfiResult list_encrypted_indexes(uintptr_t node_ptr,
 
 /*
  List all encrypted indexes across all collections.
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult list_all_encrypted_indexes(uintptr_t node_ptr, const char *identity_did);
 
