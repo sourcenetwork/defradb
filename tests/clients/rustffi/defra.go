@@ -1899,6 +1899,31 @@ func (n *Node) P2PSyncDocuments(identityDID string, collectionName string, docID
 	return nil
 }
 
+// P2PSyncBranchableCollection syncs a branchable collection from peers.
+func (n *Node) P2PSyncBranchableCollection(identityDID string, collectionID string) error {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	cCollectionID := C.CString(collectionID)
+	defer C.free(unsafe.Pointer(cCollectionID))
+
+	result := C.p2p_sync_branchable_collection(n.ptr, cIdentityDID, cCollectionID)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_sync_branchable_collection failed: %s", errMsg)
+	}
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
 // BasicExportDB exports the database to a JSON file.
 func (n *Node) BasicExportDB(configJSON string) error {
 	cConfig := C.CString(configJSON)
