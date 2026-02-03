@@ -150,7 +150,7 @@ func setupNode(
 		return nil, err
 	}
 
-	c, err := setupClient(s, nodeObj, identity, nodeIndex)
+	c, err := setupClient(s, nodeObj, identity, nodeIndex, testCase.EnableSigning)
 
 	resetStateContext(s)
 	require.Nil(s.T, err)

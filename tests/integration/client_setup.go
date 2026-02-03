@@ -56,6 +56,7 @@ func setupClient(
 	nodeObj *node.Node,
 	identity immutable.Option[acpIdentity.Identity],
 	nodeIndex int,
+	enableSigning bool,
 ) (clients.Client, error) {
 	switch s.ClientType {
 	case state.HTTPClientType:
@@ -71,7 +72,7 @@ func setupClient(
 		return cbindings.NewCWrapper(nodeObj)
 
 	case state.RustFFIClientType:
-		return setupRustFFIClient(s, nodeObj, identity, nodeIndex)
+		return setupRustFFIClient(s, nodeObj, identity, nodeIndex, enableSigning)
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)
@@ -86,15 +87,23 @@ func setupRustFFIClient(
 	nodeObj *node.Node,
 	identity immutable.Option[acpIdentity.Identity],
 	nodeIndex int,
+	enableSigning bool,
 ) (*rustffi.Wrapper, error) {
 	var wrapper *rustffi.Wrapper
 	var err error
 
+	// Get the node identity for this node index - this is the same identity
+	// used for signing in the Go node (set via db.WithNodeIdentity)
+	var nodeIdentity acpIdentity.Identity
+	if enableSigning {
+		nodeIdentity = state.GetIdentity(s, NodeIdentity(nodeIndex))
+	}
+
 	if s.IsNetworkEnabled {
 		listenAddr := "/ip4/" + getIPString() + "/tcp/0"
-		wrapper, err = rustffi.NewWrapperWithP2P(listenAddr)
+		wrapper, err = rustffi.NewWrapperWithP2P(listenAddr, enableSigning, nodeIdentity)
 	} else {
-		wrapper, err = rustffi.NewWrapper()
+		wrapper, err = rustffi.NewWrapper(enableSigning, nodeIdentity)
 	}
 	if err != nil {
 		return nil, err

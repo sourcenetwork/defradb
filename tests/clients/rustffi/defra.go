@@ -71,6 +71,20 @@ type NodeOptions struct {
 
 	// InMemory forces in-memory storage even if DBPath is set.
 	InMemory bool
+
+	// EnableSigning enables block signing on the node.
+	// When true, the node uses a signing key for block signatures.
+	// If SigningPrivateKey is provided, that key is used.
+	// Otherwise, a random secp256k1 key pair is generated.
+	EnableSigning bool
+
+	// SigningKeyType specifies the type of signing key ("secp256k1" or "ed25519").
+	// Only used when SigningPrivateKey is provided. Defaults to "secp256k1".
+	SigningKeyType string
+
+	// SigningPrivateKey is the raw private key bytes for signing.
+	// If nil, the node will auto-generate a key when EnableSigning is true.
+	SigningPrivateKey []byte
 }
 
 // NewNode creates a new DefraDB node.
@@ -88,6 +102,24 @@ func NewNode(opts NodeOptions) (*Node, error) {
 		cOpts.in_memory = 1
 	} else {
 		cOpts.in_memory = 0
+	}
+
+	if opts.EnableSigning {
+		cOpts.enable_signing = 1
+	}
+
+	// Pass signing key if provided
+	if len(opts.SigningPrivateKey) > 0 {
+		cOpts.signing_private_key = (*C.uint8_t)(unsafe.Pointer(&opts.SigningPrivateKey[0]))
+		cOpts.signing_private_key_len = C.uintptr_t(len(opts.SigningPrivateKey))
+
+		keyType := opts.SigningKeyType
+		if keyType == "" {
+			keyType = "secp256k1"
+		}
+		cKeyType := C.CString(keyType)
+		defer C.free(unsafe.Pointer(cKeyType))
+		cOpts.signing_key_type = cKeyType
 	}
 
 	result := C.new_node(cOpts)
@@ -1328,6 +1360,24 @@ func NewNodeWithP2P(opts NodeOptions, listenAddr string) (*Node, error) {
 		cOpts.in_memory = 1
 	} else {
 		cOpts.in_memory = 0
+	}
+
+	if opts.EnableSigning {
+		cOpts.enable_signing = 1
+	}
+
+	// Pass signing key if provided
+	if len(opts.SigningPrivateKey) > 0 {
+		cOpts.signing_private_key = (*C.uint8_t)(unsafe.Pointer(&opts.SigningPrivateKey[0]))
+		cOpts.signing_private_key_len = C.uintptr_t(len(opts.SigningPrivateKey))
+
+		keyType := opts.SigningKeyType
+		if keyType == "" {
+			keyType = "secp256k1"
+		}
+		cKeyType := C.CString(keyType)
+		defer C.free(unsafe.Pointer(cKeyType))
+		cOpts.signing_key_type = cKeyType
 	}
 
 	cListenAddr := C.CString(listenAddr)
