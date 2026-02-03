@@ -78,6 +78,37 @@ func (s *pubSubService) GetKeys(ctx context.Context, cids ...cidlink.Link) (*enc
 	return res, nil
 }
 
+// TryGetLocalKey attempts to retrieve an encryption block from local storage.
+// If hint is provided (non-nil and correct length), it verifies that the local key
+// matches the hint before returning. This prevents returning stale or incorrect keys.
+// Returns nil if the key is not found locally or if the hint doesn't match.
+func (s *pubSubService) TryGetLocalKey(
+	ctx context.Context,
+	encryptionCID cidlink.Link,
+	hint []byte,
+) (*coreblock.Encryption, error) {
+	// Attempt to get the encryption block from local storage
+	encBlock, err := s.encStore.get(ctx, encryptionCID.Bytes())
+	if err != nil {
+		// Not found locally or error - return nil, caller should request from peers
+		return nil, nil
+	}
+	if encBlock == nil {
+		return nil, nil
+	}
+
+	// If a hint is provided, verify it matches the encryption block
+	// This is a security measure to ensure we have the correct key
+	if len(hint) == coreblock.EncryptionHintLength {
+		if !encBlock.MatchesHint(hint) {
+			// Hint mismatch - local key is stale or incorrect
+			return nil, nil
+		}
+	}
+
+	return encBlock, nil
+}
+
 // NewPubSubService creates a new instance of the KMS service that is connected to the given PubSubServer,
 // event bus and encryption storage.
 //

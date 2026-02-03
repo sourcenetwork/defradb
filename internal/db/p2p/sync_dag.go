@@ -86,11 +86,27 @@ func (p *P2P) loadBlockLinks(ctx context.Context, linkSys *linking.LinkSystem, b
 
 	var encResults *encryption.Results
 	if block.IsEncrypted() {
-		results, err := p.kms.GetKeys(ctx, *block.Encryption)
-		if err != nil {
-			return err
+		// Optimization: Try to get the encryption key from local storage first.
+		// This avoids expensive network requests when we already have the key.
+		// The encryption hint is used to verify we have the correct key.
+		if p.kms != nil {
+			localKey, err := p.kms.TryGetLocalKey(ctx, *block.Encryption, block.EncryptionHint)
+			if err != nil {
+				return err
+			}
+			if localKey != nil {
+				// We have the correct key locally - no need for network request
+				// The key is already in our store, so decryption will work
+				encResults = nil
+			} else {
+				// Key not found locally or hint mismatch - request from peers
+				results, err := p.kms.GetKeys(ctx, *block.Encryption)
+				if err != nil {
+					return err
+				}
+				encResults = results
+			}
 		}
-		encResults = results
 	}
 
 	for _, lnk := range block.AllLinks() {

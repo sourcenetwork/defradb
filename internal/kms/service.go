@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/corelog"
 
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -38,4 +39,10 @@ type Service interface {
 	// Blocks are fetched asynchronously, so the method returns an [encryption.Results] object
 	// that can be used to wait for the results.
 	GetKeys(ctx context.Context, cids ...cidlink.Link) (*encryption.Results, error)
+
+	// TryGetLocalKey attempts to retrieve an encryption block from local storage.
+	// If hint is provided, it verifies that the local key matches the hint before returning.
+	// Returns the encryption block if found locally and hint matches (if provided), nil otherwise.
+	// This is a fast local-only operation that doesn't make network requests.
+	TryGetLocalKey(ctx context.Context, encryptionCID cidlink.Link, hint []byte) (*coreblock.Encryption, error)
 }
