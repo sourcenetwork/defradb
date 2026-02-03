@@ -726,8 +726,6 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_RecursiveExplain(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-// Tests that recursive explain aggregation correctly sums metrics from nested joins.
-// docFetches and indexFetches are aggregated across the Author->Book->Publisher chain.
 func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_RecursiveExplain(t *testing.T) {
 	req := `query {
 		Author {
