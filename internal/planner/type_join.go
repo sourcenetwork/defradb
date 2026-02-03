@@ -529,6 +529,9 @@ func (join *invertibleTypeJoin) Prefixes(prefixes []keys.Walkable) {
 
 func (join *invertibleTypeJoin) Source() planNode { return join.parentSide.plan }
 
+func (join *invertibleTypeJoin) parentPlan() planNode { return join.parentSide.plan }
+func (join *invertibleTypeJoin) childPlan() planNode  { return join.childSide.plan }
+
 type primaryObjectsRetriever struct {
 	relIDFieldDef client.CollectionFieldDescription
 	primarySide   *joinSide
