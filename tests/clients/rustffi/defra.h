@@ -1254,17 +1254,6 @@ struct FfiResult p2p_sync_documents(uintptr_t node_ptr,
                                     const char *doc_ids_json);
 
 /*
- Sync a branchable collection via P2P (stub).
-
- # Safety
-
- All string pointers must be valid null-terminated UTF-8 strings.
- */
-struct FfiResult p2p_sync_branchable_collection(uintptr_t node_ptr,
-                                                const char *identity_did,
-                                                const char *collection_id);
-
-/*
  Execute a GraphQL query or mutation.
 
  Returns a JSON object with the query result in GraphQL format:

@@ -514,7 +514,13 @@ ifndef RUST_LIB
 	$(error RUST_LIB is required. Usage: make test:ffi RUST_LIB=/path/to/defradb.rs FFI_PKG=query/simple)
 endif
 	@echo "=== Generating defra.h from $(RUST_LIB) ==="
+	@echo "=== Generating defra.h from $(RUST_LIB) ==="
 	@cd $(RUST_LIB) && cbindgen --config crates/ffi/cbindgen.toml --crate ffi --output $(CURDIR)/tests/clients/rustffi/defra.h 2>&1
+	@echo "=== Copying Rust FFI library ==="
+	@cp -f $(RUST_LIB)/target/release/libffi.dylib $(CURDIR)/tests/clients/rustffi/libdefra_ffi.dylib 2>/dev/null && \
+		install_name_tool -id @rpath/libdefra_ffi.dylib $(CURDIR)/tests/clients/rustffi/libdefra_ffi.dylib 2>/dev/null || \
+		cp -f $(RUST_LIB)/target/release/libffi.so $(CURDIR)/tests/clients/rustffi/libdefra_ffi.so 2>/dev/null || \
+		echo "WARNING: Could not copy Rust FFI library (run: cargo build --release -p ffi)"
 	@mkdir -p $(FFI_REPORT_DIR)
 	@rust_lib_name=$$(basename $(RUST_LIB)); \
 	rust_branch=$$(cd $(RUST_LIB) && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown"); \
@@ -530,7 +536,6 @@ endif
 		rm -rf $$cache_dir; \
 		echo "Running tests..."; \
 		CGO_ENABLED=1 \
-		CGO_LDFLAGS="-L$(RUST_LIB)/target/release -lffi -ldl -lpthread -lm" \
 		DEFRA_CLIENT_RUST_FFI=true \
 		GOCACHE=$$cache_dir \
 		go test ./tests/integration/$$pkg/... -v -count=1 -timeout $(FFI_TIMEOUT) 2>&1 | tee $$report_file; \
