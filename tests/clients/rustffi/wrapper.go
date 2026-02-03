@@ -534,8 +534,12 @@ func (w *Wrapper) GetCollections(
 	}
 
 	// Apply filters
+	includeInactive := options.IncludeInactive.HasValue() && options.IncludeInactive.Value()
 	var filtered []client.CollectionVersion
 	for _, v := range versions {
+		if !includeInactive && !v.IsActive {
+			continue
+		}
 		if options.Name.HasValue() && v.Name != options.Name.Value() {
 			continue
 		}
