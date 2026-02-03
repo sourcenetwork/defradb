@@ -915,46 +915,50 @@ struct FfiResult get_indexes(uintptr_t node_ptr,
 struct FfiResult get_all_indexes(uintptr_t node_ptr, const char *identity_did);
 
 /*
- Create an encrypted index on a collection (stub - not implemented).
+ Create an encrypted index on a collection field.
 
- # Safety
+ # Stub Implementation
 
- All string pointers must be valid null-terminated UTF-8 strings.
+ This is a stub that returns "not implemented" error.
+ Full implementation is on the searchable-encryption branch.
  */
 struct FfiResult create_encrypted_index(uintptr_t node_ptr,
                                         const char *identity_did,
                                         const char *collection_name,
-                                        const char *field_name);
+                                        const char *index_json);
 
 /*
- Delete an encrypted index from a collection (stub - not implemented).
+ Delete an encrypted index from a collection.
 
- # Safety
+ # Stub Implementation
 
- All string pointers must be valid null-terminated UTF-8 strings.
+ This is a stub that returns "not implemented" error.
+ Full implementation is on the searchable-encryption branch.
  */
 struct FfiResult delete_encrypted_index(uintptr_t node_ptr,
                                         const char *identity_did,
                                         const char *collection_name,
-                                        const char *field_name);
+                                        const char *index_name);
 
 /*
- List encrypted indexes for a collection (stub - not implemented).
+ List encrypted indexes for a specific collection.
 
- # Safety
+ # Stub Implementation
 
- All string pointers must be valid null-terminated UTF-8 strings.
+ This is a stub that returns an empty array.
+ Full implementation is on the searchable-encryption branch.
  */
 struct FfiResult list_encrypted_indexes(uintptr_t node_ptr,
                                         const char *identity_did,
                                         const char *collection_name);
 
 /*
- List all encrypted indexes across all collections (stub - not implemented).
+ List all encrypted indexes across all collections.
 
- # Safety
+ # Stub Implementation
 
- All string pointers must be valid null-terminated UTF-8 strings.
+ This is a stub that returns an empty object.
+ Full implementation is on the searchable-encryption branch.
  */
 struct FfiResult list_all_encrypted_indexes(uintptr_t node_ptr, const char *identity_did);
 
