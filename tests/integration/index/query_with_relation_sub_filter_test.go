@@ -713,7 +713,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Level-specific assertions: root (User) has no index, subType (Device) has all 4
+				// root (User) has no index, subType (Device) has all 4
 				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
 					WithLevel("subType").WithIndexFetches(4),
 			},
@@ -800,7 +800,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Level-specific: root (User) has no index, subType (Device) has 2 (manufacturer not indexed)
+				// root (User) has no index, subType (Device) has 2 (manufacturer not indexed)
 				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
 					WithLevel("subType").WithIndexFetches(2),
 			},
@@ -897,7 +897,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Level-specific: root (User) has no index, subType (Device) has all 5
+				// root (User) has no index, subType (Device) has all 5
 				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
 					WithLevel("subType").WithIndexFetches(5),
 			},
