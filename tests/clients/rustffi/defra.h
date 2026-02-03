@@ -80,17 +80,17 @@ typedef struct NodeInitOptions {
    */
   int enable_signing;
   /*
-   Signing key type (e.g., "secp256k1"). Null for default.
-   */
-  const char *signing_key_type;
-  /*
-   Optional: raw private key bytes for signing. Null to auto-generate.
+   Signing private key bytes (null if not provided).
    */
   const uint8_t *signing_private_key;
   /*
-   Length of signing_private_key in bytes. 0 if null.
+   Length of the signing private key.
    */
   uintptr_t signing_private_key_len;
+  /*
+   Signing key type (e.g., "secp256k1", null for default).
+   */
+  const char *signing_key_type;
 } NodeInitOptions;
 
 /*
@@ -604,30 +604,6 @@ struct FfiResult get_collection_by_version_id(uintptr_t node_ptr,
                                               const char *version_id);
 
 /*
- Truncate a collection: delete all documents while preserving the schema.
-
- This removes all document data, CRDT heads, blocks, and index entries
- for the collection. The collection schema remains intact.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `name` - The collection name to truncate
-
- # Returns
-
- - Status 0: Success (value is "{}")
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `name` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult truncate_collection(uintptr_t node_ptr,
-                                     const char *identity_did,
-                                     const char *name);
-
-/*
  Add a view to the database.
 
  Creates a new Defra View from a GQL query and SDL schema.
@@ -703,6 +679,27 @@ struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
  `config` must be a valid null-terminated UTF-8 string.
  */
 struct FfiResult set_migration(uintptr_t node_ptr, const char *identity_did, const char *config);
+
+/*
+ Truncate a collection (delete all documents, preserve schema).
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `name` - The collection name to truncate
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `name` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult truncate_collection(uintptr_t node_ptr,
+                                     const char *identity_did,
+                                     const char *name);
 
 /*
  Create document(s) in a collection.
@@ -1164,14 +1161,22 @@ struct FfiResult p2p_remove_documents(uintptr_t node_ptr,
 struct FfiResult p2p_get_all_documents(uintptr_t node_ptr, const char *identity_did);
 
 /*
- Trigger document synchronization for specified documents.
+ Sync specific documents from peers.
 
- This is a stub implementation that returns success without doing actual sync.
- Full P2P sync is handled by the replication system.
+ This implements the DocSync pull-based protocol: sends requests to connected peers
+ asking for the heads of specific documents, then fetches the missing DAG blocks
+ via Bitswap and merges them.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `identity_did` - Identity DID for NAC permission check
+ * `collection_name` - Name of the collection containing the documents
+ * `doc_ids_json` - JSON array of document IDs to sync
 
  # Safety
 
- All string parameters must be valid null-terminated UTF-8 strings or null.
+ All string pointers must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult p2p_sync_documents(uintptr_t node_ptr,
                                     const char *identity_did,
