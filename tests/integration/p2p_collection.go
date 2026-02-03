@@ -27,11 +27,11 @@ const (
 	NonExistentCollectionSchemaRoot string = "NonExistentCollectionID"
 )
 
-// SubscribeToCollection sets up a subscription on the given node to the given collection.
+// CreateCollectionSubscription sets up a subscription on the given node to the given collection.
 //
 // Changes made to subscribed collections in peers connected to this node will be synced from
 // them to this node.
-type SubscribeToCollection struct {
+type CreateCollectionSubscription struct {
 	// NodeID is the node ID (index) of the node in which to activate the subscription.
 	//
 	// Changes made to subscribed collections in peers connected to this node will be synced from
@@ -55,9 +55,9 @@ type SubscribeToCollection struct {
 	ExpectedError string
 }
 
-// UnsubscribeToCollection removes the given collections from the set of active subscriptions on
+// DeleteCollectionSubscription removes the given collections from the set of active subscriptions on
 // the given node.
-type UnsubscribeToCollection struct {
+type DeleteCollectionSubscription struct {
 	// NodeID is the node ID (index) of the node in which to remove the subscription.
 	NodeID int
 
@@ -78,9 +78,9 @@ type UnsubscribeToCollection struct {
 	ExpectedError string
 }
 
-// GetAllP2PCollections gets the active subscriptions for the given node and compares them against the
+// ListP2PCollections gets the active subscriptions for the given node and compares them against the
 // expected results.
-type GetAllP2PCollections struct {
+type ListP2PCollections struct {
 	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
 	NodeID int
 
@@ -99,12 +99,12 @@ type GetAllP2PCollections struct {
 	ExpectedError string
 }
 
-// subscribeToCollection sets up a collection subscription on the given node/collection.
+// createCollectionSubscription sets up a collection subscription on the given node/collection.
 //
 // Any errors generated during this process will result in a test failure.
-func subscribeToCollection(
+func createCollectionSubscription(
 	s *state.State,
-	action SubscribeToCollection,
+	action CreateCollectionSubscription,
 ) {
 	node := s.Nodes[action.NodeID]
 
@@ -120,7 +120,7 @@ func subscribeToCollection(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.AddP2PCollections(ctx, collectionNames...)
+	err := node.CreateP2PCollections(ctx, collectionNames...)
 	if err == nil {
 		waitForSubscribeToCollectionEvent(s, action)
 	}
@@ -128,18 +128,18 @@ func subscribeToCollection(
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
-	// The `n.Peer.AddP2PCollections(colIDs)` call above is calling some asynchronous functions
+	// The `n.Peer.CreateP2PCollections(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
 	time.Sleep(100 * time.Millisecond)
 }
 
-// unsubscribeToCollection removes the given collections from subscriptions on the given nodes.
+// deleteCollectionSubscription removes the given collections from subscriptions on the given nodes.
 //
 // Any errors generated during this process will result in a test failure.
-func unsubscribeToCollection(
+func deleteCollectionSubscription(
 	s *state.State,
-	action UnsubscribeToCollection,
+	action DeleteCollectionSubscription,
 ) {
 	node := s.Nodes[action.NodeID]
 
@@ -155,7 +155,7 @@ func unsubscribeToCollection(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.RemoveP2PCollections(ctx, collectionNames...)
+	err := node.DeleteP2PCollections(ctx, collectionNames...)
 	if err == nil {
 		waitForUnsubscribeToCollectionEvent(s, action)
 	}
@@ -169,13 +169,13 @@ func unsubscribeToCollection(
 	time.Sleep(100 * time.Millisecond)
 }
 
-// getAllP2PCollections gets all the active peer subscriptions and compares them against the
+// listP2PCollections gets all the active peer subscriptions and compares them against the
 // given expected results.
 //
 // Any errors generated during this process will result in a test failure.
-func getAllP2PCollections(
+func listP2PCollections(
 	s *state.State,
-	action GetAllP2PCollections,
+	action ListP2PCollections,
 ) {
 	expectedCollections := []string{}
 	for _, collectionIndex := range action.ExpectedCollectionIDs {
@@ -185,7 +185,7 @@ func getAllP2PCollections(
 
 	node := s.Nodes[action.NodeID]
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	cols, err := node.GetAllP2PCollections(ctx)
+	cols, err := node.ListP2PCollections(ctx)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

@@ -70,6 +70,16 @@ type CreateDoc struct {
 	// String can be a partial, and the test will pass if an error is returned that
 	// contains this string.
 	ExpectedError string
+
+	// If this property true, then the action will not wait for the event(s) that it triggers
+	// to be broadcasted.
+	//
+	// This was introduced as the function used to wait for events currently assumes that a single
+	// action will be executed at any given moment.  This is no longer true for all tests.
+	//
+	// Setting this property to true whilst testing P2P functionality will probably result in a
+	// flaky test.
+	DoNotWaitForEvent bool
 }
 
 var _ Action = (*CreateDoc)(nil)
@@ -117,18 +127,20 @@ func (a *CreateDoc) Execute() {
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 
+	a.s.DocIDsLock.Lock()
 	if a.CollectionID >= len(a.s.DocIDs) {
 		// Expand the slice if required, so that the document can be accessed by collection index
 		a.s.DocIDs = append(a.s.DocIDs, make([][]client.DocID, a.CollectionID-len(a.s.DocIDs)+1)...)
 	}
 	a.s.DocIDs[a.CollectionID] = append(a.s.DocIDs[a.CollectionID], docIDs...)
+	a.s.DocIDsLock.Unlock()
 
 	docIDMap := make(map[string]struct{})
 	for _, docID := range docIDs {
 		docIDMap[docID.String()] = struct{}{}
 	}
 
-	if a.ExpectedError == "" {
+	if a.ExpectedError == "" && !a.DoNotWaitForEvent {
 		waitForUpdateEvents(a.s, a.NodeID, a.CollectionID, docIDMap, a.Identity)
 	}
 }
@@ -276,7 +288,9 @@ func substituteRelations(
 			continue
 		}
 
+		s.DocIDsLock.RLock()
 		docID := s.DocIDs[index.CollectionIndex][index.Index]
+		s.DocIDsLock.RUnlock()
 		action.DocMap[k] = docID.String()
 	}
 }

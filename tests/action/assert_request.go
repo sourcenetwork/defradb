@@ -256,7 +256,10 @@ func assertRequestResultDoc(
 			}
 
 		case DocIndex:
+			s.DocIDsLock.RLock()
 			expectedDocID := s.DocIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
+			s.DocIDsLock.RUnlock()
+
 			if ordered {
 				assertResultsEqual(
 					s.T,

@@ -234,7 +234,7 @@ func EncodeUvarintDescending(b []byte, v uint64) []byte {
 // buffer. The remainder of the input buffer and the decoded uint64
 // are returned.
 func DecodeUvarintAscending(b []byte) ([]byte, uint64, error) {
-	if len(b) == 0 {
+	if len(b) == 0 || b[0] == byte('/') {
 		return nil, 0, NewErrInsufficientBytesToDecode(b, "uvarint")
 	}
 	length := int(b[0]) - intZero

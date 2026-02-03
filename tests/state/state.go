@@ -12,6 +12,7 @@ package state
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/ipfs/go-cid"
@@ -212,7 +213,8 @@ type NodeState struct {
 	// restarted with the same address configuration.
 	CachedAddresses []string
 	// Map of docIDs to their composite CIDs.
-	Composites map[string][]cid.Cid
+	Composites     map[string][]cid.Cid
+	CompositesLock sync.RWMutex
 }
 
 // State contains all testing State.
@@ -296,7 +298,8 @@ type State struct {
 	//
 	// Each index is assumed to be global, and may be expected across multiple
 	// nodes.
-	DocIDs [][]client.DocID
+	DocIDs     [][]client.DocID
+	DocIDsLock sync.RWMutex
 
 	// IsBench indicates wether the test is currently being benchmarked.
 	IsBench bool
@@ -335,7 +338,11 @@ func (s *State) GetIdentity(ident Identity) acpIdentity.Identity {
 }
 
 func (s *State) GetDocID(collectionIndex, docIndex int) client.DocID {
-	return s.DocIDs[collectionIndex][docIndex]
+	s.DocIDsLock.RLock()
+	docID := s.DocIDs[collectionIndex][docIndex]
+	s.DocIDsLock.RUnlock()
+
+	return docID
 }
 
 // NewState returns a new fresh state for the given testCase.

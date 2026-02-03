@@ -58,7 +58,7 @@ func TestNAC_GatesP2PCollectionCreate_AuthorizedIdentity_AllowAccess(t *testing.
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
@@ -106,7 +106,7 @@ func TestNAC_GatesP2PCollectionCreate_NoIdentity_NotAuthorizedError(t *testing.T
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.NoIdentity(),
 				NodeID:        1,
 				CollectionIDs: []int{0},
@@ -155,7 +155,7 @@ func TestNAC_GatesP2PCollectionCreate_WrongIdentity_NotAuthorizedError(t *testin
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},

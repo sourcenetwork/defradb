@@ -56,14 +56,14 @@ func TestNAC_AdminRelation_CanP2PCollectionDelete(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},
@@ -79,7 +79,7 @@ func TestNAC_AdminRelation_CanP2PCollectionDelete(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				CollectionIDs: []int{0},

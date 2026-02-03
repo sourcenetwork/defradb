@@ -303,19 +303,19 @@ func (txn *Txn) GetAllReplicators(ctx context.Context) ([]client.Replicator, err
 	return txn.db.GetAllReplicators(ctx)
 }
 
-func (txn *Txn) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (txn *Txn) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddP2PCollections(ctx, collectionNames...)
+	return txn.db.CreateP2PCollections(ctx, collectionNames...)
 }
 
-func (txn *Txn) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (txn *Txn) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.RemoveP2PCollections(ctx, collectionNames...)
+	return txn.db.DeleteP2PCollections(ctx, collectionNames...)
 }
 
-func (txn *Txn) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (txn *Txn) ListP2PCollections(ctx context.Context) ([]string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllP2PCollections(ctx)
+	return txn.db.ListP2PCollections(ctx)
 }
 
 func (txn *Txn) AddP2PDocuments(ctx context.Context, docIDs ...string) error {

@@ -35,9 +35,9 @@ type CLI interface {
 func NewDefraCommand(ctx context.Context) *cobra.Command {
 	p2p_collection := MakeP2PCollectionCommand(ctx)
 	p2p_collection.AddCommand(
-		MakeP2PCollectionAddCommand(ctx),
-		MakeP2PCollectionRemoveCommand(ctx),
-		MakeP2PCollectionGetAllCommand(ctx),
+		MakeP2PCollectionCreateCommand(ctx),
+		MakeP2PCollectionDeleteCommand(ctx),
+		MakeP2PCollectionListCommand(ctx),
 		MakeP2PCollectionSyncVersionsCommand(ctx),
 		MakeP2PCollectionSyncBranchableCommand(ctx),
 	)
