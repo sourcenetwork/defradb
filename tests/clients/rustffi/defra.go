@@ -2023,6 +2023,36 @@ func (n *Node) P2PSyncBranchableCollection(identityDID string, collectionID stri
 	return nil
 }
 
+// P2PSyncCollectionVersions syncs collection versions by their CIDs.
+func (n *Node) P2PSyncCollectionVersions(identityDID string, versionIDs []string) error {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	versionIDsJSON, err := json.Marshal(versionIDs)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal version IDs: %w", err)
+	}
+
+	cVersionIDsJSON := C.CString(string(versionIDsJSON))
+	defer C.free(unsafe.Pointer(cVersionIDsJSON))
+
+	result := C.p2p_sync_collection_versions(n.ptr, cIdentityDID, cVersionIDsJSON)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_sync_collection_versions failed: %s", errMsg)
+	}
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
 // BasicExportDB exports the database to a JSON file.
 func (n *Node) BasicExportDB(configJSON string) error {
 	cConfig := C.CString(configJSON)

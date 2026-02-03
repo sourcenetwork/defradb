@@ -1202,8 +1202,11 @@ func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docI
 }
 
 func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
-	// Collection version sync not yet implemented in Rust FFI
-	return fmt.Errorf("P2P collection version sync not yet implemented in FFI client")
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+	return w.node.P2PSyncCollectionVersions(identityDID, versionIDs)
 }
 
 func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
