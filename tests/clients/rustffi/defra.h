@@ -79,18 +79,6 @@ typedef struct NodeInitOptions {
    Enable block signing (1=true, 0=false).
    */
   int enable_signing;
-  /*
-   Signing key type (e.g., "secp256k1"). Null for default.
-   */
-  const char *signing_key_type;
-  /*
-   Optional: raw private key bytes for signing. Null to auto-generate.
-   */
-  const uint8_t *signing_private_key;
-  /*
-   Length of signing_private_key in bytes. 0 if null.
-   */
-  uintptr_t signing_private_key_len;
 } NodeInitOptions;
 
 /*
@@ -185,24 +173,24 @@ extern "C" {
 void defra_init(void);
 
 /*
- Verify a block signature.
-
- # Safety
-
- All string pointers must be either null or valid null-terminated UTF-8 strings.
- */
-struct FfiResult block_verify_signature(uintptr_t node_ptr,
-                                        const char *key_type,
-                                        const char *public_key,
-                                        const char *block_cid,
-                                        const char *identity_did);
-
-/*
  Get the library version.
 
  Returns a null-terminated string that must be freed with `defra_free_string`.
  */
 char *defra_version(void);
+
+/*
+ Verify the signature of a block identified by CID.
+
+ # Safety
+
+ All string parameters must be valid null-terminated UTF-8 strings or null.
+ */
+struct FfiResult block_verify_signature(uintptr_t node_ptr,
+                                        const char *key_type,
+                                        const char *pub_key,
+                                        const char *block_cid,
+                                        const char *identity_did);
 
 /*
  Get the current NAC status.
@@ -604,30 +592,6 @@ struct FfiResult get_collection_by_version_id(uintptr_t node_ptr,
                                               const char *version_id);
 
 /*
- Truncate a collection: delete all documents while preserving the schema.
-
- This removes all document data, CRDT heads, blocks, and index entries
- for the collection. The collection schema remains intact.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `name` - The collection name to truncate
-
- # Returns
-
- - Status 0: Success (value is "{}")
- - Status 1: Error (error field contains message)
-
- # Safety
-
- `name` must be a valid null-terminated UTF-8 string.
- */
-struct FfiResult truncate_collection(uintptr_t node_ptr,
-                                     const char *identity_did,
-                                     const char *name);
-
-/*
  Add a view to the database.
 
  Creates a new Defra View from a GQL query and SDL schema.
@@ -703,6 +667,27 @@ struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
  `config` must be a valid null-terminated UTF-8 string.
  */
 struct FfiResult set_migration(uintptr_t node_ptr, const char *identity_did, const char *config);
+
+/*
+ Truncate a collection (delete all documents, preserve schema).
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `name` - The collection name to truncate
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `name` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult truncate_collection(uintptr_t node_ptr,
+                                     const char *identity_did,
+                                     const char *name);
 
 /*
  Create document(s) in a collection.
@@ -999,9 +984,9 @@ struct NewNodeResult new_node_with_p2p(struct NodeInitOptions options, const cha
 struct FfiResult p2p_peer_info(uintptr_t node_ptr);
 
 /*
- Get list of connected peers.
+ Get list of connected peers with full multiaddrs.
 
- Returns a JSON array of peer IDs.
+ Returns a JSON array of multiaddr strings (Go-compatible format).
 
  # Safety
 
@@ -1121,7 +1106,12 @@ struct FfiResult p2p_remove_collections(uintptr_t node_ptr,
 struct FfiResult p2p_get_all_collections(uintptr_t node_ptr, const char *identity_did);
 
 /*
- Add documents to P2P replication.
+ Add documents to P2P replication by subscribing to their GossipSub topics.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `doc_ids_json` - JSON array of document IDs
 
  # Safety
 
@@ -1132,7 +1122,12 @@ struct FfiResult p2p_add_documents(uintptr_t node_ptr,
                                    const char *doc_ids_json);
 
 /*
- Remove documents from P2P replication.
+ Remove documents from P2P replication by unsubscribing from their GossipSub topics.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `doc_ids_json` - JSON array of document IDs
 
  # Safety
 
@@ -1143,7 +1138,7 @@ struct FfiResult p2p_remove_documents(uintptr_t node_ptr,
                                       const char *doc_ids_json);
 
 /*
- Get all documents configured for P2P replication.
+ Get all P2P documents.
 
  Returns a JSON array of document IDs.
 
@@ -1152,6 +1147,29 @@ struct FfiResult p2p_remove_documents(uintptr_t node_ptr,
  The caller must free the returned string with `defra_free_string`.
  */
 struct FfiResult p2p_get_all_documents(uintptr_t node_ptr, const char *identity_did);
+
+/*
+ Sync specific documents from peers.
+
+ This implements the DocSync pull-based protocol: sends requests to connected peers
+ asking for the heads of specific documents, then fetches the missing DAG blocks
+ via Bitswap and merges them.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `identity_did` - Identity DID for NAC permission check
+ * `collection_name` - Name of the collection containing the documents
+ * `doc_ids_json` - JSON array of document IDs to sync
+
+ # Safety
+
+ All string pointers must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult p2p_sync_documents(uintptr_t node_ptr,
+                                    const char *identity_did,
+                                    const char *collection_name,
+                                    const char *doc_ids_json);
 
 /*
  Execute a GraphQL query or mutation.

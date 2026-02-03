@@ -1737,6 +1737,39 @@ func (n *Node) P2PGetAllDocuments(identityDID string) ([]string, error) {
 	return docIDs, nil
 }
 
+// P2PSyncDocuments syncs specific documents from peers.
+// This implements the DocSync pull-based protocol.
+func (n *Node) P2PSyncDocuments(identityDID string, collectionName string, docIDs []string) error {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	cCollectionName := C.CString(collectionName)
+	defer C.free(unsafe.Pointer(cCollectionName))
+
+	docIDsJSON, err := json.Marshal(docIDs)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal doc IDs: %w", err)
+	}
+	cDocIDsJSON := C.CString(string(docIDsJSON))
+	defer C.free(unsafe.Pointer(cDocIDsJSON))
+
+	result := C.p2p_sync_documents(n.ptr, cIdentityDID, cCollectionName, cDocIDsJSON)
+
+	if result.status != 0 {
+		errMsg := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_sync_documents failed: %s", errMsg)
+	}
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
 // BasicExportDB exports the database to a JSON file.
 func (n *Node) BasicExportDB(configJSON string) error {
 	cConfig := C.CString(configJSON)
