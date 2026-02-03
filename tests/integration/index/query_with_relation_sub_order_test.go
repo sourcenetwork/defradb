@@ -962,3 +962,233 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ExcludesOrphans(t *t
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_ExcludesOrphans(t *testing.T) {
+	req := `query {
+		Author {
+			name
+			published(order: {publisher: {establishedYear: DESC}}, limit: 2) {
+				title
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+						published: [Book]
+					}
+					type Book {
+						title: String
+						author: Author
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						establishedYear: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2020",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2010",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2000",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "OrphanBook",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2020",
+					"establishedYear": 2020,
+					"book":            testUtils.NewDocIndex(1, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2010",
+					"establishedYear": 2010,
+					"book":            testUtils.NewDocIndex(1, 1),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2000",
+					"establishedYear": 2000,
+					"book":            testUtils.NewDocIndex(1, 2),
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John",
+							"published": []map[string]any{
+								{"title": "Book2020"},
+								{"title": "Book2010"},
+							},
+						},
+					},
+				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// The index on Publisher.establishedYear is used by the nested Book->Publisher join
+				// to provide ordering, but the explain output only reports the outer join's stats.
+				// The subTypeScanNode reports Book scan stats (no index), not Publisher scan stats.
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+// Tests that orphan children (without the ordering relation) are excluded in subquery ordering
+// when using an index-based inverted join with ASC order. This documents the expected behavior
+// where orphans would come first in ASC (NULLS FIRST) but are excluded due to index-based join.
+func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *testing.T) {
+	req := `query {
+		Author {
+			name
+			published(order: {publisher: {establishedYear: ASC}}, limit: 2) {
+				title
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+						published: [Book]
+					}
+					type Book {
+						title: String
+						author: Author
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						establishedYear: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2020",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2010",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2000",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			// OrphanBook has no publisher - would come first in ASC ordering if included
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "OrphanBook",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2020",
+					"establishedYear": 2020,
+					"book":            testUtils.NewDocIndex(1, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2010",
+					"establishedYear": 2010,
+					"book":            testUtils.NewDocIndex(1, 1),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2000",
+					"establishedYear": 2000,
+					"book":            testUtils.NewDocIndex(1, 2),
+				},
+			},
+			// With ASC ordering and no @exhaustive OrphanBook is excluded.
+			// Otherwise result would be OrphanBook, Book2000.
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John",
+							"published": []map[string]any{
+								{"title": "Book2000"},
+								{"title": "Book2010"},
+							},
+						},
+					},
+				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// docFetches: 1 author + 2 books (OrphanBook excluded because it has no publisher).
+				// indexFetches: 0 for Book scanNode - index is on Publisher.establishedYear,
+				// tracked in the nested join to Publisher, not in Book's scan.
+				Asserter: testUtils.NewExplainAsserter().WithDocFetches(3).WithIndexFetches(0),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

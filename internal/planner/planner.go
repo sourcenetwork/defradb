@@ -109,6 +109,11 @@ type Planner struct {
 	// When true, orphan parent documents will be included when ordering by relation
 	// fields with indexes. When false (default), orphans are excluded for performance.
 	exhaustive bool
+
+	// inNestedJoin tracks whether we're expanding a join that is nested inside another join.
+	// When true, orphanNode should not be added because nested joins are iterated via
+	// retrievePrimaryDocs which handles orphans correctly with parent context.
+	inNestedJoin bool
 }
 
 func New(
@@ -293,12 +298,14 @@ func (p *Planner) expandMultiNode(multiNode MultiNode, parentPlan *selectTopNode
 func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selectTopNode) error {
 	// expandJoin expands the join and wraps it with orphanNode if @exhaustive is set
 	// and ordering by relation field is active.
+	// Note: orphanNode is NOT added for nested joins (inNestedJoin=true) because nested joins
+	// are iterated via retrievePrimaryDocs which handles orphans correctly with parent context.
 	expandJoin := func(node planNode, join *invertibleTypeJoin) error {
 		orderDir, err := p.expandTypeJoin(join, parentPlan)
 		if err != nil {
 			return err
 		}
-		if orderDir.HasValue() && p.exhaustive {
+		if orderDir.HasValue() && p.exhaustive && !p.inNestedJoin {
 			plan.joinPlan = newOrphanNode(node, join, orderDir.Value())
 		}
 		return nil
@@ -514,7 +521,15 @@ func (p *Planner) expandTypeJoin(
 
 	ensureOrderNodeForRelationIndex(node)
 
-	return orderDir, p.expandPlan(node.childSide.plan, parentPlan)
+	// Mark that we're now in a nested join context.
+	// Any joins inside the child plan should not add orphanNode because they
+	// will be iterated via retrievePrimaryDocs which handles orphans correctly.
+	oldInNestedJoin := p.inNestedJoin
+	p.inNestedJoin = true
+	err = p.expandPlan(node.childSide.plan, parentPlan)
+	p.inNestedJoin = oldInNestedJoin
+
+	return orderDir, err
 }
 
 // ensureOrderNodeForRelationIndex clears the child's index if a relation ID index exists,

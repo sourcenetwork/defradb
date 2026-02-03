@@ -389,6 +389,8 @@ func (p *Planner) newInvertableTypeJoin(
 		subFilter: childScan.filter,
 		// we store child's ordering to apply when fetching child documents
 		subOrdering: childScan.ordering,
+		// propagate exhaustive flag from top-level directive
+		exhaustive: p.exhaustive,
 	}
 
 	return join, nil
@@ -519,6 +521,10 @@ type invertibleTypeJoin struct {
 	// ordering for sub-queries
 	subOrdering         []mapper.OrderCondition
 	secondaryFetchLimit uint
+	// exhaustive indicates whether to include orphan documents when ordering
+	// by a relation field causes join inversion. When true, documents without
+	// related children are fetched separately and merged into results.
+	exhaustive bool
 
 	// Iteration state (mutable during execution, reset on Init())
 	state joinIterationState
@@ -568,6 +574,7 @@ type primaryObjectsRetriever struct {
 	targetSecondaryDoc core.Doc
 	filter             *mapper.Filter
 	ordering           []mapper.OrderCondition
+	exhaustive         bool
 
 	primaryScan *scanNode
 
@@ -603,13 +610,38 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() e
 }
 
 func (r *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
+	return r.collectDocsWithLimit(numDocs, false)
+}
+
+func (r *primaryObjectsRetriever) collectDocsUnlimited() ([]core.Doc, error) {
+	return r.collectDocsWithLimit(0, true)
+}
+
+func (r *primaryObjectsRetriever) collectDocsWithLimit(numDocs int, removeLimit bool) ([]core.Doc, error) {
 	p := r.primarySide.plan
 	// If the primary side is a multiScanNode, we need to get the source node, as we are the only
 	// consumer (one, not multiple) of it.
 	if multiScan, ok := p.(*multiScanNode); ok {
 		p = multiScan.Source()
 	}
+
+	// If removing limit, find and temporarily modify the limitNode
+	var limitN *limitNode
+	var oldLimit uint64
+	if removeLimit {
+		if selectTop, ok := p.(*selectTopNode); ok {
+			limitN = selectTop.limit
+			if limitN != nil {
+				oldLimit = limitN.limit
+				limitN.limit = ^uint64(0) // max uint64
+			}
+		}
+	}
+
 	if err := p.Init(); err != nil {
+		if limitN != nil {
+			limitN.limit = oldLimit
+		}
 		return nil, NewErrSubTypeInit(err)
 	}
 
@@ -619,6 +651,9 @@ func (r *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
 		hasValue, err := p.Next()
 
 		if err != nil {
+			if limitN != nil {
+				limitN.limit = oldLimit
+			}
 			return nil, err
 		}
 
@@ -627,6 +662,11 @@ func (r *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
 		}
 
 		docs = append(docs, p.Value())
+	}
+
+	// Restore original limit
+	if limitN != nil {
+		limitN.limit = oldLimit
 	}
 
 	return docs, nil
@@ -662,14 +702,63 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 
 	r.primaryScan.initFetcher(immutable.None[string]())
 
-	docs, err := r.collectDocs(0)
-	if err != nil {
-		return nil, err
-	}
+	var docs []core.Doc
+	var err error
 
-	err = r.primaryScan.fetcher.Close()
-	if err != nil {
-		return nil, err
+	// If exhaustive mode is enabled and ordering involves a relation field,
+	// we need to fetch all docs (without limit) to correctly identify orphans.
+	if r.exhaustive && r.isOrderingByRelation() {
+		// Get the original limit so we can re-apply it after merging orphans
+		originalLimit := r.getLimit()
+
+		// Fetch ALL docs with the ordering relation (no limit)
+		docs, err = r.collectDocsUnlimited()
+		if err != nil {
+			r.primaryScan.fetcher.Close()
+			r.primaryScan.fetcher = oldFetcher
+			r.primaryScan.index = oldIndex
+			r.primaryScan.ordering = oldOrdering
+			return nil, err
+		}
+
+		err = r.primaryScan.fetcher.Close()
+		if err != nil {
+			r.primaryScan.fetcher = oldFetcher
+			r.primaryScan.index = oldIndex
+			r.primaryScan.ordering = oldOrdering
+			return nil, err
+		}
+
+		// Now fetch orphans and merge
+		docs, err = r.mergeOrphanDocs(docs)
+		if err != nil {
+			r.primaryScan.fetcher = oldFetcher
+			r.primaryScan.index = oldIndex
+			r.primaryScan.ordering = oldOrdering
+			return nil, err
+		}
+
+		// Re-apply the limit
+		if originalLimit > 0 && uint64(len(docs)) > originalLimit {
+			docs = docs[:originalLimit]
+		}
+	} else {
+		docs, err = r.collectDocs(0)
+		if err != nil {
+			r.primaryScan.fetcher.Close()
+			r.primaryScan.fetcher = oldFetcher
+			r.primaryScan.index = oldIndex
+			r.primaryScan.ordering = oldOrdering
+			return nil, err
+		}
+
+		err = r.primaryScan.fetcher.Close()
+		if err != nil {
+			r.primaryScan.fetcher = oldFetcher
+			r.primaryScan.index = oldIndex
+			r.primaryScan.ordering = oldOrdering
+			return nil, err
+		}
 	}
 
 	r.primaryScan.fetcher = oldFetcher
@@ -677,6 +766,144 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	r.primaryScan.ordering = oldOrdering
 
 	return docs, nil
+}
+
+// getLimit returns the limit from the primary side's plan, or 0 if no limit.
+func (r *primaryObjectsRetriever) getLimit() uint64 {
+	if selectTop, ok := r.primarySide.plan.(*selectTopNode); ok {
+		if selectTop.limit != nil {
+			return selectTop.limit.limit
+		}
+	}
+	return 0
+}
+
+// isOrderingByRelation returns true if the ordering involves a relation field.
+// This is detected by checking if any order condition has more than one field index
+// (indicating traversal through a relation).
+func (r *primaryObjectsRetriever) isOrderingByRelation() bool {
+	for _, order := range r.ordering {
+		if len(order.FieldIndexes) > 1 {
+			return true
+		}
+	}
+	return false
+}
+
+// mergeOrphanDocs fetches orphan documents (those without the ordering relation)
+// and merges them with the provided docs based on sort direction.
+// Orphans are found by fetching all primary docs for this secondary doc and
+// excluding those already in docs.
+func (r *primaryObjectsRetriever) mergeOrphanDocs(docs []core.Doc) ([]core.Doc, error) {
+	direction, relFieldIndex := r.getOrderingInfo()
+	if direction == nil {
+		return docs, nil
+	}
+
+	// Build a set of IDs that are already in docs (from the ordered fetch)
+	existingIDs := make(map[string]struct{}, len(docs))
+	for _, doc := range docs {
+		existingIDs[doc.GetID()] = struct{}{}
+	}
+
+	// Filter to only get documents for this secondary doc (parent constraint)
+	parentFilter := addFilterOnIDField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
+		r.targetSecondaryDoc.GetID())
+
+	oldFetcher := r.primaryScan.fetcher
+	oldIndex := r.primaryScan.index
+	oldOrdering := r.primaryScan.ordering
+	oldFilter := r.primaryScan.filter
+
+	r.primaryScan.filter = parentFilter
+	// Select index for the parent constraint only
+	result := selectIndex(selectIndexOptions{
+		collection:          r.primaryScan.col,
+		filter:              parentFilter,
+		relationIDFieldName: r.relIDFieldDef.Name,
+		docMapping:          r.primaryScan.documentMapping,
+	})
+	r.primaryScan.index = result.index
+	r.primaryScan.ordering = nil // No ordering needed for orphans
+
+	r.primaryScan.initFetcher(immutable.None[string]())
+
+	// Collect docs directly from the scanNode to avoid the plan's join logic
+	allDocs, err := r.collectDocsFromScan()
+
+	r.primaryScan.fetcher.Close()
+
+	r.primaryScan.fetcher = oldFetcher
+	r.primaryScan.index = oldIndex
+	r.primaryScan.ordering = oldOrdering
+	r.primaryScan.filter = oldFilter
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Find orphan docs - those that don't already exist in the ordered results
+	// AND are not already included in the ordered results.
+	// A doc is an orphan if it wasn't already fetched via the inverted join.
+	// We need to check if it has the relation field populated to determine orphan status.
+	orphanDocs := make([]core.Doc, 0)
+	for _, doc := range allDocs {
+		// Skip docs already in the ordered results
+		if _, exists := existingIDs[doc.GetID()]; exists {
+			continue
+		}
+		// Check if this doc is an orphan (relation field is nil/empty)
+		relField := doc.Fields[relFieldIndex]
+		if relField == nil {
+			orphanDocs = append(orphanDocs, doc)
+		}
+	}
+
+
+	// Merge orphans based on sort direction:
+	// ASC: orphans (NULL) come first
+	// DESC: orphans (NULL) come last
+	if *direction == mapper.ASC {
+		return append(orphanDocs, docs...), nil
+	}
+	return append(docs, orphanDocs...), nil
+}
+
+// collectDocsFromScan collects documents directly from the scanNode,
+// bypassing any join logic in the plan.
+func (r *primaryObjectsRetriever) collectDocsFromScan() ([]core.Doc, error) {
+	if err := r.primaryScan.Init(); err != nil {
+		return nil, NewErrSubTypeInit(err)
+	}
+
+	docs := make([]core.Doc, 0)
+
+	for {
+		hasValue, err := r.primaryScan.Next()
+
+		if err != nil {
+			return nil, err
+		}
+
+		if !hasValue {
+			break
+		}
+
+		docs = append(docs, r.primaryScan.Value())
+	}
+
+	return docs, nil
+}
+
+// getOrderingInfo returns the sort direction and relation field index if the ordering involves a relation field.
+func (r *primaryObjectsRetriever) getOrderingInfo() (*mapper.SortDirection, int) {
+	for _, order := range r.ordering {
+		if len(order.FieldIndexes) > 1 {
+			// First index is the relation field
+			return &order.Direction, order.FieldIndexes[0]
+		}
+	}
+	return nil, 0
 }
 
 func docsToDocIDs(docs []core.Doc) []string {
@@ -728,6 +955,7 @@ func fetchPrimaryDocsReferencingSecondaryDoc(
 	secondaryDoc core.Doc,
 	filter *mapper.Filter,
 	ordering []mapper.OrderCondition,
+	exhaustive bool,
 ) ([]core.Doc, core.Doc, error) {
 	retriever := primaryObjectsRetriever{
 		primarySide:        primarySide,
@@ -735,6 +963,7 @@ func fetchPrimaryDocsReferencingSecondaryDoc(
 		targetSecondaryDoc: secondaryDoc,
 		filter:             filter,
 		ordering:           ordering,
+		exhaustive:         exhaustive,
 	}
 	err := retriever.retrievePrimaryDocsReferencingSecondaryDoc()
 	return retriever.resultPrimaryDocs, retriever.resultSecondaryDoc, err
@@ -767,7 +996,7 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 		return join.fetchRelatedSecondaryDocWithChildren(firstSide.plan.Value())
 	} else {
 		primaryDocs, secondaryDoc, err := fetchPrimaryDocsReferencingSecondaryDoc(
-			join.getPrimarySide(), join.getSecondarySide(), firstSide.plan.Value(), join.subFilter, join.subOrdering)
+			join.getPrimarySide(), join.getSecondarySide(), firstSide.plan.Value(), join.subFilter, join.subOrdering, join.exhaustive)
 		if err != nil {
 			return false, err
 		}
@@ -834,7 +1063,7 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 				[]core.Doc{firstSide.plan.Value()}, secondaryDoc, join.getPrimarySide(), join.getSecondSide())
 		} else {
 			primaryDocs, secondaryDoc, err = fetchPrimaryDocsReferencingSecondaryDoc(
-				join.getPrimarySide(), join.getSecondarySide(), secondaryDoc, join.subFilter, join.subOrdering)
+				join.getPrimarySide(), join.getSecondarySide(), secondaryDoc, join.subFilter, join.subOrdering, join.exhaustive)
 			if err != nil {
 				return false, err
 			}
