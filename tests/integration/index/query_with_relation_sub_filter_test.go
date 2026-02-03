@@ -711,6 +711,12 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 				// doesn't know about parent relationships. https://github.com/sourcenetwork/defradb/issues/4347
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Level-specific assertions: root (User) has no index, subType (Device) has all 4
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
+					WithLevel("subType").WithIndexFetches(4),
+			},
 		},
 	}
 
@@ -791,6 +797,12 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 				Request: makeExplainQuery(req),
 				// 2 indexFetches: for parent filter (2 Walkman devices owned by Alice), sub-filter applied in-memory
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Level-specific: root (User) has no index, subType (Device) has 2 (manufacturer not indexed)
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
+					WithLevel("subType").WithIndexFetches(2),
 			},
 		},
 	}
@@ -882,6 +894,12 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 				// and 2 device.manufacturer fetches (2 Sony devices)
 				// Note: name="Alice" filter is checked after docID lookup (no index)
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Level-specific: root (User) has no index, subType (Device) has all 5
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
+					WithLevel("subType").WithIndexFetches(5),
 			},
 		},
 	}

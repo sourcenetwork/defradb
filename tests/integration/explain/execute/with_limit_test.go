@@ -105,17 +105,32 @@ func TestExecuteExplainRequestWithBothLimitAndOffsetOnParentAndLimitOnChild(t *t
 											"filterMatches": uint64(2),
 											"typeIndexJoin": dataMap{
 												"iterations": uint64(2),
-												"scanNode": dataMap{
-													"iterations":   uint64(2),
-													"docFetches":   uint64(2),
-													"fieldFetches": uint64(8),
-													"indexFetches": uint64(0),
-												},
-												"subTypeScanNode": dataMap{
-													"iterations":   uint64(2),
-													"docFetches":   uint64(4),
-													"fieldFetches": uint64(12),
-													"indexFetches": uint64(0),
+												"typeJoinMany": dataMap{
+													"root": dataMap{
+														"scanNode": dataMap{
+															"iterations":   uint64(2),
+															"docFetches":   uint64(2),
+															"fieldFetches": uint64(8),
+															"indexFetches": uint64(0),
+														},
+													},
+													"subType": dataMap{
+														"selectTopNode": dataMap{
+															"limitNode": dataMap{
+																"iterations": uint64(4),
+																"selectNode": dataMap{
+																	"iterations":    uint64(2),
+																	"filterMatches": uint64(2),
+																	"scanNode": dataMap{
+																		"iterations":   uint64(2),
+																		"docFetches":   uint64(4),
+																		"fieldFetches": uint64(12),
+																		"indexFetches": uint64(0),
+																	},
+																},
+															},
+														},
+													},
 												},
 											},
 										},

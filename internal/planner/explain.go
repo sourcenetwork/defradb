@@ -309,6 +309,50 @@ func collectExecuteExplainInfo(executedPlan planNode) (map[string]any, error) {
 		explainNodeLabelTitle := strcase.ToLowerCamel(executedNode.Kind())
 		executeExplainInfo[explainNodeLabelTitle] = multiChildExplainGraph
 
+	case *typeJoinMany:
+		explainGraphBuilder := map[string]any{}
+
+		if executedNode.parentSide.plan != nil {
+			rootExplainGraph, err := collectExecuteExplainInfo(executedNode.parentSide.plan)
+			if err != nil {
+				return nil, err
+			}
+			explainGraphBuilder[joinRootLabel] = rootExplainGraph
+		}
+
+		if executedNode.childSide.plan != nil {
+			subTypeExplainGraph, err := collectExecuteExplainInfo(executedNode.childSide.plan)
+			if err != nil {
+				return nil, err
+			}
+			explainGraphBuilder[joinSubTypeLabel] = subTypeExplainGraph
+		}
+
+		nodeLabelTitle := strcase.ToLowerCamel(executedNode.Kind())
+		executeExplainInfo[nodeLabelTitle] = explainGraphBuilder
+
+	case *typeJoinOne:
+		explainGraphBuilder := map[string]any{}
+
+		if executedNode.parentSide.plan != nil {
+			rootExplainGraph, err := collectExecuteExplainInfo(executedNode.parentSide.plan)
+			if err != nil {
+				return nil, err
+			}
+			explainGraphBuilder[joinRootLabel] = rootExplainGraph
+		}
+
+		if executedNode.childSide.plan != nil {
+			subTypeExplainGraph, err := collectExecuteExplainInfo(executedNode.childSide.plan)
+			if err != nil {
+				return nil, err
+			}
+			explainGraphBuilder[joinSubTypeLabel] = subTypeExplainGraph
+		}
+
+		nodeLabelTitle := strcase.ToLowerCamel(executedNode.Kind())
+		executeExplainInfo[nodeLabelTitle] = explainGraphBuilder
+
 	case explainablePlanNode:
 		executeExplainBuilder, err := executedNode.Explain(request.ExecuteExplain)
 		if err != nil {
