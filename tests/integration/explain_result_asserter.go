@@ -24,6 +24,25 @@ const (
 	docFetchesProp   = "docFetches"
 	fieldFetchesProp = "fieldFetches"
 	indexFetchesProp = "indexFetches"
+
+	explainProp          = "explain"
+	executionSuccessProp = "executionSuccess"
+	sizeOfResultProp     = "sizeOfResult"
+	planExecutionsProp   = "planExecutions"
+	operationNodeProp    = "operationNode"
+	filterMatchesProp    = "filterMatches"
+
+	selectTopNodeProp = "selectTopNode"
+	selectNodeProp    = "selectNode"
+	scanNodeProp      = "scanNode"
+	limitNodeProp     = "limitNode"
+	orderNodeProp     = "orderNode"
+	typeIndexJoinProp = "typeIndexJoin"
+	typeJoinManyProp  = "typeJoinMany"
+	typeJoinOneProp   = "typeJoinOne"
+	orphanNodeProp    = "orphanNode"
+	rootProp          = "root"
+	subTypeProp       = "subType"
 )
 
 type dataMap = map[string]any
@@ -117,32 +136,32 @@ func (a *ExplainAsserter) WithLevel(path ...string) *ExplainAsserter {
 // If path is empty, aggregates metrics across all scan nodes.
 // If path is set, reads metrics from the specific level.
 func (a *ExplainAsserter) Assert(t testing.TB, result map[string]any) {
-	explainNode, ok := result["explain"].(dataMap)
+	explainNode, ok := result[explainProp].(dataMap)
 	require.True(t, ok, "Expected explain node")
 
-	assert.Equal(t, true, explainNode["executionSuccess"], "Expected executionSuccess property")
+	assert.Equal(t, true, explainNode[executionSuccessProp], "Expected executionSuccess property")
 
 	if a.sizeOfResults.HasValue() {
-		actual := explainNode["sizeOfResult"]
+		actual := explainNode[sizeOfResultProp]
 		assert.Equal(t, a.sizeOfResults.Value(), actual,
 			"Expected %d sizeOfResult, got %d", a.sizeOfResults.Value(), actual)
 	}
 	if a.planExecutions.HasValue() {
-		actual := explainNode["planExecutions"]
+		actual := explainNode[planExecutionsProp]
 		assert.Equal(t, a.planExecutions.Value(), actual,
 			"Expected %d planExecutions, got %d", a.planExecutions.Value(), actual)
 	}
 
-	operationNode := ConvertToArrayOfMaps(t, explainNode["operationNode"])
+	operationNode := ConvertToArrayOfMaps(t, explainNode[operationNodeProp])
 	require.Len(t, operationNode, 1)
 
-	node, ok := operationNode[0]["selectTopNode"].(dataMap)
+	node, ok := operationNode[0][selectTopNodeProp].(dataMap)
 	require.True(t, ok, "Expected selectTopNode")
 
 	selectNode := navigateToSelectNode(t, node)
 
 	if a.filterMatches.HasValue() {
-		filterMatches, hasFilterMatches := selectNode["filterMatches"]
+		filterMatches, hasFilterMatches := selectNode[filterMatchesProp]
 		require.True(t, hasFilterMatches, "Expected filterMatches property")
 		assert.Equal(t, uint64(a.filterMatches.Value()), filterMatches,
 			"Expected %d filterMatches, got %d", a.filterMatches.Value(), filterMatches)
@@ -167,8 +186,8 @@ func (a *ExplainAsserter) assertLevelOnly(t testing.TB, selectNode dataMap) {
 }
 
 func (a *ExplainAsserter) assertAggregatedMetrics(t testing.TB, selectNode dataMap) {
-	_, hasScanNode := selectNode["scanNode"].(dataMap)
-	if indexJoin, isJoin := selectNode["typeIndexJoin"].(dataMap); isJoin {
+	_, hasScanNode := selectNode[scanNodeProp].(dataMap)
+	if indexJoin, isJoin := selectNode[typeIndexJoinProp].(dataMap); isJoin {
 		_, hasScanNode = findScanNodeInJoin(indexJoin)
 	}
 	require.True(t, hasScanNode, "Expected scanNode")
@@ -196,13 +215,13 @@ func (a *ExplainAsserter) assertAggregatedMetrics(t testing.TB, selectNode dataM
 }
 
 func (a *ExplainAsserter) assertLevelMetrics(t testing.TB, selectNode dataMap) {
-	indexJoin, hasJoin := selectNode["typeIndexJoin"].(dataMap)
+	indexJoin, hasJoin := selectNode[typeIndexJoinProp].(dataMap)
 	if !hasJoin {
 		require.Fail(t, "Expected typeIndexJoin for level assertion")
 	}
 
-	if orphanNode, hasOrphan := indexJoin["orphanNode"].(dataMap); hasOrphan {
-		indexJoin = orphanNode
+	if orphan, hasOrphan := indexJoin[orphanNodeProp].(dataMap); hasOrphan {
+		indexJoin = orphan
 	}
 
 	targetNode := navigateToLevel(indexJoin, a.path)
@@ -235,13 +254,13 @@ func (a *ExplainAsserter) assertLevelMetrics(t testing.TB, selectNode dataMap) {
 
 // navigateToSelectNode finds the selectNode, handling orderNode and limitNode wrappers.
 func navigateToSelectNode(t testing.TB, node dataMap) dataMap {
-	if limitNode, has := node["limitNode"].(dataMap); has {
-		node = limitNode
+	if limit, has := node[limitNodeProp].(dataMap); has {
+		node = limit
 	}
-	if orderNode, has := node["orderNode"].(dataMap); has {
-		node = orderNode
+	if order, has := node[orderNodeProp].(dataMap); has {
+		node = order
 	}
-	selectNode, ok := node["selectNode"].(dataMap)
+	selectNode, ok := node[selectNodeProp].(dataMap)
 	require.True(t, ok, "Expected selectNode")
 	return selectNode
 }
@@ -252,24 +271,24 @@ func navigateToLevel(node dataMap, path []string) dataMap {
 
 	for _, step := range path {
 		var joinNode dataMap
-		if jm, has := current["typeJoinMany"].(dataMap); has {
+		if jm, has := current[typeJoinManyProp].(dataMap); has {
 			joinNode = jm
-		} else if jo, has := current["typeJoinOne"].(dataMap); has {
+		} else if jo, has := current[typeJoinOneProp].(dataMap); has {
 			joinNode = jo
 		} else {
 			joinNode = current
 		}
 
 		switch step {
-		case "root":
-			if root, has := joinNode["root"].(dataMap); has {
+		case rootProp:
+			if root, has := joinNode[rootProp].(dataMap); has {
 				current = root
 			} else {
 				return nil
 			}
-		case "subType":
-			if subType, has := joinNode["subType"].(dataMap); has {
-				current = navigateThroughSelectTop(subType)
+		case subTypeProp:
+			if sub, has := joinNode[subTypeProp].(dataMap); has {
+				current = navigateThroughSelectTop(sub)
 			} else {
 				return nil
 			}
@@ -287,19 +306,19 @@ func navigateToLevel(node dataMap, path []string) dataMap {
 
 // navigateThroughSelectTop handles the selectTopNode -> selectNode -> typeIndexJoin chain.
 func navigateThroughSelectTop(node dataMap) dataMap {
-	if selectTop, has := node["selectTopNode"].(dataMap); has {
+	if selectTop, has := node[selectTopNodeProp].(dataMap); has {
 		node = selectTop
 	}
-	if limitNode, has := node["limitNode"].(dataMap); has {
-		node = limitNode
+	if limit, has := node[limitNodeProp].(dataMap); has {
+		node = limit
 	}
-	if orderNode, has := node["orderNode"].(dataMap); has {
-		node = orderNode
+	if order, has := node[orderNodeProp].(dataMap); has {
+		node = order
 	}
-	if selectNode, has := node["selectNode"].(dataMap); has {
-		node = selectNode
+	if sel, has := node[selectNodeProp].(dataMap); has {
+		node = sel
 	}
-	if indexJoin, has := node["typeIndexJoin"].(dataMap); has {
+	if indexJoin, has := node[typeIndexJoinProp].(dataMap); has {
 		return indexJoin
 	}
 	return node
@@ -307,14 +326,14 @@ func navigateThroughSelectTop(node dataMap) dataMap {
 
 // findScanNodeAtLevel finds the scanNode at the current level (not recursively).
 func findScanNodeAtLevel(node dataMap) dataMap {
-	if scanNode, has := node["scanNode"].(dataMap); has {
-		return scanNode
+	if scan, has := node[scanNodeProp].(dataMap); has {
+		return scan
 	}
-	for _, joinType := range []string{"typeJoinMany", "typeJoinOne"} {
+	for _, joinType := range []string{typeJoinManyProp, typeJoinOneProp} {
 		if joinNode, has := node[joinType].(dataMap); has {
-			if root, hasRoot := joinNode["root"].(dataMap); hasRoot {
-				if scanNode, hasScan := root["scanNode"].(dataMap); hasScan {
-					return scanNode
+			if root, hasRoot := joinNode[rootProp].(dataMap); hasRoot {
+				if scan, hasScan := root[scanNodeProp].(dataMap); hasScan {
+					return scan
 				}
 			}
 		}
@@ -334,15 +353,15 @@ func getMetric(node dataMap, prop string) uint64 {
 
 // findScanNodeInJoin finds a scanNode within a join structure (for validation).
 func findScanNodeInJoin(indexJoin dataMap) (dataMap, bool) {
-	if orphanNode, hasOrphan := indexJoin["orphanNode"].(dataMap); hasOrphan {
-		indexJoin = orphanNode
+	if orphan, hasOrphan := indexJoin[orphanNodeProp].(dataMap); hasOrphan {
+		indexJoin = orphan
 	}
 
-	for _, joinType := range []string{"typeJoinMany", "typeJoinOne"} {
+	for _, joinType := range []string{typeJoinManyProp, typeJoinOneProp} {
 		if joinNode, has := indexJoin[joinType].(dataMap); has {
-			if root, hasRoot := joinNode["root"].(dataMap); hasRoot {
-				if scanNode, hasScan := root["scanNode"].(dataMap); hasScan {
-					return scanNode, true
+			if root, hasRoot := joinNode[rootProp].(dataMap); hasRoot {
+				if scan, hasScan := root[scanNodeProp].(dataMap); hasScan {
+					return scan, true
 				}
 			}
 		}
@@ -354,47 +373,47 @@ func findScanNodeInJoin(indexJoin dataMap) (dataMap, bool) {
 func aggregateMetricFromNode(node dataMap, prop string) uint64 {
 	var total uint64
 
-	if scanNode, has := node["scanNode"].(dataMap); has {
-		if val, hasVal := scanNode[prop]; hasVal {
+	if scan, has := node[scanNodeProp].(dataMap); has {
+		if val, hasVal := scan[prop]; hasVal {
 			if num, ok := val.(uint64); ok {
 				total += num
 			}
 		}
 	}
 
-	if indexJoin, has := node["typeIndexJoin"].(dataMap); has {
+	if indexJoin, has := node[typeIndexJoinProp].(dataMap); has {
 		total += aggregateMetricFromNode(indexJoin, prop)
 	}
 
-	if orphanNode, has := node["orphanNode"].(dataMap); has {
-		total += aggregateMetricFromNode(orphanNode, prop)
+	if orphan, has := node[orphanNodeProp].(dataMap); has {
+		total += aggregateMetricFromNode(orphan, prop)
 	}
 
-	for _, joinType := range []string{"typeJoinMany", "typeJoinOne"} {
+	for _, joinType := range []string{typeJoinManyProp, typeJoinOneProp} {
 		if joinNode, has := node[joinType].(dataMap); has {
-			if root, hasRoot := joinNode["root"].(dataMap); hasRoot {
+			if root, hasRoot := joinNode[rootProp].(dataMap); hasRoot {
 				total += aggregateMetricFromNode(root, prop)
 			}
-			if subType, hasSubType := joinNode["subType"].(dataMap); hasSubType {
-				total += aggregateMetricFromNode(subType, prop)
+			if sub, hasSub := joinNode[subTypeProp].(dataMap); hasSub {
+				total += aggregateMetricFromNode(sub, prop)
 			}
 		}
 	}
 
-	if selectTop, has := node["selectTopNode"].(dataMap); has {
+	if selectTop, has := node[selectTopNodeProp].(dataMap); has {
 		total += aggregateMetricFromNode(selectTop, prop)
 	}
 
-	if limitNode, has := node["limitNode"].(dataMap); has {
-		total += aggregateMetricFromNode(limitNode, prop)
+	if limit, has := node[limitNodeProp].(dataMap); has {
+		total += aggregateMetricFromNode(limit, prop)
 	}
 
-	if orderNode, has := node["orderNode"].(dataMap); has {
-		total += aggregateMetricFromNode(orderNode, prop)
+	if order, has := node[orderNodeProp].(dataMap); has {
+		total += aggregateMetricFromNode(order, prop)
 	}
 
-	if selectNode, has := node["selectNode"].(dataMap); has {
-		total += aggregateMetricFromNode(selectNode, prop)
+	if sel, has := node[selectNodeProp].(dataMap); has {
+		total += aggregateMetricFromNode(sel, prop)
 	}
 
 	return total
