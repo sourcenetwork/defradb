@@ -708,14 +708,10 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// 4 indexFetches: 3 for parent filter (3 Walkman devices owned by Alice) + 1 for sub-filter (Sony)
+				// root (User) has no index
+				// subType (Device): 4 indexFetches - 3 for parent filter (3 Walkman devices) + 1 for sub-filter (Sony)
 				// Note: For existence checks, we only need 1 match per user, but currently the index fetcher
 				// doesn't know about parent relationships. https://github.com/sourcenetwork/defradb/issues/4347
-				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(4),
-			},
-			&action.Request{
-				Request: makeExplainQuery(req),
-				// root (User) has no index, subType (Device) has all 4
 				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
 					WithLevel("subType").WithIndexFetches(4),
 			},
@@ -797,12 +793,8 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// 2 indexFetches: for parent filter (2 Walkman devices owned by Alice), sub-filter applied in-memory
-				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(2),
-			},
-			&action.Request{
-				Request: makeExplainQuery(req),
-				// root (User) has no index, subType (Device) has 2 (manufacturer not indexed)
+				// root (User) has no index
+				// subType (Device): 2 indexFetches for parent filter (2 Walkman devices), sub-filter (manufacturer) applied in-memory
 				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
 					WithLevel("subType").WithIndexFetches(2),
 			},
@@ -892,14 +884,9 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// 5 indexFetches: 3 device.model fetches (3 Walkman devices: 2 Alice, 1 Bob)
+				// root (User) has no index
+				// subType (Device): 5 indexFetches - 3 device.model fetches (3 Walkman devices)
 				// and 2 device.manufacturer fetches (2 Sony devices)
-				// Note: name="Alice" filter is checked after docID lookup (no index)
-				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(5),
-			},
-			&action.Request{
-				Request: makeExplainQuery(req),
-				// root (User) has no index, subType (Device) has all 5
 				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
 					WithLevel("subType").WithIndexFetches(5),
 			},
