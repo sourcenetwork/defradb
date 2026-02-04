@@ -17,7 +17,6 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -25,7 +24,6 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
-	"github.com/sourcenetwork/immutable"
 )
 
 // We don't want to have to hold large volumes of IDs in memory, so we chunk
@@ -36,10 +34,7 @@ func (c *collection) Truncate(ctx context.Context, opts ...*options.CollectionTr
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionTruncatePerm); err != nil {
 		return err

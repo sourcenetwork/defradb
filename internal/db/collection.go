@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
@@ -214,10 +213,7 @@ func (c *collection) GetAllDocIDs(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
@@ -342,10 +338,7 @@ func (c *collection) Create(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
@@ -375,10 +368,7 @@ func (c *collection) CreateMany(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
@@ -507,10 +497,7 @@ func (c *collection) Update(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
@@ -590,10 +577,7 @@ func (c *collection) Save(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
@@ -847,10 +831,7 @@ func (c *collection) Delete(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentDeletePerm); err != nil {
 		return false, err
@@ -888,10 +869,7 @@ func (c *collection) Exists(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentReadPerm); err != nil {
 		return false, err

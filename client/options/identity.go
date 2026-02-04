@@ -33,3 +33,23 @@ func WithIdentity[T OptionWithIdentity[T]](opt T, ident immutable.Option[identit
 	}
 	return opt
 }
+
+// IdentityFrom extracts the identity from the first non-nil option in the slice.
+// Returns an empty Option if opts is empty or the first option has no identity set.
+//
+// Example usage:
+//
+//	func (db *DB) SomeMethod(ctx context.Context, opts ...*options.SomeOptions) error {
+//	    ident := options.IdentityFrom(opts...)
+//	    // use ident...
+//	}
+func IdentityFrom[T OptionWithIdentity[T]](opts ...T) immutable.Option[identity.Identity] {
+	for _, opt := range opts {
+		// Check for nil using any type assertion since T is constrained to pointer types
+		// that implement OptionWithIdentity
+		if any(opt) != nil {
+			return opt.GetIdentity()
+		}
+	}
+	return immutable.None[identity.Identity]()
+}

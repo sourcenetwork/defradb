@@ -18,9 +18,6 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
-	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -37,10 +34,7 @@ func (db *DB) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...*options.VerifySignatureOptions,
 ) error {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeSignatureVerifyPerm); err != nil {
 		return err

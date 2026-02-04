@@ -170,10 +170,7 @@ func (c *collection) CreateIndex(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexCreatePerm); err != nil {
 		return client.IndexDescription{}, err
@@ -368,10 +365,7 @@ func (c *collection) DropIndex(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexDropPerm); err != nil {
 		return err
@@ -430,10 +424,7 @@ func (c *collection) GetIndexes(
 	ctx context.Context,
 	opts ...*options.CollectionGetIndexesOptions,
 ) ([]client.IndexDescription, error) {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err

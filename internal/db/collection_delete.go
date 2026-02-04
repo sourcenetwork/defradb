@@ -13,8 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
@@ -37,10 +35,7 @@ func (c *collection) DeleteWithFilter(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentDeletePerm); err != nil {
 		return nil, err

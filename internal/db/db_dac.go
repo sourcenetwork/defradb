@@ -58,10 +58,7 @@ func (db *DB) AddDACPolicy(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeDACPolicyAddPerm); err != nil {
 		return client.AddPolicyResult{}, err
@@ -94,10 +91,7 @@ func (db *DB) AddDACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeDACRelationAddPerm); err != nil {
 		return client.AddActorRelationshipResult{}, err
@@ -153,10 +147,7 @@ func (db *DB) DeleteDACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeDACRelationDeletePerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err

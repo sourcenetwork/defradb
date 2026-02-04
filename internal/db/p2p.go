@@ -13,8 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
@@ -42,10 +40,7 @@ func (db *DB) PeerInfo() ([]string, error) {
 
 // Connect tries to connect to the peer with the given [PeerInfo].
 func (db *DB) Connect(ctx context.Context, addresses []string, opts ...*options.ConnectOptions) error {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PPeerConnectPerm); err != nil {
 		return err
@@ -62,10 +57,7 @@ func (db *DB) SetReplicator(
 	collectionNames []string,
 	opts ...*options.SetReplicatorOptions,
 ) error {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PReplicatorCreatePerm); err != nil {
 		return err
@@ -100,10 +92,7 @@ func (db *DB) DeleteReplicator(
 	collectionNames []string,
 	opts ...*options.DeleteReplicatorOptions,
 ) error {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PReplicatorDeletePerm); err != nil {
 		return err
@@ -136,10 +125,7 @@ func (db *DB) GetAllReplicators(
 	ctx context.Context,
 	opts ...*options.GetAllReplicatorsOptions,
 ) ([]client.Replicator, error) {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PReplicatorListPerm); err != nil {
 		return nil, err
@@ -172,10 +158,7 @@ func (db *DB) CreateP2PCollections(
 	collectionNames []string,
 	opts ...*options.CreateP2PCollectionsOptions,
 ) error {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PCollectionCreatePerm); err != nil {
 		return err
@@ -206,10 +189,7 @@ func (db *DB) DeleteP2PCollections(
 	collectionNames []string,
 	opts ...*options.DeleteP2PCollectionsOptions,
 ) error {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PCollectionDeletePerm); err != nil {
 		return err
@@ -238,10 +218,7 @@ func (db *DB) ListP2PCollections(
 	ctx context.Context,
 	opts ...*options.ListP2PCollectionsOptions,
 ) ([]string, error) {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PCollectionListPerm); err != nil {
 		return nil, err
@@ -267,10 +244,7 @@ func (db *DB) AddP2PDocuments(
 	docIDs []string,
 	opts ...*options.AddP2PDocumentsOptions,
 ) error {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PDocumentCreatePerm); err != nil {
 		return err
@@ -301,10 +275,7 @@ func (db *DB) RemoveP2PDocuments(
 	docIDs []string,
 	opts ...*options.RemoveP2PDocumentsOptions,
 ) error {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PDocumentDeletePerm); err != nil {
 		return err
@@ -330,10 +301,7 @@ func (db *DB) RemoveP2PDocuments(
 // GetAllP2PDocuments returns the list of persisted docIDs that
 // the P2P system subscribes to.
 func (db *DB) GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions) ([]string, error) {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PDocumentListPerm); err != nil {
 		return nil, err

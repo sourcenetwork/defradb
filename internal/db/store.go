@@ -31,8 +31,8 @@ func (db *DB) ExecRequest(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if len(opts) > 0 && opts[0] != nil && opts[0].Identity.HasValue() {
-		ctx = identity.WithContext(ctx, opts[0].Identity)
+	if ident := options.IdentityFrom(opts...); ident.HasValue() {
+		ctx = identity.WithContext(ctx, ident)
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
@@ -74,10 +74,7 @@ func (db *DB) GetCollectionByName(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
@@ -131,10 +128,7 @@ func (db *DB) GetAllIndexes(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
@@ -178,10 +172,7 @@ func (db *DB) AddSchema(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return nil, err
@@ -225,10 +216,7 @@ func (db *DB) PatchCollection(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
@@ -256,10 +244,7 @@ func (db *DB) SetActiveCollectionVersion(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
