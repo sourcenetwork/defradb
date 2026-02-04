@@ -91,7 +91,10 @@ func (a *WaitForPeersEvents) Execute() {
 	}
 
 	for colDocIndex, peerNodeIDs := range a.ExpectedPeersByDocument {
+		a.s.DocIDsLock.RLock()
 		docID := a.s.DocIDs[colDocIndex.Col][colDocIndex.Doc]
+		a.s.DocIDsLock.RUnlock()
+
 		topic := docID.String()
 		addExpectedPeers(topic, peerNodeIDs)
 	}

@@ -28,20 +28,20 @@ func TestMutationUpdate_WithIds(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-9466cfe3-c011-5d44-b1cd-f0c5a46d9202
 				Doc: `{
 					"name": "John",
 					"points": 42.1
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Bob",
 					"points": 66.6
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// bae-b76814bb-7ac8-5430-bac9-fbd7fc86db40
 				Doc: `{
 					"name": "Fred",

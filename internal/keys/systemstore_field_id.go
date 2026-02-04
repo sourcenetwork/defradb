@@ -11,10 +11,13 @@
 package keys
 
 import (
+	"bytes"
 	"strconv"
 	"strings"
 
 	ds "github.com/ipfs/go-datastore"
+
+	"github.com/sourcenetwork/defradb/internal/encoding"
 )
 
 // FieldID indexes field short ids by the full id.
@@ -38,21 +41,36 @@ func NewFieldIDPrefix(collectionShortID uint32) FieldID {
 	}
 }
 
-func NewFieldIDFromString(keyString string) (FieldID, error) {
-	keyString = strings.TrimPrefix(keyString, FIELD_SHORT_ID+"/")
-	elements := strings.Split(keyString, "/")
-	if len(elements) != 2 {
+func NewFieldIDFromBytes(key []byte) (FieldID, error) {
+	if !bytes.HasPrefix(key, []byte(FIELD_SHORT_ID)) {
 		return FieldID{}, ErrInvalidKey
 	}
 
-	colID, err := strconv.ParseUint(elements[0], 10, 0)
+	key = bytes.TrimPrefix(key, []byte(FIELD_SHORT_ID))
+	if len(key) == 0 {
+		return FieldID{}, nil
+	}
+	if key[0] != '/' {
+		return FieldID{}, ErrInvalidKey
+	}
+	key = key[1:]
+
+	key, colID, err := encoding.DecodeUvarintAscending(key)
 	if err != nil {
 		return FieldID{}, err
 	}
 
+	var fieldID string
+	if len(key) > 1 {
+		if key[0] == '/' {
+			key = key[1:]
+		}
+		fieldID = strings.TrimSuffix(string(key), "/")
+	}
+
 	return FieldID{
 		CollectionShortID: uint32(colID),
-		FieldID:           elements[1],
+		FieldID:           fieldID,
 	}, nil
 }
 
@@ -71,7 +89,18 @@ func (k FieldID) ToString() string {
 }
 
 func (k FieldID) Bytes() []byte {
-	return []byte(k.ToString())
+	result := []byte(FIELD_SHORT_ID)
+
+	if k.CollectionShortID != 0 {
+		result = append(result, encoding.EncodeUvarintAscending([]byte{'/'}, uint64(k.CollectionShortID))...)
+	}
+
+	if k.FieldID != "" {
+		result = append(result, '/')
+		result = append(result, []byte(k.FieldID)...)
+	}
+
+	return result
 }
 
 func (k FieldID) ToDS() ds.Key {

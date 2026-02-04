@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -48,7 +49,7 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 						age: Int 
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",
@@ -96,7 +97,7 @@ func TestNAC_GatesVerifySignature_GoClient_AuthorizedIdentity_AllowAccess(t *tes
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "John",
@@ -133,7 +134,7 @@ func TestNAC_GatesVerifySignature_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:       testUtils.NoIdentity(),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
-				ExpectedError:  "not authorized to perform operation",
+				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm),
 			},
 
 			// We haven't authorized non-identities. So, this should error with client identity signer also.
@@ -141,7 +142,7 @@ func TestNAC_GatesVerifySignature_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity:       testUtils.NoIdentity(),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
-				ExpectedError:  "not authorized to perform operation",
+				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm),
 			},
 		},
 	}
@@ -165,7 +166,7 @@ func TestNAC_GatesVerifySignature_WrongIdentity_NotAuthorizedError(t *testing.T)
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
-				ExpectedError:  "not authorized to perform operation",
+				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm),
 			},
 
 			// Wrong user/identity with client identity signer will also not be authorized.
@@ -173,7 +174,7 @@ func TestNAC_GatesVerifySignature_WrongIdentity_NotAuthorizedError(t *testing.T)
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
-				ExpectedError:  "not authorized to perform operation",
+				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm),
 			},
 		},
 	}

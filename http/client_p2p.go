@@ -131,7 +131,7 @@ func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, er
 	return reps, nil
 }
 
-func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (c *Client) CreateP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	body, err := json.Marshal(collectionIDs)
@@ -146,7 +146,7 @@ func (c *Client) AddP2PCollections(ctx context.Context, collectionIDs ...string)
 	return err
 }
 
-func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (c *Client) DeleteP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	body, err := json.Marshal(collectionIDs)
@@ -161,7 +161,7 @@ func (c *Client) RemoveP2PCollections(ctx context.Context, collectionIDs ...stri
 	return err
 }
 
-func (c *Client) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (c *Client) ListP2PCollections(ctx context.Context) ([]string, error) {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)

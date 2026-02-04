@@ -30,7 +30,7 @@ func TestMutationUpdate_WithArrayOfNillableFloats(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"favouriteFloats": [3.1425, null, -0.00000000001, 10]

@@ -34,12 +34,12 @@ func TestColVersionUpdateRemoveCollectionSourceTransform(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Shahzad"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -57,7 +57,7 @@ func TestColVersionUpdateRemoveCollectionSourceTransform(t *testing.T) {
 					},
 				}),
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

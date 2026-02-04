@@ -67,15 +67,15 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *Wrapper) CreateP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *Wrapper) DeleteP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (w *Wrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
 	panic("not implemented")
 }
 

@@ -29,13 +29,13 @@ func TestSchemaUpdatesMoveCollectionDoesNothing(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// This just moves an object to a new key in a temporary dictionary, it doesn't actually do
 				// anything
 				Patch: `

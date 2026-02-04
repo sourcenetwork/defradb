@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -60,7 +61,7 @@ func TestNAC_GatesCollectionGetByID_NoIdentity_NotAuthorizedError(t *testing.T) 
 				FilterOptions: client.CollectionFetchOptions{
 					CollectionID: immutable.Some("does not exist"),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -84,7 +85,7 @@ func TestNAC_GatesCollectionGetByID_WrongIdentity_NotAuthorizedError(t *testing.
 				FilterOptions: client.CollectionFetchOptions{
 					CollectionID: immutable.Some("does not exist"),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

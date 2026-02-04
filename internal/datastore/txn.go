@@ -115,6 +115,10 @@ func NewTxnFrom(
 	}
 }
 
+func (t *BasicTxn) Txn() corekv.Txn {
+	return t.txn
+}
+
 func (t *BasicTxn) ID() uint64 {
 	return t.id
 }

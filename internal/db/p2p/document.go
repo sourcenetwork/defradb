@@ -43,7 +43,7 @@ func (p *P2P) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 		}
 	}
 
-	txn.OnSuccess(func() {
+	txn.OnSuccessAsync(func() {
 		for _, docID := range docIDs {
 			err := p.host.AddPubSubTopic(docID, true, p.pubSubMessageHandler, p.peerEventHandler)
 			if err != nil {
@@ -75,7 +75,7 @@ func (p *P2P) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 		}
 	}
 
-	txn.OnSuccess(func() {
+	txn.OnSuccessAsync(func() {
 		for _, docID := range docIDs {
 			err := p.host.RemovePubSubTopic(docID)
 			if err != nil {
