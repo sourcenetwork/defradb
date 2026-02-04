@@ -43,6 +43,7 @@ type ExplainAsserter struct {
 	filterMatches  immutable.Option[int]
 	sizeOfResults  immutable.Option[int]
 	planExecutions immutable.Option[uint64]
+	nextLevel      *ExplainAsserter
 }
 
 // NewExplainAsserter creates an asserter for explain query results.
@@ -109,16 +110,19 @@ func (a *ExplainAsserter) WithLimit() *ExplainAsserter {
 	return a
 }
 
-// WithLevel adds another level assertion and returns a MultiLevelAsserter.
+// WithLevel adds another level assertion.
 // This allows chaining multiple level assertions:
 //
-//	testUtils.NewLevelAsserter("root").WithIndexFetches(0).
+//	testUtils.NewExplainAsserter("root").WithIndexFetches(0).
 //		WithLevel("subType").WithIndexFetches(4)
-func (a *ExplainAsserter) WithLevel(path ...string) *multiLevelAsserter {
-	return &multiLevelAsserter{
-		levels:  []*ExplainAsserter{a},
-		current: &ExplainAsserter{path: path},
+func (a *ExplainAsserter) WithLevel(path ...string) *ExplainAsserter {
+	next := &ExplainAsserter{path: path}
+	current := a
+	for current.nextLevel != nil {
+		current = current.nextLevel
 	}
+	current.nextLevel = next
+	return next
 }
 
 // Assert validates metrics in the explain result.
@@ -156,13 +160,21 @@ func (a *ExplainAsserter) Assert(t testing.TB, result map[string]any) {
 			"Expected %d filterMatches, got %d", a.filterMatches.Value(), filterMatches)
 	}
 
-	// Determine how to get metrics based on whether path is set
 	if len(a.path) == 0 {
-		// Aggregate mode: sum metrics across all scan nodes
 		a.assertAggregatedMetrics(t, selectNode)
 	} else {
-		// Level mode: get metrics from specific level
 		a.assertLevelMetrics(t, selectNode)
+	}
+
+	if a.nextLevel != nil {
+		a.nextLevel.assertLevelOnly(t, selectNode)
+	}
+}
+
+func (a *ExplainAsserter) assertLevelOnly(t testing.TB, selectNode dataMap) {
+	a.assertLevelMetrics(t, selectNode)
+	if a.nextLevel != nil {
+		a.nextLevel.assertLevelOnly(t, selectNode)
 	}
 }
 
@@ -230,47 +242,6 @@ func (a *ExplainAsserter) assertLevelMetrics(t testing.TB, selectNode dataMap) {
 		actual := getMetric(scanNode, indexFetchesProp)
 		assert.Equal(t, uint64(a.indexFetches.Value()), actual,
 			"Expected %d indexFetches at level %v, got %d", a.indexFetches.Value(), a.path, actual)
-	}
-}
-
-// multiLevelAsserter allows asserting on multiple levels in a single assertion.
-type multiLevelAsserter struct {
-	levels  []*ExplainAsserter
-	current *ExplainAsserter
-}
-
-func (m *multiLevelAsserter) WithIterations(iterations int) *multiLevelAsserter {
-	m.current.iterations = immutable.Some(iterations)
-	return m
-}
-
-func (m *multiLevelAsserter) WithDocFetches(docFetches int) *multiLevelAsserter {
-	m.current.docFetches = immutable.Some(docFetches)
-	return m
-}
-
-func (m *multiLevelAsserter) WithFieldFetches(fieldFetches int) *multiLevelAsserter {
-	m.current.fieldFetches = immutable.Some(fieldFetches)
-	return m
-}
-
-func (m *multiLevelAsserter) WithIndexFetches(indexFetches int) *multiLevelAsserter {
-	m.current.indexFetches = immutable.Some(indexFetches)
-	return m
-}
-
-// WithLevel adds another level assertion.
-func (m *multiLevelAsserter) WithLevel(path ...string) *multiLevelAsserter {
-	m.levels = append(m.levels, m.current)
-	m.current = &ExplainAsserter{path: path}
-	return m
-}
-
-// Assert validates metrics at all specified levels of the explain result.
-func (m *multiLevelAsserter) Assert(t testing.TB, result map[string]any) {
-	allLevels := append(m.levels, m.current)
-	for _, level := range allLevels {
-		level.Assert(t, result)
 	}
 }
 
