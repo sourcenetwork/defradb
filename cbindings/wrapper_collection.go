@@ -232,12 +232,14 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc)
 	}
 	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
-		var createOpts []*options.CollectionCreateOptions
-		if len(opts) > 0 && opts[0] != nil {
-			createOpts = []*options.CollectionCreateOptions{
-				options.CollectionCreate().
-					SetEncryptDoc(opts[0].EncryptDoc).
-					SetEncryptedFields(opts[0].EncryptedFields),
+		createOpts := make([]*options.CollectionCreateOptions, 0, len(opts))
+		for _, opt := range opts {
+			if opt != nil {
+				createOpts = append(createOpts,
+					options.CollectionCreate().
+						SetEncryptDoc(opt.EncryptDoc).
+						SetEncryptedFields(opt.EncryptedFields),
+				)
 			}
 		}
 		return c.Create(ctx, doc, createOpts...)
