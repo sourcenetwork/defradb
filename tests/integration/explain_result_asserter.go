@@ -252,9 +252,10 @@ func formatPath(path []string) string {
 	if len(path) == 0 {
 		return ""
 	}
-	var result strings.Builder; result.WriteString(path[0])
+	var result strings.Builder
+	result.WriteString(path[0])
 	for i := 1; i < len(path); i++ {
-		result .WriteString("/" + path[i])
+		result.WriteString("/" + path[i])
 	}
 	return result.String()
 }
@@ -360,4 +361,3 @@ func getMetric(node dataMap, prop string) uint64 {
 	}
 	return 0
 }
-
