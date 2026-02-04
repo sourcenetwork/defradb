@@ -17,7 +17,7 @@ import (
 	"github.com/sourcenetwork/defradb/cli/test/integration"
 )
 
-func TestReplicatorSet_WithNonExistentCollection_ShouldFail(t *testing.T) {
+func TestReplicatorCreate_WithNonExistentCollection_ShouldFail(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.SchemaAdd{
