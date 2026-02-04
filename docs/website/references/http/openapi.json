@@ -354,6 +354,23 @@
                 },
                 "type": "object"
             },
+            "create_replicator_params": {
+                "properties": {
+                    "Addresses": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "Collections": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
             "create_tx": {
                 "properties": {
                     "id": {
@@ -591,23 +608,6 @@
                 "properties": {
                     "lensId": {
                         "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "set_replicator_params": {
-                "properties": {
-                    "Addresses": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
-                    "Collections": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
                     }
                 },
                 "type": "object"
@@ -2559,12 +2559,12 @@
             },
             "post": {
                 "description": "Add peer replicators",
-                "operationId": "peer_replicator_set",
+                "operationId": "peer_replicator_create",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/set_replicator_params"
+                                "$ref": "#/components/schemas/create_replicator_params"
                             }
                         }
                     },

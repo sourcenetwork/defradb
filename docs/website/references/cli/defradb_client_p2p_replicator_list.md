@@ -1,31 +1,27 @@
-## defradb client p2p replicator set
+## defradb client p2p replicator list
 
-Add replicator(s) and start synchronization
+List all replicators
 
 ### Synopsis
 
-Add replicator(s) and start synchronization.
+List all the replicators active in the P2P data sync system.
 A replicator synchronizes one or all collection(s) from this instance to another.
 
 ```
-defradb client p2p replicator set [-c, --collection] <addresses...> [flags]
+defradb client p2p replicator list [flags]
 ```
 
 ### Examples
 
 ```
-Add a replicator to replicate the "Users" collection to a peer:  
-  defradb client p2p replicator set -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko...
-
-Add a replicator to replicate the "Orders" collection to multiple peers:  
-  defradb client p2p replicator set -c Orders /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko... /ip4/0.0.0.0/tcp/9172/p2p/1543LK...
+Get all replicators:  
+  defradb client p2p replicator list
 ```
 
 ### Options
 
 ```
-  -c, --collection strings   Collection(s) to replicate
-  -h, --help                 help for set
+  -h, --help   help for list
 ```
 
 ### Options inherited from parent commands
