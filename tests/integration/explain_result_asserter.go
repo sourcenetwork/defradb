@@ -114,8 +114,8 @@ func (a *ExplainAsserter) WithLimit() *ExplainAsserter {
 //
 //	testUtils.NewLevelAsserter("root").WithIndexFetches(0).
 //		WithLevel("subType").WithIndexFetches(4)
-func (a *ExplainAsserter) WithLevel(path ...string) *MultiLevelAsserter {
-	return &MultiLevelAsserter{
+func (a *ExplainAsserter) WithLevel(path ...string) *multiLevelAsserter {
+	return &multiLevelAsserter{
 		levels:  []*ExplainAsserter{a},
 		current: &ExplainAsserter{path: path},
 	}
@@ -233,41 +233,41 @@ func (a *ExplainAsserter) assertLevelMetrics(t testing.TB, selectNode dataMap) {
 	}
 }
 
-// MultiLevelAsserter allows asserting on multiple levels in a single assertion.
-type MultiLevelAsserter struct {
+// multiLevelAsserter allows asserting on multiple levels in a single assertion.
+type multiLevelAsserter struct {
 	levels  []*ExplainAsserter
 	current *ExplainAsserter
 }
 
-func (m *MultiLevelAsserter) WithIterations(iterations int) *MultiLevelAsserter {
+func (m *multiLevelAsserter) WithIterations(iterations int) *multiLevelAsserter {
 	m.current.iterations = immutable.Some(iterations)
 	return m
 }
 
-func (m *MultiLevelAsserter) WithDocFetches(docFetches int) *MultiLevelAsserter {
+func (m *multiLevelAsserter) WithDocFetches(docFetches int) *multiLevelAsserter {
 	m.current.docFetches = immutable.Some(docFetches)
 	return m
 }
 
-func (m *MultiLevelAsserter) WithFieldFetches(fieldFetches int) *MultiLevelAsserter {
+func (m *multiLevelAsserter) WithFieldFetches(fieldFetches int) *multiLevelAsserter {
 	m.current.fieldFetches = immutable.Some(fieldFetches)
 	return m
 }
 
-func (m *MultiLevelAsserter) WithIndexFetches(indexFetches int) *MultiLevelAsserter {
+func (m *multiLevelAsserter) WithIndexFetches(indexFetches int) *multiLevelAsserter {
 	m.current.indexFetches = immutable.Some(indexFetches)
 	return m
 }
 
 // WithLevel adds another level assertion.
-func (m *MultiLevelAsserter) WithLevel(path ...string) *MultiLevelAsserter {
+func (m *multiLevelAsserter) WithLevel(path ...string) *multiLevelAsserter {
 	m.levels = append(m.levels, m.current)
 	m.current = &ExplainAsserter{path: path}
 	return m
 }
 
 // Assert validates metrics at all specified levels of the explain result.
-func (m *MultiLevelAsserter) Assert(t testing.TB, result map[string]any) {
+func (m *multiLevelAsserter) Assert(t testing.TB, result map[string]any) {
 	allLevels := append(m.levels, m.current)
 	for _, level := range allLevels {
 		level.Assert(t, result)
@@ -375,7 +375,6 @@ func getMetric(node dataMap, prop string) uint64 {
 
 // findScanNodeInJoin finds a scanNode within a join structure (for validation).
 func findScanNodeInJoin(indexJoin dataMap) (dataMap, bool) {
-	// Check for orphanNode wrapper
 	if orphanNode, hasOrphan := indexJoin["orphanNode"].(dataMap); hasOrphan {
 		indexJoin = orphanNode
 	}
@@ -396,7 +395,6 @@ func findScanNodeInJoin(indexJoin dataMap) (dataMap, bool) {
 func aggregateMetricFromNode(node dataMap, prop string) uint64 {
 	var total uint64
 
-	// Check if this node has the metric directly (scanNode)
 	if scanNode, has := node["scanNode"].(dataMap); has {
 		if val, hasVal := scanNode[prop]; hasVal {
 			if num, ok := val.(uint64); ok {
@@ -405,46 +403,37 @@ func aggregateMetricFromNode(node dataMap, prop string) uint64 {
 		}
 	}
 
-	// Check for typeIndexJoin
 	if indexJoin, has := node["typeIndexJoin"].(dataMap); has {
 		total += aggregateMetricFromNode(indexJoin, prop)
 	}
 
-	// Check for orphanNode
 	if orphanNode, has := node["orphanNode"].(dataMap); has {
 		total += aggregateMetricFromNode(orphanNode, prop)
 	}
 
-	// Check for join types
 	for _, joinType := range []string{"typeJoinMany", "typeJoinOne"} {
 		if joinNode, has := node[joinType].(dataMap); has {
-			// Process root
 			if root, hasRoot := joinNode["root"].(dataMap); hasRoot {
 				total += aggregateMetricFromNode(root, prop)
 			}
-			// Process subType
 			if subType, hasSubType := joinNode["subType"].(dataMap); hasSubType {
 				total += aggregateMetricFromNode(subType, prop)
 			}
 		}
 	}
 
-	// Handle selectTopNode wrapper
 	if selectTop, has := node["selectTopNode"].(dataMap); has {
 		total += aggregateMetricFromNode(selectTop, prop)
 	}
 
-	// Handle limitNode wrapper
 	if limitNode, has := node["limitNode"].(dataMap); has {
 		total += aggregateMetricFromNode(limitNode, prop)
 	}
 
-	// Handle orderNode wrapper
 	if orderNode, has := node["orderNode"].(dataMap); has {
 		total += aggregateMetricFromNode(orderNode, prop)
 	}
 
-	// Handle selectNode wrapper
 	if selectNode, has := node["selectNode"].(dataMap); has {
 		total += aggregateMetricFromNode(selectNode, prop)
 	}
