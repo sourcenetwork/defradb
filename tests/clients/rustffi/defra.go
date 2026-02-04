@@ -764,7 +764,6 @@ func (n *Node) RefreshViews(options string) error {
 
 // SetMigration sets the migration for collection versions.
 // The config parameter should be a JSON string containing LensConfig.
-// Note: Not yet implemented - see issue #179.
 func (n *Node) SetMigration(identityDID string, config string) (string, error) {
 	var cIdentityDID *C.char
 	if identityDID != "" {
@@ -781,6 +780,34 @@ func (n *Node) SetMigration(identityDID string, config string) (string, error) {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
 		return "", fmt.Errorf("ffi: set_migration failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
+// SetMigrationInTxn sets the migration for collection versions within a transaction.
+// The migration will only be visible after the transaction is committed.
+func (n *Node) SetMigrationInTxn(txnID string, identityDID string, config string) (string, error) {
+	cTxnID := C.CString(txnID)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	cConfig := C.CString(config)
+	defer C.free(unsafe.Pointer(cConfig))
+
+	result := C.set_migration_in_txn(n.ptr, cTxnID, cIdentityDID, cConfig)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: set_migration_in_txn failed: %s", err)
 	}
 
 	value := C.GoString(result.value)
