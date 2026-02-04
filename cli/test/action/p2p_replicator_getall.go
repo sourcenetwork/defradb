@@ -34,7 +34,7 @@ type P2PReplicatorList struct {
 var _ Action = (*P2PReplicatorList)(nil)
 
 func (a *P2PReplicatorList) Execute() {
-	args := []string{"client", "p2p", "replicator", "getall"}
+	args := []string{"client", "p2p", "replicator", "list"}
 
 	args = a.AppendDirections(args)
 
