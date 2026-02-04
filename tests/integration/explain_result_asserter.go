@@ -192,26 +192,9 @@ func (a *ExplainAsserter) assertAggregatedMetrics(t testing.TB, selectNode dataM
 	}
 	require.True(t, hasScanNode, "Expected scanNode")
 
-	if a.iterations.HasValue() {
-		actual := aggregateMetricFromNode(selectNode, iterationsProp)
-		assert.Equal(t, uint64(a.iterations.Value()), actual,
-			"Expected %d iterations, got %d", a.iterations.Value(), actual)
-	}
-	if a.docFetches.HasValue() {
-		actual := aggregateMetricFromNode(selectNode, docFetchesProp)
-		assert.Equal(t, uint64(a.docFetches.Value()), actual,
-			"Expected %d docFetches, got %d", a.docFetches.Value(), actual)
-	}
-	if a.fieldFetches.HasValue() {
-		actual := aggregateMetricFromNode(selectNode, fieldFetchesProp)
-		assert.Equal(t, uint64(a.fieldFetches.Value()), actual,
-			"Expected %d fieldFetches, got %d", a.fieldFetches.Value(), actual)
-	}
-	if a.indexFetches.HasValue() {
-		actual := aggregateMetricFromNode(selectNode, indexFetchesProp)
-		assert.Equal(t, uint64(a.indexFetches.Value()), actual,
-			"Expected %d indexFetches, got %d", a.indexFetches.Value(), actual)
-	}
+	a.assertMetrics(t, func(prop string) uint64 {
+		return aggregateMetricFromNode(selectNode, prop)
+	}, "")
 }
 
 func (a *ExplainAsserter) assertLevelMetrics(t testing.TB, selectNode dataMap) {
@@ -230,36 +213,37 @@ func (a *ExplainAsserter) assertLevelMetrics(t testing.TB, selectNode dataMap) {
 	scanNode := findScanNodeAtLevel(targetNode)
 	require.NotNil(t, scanNode, "No scanNode found at level: %v", a.path)
 
+	a.assertMetrics(t, func(prop string) uint64 {
+		return getMetric(scanNode, prop)
+	}, " at level %v")
+}
+
+func (a *ExplainAsserter) assertMetrics(t testing.TB, getMetricFn func(string) uint64, levelFmt string) {
 	if a.iterations.HasValue() {
-		actual := getMetric(scanNode, iterationsProp)
+		actual := getMetricFn(iterationsProp)
 		assert.Equal(t, uint64(a.iterations.Value()), actual,
-			"Expected %d iterations at level %v, got %d", a.iterations.Value(), a.path, actual)
+			"Expected %d iterations"+levelFmt+", got %d", a.iterations.Value(), a.path, actual)
 	}
 	if a.docFetches.HasValue() {
-		actual := getMetric(scanNode, docFetchesProp)
+		actual := getMetricFn(docFetchesProp)
 		assert.Equal(t, uint64(a.docFetches.Value()), actual,
-			"Expected %d docFetches at level %v, got %d", a.docFetches.Value(), a.path, actual)
+			"Expected %d docFetches"+levelFmt+", got %d", a.docFetches.Value(), a.path, actual)
 	}
 	if a.fieldFetches.HasValue() {
-		actual := getMetric(scanNode, fieldFetchesProp)
+		actual := getMetricFn(fieldFetchesProp)
 		assert.Equal(t, uint64(a.fieldFetches.Value()), actual,
-			"Expected %d fieldFetches at level %v, got %d", a.fieldFetches.Value(), a.path, actual)
+			"Expected %d fieldFetches"+levelFmt+", got %d", a.fieldFetches.Value(), a.path, actual)
 	}
 	if a.indexFetches.HasValue() {
-		actual := getMetric(scanNode, indexFetchesProp)
+		actual := getMetricFn(indexFetchesProp)
 		assert.Equal(t, uint64(a.indexFetches.Value()), actual,
-			"Expected %d indexFetches at level %v, got %d", a.indexFetches.Value(), a.path, actual)
+			"Expected %d indexFetches"+levelFmt+", got %d", a.indexFetches.Value(), a.path, actual)
 	}
 }
 
 // navigateToSelectNode finds the selectNode, handling orderNode and limitNode wrappers.
 func navigateToSelectNode(t testing.TB, node dataMap) dataMap {
-	if limit, has := node[limitNodeProp].(dataMap); has {
-		node = limit
-	}
-	if order, has := node[orderNodeProp].(dataMap); has {
-		node = order
-	}
+	node = unwrapNode(node, limitNodeProp, orderNodeProp)
 	selectNode, ok := node[selectNodeProp].(dataMap)
 	require.True(t, ok, "Expected selectNode")
 	return selectNode
@@ -270,14 +254,7 @@ func navigateToLevel(node dataMap, path []string) dataMap {
 	current := node
 
 	for _, step := range path {
-		var joinNode dataMap
-		if jm, has := current[typeJoinManyProp].(dataMap); has {
-			joinNode = jm
-		} else if jo, has := current[typeJoinOneProp].(dataMap); has {
-			joinNode = jo
-		} else {
-			joinNode = current
-		}
+		joinNode := getJoinNode(current)
 
 		switch step {
 		case rootProp:
@@ -306,20 +283,30 @@ func navigateToLevel(node dataMap, path []string) dataMap {
 
 // navigateThroughSelectTop handles the selectTopNode -> selectNode -> typeIndexJoin chain.
 func navigateThroughSelectTop(node dataMap) dataMap {
-	if selectTop, has := node[selectTopNodeProp].(dataMap); has {
-		node = selectTop
-	}
-	if limit, has := node[limitNodeProp].(dataMap); has {
-		node = limit
-	}
-	if order, has := node[orderNodeProp].(dataMap); has {
-		node = order
-	}
-	if sel, has := node[selectNodeProp].(dataMap); has {
-		node = sel
-	}
+	node = unwrapNode(node, selectTopNodeProp, limitNodeProp, orderNodeProp, selectNodeProp)
 	if indexJoin, has := node[typeIndexJoinProp].(dataMap); has {
 		return indexJoin
+	}
+	return node
+}
+
+// unwrapNode navigates through wrapper nodes in order.
+func unwrapNode(node dataMap, wrappers ...string) dataMap {
+	for _, wrapper := range wrappers {
+		if inner, has := node[wrapper].(dataMap); has {
+			node = inner
+		}
+	}
+	return node
+}
+
+// getJoinNode returns the typeJoinMany or typeJoinOne node, or the node itself.
+func getJoinNode(node dataMap) dataMap {
+	if jm, has := node[typeJoinManyProp].(dataMap); has {
+		return jm
+	}
+	if jo, has := node[typeJoinOneProp].(dataMap); has {
+		return jo
 	}
 	return node
 }
@@ -329,16 +316,8 @@ func findScanNodeAtLevel(node dataMap) dataMap {
 	if scan, has := node[scanNodeProp].(dataMap); has {
 		return scan
 	}
-	for _, joinType := range []string{typeJoinManyProp, typeJoinOneProp} {
-		if joinNode, has := node[joinType].(dataMap); has {
-			if root, hasRoot := joinNode[rootProp].(dataMap); hasRoot {
-				if scan, hasScan := root[scanNodeProp].(dataMap); hasScan {
-					return scan
-				}
-			}
-		}
-	}
-	return nil
+	scan, _ := findScanNodeInJoinTypes(node)
+	return scan
 }
 
 // getMetric extracts a metric value from a node.
@@ -356,9 +335,13 @@ func findScanNodeInJoin(indexJoin dataMap) (dataMap, bool) {
 	if orphan, hasOrphan := indexJoin[orphanNodeProp].(dataMap); hasOrphan {
 		indexJoin = orphan
 	}
+	return findScanNodeInJoinTypes(indexJoin)
+}
 
+// findScanNodeInJoinTypes searches for scanNode in typeJoinMany/typeJoinOne structures.
+func findScanNodeInJoinTypes(node dataMap) (dataMap, bool) {
 	for _, joinType := range []string{typeJoinManyProp, typeJoinOneProp} {
-		if joinNode, has := indexJoin[joinType].(dataMap); has {
+		if joinNode, has := node[joinType].(dataMap); has {
 			if root, hasRoot := joinNode[rootProp].(dataMap); hasRoot {
 				if scan, hasScan := root[scanNodeProp].(dataMap); hasScan {
 					return scan, true
