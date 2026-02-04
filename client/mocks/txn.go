@@ -439,78 +439,6 @@ func (_c *Txn_AddNACActorRelationship_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
-// AddP2PCollections provides a mock function for the type Txn
-func (_mock *Txn) AddP2PCollections(ctx context.Context, collectionNames []string, opts ...*options.AddP2PCollectionsOptions) error {
-	var tmpRet mock.Arguments
-	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, collectionNames, opts)
-	} else {
-		tmpRet = _mock.Called(ctx, collectionNames)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddP2PCollections")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...*options.AddP2PCollectionsOptions) error); ok {
-		r0 = returnFunc(ctx, collectionNames, opts...)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Txn_AddP2PCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddP2PCollections'
-type Txn_AddP2PCollections_Call struct {
-	*mock.Call
-}
-
-// AddP2PCollections is a helper method to define mock.On call
-//   - ctx context.Context
-//   - collectionNames []string
-//   - opts ...*options.AddP2PCollectionsOptions
-func (_e *Txn_Expecter) AddP2PCollections(ctx interface{}, collectionNames interface{}, opts ...interface{}) *Txn_AddP2PCollections_Call {
-	return &Txn_AddP2PCollections_Call{Call: _e.mock.On("AddP2PCollections",
-		append([]interface{}{ctx, collectionNames}, opts...)...)}
-}
-
-func (_c *Txn_AddP2PCollections_Call) Run(run func(ctx context.Context, collectionNames []string, opts ...*options.AddP2PCollectionsOptions)) *Txn_AddP2PCollections_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []string
-		if args[1] != nil {
-			arg1 = args[1].([]string)
-		}
-		var arg2 []*options.AddP2PCollectionsOptions
-		var variadicArgs []*options.AddP2PCollectionsOptions
-		if len(args) > 2 {
-			variadicArgs = args[2].([]*options.AddP2PCollectionsOptions)
-		}
-		arg2 = variadicArgs
-		run(
-			arg0,
-			arg1,
-			arg2...,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_AddP2PCollections_Call) Return(err error) *Txn_AddP2PCollections_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Txn_AddP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionNames []string, opts ...*options.AddP2PCollectionsOptions) error) *Txn_AddP2PCollections_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // AddP2PDocuments provides a mock function for the type Txn
 func (_mock *Txn) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.AddP2PDocumentsOptions) error {
 	var tmpRet mock.Arguments
@@ -976,6 +904,72 @@ func (_c *Txn_Connect_Call) RunAndReturn(run func(ctx context.Context, addresses
 	return _c
 }
 
+// CreateP2PCollections provides a mock function for the type Txn
+func (_mock *Txn) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
+	var tmpRet mock.Arguments
+	if len(collectionNames) > 0 {
+		tmpRet = _mock.Called(ctx, collectionNames)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateP2PCollections")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
+		r0 = returnFunc(ctx, collectionNames...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_CreateP2PCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateP2PCollections'
+type Txn_CreateP2PCollections_Call struct {
+	*mock.Call
+}
+
+// CreateP2PCollections is a helper method to define mock.On call
+//   - ctx context.Context
+//   - collectionNames ...string
+func (_e *Txn_Expecter) CreateP2PCollections(ctx interface{}, collectionNames ...interface{}) *Txn_CreateP2PCollections_Call {
+	return &Txn_CreateP2PCollections_Call{Call: _e.mock.On("CreateP2PCollections",
+		append([]interface{}{ctx}, collectionNames...)...)}
+}
+
+func (_c *Txn_CreateP2PCollections_Call) Run(run func(ctx context.Context, collectionNames ...string)) *Txn_CreateP2PCollections_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_CreateP2PCollections_Call) Return(err error) *Txn_CreateP2PCollections_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_CreateP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionNames ...string) error) *Txn_CreateP2PCollections_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteDACActorRelationship provides a mock function for the type Txn
 func (_mock *Txn) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...*options.DeleteDACActorRelationshipOptions) (client.DeleteActorRelationshipResult, error) {
 	var tmpRet mock.Arguments
@@ -1158,6 +1152,72 @@ func (_c *Txn_DeleteNACActorRelationship_Call) Return(deleteActorRelationshipRes
 }
 
 func (_c *Txn_DeleteNACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string, opts ...*options.DeleteNACActorRelationshipOptions) (client.DeleteActorRelationshipResult, error)) *Txn_DeleteNACActorRelationship_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteP2PCollections provides a mock function for the type Txn
+func (_mock *Txn) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
+	var tmpRet mock.Arguments
+	if len(collectionNames) > 0 {
+		tmpRet = _mock.Called(ctx, collectionNames)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteP2PCollections")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
+		r0 = returnFunc(ctx, collectionNames...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_DeleteP2PCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteP2PCollections'
+type Txn_DeleteP2PCollections_Call struct {
+	*mock.Call
+}
+
+// DeleteP2PCollections is a helper method to define mock.On call
+//   - ctx context.Context
+//   - collectionNames ...string
+func (_e *Txn_Expecter) DeleteP2PCollections(ctx interface{}, collectionNames ...interface{}) *Txn_DeleteP2PCollections_Call {
+	return &Txn_DeleteP2PCollections_Call{Call: _e.mock.On("DeleteP2PCollections",
+		append([]interface{}{ctx}, collectionNames...)...)}
+}
+
+func (_c *Txn_DeleteP2PCollections_Call) Run(run func(ctx context.Context, collectionNames ...string)) *Txn_DeleteP2PCollections_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_DeleteP2PCollections_Call) Return(err error) *Txn_DeleteP2PCollections_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_DeleteP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionNames ...string) error) *Txn_DeleteP2PCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1486,83 +1546,6 @@ func (_c *Txn_GetAllIndexes_Call) Return(vToIndexDescriptions map[client.Collect
 }
 
 func (_c *Txn_GetAllIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...*options.GetAllIndexesOptions) (map[client.CollectionName][]client.IndexDescription, error)) *Txn_GetAllIndexes_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllP2PCollections provides a mock function for the type Txn
-func (_mock *Txn) GetAllP2PCollections(ctx context.Context, opts ...*options.GetAllP2PCollectionsOptions) ([]string, error) {
-	var tmpRet mock.Arguments
-	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, opts)
-	} else {
-		tmpRet = _mock.Called(ctx)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllP2PCollections")
-	}
-
-	var r0 []string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.GetAllP2PCollectionsOptions) ([]string, error)); ok {
-		return returnFunc(ctx, opts...)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.GetAllP2PCollectionsOptions) []string); ok {
-		r0 = returnFunc(ctx, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...*options.GetAllP2PCollectionsOptions) error); ok {
-		r1 = returnFunc(ctx, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Txn_GetAllP2PCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllP2PCollections'
-type Txn_GetAllP2PCollections_Call struct {
-	*mock.Call
-}
-
-// GetAllP2PCollections is a helper method to define mock.On call
-//   - ctx context.Context
-//   - opts ...*options.GetAllP2PCollectionsOptions
-func (_e *Txn_Expecter) GetAllP2PCollections(ctx interface{}, opts ...interface{}) *Txn_GetAllP2PCollections_Call {
-	return &Txn_GetAllP2PCollections_Call{Call: _e.mock.On("GetAllP2PCollections",
-		append([]interface{}{ctx}, opts...)...)}
-}
-
-func (_c *Txn_GetAllP2PCollections_Call) Run(run func(ctx context.Context, opts ...*options.GetAllP2PCollectionsOptions)) *Txn_GetAllP2PCollections_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []*options.GetAllP2PCollectionsOptions
-		var variadicArgs []*options.GetAllP2PCollectionsOptions
-		if len(args) > 1 {
-			variadicArgs = args[1].([]*options.GetAllP2PCollectionsOptions)
-		}
-		arg1 = variadicArgs
-		run(
-			arg0,
-			arg1...,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_GetAllP2PCollections_Call) Return(strings []string, err error) *Txn_GetAllP2PCollections_Call {
-	_c.Call.Return(strings, err)
-	return _c
-}
-
-func (_c *Txn_GetAllP2PCollections_Call) RunAndReturn(run func(ctx context.Context, opts ...*options.GetAllP2PCollectionsOptions) ([]string, error)) *Txn_GetAllP2PCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2184,6 +2167,68 @@ func (_c *Txn_ListLenses_Call) RunAndReturn(run func(ctx context.Context) (map[s
 	return _c
 }
 
+// ListP2PCollections provides a mock function for the type Txn
+func (_mock *Txn) ListP2PCollections(ctx context.Context) ([]string, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListP2PCollections")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_ListP2PCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListP2PCollections'
+type Txn_ListP2PCollections_Call struct {
+	*mock.Call
+}
+
+// ListP2PCollections is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Txn_Expecter) ListP2PCollections(ctx interface{}) *Txn_ListP2PCollections_Call {
+	return &Txn_ListP2PCollections_Call{Call: _e.mock.On("ListP2PCollections", ctx)}
+}
+
+func (_c *Txn_ListP2PCollections_Call) Run(run func(ctx context.Context)) *Txn_ListP2PCollections_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_ListP2PCollections_Call) Return(strings []string, err error) *Txn_ListP2PCollections_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *Txn_ListP2PCollections_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_ListP2PCollections_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PatchCollection provides a mock function for the type Txn
 func (_mock *Txn) PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens], opts ...*options.PatchCollectionOptions) error {
 	var tmpRet mock.Arguments
@@ -2496,78 +2541,6 @@ func (_c *Txn_RefreshViews_Call) Return(err error) *Txn_RefreshViews_Call {
 }
 
 func (_c *Txn_RefreshViews_Call) RunAndReturn(run func(ctx context.Context, opts ...*options.RefreshViewsOptions) error) *Txn_RefreshViews_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RemoveP2PCollections provides a mock function for the type Txn
-func (_mock *Txn) RemoveP2PCollections(ctx context.Context, collectionNames []string, opts ...*options.RemoveP2PCollectionsOptions) error {
-	var tmpRet mock.Arguments
-	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, collectionNames, opts)
-	} else {
-		tmpRet = _mock.Called(ctx, collectionNames)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveP2PCollections")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...*options.RemoveP2PCollectionsOptions) error); ok {
-		r0 = returnFunc(ctx, collectionNames, opts...)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Txn_RemoveP2PCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveP2PCollections'
-type Txn_RemoveP2PCollections_Call struct {
-	*mock.Call
-}
-
-// RemoveP2PCollections is a helper method to define mock.On call
-//   - ctx context.Context
-//   - collectionNames []string
-//   - opts ...*options.RemoveP2PCollectionsOptions
-func (_e *Txn_Expecter) RemoveP2PCollections(ctx interface{}, collectionNames interface{}, opts ...interface{}) *Txn_RemoveP2PCollections_Call {
-	return &Txn_RemoveP2PCollections_Call{Call: _e.mock.On("RemoveP2PCollections",
-		append([]interface{}{ctx, collectionNames}, opts...)...)}
-}
-
-func (_c *Txn_RemoveP2PCollections_Call) Run(run func(ctx context.Context, collectionNames []string, opts ...*options.RemoveP2PCollectionsOptions)) *Txn_RemoveP2PCollections_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []string
-		if args[1] != nil {
-			arg1 = args[1].([]string)
-		}
-		var arg2 []*options.RemoveP2PCollectionsOptions
-		var variadicArgs []*options.RemoveP2PCollectionsOptions
-		if len(args) > 2 {
-			variadicArgs = args[2].([]*options.RemoveP2PCollectionsOptions)
-		}
-		arg2 = variadicArgs
-		run(
-			arg0,
-			arg1,
-			arg2...,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_RemoveP2PCollections_Call) Return(err error) *Txn_RemoveP2PCollections_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Txn_RemoveP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionNames []string, opts ...*options.RemoveP2PCollectionsOptions) error) *Txn_RemoveP2PCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }

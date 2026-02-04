@@ -14,6 +14,8 @@ import (
 	"testing"
 
 	"github.com/sourcenetwork/defradb/client/options"
+
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -32,7 +34,7 @@ func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

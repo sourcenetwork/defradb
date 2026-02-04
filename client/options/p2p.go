@@ -104,69 +104,69 @@ func (o *GetAllReplicatorsOptions) GetIdentity() immutable.Option[identity.Ident
 	return o.Identity
 }
 
-// AddP2PCollectionsOptions contains options for AddP2PCollections operation.
-type AddP2PCollectionsOptions struct {
+// CreateP2PCollectionsOptions contains options for AddP2PCollections operation.
+type CreateP2PCollectionsOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
-// AddP2PCollections creates a new AddP2PCollectionsOptions instance.
-func AddP2PCollections() *AddP2PCollectionsOptions {
-	return &AddP2PCollectionsOptions{}
+// CreateP2PCollections creates a new AddP2PCollectionsOptions instance.
+func CreateP2PCollections() *CreateP2PCollectionsOptions {
+	return &CreateP2PCollectionsOptions{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (o *AddP2PCollectionsOptions) SetIdentity(id identity.Identity) *AddP2PCollectionsOptions {
+func (o *CreateP2PCollectionsOptions) SetIdentity(id identity.Identity) *CreateP2PCollectionsOptions {
 	o.Identity = immutable.Some(id)
 	return o
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *AddP2PCollectionsOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *CreateP2PCollectionsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// RemoveP2PCollectionsOptions contains options for RemoveP2PCollections operation.
-type RemoveP2PCollectionsOptions struct {
+// DeleteP2PCollectionsOptions contains options for RemoveP2PCollections operation.
+type DeleteP2PCollectionsOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
-// RemoveP2PCollections creates a new RemoveP2PCollectionsOptions instance.
-func RemoveP2PCollections() *RemoveP2PCollectionsOptions {
-	return &RemoveP2PCollectionsOptions{}
+// DeleteP2PCollections creates a new RemoveP2PCollectionsOptions instance.
+func DeleteP2PCollections() *DeleteP2PCollectionsOptions {
+	return &DeleteP2PCollectionsOptions{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (o *RemoveP2PCollectionsOptions) SetIdentity(id identity.Identity) *RemoveP2PCollectionsOptions {
+func (o *DeleteP2PCollectionsOptions) SetIdentity(id identity.Identity) *DeleteP2PCollectionsOptions {
 	o.Identity = immutable.Some(id)
 	return o
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *RemoveP2PCollectionsOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *DeleteP2PCollectionsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// GetAllP2PCollectionsOptions contains options for GetAllP2PCollections operation.
-type GetAllP2PCollectionsOptions struct {
+// ListP2PCollectionsOptions contains options for GetAllP2PCollections operation.
+type ListP2PCollectionsOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
-// GetAllP2PCollections creates a new GetAllP2PCollectionsOptions instance.
-func GetAllP2PCollections() *GetAllP2PCollectionsOptions {
-	return &GetAllP2PCollectionsOptions{}
+// ListP2PCollections creates a new GetAllP2PCollectionsOptions instance.
+func ListP2PCollections() *ListP2PCollectionsOptions {
+	return &ListP2PCollectionsOptions{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (o *GetAllP2PCollectionsOptions) SetIdentity(id identity.Identity) *GetAllP2PCollectionsOptions {
+func (o *ListP2PCollectionsOptions) SetIdentity(id identity.Identity) *ListP2PCollectionsOptions {
 	o.Identity = immutable.Some(id)
 	return o
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *GetAllP2PCollectionsOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *ListP2PCollectionsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 

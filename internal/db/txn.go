@@ -353,30 +353,30 @@ func (txn *Txn) GetAllReplicators(
 	return txn.db.GetAllReplicators(ctx, opts...)
 }
 
-func (txn *Txn) AddP2PCollections(
+func (txn *Txn) CreateP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...*options.AddP2PCollectionsOptions,
+	opts ...*options.CreateP2PCollectionsOptions,
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddP2PCollections(ctx, collectionNames, opts...)
+	return txn.db.CreateP2PCollections(ctx, collectionNames, opts...)
 }
 
-func (txn *Txn) RemoveP2PCollections(
+func (txn *Txn) DeleteP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...*options.RemoveP2PCollectionsOptions,
+	opts ...*options.DeleteP2PCollectionsOptions,
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.RemoveP2PCollections(ctx, collectionNames, opts...)
+	return txn.db.DeleteP2PCollections(ctx, collectionNames, opts...)
 }
 
-func (txn *Txn) GetAllP2PCollections(
+func (txn *Txn) ListP2PCollections(
 	ctx context.Context,
-	opts ...*options.GetAllP2PCollectionsOptions,
+	opts ...*options.ListP2PCollectionsOptions,
 ) ([]string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllP2PCollections(ctx, opts...)
+	return txn.db.ListP2PCollections(ctx, opts...)
 }
 
 func (txn *Txn) AddP2PDocuments(

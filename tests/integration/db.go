@@ -30,6 +30,7 @@ const (
 	fileBadgerEnvName       = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName   = "DEFRA_BADGER_FILE_PATH"
 	badgerEncryptionEnvName = "DEFRA_BADGER_ENCRYPTION"
+	levelEnvName            = "DEFRA_LEVEL"
 	inMemoryEnvName         = "DEFRA_IN_MEMORY"
 )
 
@@ -37,12 +38,14 @@ const (
 	BadgerIMType   state.DatabaseType = "badger-in-memory"
 	DefraIMType    state.DatabaseType = "defra-memory-datastore"
 	BadgerFileType state.DatabaseType = "badger-file-system"
+	LevelStoreType state.DatabaseType = "level"
 )
 
 var (
 	badgerInMemory   bool
 	badgerFile       bool
 	inMemoryStore    bool
+	levelStore       bool
 	databaseDir      string
 	badgerEncryption bool
 	encryptionKey    []byte
@@ -54,6 +57,7 @@ func init() {
 	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
 	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
 	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
+	levelStore, _ = strconv.ParseBool(os.Getenv((levelEnvName)))
 	badgerEncryption, _ = strconv.ParseBool(os.Getenv(badgerEncryptionEnvName))
 
 	if changeDetector.Enabled {
@@ -61,11 +65,13 @@ func init() {
 		badgerFile = true
 		badgerInMemory = false
 		inMemoryStore = false
-	} else if !badgerInMemory && !badgerFile && !inMemoryStore {
+		levelStore = false
+	} else if !badgerInMemory && !badgerFile && !inMemoryStore && !levelStore {
 		// Default is to test all but filesystem db types.
 		badgerFile = false
 		badgerInMemory = true
 		inMemoryStore = false
+		levelStore = false
 	}
 }
 

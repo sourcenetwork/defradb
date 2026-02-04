@@ -74,19 +74,33 @@ func (w *Wrapper) DeleteReplicator(
 	panic("not implemented")
 }
 
-func (w *Wrapper) GetAllReplicators(ctx context.Context, opts ...*options.GetAllReplicatorsOptions) ([]client.Replicator, error) {
+func (w *Wrapper) GetAllReplicators(
+	ctx context.Context,
+	opts ...*options.GetAllReplicatorsOptions,
+) ([]client.Replicator, error) {
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionNames []string, opts ...*options.AddP2PCollectionsOptions) error {
+func (w *Wrapper) CreateP2PCollections(
+	ctx context.Context,
+	collectionNames []string,
+	opts ...*options.CreateP2PCollectionsOptions,
+) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionNames []string, opts ...*options.RemoveP2PCollectionsOptions) error {
+func (w *Wrapper) DeleteP2PCollections(
+	ctx context.Context,
+	collectionNames []string,
+	opts ...*options.DeleP2PCollectionsOptions,
+) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) GetAllP2PCollections(ctx context.Context, opts ...*options.GetAllP2PCollectionsOptions) ([]string, error) {
+func (w *Wrapper) ListP2PCollections(
+	ctx context.Context,
+	opts ...*options.ListP2PCollectionsOptions,
+) ([]string, error) {
 	panic("not implemented")
 }
 

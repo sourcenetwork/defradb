@@ -20,14 +20,14 @@ import (
 func TestQuerySimpleWithMaxWithOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Age": 30,
 					"HeightM": 1.8
 				}`,
 			}, // Max: 30
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Age": 25,
 					"HeightM": 1.6

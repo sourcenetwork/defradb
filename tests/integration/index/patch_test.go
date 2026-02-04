@@ -28,7 +28,7 @@ func TestPatchCollection_AddSecondaryIndex_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -65,7 +65,7 @@ func TestPatchCollection_RemoveSecondaryIndex_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -93,7 +93,7 @@ func TestPatchCollection_ModifySecondaryIndex_ShouldError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

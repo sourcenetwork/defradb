@@ -161,15 +161,11 @@ func (c *Client) GetAllReplicators(
 	return reps, nil
 }
 
-func (c *Client) AddP2PCollections(
+func (c *Client) CreateP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.AddP2PCollectionsOptions,
+	opts ...*options.CreateP2PCollectionsOptions,
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
-
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	body, err := json.Marshal(collectionIDs)
@@ -184,15 +180,11 @@ func (c *Client) AddP2PCollections(
 	return err
 }
 
-func (c *Client) RemoveP2PCollections(
+func (c *Client) DeleteP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.RemoveP2PCollectionsOptions,
+	opts ...*options.DeleteP2PCollectionsOptions,
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
-
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	body, err := json.Marshal(collectionIDs)
@@ -207,14 +199,10 @@ func (c *Client) RemoveP2PCollections(
 	return err
 }
 
-func (c *Client) GetAllP2PCollections(
+func (c *Client) ListP2PCollections(
 	ctx context.Context,
-	opts ...*options.GetAllP2PCollectionsOptions,
+	opts ...*options.ListP2PCollectionsOptions,
 ) ([]string, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
-
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)

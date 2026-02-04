@@ -100,27 +100,27 @@ func (w *Wrapper) GetAllReplicators(
 	return w.client.GetAllReplicators(ctx, opts...)
 }
 
-func (w *Wrapper) AddP2PCollections(
+func (w *Wrapper) CreateP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.AddP2PCollectionsOptions,
+	opts ...*options.CreateP2PCollectionsOptions,
 ) error {
-	return w.client.AddP2PCollections(ctx, collectionIDs, opts...)
+	return w.client.CreateP2PCollections(ctx, collectionIDs, opts...)
 }
 
-func (w *Wrapper) RemoveP2PCollections(
+func (w *Wrapper) DeleteP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.RemoveP2PCollectionsOptions,
+	opts ...*options.DeleteP2PCollectionsOptions,
 ) error {
-	return w.client.RemoveP2PCollections(ctx, collectionIDs, opts...)
+	return w.client.DeleteP2PCollections(ctx, collectionIDs, opts...)
 }
 
-func (w *Wrapper) GetAllP2PCollections(
+func (w *Wrapper) ListP2PCollections(
 	ctx context.Context,
-	opts ...*options.GetAllP2PCollectionsOptions,
+	opts ...*options.ListP2PCollectionsOptions,
 ) ([]string, error) {
-	return w.client.GetAllP2PCollections(ctx, opts...)
+	return w.client.ListP2PCollections(ctx, opts...)
 }
 
 func (w *Wrapper) AddP2PDocuments(

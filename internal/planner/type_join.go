@@ -518,6 +518,10 @@ func (join *invertibleTypeJoin) replaceRoot(node planNode) {
 }
 
 func (join *invertibleTypeJoin) Init() error {
+	// Clear state from previous iterations to ensure fresh iteration when reinitializing.
+	// This is important for aggregates where we iterate multiple times for different parent docs.
+	join.encounteredDocIDs = nil
+	join.docsToYield = nil
 	if err := join.childSide.plan.Init(); err != nil {
 		return err
 	}
@@ -802,7 +806,6 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 	}
 
 	secondaryDocOpt, err := fetchDocWithIDAndItsSubDocs(secondSide.plan, secondaryDocID)
-
 	if err != nil {
 		return false, err
 	}

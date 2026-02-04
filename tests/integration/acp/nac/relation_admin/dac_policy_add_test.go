@@ -13,6 +13,7 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -39,7 +40,7 @@ func TestNAC_AdminRelation_CanAddDACPolicy(t *testing.T) {
 			testUtils.AddDACPolicy{
 				Identity:      testUtils.ClientIdentity(2),
 				Policy:        examplePolicy,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACPolicyAddPerm),
 			},
 
 			// Grant access to user.

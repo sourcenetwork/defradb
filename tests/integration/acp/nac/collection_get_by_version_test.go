@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client/options"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -55,7 +56,7 @@ func TestNAC_GatesCollectionGetByVersion_NoIdentity_NotAuthorizedError(t *testin
 			&action.GetCollections{
 				Identity:      testUtils.NoIdentity(),
 				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -77,7 +78,7 @@ func TestNAC_GatesCollectionGetByVersion_WrongIdentity_NotAuthorizedError(t *tes
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

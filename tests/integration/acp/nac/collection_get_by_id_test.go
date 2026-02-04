@@ -13,6 +13,7 @@ package test_acp_nac
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
@@ -55,7 +56,7 @@ func TestNAC_GatesCollectionGetByID_NoIdentity_NotAuthorizedError(t *testing.T) 
 			&action.GetCollections{
 				Identity:      testUtils.NoIdentity(),
 				FilterOptions: options.GetCollections().SetCollectionID("does not exist"),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -77,7 +78,7 @@ func TestNAC_GatesCollectionGetByID_WrongIdentity_NotAuthorizedError(t *testing.
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				FilterOptions: options.GetCollections().SetCollectionID("does not exist"),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

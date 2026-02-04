@@ -13,6 +13,7 @@ package test_acp_nac
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -63,7 +64,7 @@ func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *te
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.ClientIdentity(3),
 				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 
 			// Without an requestor identity.
@@ -71,7 +72,7 @@ func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *te
 				RequestorIdentity: testUtils.NoIdentity(),
 				TargetIdentity:    testUtils.ClientIdentity(3),
 				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 
 			// Without target identity.
@@ -79,7 +80,7 @@ func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *te
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.NoIdentity(),
 				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 
 			// Without both identities.
@@ -87,7 +88,7 @@ func TestNAC_DeleteRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *te
 				RequestorIdentity: testUtils.NoIdentity(),
 				TargetIdentity:    testUtils.NoIdentity(),
 				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 
 			// Authorized requestor identity but without target identity.
@@ -219,7 +220,7 @@ func TestNAC_DeleteRelationshipWithValidIdentity_RelationshipDeleted(t *testing.
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.ClientIdentity(3),
 				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 		},
 	}
@@ -266,13 +267,13 @@ func TestNAC_DeleteRelationshipForAllIdentities_AllImplicitIdentitiesAccessRevok
 			// Check any normal identity is no longer allowed to perform gated operation(s).
 			testUtils.GetNACStatus{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			// Check if an empty identity can no longer perform gated operation(s).
 			testUtils.GetNACStatus{
 				Identity:      testUtils.NoIdentity(),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			// Check that explicitly allowed identities still have access to perform gated operation(s).

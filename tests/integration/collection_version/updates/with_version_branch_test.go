@@ -35,7 +35,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The second schema version will not be set as the active version, leaving the initial version active
 				Patch: `
 					[
@@ -44,7 +44,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3
 				Patch: `
 					[
@@ -193,7 +193,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The second schema version will not be set as the active version, leaving the initial version active
 				Patch: `
 					[
@@ -202,7 +202,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3
 				Patch: `
 					[
@@ -211,7 +211,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The fourth schema version will be set as the active version, going from version 3 to 4
 				Patch: `
 					[
@@ -335,7 +335,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The second schema version will not be set as the active version, leaving the initial version active
 				Patch: `
 					[
@@ -344,7 +344,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3
 				Patch: `
 					[
@@ -432,7 +432,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The second schema version will not be set as the active version, leaving the initial version active
 				Patch: `
 					[
@@ -441,7 +441,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The third schema version will be set as the active version, going from version 1 to 3
 				Patch: `
 					[
@@ -454,7 +454,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 				// Set the second schema version to be active
 				VersionID: schemaVersion2ID,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The fourth schema version will be set as the active version, going from version 2 to 4
 				Patch: `
 					[
@@ -576,7 +576,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The second schema version will not be set as the active version, leaving the initial version active
 				Patch: `
 					[

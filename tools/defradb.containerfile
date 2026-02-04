@@ -14,16 +14,11 @@ RUN make deps:modules
 COPY . .
 RUN make deps:playground
 ENV BUILD_TAGS=playground,telemetry
-# manually copy libwasmer.so to fix linking issue https://github.com/wasmerio/wasmer-go/issues/281
-RUN export WASMER_ARCH=$(go env GOHOSTARCH | sed "s/arm64/aarch64/") && \
-    export WASMER_PATH=$(go env GOMODCACHE)/github.com/wasmerio/wasmer-go@v1.0.4/wasmer/packaged/lib/linux-$WASMER_ARCH/libwasmer.so && \
-    cp $WASMER_PATH /lib/libwasmer.so
 RUN make build
 
 # Stage: RUN
 FROM debian:bookworm-slim
 COPY --from=build /repo/build/defradb /defradb
-COPY --from=build /lib/libwasmer.so /lib/libwasmer.so
 
 # Documents which ports are normally used.
 # To publish the ports: `docker run -p 9181:9181` ...

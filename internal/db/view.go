@@ -350,7 +350,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 
 // lensCIDExists checks if a lens with the given CID exists in the lens store.
 func (db *DB) lensCIDExists(ctx context.Context, cidStr string) (bool, error) {
-	targetCID, err := cid.Decode(cidStr)
+	_, err := cid.Decode(cidStr)
 	if err != nil {
 		return false, err
 	}
@@ -361,7 +361,7 @@ func (db *DB) lensCIDExists(ctx context.Context, cidStr string) (bool, error) {
 	}
 
 	for storedCID := range lenses {
-		if storedCID.Equals(targetCID) {
+		if storedCID == cidStr {
 			return true, nil
 		}
 	}

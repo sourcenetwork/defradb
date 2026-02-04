@@ -17,18 +17,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionRemoveCommand(ctx context.Context) *cobra.Command {
+func MakeP2PCollectionDeleteCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "remove [collectionNames]",
-		Short: "Remove P2P collections",
-		Long: `Remove P2P collections from the followed pubsub topics.
+		Use:   "delete [collectionNames]",
+		Short: "Delete P2P collections",
+		Long: `Delete P2P collections from the followed pubsub topics.
 The removed collections will no longer be synchronized between nodes.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
 			var collectionNames []string
-			for _, id := range strings.Split(args[0], ",") {
+			for id := range strings.SplitSeq(args[0], ",") {
 				id = strings.TrimSpace(id)
 				if id == "" {
 					continue
@@ -36,15 +36,15 @@ The removed collections will no longer be synchronized between nodes.`,
 				collectionNames = append(collectionNames, id)
 			}
 
-			return cliClient.RemoveP2PCollections(cmd.Context(), collectionNames)
+			return cliClient.DeleteP2PCollections(cmd.Context(), collectionNames)
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "remove single collection",
-		`defradb client p2p collection remove User`)
+	EmbedCLIExample(ctx, cmd, "delete single collection",
+		`defradb client p2p collection delete User`)
 
-	EmbedCLIExample(ctx, cmd, "remove multiple collections",
-		`defradb client p2p collection remove User,Address`)
+	EmbedCLIExample(ctx, cmd, "delete multiple collections",
+		`defradb client p2p collection delete User,Address`)
 
 	return cmd
 }

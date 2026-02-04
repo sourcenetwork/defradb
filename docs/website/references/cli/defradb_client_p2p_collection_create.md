@@ -1,30 +1,30 @@
-## defradb client p2p collection remove
+## defradb client p2p collection create
 
-Remove P2P collections
+Create P2P collections
 
 ### Synopsis
 
-Remove P2P collections from the followed pubsub topics.
-The removed collections will no longer be synchronized between nodes.
+Create P2P collections to the synchronized pubsub topics.
+The collections are synchronized between nodes of a pubsub network.
 
 ```
-defradb client p2p collection remove [collectionNames] [flags]
+defradb client p2p collection create [collectionNames] [flags]
 ```
 
 ### Examples
 
 ```
-remove single collection:  
-  defradb client p2p collection remove User
+create single collection:  
+  defradb client p2p collection create User
 
-remove multiple collections:  
-  defradb client p2p collection remove User,Address
+create multiple collections:  
+  defradb client p2p collection create User,Address
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+  -h, --help   help for create
 ```
 
 ### Options inherited from parent commands

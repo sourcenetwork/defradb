@@ -157,35 +157,35 @@ func (w *Wrapper) GetAllReplicators(
 	return reps, nil
 }
 
-func (w *Wrapper) AddP2PCollections(
+func (w *Wrapper) CreateP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.AddP2PCollectionsOptions,
+	opts ...*options.CreateP2PCollectionsOptions,
 ) error {
-	args := []string{"client", "p2p", "collection", "add"}
+	args := []string{"client", "p2p", "collection", "create"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) RemoveP2PCollections(
+func (w *Wrapper) DeleteP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.RemoveP2PCollectionsOptions,
+	opts ...*options.DeleteP2PCollectionsOptions,
 ) error {
-	args := []string{"client", "p2p", "collection", "remove"}
+	args := []string{"client", "p2p", "collection", "delete"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) GetAllP2PCollections(
+func (w *Wrapper) ListP2PCollections(
 	ctx context.Context,
-	opts ...*options.GetAllP2PCollectionsOptions,
+	opts ...*options.ListP2PCollectionsOptions,
 ) ([]string, error) {
-	args := []string{"client", "p2p", "collection", "getall"}
+	args := []string{"client", "p2p", "collection", "list"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -369,8 +369,8 @@ func (w *Wrapper) AddView(
 	transformCID immutable.Option[string],
 ) ([]client.CollectionVersion, error) {
 	args := []string{"client", "view", "add"}
-	args = append(args, query)
-	args = append(args, sdl)
+	args = append(args, "--query", query)
+	args = append(args, "--sdl", sdl)
 
 	if transformCID.HasValue() {
 		args = append(args, "--lens-cid", transformCID.Value())
