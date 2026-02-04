@@ -186,7 +186,7 @@ func (w *Wrapper) DeleteP2PDocuments(ctx context.Context, docIDs ...string) erro
 }
 
 func (w *Wrapper) ListP2PDocuments(ctx context.Context) ([]string, error) {
-	args := []string{"client", "p2p", "document", " list"}
+	args := []string{"client", "p2p", "document", "list"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
