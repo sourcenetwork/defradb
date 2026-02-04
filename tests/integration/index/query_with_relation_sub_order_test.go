@@ -82,7 +82,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldDescending_ShouldOrder(t
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(3),
 			},
 		},
 	}
@@ -155,7 +155,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscending_ShouldOrder(t 
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(3),
 			},
 		},
 	}
@@ -226,7 +226,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscendingWithLimit_Shoul
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(1),
 			},
 		},
 	}
@@ -323,7 +323,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthors_ShouldOrderEachAuthorsBoo
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// index fetches 8: 4 for ordering all books for each author
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(8),
 			},
 		},
 	}
@@ -420,7 +420,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthorsAndIndexOnRelation_ShouldO
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// index fetches 4: relation ID index fetches 2 books per author, then sorts in memory
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(4),
 			},
 		},
 	}
@@ -516,7 +516,7 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 				Request: makeExplainQuery(req),
 				// 6 indexFetches: sub-filter uses rating index (3 books match filter rating _geq: 4.0) for 2 authors,
 				// DESC instructs the index to iterate in reverse order, so no in-memory sort needed
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(6),
 			},
 		},
 	}
@@ -607,7 +607,7 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 				Request: makeExplainQuery(req),
 				// 5 indexFetch: parent filter uses rating index via inverted join (1 book matches _ge: 4.0)
 				// For the matched author full index scan is done to get all 4 books
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(5),
 			},
 		},
 	}
@@ -717,8 +717,8 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_RecursiveExplain(t
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// The index on Publisher.establishedYear is used by the nested Book->Publisher join.
-				// With recursive aggregation, the indexFetches from the Publisher scanNode are now included.
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				// Publisher is at subType/subType (nested inside Book which is at subType).
+				Asserter: testUtils.NewExplainAsserter("subType", "subType").WithIndexFetches(2),
 			},
 		},
 	}
@@ -820,9 +820,12 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_RecursiveExplain(t 
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// docFetches: 1 author + 2 books + 2 publishers = 5 (recursively aggregated)
-				// indexFetches: 2 from Publisher index (recursively aggregated from nested join)
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(5).WithIndexFetches(2),
+				// Author root: 1 docFetch
+				// Book (subType): 2 docFetches
+				// Publisher (subType/subType): 2 docFetches, 2 indexFetches
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).
+					WithLevel("subType").WithDocFetches(2).
+					WithLevel("subType", "subType").WithDocFetches(2).WithIndexFetches(2),
 			},
 		},
 	}

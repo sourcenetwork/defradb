@@ -449,7 +449,7 @@ func TestOrderQueryWithIndex_WithOrderOnNestedField_ShouldUseIndexForOrdering(t 
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(3),
 			},
 		},
 	}
@@ -529,7 +529,7 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(3),
 			},
 		},
 	}
@@ -1382,7 +1382,7 @@ func TestOrderQueryWithIndexOnRelation_OrderByPrimaryDoc_ShouldOrderWithIndex(t 
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(4),
 			},
 		},
 	}
@@ -1484,7 +1484,8 @@ func TestOrderQueryWithIndexOnRelation_OrderBySecondaryDoc_ShouldOrderWithIndex(
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// 4 indexFetches for device model index + 4 for the auto-created unique index on _deviceID
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(4).
+					WithLevel("root").WithIndexFetches(4),
 			},
 		},
 	}
