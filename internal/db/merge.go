@@ -88,9 +88,9 @@ func (db *DB) Merge(ctx context.Context, evt event.Merge) error {
 }
 
 // MergeBatchWithTxn merges multiple events using an existing transaction from context.
-func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error {
+func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) (func(), error) {
 	if len(evts) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	byCollection := make(map[string][]event.Merge)
@@ -146,20 +146,17 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) error {
 	}
 
 	if len(pendingIndexSync) > 0 {
-		txn := datastore.CtxMustGetTxn(ctx)
-		if err := txn.Commit(); err != nil {
-			return err
-		}
-
-		for _, work := range pendingIndexSync {
-			if err := db.syncIndexesForBatch(context.Background(), work.col, work.docIDs, work.oldDocs); err != nil {
-				log.ErrorContextE(ctx, "Index sync after merge failed (indexes may be stale)", err,
-					corelog.Int("DocCount", len(work.docIDs)))
+		return func() {
+			for _, work := range pendingIndexSync {
+				if err := db.syncIndexesForBatch(context.Background(), work.col, work.docIDs, work.oldDocs); err != nil {
+					log.ErrorContextE(ctx, "Index sync after merge failed (indexes may be stale)", err,
+						corelog.Int("DocCount", len(work.docIDs)))
+				}
 			}
-		}
+		}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 // executeMergeBatchWithTxn merges events using an existing transaction from context.
@@ -191,7 +188,7 @@ func (db *DB) executeMergeBatchWithTxn(ctx context.Context, col *collection, evt
 		}
 	}()
 
-	return db.executeMergeBatchInTxnNoCommit(ctx, col, evts)
+	return db.executeMergeBatchWritesOnly(ctx, col, evts)
 }
 
 // MergeBatchResult contains the result of a batch merge operation.
@@ -199,12 +196,6 @@ type MergeBatchResult struct {
 	CollectionID string
 	DocIDs       []string
 	OldDocs      map[string]*client.Document
-}
-
-// executeMergeBatchInTxnNoCommit performs batch merge using existing transaction.
-// Index sync is deferred to syncIndexesForBatch which should be called after commit.
-func (db *DB) executeMergeBatchInTxnNoCommit(ctx context.Context, col *collection, evts []event.Merge) (*MergeBatchResult, error) {
-	return db.executeMergeBatchWritesOnly(ctx, col, evts)
 }
 
 // syncIndexesForBatch syncs indexes for documents after merge writes have been committed.
@@ -223,7 +214,7 @@ func (db *DB) syncIndexesForBatch(ctx context.Context, col *collection, docIDs [
 			return err
 		}
 		oldDoc := oldDocs[docIDStr]
-		err = syncIndexedDoc(indexCtx, indexCtx, docID, col, oldDoc)
+		err = syncIndexedDoc(indexCtx, docID, col, oldDoc)
 		if err != nil {
 			return err
 		}
@@ -335,14 +326,8 @@ func (db *DB) mergeWithTxn(ctx context.Context, col *collection, evt event.Merge
 		return err
 	}
 
-	oldCtx, oldTxn, err := ensureContextTxn(context.Background(), db, true)
-	if err != nil {
-		return err
-	}
-	defer oldTxn.Discard()
-
 	for docID, oldDoc := range mp.docIDs {
-		err = syncIndexedDoc(ctx, oldCtx, docID, col, oldDoc)
+		err = syncIndexedDoc(ctx, docID, col, oldDoc)
 		if err != nil {
 			return err
 		}
@@ -401,7 +386,7 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 	}
 
 	for docID, oldDoc := range mp.docIDs {
-		err = syncIndexedDoc(ctx, ctx, docID, mp.col, oldDoc)
+		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
 		if err != nil {
 			return err
 		}
@@ -910,7 +895,6 @@ func loadBlockFromBlockStore(ctx context.Context, cid cid.Cid) (*coreblock.Block
 
 func syncIndexedDoc(
 	ctx context.Context,
-	_ context.Context,
 	docID client.DocID,
 	col *collection,
 	oldDoc *client.Document,
