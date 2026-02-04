@@ -32,8 +32,14 @@ A replicator synchronizes one or all collection(s) from this instance to another
 	EmbedCLIExample(ctx, cmd, "Create a replicator to replicate the \"Users\" collection to a peer",
 		`defradb client p2p replicator create -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko...`)
 
-	EmbedCLIExample(ctx, cmd, "Create a replicator to replicate the \"Orders\" collection to multiple peers",
-		`defradb client p2p replicator create -c Orders /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko... /ip4/0.0.0.0/tcp/9172/p2p/1543LK...`)
+	EmbedCLIExample(
+		ctx,
+		cmd,
+		"Create a replicator to replicate the \"Orders\" collection to multiple peers",
+		`defradb client p2p replicator create -c Orders `+
+			`/ip4/0.0.0.0/tcp/9171/p2p/12D3Ko... `+
+			`/ip4/0.0.0.0/tcp/9172/p2p/1543LK...`,
+	)
 
 	cmd.Flags().StringSliceVarP(&collections, "collection", "c",
 		[]string{}, "Collection(s) to replicate")

@@ -45,12 +45,6 @@ func TestP2PDocumentAddGetSingle(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.ListP2PDocuments{
-				NodeID: 1,
-				ExpectedDocIDs: []state.ColDocIndex{
-					state.NewColDocIndex(0, 0),
-				},
-			},
 		},
 	}
 

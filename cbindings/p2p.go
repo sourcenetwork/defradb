@@ -74,7 +74,10 @@ func P2PlistReplicators(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 }
 
 //export P2PcreateReplicator
-func P2PcreateReplicator(nodePtr C.uintptr_t, collections *C.char, addresses *C.char, identityPtr C.uintptr_t) C.Result {
+func P2PcreateReplicator(nodePtr C.uintptr_t,
+	collections *C.char,
+	addresses *C.char,
+	identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {

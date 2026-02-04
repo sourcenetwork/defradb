@@ -33,7 +33,7 @@ A replicator synchronizes one or all collection(s) from this instance to another
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "Get all replicators",
+	EmbedCLIExample(ctx, cmd, "List all replicators",
 		`defradb client p2p replicator list`)
 
 	return cmd
