@@ -102,14 +102,26 @@ func newIndexFetcher(
 
 	if startKey.HasValue() {
 		if matchIter, ok := iter.(*indexMatchIterator); ok {
-			matchIter.startKey = startKey.Value()
 			matchIter.prefixKey = nil
-			if matchIter.endKey == nil {
-				baseKey, err := f.newIndexDataStoreKey()
-				if err != nil {
-					return nil, err
+			baseKey, err := f.newIndexDataStoreKey()
+			if err != nil {
+				return nil, err
+			}
+
+			if matchIter.reverse {
+				// For reverse iteration, the cursor position becomes the upper bound (endKey).
+				// We iterate backward from just before the cursor position.
+				// The startKey (lower bound) is the index prefix to iterate down to.
+				matchIter.startKey = &baseKey
+				matchIter.endKey = startKey.Value()
+			} else {
+				// For forward iteration, the cursor position becomes the lower bound (startKey).
+				// We iterate forward from just after the cursor position.
+				// The endKey (upper bound) is the end of the index prefix.
+				matchIter.startKey = startKey.Value()
+				if matchIter.endKey == nil {
+					matchIter.endKey = baseKey.PrefixEnd()
 				}
-				matchIter.endKey = baseKey.PrefixEnd()
 			}
 		}
 	}

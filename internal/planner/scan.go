@@ -59,7 +59,8 @@ type scanNode struct {
 	index   immutable.Option[client.IndexDescription]
 	fetcher fetcher.Fetcher
 
-	cursorPayload *cursor.CursorPayload
+	cursorPayload     *cursor.CursorPayload
+	reversedIteration bool // true when query order is opposite to index direction
 
 	execInfo scanExecInfo
 }
@@ -296,7 +297,14 @@ func (n *scanNode) buildCursorSeekKey() *keys.IndexDataStoreKey {
 	}
 
 	key := keys.NewIndexDataStoreKey(shortID, indexDesc.ID, fields)
-	key.Offset = 1
+	// For forward iteration, Offset=1 skips past the cursor position.
+	// For reverse iteration, the cursor position is the exclusive upper bound,
+	// so we use Offset=0 to get the exact cursor key (which will be excluded by the iterator).
+	if n.reversedIteration {
+		key.Offset = 0
+	} else {
+		key.Offset = 1
+	}
 	return &key
 }
 

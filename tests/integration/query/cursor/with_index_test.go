@@ -163,9 +163,9 @@ func TestCursorWithIndex_IndexPathReturnsSortedResults(t *testing.T) {
 	executeTestCase(t, test)
 }
 
-// TestCursorWithIndex_DESCOrderRejectsReverseScan verifies that DESC order
-// on an indexed field is rejected (reverse index scans not currently supported).
-func TestCursorWithIndex_DESCOrderRejectsReverseScan(t *testing.T) {
+// TestCursorWithIndex_DESCOrderSucceeds verifies that DESC order
+// on an indexed ASC field succeeds (reverse iteration supported in Phase 10).
+func TestCursorWithIndex_DESCOrderSucceeds(t *testing.T) {
 	req := `query {
 		_cursor {
 			User(first: 3, order: {age: DESC}) {
@@ -183,8 +183,19 @@ func TestCursorWithIndex_DESCOrderRejectsReverseScan(t *testing.T) {
 			testUtils.CreateDoc{Doc: `{"name": "Bob", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Carol", "age": 35}`},
 			&action.Request{
-				Request:       req,
-				ExpectedError: "cursor index does not support required scan direction",
+				Request: req,
+				Results: map[string]any{
+					"_cursor": map[string]any{
+						"User": []map[string]any{
+							{"name": "Carol", "age": int64(35)},
+							{"name": "Bob", "age": int64(30)},
+							{"name": "Alice", "age": int64(25)},
+						},
+						"_pageInfo": map[string]any{
+							"hasNext": false,
+						},
+					},
+				},
 			},
 		},
 	}

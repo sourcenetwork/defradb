@@ -256,7 +256,8 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	}
 
 	if plan.cursor != nil {
-		if err := p.validateCursorIndex(plan); err != nil {
+		reversed, err := p.validateCursorIndex(plan)
+		if err != nil {
 			return err
 		}
 		if ob := plan.selectNode.selectReq.OrderBy; ob != nil {
@@ -265,6 +266,7 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 		if plan.cursor.afterPayload != nil {
 			if scan := getNode[*scanNode](plan.selectNode); scan != nil {
 				scan.cursorPayload = plan.cursor.afterPayload
+				scan.reversedIteration = reversed
 			}
 			if len(plan.cursor.afterPayload.Keys) > 0 {
 				plan.cursor.indexSeekActive = true
@@ -903,29 +905,28 @@ func (p *Planner) MakeSelectionPlan(selection *request.Select) (planNode, error)
 // resources of the returned plan.
 
 // validateCursorIndex checks that a cursor query has a compatible index for ordering.
-func (p *Planner) validateCursorIndex(plan *selectTopNode) error {
+// Returns (reversed, error) where reversed indicates if iteration should be in reverse direction.
+func (p *Planner) validateCursorIndex(plan *selectTopNode) (bool, error) {
 	scan := getNode[*scanNode](plan.selectNode)
 	if scan == nil {
-		return ErrNoSupportingIndexForCursor
+		return false, ErrNoSupportingIndexForCursor
 	}
 
 	if len(scan.ordering) == 0 {
-		return nil
+		return false, nil
 	}
 
 	if !scan.index.HasValue() {
-		return ErrNoSupportingIndexForCursor
+		return false, ErrNoSupportingIndexForCursor
 	}
 
 	ok, reversed := fetcher.CanBeOrderedByIndex(scan.ordering, scan.index.Value(), scan.documentMapping)
 	if !ok {
-		return ErrNoSupportingIndexForCursor
-	}
-	if reversed {
-		return ErrCursorIndexDirectionMismatch
+		return false, ErrNoSupportingIndexForCursor
 	}
 
-	return nil
+	// Return reversed flag for propagation instead of rejecting
+	return reversed, nil
 }
 
 // @TODO {defradb/issues/368}: Test this exported function.
