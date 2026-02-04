@@ -378,7 +378,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOpt
 
 	var getCollOpts *options.GetCollectionsOptions
 	if len(opts) > 0 && opts[0] != nil {
-		getCollOpts = opts[0].ToGetCollectionsOptions()
+		getCollOpts = opts[0]
 	} else {
 		getCollOpts = options.GetCollections()
 	}

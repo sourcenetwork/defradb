@@ -201,11 +201,11 @@ func (w *CWrapper) GetAllReplicators(
 }
 
 func (w *CWrapper) CreateP2PCollections(
-	ctx context.Context, 
+	ctx context.Context,
 	collectionIDs []string,
-	opts2...*options.CreateP2PCollectionsOptions,
+	opts ...*options.CreateP2PCollectionsOptions,
 ) error {
-	cIdentity := identityFromContext(ctx)
+	cIdentity := identityFromOptions(opts)
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
@@ -218,9 +218,9 @@ func (w *CWrapper) CreateP2PCollections(
 }
 
 func (w *CWrapper) DeleteP2PCollections(
-	ctx context.Context, 
+	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.Delete2PCollectionsOptions,
+	opts ...*options.DeleteP2PCollectionsOptions,
 ) error {
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	cIdentity := identityFromOptions(opts)
@@ -238,8 +238,8 @@ func (w *CWrapper) DeleteP2PCollections(
 func (w *CWrapper) ListP2PCollections(
 	ctx context.Context,
 	opts ...*options.ListP2PCollectionsOptions,
-	) ([]string, error) {
-	cIdentity := identityFromContext(ctx)
+) ([]string, error) {
+	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 	res := ConvertAndFreeCResult(C.P2PcollectionList(C.uintptr_t(w.handle), cIdentity))
 
@@ -694,7 +694,7 @@ func (w *CWrapper) AddView(
 func (w *CWrapper) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
 	var getCollOpts *options.GetCollectionsOptions
 	if len(opts) > 0 && opts[0] != nil {
-		getCollOpts = opts[0].ToGetCollectionsOptions()
+		getCollOpts = opts[0]
 	} else {
 		getCollOpts = options.GetCollections()
 	}

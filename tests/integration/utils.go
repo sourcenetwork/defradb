@@ -160,15 +160,15 @@ func ExecuteTestCase(
 	skipIfVectorEmbeddingTest(t, testCase.Actions)
 
 	var clients []state.ClientType
-	if httpClient {
-		clients = append(clients, state.HTTPClientType)
-	}
-	if goClient {
-		clients = append(clients, state.GoClientType)
-	}
-	if cliClient {
-		clients = append(clients, state.CLIClientType)
-	}
+	//if httpClient {
+	clients = append(clients, state.HTTPClientType)
+	//}
+	//if goClient {
+	clients = append(clients, state.GoClientType)
+	//}
+	//if cliClient {
+	clients = append(clients, state.CLIClientType)
+	//}
 	if jsClient {
 		clients = append(clients, state.JSClientType)
 	}

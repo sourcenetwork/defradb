@@ -237,89 +237,11 @@ func (o *AddViewOptions) GetIdentity() immutable.Option[identity.Identity] {
 }
 
 // RefreshViewsOptions contains options for RefreshViews operation.
-type RefreshViewsOptions struct {
-	// Identity is the identity of the actor performing the operation.
-	Identity immutable.Option[identity.Identity]
-	// VersionID is the version ID of the collection to refresh.
-	VersionID immutable.Option[string]
-	// CollectionID is the collection ID to filter by.
-	CollectionID immutable.Option[string]
-	// CollectionSetID is the collection set ID to filter by.
-	CollectionSetID immutable.Option[string]
-	// CollectionName is the name of the collection to filter by.
-	CollectionName immutable.Option[string]
-	// IncludeInactive indicates whether to include inactive collections.
-	IncludeInactive immutable.Option[bool]
-}
+type RefreshViewsOptions = GetCollectionsOptions
 
 // RefreshViews creates a new RefreshViewsOptions instance.
 func RefreshViews() *RefreshViewsOptions {
 	return &RefreshViewsOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *RefreshViewsOptions) SetIdentity(id identity.Identity) *RefreshViewsOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
-// GetIdentity returns the identity for the operation.
-func (o *RefreshViewsOptions) GetIdentity() immutable.Option[identity.Identity] {
-	return o.Identity
-}
-
-// SetVersionID sets the version ID filter.
-func (o *RefreshViewsOptions) SetVersionID(versionID string) *RefreshViewsOptions {
-	o.VersionID = immutable.Some(versionID)
-	return o
-}
-
-// SetCollectionID sets the collection ID filter.
-func (o *RefreshViewsOptions) SetCollectionID(collectionID string) *RefreshViewsOptions {
-	o.CollectionID = immutable.Some(collectionID)
-	return o
-}
-
-// SetCollectionSetID sets the collection set ID filter.
-func (o *RefreshViewsOptions) SetCollectionSetID(collectionSetID string) *RefreshViewsOptions {
-	o.CollectionSetID = immutable.Some(collectionSetID)
-	return o
-}
-
-// SetCollectionName sets the name filter.
-func (o *RefreshViewsOptions) SetCollectionName(name string) *RefreshViewsOptions {
-	o.CollectionName = immutable.Some(name)
-	return o
-}
-
-// SetIncludeInactive sets whether to include inactive collections.
-func (o *RefreshViewsOptions) SetIncludeInactive(includeInactive bool) *RefreshViewsOptions {
-	o.IncludeInactive = immutable.Some(includeInactive)
-	return o
-}
-
-// ToGetCollectionsOptions converts RefreshViewsOptions to GetCollectionsOptions.
-func (o *RefreshViewsOptions) ToGetCollectionsOptions() *GetCollectionsOptions {
-	opts := GetCollections()
-	if o.Identity.HasValue() {
-		opts.SetIdentity(o.Identity.Value())
-	}
-	if o.VersionID.HasValue() {
-		opts.SetVersionID(o.VersionID.Value())
-	}
-	if o.CollectionID.HasValue() {
-		opts.SetCollectionID(o.CollectionID.Value())
-	}
-	if o.CollectionSetID.HasValue() {
-		opts.SetCollectionSetID(o.CollectionSetID.Value())
-	}
-	if o.CollectionName.HasValue() {
-		opts.SetCollectionName(o.CollectionName.Value())
-	}
-	if o.IncludeInactive.HasValue() {
-		opts.SetIncludeInactive(o.IncludeInactive.Value())
-	}
-	return opts
 }
 
 // GetCollectionByNameOptions contains options for GetCollectionByName operation.
