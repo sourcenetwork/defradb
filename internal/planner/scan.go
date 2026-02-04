@@ -11,8 +11,9 @@
 package planner
 
 import (
-	"context"
+"context"
 	"maps"
+	"time"
 
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/immutable"
@@ -481,9 +482,18 @@ func (n *scanNode) buildCursorSeekKey() *keys.IndexDataStoreKey {
 		}
 
 		if colField, found := n.col.Version().GetFieldByName(idxField.Name); found {
-			if colField.Kind == client.FieldKind_NILLABLE_INT {
+			switch colField.Kind {
+			case client.FieldKind_NILLABLE_INT:
+				// JSON deserializes numbers as float64, convert back to int64
 				if floatVal, isFloat := val.(float64); isFloat {
 					val = int64(floatVal)
+				}
+			case client.FieldKind_NILLABLE_DATETIME:
+				// JSON deserializes DateTime as string, parse back to time.Time
+				if strVal, isString := val.(string); isString {
+					if parsed, err := time.Parse(time.RFC3339, strVal); err == nil {
+						val = parsed
+					}
 				}
 			}
 		}
