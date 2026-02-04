@@ -289,10 +289,14 @@ func groupPatchByCollection(patch string) ([]struct{ Name, Patch string }, error
 			return nil, fmt.Errorf("failed to parse patch operation %d: %w", i, err)
 		}
 		path := op.Path
-		if len(path) == 0 || path[0] != '/' {
-			return nil, fmt.Errorf("invalid patch path in operation %d: %s", i, path)
+		if len(path) == 0 {
+			return nil, fmt.Errorf("invalid patch path in operation %d: empty path", i)
 		}
-		path = path[1:]
+		// Go DefraDB accepts paths with or without leading '/'.
+		// Strip leading '/' if present for consistent collection name extraction.
+		if path[0] == '/' {
+			path = path[1:]
+		}
 		name := path
 		for j, c := range path {
 			if c == '/' {
