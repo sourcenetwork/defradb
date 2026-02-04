@@ -728,6 +728,33 @@ struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
 struct FfiResult set_migration(uintptr_t node_ptr, const char *identity_did, const char *config);
 
 /*
+ Set a migration within an existing transaction.
+
+ This registers a lens migration configuration within the specified transaction.
+ The migration will only be visible after the transaction is committed.
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `txn_id` - Transaction ID from `begin_txn`
+ * `identity_did` - Optional DID for permission checks (null for anonymous)
+ * `config` - JSON string containing the lens configuration
+
+ # Returns
+
+ - Status 0: Success (value contains the transform ID)
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `txn_id` and `config` must be valid null-terminated UTF-8 strings.
+ */
+struct FfiResult set_migration_in_txn(uintptr_t node_ptr,
+                                      const char *txn_id,
+                                      const char *identity_did,
+                                      const char *config);
+
+/*
  Create document(s) in a collection.
 
  This function automatically detects whether the input is a single document
@@ -818,7 +845,7 @@ struct FfiResult parse_duration(const char *duration_str);
 struct FfiResult parse_string_array(const char *input);
 
 /*
- Create an encrypted index on a collection.
+ Create a new encrypted index on a collection field.
 
  # Safety
 
@@ -846,7 +873,7 @@ struct FfiResult delete_encrypted_index(uintptr_t node_ptr,
 
  # Safety
 
- All string pointers must be valid null-terminated UTF-8 strings.
+ `collection_name` must be a valid null-terminated UTF-8 string.
  */
 struct FfiResult list_encrypted_indexes(uintptr_t node_ptr,
                                         const char *identity_did,
@@ -854,10 +881,6 @@ struct FfiResult list_encrypted_indexes(uintptr_t node_ptr,
 
 /*
  List all encrypted indexes across all collections.
-
- # Safety
-
- All string pointers must be valid null-terminated UTF-8 strings.
  */
 struct FfiResult list_all_encrypted_indexes(uintptr_t node_ptr, const char *identity_did);
 
@@ -1255,9 +1278,10 @@ struct FfiResult p2p_sync_documents(uintptr_t node_ptr,
                                     const char *doc_ids_json);
 
 /*
- Sync a branchable collection from peers.
+ Sync a branchable collection from connected peers.
 
- Subscribes to the collection's GossipSub topic for P2P replication.
+ Looks up the collection, verifies it is branchable, then sends a
+ BranchableSyncRequest to each connected peer via the two-stream protocol.
 
  # Safety
 
@@ -1268,19 +1292,19 @@ struct FfiResult p2p_sync_branchable_collection(uintptr_t node_ptr,
                                                 const char *collection_id);
 
 /*
- Sync specific collection versions from peers.
+ Sync collection versions (schema definitions) from connected peers via Bitswap.
 
- Fetches and merges the specified collection versions from connected peers.
+ This fetches collection definition blocks by their CIDs (version IDs), recursively
+ fetches previous versions and field definition blocks, then saves them to the
+ database as inactive collection versions.
 
- # Arguments
-
- * `node_ptr` - Handle to the node
- * `identity_did` - DID of the requestor for access control
- * `version_ids_json` - JSON array of CID strings to sync, e.g. `["bafyrei...", "bafyrei..."]`
+ Unlike DocSync and BranchableSync (which use PubSub request/reply), this uses
+ Bitswap directly to fetch blocks by CID.
 
  # Safety
 
  `identity_did` and `version_ids_json` must be valid null-terminated UTF-8 strings.
+ `version_ids_json` should be a JSON array of CID strings: `["bafyrei...", "bafyrei..."]`
  */
 struct FfiResult p2p_sync_collection_versions(uintptr_t node_ptr,
                                               const char *identity_did,
@@ -1405,6 +1429,12 @@ struct CreateSubscriptionResult create_merge_complete_subscription(uintptr_t nod
 struct PollSubscriptionResult poll_subscription(uintptr_t subscription_handle);
 
 /*
+ Alias for poll_subscription (for Go compatibility)
+ Accepts a string subscription ID and parses it as a numeric handle.
+ */
+struct PollSubscriptionResult poll_graphql_subscription(const char *subscription_id);
+
+/*
  Close a subscription and release resources.
 
  # Arguments
@@ -1418,43 +1448,8 @@ struct PollSubscriptionResult poll_subscription(uintptr_t subscription_handle);
 struct CloseSubscriptionResult close_subscription(uintptr_t subscription_handle);
 
 /*
- Poll a GraphQL subscription for the next event (non-blocking).
-
- This is an alternative API that accepts a string subscription ID instead of a numeric handle.
- The ID is parsed as a decimal number.
-
- # Arguments
-
- * `subscription_id` - String subscription ID (decimal number)
-
- # Returns
-
- Same as `poll_subscription`.
-
- # Safety
-
- The subscription_id must be a valid null-terminated UTF-8 string.
- */
-struct PollSubscriptionResult poll_graphql_subscription(const char *subscription_id);
-
-/*
- Close a GraphQL subscription and release resources.
-
- This is an alternative API that accepts a string subscription ID instead of a numeric handle.
- The ID is parsed as a decimal number.
-
- # Arguments
-
- * `subscription_id` - String subscription ID (decimal number)
-
- # Returns
-
- Same as `close_subscription`.
-
- # Safety
-
- The subscription_id must be a valid null-terminated UTF-8 string.
- After this call, the subscription ID is no longer valid.
+ Alias for close_subscription (for Go compatibility)
+ Accepts a string subscription ID and parses it as a numeric handle.
  */
 struct CloseSubscriptionResult close_graphql_subscription(const char *subscription_id);
 

@@ -977,6 +977,14 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 		identityDID = id.Value().DID()
 	}
 
+	// If the context carries a transaction, use the transaction-aware function
+	// so the migration is part of that transaction and only visible after commit.
+	if clientTxn, ok := datastore.CtxTryGetClientTxn(ctx); ok && clientTxn != nil {
+		if txnW, ok := clientTxn.(*TxnWrapper); ok {
+			return w.node.SetMigrationInTxn(txnW.txn.id, identityDID, string(configJSON))
+		}
+	}
+
 	return w.node.SetMigration(identityDID, string(configJSON))
 }
 
