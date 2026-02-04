@@ -42,7 +42,7 @@ func TestNAC_AdminRelation_CanP2PReplicatorCreate(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				Identity:      testUtils.ClientIdentity(2),
 				SourceNodeID:  1,
 				TargetNodeID:  0,
@@ -58,7 +58,7 @@ func TestNAC_AdminRelation_CanP2PReplicatorCreate(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				Identity:     testUtils.ClientIdentity(2),
 				SourceNodeID: 1,
 				TargetNodeID: 0,

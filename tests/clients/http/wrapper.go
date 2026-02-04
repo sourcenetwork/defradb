@@ -74,16 +74,16 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
 	return w.client.Connect(ctx, addresses)
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
-	return w.client.SetReplicator(ctx, addresses, collections...)
+func (w *Wrapper) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
+	return w.client.CreateReplicator(ctx, addresses, collections...)
 }
 
 func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
 	return w.client.DeleteReplicator(ctx, id, collections...)
 }
 
-func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	return w.client.GetAllReplicators(ctx)
+func (w *Wrapper) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
+	return w.client.ListReplicators(ctx)
 }
 
 func (w *Wrapper) CreateP2PCollections(ctx context.Context, collectionIDs ...string) error {
