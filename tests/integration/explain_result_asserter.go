@@ -98,18 +98,6 @@ func (a *ExplainAsserter) WithPlanExecutions(planExecutions uint64) *ExplainAsse
 	return a
 }
 
-// Deprecated: WithOrder is kept for backward compatibility but no longer affects assertion behavior.
-// The new recursive assertion automatically handles orderNode wrappers.
-func (a *ExplainAsserter) WithOrder() *ExplainAsserter {
-	return a
-}
-
-// Deprecated: WithLimit is kept for backward compatibility but no longer affects assertion behavior.
-// The new recursive assertion automatically handles limitNode wrappers.
-func (a *ExplainAsserter) WithLimit() *ExplainAsserter {
-	return a
-}
-
 // WithLevel adds another level assertion.
 // This allows chaining multiple level assertions:
 //

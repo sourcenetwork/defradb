@@ -323,7 +323,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthors_ShouldOrderEachAuthorsBoo
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// index fetches 8: 4 for ordering all books for each author
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(8),
 			},
 		},
 	}
@@ -420,7 +420,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthorsAndIndexOnRelation_ShouldO
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// index fetches 4: relation ID index fetches 2 books per author, then sorts in memory
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
 			},
 		},
 	}
