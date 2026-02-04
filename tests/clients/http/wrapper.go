@@ -123,27 +123,27 @@ func (w *Wrapper) ListP2PCollections(
 	return w.client.ListP2PCollections(ctx, opts...)
 }
 
-func (w *Wrapper) AddP2PDocuments(
+func (w *Wrapper) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.AddP2PDocumentsOptions,
+	opts ...*options.CreateP2PDocumentsOptions,
 ) error {
-	return w.client.AddP2PDocuments(ctx, docIDs, opts...)
+	return w.client.CreateP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (w *Wrapper) RemoveP2PDocuments(
+func (w *Wrapper) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.RemoveP2PDocumentsOptions,
+	opts ...*options.DeleteP2PDocumentsOptions,
 ) error {
-	return w.client.RemoveP2PDocuments(ctx, docIDs, opts...)
+	return w.client.DeleteP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (w *Wrapper) GetAllP2PDocuments(
+func (w *Wrapper) ListP2PDocuments(
 	ctx context.Context,
-	opts ...*options.GetAllP2PDocumentsOptions,
+	opts ...*options.ListP2PDocumentsOptions,
 ) ([]string, error) {
-	return w.client.GetAllP2PDocuments(ctx, opts...)
+	return w.client.ListP2PDocuments(ctx, opts...)
 }
 
 func (w *Wrapper) SyncDocuments(

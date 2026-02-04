@@ -92,7 +92,7 @@ func (w *Wrapper) CreateP2PCollections(
 func (w *Wrapper) DeleteP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...*options.DeleP2PCollectionsOptions,
+	opts ...*options.DeleteP2PCollectionsOptions,
 ) error {
 	panic("not implemented")
 }
@@ -104,15 +104,23 @@ func (w *Wrapper) ListP2PCollections(
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.AddP2PDocumentsOptions) error {
+func (w *Wrapper) CreateP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...*options.CreateP2PDocumentsOptions,
+) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.RemoveP2PDocumentsOptions) error {
+func (w *Wrapper) DeleteP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...*options.DeleteP2PDocumentsOptions,
+) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions) ([]string, error) {
+func (w *Wrapper) ListP2PDocuments(ctx context.Context, opts ...*options.ListP2PDocumentsOptions) ([]string, error) {
 	panic("not implemented")
 }
 

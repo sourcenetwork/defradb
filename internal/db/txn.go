@@ -379,27 +379,27 @@ func (txn *Txn) ListP2PCollections(
 	return txn.db.ListP2PCollections(ctx, opts...)
 }
 
-func (txn *Txn) AddP2PDocuments(
+func (txn *Txn) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.AddP2PDocumentsOptions,
+	opts ...*options.CreateP2PDocumentsOptions,
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddP2PDocuments(ctx, docIDs, opts...)
+	return txn.db.CreateP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (txn *Txn) RemoveP2PDocuments(
+func (txn *Txn) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.RemoveP2PDocumentsOptions,
+	opts ...*options.DeleteP2PDocumentsOptions,
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.RemoveP2PDocuments(ctx, docIDs, opts...)
+	return txn.db.DeleteP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (txn *Txn) GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions) ([]string, error) {
+func (txn *Txn) ListP2PDocuments(ctx context.Context, opts ...*options.ListP2PDocumentsOptions) ([]string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllP2PDocuments(ctx, opts...)
+	return txn.db.ListP2PDocuments(ctx, opts...)
 }
 
 func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {

@@ -71,19 +71,19 @@ type P2P interface {
 	// the P2P system subscribes to.
 	ListP2PCollections(ctx context.Context, opts ...*options.ListP2PCollectionsOptions) ([]string, error)
 
-	// AddP2PDocuments adds the given docIDs to the P2P system and
+	// CreateP2PDocuments creates the given docIDs to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// docIDs are invalid.
-	AddP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.AddP2PDocumentsOptions) error
+	CreateP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.CreateP2PDocumentsOptions) error
 
-	// RemoveP2PDocuments removes the given docIDs from the P2P system and
+	// DeleteP2PDocuments removes the given docIDs from the P2P system and
 	// unsubscribes from their topics. It will error if the provided
 	// docIDs are invalid.
-	RemoveP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.RemoveP2PDocumentsOptions) error
+	DeleteP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.DeleteP2PDocumentsOptions) error
 
-	// GetAllP2PDocuments returns the list of persisted docIDs that
+	// ListP2PDocuments returns the list of persisted docIDs that
 	// the P2P system subscribes to.
-	GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions) ([]string, error)
+	ListP2PDocuments(ctx context.Context, opts ...*options.ListP2PDocumentsOptions) ([]string, error)
 
 	// SyncDocuments requests the latest versions of specified documents from the network
 	// and synchronizes their DAGs locally. It doesn't automatically subscribe

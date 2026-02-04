@@ -171,7 +171,7 @@ func (h *p2pHandler) ListP2PCollections(rw http.ResponseWriter, req *http.Reques
 	responseJSON(rw, http.StatusOK, cols)
 }
 
-func (h *p2pHandler) AddP2PDocuments(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) CreateP2PDocuments(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
@@ -181,9 +181,9 @@ func (h *p2pHandler) AddP2PDocuments(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	opt := options.WithIdentity(options.AddP2PDocuments(), identity.FromContext(ctx))
+	opt := options.WithIdentity(options.CreateP2PDocuments(), identity.FromContext(ctx))
 
-	err := db.AddP2PDocuments(ctx, docIDs, opt)
+	err := db.CreateP2PDocuments(ctx, docIDs, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -191,7 +191,7 @@ func (h *p2pHandler) AddP2PDocuments(rw http.ResponseWriter, req *http.Request) 
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *p2pHandler) RemoveP2PDocuments(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) DeleteP2PDocuments(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
@@ -201,9 +201,9 @@ func (h *p2pHandler) RemoveP2PDocuments(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	opt := options.WithIdentity(options.RemoveP2PDocuments(), identity.FromContext(ctx))
+	opt := options.WithIdentity(options.DeleteP2PDocuments(), identity.FromContext(ctx))
 
-	err := db.RemoveP2PDocuments(ctx, docIDs, opt)
+	err := db.DeleteP2PDocuments(ctx, docIDs, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -211,13 +211,13 @@ func (h *p2pHandler) RemoveP2PDocuments(rw http.ResponseWriter, req *http.Reques
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (h *p2pHandler) GetAllP2PDocuments(rw http.ResponseWriter, req *http.Request) {
+func (h *p2pHandler) ListP2PDocuments(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
-	opt := options.WithIdentity(options.GetAllP2PDocuments(), identity.FromContext(ctx))
+	opt := options.WithIdentity(options.ListP2PDocuments(), identity.FromContext(ctx))
 
-	docIDs, err := db.GetAllP2PDocuments(ctx, opt)
+	docIDs, err := db.ListP2PDocuments(ctx, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -468,38 +468,38 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 		WithRequired(true).
 		WithContent(openapi3.NewContentWithJSONSchema(peerDocumentsSchema))
 
-	getPeerDocumentsResponse := openapi3.NewResponse().
+	listPeerDocumentsResponse := openapi3.NewResponse().
 		WithDescription("Peer documents").
 		WithContent(openapi3.NewContentWithJSONSchema(peerDocumentsSchema))
 
-	getPeerDocuments := openapi3.NewOperation()
-	getPeerDocuments.Description = "List peer documents"
-	getPeerDocuments.OperationID = "peer_documents_list"
-	getPeerDocuments.Tags = []string{"p2p"}
-	getPeerDocuments.AddResponse(200, getPeerDocumentsResponse)
-	getPeerDocuments.Responses.Set("400", errorResponse)
+	listPeerDocuments := openapi3.NewOperation()
+	listPeerDocuments.Description = "List peer documents"
+	listPeerDocuments.OperationID = "peer_documents_list"
+	listPeerDocuments.Tags = []string{"p2p"}
+	listPeerDocuments.AddResponse(200, listPeerDocumentsResponse)
+	listPeerDocuments.Responses.Set("400", errorResponse)
 
-	addPeerDocuments := openapi3.NewOperation()
-	addPeerDocuments.Description = "Add peer documents"
-	addPeerDocuments.OperationID = "peer_documents_add"
-	addPeerDocuments.Tags = []string{"p2p"}
-	addPeerDocuments.RequestBody = &openapi3.RequestBodyRef{
+	createPeerDocuments := openapi3.NewOperation()
+	createPeerDocuments.Description = "Create peer documents"
+	createPeerDocuments.OperationID = "peer_documents_create"
+	createPeerDocuments.Tags = []string{"p2p"}
+	createPeerDocuments.RequestBody = &openapi3.RequestBodyRef{
 		Value: peerDocumentRequest,
 	}
-	addPeerDocuments.Responses = openapi3.NewResponses()
-	addPeerDocuments.Responses.Set("200", successResponse)
-	addPeerDocuments.Responses.Set("400", errorResponse)
+	createPeerDocuments.Responses = openapi3.NewResponses()
+	createPeerDocuments.Responses.Set("200", successResponse)
+	createPeerDocuments.Responses.Set("400", errorResponse)
 
-	removePeerDocuments := openapi3.NewOperation()
-	removePeerDocuments.Description = "Remove peer documents"
-	removePeerDocuments.OperationID = "peer_documents_remove"
-	removePeerDocuments.Tags = []string{"p2p"}
-	removePeerDocuments.RequestBody = &openapi3.RequestBodyRef{
+	deletePeerDocuments := openapi3.NewOperation()
+	deletePeerDocuments.Description = "Delete peer documents"
+	deletePeerDocuments.OperationID = "peer_documents_delete"
+	deletePeerDocuments.Tags = []string{"p2p"}
+	deletePeerDocuments.RequestBody = &openapi3.RequestBodyRef{
 		Value: peerDocumentRequest,
 	}
-	removePeerDocuments.Responses = openapi3.NewResponses()
-	removePeerDocuments.Responses.Set("200", successResponse)
-	removePeerDocuments.Responses.Set("400", errorResponse)
+	deletePeerDocuments.Responses = openapi3.NewResponses()
+	deletePeerDocuments.Responses.Set("200", successResponse)
+	deletePeerDocuments.Responses.Set("400", errorResponse)
 
 	syncDocumentsRequestSchema := openapi3.NewObjectSchema().
 		WithProperty("collectionName", openapi3.NewStringSchema()).
@@ -583,8 +583,8 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 	router.AddRoute("/p2p/collections/sync-versions", http.MethodPost, syncCollectionVersions, h.SyncCollectionVersions)
 	router.AddRoute("/p2p/collections/sync-branchable", http.MethodPost, syncBranchableCollection,
 		h.SyncBranchableCollection)
-	router.AddRoute("/p2p/documents", http.MethodGet, getPeerDocuments, h.GetAllP2PDocuments)
-	router.AddRoute("/p2p/documents", http.MethodPost, addPeerDocuments, h.AddP2PDocuments)
-	router.AddRoute("/p2p/documents", http.MethodDelete, removePeerDocuments, h.RemoveP2PDocuments)
+	router.AddRoute("/p2p/documents", http.MethodGet, listPeerDocuments, h.ListP2PDocuments)
+	router.AddRoute("/p2p/documents", http.MethodPost, createPeerDocuments, h.CreateP2PDocuments)
+	router.AddRoute("/p2p/documents", http.MethodDelete, deletePeerDocuments, h.DeleteP2PDocuments)
 	router.AddRoute("/p2p/documents/sync", http.MethodPost, syncDocuments, h.SyncDocuments)
 }

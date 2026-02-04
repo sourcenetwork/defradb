@@ -170,68 +170,68 @@ func (o *ListP2PCollectionsOptions) GetIdentity() immutable.Option[identity.Iden
 	return o.Identity
 }
 
-// AddP2PDocumentsOptions contains options for AddP2PDocuments operation.
-type AddP2PDocumentsOptions struct {
+// CreateP2PDocumentsOptions contains options for AddP2PDocuments operation.
+type CreateP2PDocumentsOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
-// AddP2PDocuments creates a new AddP2PDocumentsOptions instance.
-func AddP2PDocuments() *AddP2PDocumentsOptions {
-	return &AddP2PDocumentsOptions{}
+// CreateP2PDocuments creates a new AddP2PDocumentsOptions instance.
+func CreateP2PDocuments() *CreateP2PDocumentsOptions {
+	return &CreateP2PDocumentsOptions{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (o *AddP2PDocumentsOptions) SetIdentity(id identity.Identity) *AddP2PDocumentsOptions {
+func (o *CreateP2PDocumentsOptions) SetIdentity(id identity.Identity) *CreateP2PDocumentsOptions {
 	o.Identity = immutable.Some(id)
 	return o
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *AddP2PDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *CreateP2PDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// RemoveP2PDocumentsOptions contains options for RemoveP2PDocuments operation.
-type RemoveP2PDocumentsOptions struct {
+// DeleteP2PDocumentsOptions contains options for RemoveP2PDocuments operation.
+type DeleteP2PDocumentsOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
-// RemoveP2PDocuments creates a new RemoveP2PDocumentsOptions instance.
-func RemoveP2PDocuments() *RemoveP2PDocumentsOptions {
-	return &RemoveP2PDocumentsOptions{}
+// DeleteP2PDocuments creates a new RemoveP2PDocumentsOptions instance.
+func DeleteP2PDocuments() *DeleteP2PDocumentsOptions {
+	return &DeleteP2PDocumentsOptions{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (o *RemoveP2PDocumentsOptions) SetIdentity(id identity.Identity) *RemoveP2PDocumentsOptions {
+func (o *DeleteP2PDocumentsOptions) SetIdentity(id identity.Identity) *DeleteP2PDocumentsOptions {
 	o.Identity = immutable.Some(id)
 	return o
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *RemoveP2PDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *DeleteP2PDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// GetAllP2PDocumentsOptions contains options for GetAllP2PDocuments operation.
-type GetAllP2PDocumentsOptions struct {
+// ListP2PDocumentsOptions contains options for GetAllP2PDocuments operation.
+type ListP2PDocumentsOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
-// GetAllP2PDocuments creates a new GetAllP2PDocumentsOptions instance.
-func GetAllP2PDocuments() *GetAllP2PDocumentsOptions {
-	return &GetAllP2PDocumentsOptions{}
+// ListP2PDocuments creates a new GetAllP2PDocumentsOptions instance.
+func ListP2PDocuments() *ListP2PDocumentsOptions {
+	return &ListP2PDocumentsOptions{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (o *GetAllP2PDocumentsOptions) SetIdentity(id identity.Identity) *GetAllP2PDocumentsOptions {
+func (o *ListP2PDocumentsOptions) SetIdentity(id identity.Identity) *ListP2PDocumentsOptions {
 	o.Identity = immutable.Some(id)
 	return o
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *GetAllP2PDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *ListP2PDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }

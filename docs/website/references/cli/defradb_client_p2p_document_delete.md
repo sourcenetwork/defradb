@@ -1,30 +1,30 @@
-## defradb client p2p document add
+## defradb client p2p document delete
 
-Add P2P documents
+Delete P2P documents
 
 ### Synopsis
 
-Add P2P documents to the synchronized pubsub topics.
-The documents are synchronized between nodes of a pubsub network.
+Delete P2P documents from the followed pubsub topics.
+The removed documents will no longer be synchronized between nodes.
 
 ```
-defradb client p2p document add [docIDs] [flags]
+defradb client p2p document delete [docIDs] [flags]
 ```
 
 ### Examples
 
 ```
-add single document:  
-  defradb client p2p document add bae123
+delete single document:  
+  defradb client p2p document delete bae123
 
-add multiple documents:  
-  defradb client p2p document add bae123,bae456
+delete multiple documents:  
+  defradb client p2p document delete bae123,bae456
 ```
 
 ### Options
 
 ```
-  -h, --help   help for add
+  -h, --help   help for delete
 ```
 
 ### Options inherited from parent commands

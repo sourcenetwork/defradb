@@ -1,30 +1,20 @@
-## defradb client p2p document remove
+## defradb client p2p document list
 
-Remove P2P documents
+List P2P documents
 
 ### Synopsis
 
-Remove P2P documents from the followed pubsub topics.
-The removed documents will no longer be synchronized between nodes.
+List all P2P documents in the pubsub topics.
+This is the list of documents of the node that are synchronized on the pubsub network.
 
 ```
-defradb client p2p document remove [docIDs] [flags]
-```
-
-### Examples
-
-```
-remove single document:  
-  defradb client p2p document remove bae123
-
-remove multiple documents:  
-  defradb client p2p document remove bae123,bae456
+defradb client p2p document list [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+  -h, --help   help for list
 ```
 
 ### Options inherited from parent commands

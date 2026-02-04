@@ -198,35 +198,35 @@ func (w *Wrapper) ListP2PCollections(
 	return cols, nil
 }
 
-func (w *Wrapper) AddP2PDocuments(
+func (w *Wrapper) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.AddP2PDocumentsOptions,
+	opts ...*options.CreateP2PDocumentsOptions,
 ) error {
-	args := []string{"client", "p2p", "document", "add"}
+	args := []string{"client", "p2p", "document", "create"}
 	args = append(args, strings.Join(docIDs, ","))
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) RemoveP2PDocuments(
+func (w *Wrapper) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.RemoveP2PDocumentsOptions,
+	opts ...*options.DeleteP2PDocumentsOptions,
 ) error {
-	args := []string{"client", "p2p", "document", "remove"}
+	args := []string{"client", "p2p", "document", "delete"}
 	args = append(args, strings.Join(docIDs, ","))
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
-func (w *Wrapper) GetAllP2PDocuments(
+func (w *Wrapper) ListP2PDocuments(
 	ctx context.Context,
-	opts ...*options.GetAllP2PDocumentsOptions,
+	opts ...*options.ListP2PDocumentsOptions,
 ) ([]string, error) {
-	args := []string{"client", "p2p", "document", "getall"}
+	args := []string{"client", "p2p", "document", "list"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {

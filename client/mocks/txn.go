@@ -440,7 +440,7 @@ func (_c *Txn_AddNACActorRelationship_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // AddP2PDocuments provides a mock function for the type Txn
-func (_mock *Txn) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.AddP2PDocumentsOptions) error {
+func (_mock *Txn) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.CreateP2PDocumentsOptions) error {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, docIDs, opts)
@@ -454,7 +454,7 @@ func (_mock *Txn) AddP2PDocuments(ctx context.Context, docIDs []string, opts ...
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...*options.AddP2PDocumentsOptions) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...*options.CreateP2PDocumentsOptions) error); ok {
 		r0 = returnFunc(ctx, docIDs, opts...)
 	} else {
 		r0 = ret.Error(0)
@@ -476,7 +476,7 @@ func (_e *Txn_Expecter) AddP2PDocuments(ctx interface{}, docIDs interface{}, opt
 		append([]interface{}{ctx, docIDs}, opts...)...)}
 }
 
-func (_c *Txn_AddP2PDocuments_Call) Run(run func(ctx context.Context, docIDs []string, opts ...*options.AddP2PDocumentsOptions)) *Txn_AddP2PDocuments_Call {
+func (_c *Txn_AddP2PDocuments_Call) Run(run func(ctx context.Context, docIDs []string, opts ...*options.CreateP2PDocumentsOptions)) *Txn_AddP2PDocuments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -486,10 +486,10 @@ func (_c *Txn_AddP2PDocuments_Call) Run(run func(ctx context.Context, docIDs []s
 		if args[1] != nil {
 			arg1 = args[1].([]string)
 		}
-		var arg2 []*options.AddP2PDocumentsOptions
-		var variadicArgs []*options.AddP2PDocumentsOptions
+		var arg2 []*options.CreateP2PDocumentsOptions
+		var variadicArgs []*options.CreateP2PDocumentsOptions
 		if len(args) > 2 {
-			variadicArgs = args[2].([]*options.AddP2PDocumentsOptions)
+			variadicArgs = args[2].([]*options.CreateP2PDocumentsOptions)
 		}
 		arg2 = variadicArgs
 		run(
@@ -506,7 +506,7 @@ func (_c *Txn_AddP2PDocuments_Call) Return(err error) *Txn_AddP2PDocuments_Call 
 	return _c
 }
 
-func (_c *Txn_AddP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs []string, opts ...*options.AddP2PDocumentsOptions) error) *Txn_AddP2PDocuments_Call {
+func (_c *Txn_AddP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs []string, opts ...*options.CreateP2PDocumentsOptions) error) *Txn_AddP2PDocuments_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -970,6 +970,72 @@ func (_c *Txn_CreateP2PCollections_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
+// CreateP2PDocuments provides a mock function for the type Txn
+func (_mock *Txn) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
+	var tmpRet mock.Arguments
+	if len(docIDs) > 0 {
+		tmpRet = _mock.Called(ctx, docIDs)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateP2PDocuments")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
+		r0 = returnFunc(ctx, docIDs...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_CreateP2PDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateP2PDocuments'
+type Txn_CreateP2PDocuments_Call struct {
+	*mock.Call
+}
+
+// CreateP2PDocuments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - docIDs ...string
+func (_e *Txn_Expecter) CreateP2PDocuments(ctx interface{}, docIDs ...interface{}) *Txn_CreateP2PDocuments_Call {
+	return &Txn_CreateP2PDocuments_Call{Call: _e.mock.On("CreateP2PDocuments",
+		append([]interface{}{ctx}, docIDs...)...)}
+}
+
+func (_c *Txn_CreateP2PDocuments_Call) Run(run func(ctx context.Context, docIDs ...string)) *Txn_CreateP2PDocuments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_CreateP2PDocuments_Call) Return(err error) *Txn_CreateP2PDocuments_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_CreateP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs ...string) error) *Txn_CreateP2PDocuments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteDACActorRelationship provides a mock function for the type Txn
 func (_mock *Txn) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...*options.DeleteDACActorRelationshipOptions) (client.DeleteActorRelationshipResult, error) {
 	var tmpRet mock.Arguments
@@ -1218,6 +1284,72 @@ func (_c *Txn_DeleteP2PCollections_Call) Return(err error) *Txn_DeleteP2PCollect
 }
 
 func (_c *Txn_DeleteP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionNames ...string) error) *Txn_DeleteP2PCollections_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteP2PDocuments provides a mock function for the type Txn
+func (_mock *Txn) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
+	var tmpRet mock.Arguments
+	if len(docIDs) > 0 {
+		tmpRet = _mock.Called(ctx, docIDs)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteP2PDocuments")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
+		r0 = returnFunc(ctx, docIDs...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_DeleteP2PDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteP2PDocuments'
+type Txn_DeleteP2PDocuments_Call struct {
+	*mock.Call
+}
+
+// DeleteP2PDocuments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - docIDs ...string
+func (_e *Txn_Expecter) DeleteP2PDocuments(ctx interface{}, docIDs ...interface{}) *Txn_DeleteP2PDocuments_Call {
+	return &Txn_DeleteP2PDocuments_Call{Call: _e.mock.On("DeleteP2PDocuments",
+		append([]interface{}{ctx}, docIDs...)...)}
+}
+
+func (_c *Txn_DeleteP2PDocuments_Call) Run(run func(ctx context.Context, docIDs ...string)) *Txn_DeleteP2PDocuments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_DeleteP2PDocuments_Call) Return(err error) *Txn_DeleteP2PDocuments_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_DeleteP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs ...string) error) *Txn_DeleteP2PDocuments_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1551,7 +1683,7 @@ func (_c *Txn_GetAllIndexes_Call) RunAndReturn(run func(ctx context.Context, opt
 }
 
 // GetAllP2PDocuments provides a mock function for the type Txn
-func (_mock *Txn) GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions) ([]string, error) {
+func (_mock *Txn) GetAllP2PDocuments(ctx context.Context, opts ...*options.ListP2PDocumentsOptions) ([]string, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, opts)
@@ -1566,17 +1698,17 @@ func (_mock *Txn) GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAl
 
 	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.GetAllP2PDocumentsOptions) ([]string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.ListP2PDocumentsOptions) ([]string, error)); ok {
 		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.GetAllP2PDocumentsOptions) []string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.ListP2PDocumentsOptions) []string); ok {
 		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...*options.GetAllP2PDocumentsOptions) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...*options.ListP2PDocumentsOptions) error); ok {
 		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -1597,16 +1729,16 @@ func (_e *Txn_Expecter) GetAllP2PDocuments(ctx interface{}, opts ...interface{})
 		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_GetAllP2PDocuments_Call) Run(run func(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions)) *Txn_GetAllP2PDocuments_Call {
+func (_c *Txn_GetAllP2PDocuments_Call) Run(run func(ctx context.Context, opts ...*options.ListP2PDocumentsOptions)) *Txn_GetAllP2PDocuments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 []*options.GetAllP2PDocumentsOptions
-		var variadicArgs []*options.GetAllP2PDocumentsOptions
+		var arg1 []*options.ListP2PDocumentsOptions
+		var variadicArgs []*options.ListP2PDocumentsOptions
 		if len(args) > 1 {
-			variadicArgs = args[1].([]*options.GetAllP2PDocumentsOptions)
+			variadicArgs = args[1].([]*options.ListP2PDocumentsOptions)
 		}
 		arg1 = variadicArgs
 		run(
@@ -1622,7 +1754,7 @@ func (_c *Txn_GetAllP2PDocuments_Call) Return(strings []string, err error) *Txn_
 	return _c
 }
 
-func (_c *Txn_GetAllP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions) ([]string, error)) *Txn_GetAllP2PDocuments_Call {
+func (_c *Txn_GetAllP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, opts ...*options.ListP2PDocumentsOptions) ([]string, error)) *Txn_GetAllP2PDocuments_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2229,6 +2361,68 @@ func (_c *Txn_ListP2PCollections_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// ListP2PDocuments provides a mock function for the type Txn
+func (_mock *Txn) ListP2PDocuments(ctx context.Context) ([]string, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListP2PDocuments")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_ListP2PDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListP2PDocuments'
+type Txn_ListP2PDocuments_Call struct {
+	*mock.Call
+}
+
+// ListP2PDocuments is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Txn_Expecter) ListP2PDocuments(ctx interface{}) *Txn_ListP2PDocuments_Call {
+	return &Txn_ListP2PDocuments_Call{Call: _e.mock.On("ListP2PDocuments", ctx)}
+}
+
+func (_c *Txn_ListP2PDocuments_Call) Run(run func(ctx context.Context)) *Txn_ListP2PDocuments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_ListP2PDocuments_Call) Return(strings []string, err error) *Txn_ListP2PDocuments_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *Txn_ListP2PDocuments_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_ListP2PDocuments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PatchCollection provides a mock function for the type Txn
 func (_mock *Txn) PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens], opts ...*options.PatchCollectionOptions) error {
 	var tmpRet mock.Arguments
@@ -2546,7 +2740,7 @@ func (_c *Txn_RefreshViews_Call) RunAndReturn(run func(ctx context.Context, opts
 }
 
 // RemoveP2PDocuments provides a mock function for the type Txn
-func (_mock *Txn) RemoveP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.RemoveP2PDocumentsOptions) error {
+func (_mock *Txn) RemoveP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.DeleteP2PDocumentsOptions) error {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, docIDs, opts)
@@ -2560,7 +2754,7 @@ func (_mock *Txn) RemoveP2PDocuments(ctx context.Context, docIDs []string, opts 
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...*options.RemoveP2PDocumentsOptions) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...*options.DeleteP2PDocumentsOptions) error); ok {
 		r0 = returnFunc(ctx, docIDs, opts...)
 	} else {
 		r0 = ret.Error(0)
@@ -2582,7 +2776,7 @@ func (_e *Txn_Expecter) RemoveP2PDocuments(ctx interface{}, docIDs interface{}, 
 		append([]interface{}{ctx, docIDs}, opts...)...)}
 }
 
-func (_c *Txn_RemoveP2PDocuments_Call) Run(run func(ctx context.Context, docIDs []string, opts ...*options.RemoveP2PDocumentsOptions)) *Txn_RemoveP2PDocuments_Call {
+func (_c *Txn_RemoveP2PDocuments_Call) Run(run func(ctx context.Context, docIDs []string, opts ...*options.DeleteP2PDocumentsOptions)) *Txn_RemoveP2PDocuments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2592,10 +2786,10 @@ func (_c *Txn_RemoveP2PDocuments_Call) Run(run func(ctx context.Context, docIDs 
 		if args[1] != nil {
 			arg1 = args[1].([]string)
 		}
-		var arg2 []*options.RemoveP2PDocumentsOptions
-		var variadicArgs []*options.RemoveP2PDocumentsOptions
+		var arg2 []*options.DeleteP2PDocumentsOptions
+		var variadicArgs []*options.DeleteP2PDocumentsOptions
 		if len(args) > 2 {
-			variadicArgs = args[2].([]*options.RemoveP2PDocumentsOptions)
+			variadicArgs = args[2].([]*options.DeleteP2PDocumentsOptions)
 		}
 		arg2 = variadicArgs
 		run(
@@ -2612,7 +2806,7 @@ func (_c *Txn_RemoveP2PDocuments_Call) Return(err error) *Txn_RemoveP2PDocuments
 	return _c
 }
 
-func (_c *Txn_RemoveP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs []string, opts ...*options.RemoveP2PDocumentsOptions) error) *Txn_RemoveP2PDocuments_Call {
+func (_c *Txn_RemoveP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs []string, opts ...*options.DeleteP2PDocumentsOptions) error) *Txn_RemoveP2PDocuments_Call {
 	_c.Call.Return(run)
 	return _c
 }

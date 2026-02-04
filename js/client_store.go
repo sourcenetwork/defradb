@@ -132,7 +132,7 @@ func collectionFetchOptionsToRefreshViewsOptions(input collectionFetchOptions) *
 		opt.SetCollectionID(input.CollectionID.Value())
 	}
 	if input.Name.HasValue() {
-		opt.SetName(input.Name.Value())
+		opt.SetCollectionName(input.Name.Value())
 	}
 	if input.IncludeInactive.HasValue() {
 		opt.SetIncludeInactive(input.IncludeInactive.Value())
@@ -233,7 +233,7 @@ func collectionFetchOptionsToGetCollectionsOptions(input collectionFetchOptions)
 		opt.SetCollectionID(input.CollectionID.Value())
 	}
 	if input.Name.HasValue() {
-		opt.SetName(input.Name.Value())
+		opt.SetCollectionName(input.Name.Value())
 	}
 	if input.IncludeInactive.HasValue() {
 		opt.SetIncludeInactive(input.IncludeInactive.Value())

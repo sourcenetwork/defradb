@@ -236,13 +236,13 @@ func (db *DB) ListP2PCollections(
 	return db.p2p.ListP2PCollections(identity.WithContext(ctx, ident))
 }
 
-// AddP2PDocuments adds the given docIDs to the P2P system and
+// CreateP2PDocuments adds the given docIDs to the P2P system and
 // subscribes to their topics. It will error if any of the provided
 // docIDs are invalid.
-func (db *DB) AddP2PDocuments(
+func (db *DB) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.AddP2PDocumentsOptions,
+	opts ...*options.CreateP2PDocumentsOptions,
 ) error {
 	ident := options.IdentityFrom(opts...)
 
@@ -259,7 +259,7 @@ func (db *DB) AddP2PDocuments(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.AddP2PDocuments(ctx, docIDs...)
+	err = db.p2p.CreateP2PDocuments(ctx, docIDs...)
 	if err != nil {
 		return err
 	}
@@ -267,13 +267,13 @@ func (db *DB) AddP2PDocuments(
 	return txn.Commit()
 }
 
-// RemoveP2PDocuments removes the given docIDs from the P2P system and
+// DeleteP2PDocuments removes the given docIDs from the P2P system and
 // unsubscribes from their topics. It will error if the provided
 // docIDs are invalid.
-func (db *DB) RemoveP2PDocuments(
+func (db *DB) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.RemoveP2PDocumentsOptions,
+	opts ...*options.DeleteP2PDocumentsOptions,
 ) error {
 	ident := options.IdentityFrom(opts...)
 
@@ -290,7 +290,7 @@ func (db *DB) RemoveP2PDocuments(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.RemoveP2PDocuments(ctx, docIDs...)
+	err = db.p2p.DeleteP2PDocuments(ctx, docIDs...)
 	if err != nil {
 		return err
 	}
@@ -298,9 +298,9 @@ func (db *DB) RemoveP2PDocuments(
 	return txn.Commit()
 }
 
-// GetAllP2PDocuments returns the list of persisted docIDs that
+// ListP2PDocuments returns the list of persisted docIDs that
 // the P2P system subscribes to.
-func (db *DB) GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions) ([]string, error) {
+func (db *DB) ListP2PDocuments(ctx context.Context, opts ...*options.ListP2PDocumentsOptions) ([]string, error) {
 	ident := options.IdentityFrom(opts...)
 
 	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeP2PDocumentListPerm); err != nil {
@@ -316,7 +316,7 @@ func (db *DB) GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAllP2P
 	}
 	defer txn.Discard()
 
-	return db.p2p.GetAllP2PDocuments(ctx)
+	return db.p2p.ListP2PDocuments(ctx)
 }
 
 // SyncDocuments requests the latest versions of specified documents from the network

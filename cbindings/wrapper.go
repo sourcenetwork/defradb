@@ -51,9 +51,9 @@ extern Result P2PcollectionCreate(uintptr_t nodePtr, char* collections, uintptr_
 extern Result P2PcollectionDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionList(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2Pconnect(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
-extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
-extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections, uintptr_t identity);
-extern Result P2PdocumentGetAll(uintptr_t nodePtr, uintptr_t identity);
+extern Result P2PdocumentCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PdocumentDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PdocumentList(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr, uintptr_t identity);
 extern Result P2PcollectionSyncVersions(uintptr_t nodePtr, char* versionIDs, char* timeoutStr, uintptr_t identity);
 extern Result P2PbranchableCollectionSync(uintptr_t nodePtr, char* collectionID, char* timeoutStr, uintptr_t identity);
@@ -254,17 +254,17 @@ func (w *CWrapper) ListP2PCollections(
 	return collections, nil
 }
 
-func (w *CWrapper) AddP2PDocuments(
+func (w *CWrapper) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.AddP2PDocumentsOptions,
+	opts ...*options.CreateP2PDocumentsOptions,
 ) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentAdd(C.uintptr_t(w.handle), docStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PdocumentCreate(C.uintptr_t(w.handle), docStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -272,17 +272,17 @@ func (w *CWrapper) AddP2PDocuments(
 	return nil
 }
 
-func (w *CWrapper) RemoveP2PDocuments(
+func (w *CWrapper) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.RemoveP2PDocumentsOptions,
+	opts ...*options.DeleteP2PDocumentsOptions,
 ) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentRemove(C.uintptr_t(w.handle), docStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PdocumentDelete(C.uintptr_t(w.handle), docStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -290,13 +290,13 @@ func (w *CWrapper) RemoveP2PDocuments(
 	return nil
 }
 
-func (w *CWrapper) GetAllP2PDocuments(
+func (w *CWrapper) ListP2PDocuments(
 	ctx context.Context,
-	opts ...*options.GetAllP2PDocumentsOptions,
+	opts ...*options.ListP2PDocumentsOptions,
 ) ([]string, error) {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PdocumentGetAll(C.uintptr_t(w.handle), cIdentity))
+	res := ConvertAndFreeCResult(C.P2PdocumentList(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

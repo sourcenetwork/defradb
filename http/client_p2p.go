@@ -216,10 +216,10 @@ func (c *Client) ListP2PCollections(
 	return cols, nil
 }
 
-func (c *Client) AddP2PDocuments(
+func (c *Client) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.AddP2PDocumentsOptions,
+	opts ...*options.CreateP2PDocumentsOptions,
 ) error {
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
@@ -239,10 +239,10 @@ func (c *Client) AddP2PDocuments(
 	return err
 }
 
-func (c *Client) RemoveP2PDocuments(
+func (c *Client) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.RemoveP2PDocumentsOptions,
+	opts ...*options.DeleteP2PDocumentsOptions,
 ) error {
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
@@ -262,9 +262,9 @@ func (c *Client) RemoveP2PDocuments(
 	return err
 }
 
-func (c *Client) GetAllP2PDocuments(
+func (c *Client) ListP2PDocuments(
 	ctx context.Context,
-	opts ...*options.GetAllP2PDocumentsOptions,
+	opts ...*options.ListP2PDocumentsOptions,
 ) ([]string, error) {
 	if len(opts) > 0 && opts[0] != nil {
 		ctx = withOptIdentity(ctx, opts[0])
