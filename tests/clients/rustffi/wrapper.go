@@ -92,6 +92,7 @@ type Wrapper struct {
 	txnIDGen         uint64
 	stopMergePoller  chan struct{}
 	stopSEForwarder  chan struct{}
+	goNodeCloser     func() // Called during Close() to release Go node resources (e.g. badger lock)
 }
 
 // NewWrapper creates a new Rust FFI client wrapper.
@@ -325,6 +326,12 @@ func groupPatchByCollection(patch string) ([]struct{ Name, Patch string }, error
 // clients.Client interface
 // ============================================================================
 
+// SetGoNodeCloser sets a callback to close the Go node during wrapper Close().
+// This ensures the Go node's badger lock is released on restart.
+func (w *Wrapper) SetGoNodeCloser(closer func()) {
+	w.goNodeCloser = closer
+}
+
 func (w *Wrapper) Close() {
 	if w.stopSEForwarder != nil {
 		close(w.stopSEForwarder)
@@ -341,6 +348,10 @@ func (w *Wrapper) Close() {
 	if w.events != nil {
 		w.events.Close()
 		w.events = nil
+	}
+	if w.goNodeCloser != nil {
+		w.goNodeCloser()
+		w.goNodeCloser = nil
 	}
 }
 
