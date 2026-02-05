@@ -24,6 +24,7 @@ const (
 	errInvalidSubscriptionID        = "invalid subscription ID"
 	errGettingSubscription          = "could not retrieve subscription"
 	errInvalidCGOHandle             = "invalid handle"
+	errFFI                          = "FFI error"
 )
 
 func NewErrAmbiguousCollection() error {
@@ -44,4 +45,8 @@ func NewErrInvalidSubscriptionID(id string) error {
 
 func NewErrInvalidCGOHandle(id uintptr) error {
 	return errors.New(errInvalidCGOHandle, errors.NewKV("Handle", id))
+}
+
+func NewErrFFI(msg string) error {
+	return errors.New(errFFI, errors.NewKV("Message", msg))
 }
