@@ -67,8 +67,8 @@ func (c *Client) NewTxn(readOnly bool) (client.Txn, error) {
 		return nil, err
 	}
 	return &Transaction{
-		Client:  &Client{c.http},
-		tokenID: txRes.ID,
+		Client: &Client{c.http},
+		id:     txRes.ID,
 	}, nil
 }
 
@@ -90,8 +90,8 @@ func (c *Client) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 		return nil, err
 	}
 	return &Transaction{
-		Client:  &Client{c.http},
-		tokenID: txRes.ID,
+		Client: &Client{c.http},
+		id:     txRes.ID,
 	}, nil
 }
 

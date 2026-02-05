@@ -52,6 +52,7 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 		if tokenTxn, ok := txn.(interface{ TokenID() string }); ok {
 			req.Header.Set(txHeaderName, tokenTxn.TokenID())
 		} else {
+			// This should only happen in tests.
 			req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
 		}
 	}

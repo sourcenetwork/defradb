@@ -29,27 +29,23 @@ var _ client.Txn = (*Transaction)(nil)
 // Transaction implements the client.Txn interface over HTTP.
 type Transaction struct {
 	*Client
-	id      uint64
-	tokenID string
+	id string
 }
 
-func NewTransaction(rawURL string, tokenID string) (*Transaction, error) {
+func NewTransaction(rawURL string, id string) (*Transaction, error) {
 	httpClient, err := newHttpClient(rawURL)
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{
-		Client:  &Client{httpClient},
-		tokenID: tokenID,
-	}, nil
+	return &Transaction{&Client{httpClient}, id}, nil
 }
 
 func (txn *Transaction) ID() uint64 {
-	return txn.id
+	return 0 // This is a no-op since the HTTP client works with the string representation only.
 }
 
 func (txn *Transaction) TokenID() string {
-	return txn.tokenID
+	return txn.id
 }
 
 func (txn *Transaction) StartTS() time.Time {
@@ -57,7 +53,7 @@ func (txn *Transaction) StartTS() time.Time {
 }
 
 func (txn *Transaction) Commit() error {
-	methodURL := txn.http.apiURL.JoinPath("tx", txn.tokenID)
+	methodURL := txn.http.apiURL.JoinPath("tx", txn.id)
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, methodURL.String(), nil)
 	if err != nil {
@@ -68,7 +64,7 @@ func (txn *Transaction) Commit() error {
 }
 
 func (txn *Transaction) Discard() {
-	methodURL := txn.http.apiURL.JoinPath("tx", txn.tokenID)
+	methodURL := txn.http.apiURL.JoinPath("tx", txn.id)
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, methodURL.String(), nil)
 	if err != nil {

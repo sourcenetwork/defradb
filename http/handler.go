@@ -108,10 +108,10 @@ func NewHandler(db DB) (*Handler, error) {
 	}, nil
 }
 
-// Transaction returns the transaction with the given token ID.
-// Token IDs are UUIDv4 strings that uniquely identify each transaction.
-func (h *Handler) Transaction(tokenID string) (client.Txn, error) {
-	tx, ok := h.txs.Load(tokenID)
+// Transaction returns the transaction with the given ID.
+// IDs are UUIDv4 strings that uniquely identify each transaction.
+func (h *Handler) Transaction(id string) (client.Txn, error) {
+	tx, ok := h.txs.Load(id)
 	if !ok {
 		return nil, ErrInvalidTransactionId
 	}

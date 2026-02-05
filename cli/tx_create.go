@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/http"
 )
 
 func MakeTxCreateCommand(ctx context.Context) *cobra.Command {
@@ -37,7 +38,8 @@ func MakeTxCreateCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return writeJSON(cmd, map[string]any{"id": tx.ID()})
+			httpTxn := tx.(*http.Transaction) //nolint:forcetypeassert
+			return writeJSON(cmd, map[string]any{"id": httpTxn.TokenID()})
 		},
 	}
 	cmd.Flags().BoolVar(&concurrent, "concurrent", false, "Transaction is concurrent")
