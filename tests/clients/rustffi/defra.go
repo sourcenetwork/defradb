@@ -1425,7 +1425,7 @@ func (n *Node) GetNodeIdentity() (string, error) {
 // ============================================================================
 
 // BlockVerifySignature verifies the signature of a block identified by CID.
-func (n *Node) BlockVerifySignature(keyType, publicKey, blockCid string) error {
+func (n *Node) BlockVerifySignature(keyType, publicKey, blockCid, identityDID string) error {
 	cKeyType := C.CString(keyType)
 	defer C.free(unsafe.Pointer(cKeyType))
 
@@ -1435,7 +1435,13 @@ func (n *Node) BlockVerifySignature(keyType, publicKey, blockCid string) error {
 	cBlockCid := C.CString(blockCid)
 	defer C.free(unsafe.Pointer(cBlockCid))
 
-	result := C.block_verify_signature(n.ptr, cKeyType, cPubKey, cBlockCid, nil)
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.block_verify_signature(n.ptr, cKeyType, cPubKey, cBlockCid, cIdentityDID)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)

@@ -919,7 +919,11 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 }
 
 func (w *Wrapper) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	return w.node.BlockVerifySignature(string(pubKey.Type()), pubKey.String(), blockCid)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+	return w.node.BlockVerifySignature(string(pubKey.Type()), pubKey.String(), blockCid, identityDID)
 }
 
 // ============================================================================

@@ -382,6 +382,26 @@ struct FfiResult delete_dac_actor_relationship(uintptr_t node_ptr,
 struct FfiResult get_node_identity(uintptr_t node_ptr);
 
 /*
+ Register an existing identity for block signing.
+
+ This allows Go-created identities to be used for signing blocks in Rust.
+ The identity's signing config is stored in the global identity store.
+
+ # Parameters
+ - `did`: The DID string (e.g., "did:key:z6Mk...")
+ - `private_key_hex`: Hex-encoded private key bytes
+ - `public_key_hex`: Hex-encoded public key bytes
+ - `key_type`: Key type ("secp256k1" or "ed25519")
+
+ # Returns
+ Success with empty JSON object, or error on failure.
+ */
+struct FfiResult RegisterIdentity(const char *did,
+                                  const char *private_key_hex,
+                                  const char *public_key_hex,
+                                  const char *key_type);
+
+/*
  Create a new identity (Ed25519 keypair).
 
  Generates a fresh Ed25519 keypair and returns the DID and private key.
