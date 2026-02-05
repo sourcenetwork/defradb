@@ -20,7 +20,7 @@ import (
 
 func MakeCollectionListDocIDsCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "docIDs [-i --identity]",
+		Use:   "docIDs",
 		Short: "List all document IDs (docIDs).",
 		Long:  `List all document IDs (docIDs).`,
 		RunE: func(cmd *cobra.Command, args []string) error {

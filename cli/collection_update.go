@@ -24,7 +24,7 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 	var filter string
 	var updater string
 	var cmd = &cobra.Command{
-		Use:   "update [-i --identity] [--filter <filter> --docID <docID>] --updater <updater>",
+		Use:   "update",
 		Short: "Update documents by docID or filter.",
 		Long:  `Update documents by docID or filter.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
