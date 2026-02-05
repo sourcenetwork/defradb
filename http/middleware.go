@@ -89,12 +89,14 @@ func CollectionMiddleware(next http.Handler) http.Handler {
 
 		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"))
 		if err != nil {
-			if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
+			switch {
+			case errors.Is(err, client.ErrNotAuthorizedToPerformOperation):
 				rw.WriteHeader(http.StatusUnauthorized)
-				_, _ = fmt.Fprintln(rw, err.Error())
-				return
+			case errors.Is(err, client.ErrCollectionNotFound), errors.Is(err, client.ErrNotFound):
+				rw.WriteHeader(http.StatusNotFound)
+			default:
+				rw.WriteHeader(http.StatusInternalServerError)
 			}
-			rw.WriteHeader(http.StatusNotFound)
 			_, _ = fmt.Fprintln(rw, err.Error())
 			return
 		}
