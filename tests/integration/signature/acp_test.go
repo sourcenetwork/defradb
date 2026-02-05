@@ -50,8 +50,8 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// Rust FFI: ACP permission enforcement during signature verification not implemented yet
 			state.GoClientType,
+			state.RustFFIClientType,
 		}),
 		Actions: []any{
 			testUtils.AddDACPolicy{
