@@ -143,26 +143,55 @@ func setupRustFFIClient(
 	// We mirror this by:
 	// - Enabling NAC with the context identity (action.Identity) as owner
 	// - Adding NodeIdentity as admin (mirrors the nodeIdentity shortcut)
+	// - If Go says "disabled temporarily", disabling after setup
 	nacStatus, nacErr := nodeObj.DB.GetNACStatus(s.Ctx)
-	if nacErr == nil && nacStatus.Status == "enabled" && identity.HasValue() {
+	if nacErr == nil && identity.HasValue() {
 		ownerDID := identity.Value().DID()
-		if ownerDID != "" {
-			if err := wrapper.EnableNACForInit(ownerDID); err != nil {
-				wrapper.Close()
-				return nil, fmt.Errorf("failed to enable NAC on Rust FFI node: %w", err)
+		if ownerDID != "" && (nacStatus.Status == "enabled" || nacStatus.Status == "disabled temporarily") {
+			// Check if Rust node already has NAC enabled (from persistent store)
+			rustStatus, rustErr := wrapper.GetNACStatus(s.Ctx)
+			needsEnable := rustErr != nil || rustStatus.Status == "not configured"
+
+			if needsEnable {
+				if err := wrapper.EnableNACForInit(ownerDID); err != nil {
+					wrapper.Close()
+					return nil, fmt.Errorf("failed to enable NAC on Rust FFI node: %w", err)
+				}
 			}
 			// Mirror Go's nodeIdentity shortcut: the Go node grants automatic
 			// access to db.nodeIdentity (set via WithNodeIdentity). Add that
 			// identity as admin on the Rust FFI node so refreshCollections works.
+			// Skip when NAC is disabled (writes blocked) - the admin was already
+			// persisted from the initial run.
 			nodeIdentityDID := getIdentityDID(s, NodeIdentity(nodeIndex))
-			if nodeIdentityDID != "" && nodeIdentityDID != ownerDID {
+			rustStatusForAdmin, _ := wrapper.GetNACStatus(s.Ctx)
+			if nodeIdentityDID != "" && nodeIdentityDID != ownerDID && rustStatusForAdmin.Status != "disabled temporarily" {
 				if err := wrapper.AddNACAdminForInit(ownerDID, nodeIdentityDID); err != nil {
 					wrapper.Close()
 					return nil, fmt.Errorf("failed to add node identity as NAC admin: %w", err)
 				}
 			}
+
+			// If Go says "disabled temporarily", mirror that state on Rust
+			// (but only if the Rust node isn't already in that state from persistent load)
+			if nacStatus.Status == "disabled temporarily" {
+				rustStatus2, rustErr2 := wrapper.GetNACStatus(s.Ctx)
+				if rustErr2 != nil || rustStatus2.Status != "disabled temporarily" {
+					ctx := acpIdentity.WithContext(s.Ctx, identity)
+					if err := wrapper.DisableNAC(ctx); err != nil {
+						wrapper.Close()
+						return nil, fmt.Errorf("failed to mirror NAC disabled state: %w", err)
+					}
+				}
+			}
 		}
 	}
+
+	// Store the Go node closer so the Go node's badger lock is released
+	// when the wrapper is closed during restart tests.
+	wrapper.SetGoNodeCloser(func() {
+		_ = nodeObj.Close(context.Background())
+	})
 
 	return wrapper, nil
 }
