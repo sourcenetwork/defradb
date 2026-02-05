@@ -12,7 +12,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -23,7 +22,6 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 )
 
@@ -89,15 +87,7 @@ func CollectionMiddleware(next http.Handler) http.Handler {
 
 		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"))
 		if err != nil {
-			switch {
-			case errors.Is(err, client.ErrNotAuthorizedToPerformOperation):
-				rw.WriteHeader(http.StatusUnauthorized)
-			case errors.Is(err, client.ErrCollectionNotFound), errors.Is(err, client.ErrNotFound):
-				rw.WriteHeader(http.StatusNotFound)
-			default:
-				rw.WriteHeader(http.StatusInternalServerError)
-			}
-			_, _ = fmt.Fprintln(rw, err.Error())
+			responseError(rw, err, http.StatusInternalServerError)
 			return
 		}
 

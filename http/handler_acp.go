@@ -24,7 +24,7 @@ func (h *acpHandler) AddDACPolicy(rw http.ResponseWriter, req *http.Request) {
 
 	policyBytes, err := io.ReadAll(req.Body)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -33,7 +33,7 @@ func (h *acpHandler) AddDACPolicy(rw http.ResponseWriter, req *http.Request) {
 		string(policyBytes),
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -46,7 +46,7 @@ func (h *acpHandler) AddDACActorRelationship(rw http.ResponseWriter, req *http.R
 	var message addDACActorRelationshipRequest
 	err := requestJSON(req, &message)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -58,7 +58,7 @@ func (h *acpHandler) AddDACActorRelationship(rw http.ResponseWriter, req *http.R
 		message.TargetActor,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (h *acpHandler) DeleteDACActorRelationship(rw http.ResponseWriter, req *htt
 	var message deleteDACActorRelationshipRequest
 	err := requestJSON(req, &message)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (h *acpHandler) DeleteDACActorRelationship(rw http.ResponseWriter, req *htt
 		message.TargetActor,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -96,7 +96,7 @@ func (h *acpHandler) AddNACActorRelationship(rw http.ResponseWriter, req *http.R
 	var message addNACActorRelationshipRequest
 	err := requestJSON(req, &message)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -106,7 +106,7 @@ func (h *acpHandler) AddNACActorRelationship(rw http.ResponseWriter, req *http.R
 		message.TargetActor,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -119,7 +119,7 @@ func (h *acpHandler) DeleteNACActorRelationship(rw http.ResponseWriter, req *htt
 	var message deleteNACActorRelationshipRequest
 	err := requestJSON(req, &message)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -129,7 +129,7 @@ func (h *acpHandler) DeleteNACActorRelationship(rw http.ResponseWriter, req *htt
 		message.TargetActor,
 	)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -141,7 +141,7 @@ func (h *acpHandler) ReEnableNAC(rw http.ResponseWriter, req *http.Request) {
 
 	err := db.ReEnableNAC(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (h *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
 
 	err := db.DisableNAC(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -165,7 +165,7 @@ func (h *acpHandler) GetNACStatus(rw http.ResponseWriter, req *http.Request) {
 
 	statusNACResult, err := db.GetNACStatus(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 

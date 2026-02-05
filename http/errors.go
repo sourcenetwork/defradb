@@ -11,8 +11,12 @@
 package http
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
+
+	"net/http"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
@@ -45,6 +49,44 @@ var (
 	ErrInvalidSubscriptionTransport = errors.New("invalid subscription transport")
 	ErrInvalidGraphQLRequest        = errors.New("invalid graphql request")
 )
+
+func getErrorStatus(err error, defaultStatus int) int {
+	var jsonSyntaxErr *json.SyntaxError
+	var jsonUnmarshalErr *json.UnmarshalTypeError
+	var hexInvalidByteErr hex.InvalidByteError
+	switch {
+	case errors.Is(err, client.ErrNotAuthorizedToPerformOperation):
+		return http.StatusUnauthorized
+	case errors.Is(err, client.ErrCollectionNotFound),
+		errors.Is(err, client.ErrNotFound),
+		errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized),
+		errors.Is(err, ErrMigrationNotFound):
+		return http.StatusNotFound
+	case errors.Is(err, ErrNoListener),
+		errors.Is(err, ErrNoEmail),
+		errors.Is(err, ErrInvalidRequestBody),
+		errors.Is(err, ErrStreamingNotSupported),
+		errors.Is(err, ErrMissingRequest),
+		errors.Is(err, ErrInvalidTransactionId),
+		errors.Is(err, client.ErrInvalidDocIDVersion),
+		errors.Is(err, client.ErrInvalidJSONPayload),
+		errors.Is(err, ErrInvalidGraphQLRequest),
+		errors.Is(err, io.EOF),
+		errors.Is(err, io.ErrUnexpectedEOF),
+		errors.As(err, &jsonSyntaxErr),
+		errors.As(err, &jsonUnmarshalErr),
+		errors.As(err, &hexInvalidByteErr),
+		errors.Is(err, hex.ErrLength):
+		return http.StatusBadRequest
+	default:
+		return defaultStatus
+		
+	}
+}
+
+func responseError(rw http.ResponseWriter, err error, defaultStatus int) {
+	responseJSON(rw, getErrorStatus(err, defaultStatus), errorResponse{err})
+}
 
 type errorResponse struct {
 	Error error `json:"error"`

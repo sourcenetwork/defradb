@@ -37,12 +37,12 @@ func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	err := db.BasicImport(req.Context(), config.Filepath)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -53,12 +53,12 @@ func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	err := db.BasicExport(req.Context(), &config)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -69,12 +69,12 @@ func (h *storeHandler) AddSchema(rw http.ResponseWriter, req *http.Request) {
 
 	schema, err := io.ReadAll(req.Body)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	cols, err := db.AddSchema(req.Context(), string(schema))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	responseJSON(rw, http.StatusOK, cols)
@@ -86,13 +86,13 @@ func (h *storeHandler) PatchCollection(rw http.ResponseWriter, req *http.Request
 	var message patchCollectionRequest
 	err := requestJSON(req, &message)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
 	err = db.PatchCollection(req.Context(), message.Patch, message.Migration)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -103,12 +103,12 @@ func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *h
 
 	collectionVersionID, err := io.ReadAll(req.Body)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	err = db.SetActiveCollectionVersion(req.Context(), string(collectionVersionID))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -120,13 +120,13 @@ func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	var message addViewRequest
 	err := requestJSON(req, &message)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
 	defs, err := db.AddView(req.Context(), message.Query, message.SDL, message.TransformCID)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -142,13 +142,13 @@ func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 
 	var cfg client.LensConfig
 	if err := requestJSON(req, &cfg); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
 	lensID, err := db.SetMigration(req.Context(), cfg)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -168,13 +168,13 @@ func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
 
 	var addLensReq AddLensRequest
 	if err := requestJSON(req, &addLensReq); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
 	lensID, err := db.AddLens(req.Context(), addLensReq.Lens)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -190,7 +190,7 @@ func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 
 	lenses, err := db.ListLenses(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -215,7 +215,7 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 		var err error
 		getInactive, err := strconv.ParseBool(getInactiveStr)
 		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseError(rw, err, http.StatusBadRequest)
 			return
 		}
 		options.IncludeInactive = immutable.Some(getInactive)
@@ -223,7 +223,7 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 
 	cols, err := db.GetCollections(req.Context(), options)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	colDesc := make([]client.CollectionVersion, len(cols))
@@ -251,7 +251,7 @@ func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 		var err error
 		getInactive, err := strconv.ParseBool(getInactiveStr)
 		if err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseError(rw, err, http.StatusBadRequest)
 			return
 		}
 		options.IncludeInactive = immutable.Some(getInactive)
@@ -259,7 +259,7 @@ func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 
 	err := db.RefreshViews(req.Context(), options)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -270,7 +270,7 @@ func (h *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) 
 
 	indexes, err := db.GetAllIndexes(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	responseJSON(rw, http.StatusOK, indexes)
@@ -281,7 +281,7 @@ func (h *storeHandler) ListAllEncryptedIndexes(rw http.ResponseWriter, req *http
 
 	indexes, err := db.ListAllEncryptedIndexes(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	responseJSON(rw, http.StatusOK, indexes)
@@ -291,7 +291,7 @@ func (h *storeHandler) PrintDump(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
 	if err := db.PrintDump(req.Context()); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -321,7 +321,7 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 
 	request, options, err := extractGraphQLRequest(req)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -342,7 +342,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 
 	request, options, err := extractGraphQLRequest(req)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -471,7 +471,7 @@ func (h *storeHandler) GetNodeIdentity(rw http.ResponseWriter, req *http.Request
 
 	identity, err := db.GetNodeIdentity(req.Context())
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	responseJSON(rw, http.StatusOK, identity)

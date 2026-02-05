@@ -42,19 +42,19 @@ func (h *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 		ccipReq.Data = chi.URLParam(req, "data")
 	case http.MethodPost:
 		if err := requestJSON(req, &ccipReq); err != nil {
-			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+			responseError(rw, err, http.StatusBadRequest)
 			return
 		}
 	}
 
 	data, err := hex.DecodeString(strings.TrimPrefix(ccipReq.Data, "0x"))
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	var request GraphQLRequest
 	if err := json.Unmarshal(data, &request); err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 
@@ -65,7 +65,7 @@ func (h *ccipHandler) ExecCCIP(rw http.ResponseWriter, req *http.Request) {
 	}
 	resultJSON, err := json.Marshal(result.GQL)
 	if err != nil {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		responseError(rw, err, http.StatusBadRequest)
 		return
 	}
 	resultHex := "0x" + hex.EncodeToString(resultJSON)

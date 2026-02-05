@@ -82,6 +82,21 @@ func Is(err, target error) bool {
 	return errors.Is(err, target)
 }
 
+// As finds the first error in err's tree that matches target, and if one is found,
+// sets target to that error value and returns true. Otherwise, it returns false.
+//
+// The tree consists of err itself, followed by the errors obtained by repeatedly
+// calling its Unwrap() error or Unwrap() []error method. When err wraps multiple
+// errors, As examines err followed by a depth-first traversal of its children.
+//
+// An error matches target if the error's concrete value is assignable to the value
+// pointed to by target, or if the error has a method As(any) bool such that
+// As(target) returns true. As will panic if target is not a non-nil pointer to
+// either a type that implements error, or to any interface type.
+func As(err error, target any) bool {
+	return errors.As(err, target)
+}
+
 // Join returns an error that wraps the given errors.
 // Any nil error values are discarded.
 // Join returns nil if every value in errs is nil.
