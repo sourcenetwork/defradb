@@ -88,10 +88,10 @@ func (_c *DB_Events_Call) RunAndReturn(run func() event.Bus) *DB_Events_Call {
 }
 
 // GetCollections provides a mock function for the type DB
-func (_mock *DB) GetCollections(context1 context.Context, getCollectionsOptionss ...*options.GetCollectionsOptions) ([]client.Collection, error) {
+func (_mock *DB) GetCollections(context1 context.Context, listers ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error) {
 	var tmpRet mock.Arguments
-	if len(getCollectionsOptionss) > 0 {
-		tmpRet = _mock.Called(context1, getCollectionsOptionss)
+	if len(listers) > 0 {
+		tmpRet = _mock.Called(context1, listers)
 	} else {
 		tmpRet = _mock.Called(context1)
 	}
@@ -103,18 +103,18 @@ func (_mock *DB) GetCollections(context1 context.Context, getCollectionsOptionss
 
 	var r0 []client.Collection
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.GetCollectionsOptions) ([]client.Collection, error)); ok {
-		return returnFunc(context1, getCollectionsOptionss...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error)); ok {
+		return returnFunc(context1, listers...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...*options.GetCollectionsOptions) []client.Collection); ok {
-		r0 = returnFunc(context1, getCollectionsOptionss...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetCollectionsOptions]) []client.Collection); ok {
+		r0 = returnFunc(context1, listers...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.Collection)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...*options.GetCollectionsOptions) error); ok {
-		r1 = returnFunc(context1, getCollectionsOptionss...)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.GetCollectionsOptions]) error); ok {
+		r1 = returnFunc(context1, listers...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -128,22 +128,22 @@ type DB_GetCollections_Call struct {
 
 // GetCollections is a helper method to define mock.On call
 //   - context1 context.Context
-//   - getCollectionsOptionss ...*options.GetCollectionsOptions
-func (_e *DB_Expecter) GetCollections(context1 interface{}, getCollectionsOptionss ...interface{}) *DB_GetCollections_Call {
+//   - listers ...options.Lister[options.GetCollectionsOptions]
+func (_e *DB_Expecter) GetCollections(context1 interface{}, listers ...interface{}) *DB_GetCollections_Call {
 	return &DB_GetCollections_Call{Call: _e.mock.On("GetCollections",
-		append([]interface{}{context1}, getCollectionsOptionss...)...)}
+		append([]interface{}{context1}, listers...)...)}
 }
 
-func (_c *DB_GetCollections_Call) Run(run func(context1 context.Context, getCollectionsOptionss ...*options.GetCollectionsOptions)) *DB_GetCollections_Call {
+func (_c *DB_GetCollections_Call) Run(run func(context1 context.Context, listers ...options.Lister[options.GetCollectionsOptions])) *DB_GetCollections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 []*options.GetCollectionsOptions
-		var variadicArgs []*options.GetCollectionsOptions
+		var arg1 []options.Lister[options.GetCollectionsOptions]
+		var variadicArgs []options.Lister[options.GetCollectionsOptions]
 		if len(args) > 1 {
-			variadicArgs = args[1].([]*options.GetCollectionsOptions)
+			variadicArgs = args[1].([]options.Lister[options.GetCollectionsOptions])
 		}
 		arg1 = variadicArgs
 		run(
@@ -159,7 +159,7 @@ func (_c *DB_GetCollections_Call) Return(collections []client.Collection, err er
 	return _c
 }
 
-func (_c *DB_GetCollections_Call) RunAndReturn(run func(context1 context.Context, getCollectionsOptionss ...*options.GetCollectionsOptions) ([]client.Collection, error)) *DB_GetCollections_Call {
+func (_c *DB_GetCollections_Call) RunAndReturn(run func(context1 context.Context, listers ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error)) *DB_GetCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }

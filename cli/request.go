@@ -63,24 +63,23 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				return errors.New("request cannot be empty")
 			}
 
-			var opt *options.ExecRequestOptions
+			opts := options.ExecRequest()
 			if variablesJSON != "" || operationName != "" {
-				opt = options.ExecRequest()
 				if variablesJSON != "" {
 					var variables map[string]any
 					err := json.Unmarshal([]byte(variablesJSON), &variables)
 					if err != nil {
 						return err
 					}
-					opt.SetVariables(variables)
+					opts.SetVariables(variables)
 				}
 				if operationName != "" {
-					opt.SetOperationName(operationName)
+					opts.SetOperationName(operationName)
 				}
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-			result := cliClient.ExecRequest(cmd.Context(), request, opt)
+			result := cliClient.ExecRequest(cmd.Context(), request, opts)
 
 			if result.Subscription == nil {
 				cmd.Print(REQ_RESULTS_HEADER)

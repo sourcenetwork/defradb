@@ -16,40 +16,45 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
-// OptionWithIdentity is an interface for options that provide and can set an identity.
-// T is the concrete options type (for fluent API support).
+// OptionWithIdentity is an interface for options structs that provide identity access.
+// This is implemented by the options structs (not builders) to provide read access to the Identity field.
 type OptionWithIdentity[T any] interface {
 	// GetIdentity returns the identity associated with this option, if any.
 	GetIdentity() immutable.Option[identity.Identity]
-	// SetIdentity sets the identity for this option and returns the option for chaining.
-	SetIdentity(id identity.Identity) T
 }
 
-// WithIdentity sets the identity on an option if the identity is present.
-// Returns the option for chaining.
-func WithIdentity[T OptionWithIdentity[T]](opt T, ident immutable.Option[identity.Identity]) T {
+// BuilderWithIdentity is an interface for option builders that can set identity.
+// T is the options type, B is the builder type (for fluent API support).
+type BuilderWithIdentity[T any, B any] interface {
+	Lister[T]
+	// SetIdentity sets the identity for this option and returns the builder for chaining.
+	SetIdentity(id identity.Identity) B
+}
+
+// WithIdentity sets the identity on a builder if the identity is present.
+// Returns the builder for chaining.
+func WithIdentity[T any, B BuilderWithIdentity[T, B]](builder B, ident immutable.Option[identity.Identity]) B {
 	if ident.HasValue() {
-		opt.SetIdentity(ident.Value())
+		return builder.SetIdentity(ident.Value())
 	}
-	return opt
+	return builder
 }
 
-// IdentityFrom extracts the identity from the first non-nil option in the slice.
-// Returns an empty Option if opts is empty or the first option has no identity set.
+// IdentityFrom extracts the identity from option builders by merging them and reading the identity.
+// Returns an empty Option if opts is empty or no identity is set.
 //
 // Example usage:
 //
-//	func (db *DB) SomeMethod(ctx context.Context, opts ...*options.SomeOptions) error {
-//	    ident := options.IdentityFrom(opts...)
+//	func (db *DB) SomeMethod(ctx context.Context, opts ...options.Lister[options.SomeOptions]) error {
+//	    ident := options.IdentityFrom[options.SomeOptions](opts...)
 //	    // use ident...
 //	}
-func IdentityFrom[T OptionWithIdentity[T]](opts ...T) immutable.Option[identity.Identity] {
-	for _, opt := range opts {
-		// Check for nil using any type assertion since T is constrained to pointer types
-		// that implement OptionWithIdentity
-		if any(opt) != nil {
-			return opt.GetIdentity()
-		}
+func IdentityFrom[T any](opts ...Lister[T]) immutable.Option[identity.Identity] {
+	merged := NewOptions(opts...)
+	if withIdentity, ok := any(merged).(interface {
+		GetIdentity() immutable.Option[identity.Identity]
+	}); ok {
+		return withIdentity.GetIdentity()
 	}
 	return immutable.None[identity.Identity]()
 }

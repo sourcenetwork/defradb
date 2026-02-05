@@ -26,7 +26,7 @@ import (
 // ExecRequest executes a request against the database.
 func (db *DB) ExecRequest(
 	ctx context.Context,
-	request string, opts ...*options.ExecRequestOptions,
+	request string, opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -44,13 +44,11 @@ func (db *DB) ExecRequest(
 	defer txn.Discard()
 
 	gqlOpts := &client.GQLOptions{}
-	if len(opts) > 0 && opts[0] != nil {
-		opt := opts[0]
-		if opt.OperationName.HasValue() {
-			gqlOpts.OperationName = opt.OperationName.Value()
-		}
-		gqlOpts.Variables = opt.Variables
+	opt := options.NewOptions(opts...)
+	if opt.OperationName.HasValue() {
+		gqlOpts.OperationName = opt.OperationName.Value()
 	}
+	gqlOpts.Variables = opt.Variables
 
 	res := db.execRequest(ctx, request, gqlOpts)
 	if len(res.GQL.Errors) > 0 {
@@ -69,7 +67,7 @@ func (db *DB) ExecRequest(
 func (db *DB) GetCollectionByName(
 	ctx context.Context,
 	name string,
-	opts ...*options.GetCollectionByNameOptions,
+	opts ...options.Lister[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -92,15 +90,12 @@ func (db *DB) GetCollectionByName(
 // GetCollections gets all the currently defined collections.
 func (db *DB) GetCollections(
 	ctx context.Context,
-	opts ...*options.GetCollectionsOptions,
+	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var opt *options.GetCollectionsOptions
-	if len(opts) > 0 && opts[0] != nil {
-		opt = opts[0]
-	}
+	opt := options.NewOptions(opts...)
 
 	var ident immutable.Option[identity.Identity]
 	if opt != nil {
@@ -123,7 +118,7 @@ func (db *DB) GetCollections(
 // GetAllIndexes gets all the indexes in the database.
 func (db *DB) GetAllIndexes(
 	ctx context.Context,
-	opts ...*options.GetAllIndexesOptions,
+	opts ...options.Lister[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -167,7 +162,7 @@ func (db *DB) ListAllEncryptedIndexes(
 func (db *DB) AddSchema(
 	ctx context.Context,
 	schemaString string,
-	opts ...*options.AddSchemaOptions,
+	opts ...options.Lister[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -211,7 +206,7 @@ func (db *DB) PatchCollection(
 	ctx context.Context,
 	patchString string,
 	migration immutable.Option[model.Lens],
-	opts ...*options.PatchCollectionOptions,
+	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -239,7 +234,7 @@ func (db *DB) PatchCollection(
 func (db *DB) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
-	opts ...*options.SetActiveCollectionVersionOptions,
+	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -351,7 +346,7 @@ func (db *DB) AddView(
 	return defs, nil
 }
 
-func (db *DB) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
+func (db *DB) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -361,14 +356,9 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOpt
 	}
 	defer txn.Discard()
 
-	var getCollOpts *options.GetCollectionsOptions
-	if len(opts) > 0 && opts[0] != nil {
-		getCollOpts = opts[0]
-	} else {
-		getCollOpts = options.GetCollections()
-	}
+	opt := options.NewOptions(opts...)
 
-	err = db.refreshViews(ctx, getCollOpts)
+	err = db.refreshViews(ctx, opt)
 	if err != nil {
 		return err
 	}

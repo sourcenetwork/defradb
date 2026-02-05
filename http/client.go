@@ -123,11 +123,10 @@ func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) e
 func (c *Client) AddSchema(
 	ctx context.Context,
 	schema string,
-	opts ...*options.AddSchemaOptions,
+	opts ...options.Lister[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("schema")
 
@@ -151,11 +150,10 @@ func (c *Client) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...*options.PatchCollectionOptions,
+	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("collections")
 
@@ -175,11 +173,10 @@ func (c *Client) PatchCollection(
 func (c *Client) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
-	opts ...*options.SetActiveCollectionVersionOptions,
+	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("collections", "default")
 
@@ -224,23 +221,21 @@ func (c *Client) AddView(
 	return descriptions, nil
 }
 
-func (c *Client) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
+func (c *Client) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
 	methodURL := c.http.apiURL.JoinPath("view", "refresh")
 	params := url.Values{}
-	if len(opts) > 0 && opts[0] != nil {
-		opt := opts[0]
-		if opt.CollectionName.HasValue() {
-			params.Add("name", opt.CollectionName.Value())
-		}
-		if opt.VersionID.HasValue() {
-			params.Add("version_id", opt.VersionID.Value())
-		}
-		if opt.CollectionID.HasValue() {
-			params.Add("collection_id", opt.CollectionID.Value())
-		}
-		if opt.IncludeInactive.HasValue() {
-			params.Add("get_inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
-		}
+	opt := options.NewOptions(opts...)
+	if opt.CollectionName.HasValue() {
+		params.Add("name", opt.CollectionName.Value())
+	}
+	if opt.VersionID.HasValue() {
+		params.Add("version_id", opt.VersionID.Value())
+	}
+	if opt.CollectionID.HasValue() {
+		params.Add("collection_id", opt.CollectionID.Value())
+	}
+	if opt.IncludeInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
 	}
 	methodURL.RawQuery = params.Encode()
 
@@ -314,11 +309,10 @@ func (c *Client) ListLenses(ctx context.Context) (map[string]model.Lens, error) 
 func (c *Client) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...*options.GetCollectionByNameOptions,
+	opts ...options.Lister[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	cols, err := c.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
 	if err != nil {
@@ -335,28 +329,24 @@ func (c *Client) GetCollectionByName(
 
 func (c *Client) GetCollections(
 	ctx context.Context,
-	opts ...*options.GetCollectionsOptions,
+	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
-	if len(opts) > 0 && opts[0] != nil {
-		opt := opts[0]
-		if opt.CollectionName.HasValue() {
-			params.Add("name", opt.CollectionName.Value())
-		}
-		if opt.VersionID.HasValue() {
-			params.Add("version_id", opt.VersionID.Value())
-		}
-		if opt.CollectionID.HasValue() {
-			params.Add("collection_id", opt.CollectionID.Value())
-		}
-		if opt.IncludeInactive.HasValue() {
-			params.Add("get_inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
-		}
+	if opt.CollectionName.HasValue() {
+		params.Add("name", opt.CollectionName.Value())
+	}
+	if opt.VersionID.HasValue() {
+		params.Add("version_id", opt.VersionID.Value())
+	}
+	if opt.CollectionID.HasValue() {
+		params.Add("collection_id", opt.CollectionID.Value())
+	}
+	if opt.IncludeInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
 	}
 	methodURL.RawQuery = params.Encode()
 
@@ -377,11 +367,10 @@ func (c *Client) GetCollections(
 
 func (c *Client) GetAllIndexes(
 	ctx context.Context,
-	opts ...*options.GetAllIndexesOptions,
+	opts ...options.Lister[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("collections", "indexes")
 
@@ -415,24 +404,20 @@ func (c *Client) ListAllEncryptedIndexes(
 func (c *Client) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...*options.ExecRequestOptions,
+	opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 	methodURL := c.http.apiURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
 	gqlRequest := &GraphQLRequest{
 		Query: query,
 	}
-	if len(opts) > 0 && opts[0] != nil {
-		opt := opts[0]
-		if opt.OperationName.HasValue() {
-			gqlRequest.OperationName = opt.OperationName.Value()
-		}
-		gqlRequest.Variables = opt.Variables
+	if opt.OperationName.HasValue() {
+		gqlRequest.OperationName = opt.OperationName.Value()
 	}
+	gqlRequest.Variables = opt.Variables
 
 	body, err := json.Marshal(gqlRequest)
 	if err != nil {
@@ -566,11 +551,10 @@ func (c *Client) VerifySignature(
 	ctx context.Context,
 	cid string,
 	pubKey crypto.PublicKey,
-	opts ...*options.VerifySignatureOptions,
+	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("block", "verify-signature")
 

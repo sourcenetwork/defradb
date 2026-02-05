@@ -91,7 +91,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 		return nil, ErrCollectionNameEmpty
 	}
 
-	cols, err := db.getCollections(ctx, options.GetCollections().SetCollectionName(name))
+	cols, err := db.getCollections(ctx, options.NewOptions(options.GetCollections().SetCollectionName(name)))
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func (db *DB) getCollections(
 // it hits every key and will cause Tx conflicts for concurrent Txs
 func (c *collection) GetAllDocIDs(
 	ctx context.Context,
-	opts ...*options.CollectionGetAllDocIDsOptions,
+	opts ...options.Lister[options.CollectionGetAllDocIDsOptions],
 ) (<-chan client.DocIDResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -333,7 +333,7 @@ func (c *collection) CollectionID() string {
 func (c *collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...*options.CollectionCreateOptions,
+	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -350,7 +350,7 @@ func (c *collection) Create(
 	}
 	defer txn.Discard()
 
-	err = c.create(ctx, doc, opts)
+	err = c.create(ctx, doc, opts...)
 	if err != nil {
 		return err
 	}
@@ -363,7 +363,7 @@ func (c *collection) Create(
 func (c *collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...*options.CollectionCreateOptions,
+	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -381,7 +381,7 @@ func (c *collection) CreateMany(
 	defer txn.Discard()
 
 	for _, doc := range docs {
-		err = c.create(ctx, doc, opts)
+		err = c.create(ctx, doc, opts...)
 		if err != nil {
 			return err
 		}
@@ -413,7 +413,7 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 func (c *collection) create(
 	ctx context.Context,
 	doc *client.Document,
-	opts []*options.CollectionCreateOptions,
+	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
@@ -474,11 +474,8 @@ func (c *collection) create(
 	return c.registerDocWithACP(ctx, doc.ID().String())
 }
 
-func setContextDocEncryption(ctx context.Context, opts []*options.CollectionCreateOptions) context.Context {
-	if len(opts) == 0 || opts[0] == nil {
-		return ctx
-	}
-	opt := opts[0]
+func setContextDocEncryption(ctx context.Context, opts []options.Lister[options.CollectionCreateOptions]) context.Context {
+	opt := options.NewOptions(opts...)
 	if !opt.EncryptDoc && len(opt.EncryptedFields) == 0 {
 		return ctx
 	}
@@ -492,7 +489,7 @@ func setContextDocEncryption(ctx context.Context, opts []*options.CollectionCrea
 func (c *collection) Update(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...*options.CollectionUpdateOptions,
+	opts ...options.Lister[options.CollectionUpdateOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -572,7 +569,7 @@ func (c *collection) update(
 func (c *collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...*options.CollectionSaveOptions,
+	opts ...options.Lister[options.CollectionSaveOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -607,14 +604,11 @@ func (c *collection) Save(
 	if exists {
 		err = c.update(ctx, doc)
 	} else {
-		var createOpts []*options.CollectionCreateOptions
-		if len(opts) > 0 && opts[0] != nil {
-			createOpts = []*options.CollectionCreateOptions{
-				options.CollectionCreate().
-					SetEncryptDoc(opts[0].EncryptDoc).
-					SetEncryptedFields(opts[0].EncryptedFields),
-			}
-		}
+		opt := options.NewOptions(opts...)
+		createOpts :=
+			options.CollectionCreate().
+				SetEncryptDoc(opt.EncryptDoc).
+				SetEncryptedFields(opt.EncryptedFields)
 		err = c.create(ctx, doc, createOpts)
 	}
 	if err != nil {
@@ -826,7 +820,7 @@ func (c *collection) save(
 func (c *collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...*options.CollectionDeleteOptions,
+	opts ...options.Lister[options.CollectionDeleteOptions],
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -864,7 +858,7 @@ func (c *collection) Delete(
 func (c *collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...*options.CollectionExistsOptions,
+	opts ...options.Lister[options.CollectionExistsOptions],
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

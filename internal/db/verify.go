@@ -32,7 +32,7 @@ func (db *DB) VerifySignature(
 	ctx context.Context,
 	blockCid string,
 	pubKey crypto.PublicKey,
-	opts ...*options.VerifySignatureOptions,
+	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
 	ident := options.IdentityFrom(opts...)
 

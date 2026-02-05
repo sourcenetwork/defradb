@@ -67,10 +67,9 @@ func (c *Client) ActivePeers(ctx context.Context) ([]string, error) {
 	return res, nil
 }
 
-func (c *Client) Connect(ctx context.Context, addresses []string, opts ...*options.ConnectOptions) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+func (c *Client) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "connect")
 
@@ -90,11 +89,10 @@ func (c *Client) SetReplicator(
 	ctx context.Context,
 	addresses []string,
 	collections []string,
-	opts ...*options.SetReplicatorOptions,
+	opts ...options.Lister[options.SetReplicatorOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
@@ -117,11 +115,10 @@ func (c *Client) DeleteReplicator(
 	ctx context.Context,
 	id string,
 	collections []string,
-	opts ...*options.DeleteReplicatorOptions,
+	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
@@ -142,11 +139,10 @@ func (c *Client) DeleteReplicator(
 
 func (c *Client) GetAllReplicators(
 	ctx context.Context,
-	opts ...*options.GetAllReplicatorsOptions,
+	opts ...options.Lister[options.GetAllReplicatorsOptions],
 ) ([]client.Replicator, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
@@ -164,7 +160,7 @@ func (c *Client) GetAllReplicators(
 func (c *Client) CreateP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.CreateP2PCollectionsOptions,
+	opts ...options.Lister[options.CreateP2PCollectionsOptions],
 ) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
@@ -183,7 +179,7 @@ func (c *Client) CreateP2PCollections(
 func (c *Client) DeleteP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.DeleteP2PCollectionsOptions,
+	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
 ) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
@@ -201,7 +197,7 @@ func (c *Client) DeleteP2PCollections(
 
 func (c *Client) ListP2PCollections(
 	ctx context.Context,
-	opts ...*options.ListP2PCollectionsOptions,
+	opts ...options.Lister[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
@@ -219,11 +215,10 @@ func (c *Client) ListP2PCollections(
 func (c *Client) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.CreateP2PDocumentsOptions,
+	opts ...options.Lister[options.CreateP2PDocumentsOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
@@ -242,11 +237,10 @@ func (c *Client) CreateP2PDocuments(
 func (c *Client) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.DeleteP2PDocumentsOptions,
+	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
@@ -264,11 +258,10 @@ func (c *Client) DeleteP2PDocuments(
 
 func (c *Client) ListP2PDocuments(
 	ctx context.Context,
-	opts ...*options.ListP2PDocumentsOptions,
+	opts ...options.Lister[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 

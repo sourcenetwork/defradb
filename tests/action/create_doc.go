@@ -318,7 +318,7 @@ func parseCreateDocs(ctx context.Context, action *CreateDoc, collection client.C
 	}
 }
 
-func makeDocSaveOptions(s *state.State, action *CreateDoc, nodeIndex int) []*options.CollectionSaveOptions {
+func makeDocSaveOptions(s *state.State, action *CreateDoc, nodeIndex int) []options.Lister[options.CollectionSaveOptions] {
 	opts := options.CollectionSave().
 		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
@@ -326,10 +326,10 @@ func makeDocSaveOptions(s *state.State, action *CreateDoc, nodeIndex int) []*opt
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
-	return []*options.CollectionSaveOptions{opts}
+	return []options.Lister[options.CollectionSaveOptions]{opts}
 }
 
-func makeDocCreateOptions(s *state.State, action *CreateDoc, nodeIndex int) []*options.CollectionCreateOptions {
+func makeDocCreateOptions(s *state.State, action *CreateDoc, nodeIndex int) []options.Lister[options.CollectionCreateOptions] {
 	opts := options.CollectionCreate().
 		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
@@ -337,5 +337,5 @@ func makeDocCreateOptions(s *state.State, action *CreateDoc, nodeIndex int) []*o
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
-	return []*options.CollectionCreateOptions{opts}
+	return []options.Lister[options.CollectionCreateOptions]{opts}
 }

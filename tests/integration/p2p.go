@@ -143,7 +143,7 @@ func connectWithRetry(
 	ctx context.Context,
 	node *state.NodeState,
 	targetAddresses []string,
-	opt *options.ConnectOptions,
+	opt options.Lister[options.ConnectOptions],
 ) error {
 	const maxRetries = 5
 	const retryDelay = 50 * time.Millisecond

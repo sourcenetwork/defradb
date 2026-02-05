@@ -46,7 +46,7 @@ type createNode struct {
 
 	execInfo createExecInfo
 
-	createOptions []*options.CollectionCreateOptions
+	createOptions []options.Lister[options.CollectionCreateOptions]
 }
 
 type createExecInfo struct {
@@ -168,7 +168,7 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		input:     parsed.CreateInput,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
-		createOptions: []*options.CollectionCreateOptions{
+		createOptions: []options.Lister[options.CollectionCreateOptions]{
 			options.WithIdentity(
 				options.CollectionCreate().
 					SetEncryptDoc(parsed.Encrypt).

@@ -74,7 +74,10 @@ type DB interface {
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
-	GetCollections(ctx context.Context, opts ...*options.GetCollectionsOptions) ([]client.Collection, error)
+	GetCollections(
+		ctx context.Context,
+		opts ...options.Lister[options.GetCollectionsOptions],
+	) ([]client.Collection, error)
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
 	// Events returns the event bus for the database.

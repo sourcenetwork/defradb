@@ -32,11 +32,10 @@ func withOptIdentity[T options.OptionWithIdentity[T]](ctx context.Context, opt T
 func (c *Client) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...*options.AddDACPolicyOptions,
+	opts ...options.Lister[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("acp", "document", "policy")
 
@@ -72,11 +71,10 @@ func (c *Client) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.AddDACActorRelationshipOptions,
+	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("acp", "document", "relationship")
 
@@ -125,11 +123,10 @@ func (c *Client) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.DeleteDACActorRelationshipOptions,
+	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("acp", "document", "relationship")
 
@@ -174,11 +171,10 @@ func (c *Client) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...*options.AddNACActorRelationshipOptions,
+	opts ...options.Lister[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "relationship")
 
@@ -221,11 +217,10 @@ func (c *Client) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...*options.DeleteNACActorRelationshipOptions,
+	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "relationship")
 
@@ -259,10 +254,9 @@ func (c *Client) DeleteNACActorRelationship(
 	return deleteDocActorRelResult, nil
 }
 
-func (c *Client) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+func (c *Client) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "re-enable")
 
@@ -279,10 +273,9 @@ func (c *Client) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOp
 	return nil
 }
 
-func (c *Client) DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+func (c *Client) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "disable")
 
@@ -301,11 +294,10 @@ func (c *Client) DisableNAC(ctx context.Context, opts ...*options.DisableNACOpti
 
 func (c *Client) GetNACStatus(
 	ctx context.Context,
-	opts ...*options.GetNACStatusOptions,
+	opts ...options.Lister[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := options.NewOptions(opts...)
+	ctx = withOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "status")
 

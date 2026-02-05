@@ -73,7 +73,7 @@ func (txn *Transaction) PrintDump(ctx context.Context) error {
 func (txn *Transaction) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...*options.AddDACPolicyOptions,
+	opts ...options.Lister[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	return txn.CWrapper.AddDACPolicy(ctx, policy, opts...)
 }
@@ -84,7 +84,7 @@ func (txn *Transaction) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.AddDACActorRelationshipOptions,
+	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	return txn.CWrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
@@ -95,7 +95,7 @@ func (txn *Transaction) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.DeleteDACActorRelationshipOptions,
+	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	return txn.CWrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
@@ -108,7 +108,7 @@ func (txn *Transaction) VerifySignature(
 	ctx context.Context,
 	blockCid string,
 	pubKey crypto.PublicKey,
-	opts ...*options.VerifySignatureOptions,
+	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
 	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
@@ -116,7 +116,7 @@ func (txn *Transaction) VerifySignature(
 func (txn *Transaction) AddSchema(
 	ctx context.Context,
 	sdl string,
-	opts ...*options.AddSchemaOptions,
+	opts ...options.Lister[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	return txn.CWrapper.AddSchema(ctx, sdl, opts...)
 }
@@ -125,7 +125,7 @@ func (txn *Transaction) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...*options.PatchCollectionOptions,
+	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
 	return txn.CWrapper.PatchCollection(ctx, patch, migration, opts...)
 }
@@ -133,7 +133,7 @@ func (txn *Transaction) PatchCollection(
 func (txn *Transaction) SetActiveCollectionVersion(
 	ctx context.Context,
 	version string,
-	opts ...*options.SetActiveCollectionVersionOptions,
+	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
 ) error {
 	return txn.CWrapper.SetActiveCollectionVersion(ctx, version, opts...)
 }
@@ -147,7 +147,7 @@ func (txn *Transaction) AddView(
 	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, transformCID)
 }
 
-func (txn *Transaction) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
+func (txn *Transaction) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
 	return txn.CWrapper.RefreshViews(ctx, opts...)
 }
 
@@ -166,21 +166,21 @@ func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, 
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...*options.GetCollectionByNameOptions,
+	opts ...options.Lister[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	return txn.CWrapper.GetCollectionByName(ctx, name, opts...)
 }
 
 func (txn *Transaction) GetCollections(
 	ctx context.Context,
-	opts ...*options.GetCollectionsOptions,
+	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	return txn.CWrapper.GetCollections(ctx, opts...)
 }
 
 func (txn *Transaction) GetAllIndexes(
 	ctx context.Context,
-	opts ...*options.GetAllIndexesOptions,
+	opts ...options.Lister[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	return txn.CWrapper.GetAllIndexes(ctx, opts...)
 }
@@ -188,7 +188,7 @@ func (txn *Transaction) GetAllIndexes(
 func (txn *Transaction) ExecRequest(
 	ctx context.Context,
 	request string,
-	opts ...*options.ExecRequestOptions,
+	opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
 	return txn.CWrapper.ExecRequest(ctx, request, opts...)
 }

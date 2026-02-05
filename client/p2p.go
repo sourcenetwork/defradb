@@ -33,7 +33,7 @@ type P2P interface {
 	ActivePeers(ctx context.Context) ([]string, error)
 
 	// Connect tries to connect to the peer with the given [PeerInfo].
-	Connect(ctx context.Context, addresses []string, opts ...*options.ConnectOptions) error
+	Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error
 
 	// SetReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
@@ -41,7 +41,7 @@ type P2P interface {
 		ctx context.Context,
 		addresses []string,
 		collectionNames []string,
-		opts ...*options.SetReplicatorOptions,
+		opts ...options.Lister[options.SetReplicatorOptions],
 	) error
 
 	// DeleteReplicator deletes a replicator from the persisted list
@@ -50,40 +50,40 @@ type P2P interface {
 		ctx context.Context,
 		id string,
 		collectionNames []string,
-		opts ...*options.DeleteReplicatorOptions,
+		opts ...options.Lister[options.DeleteReplicatorOptions],
 	) error
 
 	// GetAllReplicators returns the full list of replicators with their
 	// subscribed schemas.
-	GetAllReplicators(ctx context.Context, opts ...*options.GetAllReplicatorsOptions) ([]Replicator, error)
+	GetAllReplicators(ctx context.Context, opts ...options.Lister[options.GetAllReplicatorsOptions]) ([]Replicator, error)
 
 	// CreateP2PCollections creates the given collections to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// collection names are invalid.
-	CreateP2PCollections(ctx context.Context, collectionNames []string, opts ...*options.CreateP2PCollectionsOptions) error
+	CreateP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Lister[options.CreateP2PCollectionsOptions]) error
 
 	// DeleteP2PCollections deletes the given collections from the P2P system and
 	// unsubscribes from their topics. It will error if the provided
 	// collection names are invalid.
-	DeleteP2PCollections(ctx context.Context, collectionNames []string, opts ...*options.DeleteP2PCollectionsOptions) error
+	DeleteP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Lister[options.DeleteP2PCollectionsOptions]) error
 
 	// ListP2PCollections returns the list of persisted collection names that
 	// the P2P system subscribes to.
-	ListP2PCollections(ctx context.Context, opts ...*options.ListP2PCollectionsOptions) ([]string, error)
+	ListP2PCollections(ctx context.Context, opts ...options.Lister[options.ListP2PCollectionsOptions]) ([]string, error)
 
 	// CreateP2PDocuments creates the given docIDs to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// docIDs are invalid.
-	CreateP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.CreateP2PDocumentsOptions) error
+	CreateP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Lister[options.CreateP2PDocumentsOptions]) error
 
 	// DeleteP2PDocuments removes the given docIDs from the P2P system and
 	// unsubscribes from their topics. It will error if the provided
 	// docIDs are invalid.
-	DeleteP2PDocuments(ctx context.Context, docIDs []string, opts ...*options.DeleteP2PDocumentsOptions) error
+	DeleteP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Lister[options.DeleteP2PDocumentsOptions]) error
 
 	// ListP2PDocuments returns the list of persisted docIDs that
 	// the P2P system subscribes to.
-	ListP2PDocuments(ctx context.Context, opts ...*options.ListP2PDocumentsOptions) ([]string, error)
+	ListP2PDocuments(ctx context.Context, opts ...options.Lister[options.ListP2PDocumentsOptions]) ([]string, error)
 
 	// SyncDocuments requests the latest versions of specified documents from the network
 	// and synchronizes their DAGs locally. It doesn't automatically subscribe

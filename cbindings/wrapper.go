@@ -143,7 +143,7 @@ func (w *CWrapper) SetReplicator(
 	ctx context.Context,
 	addresses []string,
 	collections []string,
-	opts ...*options.SetReplicatorOptions,
+	opts ...options.Lister[options.SetReplicatorOptions],
 ) error {
 	addrStr := C.CString(strings.Join(addresses, ","))
 	colStr := C.CString(strings.Join(collections, ","))
@@ -164,7 +164,7 @@ func (w *CWrapper) DeleteReplicator(
 	ctx context.Context,
 	id string,
 	collections []string,
-	opts ...*options.DeleteReplicatorOptions,
+	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
 	peerID := C.CString(id)
 	colStr := C.CString(strings.Join(collections, ","))
@@ -183,7 +183,7 @@ func (w *CWrapper) DeleteReplicator(
 
 func (w *CWrapper) GetAllReplicators(
 	ctx context.Context,
-	opts ...*options.GetAllReplicatorsOptions,
+	opts ...options.Lister[options.GetAllReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
@@ -203,7 +203,7 @@ func (w *CWrapper) GetAllReplicators(
 func (w *CWrapper) CreateP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.CreateP2PCollectionsOptions,
+	opts ...options.Lister[options.CreateP2PCollectionsOptions],
 ) error {
 	cIdentity := identityFromOptions(opts)
 	colStr := C.CString(strings.Join(collectionIDs, ","))
@@ -220,7 +220,7 @@ func (w *CWrapper) CreateP2PCollections(
 func (w *CWrapper) DeleteP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.DeleteP2PCollectionsOptions,
+	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
 ) error {
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	cIdentity := identityFromOptions(opts)
@@ -237,7 +237,7 @@ func (w *CWrapper) DeleteP2PCollections(
 
 func (w *CWrapper) ListP2PCollections(
 	ctx context.Context,
-	opts ...*options.ListP2PCollectionsOptions,
+	opts ...options.Lister[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
@@ -257,7 +257,7 @@ func (w *CWrapper) ListP2PCollections(
 func (w *CWrapper) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.CreateP2PDocumentsOptions,
+	opts ...options.Lister[options.CreateP2PDocumentsOptions],
 ) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
 	cIdentity := identityFromOptions(opts)
@@ -275,7 +275,7 @@ func (w *CWrapper) CreateP2PDocuments(
 func (w *CWrapper) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.DeleteP2PDocumentsOptions,
+	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
 ) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
 	cIdentity := identityFromOptions(opts)
@@ -292,7 +292,7 @@ func (w *CWrapper) DeleteP2PDocuments(
 
 func (w *CWrapper) ListP2PDocuments(
 	ctx context.Context,
-	opts ...*options.ListP2PDocumentsOptions,
+	opts ...options.Lister[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
@@ -389,7 +389,7 @@ func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig)
 func (w *CWrapper) AddSchema(
 	ctx context.Context,
 	schema string,
-	opts ...*options.AddSchemaOptions,
+	opts ...options.Lister[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
@@ -413,7 +413,7 @@ func (w *CWrapper) AddSchema(
 func (w *CWrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...*options.AddDACPolicyOptions,
+	opts ...options.Lister[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
@@ -440,7 +440,7 @@ func (w *CWrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.AddDACActorRelationshipOptions,
+	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	cIdentity := identityFromOptions(opts)
 	cCollectionName := C.CString(collectionName)
@@ -481,7 +481,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.DeleteDACActorRelationshipOptions,
+	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	cIdentity := identityFromOptions(opts)
 	cCollectionName := C.CString(collectionName)
@@ -517,7 +517,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 
 func (w *CWrapper) GetNACStatus(
 	ctx context.Context,
-	opts ...*options.GetNACStatusOptions,
+	opts ...options.Lister[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
@@ -531,7 +531,7 @@ func (w *CWrapper) GetNACStatus(
 	return unmarshalResult[client.NACStatusResult](res.Value)
 }
 
-func (w *CWrapper) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
+func (w *CWrapper) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 
@@ -544,7 +544,7 @@ func (w *CWrapper) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNAC
 	return nil
 }
 
-func (w *CWrapper) DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error {
+func (w *CWrapper) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
 
@@ -561,7 +561,7 @@ func (w *CWrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...*options.AddNACActorRelationshipOptions,
+	opts ...options.Lister[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	cIdentity := identityFromOptions(opts)
 	cRelation := C.CString(relation)
@@ -584,7 +584,7 @@ func (w *CWrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...*options.DeleteNACActorRelationshipOptions,
+	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	cIdentity := identityFromOptions(opts)
 	cRelation := C.CString(relation)
@@ -605,7 +605,7 @@ func (w *CWrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...*options.PatchCollectionOptions,
+	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
 	cPatch := C.CString(patch)
 	cIdentity := identityFromOptions(opts)
@@ -637,7 +637,7 @@ func (w *CWrapper) PatchCollection(
 func (w *CWrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
-	opts ...*options.SetActiveCollectionVersionOptions,
+	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
 ) error {
 	cIdentity := identityFromOptions(opts)
 	cVersion := C.CString(collectionVersionID)
@@ -691,15 +691,8 @@ func (w *CWrapper) AddView(
 	return colDefRes, nil
 }
 
-func (w *CWrapper) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
-	var getCollOpts *options.GetCollectionsOptions
-	if len(opts) > 0 && opts[0] != nil {
-		getCollOpts = opts[0]
-	} else {
-		getCollOpts = options.GetCollections()
-	}
-
-	copts := getCollectionsOptionsToCOptions(getCollOpts)
+func (w *CWrapper) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+	copts := getCollectionsOptionsToCOptions(options.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))
 	defer C.free(unsafe.Pointer(copts.collectionID))
 	defer C.free(unsafe.Pointer(copts.name))
@@ -769,7 +762,7 @@ func (w *CWrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error
 func (w *CWrapper) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...*options.GetCollectionByNameOptions,
+	opts ...options.Lister[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	cols, err := w.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
 	if err != nil {
@@ -815,14 +808,9 @@ func getCollectionsOptionsToCOptions(opts *options.GetCollectionsOptions) C.Coll
 
 func (w *CWrapper) GetCollections(
 	ctx context.Context,
-	opts ...*options.GetCollectionsOptions,
+	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	var getCollOpts *options.GetCollectionsOptions
-	if len(opts) > 0 {
-		getCollOpts = opts[0]
-	}
-
-	copts := getCollectionsOptionsToCOptions(getCollOpts)
+	copts := getCollectionsOptionsToCOptions(options.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))
 	defer C.free(unsafe.Pointer(copts.collectionID))
 	defer C.free(unsafe.Pointer(copts.name))
@@ -851,7 +839,7 @@ func (w *CWrapper) GetCollections(
 
 func (w *CWrapper) GetAllIndexes(
 	ctx context.Context,
-	opts ...*options.GetAllIndexesOptions,
+	opts ...options.Lister[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -907,7 +895,7 @@ func (w *CWrapper) ListAllEncryptedIndexes(
 func (w *CWrapper) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...*options.ExecRequestOptions,
+	opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
 	operation, variables, err := extractStringsFromRequestOptions(opts)
 	if err != nil {
@@ -1012,7 +1000,7 @@ func (w *CWrapper) PrintDump(ctx context.Context) error {
 	panic("not implemented")
 }
 
-func (w *CWrapper) Connect(ctx context.Context, addresses []string, opts ...*options.ConnectOptions) error {
+func (w *CWrapper) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
 	cIdentity := identityFromOptions(opts)
 	cPeerAddresses := C.CString(strings.Join(addresses, ","))
 	defer C.free(unsafe.Pointer(cPeerAddresses))
@@ -1049,7 +1037,7 @@ func (w *CWrapper) VerifySignature(
 	ctx context.Context,
 	blockCid string,
 	pubKey crypto.PublicKey,
-	opts ...*options.VerifySignatureOptions,
+	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
 	cPubKey := C.CString(pubKey.String())
 	cKeyType := C.CString(string(pubKey.Type()))

@@ -29,7 +29,7 @@ func (c *collection) Get(
 	ctx context.Context,
 	docID client.DocID,
 	showDeleted bool,
-	opts ...*options.CollectionGetOptions,
+	opts ...options.Lister[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

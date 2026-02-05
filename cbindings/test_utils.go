@@ -47,11 +47,22 @@ func unmarshalResult[T any](value string) (T, error) {
 
 // identityFromOptions creates a cgo handle, wrapped as a pointer, from options that implement OptionWithIdentity.
 // If the options slice is empty or nil, returns 0.
-func identityFromOptions[T options.OptionWithIdentity[T]](opts []T) C.uintptr_t {
+func identityFromOptions[T any, PT interface {
+	*T
+	options.OptionWithIdentity[PT]
+}](opts []options.Lister[T]) C.uintptr_t {
 	if len(opts) == 0 {
 		return C.uintptr_t(0)
 	}
-	idf := opts[0].GetIdentity()
+	optFuncs := opts[0].List()
+	if len(optFuncs) == 0 {
+		return C.uintptr_t(0)
+	}
+	var opt T
+	for _, f := range optFuncs {
+		f(&opt)
+	}
+	idf := PT(&opt).GetIdentity()
 	if !idf.HasValue() {
 		return C.uintptr_t(0)
 	}
@@ -61,11 +72,19 @@ func identityFromOptions[T options.OptionWithIdentity[T]](opts []T) C.uintptr_t 
 }
 
 // isEncryptedFromCollectionCreateOptions is a helper function that extracts as a C.int
-func isEncryptedFromCollectionCreateOptions(opts []*options.CollectionCreateOptions) C.int {
-	if len(opts) == 0 || opts[0] == nil {
+func isEncryptedFromCollectionCreateOptions(opts []options.Lister[options.CollectionCreateOptions]) C.int {
+	if len(opts) == 0 {
 		return 0
 	}
-	if opts[0].EncryptDoc {
+	optFuncs := opts[0].List()
+	if len(optFuncs) == 0 {
+		return 0
+	}
+	var opt options.CollectionCreateOptions
+	for _, f := range optFuncs {
+		f(&opt)
+	}
+	if opt.EncryptDoc {
 		return 1
 	}
 	return 0
@@ -74,23 +93,38 @@ func isEncryptedFromCollectionCreateOptions(opts []*options.CollectionCreateOpti
 // encryptedFieldsFromCollectionCreateOptions is a helper function that returns a comma separated
 // C-string, or a blank string, representing the fields that should be encrypted
 // After calling this, the caller is responsible for freeing the string returned
-func encryptedFieldsFromCollectionCreateOptions(opts []*options.CollectionCreateOptions) *C.char {
-	if len(opts) == 0 || opts[0] == nil {
+func encryptedFieldsFromCollectionCreateOptions(opts []options.Lister[options.CollectionCreateOptions]) *C.char {
+	if len(opts) == 0 {
 		return C.CString("")
 	}
-	if len(opts[0].EncryptedFields) > 0 {
-		return C.CString(strings.Join(opts[0].EncryptedFields, ","))
+	optFuncs := opts[0].List()
+	if len(optFuncs) == 0 {
+		return C.CString("")
+	}
+	var opt options.CollectionCreateOptions
+	for _, f := range optFuncs {
+		f(&opt)
+	}
+	if len(opt.EncryptedFields) > 0 {
+		return C.CString(strings.Join(opt.EncryptedFields, ","))
 	}
 	return C.CString("")
 }
 
 // extractStringsFromRequestOptions is a helper function that extracts operation name and variables
 // as strings from the request option object. They will be blank strings if not present.
-func extractStringsFromRequestOptions(opts []*options.ExecRequestOptions) (string, string, error) {
-	if len(opts) == 0 || opts[0] == nil {
+func extractStringsFromRequestOptions(opts []options.Lister[options.ExecRequestOptions]) (string, string, error) {
+	if len(opts) == 0 {
 		return "", "", nil
 	}
-	opt := opts[0]
+	optFuncs := opts[0].List()
+	if len(optFuncs) == 0 {
+		return "", "", nil
+	}
+	var opt options.ExecRequestOptions
+	for _, f := range optFuncs {
+		f(&opt)
+	}
 
 	opName := ""
 	if opt.OperationName.HasValue() {

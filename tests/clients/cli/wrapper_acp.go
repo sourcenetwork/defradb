@@ -21,14 +21,13 @@ import (
 func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...*options.AddDACPolicyOptions,
+	opts ...options.Lister[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	args := []string{"client", "acp", "document", "policy", "add"}
 	args = append(args, policy)
 
-	if len(opts) > 0 && opts[0] != nil {
-		args = appendIdentityArg(args, opts[0].GetIdentity())
-	}
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -49,7 +48,7 @@ func (w *Wrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.AddDACActorRelationshipOptions,
+	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "document", "relationship", "add",
@@ -59,9 +58,8 @@ func (w *Wrapper) AddDACActorRelationship(
 		"--actor", targetActor,
 	}
 
-	if len(opts) > 0 && opts[0] != nil {
-		args = appendIdentityArg(args, opts[0].GetIdentity())
-	}
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -82,7 +80,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.DeleteDACActorRelationshipOptions,
+	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "document", "relationship", "delete",
@@ -92,9 +90,8 @@ func (w *Wrapper) DeleteDACActorRelationship(
 		"--actor", targetActor,
 	}
 
-	if len(opts) > 0 && opts[0] != nil {
-		args = appendIdentityArg(args, opts[0].GetIdentity())
-	}
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -111,13 +108,12 @@ func (w *Wrapper) DeleteDACActorRelationship(
 
 func (w *Wrapper) GetNACStatus(
 	ctx context.Context,
-	opts ...*options.GetNACStatusOptions,
+	opts ...options.Lister[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	args := []string{"client", "acp", "node", "status"}
 
-	if len(opts) > 0 && opts[0] != nil {
-		args = appendIdentityArg(args, opts[0].GetIdentity())
-	}
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -134,13 +130,12 @@ func (w *Wrapper) GetNACStatus(
 
 func (w *Wrapper) ReEnableNAC(
 	ctx context.Context,
-	opts ...*options.ReEnableNACOptions,
+	opts ...options.Lister[options.ReEnableNACOptions],
 ) error {
 	args := []string{"client", "acp", "node", "re-enable"}
 
-	if len(opts) > 0 && opts[0] != nil {
-		args = appendIdentityArg(args, opts[0].GetIdentity())
-	}
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	if _, err := w.cmd.execute(ctx, args); err != nil {
 		return err
@@ -150,13 +145,12 @@ func (w *Wrapper) ReEnableNAC(
 
 func (w *Wrapper) DisableNAC(
 	ctx context.Context,
-	opts ...*options.DisableNACOptions,
+	opts ...options.Lister[options.DisableNACOptions],
 ) error {
 	args := []string{"client", "acp", "node", "disable"}
 
-	if len(opts) > 0 && opts[0] != nil {
-		args = appendIdentityArg(args, opts[0].GetIdentity())
-	}
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	if _, err := w.cmd.execute(ctx, args); err != nil {
 		return err
@@ -168,7 +162,7 @@ func (w *Wrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...*options.AddNACActorRelationshipOptions,
+	opts ...options.Lister[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "node", "relationship", "add",
@@ -176,9 +170,8 @@ func (w *Wrapper) AddNACActorRelationship(
 		"--actor", targetActor,
 	}
 
-	if len(opts) > 0 && opts[0] != nil {
-		args = appendIdentityArg(args, opts[0].GetIdentity())
-	}
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -197,7 +190,7 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...*options.DeleteNACActorRelationshipOptions,
+	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "node", "relationship", "delete",
@@ -205,9 +198,8 @@ func (w *Wrapper) DeleteNACActorRelationship(
 		"--actor", targetActor,
 	}
 
-	if len(opts) > 0 && opts[0] != nil {
-		args = appendIdentityArg(args, opts[0].GetIdentity())
-	}
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
