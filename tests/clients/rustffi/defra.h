@@ -700,12 +700,12 @@ struct FfiResult add_view(uintptr_t node_ptr,
 /*
  Refresh view caches.
 
- Refreshes the caches of all views matching the given options.
+ Refreshes the caches of all materialized views matching the given options.
 
  # Arguments
 
  * `node_ptr` - Handle to the node
- * `options` - JSON string of CollectionFetchOptions (null for all views)
+ * `options` - JSON string with optional "Names" field (null for all views)
 
  # Returns
 
@@ -715,10 +715,6 @@ struct FfiResult add_view(uintptr_t node_ptr,
  # Safety
 
  `options` must be null or a valid null-terminated UTF-8 string.
-
- # Note
-
- Not yet implemented. See issue #178.
  */
 struct FfiResult refresh_views(uintptr_t node_ptr, const char *options);
 
