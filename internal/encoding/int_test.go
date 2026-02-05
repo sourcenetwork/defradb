@@ -16,6 +16,8 @@ import (
 	"bytes"
 	"math"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func testBasicEncodeDecodeUint64(
@@ -220,4 +222,26 @@ func TestEncodeDecodeUvarintDescending(t *testing.T) {
 		{math.MaxUint64, []byte{0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
 	}
 	testCustomEncodeUint64(testCases, EncodeUvarintDescending, t)
+}
+
+func TestDecode_IntTypes_WithInvalidKey_ShouldError(t *testing.T) {
+	// The key needs to start with a `/` and be at least 8 bytes long
+	// to trigger the check on the starting byte.
+	invalidKey := []byte("/\x89\x89\x89\x89\x89\x89\x89\x89")
+	_, _, err := DecodeUint32Ascending(invalidKey)
+	require.ErrorIs(t, err, ErrInsufficientBytesToDecode)
+	_, _, err = DecodeUint32Descending(invalidKey)
+	require.ErrorIs(t, err, ErrInsufficientBytesToDecode)
+	_, _, err = DecodeUint64Ascending(invalidKey)
+	require.ErrorIs(t, err, ErrInsufficientBytesToDecode)
+	_, _, err = DecodeUint64Descending(invalidKey)
+	require.ErrorIs(t, err, ErrInsufficientBytesToDecode)
+	_, _, err = DecodeUvarintAscending(invalidKey)
+	require.ErrorIs(t, err, ErrInsufficientBytesToDecode)
+	_, _, err = DecodeUvarintDescending(invalidKey)
+	require.ErrorIs(t, err, ErrInsufficientBytesToDecode)
+	_, _, err = DecodeVarintAscending(invalidKey)
+	require.ErrorIs(t, err, ErrInsufficientBytesToDecode)
+	_, _, err = DecodeVarintDescending(invalidKey)
+	require.ErrorIs(t, err, ErrInsufficientBytesToDecode)
 }
