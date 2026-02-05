@@ -29,10 +29,10 @@ import (
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/node"
 )
 
@@ -114,13 +114,13 @@ func (w *Wrapper) Connect(
 	return err
 }
 
-func (w *Wrapper) SetReplicator(
+func (w *Wrapper) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
 	collections []string,
-	opts ...options.Lister[options.SetReplicatorOptions],
+	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
-	args := []string{"client", "p2p", "replicator", "set"}
+	args := []string{"client", "p2p", "replicator", "create"}
 	args = append(args, "--collection", strings.Join(collections, ","))
 
 	args = append(args, strings.Join(addresses, ","))
@@ -150,11 +150,11 @@ func (w *Wrapper) DeleteReplicator(
 	return err
 }
 
-func (w *Wrapper) GetAllReplicators(
+func (w *Wrapper) ListReplicators(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllReplicatorsOptions],
+	opts ...options.Lister[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
-	args := []string{"client", "p2p", "replicator", "getall"}
+	args := []string{"client", "p2p", "replicator", "list"}
 
 	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())

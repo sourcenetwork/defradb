@@ -325,14 +325,14 @@ func (txn *Txn) Connect(ctx context.Context, addresses []string, opts ...options
 	return txn.db.Connect(ctx, addresses, opts...)
 }
 
-func (txn *Txn) SetReplicator(
+func (txn *Txn) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
 	collectionNames []string,
-	opts ...options.Lister[options.SetReplicatorOptions],
+	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.SetReplicator(ctx, addresses, collectionNames, opts...)
+	return txn.db.CreateReplicator(ctx, addresses, collectionNames, opts...)
 }
 
 func (txn *Txn) DeleteReplicator(
@@ -345,12 +345,12 @@ func (txn *Txn) DeleteReplicator(
 	return txn.db.DeleteReplicator(ctx, id, collectionNames, opts...)
 }
 
-func (txn *Txn) GetAllReplicators(
+func (txn *Txn) ListReplicators(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllReplicatorsOptions],
+	opts ...options.Lister[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllReplicators(ctx, opts...)
+	return txn.db.ListReplicators(ctx, opts...)
 }
 
 func (txn *Txn) CreateP2PCollections(

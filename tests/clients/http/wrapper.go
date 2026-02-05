@@ -75,13 +75,13 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...optio
 	return w.client.Connect(ctx, addresses, opts...)
 }
 
-func (w *Wrapper) SetReplicator(
+func (w *Wrapper) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
 	collections []string,
-	opts ...options.Lister[options.SetReplicatorOptions],
+	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
-	return w.client.SetReplicator(ctx, addresses, collections, opts...)
+	return w.client.CreateReplicator(ctx, addresses, collections, opts...)
 }
 
 func (w *Wrapper) DeleteReplicator(
@@ -93,11 +93,11 @@ func (w *Wrapper) DeleteReplicator(
 	return w.client.DeleteReplicator(ctx, id, collections, opts...)
 }
 
-func (w *Wrapper) GetAllReplicators(
+func (w *Wrapper) ListReplicators(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllReplicatorsOptions],
+	opts ...options.Lister[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
-	return w.client.GetAllReplicators(ctx, opts...)
+	return w.client.ListReplicators(ctx, opts...)
 }
 
 func (w *Wrapper) CreateP2PCollections(

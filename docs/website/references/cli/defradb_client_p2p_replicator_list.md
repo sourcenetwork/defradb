@@ -1,27 +1,27 @@
-## defradb client p2p replicator getall
+## defradb client p2p replicator list
 
-Get all replicators
+List all replicators
 
 ### Synopsis
 
-Get all the replicators active in the P2P data sync system.
+List all the replicators active in the P2P data sync system.
 A replicator synchronizes one or all collection(s) from this instance to another.
 
 ```
-defradb client p2p replicator getall [flags]
+defradb client p2p replicator list [flags]
 ```
 
 ### Examples
 
 ```
-Get all replicators:  
-  defradb client p2p replicator getall
+List all replicators:  
+  defradb client p2p replicator list
 ```
 
 ### Options
 
 ```
-  -h, --help   help for getall
+  -h, --help   help for list
 ```
 
 ### Options inherited from parent commands

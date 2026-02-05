@@ -35,13 +35,13 @@ type P2P interface {
 	// Connect tries to connect to the peer with the given [PeerInfo].
 	Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error
 
-	// SetReplicator adds a replicator to the persisted list or adds
+	// CreateReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
-	SetReplicator(
+	CreateReplicator(
 		ctx context.Context,
 		addresses []string,
 		collectionNames []string,
-		opts ...options.Lister[options.SetReplicatorOptions],
+		opts ...options.Lister[options.CreateReplicatorOptions],
 	) error
 
 	// DeleteReplicator deletes a replicator from the persisted list
@@ -53,9 +53,9 @@ type P2P interface {
 		opts ...options.Lister[options.DeleteReplicatorOptions],
 	) error
 
-	// GetAllReplicators returns the full list of replicators with their
+	// ListReplicators returns the full list of replicators with their
 	// subscribed schemas.
-	GetAllReplicators(ctx context.Context, opts ...options.Lister[options.GetAllReplicatorsOptions]) ([]Replicator, error)
+	ListReplicators(ctx context.Context, opts ...options.Lister[options.ListReplicatorsOptions]) ([]Replicator, error)
 
 	// CreateP2PCollections creates the given collections to the P2P system and
 	// subscribes to their topics. It will error if any of the provided

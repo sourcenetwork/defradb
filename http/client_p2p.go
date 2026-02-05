@@ -24,8 +24,8 @@ import (
 
 var _ client.P2P = (*Client)(nil)
 
-// SetReplicatorParams contains the replicator fields that can be modified by the user.
-type SetReplicatorParams struct {
+// CreateReplicatorParams contains the replicator fields that can be modified by the user.
+type CreateReplicatorParams struct {
 	// Addresses list of peer addresses.
 	Addresses []string
 	// Collections is the list of collection names to replicate.
@@ -86,18 +86,18 @@ func (c *Client) Connect(ctx context.Context, addresses []string, opts ...option
 	return err
 }
 
-func (c *Client) SetReplicator(
+func (c *Client) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
 	collections []string,
-	opts ...options.Lister[options.SetReplicatorOptions],
+	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(SetReplicatorParams{
+	body, err := json.Marshal(CreateReplicatorParams{
 		Addresses:   addresses,
 		Collections: collections,
 	})
@@ -138,9 +138,9 @@ func (c *Client) DeleteReplicator(
 	return err
 }
 
-func (c *Client) GetAllReplicators(
+func (c *Client) ListReplicators(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllReplicatorsOptions],
+	opts ...options.Lister[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = utils.WithOptIdentity(ctx, opt)

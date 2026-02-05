@@ -976,6 +976,84 @@ func (_c *Txn_CreateP2PDocuments_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// CreateReplicator provides a mock function for the type Txn
+func (_mock *Txn) CreateReplicator(ctx context.Context, addresses []string, collectionNames []string, opts ...options.Lister[options.CreateReplicatorOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, addresses, collectionNames, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, addresses, collectionNames)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateReplicator")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, []string, ...options.Lister[options.CreateReplicatorOptions]) error); ok {
+		r0 = returnFunc(ctx, addresses, collectionNames, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_CreateReplicator_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateReplicator'
+type Txn_CreateReplicator_Call struct {
+	*mock.Call
+}
+
+// CreateReplicator is a helper method to define mock.On call
+//   - ctx context.Context
+//   - addresses []string
+//   - collectionNames []string
+//   - opts ...options.Lister[options.CreateReplicatorOptions]
+func (_e *Txn_Expecter) CreateReplicator(ctx interface{}, addresses interface{}, collectionNames interface{}, opts ...interface{}) *Txn_CreateReplicator_Call {
+	return &Txn_CreateReplicator_Call{Call: _e.mock.On("CreateReplicator",
+		append([]interface{}{ctx, addresses, collectionNames}, opts...)...)}
+}
+
+func (_c *Txn_CreateReplicator_Call) Run(run func(ctx context.Context, addresses []string, collectionNames []string, opts ...options.Lister[options.CreateReplicatorOptions])) *Txn_CreateReplicator_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		if args[1] != nil {
+			arg1 = args[1].([]string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		var arg3 []options.Lister[options.CreateReplicatorOptions]
+		var variadicArgs []options.Lister[options.CreateReplicatorOptions]
+		if len(args) > 3 {
+			variadicArgs = args[3].([]options.Lister[options.CreateReplicatorOptions])
+		}
+		arg3 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_CreateReplicator_Call) Return(err error) *Txn_CreateReplicator_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_CreateReplicator_Call) RunAndReturn(run func(ctx context.Context, addresses []string, collectionNames []string, opts ...options.Lister[options.CreateReplicatorOptions]) error) *Txn_CreateReplicator_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteDACActorRelationship provides a mock function for the type Txn
 func (_mock *Txn) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...options.Lister[options.DeleteDACActorRelationshipOptions]) (client.DeleteActorRelationshipResult, error) {
 	var tmpRet mock.Arguments
@@ -1634,83 +1712,6 @@ func (_c *Txn_GetAllIndexes_Call) RunAndReturn(run func(ctx context.Context, opt
 	return _c
 }
 
-// GetAllReplicators provides a mock function for the type Txn
-func (_mock *Txn) GetAllReplicators(ctx context.Context, opts ...options.Lister[options.GetAllReplicatorsOptions]) ([]client.Replicator, error) {
-	var tmpRet mock.Arguments
-	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, opts)
-	} else {
-		tmpRet = _mock.Called(ctx)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllReplicators")
-	}
-
-	var r0 []client.Replicator
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetAllReplicatorsOptions]) ([]client.Replicator, error)); ok {
-		return returnFunc(ctx, opts...)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetAllReplicatorsOptions]) []client.Replicator); ok {
-		r0 = returnFunc(ctx, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.Replicator)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.GetAllReplicatorsOptions]) error); ok {
-		r1 = returnFunc(ctx, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Txn_GetAllReplicators_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllReplicators'
-type Txn_GetAllReplicators_Call struct {
-	*mock.Call
-}
-
-// GetAllReplicators is a helper method to define mock.On call
-//   - ctx context.Context
-//   - opts ...options.Lister[options.GetAllReplicatorsOptions]
-func (_e *Txn_Expecter) GetAllReplicators(ctx interface{}, opts ...interface{}) *Txn_GetAllReplicators_Call {
-	return &Txn_GetAllReplicators_Call{Call: _e.mock.On("GetAllReplicators",
-		append([]interface{}{ctx}, opts...)...)}
-}
-
-func (_c *Txn_GetAllReplicators_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.GetAllReplicatorsOptions])) *Txn_GetAllReplicators_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []options.Lister[options.GetAllReplicatorsOptions]
-		var variadicArgs []options.Lister[options.GetAllReplicatorsOptions]
-		if len(args) > 1 {
-			variadicArgs = args[1].([]options.Lister[options.GetAllReplicatorsOptions])
-		}
-		arg1 = variadicArgs
-		run(
-			arg0,
-			arg1...,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_GetAllReplicators_Call) Return(replicators []client.Replicator, err error) *Txn_GetAllReplicators_Call {
-	_c.Call.Return(replicators, err)
-	return _c
-}
-
-func (_c *Txn_GetAllReplicators_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.GetAllReplicatorsOptions]) ([]client.Replicator, error)) *Txn_GetAllReplicators_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetCollectionByName provides a mock function for the type Txn
 func (_mock *Txn) GetCollectionByName(ctx context.Context, name client.CollectionName, opts ...options.Lister[options.GetCollectionByNameOptions]) (client.Collection, error) {
 	var tmpRet mock.Arguments
@@ -2328,6 +2329,83 @@ func (_c *Txn_ListP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, 
 	return _c
 }
 
+// ListReplicators provides a mock function for the type Txn
+func (_mock *Txn) ListReplicators(ctx context.Context, opts ...options.Lister[options.ListReplicatorsOptions]) ([]client.Replicator, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListReplicators")
+	}
+
+	var r0 []client.Replicator
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ListReplicatorsOptions]) ([]client.Replicator, error)); ok {
+		return returnFunc(ctx, opts...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ListReplicatorsOptions]) []client.Replicator); ok {
+		r0 = returnFunc(ctx, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.Replicator)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.ListReplicatorsOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_ListReplicators_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListReplicators'
+type Txn_ListReplicators_Call struct {
+	*mock.Call
+}
+
+// ListReplicators is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts ...options.Lister[options.ListReplicatorsOptions]
+func (_e *Txn_Expecter) ListReplicators(ctx interface{}, opts ...interface{}) *Txn_ListReplicators_Call {
+	return &Txn_ListReplicators_Call{Call: _e.mock.On("ListReplicators",
+		append([]interface{}{ctx}, opts...)...)}
+}
+
+func (_c *Txn_ListReplicators_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.ListReplicatorsOptions])) *Txn_ListReplicators_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []options.Lister[options.ListReplicatorsOptions]
+		var variadicArgs []options.Lister[options.ListReplicatorsOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.ListReplicatorsOptions])
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_ListReplicators_Call) Return(replicators []client.Replicator, err error) *Txn_ListReplicators_Call {
+	_c.Call.Return(replicators, err)
+	return _c
+}
+
+func (_c *Txn_ListReplicators_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.ListReplicatorsOptions]) ([]client.Replicator, error)) *Txn_ListReplicators_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PatchCollection provides a mock function for the type Txn
 func (_mock *Txn) PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens], opts ...options.Lister[options.PatchCollectionOptions]) error {
 	var tmpRet mock.Arguments
@@ -2778,84 +2856,6 @@ func (_c *Txn_SetMigration_Call) Return(s string, err error) *Txn_SetMigration_C
 }
 
 func (_c *Txn_SetMigration_Call) RunAndReturn(run func(ctx context.Context, config client.LensConfig) (string, error)) *Txn_SetMigration_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SetReplicator provides a mock function for the type Txn
-func (_mock *Txn) SetReplicator(ctx context.Context, addresses []string, collectionNames []string, opts ...options.Lister[options.SetReplicatorOptions]) error {
-	var tmpRet mock.Arguments
-	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, addresses, collectionNames, opts)
-	} else {
-		tmpRet = _mock.Called(ctx, addresses, collectionNames)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetReplicator")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, []string, ...options.Lister[options.SetReplicatorOptions]) error); ok {
-		r0 = returnFunc(ctx, addresses, collectionNames, opts...)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Txn_SetReplicator_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetReplicator'
-type Txn_SetReplicator_Call struct {
-	*mock.Call
-}
-
-// SetReplicator is a helper method to define mock.On call
-//   - ctx context.Context
-//   - addresses []string
-//   - collectionNames []string
-//   - opts ...options.Lister[options.SetReplicatorOptions]
-func (_e *Txn_Expecter) SetReplicator(ctx interface{}, addresses interface{}, collectionNames interface{}, opts ...interface{}) *Txn_SetReplicator_Call {
-	return &Txn_SetReplicator_Call{Call: _e.mock.On("SetReplicator",
-		append([]interface{}{ctx, addresses, collectionNames}, opts...)...)}
-}
-
-func (_c *Txn_SetReplicator_Call) Run(run func(ctx context.Context, addresses []string, collectionNames []string, opts ...options.Lister[options.SetReplicatorOptions])) *Txn_SetReplicator_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []string
-		if args[1] != nil {
-			arg1 = args[1].([]string)
-		}
-		var arg2 []string
-		if args[2] != nil {
-			arg2 = args[2].([]string)
-		}
-		var arg3 []options.Lister[options.SetReplicatorOptions]
-		var variadicArgs []options.Lister[options.SetReplicatorOptions]
-		if len(args) > 3 {
-			variadicArgs = args[3].([]options.Lister[options.SetReplicatorOptions])
-		}
-		arg3 = variadicArgs
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3...,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_SetReplicator_Call) Return(err error) *Txn_SetReplicator_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Txn_SetReplicator_Call) RunAndReturn(run func(ctx context.Context, addresses []string, collectionNames []string, opts ...options.Lister[options.SetReplicatorOptions]) error) *Txn_SetReplicator_Call {
 	_c.Call.Return(run)
 	return _c
 }

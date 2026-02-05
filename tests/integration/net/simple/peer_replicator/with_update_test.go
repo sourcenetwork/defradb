@@ -50,7 +50,7 @@ func TestP2PPeerReplicatorWithUpdate(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},

@@ -56,11 +56,11 @@ func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
 	panic("not implemented")
 }
 
-func (w *Wrapper) SetReplicator(
+func (w *Wrapper) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
 	collectionNames []string,
-	opts ...*options.SetReplicatorOptions,
+	opts ...*options.CreateReplicatorOptions,
 ) error {
 	panic("not implemented")
 }
@@ -74,9 +74,9 @@ func (w *Wrapper) DeleteReplicator(
 	panic("not implemented")
 }
 
-func (w *Wrapper) GetAllReplicators(
+func (w *Wrapper) ListReplicators(
 	ctx context.Context,
-	opts ...*options.GetAllReplicatorsOptions,
+	opts ...*options.ListReplicatorsOptions,
 ) ([]client.Replicator, error) {
 	panic("not implemented")
 }

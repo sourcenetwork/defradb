@@ -50,37 +50,37 @@ func (b *ConnectOptionsBuilder) List() []func(*ConnectOptions) {
 	return b.Opts
 }
 
-// SetReplicatorOptions contains options for SetReplicator operation.
-type SetReplicatorOptions struct {
+// CreateReplicatorOptions contains options for SetReplicator operation.
+type CreateReplicatorOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *SetReplicatorOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *CreateReplicatorOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// SetReplicatorOptionsBuilder is a builder for SetReplicatorOptions.
-type SetReplicatorOptionsBuilder struct {
-	Opts []func(*SetReplicatorOptions)
+// CreateReplicatorOptionsBuilder is a builder for SetReplicatorOptions.
+type CreateReplicatorOptionsBuilder struct {
+	Opts []func(*CreateReplicatorOptions)
 }
 
-// SetReplicator creates a new SetReplicatorOptionsBuilder instance.
-func SetReplicator() *SetReplicatorOptionsBuilder {
-	return &SetReplicatorOptionsBuilder{}
+// CreateReplicator creates a new SetReplicatorOptionsBuilder instance.
+func CreateReplicator() *CreateReplicatorOptionsBuilder {
+	return &CreateReplicatorOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *SetReplicatorOptionsBuilder) SetIdentity(id identity.Identity) *SetReplicatorOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *SetReplicatorOptions) {
+func (b *CreateReplicatorOptionsBuilder) SetIdentity(id identity.Identity) *CreateReplicatorOptionsBuilder {
+	b.Opts = append(b.Opts, func(opts *CreateReplicatorOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
 }
 
 // List returns the list of functional options.
-func (b *SetReplicatorOptionsBuilder) List() []func(*SetReplicatorOptions) {
+func (b *CreateReplicatorOptionsBuilder) List() []func(*CreateReplicatorOptions) {
 	return b.Opts
 }
 
@@ -118,37 +118,37 @@ func (b *DeleteReplicatorOptionsBuilder) List() []func(*DeleteReplicatorOptions)
 	return b.Opts
 }
 
-// GetAllReplicatorsOptions contains options for GetAllReplicators operation.
-type GetAllReplicatorsOptions struct {
+// ListReplicatorsOptions contains options for GetAllReplicators operation.
+type ListReplicatorsOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *GetAllReplicatorsOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *ListReplicatorsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// GetAllReplicatorsOptionsBuilder is a builder for GetAllReplicatorsOptions.
-type GetAllReplicatorsOptionsBuilder struct {
-	Opts []func(*GetAllReplicatorsOptions)
+// ListReplicatorsOptionsBuilder is a builder for GetAllReplicatorsOptions.
+type ListReplicatorsOptionsBuilder struct {
+	Opts []func(*ListReplicatorsOptions)
 }
 
-// GetAllReplicators creates a new GetAllReplicatorsOptionsBuilder instance.
-func GetAllReplicators() *GetAllReplicatorsOptionsBuilder {
-	return &GetAllReplicatorsOptionsBuilder{}
+// ListReplicators creates a new GetAllReplicatorsOptionsBuilder instance.
+func ListReplicators() *ListReplicatorsOptionsBuilder {
+	return &ListReplicatorsOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *GetAllReplicatorsOptionsBuilder) SetIdentity(id identity.Identity) *GetAllReplicatorsOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *GetAllReplicatorsOptions) {
+func (b *ListReplicatorsOptionsBuilder) SetIdentity(id identity.Identity) *ListReplicatorsOptionsBuilder {
+	b.Opts = append(b.Opts, func(opts *ListReplicatorsOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
 }
 
 // List returns the list of functional options.
-func (b *GetAllReplicatorsOptionsBuilder) List() []func(*GetAllReplicatorsOptions) {
+func (b *ListReplicatorsOptionsBuilder) List() []func(*ListReplicatorsOptions) {
 	return b.Opts
 }
 
