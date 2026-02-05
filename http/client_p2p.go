@@ -68,7 +68,11 @@ func (c *Client) ActivePeers(ctx context.Context) ([]string, error) {
 	return res, nil
 }
 
-func (c *Client) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
+func (c *Client) Connect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Lister[options.ConnectOptions],
+) error {
 	opt := utils.NewOptions(opts...)
 	ctx = utils.WithOptIdentity(ctx, opt)
 

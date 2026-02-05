@@ -60,7 +60,11 @@ type Store interface {
 	// validation fails.
 	//
 	// Note: A policy can not be added without the creatorID (identity).
-	AddDACPolicy(ctx context.Context, policy string, opts ...options.Lister[options.AddDACPolicyOptions]) (AddPolicyResult, error)
+	AddDACPolicy(
+		ctx context.Context,
+		policy string,
+		opts ...options.Lister[options.AddDACPolicyOptions],
+	) (AddPolicyResult, error)
 
 	// AddDACActorRelationship creates a relationship between document and the target actor.
 	//
@@ -174,7 +178,11 @@ type Store interface {
 	//
 	// All schema types provided must not exist prior to calling this, and they may not reference existing
 	// types previously defined.
-	AddSchema(ctx context.Context, sdl string, opts ...options.Lister[options.AddSchemaOptions]) ([]CollectionVersion, error)
+	AddSchema(
+		ctx context.Context,
+		sdl string,
+		opts ...options.Lister[options.AddSchemaOptions],
+	) ([]CollectionVersion, error)
 
 	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 	// present in the database.

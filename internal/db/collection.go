@@ -475,7 +475,10 @@ func (c *collection) create(
 	return c.registerDocWithACP(ctx, doc.ID().String())
 }
 
-func setContextDocEncryption(ctx context.Context, opts []options.Lister[options.CollectionCreateOptions]) context.Context {
+func setContextDocEncryption(
+	ctx context.Context,
+	opts []options.Lister[options.CollectionCreateOptions],
+) context.Context {
 	opt := utils.NewOptions(opts...)
 	if !opt.EncryptDoc && len(opt.EncryptedFields) == 0 {
 		return ctx

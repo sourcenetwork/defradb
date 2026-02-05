@@ -254,7 +254,9 @@ func CollectionUpdateWithFilter() *CollectionUpdateWithFilterOptionsBuilder {
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionUpdateWithFilterOptionsBuilder) SetIdentity(id identity.Identity) *CollectionUpdateWithFilterOptionsBuilder {
+func (b *CollectionUpdateWithFilterOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *CollectionUpdateWithFilterOptionsBuilder {
 	b.Opts = append(b.Opts, func(opts *CollectionUpdateWithFilterOptions) {
 		opts.Identity = immutable.Some(id)
 	})
@@ -288,7 +290,9 @@ func CollectionDeleteWithFilter() *CollectionDeleteWithFilterOptionsBuilder {
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *CollectionDeleteWithFilterOptionsBuilder) SetIdentity(id identity.Identity) *CollectionDeleteWithFilterOptionsBuilder {
+func (b *CollectionDeleteWithFilterOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *CollectionDeleteWithFilterOptionsBuilder {
 	b.Opts = append(b.Opts, func(opts *CollectionDeleteWithFilterOptions) {
 		opts.Identity = immutable.Some(id)
 	})

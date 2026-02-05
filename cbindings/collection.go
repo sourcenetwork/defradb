@@ -36,7 +36,9 @@ type docIDResult struct {
 
 // parseCollectionOptionsToGetCollectionsOptions is a helper function that converts
 // a C.CollectionOptions struct into a GetCollectionsOptions
-func parseCollectionOptionsToGetCollectionsOptions(opts C.CollectionOptions) options.Lister[options.GetCollectionsOptions] {
+func parseCollectionOptionsToGetCollectionsOptions(
+	opts C.CollectionOptions,
+) options.Lister[options.GetCollectionsOptions] {
 	versionID := C.GoString(opts.version)
 	collectionID := C.GoString(opts.collectionID)
 	name := C.GoString(opts.name)

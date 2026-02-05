@@ -397,7 +397,10 @@ func (txn *Txn) DeleteP2PDocuments(
 	return txn.db.DeleteP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (txn *Txn) ListP2PDocuments(ctx context.Context, opts ...options.Lister[options.ListP2PDocumentsOptions]) ([]string, error) {
+func (txn *Txn) ListP2PDocuments(
+	ctx context.Context,
+	opts ...options.Lister[options.ListP2PDocumentsOptions],
+) ([]string, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ListP2PDocuments(ctx, opts...)
 }

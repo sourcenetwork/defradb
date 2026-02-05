@@ -60,26 +60,45 @@ type P2P interface {
 	// CreateP2PCollections creates the given collections to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// collection names are invalid.
-	CreateP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Lister[options.CreateP2PCollectionsOptions]) error
+	CreateP2PCollections(
+		ctx context.Context,
+		collectionNames []string,
+		opts ...options.Lister[options.CreateP2PCollectionsOptions],
+	) error
 
 	// DeleteP2PCollections deletes the given collections from the P2P system and
 	// unsubscribes from their topics. It will error if the provided
 	// collection names are invalid.
-	DeleteP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Lister[options.DeleteP2PCollectionsOptions]) error
+	DeleteP2PCollections(
+		ctx context.Context,
+		collectionNames []string,
+		opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+	) error
 
 	// ListP2PCollections returns the list of persisted collection names that
 	// the P2P system subscribes to.
-	ListP2PCollections(ctx context.Context, opts ...options.Lister[options.ListP2PCollectionsOptions]) ([]string, error)
+	ListP2PCollections(
+		ctx context.Context,
+		opts ...options.Lister[options.ListP2PCollectionsOptions],
+	) ([]string, error)
 
 	// CreateP2PDocuments creates the given docIDs to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// docIDs are invalid.
-	CreateP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Lister[options.CreateP2PDocumentsOptions]) error
+	CreateP2PDocuments(
+		ctx context.Context,
+		docIDs []string,
+		opts ...options.Lister[options.CreateP2PDocumentsOptions],
+	) error
 
 	// DeleteP2PDocuments removes the given docIDs from the P2P system and
 	// unsubscribes from their topics. It will error if the provided
 	// docIDs are invalid.
-	DeleteP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Lister[options.DeleteP2PDocumentsOptions]) error
+	DeleteP2PDocuments(
+		ctx context.Context,
+		docIDs []string,
+		opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+	) error
 
 	// ListP2PDocuments returns the list of persisted docIDs that
 	// the P2P system subscribes to.

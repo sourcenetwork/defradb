@@ -74,7 +74,9 @@ func AddDACActorRelationship() *AddDACActorRelationshipOptionsBuilder {
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *AddDACActorRelationshipOptionsBuilder) SetIdentity(id identity.Identity) *AddDACActorRelationshipOptionsBuilder {
+func (b *AddDACActorRelationshipOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *AddDACActorRelationshipOptionsBuilder {
 	b.Opts = append(b.Opts, func(opts *AddDACActorRelationshipOptions) {
 		opts.Identity = immutable.Some(id)
 	})
@@ -108,7 +110,9 @@ func DeleteDACActorRelationship() *DeleteDACActorRelationshipOptionsBuilder {
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *DeleteDACActorRelationshipOptionsBuilder) SetIdentity(id identity.Identity) *DeleteDACActorRelationshipOptionsBuilder {
+func (b *DeleteDACActorRelationshipOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *DeleteDACActorRelationshipOptionsBuilder {
 	b.Opts = append(b.Opts, func(opts *DeleteDACActorRelationshipOptions) {
 		opts.Identity = immutable.Some(id)
 	})
@@ -142,7 +146,9 @@ func AddNACActorRelationship() *AddNACActorRelationshipOptionsBuilder {
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *AddNACActorRelationshipOptionsBuilder) SetIdentity(id identity.Identity) *AddNACActorRelationshipOptionsBuilder {
+func (b *AddNACActorRelationshipOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *AddNACActorRelationshipOptionsBuilder {
 	b.Opts = append(b.Opts, func(opts *AddNACActorRelationshipOptions) {
 		opts.Identity = immutable.Some(id)
 	})
@@ -176,7 +182,9 @@ func DeleteNACActorRelationship() *DeleteNACActorRelationshipOptionsBuilder {
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *DeleteNACActorRelationshipOptionsBuilder) SetIdentity(id identity.Identity) *DeleteNACActorRelationshipOptionsBuilder {
+func (b *DeleteNACActorRelationshipOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *DeleteNACActorRelationshipOptionsBuilder {
 	b.Opts = append(b.Opts, func(opts *DeleteNACActorRelationshipOptions) {
 		opts.Identity = immutable.Some(id)
 	})
@@ -611,7 +619,9 @@ func SetActiveCollectionVersion() *SetActiveCollectionVersionOptionsBuilder {
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *SetActiveCollectionVersionOptionsBuilder) SetIdentity(id identity.Identity) *SetActiveCollectionVersionOptionsBuilder {
+func (b *SetActiveCollectionVersionOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *SetActiveCollectionVersionOptionsBuilder {
 	b.Opts = append(b.Opts, func(opts *SetActiveCollectionVersionOptions) {
 		opts.Identity = immutable.Some(id)
 	})

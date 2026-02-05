@@ -1001,7 +1001,11 @@ func (w *CWrapper) PrintDump(ctx context.Context) error {
 	panic("not implemented")
 }
 
-func (w *CWrapper) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
+func (w *CWrapper) Connect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Lister[options.ConnectOptions],
+) error {
 	cIdentity := identityFromOptions(opts)
 	cPeerAddresses := C.CString(strings.Join(addresses, ","))
 	defer C.free(unsafe.Pointer(cPeerAddresses))

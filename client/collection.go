@@ -104,7 +104,10 @@ type Collection interface {
 	) (*Document, error)
 
 	// GetAllDocIDs returns all the document IDs that exist in the collection.
-	GetAllDocIDs(ctx context.Context, opts ...options.Lister[options.CollectionGetAllDocIDsOptions]) (<-chan DocIDResult, error)
+	GetAllDocIDs(
+		ctx context.Context,
+		opts ...options.Lister[options.CollectionGetAllDocIDsOptions],
+	) (<-chan DocIDResult, error)
 
 	// CreateIndex creates a new index on the collection.
 	// `IndexDescription` contains the description of the index to be created.
@@ -112,13 +115,20 @@ type Collection interface {
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
 	// WARNING: This method can not create index for a collection that has a policy.
-	CreateIndex(context.Context, IndexCreateRequest, ...options.Lister[options.CollectionCreateIndexOptions]) (IndexDescription, error)
+	CreateIndex(
+		context.Context,
+		IndexCreateRequest,
+		...options.Lister[options.CollectionCreateIndexOptions],
+	) (IndexDescription, error)
 
 	// DropIndex drops an index from the collection.
 	DropIndex(ctx context.Context, indexName string, opts ...options.Lister[options.CollectionDropIndexOptions]) error
 
 	// GetIndexes returns all the indexes that exist on the collection.
-	GetIndexes(ctx context.Context, opts ...options.Lister[options.CollectionGetIndexesOptions]) ([]IndexDescription, error)
+	GetIndexes(
+		ctx context.Context,
+		opts ...options.Lister[options.CollectionGetIndexesOptions],
+	) ([]IndexDescription, error)
 
 	// CreateEncryptedIndex creates a new encrypted index on the collection.
 	CreateEncryptedIndex(context.Context, EncryptedIndexDescription) (EncryptedIndexDescription, error)
