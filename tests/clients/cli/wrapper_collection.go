@@ -20,9 +20,9 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // appendIdentityArg extracts identity from an immutable.Option and appends --identity flag to args

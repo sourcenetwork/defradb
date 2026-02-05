@@ -29,9 +29,9 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // unmarshalResult is a helper function that unmarshals JSON string into another type

@@ -21,9 +21,9 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/planner"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // UpdateWithFilter updates using a filter to target documents for update.

@@ -17,8 +17,8 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.P2P = (*DB)(nil)

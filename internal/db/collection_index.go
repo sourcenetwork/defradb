@@ -23,7 +23,6 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -33,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // getAllIndexDescriptions returns all the index descriptions in the database.
