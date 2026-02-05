@@ -106,6 +106,9 @@ func (w *Wrapper) Connect(
 
 	args = append(args, strings.Join(addresses, ","))
 
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
@@ -120,6 +123,9 @@ func (w *Wrapper) SetReplicator(
 	args = append(args, "--collection", strings.Join(collections, ","))
 
 	args = append(args, strings.Join(addresses, ","))
+
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
 	return err
@@ -136,6 +142,9 @@ func (w *Wrapper) DeleteReplicator(
 
 	args = append(args, id)
 
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
@@ -145,6 +154,9 @@ func (w *Wrapper) GetAllReplicators(
 	opts ...options.Lister[options.GetAllReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	args := []string{"client", "p2p", "replicator", "getall"}
+
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -165,6 +177,9 @@ func (w *Wrapper) CreateP2PCollections(
 	args := []string{"client", "p2p", "collection", "create"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
@@ -177,6 +192,9 @@ func (w *Wrapper) DeleteP2PCollections(
 	args := []string{"client", "p2p", "collection", "delete"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
@@ -186,6 +204,9 @@ func (w *Wrapper) ListP2PCollections(
 	opts ...options.Lister[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	args := []string{"client", "p2p", "collection", "list"}
+
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -206,6 +227,9 @@ func (w *Wrapper) CreateP2PDocuments(
 	args := []string{"client", "p2p", "document", "create"}
 	args = append(args, strings.Join(docIDs, ","))
 
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
@@ -218,6 +242,9 @@ func (w *Wrapper) DeleteP2PDocuments(
 	args := []string{"client", "p2p", "document", "delete"}
 	args = append(args, strings.Join(docIDs, ","))
 
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
@@ -227,6 +254,9 @@ func (w *Wrapper) ListP2PDocuments(
 	opts ...options.Lister[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
 	args := []string{"client", "p2p", "document", "list"}
+
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -318,6 +348,9 @@ func (w *Wrapper) AddSchema(
 	args := []string{"client", "schema", "add"}
 	args = append(args, schema)
 
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
 		return nil, err
@@ -346,6 +379,9 @@ func (w *Wrapper) PatchCollection(
 		args = append(args, string(lenses))
 	}
 
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }
@@ -357,6 +393,9 @@ func (w *Wrapper) SetActiveCollectionVersion(
 ) error {
 	args := []string{"client", "collection", "set-active"}
 	args = append(args, collectionVersionID)
+
+	opt := options.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
 	return err

@@ -98,6 +98,9 @@ func (a *GetCollections) Execute() {
 		ctx = getContextWithIdentity(ctx, a.s, a.Identity, nodeID)
 
 		opts := a.FilterOptions
+		if opts == nil {
+			opts = options.GetCollections()
+		}
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
