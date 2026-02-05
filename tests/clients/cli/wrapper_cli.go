@@ -58,7 +58,7 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 
 	tx, ok := datastore.CtxTryGetClientTxn(ctx)
 	if ok {
-		id := tx.(interface{ TokenID() string }).TokenID()
+		id := tx.(interface{ TokenID() string }).TokenID() //nolint:forcetypeassert
 		args = append(args, "--tx", id)
 	}
 	id := identity.FromContext(ctx)
