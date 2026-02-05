@@ -19,7 +19,7 @@ import (
 func MakeP2PReplicatorSetCommand(ctx context.Context) *cobra.Command {
 	var collections []string
 	var cmd = &cobra.Command{
-		Use:   "set [-c, --collection] <addresses...>",
+		Use:   "set <addresses...>",
 		Short: "Add replicator(s) and start synchronization",
 		Long: `Add replicator(s) and start synchronization.
 A replicator synchronizes one or all collection(s) from this instance to another.`,
