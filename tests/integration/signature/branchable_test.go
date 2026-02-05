@@ -28,11 +28,11 @@ func TestSignature_WithBranchableCollection_ShouldSignCollectionBlocks(t *testin
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// C bindings do not support calling functions with non-Secp256k key yet
 			state.GoClientType,
 			state.CLIClientType,
 			state.HTTPClientType,
 			state.JSClientType,
+			state.RustFFIClientType,
 		}),
 		Actions: []any{
 			&action.AddCollection{
