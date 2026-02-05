@@ -345,8 +345,8 @@ func performAction(
 	case ConnectPeers:
 		connectPeers(s, action)
 
-	case ConfigureReplicator:
-		configureReplicator(s, action)
+	case CreateReplicator:
+		createReplicator(s, action)
 
 	case DeleteReplicator:
 		deleteReplicator(s, action)

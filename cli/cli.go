@@ -52,8 +52,8 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 
 	p2p_replicator := MakeP2PReplicatorCommand(ctx)
 	p2p_replicator.AddCommand(
-		MakeP2PReplicatorGetAllCommand(ctx),
-		MakeP2PReplicatorSetCommand(ctx),
+		MakeP2PReplicatorListCommand(ctx),
+		MakeP2PReplicatorCreateCommand(ctx),
 		MakeP2PReplicatorDeleteCommand(ctx),
 	)
 

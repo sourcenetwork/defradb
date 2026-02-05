@@ -44,7 +44,7 @@ func TestP2PPeerReplicatorWithCreate_PCounter_NoError(t *testing.T) {
 					"points": 0
 				}`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
@@ -150,7 +150,7 @@ func TestP2PPeerReplicatorWithUpdate_PCounter_NoError(t *testing.T) {
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},

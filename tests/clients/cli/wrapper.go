@@ -105,8 +105,8 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
 	return err
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
-	args := []string{"client", "p2p", "replicator", "set"}
+func (w *Wrapper) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
+	args := []string{"client", "p2p", "replicator", "create"}
 	args = append(args, "--collection", strings.Join(collections, ","))
 
 	args = append(args, strings.Join(addresses, ","))
@@ -125,8 +125,8 @@ func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections .
 	return err
 }
 
-func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	args := []string{"client", "p2p", "replicator", "getall"}
+func (w *Wrapper) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
+	args := []string{"client", "p2p", "replicator", "list"}
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {

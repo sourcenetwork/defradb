@@ -44,8 +44,8 @@ extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
 extern Result P2PInfo(uintptr_t nodePtr);
 extern Result P2PActivePeers(uintptr_t nodePtr, uintptr_t identity);
-extern Result P2PgetAllReplicators(uintptr_t nodePtr, uintptr_t identity);
-extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
+extern Result P2PlistReplicators(uintptr_t nodePtr, uintptr_t identity);
+extern Result P2PcreateReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
 extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
 extern Result P2PcollectionCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
@@ -141,7 +141,7 @@ func (w *CWrapper) ActivePeers(ctx context.Context) ([]string, error) {
 	return peers, nil
 }
 
-func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (w *CWrapper) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
 	addrStr := C.CString(strings.Join(addresses, ","))
 	colStr := C.CString(strings.Join(collections, ","))
 	cIdentity := identityFromContext(ctx)
@@ -149,7 +149,7 @@ func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collec
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PsetReplicator(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PcreateReplicator(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -173,10 +173,10 @@ func (w *CWrapper) DeleteReplicator(ctx context.Context, id string, collections 
 	return nil
 }
 
-func (w *CWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (w *CWrapper) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
 	cIdentity := identityFromContext(ctx)
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PgetAllReplicators(C.uintptr_t(w.handle), cIdentity))
+	res := ConvertAndFreeCResult(C.P2PlistReplicators(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

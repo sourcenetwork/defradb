@@ -288,9 +288,9 @@ func (txn *Txn) Connect(ctx context.Context, addresses []string) error {
 	return txn.db.Connect(ctx, addresses)
 }
 
-func (txn *Txn) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
+func (txn *Txn) CreateReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.SetReplicator(ctx, addresses, collectionNames...)
+	return txn.db.CreateReplicator(ctx, addresses, collectionNames...)
 }
 
 func (txn *Txn) DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error {
@@ -298,9 +298,9 @@ func (txn *Txn) DeleteReplicator(ctx context.Context, id string, collectionNames
 	return txn.db.DeleteReplicator(ctx, id, collectionNames...)
 }
 
-func (txn *Txn) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (txn *Txn) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllReplicators(ctx)
+	return txn.db.ListReplicators(ctx)
 }
 
 func (txn *Txn) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {

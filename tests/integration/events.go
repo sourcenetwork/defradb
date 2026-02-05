@@ -33,7 +33,7 @@ const eventTimeout = 1 * time.Second
 // replicator completed event on the local event bus.
 //
 // Expected document heads will be updated for the targeted node.
-func waitForReplicatorConfigureEvent(s *state.State, cfg ConfigureReplicator) {
+func waitForReplicatorConfigureEvent(s *state.State, cfg CreateReplicator) {
 	select {
 	case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
 		if !ok {

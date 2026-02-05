@@ -45,9 +45,9 @@ func (db *DB) Connect(ctx context.Context, addresses []string) error {
 	return db.p2p.Connect(ctx, addresses)
 }
 
-// SetReplicator adds a replicator to the persisted list or adds
+// CreateReplicator adds a replicator to the persisted list or adds
 // schemas if the replicator already exists.
-func (db *DB) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
+func (db *DB) CreateReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PReplicatorCreatePerm); err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func (db *DB) SetReplicator(ctx context.Context, addresses []string, collectionN
 	}
 	defer txn.Discard()
 
-	err = db.p2p.SetReplicator(ctx, addresses, collectionNames...)
+	err = db.p2p.CreateReplicator(ctx, addresses, collectionNames...)
 	if err != nil {
 		return err
 	}
@@ -93,9 +93,9 @@ func (db *DB) DeleteReplicator(ctx context.Context, id string, collectionNames .
 	return txn.Commit()
 }
 
-// GetAllReplicators returns the full list of replicators with their
+// ListReplicators returns the full list of replicators with their
 // subscribed schemas.
-func (db *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (db *DB) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
 	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PReplicatorListPerm); err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (db *DB) GetAllReplicators(ctx context.Context) ([]client.Replicator, error
 		return nil, err
 	}
 	defer txn.Discard()
-	return db.p2p.GetAllReplicators(ctx)
+	return db.p2p.ListReplicators(ctx)
 }
 
 func (db *DB) ActivePeers(ctx context.Context) ([]string, error) {

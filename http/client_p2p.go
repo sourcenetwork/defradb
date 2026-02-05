@@ -22,8 +22,8 @@ import (
 
 var _ client.P2P = (*Client)(nil)
 
-// SetReplicatorParams contains the replicator fields that can be modified by the user.
-type SetReplicatorParams struct {
+// CreateReplicatorParams contains the replicator fields that can be modified by the user.
+type CreateReplicatorParams struct {
 	// Addresses list of peer addresses.
 	Addresses []string
 	// Collections is the list of collection names to replicate.
@@ -81,10 +81,10 @@ func (c *Client) Connect(ctx context.Context, addresses []string) error {
 	return err
 }
 
-func (c *Client) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (c *Client) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(SetReplicatorParams{
+	body, err := json.Marshal(CreateReplicatorParams{
 		Addresses:   addresses,
 		Collections: collections,
 	})
@@ -117,7 +117,7 @@ func (c *Client) DeleteReplicator(ctx context.Context, id string, collections ..
 	return err
 }
 
-func (c *Client) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (c *Client) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
