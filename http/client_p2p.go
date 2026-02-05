@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.P2P = (*Client)(nil)
@@ -68,8 +69,8 @@ func (c *Client) ActivePeers(ctx context.Context) ([]string, error) {
 }
 
 func (c *Client) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "connect")
 
@@ -91,8 +92,8 @@ func (c *Client) SetReplicator(
 	collections []string,
 	opts ...options.Lister[options.SetReplicatorOptions],
 ) error {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
@@ -117,8 +118,8 @@ func (c *Client) DeleteReplicator(
 	collections []string,
 	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
@@ -141,8 +142,8 @@ func (c *Client) GetAllReplicators(
 	ctx context.Context,
 	opts ...options.Lister[options.GetAllReplicatorsOptions],
 ) ([]client.Replicator, error) {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
@@ -217,8 +218,8 @@ func (c *Client) CreateP2PDocuments(
 	docIDs []string,
 	opts ...options.Lister[options.CreateP2PDocumentsOptions],
 ) error {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
@@ -239,8 +240,8 @@ func (c *Client) DeleteP2PDocuments(
 	docIDs []string,
 	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
 ) error {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
@@ -260,8 +261,8 @@ func (c *Client) ListP2PDocuments(
 	ctx context.Context,
 	opts ...options.Lister[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 

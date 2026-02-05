@@ -22,6 +22,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -91,7 +92,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 		return nil, ErrCollectionNameEmpty
 	}
 
-	cols, err := db.getCollections(ctx, options.NewOptions(options.GetCollections().SetCollectionName(name)))
+	cols, err := db.getCollections(ctx, utils.NewOptions(options.GetCollections().SetCollectionName(name)))
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +214,7 @@ func (c *collection) GetAllDocIDs(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
@@ -338,7 +339,7 @@ func (c *collection) Create(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
@@ -368,7 +369,7 @@ func (c *collection) CreateMany(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
@@ -475,7 +476,7 @@ func (c *collection) create(
 }
 
 func setContextDocEncryption(ctx context.Context, opts []options.Lister[options.CollectionCreateOptions]) context.Context {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	if !opt.EncryptDoc && len(opt.EncryptedFields) == 0 {
 		return ctx
 	}
@@ -494,7 +495,7 @@ func (c *collection) Update(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
@@ -574,7 +575,7 @@ func (c *collection) Save(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
@@ -604,7 +605,7 @@ func (c *collection) Save(
 	if exists {
 		err = c.update(ctx, doc)
 	} else {
-		opt := options.NewOptions(opts...)
+		opt := utils.NewOptions(opts...)
 		createOpts :=
 			options.CollectionCreate().
 				SetEncryptDoc(opt.EncryptDoc).
@@ -825,7 +826,7 @@ func (c *collection) Delete(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentDeletePerm); err != nil {
 		return false, err
@@ -863,7 +864,7 @@ func (c *collection) Exists(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return false, err

@@ -19,6 +19,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 )
@@ -124,7 +125,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
-		cols, err = db.getCollections(ctx, options.NewOptions(options.GetCollections()))
+		cols, err = db.getCollections(ctx, utils.NewOptions(options.GetCollections()))
 		if err != nil {
 			return NewErrFailedToGetAllCollections(err)
 		}

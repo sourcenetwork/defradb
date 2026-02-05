@@ -8,9 +8,13 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-package options
+package utils
 
-import "reflect"
+import (
+	"reflect"
+
+	clientOptions "github.com/sourcenetwork/defradb/client/options"
+)
 
 // NewOptions merges multiple option builders into a single options struct.
 // It applies all functional options from all builders in the order they are provided.
@@ -24,7 +28,7 @@ import "reflect"
 //	    options.GetCollections().SetIdentity(id),
 //	    options.GetCollections().SetVersionID(vid),
 //	)
-func NewOptions[T any](opts ...Lister[T]) *T {
+func NewOptions[T any](opts ...clientOptions.Lister[T]) *T {
 	args := new(T)
 	for _, opt := range opts {
 		if opt == nil || reflect.ValueOf(opt).IsNil() {

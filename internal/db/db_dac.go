@@ -20,6 +20,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
@@ -58,7 +59,7 @@ func (db *DB) AddDACPolicy(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACPolicyAddPerm); err != nil {
 		return client.AddPolicyResult{}, err
@@ -91,7 +92,7 @@ func (db *DB) AddDACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACRelationAddPerm); err != nil {
 		return client.AddActorRelationshipResult{}, err
@@ -147,7 +148,7 @@ func (db *DB) DeleteDACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACRelationDeletePerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err

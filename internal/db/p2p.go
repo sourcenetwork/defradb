@@ -17,6 +17,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/event"
 )
 
@@ -40,7 +41,7 @@ func (db *DB) PeerInfo() ([]string, error) {
 
 // Connect tries to connect to the peer with the given [PeerInfo].
 func (db *DB) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PPeerConnectPerm); err != nil {
 		return err
@@ -57,7 +58,7 @@ func (db *DB) SetReplicator(
 	collectionNames []string,
 	opts ...options.Lister[options.SetReplicatorOptions],
 ) error {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PReplicatorCreatePerm); err != nil {
 		return err
@@ -92,7 +93,7 @@ func (db *DB) DeleteReplicator(
 	collectionNames []string,
 	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PReplicatorDeletePerm); err != nil {
 		return err
@@ -125,7 +126,7 @@ func (db *DB) GetAllReplicators(
 	ctx context.Context,
 	opts ...options.Lister[options.GetAllReplicatorsOptions],
 ) ([]client.Replicator, error) {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PReplicatorListPerm); err != nil {
 		return nil, err
@@ -158,7 +159,7 @@ func (db *DB) CreateP2PCollections(
 	collectionNames []string,
 	opts ...options.Lister[options.CreateP2PCollectionsOptions],
 ) error {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PCollectionCreatePerm); err != nil {
 		return err
@@ -189,7 +190,7 @@ func (db *DB) DeleteP2PCollections(
 	collectionNames []string,
 	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
 ) error {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PCollectionDeletePerm); err != nil {
 		return err
@@ -218,7 +219,7 @@ func (db *DB) ListP2PCollections(
 	ctx context.Context,
 	opts ...options.Lister[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PCollectionListPerm); err != nil {
 		return nil, err
@@ -244,7 +245,7 @@ func (db *DB) CreateP2PDocuments(
 	docIDs []string,
 	opts ...options.Lister[options.CreateP2PDocumentsOptions],
 ) error {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PDocumentCreatePerm); err != nil {
 		return err
@@ -275,7 +276,7 @@ func (db *DB) DeleteP2PDocuments(
 	docIDs []string,
 	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
 ) error {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PDocumentDeletePerm); err != nil {
 		return err
@@ -301,7 +302,7 @@ func (db *DB) DeleteP2PDocuments(
 // ListP2PDocuments returns the list of persisted docIDs that
 // the P2P system subscribes to.
 func (db *DB) ListP2PDocuments(ctx context.Context, opts ...options.Lister[options.ListP2PDocumentsOptions]) ([]string, error) {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PDocumentListPerm); err != nil {
 		return nil, err

@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/cli"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
@@ -106,7 +107,7 @@ func (w *Wrapper) Connect(
 
 	args = append(args, strings.Join(addresses, ","))
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -124,7 +125,7 @@ func (w *Wrapper) SetReplicator(
 
 	args = append(args, strings.Join(addresses, ","))
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -142,7 +143,7 @@ func (w *Wrapper) DeleteReplicator(
 
 	args = append(args, id)
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -155,7 +156,7 @@ func (w *Wrapper) GetAllReplicators(
 ) ([]client.Replicator, error) {
 	args := []string{"client", "p2p", "replicator", "getall"}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
@@ -177,7 +178,7 @@ func (w *Wrapper) CreateP2PCollections(
 	args := []string{"client", "p2p", "collection", "create"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -192,7 +193,7 @@ func (w *Wrapper) DeleteP2PCollections(
 	args := []string{"client", "p2p", "collection", "delete"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -205,7 +206,7 @@ func (w *Wrapper) ListP2PCollections(
 ) ([]string, error) {
 	args := []string{"client", "p2p", "collection", "list"}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
@@ -227,7 +228,7 @@ func (w *Wrapper) CreateP2PDocuments(
 	args := []string{"client", "p2p", "document", "create"}
 	args = append(args, strings.Join(docIDs, ","))
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -242,7 +243,7 @@ func (w *Wrapper) DeleteP2PDocuments(
 	args := []string{"client", "p2p", "document", "delete"}
 	args = append(args, strings.Join(docIDs, ","))
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -255,7 +256,7 @@ func (w *Wrapper) ListP2PDocuments(
 ) ([]string, error) {
 	args := []string{"client", "p2p", "document", "list"}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
@@ -348,7 +349,7 @@ func (w *Wrapper) AddSchema(
 	args := []string{"client", "schema", "add"}
 	args = append(args, schema)
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
@@ -379,7 +380,7 @@ func (w *Wrapper) PatchCollection(
 		args = append(args, string(lenses))
 	}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -394,7 +395,7 @@ func (w *Wrapper) SetActiveCollectionVersion(
 	args := []string{"client", "collection", "set-active"}
 	args = append(args, collectionVersionID)
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -428,7 +429,7 @@ func (w *Wrapper) AddView(
 
 func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
 	args := []string{"client", "view", "refresh"}
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
 		args = append(args, "--name", opt.CollectionName.Value())
 	}
@@ -524,7 +525,7 @@ func (w *Wrapper) GetCollections(
 	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
 		args = append(args, "--name", opt.CollectionName.Value())
 	}
@@ -595,7 +596,7 @@ func (w *Wrapper) ExecRequest(
 	args = append(args, query)
 
 	result := &client.RequestResult{}
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	if opt.OperationName.HasValue() {
 		args = append(args, "--operation", opt.OperationName.Value())
 	}

@@ -24,6 +24,8 @@ import (
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/internal/utils"
+
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
@@ -125,8 +127,8 @@ func (c *Client) AddSchema(
 	schema string,
 	opts ...options.Lister[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("schema")
 
@@ -152,8 +154,8 @@ func (c *Client) PatchCollection(
 	migration immutable.Option[model.Lens],
 	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("collections")
 
@@ -175,8 +177,8 @@ func (c *Client) SetActiveCollectionVersion(
 	collectionVersionID string,
 	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
 ) error {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("collections", "default")
 
@@ -224,7 +226,7 @@ func (c *Client) AddView(
 func (c *Client) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
 	methodURL := c.http.apiURL.JoinPath("view", "refresh")
 	params := url.Values{}
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
 		params.Add("name", opt.CollectionName.Value())
 	}
@@ -311,8 +313,8 @@ func (c *Client) GetCollectionByName(
 	name client.CollectionName,
 	opts ...options.Lister[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	cols, err := c.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
 	if err != nil {
@@ -331,8 +333,8 @@ func (c *Client) GetCollections(
 	ctx context.Context,
 	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
@@ -369,8 +371,8 @@ func (c *Client) GetAllIndexes(
 	ctx context.Context,
 	opts ...options.Lister[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("collections", "indexes")
 
@@ -406,8 +408,8 @@ func (c *Client) ExecRequest(
 	query string,
 	opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 	methodURL := c.http.apiURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
@@ -553,8 +555,8 @@ func (c *Client) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
-	opt := options.NewOptions(opts...)
-	ctx = withOptIdentity(ctx, opt)
+	opt := utils.NewOptions(opts...)
+	ctx = utils.WithOptIdentity(ctx, opt)
 
 	methodURL := c.http.apiURL.JoinPath("block", "verify-signature")
 

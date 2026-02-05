@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -34,7 +35,7 @@ func (c *collection) Truncate(ctx context.Context, opts ...options.Lister[option
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionTruncatePerm); err != nil {
 		return err

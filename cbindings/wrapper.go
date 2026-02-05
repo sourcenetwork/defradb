@@ -83,6 +83,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -692,7 +693,7 @@ func (w *CWrapper) AddView(
 }
 
 func (w *CWrapper) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
-	copts := getCollectionsOptionsToCOptions(options.NewOptions(opts...))
+	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))
 	defer C.free(unsafe.Pointer(copts.collectionID))
 	defer C.free(unsafe.Pointer(copts.name))
@@ -810,7 +811,7 @@ func (w *CWrapper) GetCollections(
 	ctx context.Context,
 	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	copts := getCollectionsOptionsToCOptions(options.NewOptions(opts...))
+	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
 	defer C.free(unsafe.Pointer(copts.version))
 	defer C.free(unsafe.Pointer(copts.collectionID))
 	defer C.free(unsafe.Pointer(copts.name))

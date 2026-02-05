@@ -21,6 +21,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // ExecRequest executes a request against the database.
@@ -31,7 +32,7 @@ func (db *DB) ExecRequest(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	if opt.Identity.HasValue() {
 		ctx = identity.WithContext(ctx, opt.Identity)
 	}
@@ -72,7 +73,7 @@ func (db *DB) GetCollectionByName(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
@@ -95,7 +96,7 @@ func (db *DB) GetCollections(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
@@ -118,7 +119,7 @@ func (db *DB) GetAllIndexes(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
@@ -162,7 +163,7 @@ func (db *DB) AddSchema(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return nil, err
@@ -206,7 +207,7 @@ func (db *DB) PatchCollection(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
@@ -234,7 +235,7 @@ func (db *DB) SetActiveCollectionVersion(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
@@ -351,7 +352,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Lister[options.R
 	}
 	defer txn.Discard()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	err = db.refreshViews(ctx, opt)
 	if err != nil {

@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -98,7 +99,7 @@ func (db *DB) addView(
 
 	for _, view := range returnDescriptions {
 		if view.Query.HasValue() && view.IsMaterialized {
-			err := db.refreshViews(ctx, options.NewOptions(options.GetCollections().SetVersionID(view.VersionID)))
+			err := db.refreshViews(ctx, utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID)))
 			if err != nil {
 				return nil, err
 			}

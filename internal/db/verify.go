@@ -20,6 +20,7 @@ import (
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -34,7 +35,7 @@ func (db *DB) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeSignatureVerifyPerm); err != nil {
 		return err

@@ -23,6 +23,7 @@ import (
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
@@ -79,7 +80,7 @@ func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.Re
 		return ErrNACIsAlreadyEnabled
 	}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	// User trying to re-enable a disabled nac state.
 	// Check if this request is authorized to re-enable node access control.
@@ -112,7 +113,7 @@ func (db *DB) DisableNAC(ctx context.Context, opts ...options.Lister[options.Dis
 		return ErrNACIsAlreadyDisabled
 	}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	// Check if this request is authorized to disable node access control.
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACDisablePerm); err != nil {
@@ -127,7 +128,7 @@ func (db *DB) GetNACStatus(ctx context.Context, opts ...options.Lister[options.G
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACStatusPerm); err != nil {
 		return client.NACStatusResult{}, err
@@ -147,7 +148,7 @@ func (db *DB) AddNACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationAddPerm); err != nil {
 		return client.AddActorRelationshipResult{}, err
@@ -165,7 +166,7 @@ func (db *DB) DeleteNACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationDeletePerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err

@@ -27,9 +27,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
@@ -49,7 +49,7 @@ func unmarshalResult[T any](value string) (T, error) {
 // If the options slice is empty or nil, returns 0.
 func identityFromOptions[T any, PT interface {
 	*T
-	options.OptionWithIdentity[PT]
+	utils.OptionWithIdentity[PT]
 }](opts []options.Lister[T]) C.uintptr_t {
 	if len(opts) == 0 {
 		return C.uintptr_t(0)
@@ -153,19 +153,6 @@ func optionToString[T any](opt immutable.Option[T]) (string, error) {
 		return "", err
 	}
 	return string(jsonBytes), nil
-}
-
-// stringFromLensOption is a helper function to extract a simple string
-func stringFromLensOption(opt immutable.Option[model.Lens]) (string, error) {
-	if !opt.HasValue() {
-		return "", nil
-	}
-	lens := opt.Value()
-	data, err := json.Marshal(lens)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
 }
 
 // stringFromImmutableOptionString is a helper function to extract a simple string

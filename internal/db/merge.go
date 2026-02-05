@@ -26,6 +26,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -502,7 +503,7 @@ func getCollectionFromCollectionID(ctx context.Context, db *DB, collectionID str
 
 	cols, err := db.getCollections(
 		ctx,
-		options.NewOptions(options.GetCollections().SetCollectionID(collectionID)),
+		utils.NewOptions(options.GetCollections().SetCollectionID(collectionID)),
 	)
 	if err != nil {
 		return nil, err

@@ -46,6 +46,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -232,7 +233,7 @@ func (c *Collection) Save(
 		return c.Update(ctx, doc)
 	}
 	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
-		saveOpt := options.NewOptions(opts...)
+		saveOpt := utils.NewOptions(opts...)
 		createOpts :=
 			options.CollectionCreate().
 				SetEncryptDoc(saveOpt.EncryptDoc).

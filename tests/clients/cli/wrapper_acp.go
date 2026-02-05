@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (w *Wrapper) AddDACPolicy(
@@ -26,7 +27,7 @@ func (w *Wrapper) AddDACPolicy(
 	args := []string{"client", "acp", "document", "policy", "add"}
 	args = append(args, policy)
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
@@ -58,7 +59,7 @@ func (w *Wrapper) AddDACActorRelationship(
 		"--actor", targetActor,
 	}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
@@ -90,7 +91,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 		"--actor", targetActor,
 	}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
@@ -112,7 +113,7 @@ func (w *Wrapper) GetNACStatus(
 ) (client.NACStatusResult, error) {
 	args := []string{"client", "acp", "node", "status"}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
@@ -134,7 +135,7 @@ func (w *Wrapper) ReEnableNAC(
 ) error {
 	args := []string{"client", "acp", "node", "re-enable"}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	if _, err := w.cmd.execute(ctx, args); err != nil {
@@ -149,7 +150,7 @@ func (w *Wrapper) DisableNAC(
 ) error {
 	args := []string{"client", "acp", "node", "disable"}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	if _, err := w.cmd.execute(ctx, args); err != nil {
@@ -170,7 +171,7 @@ func (w *Wrapper) AddNACActorRelationship(
 		"--actor", targetActor,
 	}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
@@ -198,7 +199,7 @@ func (w *Wrapper) DeleteNACActorRelationship(
 		"--actor", targetActor,
 	}
 
-	opt := options.NewOptions(opts...)
+	opt := utils.NewOptions(opts...)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)

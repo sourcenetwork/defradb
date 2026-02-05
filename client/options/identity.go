@@ -16,13 +16,6 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
-// OptionWithIdentity is an interface for options structs that provide identity access.
-// This is implemented by the options structs (not builders) to provide read access to the Identity field.
-type OptionWithIdentity[T any] interface {
-	// GetIdentity returns the identity associated with this option, if any.
-	GetIdentity() immutable.Option[identity.Identity]
-}
-
 // BuilderWithIdentity is an interface for option builders that can set identity.
 // T is the options type, B is the builder type (for fluent API support).
 type BuilderWithIdentity[T any, B any] interface {
