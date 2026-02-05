@@ -23,6 +23,17 @@ import (
 // with ASC order on a DESC index succeeds (reverse iteration supported).
 // Per Phase 10: Reverse direction cursor pagination is now supported.
 func TestCursorWithIndexDirection_DescIndexAscQuerySucceeds(t *testing.T) {
+	req := `query {
+		_cursor {
+			User(first: 3, order: {age: ASC}) {
+				name
+				age
+			}
+			_pageInfo {
+				hasNext
+			}
+		}
+	}`
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -37,17 +48,7 @@ func TestCursorWithIndexDirection_DescIndexAscQuerySucceeds(t *testing.T) {
 			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
 			&action.Request{
-				Request: `query {
-							_cursor {
-								User(first: 3, order: {age: ASC}) {
-									name
-									age
-								}
-								_pageInfo {
-									hasNext
-								}
-							}
-						}`,
+				Request: req,
 				Results: map[string]any{
 					"_cursor": map[string]any{
 						"User": []map[string]any{
@@ -61,6 +62,10 @@ func TestCursorWithIndexDirection_DescIndexAscQuerySucceeds(t *testing.T) {
 					},
 				},
 			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
+			},
 		},
 	}
 	testUtils.ExecuteTestCase(t, test)
@@ -70,6 +75,17 @@ func TestCursorWithIndexDirection_DescIndexAscQuerySucceeds(t *testing.T) {
 // with DESC order on an ASC index (default) succeeds (reverse iteration supported).
 // Per Phase 10: Reverse direction cursor pagination is now supported.
 func TestCursorWithIndexDirection_AscIndexDescQuerySucceeds(t *testing.T) {
+	req := `query {
+		_cursor {
+			User(first: 3, order: {age: DESC}) {
+				name
+				age
+			}
+			_pageInfo {
+				hasNext
+			}
+		}
+	}`
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -84,17 +100,7 @@ func TestCursorWithIndexDirection_AscIndexDescQuerySucceeds(t *testing.T) {
 			testUtils.CreateDoc{Doc: `{"name": "Andy", "age": 30}`},
 			testUtils.CreateDoc{Doc: `{"name": "Chris", "age": 35}`},
 			&action.Request{
-				Request: `query {
-							_cursor {
-								User(first: 3, order: {age: DESC}) {
-									name
-									age
-								}
-								_pageInfo {
-									hasNext
-								}
-							}
-						}`,
+				Request: req,
 				Results: map[string]any{
 					"_cursor": map[string]any{
 						"User": []map[string]any{
@@ -108,6 +114,10 @@ func TestCursorWithIndexDirection_AscIndexDescQuerySucceeds(t *testing.T) {
 					},
 				},
 			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
+			},
 		},
 	}
 	testUtils.ExecuteTestCase(t, test)
@@ -116,6 +126,17 @@ func TestCursorWithIndexDirection_AscIndexDescQuerySucceeds(t *testing.T) {
 // TestCursorWithIndexDirection_MatchingDirectionSucceeds verifies that a DESC order
 // query on a DESC index succeeds (matching direction works).
 func TestCursorWithIndexDirection_MatchingDirectionSucceeds(t *testing.T) {
+	req := `query {
+		_cursor {
+			User(first: 3, order: {age: DESC}) {
+				name
+				age
+			}
+			_pageInfo {
+				hasNext
+			}
+		}
+	}`
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -132,17 +153,7 @@ func TestCursorWithIndexDirection_MatchingDirectionSucceeds(t *testing.T) {
 			testUtils.CreateDoc{Doc: `{"name": "Fred", "age": 40}`},
 			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
 			&action.Request{
-				Request: `query {
-							_cursor {
-								User(first: 3, order: {age: DESC}) {
-									name
-									age
-								}
-								_pageInfo {
-									hasNext
-								}
-							}
-						}`,
+				Request: req,
 				Results: map[string]any{
 					"_cursor": map[string]any{
 						"User": []map[string]any{
@@ -155,6 +166,10 @@ func TestCursorWithIndexDirection_MatchingDirectionSucceeds(t *testing.T) {
 						},
 					},
 				},
+			},
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(4),
 			},
 		},
 	}
@@ -202,6 +217,18 @@ func TestCursorWithIndexDirection_CompositeIndexMismatch(t *testing.T) {
 // cursor pagination works correctly when querying DESC on an ASC index.
 // 5 documents, page size 2: page 1 (45, 40), page 2 (35, 30), page 3 (25).
 func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
+	req := `query {
+		_cursor {
+			User(first: 2, order: {age: DESC}) {
+				name
+				age
+			}
+			_pageInfo {
+				hasNext
+				endCursor
+			}
+		}
+	}`
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -219,18 +246,7 @@ func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
 			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
 			// Page 1: first 2 in DESC order
 			&action.Request{
-				Request: `query {
-					_cursor {
-						User(first: 2, order: {age: DESC}) {
-							name
-							age
-						}
-						_pageInfo {
-							hasNext
-							endCursor
-						}
-					}
-				}`,
+				Request: req,
 				Results: map[string]any{
 					"_cursor": map[string]any{
 						"User": []map[string]any{
@@ -243,6 +259,11 @@ func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
 						},
 					},
 				},
+			},
+			// Explain: verify page 1 uses index
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
 			},
 			// Page 2: next 2
 			&action.Request{
@@ -310,6 +331,18 @@ func TestCursorWithIndexDirection_AscIndexDescQueryMultiPage(t *testing.T) {
 // cursor pagination works correctly when querying ASC on a DESC index.
 // 5 documents, page size 2: page 1 (25, 30), page 2 (35, 40), page 3 (45).
 func TestCursorWithIndexDirection_DescIndexAscQueryMultiPage(t *testing.T) {
+	req := `query {
+		_cursor {
+			User(first: 2, order: {age: ASC}) {
+				name
+				age
+			}
+			_pageInfo {
+				hasNext
+				endCursor
+			}
+		}
+	}`
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -327,18 +360,7 @@ func TestCursorWithIndexDirection_DescIndexAscQueryMultiPage(t *testing.T) {
 			testUtils.CreateDoc{Doc: `{"name": "Islam", "age": 45}`},
 			// Page 1: first 2 in ASC order
 			&action.Request{
-				Request: `query {
-					_cursor {
-						User(first: 2, order: {age: ASC}) {
-							name
-							age
-						}
-						_pageInfo {
-							hasNext
-							endCursor
-						}
-					}
-				}`,
+				Request: req,
 				Results: map[string]any{
 					"_cursor": map[string]any{
 						"User": []map[string]any{
@@ -351,6 +373,11 @@ func TestCursorWithIndexDirection_DescIndexAscQueryMultiPage(t *testing.T) {
 						},
 					},
 				},
+			},
+			// Explain: verify page 1 uses index
+			&action.Request{
+				Request:  makeExplainQuery(req),
+				Asserter: testUtils.NewExplainAsserter().WithCursor().WithIndexFetches(3),
 			},
 			// Page 2: next 2
 			&action.Request{

@@ -74,5 +74,8 @@ crash.log
 # Ignore direnv environment files (developer-local).
 .envrc
 
+# AGENTS
+CLAUDE.md
+
 # GSD planning directory (local only).
 .planning/
