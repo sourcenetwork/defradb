@@ -1,45 +1,49 @@
-Test Coverage Workflow
-[Go Report Card](https://goreportcard.com/report/github.com/sourcenetwork/defradb)
-[codecov](https://codecov.io/gh/sourcenetwork/defradb)
-[Discord](https://discord.gg/w7jYQVJ)
-[Twitter Follow](https://twitter.com/sourcenetwrk)
+![Test Coverage Workflow](https://github.com/sourcenetwork/defradb/actions/workflows/test-coverage.yml/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/sourcenetwork/defradb)](https://goreportcard.com/report/github.com/sourcenetwork/defradb)
+[![codecov](https://codecov.io/gh/sourcenetwork/defradb/branch/develop/graph/badge.svg?token=RHAORX13PA)](https://codecov.io/gh/sourcenetwork/defradb)
+[![Discord](https://img.shields.io/discord/427944769851752448.svg?color=768AD4&label=discord&logo=https%3A%2F%2Fdiscordapp.com%2Fassets%2F8c9701b98ad4372b58f13fd9f65f966e.svg)](https://discord.gg/w7jYQVJ)
+[![Twitter Follow](https://img.shields.io/twitter/follow/sourcenetwrk.svg?label=&style=social)](https://twitter.com/sourcenetwrk)
 
-
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/DefraDB_White.svg">
+    <img height="120px" width="374px" alt="DefraDB" src="docs/DefraDB_Full.svg">
+  </picture>
+</p>
 
 DefraDB is a user-centric database that prioritizes data ownership, personal privacy, and information security. Its data model, powered by the convergence of [MerkleCRDTs](https://arxiv.org/pdf/2004.00107.pdf) and the content-addressability of [IPLD](https://docs.ipld.io/), enables a multi-write-master architecture. It features [DQL](https://docs.source.network/defradb/references/query-specification/query-language-overview), a query language compatible with GraphQL but providing extra convenience. By leveraging peer-to-peer networking it can be deployed nimbly in novel topologies. Access control is determined by a relationship-based DSL, supporting document or field-level policies, secured by the SourceHub network. DefraDB is a core part of the [Source technologies](https://source.network/) that enable new paradigms of decentralized data and access-control management, user-centric apps, data trustworthiness, and much more.
 
 Read the documentation on [docs.source.network](https://docs.source.network/).
 
+
 ## Table of Contents
 
-
-
-- [Install](#install)
-- [Build Requirements](#build-requirements)
-  - [Prerequisites](#prerequisites)
-  - [System Resources](#system-resources)
-  - [Building on Resource-Constrained Systems](#building-on-resource-constrained-systems)
-- [Key Management](#key-management)
-- [Start](#start)
-- [Configuration](#configuration)
-- [External port binding](#external-port-binding)
-- [Add a schema type](#add-a-schema-type)
-- [Create a document](#create-a-document)
-- [Query documents](#query-documents)
-- [Obtain document commits](#obtain-document-commits)
-- [DefraDB Query Language (DQL)](#defradb-query-language-dql)
-- [Peer-to-peer data synchronization](#peer-to-peer-data-synchronization)
-- [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
-- [Access Control System](#access-control-system)
-- [Supporting CORS](#supporting-cors)
-- [Backing up and restoring](#backing-up-and-restoring)
-- [Telemetry](#telemetry)
-- [Community](#community)
-- [Playground](#playground)
-- [Licensing](#licensing)
-- [Contributors](#contributors)
-
-
+<!--ts-->
+   * [Install](#install)
+   * [Build Requirements](#build-requirements)
+      * [Prerequisites](#prerequisites)
+      * [System Resources](#system-resources)
+      * [Building on Resource-Constrained Systems](#building-on-resource-constrained-systems)
+   * [Key Management](#key-management)
+   * [Start](#start)
+   * [Configuration](#configuration)
+   * [External port binding](#external-port-binding)
+   * [Add a schema type](#add-a-schema-type)
+   * [Create a document](#create-a-document)
+   * [Query documents](#query-documents)
+   * [Obtain document commits](#obtain-document-commits)
+   * [DefraDB Query Language (DQL)](#defradb-query-language-dql)
+   * [Peer-to-peer data synchronization](#peer-to-peer-data-synchronization)
+   * [Securing the HTTP API with TLS](#securing-the-http-api-with-tls)
+   * [Access Control System](#access-control-system)
+   * [Supporting CORS](#supporting-cors)
+   * [Backing up and restoring](#backing-up-and-restoring)
+   * [Telemetry](#telemetry)
+   * [Community](#community)
+   * [Playground](#playground)
+   * [Licensing](#licensing)
+   * [Contributors](#contributors)
+<!--te-->
 
 DISCLAIMER: The software is provided "as is" and is not guaranteed to be stable, secure, or error-free. We encourage you to experiment with DefraDB and provide feedback, and when you plan to deploy it to production, please thoroughly test your integrations.
 
@@ -73,12 +77,10 @@ Building DefraDB from source requires significant system resources. If you encou
 
 ### System Resources
 
-
-| Resource   | Minimum | Recommended |
-| ---------- | ------- | ----------- |
-| RAM        | 2 GB    | 4+ GB       |
-| Disk Space | 3 GB    | 5+ GB       |
-
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| RAM | 2 GB | 4+ GB |
+| Disk Space | 3 GB | 5+ GB |
 
 The Go compiler requires substantial memory during compilation. Builds with less than 2 GB of available RAM will likely fail with out-of-memory errors.
 
@@ -87,14 +89,12 @@ The Go compiler requires substantial memory during compilation. Builds with less
 If you're building on a system with limited RAM (e.g., a small VM or container), you may encounter build failures. Common issues and solutions:
 
 **Out of Memory (OOM) errors:**
-
 - Ensure at least 2 GB of RAM is available
 - Add swap space if physical RAM is limited
 - Use `-p 1` to limit compiler parallelism: `go build -p 1 ./cmd/defradb`
 
-`**/tmp` running out of space:**
+**`/tmp` running out of space:**
 On systems where `/tmp` is a small tmpfs (RAM-backed filesystem), the Go compiler may exhaust available space. Redirect Go's temp directories to a location with more space:
-
 ```sh
 export GOTMPDIR=/path/with/space
 export GOCACHE=/path/with/space/go-cache
@@ -103,7 +103,6 @@ export GOMODCACHE=/path/with/space/go-mod
 
 **Reducing memory usage:**
 For extremely constrained environments, disable optimizations (produces slower binary):
-
 ```sh
 go build -p 1 -gcflags="all=-N -l" ./cmd/defradb
 ```
@@ -154,7 +153,7 @@ In this document, we use the default configuration, which has the following beha
 
 - `~/.defradb/` is DefraDB's configuration and data directory
 - `client` command interacts with the locally running node
-- The GraphQL endpoint is provided at [http://localhost:9181/api/v0/graphql](http://localhost:9181/api/v0/graphql)
+- The GraphQL endpoint is provided at http://localhost:9181/api/v0/graphql
 
 The GraphQL endpoint can be used with a GraphQL client (e.g., Altair) to conveniently perform requests (`query`, `mutation`) and obtain schema introspection.
 
@@ -355,7 +354,8 @@ Pubsub peering *passively* synchronizes data between nodes by broadcasting *Docu
 
 Replicator peering *actively* pushes changes from a specific collection *to* a target peer.
 
-Pubsub example
+<details>
+<summary>Pubsub example</summary>
 
 Pubsub peers can be specified on the command line using the `--peers` flag, which accepts a comma-separated list of peer [multiaddresses](https://docs.libp2p.io/concepts/addressing/). For example, a node at IP `192.168.1.12` listening on 9000 with PeerID `12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B` would be referred to using the multiaddress `/ip4/192.168.1.12/tcp/9000/p2p/12D3KooWNXm3dmrwCYSxGoRUyZstaKYiHPdt8uZH5vgVaEJyzU8B`.
 
@@ -389,10 +389,10 @@ About the flags:
 - `--peers` is a comma-separated list of peer multiaddresses
 
 This starts two nodes and connects them via pubsub networking.
+</details>
 
-
-
-Subscription example
+<details>
+<summary>Subscription example</summary>
 
 It is possible to subscribe to updates on a given collection by using its ID as the pubsub topic. The ID of a collection is found as the field `collectionID` in one of its documents. Here we use the collection ID of the `User` type we created above. After setting up 2 nodes as shown in the [Pubsub example](#pubsub-example) section, we can subscribe to collections updates on *nodeA* from *nodeB* by using the following command:
 
@@ -405,10 +405,10 @@ Multiple collection IDs can be added at once.
 ```shell
 defradb client p2p collection add --url localhost:9182 <collection1ID>,<collection2ID>,<collection3ID>
 ```
+</details>
 
-
-
-Replicator example
+<details>
+<summary>Replicator example</summary>
 
 Replicator peering is targeted: it allows a node to actively send updates to another node. Let's go through an example of *nodeA* actively replicating to *nodeB*:
 
@@ -461,8 +461,7 @@ defradb client p2p replicator create -c Article <nodeB_peer_info_json>
 ```
 
 As we add or update documents in the Article collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.
-
-
+</details>
 
 ## Securing the HTTP API with TLS
 
@@ -470,7 +469,6 @@ By default, DefraDB will expose its HTTP API at `http://localhost:9181/api/v0`. 
 
 To start defradb with self-signed certificates placed under `~/.defradb/certs/` with `server.key`
 being the public key and `server.crt` being the private key, just do:
-
 ```shell
 defradb start --tls
 ```
@@ -482,26 +480,22 @@ Since the keys should be stored within the DefraDB data and configuration direct
 If not saved under `~/.defradb/certs` then the public (`pubkeypath`) and private (`privkeypaths`) key paths need to be explicitly defined in addition to the `--tls` flag or `tls` set to `true` in the config.
 
 Then to start the server with TLS, using your generated keys in custom path:
-
 ```shell
 defradb start --tls --pubkeypath ~/path-to-pubkey.key --privkeypath ~/path-to-privkey.crt
 
 ```
 
 ## Access Control System
-
 Read more about the DefraDB ACP System [here](/acp/README.md)
 
 ## Supporting CORS
 
 When accessing DefraDB through a frontend interface, you may be confronted with a CORS error. That is because, by default, DefraDB will not have any allowed origins set. To specify which origins should be allowed to access your DefraDB endpoint, you can specify them when starting the database:
-
 ```shell
 defradb start --allowed-origins=https://yourdomain.com
 ```
 
 If running a frontend app locally on localhost, allowed origins must be set with the port of the app:
-
 ```shell
 defradb start --allowed-origins=http://localhost:3000
 ```
@@ -513,19 +507,16 @@ The catch-all `*` is also a valid origin.
 It is currently not possible to do a full backup of DefraDB that includes the history of changes through the Merkle DAG. However, DefraDB currently supports a simple backup of the current data state in JSON format that can be used to seed a database or help with transitioning from one DefraDB version to another.
 
 To backup the data, run the following command:
-
 ```shell
 defradb client backup export path/to/backup.json
 ```
 
 To pretty print the JSON content when exporting, run the following command:
-
 ```shell
 defradb client backup export --pretty path/to/backup.json
 ```
 
 To restore the data, run the following command:
-
 ```shell
 defradb client backup import path/to/backup.json
 ```
@@ -548,7 +539,7 @@ Instructions for the playground can be found [here](./playground/README.md).
 
 ## Licensing
 
-DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make non-production use of it. For additional uses, such as deploying in production on a private network, please contact [license@source.network](mailto:license@source.network) for a licensing agreement. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete license before usage.
+DefraDB's code is released under the [Business Source License (BSL)](licenses/BSL.txt). It grants you the right to copy, modify, create derivative works, redistribute, and make non-production use of it. For additional uses, such as deploying in production on a private network, please contact license@source.network for a licensing agreement. Each dated version of the license turns into the more permissive Apache License v2.0 after four years. Please read the complete license before usage.
 
 ## Contributors
 
