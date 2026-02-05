@@ -23,7 +23,7 @@ func MakeEncryptedIndexCreateCommand(ctx context.Context) *cobra.Command {
 	var fieldArg string
 	var typeArg string
 	var cmd = &cobra.Command{
-		Use:   "create -c --collection <collection> --field <field> [--type <type>]",
+		Use:   "create",
 		Short: "Creates an encrypted index on a collection's field",
 		Long: `Creates an encrypted index on a collection's field.
 

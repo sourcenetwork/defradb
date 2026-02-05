@@ -25,7 +25,7 @@ func MakeIndexCreateCommand(ctx context.Context) *cobra.Command {
 	var fieldsArg []string
 	var uniqueArg bool
 	var cmd = &cobra.Command{
-		Use:   "create -c --collection <collection> --fields <fields[:ASC|:DESC]> [-n --name <name>] [--unique]",
+		Use:   "create",
 		Short: "Creates a secondary index on a collection's field(s)",
 		Long: `Creates a secondary index on a collection's field(s).
 
