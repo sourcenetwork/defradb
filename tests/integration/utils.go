@@ -360,14 +360,14 @@ func performAction(
 	case ListP2PCollections:
 		listP2PCollections(s, action)
 
-	case SubscribeToDocument:
-		subscribeToDocument(s, action)
+	case CreateDocumentSubscription:
+		createDocumentSubscription(s, action)
 
-	case UnsubscribeToDocument:
-		unsubscribeToDocument(s, action)
+	case DeleteDocumentSubscription:
+		deleteDocumentSubscription(s, action)
 
-	case GetAllP2PDocuments:
-		getAllP2PDocuments(s, action)
+	case ListP2PDocuments:
+		listP2PDocuments(s, action)
 
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)

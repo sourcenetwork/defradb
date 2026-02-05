@@ -64,7 +64,7 @@ func TestNAC_GatesP2PDocumentCreate_AuthorizedIdentity_AllowAccess(t *testing.T)
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -120,7 +120,7 @@ func TestNAC_GatesP2PDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) 
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.NoIdentity(),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -177,7 +177,7 @@ func TestNAC_GatesP2PDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(2),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{

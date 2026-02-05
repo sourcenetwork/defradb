@@ -26,11 +26,11 @@ func TestP2PDocument_GetAllWithNoneConfigured_ShouldSucceed(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				NodeID:         0,
 				ExpectedDocIDs: []state.ColDocIndex{},
 			},
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				NodeID:         1,
 				ExpectedDocIDs: []state.ColDocIndex{},
 			},

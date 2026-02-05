@@ -1,20 +1,30 @@
-## defradb client p2p document getall
+## defradb client p2p document create
 
-Get all P2P documents
+Create P2P documents
 
 ### Synopsis
 
-Get all P2P documents in the pubsub topics.
-This is the list of documents of the node that are synchronized on the pubsub network.
+Create P2P documents to the synchronized pubsub topics.
+The documents are synchronized between nodes of a pubsub network.
 
 ```
-defradb client p2p document getall [flags]
+defradb client p2p document create [docIDs] [flags]
+```
+
+### Examples
+
+```
+create single document:  
+  defradb client p2p document create bae123
+
+create multiple documents:  
+  defradb client p2p document create bae123,bae456
 ```
 
 ### Options
 
 ```
-  -h, --help   help for getall
+  -h, --help   help for create
 ```
 
 ### Options inherited from parent commands

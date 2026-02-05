@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func (p *P2P) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (p *P2P) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -55,7 +55,7 @@ func (p *P2P) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	return nil
 }
 
-func (p *P2P) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (p *P2P) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -87,7 +87,7 @@ func (p *P2P) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 	return nil
 }
 
-func (p *P2P) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (p *P2P) ListP2PDocuments(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

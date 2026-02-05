@@ -27,11 +27,11 @@ const (
 	NonExistentDocIDString string = "NonExistentDocID"
 )
 
-// SubscribeToDocument sets up a subscription on the given node to the given document.
+// CreateDocumentSubscription sets up a subscription on the given node to the given document.
 //
 // Changes made to subscribed documents in peers connected to this node will be synced from
 // them to this node.
-type SubscribeToDocument struct {
+type CreateDocumentSubscription struct {
 	// NodeID is the node ID (index) of the node in which to activate the subscription.
 	//
 	// Changes made to subscribed documents in peers connected to this node will be synced from
@@ -55,9 +55,9 @@ type SubscribeToDocument struct {
 	ExpectedError string
 }
 
-// UnsubscribeToDocument removes the given documents from the set of active subscriptions on
+// DeleteDocumentSubscription removes the given documents from the set of active subscriptions on
 // the given node.
-type UnsubscribeToDocument struct {
+type DeleteDocumentSubscription struct {
 	// NodeID is the node ID (index) of the node in which to remove the subscription.
 	NodeID int
 
@@ -78,9 +78,9 @@ type UnsubscribeToDocument struct {
 	ExpectedError string
 }
 
-// GetAllP2PDocuments gets the active subscriptions for the given node and compares them against the
+// ListP2PDocuments gets the active subscriptions for the given node and compares them against the
 // expected results.
-type GetAllP2PDocuments struct {
+type ListP2PDocuments struct {
 	// NodeID is the node ID (index) of the node in which to get the subscriptions for.
 	NodeID int
 
@@ -99,12 +99,12 @@ type GetAllP2PDocuments struct {
 	ExpectedError string
 }
 
-// subscribeToDocument sets up a collection subscription on the given node/collection.
+// createDocumentSubscription sets up a collection subscription on the given node/collection.
 //
 // Any errors generated during this process will result in a test failure.
-func subscribeToDocument(
+func createDocumentSubscription(
 	s *state.State,
-	action SubscribeToDocument,
+	action CreateDocumentSubscription,
 ) {
 	node := s.Nodes[action.NodeID]
 
@@ -123,26 +123,26 @@ func subscribeToDocument(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.AddP2PDocuments(ctx, docIDs...)
+	err := node.CreateP2PDocuments(ctx, docIDs...)
 	if err == nil {
-		waitForSubscribeToDocumentEvent(s, action)
+		waitForCreateDocumentSubscriptionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
-	// The `n.Peer.AddP2PDocuments(colIDs)` call above is calling some asynchronous functions
+	// The `n.Peer.CreateP2PDocuments(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
 	time.Sleep(100 * time.Millisecond)
 }
 
-// unsubscribeToDocument removes the given collections from subscriptions on the given nodes.
+// deleteDocumentSubscription removes the given collections from subscriptions on the given nodes.
 //
 // Any errors generated during this process will result in a test failure.
-func unsubscribeToDocument(
+func deleteDocumentSubscription(
 	s *state.State,
-	action UnsubscribeToDocument,
+	action DeleteDocumentSubscription,
 ) {
 	node := s.Nodes[action.NodeID]
 
@@ -161,27 +161,27 @@ func unsubscribeToDocument(
 	}
 
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	err := node.RemoveP2PDocuments(ctx, docIDs...)
+	err := node.DeleteP2PDocuments(ctx, docIDs...)
 	if err == nil {
-		waitForUnsubscribeToDocumentEvent(s, action)
+		waitForDeleteDocumentSubscriptionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
-	// The `n.Peer.RemoveP2PDocuments(colIDs)` call above is calling some asynchronous functions
+	// The `n.Peer.DeleteP2PDocuments(colIDs)` call above is calling some asynchronous functions
 	// for the pubsub subscription and those functions can take a bit of time to complete,
 	// we need to make sure this has finished before progressing.
 	time.Sleep(100 * time.Millisecond)
 }
 
-// getAllP2PDocuments gets all the active peer subscriptions and compares them against the
+// listP2PDocuments gets all the active peer subscriptions and compares them against the
 // given expected results.
 //
 // Any errors generated during this process will result in a test failure.
-func getAllP2PDocuments(
+func listP2PDocuments(
 	s *state.State,
-	action GetAllP2PDocuments,
+	action ListP2PDocuments,
 ) {
 	expectedDocuments := []string{}
 	for _, colDocIndex := range action.ExpectedDocIDs {
@@ -194,7 +194,7 @@ func getAllP2PDocuments(
 
 	node := s.Nodes[action.NodeID]
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	cols, err := node.GetAllP2PDocuments(ctx)
+	cols, err := node.ListP2PDocuments(ctx)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

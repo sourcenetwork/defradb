@@ -2337,8 +2337,8 @@
         },
         "/p2p/documents": {
             "delete": {
-                "description": "Remove peer documents",
-                "operationId": "peer_documents_remove",
+                "description": "Delete peer documents",
+                "operationId": "peer_documents_delete",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2396,8 +2396,8 @@
                 ]
             },
             "post": {
-                "description": "Add peer documents",
-                "operationId": "peer_documents_add",
+                "description": "Create peer documents",
+                "operationId": "peer_documents_create",
                 "requestBody": {
                     "content": {
                         "application/json": {
