@@ -123,7 +123,7 @@ func (c *Client) refreshViews(this js.Value, args []js.Value) (js.Value, error) 
 }
 
 // collectionFetchOptionsToRefreshViewsOptions converts collectionFetchOptions to RefreshViewsOptions.
-func collectionFetchOptionsToRefreshViewsOptions(input collectionFetchOptions) *options.RefreshViewsOptions {
+func collectionFetchOptionsToRefreshViewsOptions(input collectionFetchOptions) *options.RefreshViewsOptionsBuilder {
 	opt := options.RefreshViews()
 	if input.VersionID.HasValue() {
 		opt.SetVersionID(input.VersionID.Value())
@@ -224,7 +224,7 @@ func (c *Client) getCollections(this js.Value, args []js.Value) (js.Value, error
 }
 
 // collectionFetchOptionsToGetCollectionsOptions converts collectionFetchOptions to GetCollectionsOptions.
-func collectionFetchOptionsToGetCollectionsOptions(input collectionFetchOptions) *options.GetCollectionsOptions {
+func collectionFetchOptionsToGetCollectionsOptions(input collectionFetchOptions) *options.GetCollectionsOptionsBuilder {
 	opt := options.GetCollections()
 	if input.VersionID.HasValue() {
 		opt.SetVersionID(input.VersionID.Value())
@@ -272,7 +272,7 @@ func (c *Client) execRequest(this js.Value, args []js.Value) (js.Value, error) {
 	if err != nil {
 		return js.Undefined(), err
 	}
-	var opt *options.ExecRequestOptions
+	var opt *options.ExecRequestOptionsBuilder
 	if args[1].Type() == js.TypeObject {
 		opt = options.ExecRequest()
 		operationName := args[1].Get("operationName")

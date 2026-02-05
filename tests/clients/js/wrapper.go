@@ -60,7 +60,7 @@ func (w *Wrapper) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
 	collectionNames []string,
-	opts ...*options.CreateReplicatorOptions,
+	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
 	panic("not implemented")
 }
@@ -69,14 +69,14 @@ func (w *Wrapper) DeleteReplicator(
 	ctx context.Context,
 	id string,
 	collectionNames []string,
-	opts ...*options.DeleteReplicatorOptions,
+	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
 	panic("not implemented")
 }
 
 func (w *Wrapper) ListReplicators(
 	ctx context.Context,
-	opts ...*options.ListReplicatorsOptions,
+	opts ...options.Lister[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	panic("not implemented")
 }
@@ -84,7 +84,7 @@ func (w *Wrapper) ListReplicators(
 func (w *Wrapper) CreateP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...*options.CreateP2PCollectionsOptions,
+	opts ...options.Lister[options.CreateP2PCollectionsOptions],
 ) error {
 	panic("not implemented")
 }
@@ -92,14 +92,14 @@ func (w *Wrapper) CreateP2PCollections(
 func (w *Wrapper) DeleteP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...*options.DeleteP2PCollectionsOptions,
+	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
 ) error {
 	panic("not implemented")
 }
 
 func (w *Wrapper) ListP2PCollections(
 	ctx context.Context,
-	opts ...*options.ListP2PCollectionsOptions,
+	opts ...options.Lister[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	panic("not implemented")
 }
@@ -107,7 +107,7 @@ func (w *Wrapper) ListP2PCollections(
 func (w *Wrapper) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.CreateP2PDocumentsOptions,
+	opts ...options.Lister[options.CreateP2PDocumentsOptions],
 ) error {
 	panic("not implemented")
 }
@@ -115,12 +115,12 @@ func (w *Wrapper) CreateP2PDocuments(
 func (w *Wrapper) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.DeleteP2PDocumentsOptions,
+	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
 ) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) ListP2PDocuments(ctx context.Context, opts ...*options.ListP2PDocumentsOptions) ([]string, error) {
+func (w *Wrapper) ListP2PDocuments(ctx context.Context, opts ...options.Lister[options.ListP2PDocumentsOptions]) ([]string, error) {
 	panic("not implemented")
 }
 
@@ -147,7 +147,7 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 func (w *Wrapper) AddSchema(
 	ctx context.Context,
 	schema string,
-	opts ...*options.AddSchemaOptions,
+	opts ...options.Lister[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -173,7 +173,7 @@ func (w *Wrapper) AddSchema(
 func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...*options.AddDACPolicyOptions,
+	opts ...options.Lister[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -202,7 +202,7 @@ func (w *Wrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.AddDACActorRelationshipOptions,
+	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -231,7 +231,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.DeleteDACActorRelationshipOptions,
+	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -256,7 +256,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 
 func (w *Wrapper) GetNACStatus(
 	ctx context.Context,
-	opts ...*options.GetNACStatusOptions,
+	opts ...options.Lister[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -279,7 +279,7 @@ func (w *Wrapper) GetNACStatus(
 	return out, nil
 }
 
-func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACOptions) error {
+func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
 	var optsVal sysjs.Value
 	var err error
 	if len(opts) > 0 && opts[0] != nil {
@@ -294,7 +294,7 @@ func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...*options.ReEnableNACO
 	return err
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context, opts ...*options.DisableNACOptions) error {
+func (w *Wrapper) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
 	var optsVal sysjs.Value
 	var err error
 	if len(opts) > 0 && opts[0] != nil {
@@ -313,7 +313,7 @@ func (w *Wrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...*options.AddNACActorRelationshipOptions,
+	opts ...options.Lister[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -340,7 +340,7 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...*options.DeleteNACActorRelationshipOptions,
+	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -367,7 +367,7 @@ func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...*options.PatchCollectionOptions,
+	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
 	migrationVal, err := goji.MarshalJS(migration)
 	if err != nil {
@@ -389,7 +389,7 @@ func (w *Wrapper) PatchCollection(
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
-	opts ...*options.SetActiveCollectionVersionOptions,
+	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
 ) error {
 	var optsVal sysjs.Value
 	var err error
@@ -426,7 +426,7 @@ func (w *Wrapper) AddView(
 	return out, nil
 }
 
-func (w *Wrapper) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
+func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
 	var optsVal sysjs.Value
 	var err error
 	if len(opts) > 0 && opts[0] != nil {
@@ -480,7 +480,7 @@ func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error)
 func (w *Wrapper) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...*options.GetCollectionByNameOptions,
+	opts ...options.Lister[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -503,7 +503,7 @@ func (w *Wrapper) GetCollectionByName(
 
 func (w *Wrapper) GetCollections(
 	ctx context.Context,
-	opts ...*options.GetCollectionsOptions,
+	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -530,7 +530,7 @@ func (w *Wrapper) GetCollections(
 
 func (w *Wrapper) GetAllIndexes(
 	ctx context.Context,
-	opts ...*options.GetAllIndexesOptions,
+	opts ...options.Lister[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -556,7 +556,7 @@ func (w *Wrapper) GetAllIndexes(
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...*options.ExecRequestOptions,
+	opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
 	var optsVal sysjs.Value
 	if len(opts) > 0 && opts[0] != nil {
@@ -650,7 +650,7 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...*options.ConnectOptions) error {
+func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
 	return w.node.DB.Connect(ctx, addresses, opts...)
 }
 
@@ -670,7 +670,7 @@ func (w *Wrapper) VerifySignature(
 	ctx context.Context,
 	blockCid string,
 	pubKey crypto.PublicKey,
-	opts ...*options.VerifySignatureOptions,
+	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
 	var optsVal sysjs.Value
 	var err error

@@ -44,9 +44,9 @@ extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
 extern Result P2PInfo(uintptr_t nodePtr);
 extern Result P2PActivePeers(uintptr_t nodePtr, uintptr_t identity);
-extern Result P2PlistReplicators(uintptr_t nodePtr, uintptr_t identity);
-extern Result P2PcreateReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
-extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
+extern Result P2PreplicatorList(uintptr_t nodePtr, uintptr_t identity);
+extern Result P2PreplicatorCreate(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
+extern Result P2PreplicatorDelete(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
 extern Result P2PcollectionCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionList(uintptr_t nodePtr, uintptr_t identity);
@@ -153,7 +153,7 @@ func (w *CWrapper) CreateReplicator(
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PcreateReplicator(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PreplicatorCreate(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -174,7 +174,7 @@ func (w *CWrapper) DeleteReplicator(
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PdeleteReplicator(C.uintptr_t(w.handle), colStr, peerID, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PreplicatorDelete(C.uintptr_t(w.handle), colStr, peerID, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -188,7 +188,7 @@ func (w *CWrapper) ListReplicators(
 ) ([]client.Replicator, error) {
 	cIdentity := identityFromOptions(opts)
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PlistReplicators(C.uintptr_t(w.handle), cIdentity))
+	res := ConvertAndFreeCResult(C.P2PreplicatorList(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

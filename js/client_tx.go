@@ -278,7 +278,7 @@ func (t *transaction) execRequest(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	var opt *options.ExecRequestOptions
+	var opt *options.ExecRequestOptionsBuilder
 	if args[1].Type() == js.TypeObject {
 		opt = options.ExecRequest()
 		operationName := args[1].Get("operationName")
