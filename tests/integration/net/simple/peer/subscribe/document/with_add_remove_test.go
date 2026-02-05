@@ -41,13 +41,13 @@ func TestP2PDocumentAddAndRemoveSingle(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -110,14 +110,14 @@ func TestP2PDocumentAddAndRemoveMultiple(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 					state.NewColDocIndex(0, 1),
 				},
 			},
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -203,13 +203,13 @@ func TestP2PDocumentAddSingleAndRemoveErroneous(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, testUtils.NonExistentDocID),
@@ -269,13 +269,13 @@ func TestP2PDocumentAddSingleAndRemoveNone(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{},
 			},

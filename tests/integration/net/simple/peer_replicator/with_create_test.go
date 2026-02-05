@@ -39,7 +39,7 @@ func TestP2PPeerReplicatorWithCreate(t *testing.T) {
 					"Age": 21
 				}`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 2,
 			},
