@@ -33,7 +33,7 @@ func MakeCollectionGetCommand(ctx context.Context) *cobra.Command {
 
 			docID, err := client.NewDocIDFromString(args[0])
 			if err != nil {
-				return err
+				return NewErrParsingArgument("docID", err)
 			}
 			doc, err := col.Get(cmd.Context(), docID, showDeleted)
 			if err != nil {

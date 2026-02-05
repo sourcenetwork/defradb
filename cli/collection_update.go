@@ -42,7 +42,7 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 			case filter != "":
 				var filterValue any
 				if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
-					return err
+					return NewErrParsingArgument("filter", err)
 				}
 				res, err := col.UpdateWithFilter(ctx, filterValue, updater)
 				if err != nil {
@@ -52,14 +52,14 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 			case argDocID != "":
 				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
-					return err
+					return NewErrParsingArgument("docID", err)
 				}
 				doc, err := col.Get(ctx, docID, true)
 				if err != nil {
 					return err
 				}
 				if err := doc.SetWithJSON(ctx, []byte(updater)); err != nil {
-					return err
+					return NewErrParsingArgument("updater", err)
 				}
 				return col.Update(cmd.Context(), doc)
 			default:

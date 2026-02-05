@@ -35,7 +35,7 @@ func MakeCollectionDeleteCommand(ctx context.Context) *cobra.Command {
 			case argDocID != "":
 				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
-					return err
+					return NewErrParsingArgument("docID", err)
 				}
 				_, err = col.Delete(cmd.Context(), docID)
 				return err

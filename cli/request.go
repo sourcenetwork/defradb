@@ -46,13 +46,13 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 			case filePath != "":
 				data, err := os.ReadFile(filePath)
 				if err != nil {
-					return err
+					return NewErrReadingArgument("file", err)
 				}
 				request = string(data)
 			case len(args) > 0 && args[0] == "-":
 				data, err := io.ReadAll(cmd.InOrStdin())
 				if err != nil {
-					return err
+					return NewErrReadingArgument("stdin", err)
 				}
 				request = string(data)
 			case len(args) > 0:
@@ -68,7 +68,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				var variables map[string]any
 				err := json.Unmarshal([]byte(variablesJSON), &variables)
 				if err != nil {
-					return err
+					return NewErrParsingArgument("variables", err)
 				}
 				options = append(options, client.WithVariables(variables))
 			}
