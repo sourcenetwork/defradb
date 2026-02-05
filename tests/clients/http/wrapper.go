@@ -285,12 +285,7 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 		return nil, err
 	}
 	httpTxn := clientTxn.(*http.Transaction) //nolint:forcetypeassert
-
-	serverTxn, err := w.handler.Transaction(httpTxn.TokenID())
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, serverTxn}, nil
+	return &Transaction{w, httpTxn}, nil
 }
 
 func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
@@ -299,12 +294,7 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 		return nil, err
 	}
 	httpTxn := clientTxn.(*http.Transaction) //nolint:forcetypeassert
-
-	serverTxn, err := w.handler.Transaction(httpTxn.TokenID())
-	if err != nil {
-		return nil, err
-	}
-	return &Transaction{w, serverTxn}, nil
+	return &Transaction{w, httpTxn}, nil
 }
 
 func (w *Wrapper) Close() {

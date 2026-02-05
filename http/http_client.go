@@ -46,15 +46,10 @@ func newHttpClient(rawURL string) (*httpClient, error) {
 func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-
 	txn, ok := datastore.CtxTryGetClientTxn(req.Context())
 	if ok {
-		if tokenTxn, ok := txn.(interface{ TokenID() string }); ok {
-			req.Header.Set(txHeaderName, tokenTxn.TokenID())
-		} else {
-			// This should only happen in tests.
-			req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
-		}
+		tokenTxn := txn.(interface{ TokenID() string }) //nolint:forcetypeassert
+		req.Header.Set(txHeaderName, tokenTxn.TokenID())
 	}
 	id := identity.FromContext(req.Context())
 	if !id.HasValue() {
