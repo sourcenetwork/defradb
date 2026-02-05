@@ -23,6 +23,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/cbindings"
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
@@ -134,6 +135,12 @@ func generateIdentity(s *State, keyType crypto.KeyType) acpIdentity.Identity {
 
 	identity, err := acpIdentity.FromPrivateKey(privateKey)
 	require.NoError(s.T, err)
+
+	// Register identity with Rust FFI so block signing works when using the Rust client
+	if s.ClientType == RustFFIClientType {
+		err = cbindings.RegisterIdentityWithRust(identity)
+		require.NoError(s.T, err, "failed to register identity with Rust FFI")
+	}
 
 	return identity
 }
