@@ -44,7 +44,7 @@ const (
 	retryLoopInterval = 2 * time.Second
 )
 
-func (p *P2P) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
+func (p *P2P) CreateReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -326,7 +326,7 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 	return nil
 }
 
-func (p *P2P) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (p *P2P) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -384,7 +384,7 @@ func (p *P2P) pushLogToReplicators(lg event.Update) {
 }
 
 func (p *P2P) loadAndPublishReplicators(ctx context.Context) error {
-	replicators, err := p.GetAllReplicators(ctx)
+	replicators, err := p.ListReplicators(ctx)
 	if err != nil {
 		return err
 	}
@@ -456,13 +456,13 @@ func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string,
 			}
 		} else {
 			// If there are more docs to retry, set the next retry time to be immediate.
-			err := setReplicatorNextRetry(ctx, peerID, []time.Duration{0}, p.db.Multistore().Peerstore())
+			err := createReplicatorNextRetry(ctx, peerID, []time.Duration{0}, p.db.Multistore().Peerstore())
 			if err != nil {
 				return err
 			}
 		}
 	} else {
-		err := setReplicatorNextRetry(ctx, peerID, p.retryIntervals, p.db.Multistore().Peerstore())
+		err := createReplicatorNextRetry(ctx, peerID, p.retryIntervals, p.db.Multistore().Peerstore())
 		if err != nil {
 			return err
 		}
@@ -599,7 +599,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 				continue
 			}
 
-			err = p.setReplicatorAsRetrying(ctx, key, rInfo)
+			err = p.createReplicatorAsRetrying(ctx, key, rInfo)
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to set replicator as retrying", err)
 				continue
@@ -609,7 +609,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 	}
 }
 
-func (p *P2P) setReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRetryIDKey, rInfo retryInfo) error {
+func (p *P2P) createReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRetryIDKey, rInfo retryInfo) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -623,7 +623,7 @@ func (p *P2P) setReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRe
 	return p.db.Multistore().Peerstore().Set(ctx, key.Bytes(), b)
 }
 
-func setReplicatorNextRetry(
+func createReplicatorNextRetry(
 	ctx context.Context,
 	peerID string,
 	retryIntervals []time.Duration,

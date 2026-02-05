@@ -1,4 +1,4 @@
-// Copyright 2023 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -16,25 +16,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PReplicatorGetAllCommand(ctx context.Context) *cobra.Command {
+func MakeP2PDocumentListCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "getall",
-		Short: "Get all replicators",
-		Long: `Get all the replicators active in the P2P data sync system.
-A replicator synchronizes one or all collection(s) from this instance to another.`,
+		Use:   "list",
+		Short: "List P2P documents",
+		Long: `List all P2P documents in the pubsub topics.
+This is the list of documents of the node that are synchronized on the pubsub network.`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			reps, err := cliClient.GetAllReplicators(cmd.Context())
+			cols, err := cliClient.ListP2PDocuments(cmd.Context())
 			if err != nil {
 				return err
 			}
-			return writeJSON(cmd, reps)
+			return writeJSON(cmd, cols)
 		},
 	}
-
-	EmbedCLIExample(ctx, cmd, "Get all replicators",
-		`defradb client p2p replicator getall`)
-
 	return cmd
 }

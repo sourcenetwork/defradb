@@ -33,15 +33,15 @@ type P2P interface {
 	// Connect tries to connect to the peer with the given [PeerInfo].
 	Connect(ctx context.Context, addresses []string) error
 
-	// SetReplicator adds a replicator to the persisted list or adds
+	// CreateReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
-	SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error
+	CreateReplicator(ctx context.Context, addresses []string, collectionNames ...string) error
 	// DeleteReplicator deletes a replicator from the persisted list
 	// or specific schemas if they are specified.
 	DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error
-	// GetAllReplicators returns the full list of replicators with their
+	// ListReplicators returns the full list of replicators with their
 	// subscribed schemas.
-	GetAllReplicators(ctx context.Context) ([]Replicator, error)
+	ListReplicators(ctx context.Context) ([]Replicator, error)
 
 	// CreateP2PCollections creates the given collections to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
@@ -57,19 +57,19 @@ type P2P interface {
 	// the P2P system subscribes to.
 	ListP2PCollections(ctx context.Context) ([]string, error)
 
-	// AddP2PDocuments adds the given docIDs to the P2P system and
+	// CreateP2PDocuments creates the given docIDs to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// docIDs are invalid.
-	AddP2PDocuments(ctx context.Context, docIDs ...string) error
+	CreateP2PDocuments(ctx context.Context, docIDs ...string) error
 
-	// RemoveP2PDocuments removes the given docIDs from the P2P system and
+	// DeleteP2PDocuments removes the given docIDs from the P2P system and
 	// unsubscribes from their topics. It will error if the provided
 	// docIDs are invalid.
-	RemoveP2PDocuments(ctx context.Context, docIDs ...string) error
+	DeleteP2PDocuments(ctx context.Context, docIDs ...string) error
 
-	// GetAllP2PDocuments returns the list of persisted docIDs that
+	// ListP2PDocuments returns the list of persisted docIDs that
 	// the P2P system subscribes to.
-	GetAllP2PDocuments(ctx context.Context) ([]string, error)
+	ListP2PDocuments(ctx context.Context) ([]string, error)
 
 	// SyncDocuments requests the latest versions of specified documents from the network
 	// and synchronizes their DAGs locally. It doesn't automatically subscribe

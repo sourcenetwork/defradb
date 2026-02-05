@@ -40,7 +40,7 @@ func TestNAC_GatesP2PReplicatorDelete_AuthorizedIdentity_AllowAccess(t *testing.
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				Identity:     testUtils.ClientIdentity(1),
 				SourceNodeID: 1,
 				TargetNodeID: 0,
@@ -78,7 +78,7 @@ func TestNAC_GatesP2PReplicatorDelete_NoIdentity_NotAuthorizedError(t *testing.T
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				Identity:     testUtils.ClientIdentity(1),
 				SourceNodeID: 1,
 				TargetNodeID: 0,
@@ -117,7 +117,7 @@ func TestNAC_GatesP2PReplicatorDelete_WrongIdentity_NotAuthorizedError(t *testin
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				Identity:     testUtils.ClientIdentity(1),
 				SourceNodeID: 1,
 				TargetNodeID: 0,

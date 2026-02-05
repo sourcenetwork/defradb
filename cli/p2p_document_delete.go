@@ -17,11 +17,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PDocumentRemoveCommand(ctx context.Context) *cobra.Command {
+func MakeP2PDocumentDeleteCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "remove [docIDs]",
-		Short: "Remove P2P documents",
-		Long: `Remove P2P documents from the followed pubsub topics.
+		Use:   "delete [docIDs]",
+		Short: "Delete P2P documents",
+		Long: `Delete P2P documents from the followed pubsub topics.
 The removed documents will no longer be synchronized between nodes.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -36,15 +36,15 @@ The removed documents will no longer be synchronized between nodes.`,
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return cliClient.RemoveP2PDocuments(cmd.Context(), collectionIDs...)
+			return cliClient.DeleteP2PDocuments(cmd.Context(), collectionIDs...)
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "remove single document",
-		`defradb client p2p document remove bae123`)
+	EmbedCLIExample(ctx, cmd, "delete single document",
+		`defradb client p2p document delete bae123`)
 
-	EmbedCLIExample(ctx, cmd, "remove multiple documents",
-		`defradb client p2p document remove bae123,bae456`)
+	EmbedCLIExample(ctx, cmd, "delete multiple documents",
+		`defradb client p2p document delete bae123,bae456`)
 
 	return cmd
 }

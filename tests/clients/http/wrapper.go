@@ -74,16 +74,16 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
 	return w.client.Connect(ctx, addresses)
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
-	return w.client.SetReplicator(ctx, addresses, collections...)
+func (w *Wrapper) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
+	return w.client.CreateReplicator(ctx, addresses, collections...)
 }
 
 func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
 	return w.client.DeleteReplicator(ctx, id, collections...)
 }
 
-func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	return w.client.GetAllReplicators(ctx)
+func (w *Wrapper) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
+	return w.client.ListReplicators(ctx)
 }
 
 func (w *Wrapper) CreateP2PCollections(ctx context.Context, collectionIDs ...string) error {
@@ -98,16 +98,16 @@ func (w *Wrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
 	return w.client.ListP2PCollections(ctx)
 }
 
-func (w *Wrapper) AddP2PDocuments(ctx context.Context, collectionIDs ...string) error {
-	return w.client.AddP2PDocuments(ctx, collectionIDs...)
+func (w *Wrapper) CreateP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+	return w.client.CreateP2PDocuments(ctx, collectionIDs...)
 }
 
-func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, collectionIDs ...string) error {
-	return w.client.RemoveP2PDocuments(ctx, collectionIDs...)
+func (w *Wrapper) DeleteP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+	return w.client.DeleteP2PDocuments(ctx, collectionIDs...)
 }
 
-func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
-	return w.client.GetAllP2PDocuments(ctx)
+func (w *Wrapper) ListP2PDocuments(ctx context.Context) ([]string, error) {
+	return w.client.ListP2PDocuments(ctx)
 }
 
 func (w *Wrapper) SyncDocuments(
