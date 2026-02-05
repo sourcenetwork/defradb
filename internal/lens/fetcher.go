@@ -115,9 +115,9 @@ func (f *lensedFetcher) Init(
 	var innerFetcherFilter *mapper.Filter
 	if f.hasMigrations {
 		// If there are migrations present, they may require fields that are not otherwise
-		// requested.  At the moment this means we need to pass in nil so that the underlying
+		// requested. At the moment this means we need to pass in all the fields so that the underlying
 		// fetcher fetches everything.
-		innerFetcherFields = nil
+		innerFetcherFields = defFields
 
 		if index.HasValue() {
 			// When an index is used, the index has been reindexed with migrated values,
