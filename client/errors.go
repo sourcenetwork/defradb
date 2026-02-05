@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -268,4 +269,8 @@ func NewErrEmbeddingFieldEmbedding(fieldName string) error {
 
 func NewErrNotFound(kv errors.KV) error {
 	return errors.New(errNotFound, kv)
+}
+
+func NewErrNotAuthorizedToPerformOperation(permission acpTypes.NodeResourcePermission) error {
+	return errors.WithStack(ErrNotAuthorizedToPerformOperation, errors.NewKV("Permission", permission))
 }

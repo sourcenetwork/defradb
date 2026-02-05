@@ -13,6 +13,7 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -65,7 +66,7 @@ func TestNAC_AdminRelation_WithDACManagerRelation_CanDeleteDACActorRelationship(
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationDeletePerm),
 			},
 
 			// Grant access to user.
@@ -139,7 +140,7 @@ func TestNAC_AdminRelation_WithoutDACManagerRelation_CanNotDeleteDACActorRelatio
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationDeletePerm),
 			},
 
 			// Grant access to user.

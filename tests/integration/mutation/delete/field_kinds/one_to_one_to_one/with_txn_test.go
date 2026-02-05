@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestTxnDeletionOfRelatedDocFromPrimarySideForwardDirection(t *testing.T) {
@@ -153,6 +154,13 @@ func TestTxnDeletionOfRelatedDocFromPrimarySideBackwardDirection(t *testing.T) {
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		// LevelDB does not support concurrent transactions
+		// TODO https://github.com/sourcenetwork/defradb/issues/4442
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			testUtils.BadgerFileType,
+			testUtils.BadgerIMType,
+			testUtils.DefraIMType,
+		}),
 		Actions: []any{
 			&action.CreateDoc{
 				// books
@@ -248,6 +256,13 @@ func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnForwardDirection(t *tes
 
 func TestATxnCanReadARecordThatIsDeletedInANonCommitedTxnBackwardDirection(t *testing.T) {
 	test := testUtils.TestCase{
+		// LevelDB does not support concurrent transactions
+		// TODO https://github.com/sourcenetwork/defradb/issues/4442
+		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
+			testUtils.BadgerFileType,
+			testUtils.BadgerIMType,
+			testUtils.DefraIMType,
+		}),
 		Actions: []any{
 			&action.CreateDoc{
 				// books

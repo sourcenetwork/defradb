@@ -26,7 +26,6 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
-	"github.com/sourcenetwork/defradb/internal/datastore"
 	dbid "github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
@@ -265,12 +264,6 @@ func (p *P2P) syncBranchableCollectionMessageHandler(from string, topic string, 
 
 // processSyncBranchableCollection processes a branchable collection sync request and returns all head CIDs.
 func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, error) {
-	clientTxn, err := p.db.NewTxn(true)
-	if err != nil {
-		return nil, err
-	}
-	defer clientTxn.Discard()
-
 	cols, err := p.db.GetCollections(
 		p.ctx,
 		client.CollectionFetchOptions{
@@ -286,19 +279,15 @@ func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, er
 		return nil, NewErrCollectionNotBranchable(collectionID)
 	}
 
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-
-	txnCtx := dbid.InitCollectionShortIDCache(p.ctx)
-	txnCtx = datastore.CtxSetTxn(txnCtx, txn)
-	shortID, err := dbid.GetShortCollectionID(txnCtx, col.CollectionID)
+	shortID, err := dbid.GetUncachedShortCollectionID(p.ctx, col.CollectionID, p.db.Multistore().Systemstore())
 	if err != nil {
 		return nil, err
 	}
 
 	key := keys.NewHeadstoreColKey(shortID)
-	headset := coreblock.NewHeadSet(txn.Headstore(), key)
+	headset := coreblock.NewHeadSet(p.db.Multistore().Headstore(), key)
 
-	cids, _, err := headset.List(txnCtx)
+	cids, _, err := headset.List(p.ctx)
 	if err != nil {
 		return nil, err
 	}

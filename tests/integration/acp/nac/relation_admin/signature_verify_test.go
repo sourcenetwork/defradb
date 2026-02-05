@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -61,7 +62,7 @@ func TestNAC_AdminRelation_CanVerifySignature(t *testing.T) {
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.NodeIdentity(0).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
-				ExpectedError:  "not authorized to perform operation",
+				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm),
 			},
 
 			// Grant access to user.
@@ -125,7 +126,7 @@ func TestNAC_AdminRelation_GoClient_CanVerifySignature(t *testing.T) {
 				Identity:       testUtils.ClientIdentity(2),
 				SignerIdentity: testUtils.ClientIdentity(1).Value(),
 				Cid:            "bafyreihymej6gbxq7qauy4tgt37di25uap2ahzq7z5d3ln3og5syo7rwmi",
-				ExpectedError:  "not authorized to perform operation",
+				ExpectedError:  testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeSignatureVerifyPerm),
 			},
 
 			// Grant access to user.

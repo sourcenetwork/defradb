@@ -1,4 +1,4 @@
-// Copyright 2022 Democratized Data Foundation
+// Copyright 2025 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -16,17 +16,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PCollectionGetAllCommand(ctx context.Context) *cobra.Command {
+func MakeP2PDocumentListCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "getall",
-		Short: "Get all P2P collections",
-		Long: `Get all P2P collections in the pubsub topics.
-This is the list of collections of the node that are synchronized on the pubsub network.`,
+		Use:   "list",
+		Short: "List P2P documents",
+		Long: `List all P2P documents in the pubsub topics.
+This is the list of documents of the node that are synchronized on the pubsub network.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			cols, err := cliClient.GetAllP2PCollections(cmd.Context())
+			cols, err := cliClient.ListP2PDocuments(cmd.Context())
 			if err != nil {
 				return err
 			}

@@ -13,6 +13,7 @@ package test_acp_nac
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -51,7 +52,7 @@ func TestNAC_GatesAddingDACPolicy_NoIdentity_NotAuthorizedError(t *testing.T) {
 			testUtils.AddDACPolicy{
 				Identity:      testUtils.NoIdentity(),
 				Policy:        examplePolicy,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACPolicyAddPerm),
 			},
 		},
 	}
@@ -73,7 +74,7 @@ func TestNAC_GatesAddingDACPolicy_WrongIdentity_NotAuthorizedError(t *testing.T)
 			testUtils.AddDACPolicy{
 				Identity:      testUtils.ClientIdentity(2),
 				Policy:        examplePolicy,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACPolicyAddPerm),
 			},
 		},
 	}

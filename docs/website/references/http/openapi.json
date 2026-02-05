@@ -2141,8 +2141,8 @@
         },
         "/p2p/collections": {
             "delete": {
-                "description": "Remove peer collections",
-                "operationId": "peer_collections_remove",
+                "description": "Delete peer collections",
+                "operationId": "peer_collections_delete",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2200,8 +2200,8 @@
                 ]
             },
             "post": {
-                "description": "Add peer collections",
-                "operationId": "peer_collections_add",
+                "description": "Create peer collections",
+                "operationId": "peer_collections_create",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2337,8 +2337,8 @@
         },
         "/p2p/documents": {
             "delete": {
-                "description": "Remove peer documents",
-                "operationId": "peer_documents_remove",
+                "description": "Delete peer documents",
+                "operationId": "peer_documents_delete",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2396,8 +2396,8 @@
                 ]
             },
             "post": {
-                "description": "Add peer documents",
-                "operationId": "peer_documents_add",
+                "description": "Create peer documents",
+                "operationId": "peer_documents_create",
                 "requestBody": {
                     "content": {
                         "application/json": {

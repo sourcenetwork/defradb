@@ -118,7 +118,7 @@ func TestP2PCreateWithP2PCollection(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
@@ -234,19 +234,19 @@ func TestP2PCreate_WithP2PCollectionWithNodeChain_ShouldSucceed(t *testing.T) {
 				SourceNodeID: 4,
 				TargetNodeID: 3,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        2,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        3,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        4,
 				CollectionIDs: []int{0},
 			},
@@ -310,7 +310,7 @@ func TestP2PCreate_WithP2PCollectionOnLastNodeInNodeChain_ShouldPropagateUpdate(
 				SourceNodeID: 4,
 				TargetNodeID: 3,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        4,
 				CollectionIDs: []int{0},
 			},
@@ -360,7 +360,7 @@ func TestP2PCreate_WithP2PCollectionAndSubscription_ShouldSucceed(t *testing.T) 
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},

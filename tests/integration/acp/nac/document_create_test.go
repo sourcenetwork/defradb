@@ -54,6 +54,8 @@ func TestNAC_GatesDocumentCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
 
 func TestNAC_GatesDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -70,9 +72,13 @@ func TestNAC_GatesDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 			// We haven't authorized non-identities. So, this should error.
 			&action.CreateDoc{
-				Identity:      testUtils.NoIdentity(),
-				CollectionID:  0,
-				Doc:           `{ "name": "Shahzad" }`,
+				Identity:     testUtils.NoIdentity(),
+				CollectionID: 0,
+				Doc:          `{ "name": "Shahzad" }`,
+				// todo: After implementing granular NAC permissions, this should be changed to a
+				// specific permission error. Currently, the permission error is different across
+				// different client types and environments.
+				// See: https://github.com/sourcenetwork/defradb/issues/4446
 				ExpectedError: "not authorized to perform operation",
 			},
 			&action.Request{ // Should not be created
@@ -88,6 +94,8 @@ func TestNAC_GatesDocumentCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
 
 func TestNAC_GatesDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
+		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+		// See: https://github.com/sourcenetwork/defradb/issues/4383
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
@@ -104,9 +112,13 @@ func TestNAC_GatesDocumentCreate_WrongIdentity_NotAuthorizedError(t *testing.T) 
 
 			// Wrong user/identity will also not be authorized.
 			&action.CreateDoc{
-				Identity:      testUtils.ClientIdentity(2),
-				CollectionID:  0,
-				Doc:           `{ "name": "Shahzad" }`,
+				Identity:     testUtils.ClientIdentity(2),
+				CollectionID: 0,
+				Doc:          `{ "name": "Shahzad" }`,
+				// todo: After implementing granular NAC permissions, this should be changed to a
+				// specific permission error. Currently, the permission error is different across
+				// different client types and environments.
+				// See: https://github.com/sourcenetwork/defradb/issues/4446
 				ExpectedError: "not authorized to perform operation",
 			},
 			&action.Request{ // Should not be created

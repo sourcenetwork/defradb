@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/testo/multiplier"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -49,7 +50,7 @@ import (
 )
 
 func init() {
-	multiplier.Init("DEFRA_MULTIPLIERS")
+	multiplier.Init(multipliersEnvName)
 }
 
 const (
@@ -57,6 +58,7 @@ const (
 	viewTypeEnvName         = "DEFRA_VIEW_TYPE"
 	skipNetworkTestsEnvName = "DEFRA_SKIP_NETWORK_TESTS"
 	vectorEmbeddingEnvName  = "DEFRA_VECTOR_EMBEDDING"
+	multipliersEnvName      = "DEFRA_MULTIPLIERS"
 )
 
 // ViewType is a type alias for backward compatibility.
@@ -183,6 +185,9 @@ func ExecuteTestCase(
 	if inMemoryStore {
 		databases = append(databases, DefraIMType)
 	}
+	if levelStore {
+		databases = append(databases, LevelStoreType)
+	}
 
 	var kmsList []state.KMSType
 	if testCase.KMS.Activated {
@@ -254,6 +259,10 @@ func executeTestCase(
 		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
 	}
 
+	if value, ok := os.LookupEnv(multipliersEnvName); ok {
+		logAttrs = append(logAttrs, corelog.String("multipliers", value))
+	}
+
 	log.InfoContext(ctx, t.Name(), logAttrs...)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
@@ -279,17 +288,12 @@ func executeTestCase(
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
-	refreshCollections(s)
+	refreshCollections(s, immutable.None[int]())
 	refreshDocuments(s, testCase, startActionIndex)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
 		performAction(s, testCase, i, testCase.Actions[i])
 	}
-
-	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
-	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
-	// by them. So the matchers need to be reset between the test runs.
-	resetMatchers(s)
 
 	// Notify any active subscriptions that all requests have been sent.
 	close(s.AllActionsDone)
@@ -305,6 +309,11 @@ func executeTestCase(
 			assert.Fail(t, "timeout occurred while waiting for data stream")
 		}
 	}
+
+	// matchers can be instantiated not as part of the test state, but as a variable for Test... function scope
+	// which will outlive all test runs (test instance of type [testUtils.TestCase]) and will be reused
+	// by them. So the matchers need to be reset between the test runs.
+	resetMatchers(s)
 }
 
 func performAction(
@@ -342,23 +351,23 @@ func performAction(
 	case DeleteReplicator:
 		deleteReplicator(s, action)
 
-	case SubscribeToCollection:
-		subscribeToCollection(s, action)
+	case CreateCollectionSubscription:
+		createCollectionSubscription(s, action)
 
-	case UnsubscribeToCollection:
-		unsubscribeToCollection(s, action)
+	case DeleteCollectionSubscription:
+		deleteCollectionSubscription(s, action)
 
-	case GetAllP2PCollections:
-		getAllP2PCollections(s, action)
+	case ListP2PCollections:
+		listP2PCollections(s, action)
 
-	case SubscribeToDocument:
-		subscribeToDocument(s, action)
+	case CreateDocumentSubscription:
+		createDocumentSubscription(s, action)
 
-	case UnsubscribeToDocument:
-		unsubscribeToDocument(s, action)
+	case DeleteDocumentSubscription:
+		deleteDocumentSubscription(s, action)
 
-	case GetAllP2PDocuments:
-		getAllP2PDocuments(s, action)
+	case ListP2PDocuments:
+		listP2PDocuments(s, action)
 
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)
@@ -853,7 +862,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
 	// will reference the old (closed) database instances.
-	refreshCollections(s)
+	refreshCollections(s, immutable.None[int]())
 }
 
 func restartNodes(
@@ -900,6 +909,7 @@ func refreshTokens(
 // result-index will be nil.
 func refreshCollections(
 	s *state.State,
+	transactionID immutable.Option[int],
 ) {
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
@@ -908,7 +918,9 @@ func refreshCollections(
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
-		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
+		txn := getTransaction(s, node, transactionID, "")
+		ctx := db.InitContext(s.Ctx, txn)
+		ctx = getContextWithIdentity(ctx, s, nodeIdentity, nodeID)
 		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})
 		require.Nil(s.T, err)
 
@@ -982,11 +994,13 @@ func refreshDocuments(
 	// For now just do the initial setup using the collections on the first node,
 	// this may need to become more involved at a later date depending on testing
 	// requirements.
+	s.DocIDsLock.Lock()
 	s.DocIDs = make([][]client.DocID, len(s.Nodes[0].Collections))
 
 	for i := range s.Nodes[0].Collections {
 		s.DocIDs[i] = []client.DocID{}
 	}
+	s.DocIDsLock.Unlock()
 
 	for i := 0; i < startActionIndex; i++ {
 		// We need to add the existing documents in the order in which the test case lists them
@@ -1008,11 +1022,18 @@ func refreshDocuments(
 				// the test will fail later anyway
 				continue
 			}
+
+			s.Nodes[firstNodesID].CompositesLock.Lock()
 			if s.Nodes[firstNodesID].Composites == nil {
 				s.Nodes[firstNodesID].Composites = make(map[string][]cid.Cid)
 			}
+			s.Nodes[firstNodesID].CompositesLock.Unlock()
+
 			for _, doc := range docs {
+				s.DocIDsLock.Lock()
 				s.DocIDs[action.CollectionID] = append(s.DocIDs[action.CollectionID], doc.ID())
+				s.DocIDsLock.Unlock()
+
 				// We fetch the list of composite commits for the document so that
 				// they can be referenced later in the test if required.
 				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: ID!) {
@@ -1026,10 +1047,13 @@ func refreshDocuments(
 					if commits, ok := data["_commits"].([]map[string]any); ok {
 						for _, commit := range commits {
 							cid := cid.MustParse(commit[request.CidFieldName].(string))
+
+							s.Nodes[firstNodesID].CompositesLock.Lock()
 							s.Nodes[firstNodesID].Composites[doc.ID().String()] = append(
 								s.Nodes[firstNodesID].Composites[doc.ID().String()],
 								cid,
 							)
+							s.Nodes[firstNodesID].CompositesLock.Unlock()
 						}
 					}
 				}
@@ -1058,7 +1082,7 @@ func setActiveCollectionVersion(
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(s)
+	refreshCollections(s, immutable.None[int]())
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
@@ -1075,7 +1099,10 @@ func substituteRelations(
 			continue
 		}
 
+		s.DocIDsLock.RLock()
 		docID := s.DocIDs[index.CollectionIndex][index.Index]
+		s.DocIDsLock.RUnlock()
+
 		action.DocMap[k] = docID.String()
 	}
 }
@@ -1086,7 +1113,9 @@ func deleteDoc(
 	s *state.State,
 	action DeleteDoc,
 ) {
+	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
 
 	var expectedErrorRaised bool
 
@@ -1176,7 +1205,11 @@ func updateDocViaColSave(
 ) error {
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
-	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true)
+	s.DocIDsLock.RLock()
+	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
+
+	doc, err := collection.Get(ctx, docID, true)
 	if err != nil {
 		return err
 	}
@@ -1196,7 +1229,11 @@ func updateDocViaColUpdate(
 ) error {
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
-	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true)
+	s.DocIDsLock.RLock()
+	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
+
+	doc, err := collection.Get(ctx, docID, true)
 	if err != nil {
 		return err
 	}
@@ -1214,7 +1251,9 @@ func updateDocViaGQL(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
+	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
 
 	input, err := jsonToGQL(action.Doc)
 	require.NoError(s.T, err)
@@ -1939,4 +1978,8 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 			require.NoError(s.T, err)
 		}
 	}
+}
+
+func FormatExpectedErrorWithPermission(permission acpTypes.NodeResourcePermission) string {
+	return fmt.Sprintf("%s. Permission: %s", client.ErrNotAuthorizedToPerformOperation, permission.String())
 }

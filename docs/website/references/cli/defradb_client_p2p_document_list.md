@@ -1,30 +1,20 @@
-## defradb client p2p collection remove
+## defradb client p2p document list
 
-Remove P2P collections
+List P2P documents
 
 ### Synopsis
 
-Remove P2P collections from the followed pubsub topics.
-The removed collections will no longer be synchronized between nodes.
+List all P2P documents in the pubsub topics.
+This is the list of documents of the node that are synchronized on the pubsub network.
 
 ```
-defradb client p2p collection remove [collectionNames] [flags]
-```
-
-### Examples
-
-```
-remove single collection:  
-  defradb client p2p collection remove User
-
-remove multiple collections:  
-  defradb client p2p collection remove User,Address
+defradb client p2p document list [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+  -h, --help   help for list
 ```
 
 ### Options inherited from parent commands
@@ -51,5 +41,5 @@ remove multiple collections:
 
 ### SEE ALSO
 
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
+* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
 
