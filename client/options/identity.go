@@ -39,22 +39,3 @@ func WithIdentity[T any, B BuilderWithIdentity[T, B]](builder B, ident immutable
 	}
 	return builder
 }
-
-// IdentityFrom extracts the identity from option builders by merging them and reading the identity.
-// Returns an empty Option if opts is empty or no identity is set.
-//
-// Example usage:
-//
-//	func (db *DB) SomeMethod(ctx context.Context, opts ...options.Lister[options.SomeOptions]) error {
-//	    ident := options.IdentityFrom[options.SomeOptions](opts...)
-//	    // use ident...
-//	}
-func IdentityFrom[T any](opts ...Lister[T]) immutable.Option[identity.Identity] {
-	merged := NewOptions(opts...)
-	if withIdentity, ok := any(merged).(interface {
-		GetIdentity() immutable.Option[identity.Identity]
-	}); ok {
-		return withIdentity.GetIdentity()
-	}
-	return immutable.None[identity.Identity]()
-}

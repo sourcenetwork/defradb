@@ -37,9 +37,9 @@ func (c *collection) UpdateWithFilter(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return nil, err
 	}
 

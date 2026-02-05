@@ -34,9 +34,9 @@ func (c *collection) Get(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentReadPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
 

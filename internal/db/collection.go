@@ -213,9 +213,9 @@ func (c *collection) GetAllDocIDs(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentReadPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
 	return c.getAllDocIDsChan(ctx)
@@ -338,9 +338,9 @@ func (c *collection) Create(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
 
@@ -368,9 +368,9 @@ func (c *collection) CreateMany(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
 
@@ -494,9 +494,9 @@ func (c *collection) Update(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
 
@@ -574,9 +574,9 @@ func (c *collection) Save(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
 
@@ -825,9 +825,9 @@ func (c *collection) Delete(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentDeletePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentDeletePerm); err != nil {
 		return false, err
 	}
 
@@ -863,9 +863,9 @@ func (c *collection) Exists(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentReadPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return false, err
 	}
 

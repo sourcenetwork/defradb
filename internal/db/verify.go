@@ -34,9 +34,9 @@ func (db *DB) VerifySignature(
 	pubKey crypto.PublicKey,
 	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeSignatureVerifyPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeSignatureVerifyPerm); err != nil {
 		return err
 	}
 
@@ -66,14 +66,14 @@ func (db *DB) VerifySignature(
 
 	if db.documentACP.HasValue() {
 		docID := string(block.Delta.GetDocID())
-		collection, err := NewCollectionRetriever(db).WithIdentity(ident).RetrieveCollectionFromDocID(ctx, docID)
+		collection, err := NewCollectionRetriever(db).WithIdentity(opt.Identity).RetrieveCollectionFromDocID(ctx, docID)
 		if err != nil {
 			return err
 		}
 
 		hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
 			ctx,
-			ident,
+			opt.Identity,
 			db.nodeACP,
 			db.documentACP.Value(),
 			collection,

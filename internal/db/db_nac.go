@@ -79,11 +79,11 @@ func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.Re
 		return ErrNACIsAlreadyEnabled
 	}
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
 	// User trying to re-enable a disabled nac state.
 	// Check if this request is authorized to re-enable node access control.
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeNACReEnablePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACReEnablePerm); err != nil {
 		return err
 	}
 
@@ -112,10 +112,10 @@ func (db *DB) DisableNAC(ctx context.Context, opts ...options.Lister[options.Dis
 		return ErrNACIsAlreadyDisabled
 	}
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
 	// Check if this request is authorized to disable node access control.
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeNACDisablePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACDisablePerm); err != nil {
 		return err
 	}
 
@@ -127,9 +127,9 @@ func (db *DB) GetNACStatus(ctx context.Context, opts ...options.Lister[options.G
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeNACStatusPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACStatusPerm); err != nil {
 		return client.NACStatusResult{}, err
 	}
 
@@ -147,9 +147,9 @@ func (db *DB) AddNACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeNACRelationAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationAddPerm); err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
 
@@ -165,9 +165,9 @@ func (db *DB) DeleteNACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeNACRelationDeletePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationDeletePerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
 

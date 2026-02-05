@@ -58,9 +58,9 @@ func (db *DB) AddDACPolicy(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeDACPolicyAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACPolicyAddPerm); err != nil {
 		return client.AddPolicyResult{}, err
 	}
 
@@ -91,9 +91,9 @@ func (db *DB) AddDACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeDACRelationAddPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACRelationAddPerm); err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
 
@@ -101,7 +101,7 @@ func (db *DB) AddDACActorRelationship(
 		return client.AddActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
-	colOpt := options.WithIdentity(options.GetCollectionByName(), ident)
+	colOpt := options.WithIdentity(options.GetCollectionByName(), opt.Identity)
 	collection, err := db.GetCollectionByName(ctx, collectionName, colOpt)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
@@ -147,9 +147,9 @@ func (db *DB) DeleteDACActorRelationship(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeDACRelationDeletePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACRelationDeletePerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
 
@@ -157,7 +157,7 @@ func (db *DB) DeleteDACActorRelationship(
 		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
-	colOpt := options.WithIdentity(options.GetCollectionByName(), ident)
+	colOpt := options.WithIdentity(options.GetCollectionByName(), opt.Identity)
 	collection, err := db.GetCollectionByName(ctx, collectionName, colOpt)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err

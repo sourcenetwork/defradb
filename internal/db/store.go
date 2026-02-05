@@ -31,8 +31,9 @@ func (db *DB) ExecRequest(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if ident := options.IdentityFrom(opts...); ident.HasValue() {
-		ctx = identity.WithContext(ctx, ident)
+	opt := options.NewOptions(opts...)
+	if opt.Identity.HasValue() {
+		ctx = identity.WithContext(ctx, opt.Identity)
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
@@ -44,7 +45,6 @@ func (db *DB) ExecRequest(
 	defer txn.Discard()
 
 	gqlOpts := &client.GQLOptions{}
-	opt := options.NewOptions(opts...)
 	if opt.OperationName.HasValue() {
 		gqlOpts.OperationName = opt.OperationName.Value()
 	}
@@ -72,9 +72,9 @@ func (db *DB) GetCollectionByName(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionGetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
 	}
 
@@ -97,12 +97,7 @@ func (db *DB) GetCollections(
 
 	opt := options.NewOptions(opts...)
 
-	var ident immutable.Option[identity.Identity]
-	if opt != nil {
-		ident = opt.Identity
-	}
-
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionGetPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
 	}
 
@@ -123,9 +118,9 @@ func (db *DB) GetAllIndexes(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexListPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
 	}
 
@@ -167,9 +162,9 @@ func (db *DB) AddSchema(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return nil, err
 	}
 
@@ -211,9 +206,9 @@ func (db *DB) PatchCollection(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
 	}
 
@@ -239,9 +234,9 @@ func (db *DB) SetActiveCollectionVersion(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionPatchPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
 	}
 

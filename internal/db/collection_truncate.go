@@ -34,9 +34,9 @@ func (c *collection) Truncate(ctx context.Context, opts ...options.Lister[option
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	ident := options.IdentityFrom(opts...)
+	opt := options.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeCollectionTruncatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionTruncatePerm); err != nil {
 		return err
 	}
 
