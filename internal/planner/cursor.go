@@ -32,7 +32,7 @@ type cursorNode struct {
 	first       immutable.Option[uint64]
 	afterCursor immutable.Option[string]
 
-	// Pre-decoded cursor payload (decoded in constructor, not on hot path)
+	// Pre-decoded cursor payload
 	afterPayload *cursor.CursorPayload
 
 	// Internal state machine
@@ -106,7 +106,7 @@ func (n *cursorNode) Start() error                      { return n.plan.Start() 
 func (n *cursorNode) Prefixes(prefixes []keys.Walkable) { n.plan.Prefixes(prefixes) }
 func (n *cursorNode) Close() error                      { return n.plan.Close() }
 func (n *cursorNode) Value() core.Doc                   { return n.plan.Value() }
-func (n *cursorNode) Source() planNode                   { return n.plan }
+func (n *cursorNode) Source() planNode                  { return n.plan }
 
 func (n *cursorNode) Next() (bool, error) {
 	n.execInfo.iterations++

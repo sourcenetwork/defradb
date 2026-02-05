@@ -256,21 +256,9 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 	}
 
 	if plan.cursor != nil {
-		reversed, err := p.validateCursorIndex(plan)
+		err := p.expandCusrorPlan(plan)
 		if err != nil {
 			return err
-		}
-		if ob := plan.selectNode.selectReq.OrderBy; ob != nil {
-			plan.cursor.orderFields = ob.Conditions
-		}
-		if plan.cursor.afterPayload != nil {
-			if scan := getNode[*scanNode](plan.selectNode); scan != nil {
-				scan.cursorPayload = plan.cursor.afterPayload
-				scan.reversedIteration = reversed
-			}
-			if len(plan.cursor.afterPayload.Keys) > 0 {
-				plan.cursor.indexSeekActive = true
-			}
 		}
 		plan.cursor.plan = plan.planNode
 		plan.planNode = plan.cursor
@@ -294,6 +282,26 @@ func (p *Planner) expandSelectTopNodePlan(plan *selectTopNode, parentPlan *selec
 type aggregateNode interface {
 	planNode
 	SetPlan(plan planNode)
+}
+
+func (p *Planner) expandCusrorPlan(plan *selectTopNode) error {
+	reversed, err := p.validateCursorIndex(plan)
+	if err != nil {
+		return err
+	}
+	if selectReq := plan.selectNode.selectReq; selectReq != nil && selectReq.OrderBy != nil {
+		plan.cursor.orderFields = selectReq.OrderBy.Conditions
+	}
+	if plan.cursor.afterPayload != nil {
+		if scan := getNode[*scanNode](plan.selectNode); scan != nil {
+			scan.cursorPayload = plan.cursor.afterPayload
+			scan.reversedIteration = reversed
+		}
+		if plan.cursor.afterPayload != nil && len(plan.cursor.afterPayload.Keys) > 0 {
+			plan.cursor.indexSeekActive = true
+		}
+	}
+	return nil
 }
 
 func (p *Planner) expandAggregatePlans(plan *selectTopNode) {

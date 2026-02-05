@@ -71,5 +71,8 @@ crash.log
 # Ignore .env files containing sensitive information.
 .env
 
+# AGENTS
+CLAUDE.md
+
 # GSD planning directory (local only).
 .planning/
