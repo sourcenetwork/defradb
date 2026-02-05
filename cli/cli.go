@@ -35,18 +35,18 @@ type CLI interface {
 func NewDefraCommand(ctx context.Context) *cobra.Command {
 	p2p_collection := MakeP2PCollectionCommand(ctx)
 	p2p_collection.AddCommand(
-		MakeP2PCollectionAddCommand(ctx),
-		MakeP2PCollectionRemoveCommand(ctx),
-		MakeP2PCollectionGetAllCommand(ctx),
+		MakeP2PCollectionCreateCommand(ctx),
+		MakeP2PCollectionDeleteCommand(ctx),
+		MakeP2PCollectionListCommand(ctx),
 		MakeP2PCollectionSyncVersionsCommand(ctx),
 		MakeP2PCollectionSyncBranchableCommand(ctx),
 	)
 
 	p2p_document := MakeP2PDocumentCommand(ctx)
 	p2p_document.AddCommand(
-		MakeP2PDocumentAddCommand(ctx),
-		MakeP2PDocumentRemoveCommand(ctx),
-		MakeP2PDocumentGetAllCommand(ctx),
+		MakeP2PDocumentCreateCommand(ctx),
+		MakeP2PDocumentDeleteCommand(ctx),
+		MakeP2PDocumentListCommand(ctx),
 		MakeP2PDocumentSyncCommand(ctx),
 	)
 
@@ -199,11 +199,17 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 		MakeIdentityNewCommand(ctx),
 	)
 
+	sdl := MakeSDLCommand(ctx)
+	sdl.AddCommand(
+		MakeSDLGenerateCommand(ctx),
+	)
+
 	root := MakeRootCommand(ctx)
 	root.AddCommand(
 		client,
 		keyring,
 		identity,
+		sdl,
 		MakeStartCommand(ctx),
 		MakeServerDumpCmd(),
 		MakeVersionCommand(ctx),

@@ -20,14 +20,14 @@ import (
 func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -36,7 +36,7 @@ func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
 						"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Book {
 							name
@@ -69,14 +69,14 @@ func TestQueryOneToOne_PrimaryDirection(t *testing.T) {
 func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name": "Painted House",
 						"rating": 4.9
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 						"name": "John Grisham",
@@ -85,7 +85,7 @@ func TestQueryOneToOne_SecondaryDirection(t *testing.T) {
 						"_publishedID": "bae-8627532a-2ed3-50ed-91d5-26f6b9b44c25"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author {
 							name
@@ -134,21 +134,21 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":   "Painted House",
 					"rating": 4.9,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":   "Go Guide for Rust developers",
 					"rating": 5.0,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
@@ -157,7 +157,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Andrew Lone",
@@ -166,7 +166,7 @@ func TestQueryOneToOneWithMultipleRecords(t *testing.T) {
 					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -217,33 +217,33 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Theif Lord"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "Cornelia Funke",
 					"_publishedID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -279,13 +279,13 @@ func TestQueryOneToOneWithMultipleRecordsSecondaryDirection(t *testing.T) {
 func TestQueryOneToOneWithNilChild(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John Grisham"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -312,12 +312,12 @@ func TestQueryOneToOneWithNilChild(t *testing.T) {
 func TestQueryOneToOneWithNilParent(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name
@@ -357,20 +357,20 @@ func TestQueryOneToOne_WithRelationIDFromPrimarySide(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name
@@ -408,20 +408,20 @@ func TestQueryOneToOne_WithRelationIDFromSecondarySide(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Painted House"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":         "John Grisham",
 					"_publishedID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Book {
 						name

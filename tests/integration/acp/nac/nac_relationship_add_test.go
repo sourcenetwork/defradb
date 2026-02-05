@@ -13,6 +13,7 @@ package test_acp_nac
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -63,7 +64,7 @@ func TestNAC_AddRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *testi
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.ClientIdentity(3),
 				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationAddPerm),
 			},
 
 			// Without an requestor identity.
@@ -71,7 +72,7 @@ func TestNAC_AddRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *testi
 				RequestorIdentity: testUtils.NoIdentity(),
 				TargetIdentity:    testUtils.ClientIdentity(3),
 				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationAddPerm),
 			},
 
 			// Without target identity.
@@ -79,7 +80,7 @@ func TestNAC_AddRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *testi
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.NoIdentity(),
 				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationAddPerm),
 			},
 
 			// Without both identities.
@@ -87,7 +88,7 @@ func TestNAC_AddRelationshipWhenNACIsEnabledWithInvalidIdentities_Error(t *testi
 				RequestorIdentity: testUtils.NoIdentity(),
 				TargetIdentity:    testUtils.NoIdentity(),
 				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationAddPerm),
 			},
 
 			// Authorized requestor identity but without target identity.

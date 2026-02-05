@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_ManagerGivesReadAccessToAnotherActor_OtherActorCanRead(t *testing.T) {
@@ -74,7 +75,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -87,7 +88,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // This identity can not read yet.
 
 				Request: `
@@ -133,7 +134,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // The other actor can read
 
 				Request: `
@@ -244,7 +245,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -257,7 +258,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // This identity can not read yet.
 
 				Request: `
@@ -317,7 +318,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // The other actor can read
 
 				Request: `
@@ -363,7 +364,7 @@ resources:
 				DocID: 0,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3),
 
 				Request: `
@@ -441,7 +442,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -454,7 +455,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity (to be manager) can not read yet.
 
 				Request: `
@@ -500,7 +501,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Manager can read now
 
 				Request: `
@@ -559,10 +560,10 @@ func TestACP_OwnerMakesAManagerThatGivesItSelfReadAndWriteAccess_ManagerCanReadA
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{
@@ -619,7 +620,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -632,7 +633,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity (to be manager) can not read yet.
 
 				Request: `
@@ -733,7 +734,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Manager can read now
 
 				Request: `
@@ -789,7 +790,7 @@ resources:
 				DocID: 0,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Make sure manager was able to delete the document.
 
 				Request: `
@@ -816,10 +817,10 @@ func TestACP_ManagerAddsRelationshipWithRelationItDoesNotManageAccordingToPolicy
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{
@@ -874,7 +875,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -929,7 +930,7 @@ resources:
 				ExpectedError: "UNAUTHORIZED",
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(3), // The other actor can't read
 
 				Request: `
@@ -982,10 +983,10 @@ func TestACP_OwnerMakesManagerButManagerCanNotPerformOperations_ManagerCantReadO
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{
@@ -1040,7 +1041,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -1067,7 +1068,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Manager can not read
 
 				Request: `
@@ -1185,7 +1186,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,

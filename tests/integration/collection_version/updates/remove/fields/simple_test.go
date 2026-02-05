@@ -15,10 +15,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestSchemaUpdatesRemoveField(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -28,14 +31,14 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2" }
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -44,7 +47,7 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 				}`,
 				ExpectedError: "Cannot query field \"name\" on type \"Users\".",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						email
@@ -61,6 +64,8 @@ func TestSchemaUpdatesRemoveField(t *testing.T) {
 
 func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -70,14 +75,14 @@ func TestSchemaUpdatesRemoveAllFields(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields" }
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						_docID
@@ -103,7 +108,7 @@ func TestSchemaUpdatesRemoveFieldNameErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2/Name" }
@@ -127,7 +132,7 @@ func TestSchemaUpdatesRemoveFieldKindErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2/Kind" }
@@ -151,7 +156,7 @@ func TestSchemaUpdatesRemoveFieldTypErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/Fields/2/Typ" }

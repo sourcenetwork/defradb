@@ -211,27 +211,20 @@ func (c *collection) GetAllDocIDs(
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
-
-	ctx, _, err := ensureContextTxn(ctx, c.db, true)
-	if err != nil {
-		return nil, err
-	}
 	return c.getAllDocIDsChan(ctx)
 }
 
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	txn := datastore.CtxMustGetTxn(ctx)
-
-	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
+	shortID, err := id.GetUncachedShortCollectionID(ctx, c.Version().CollectionID, c.db.Multistore().Systemstore())
 	if err != nil {
 		return nil, err
 	}
 	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionShortID: shortID,
 	}
-	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
+	iter, err := c.db.Multistore().Datastore().Iterator(ctx, datastore.IterOptions{
 		Prefix:   prefix,
 		KeysOnly: true,
 	})

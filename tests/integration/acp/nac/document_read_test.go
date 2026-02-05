@@ -13,6 +13,7 @@ package test_acp_nac
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -32,14 +33,14 @@ func TestNAC_GatesDocumentRead_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 				Request:  `query{ User { name } }`,
 				Results: map[string]any{
@@ -53,6 +54,8 @@ func TestNAC_GatesDocumentRead_AuthorizedIdentity_AllowAccess(t *testing.T) {
 }
 
 func TestNAC_GatesDocumentRead_NoIdentity_NotAuthorizedError(t *testing.T) {
+	// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
+	// See: https://github.com/sourcenetwork/defradb/issues/4383
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
@@ -67,17 +70,17 @@ func TestNAC_GatesDocumentRead_NoIdentity_NotAuthorizedError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.Request{
+			&action.Request{
 				Identity:      testUtils.NoIdentity(),
 				Request:       `query{ User { name } }`,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -100,17 +103,17 @@ func TestNAC_GatesDocumentRead_WrongIdentity_NotAuthorizedError(t *testing.T) {
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type User { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.Request{
+			&action.Request{
 				Identity:      testUtils.ClientIdentity(2),
 				Request:       `query{ User { name } }`,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

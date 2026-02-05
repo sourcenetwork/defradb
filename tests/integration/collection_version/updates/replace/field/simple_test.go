@@ -15,10 +15,13 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestSchemaUpdatesReplaceField(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -28,14 +31,14 @@ func TestSchemaUpdatesReplaceField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "replace", "path": "/Users/Fields/1", "value": {"Name": "fax", "Kind": 11} }
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -44,7 +47,7 @@ func TestSchemaUpdatesReplaceField(t *testing.T) {
 				}`,
 				ExpectedError: "Cannot query field \"email\" on type \"Users\".",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

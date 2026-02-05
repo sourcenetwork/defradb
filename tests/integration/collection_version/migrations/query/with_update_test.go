@@ -31,12 +31,12 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -60,7 +60,7 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					update_Users(input: {name: "Johnnnn"}) {
 						name
@@ -78,7 +78,7 @@ func TestSchemaMigrationQueryWithUpdateRequest(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -112,12 +112,12 @@ func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -147,7 +147,7 @@ func TestSchemaMigrationQueryWithMigrationRegisteredAfterUpdate(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

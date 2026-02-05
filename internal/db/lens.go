@@ -41,7 +41,7 @@ func (db *DB) addLens(ctx context.Context, lens model.Lens) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return cid.String(), nil
+	return cid, nil
 }
 
 func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
@@ -52,7 +52,7 @@ func (db *DB) listLenses(ctx context.Context) (map[string]model.Lens, error) {
 
 	result := make(map[string]model.Lens, len(lenses))
 	for cid, lens := range lenses {
-		result[cid.String()] = lens
+		result[cid] = lens
 	}
 	return result, nil
 }
@@ -114,7 +114,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 
 	dstCol.PreviousVersion = immutable.Some(client.CollectionSource{
 		SourceCollectionID: sourceCol.VersionID,
-		Transform:          immutable.Some(id.String()),
+		Transform:          immutable.Some(id),
 	})
 
 	err = description.SaveCollection(ctx, dstCol)
@@ -134,7 +134,7 @@ func (db *DB) setMigration(ctx context.Context, cfg client.LensConfig) (string, 
 		}
 	}
 
-	return id.String(), nil
+	return id, nil
 }
 
 // shouldReindexAfterMigration determines if reindexing is needed after adding a migration.

@@ -35,42 +35,42 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGt_ShouldFetchInRevertedOrder(t
 						age: Int @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"John",
 						"age":	20
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Fred",
 						"age":	18
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"age":	24
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"age":	23
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -89,7 +89,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGt_ShouldFetchInRevertedOrder(t
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -117,42 +117,42 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGe_ShouldFetchInRevertedOrder(t
 						age: Int @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"John",
 						"age":	20
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Fred",
 						"age":	18
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"age":	24
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"age":	23
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -171,7 +171,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithGe_ShouldFetchInRevertedOrder(t
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -199,42 +199,42 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLt_ShouldFetchInRevertedOrder(t
 						age: Int @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"John",
 						"age":	20
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Fred",
 						"age":	18
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"age":	24
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"age":	23
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -249,7 +249,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLt_ShouldFetchInRevertedOrder(t
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -277,42 +277,42 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLe_ShouldFetchInRevertedOrder(t
 						age: Int @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"John",
 						"age":	20
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Fred",
 						"age":	18
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"age":	24
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"age":	23
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -331,7 +331,7 @@ func TestQueryWithIndex_IfIntFieldInDescOrderWithLe_ShouldFetchInRevertedOrder(t
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -359,42 +359,42 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLt_ShouldFetchInRevertedOrder
 						iq: Float @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"iq":	0.2
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"iq":	0.4
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"iq":	0.3
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"David",
 						"iq":	0.5
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Emma",
 						"iq":	0.1
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -413,7 +413,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLt_ShouldFetchInRevertedOrder
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -441,42 +441,42 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGt_ShouldFetchInRevertedOrder
 						iq: Float @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"iq":	0.2
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"iq":	0.4
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"iq":	0.3
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"David",
 						"iq":	0.5
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Emma",
 						"iq":	0.1
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -495,7 +495,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGt_ShouldFetchInRevertedOrder
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -523,42 +523,42 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGe_ShouldFetchInRevertedOrder
 						iq: Float @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"iq":	0.2
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"iq":	0.4
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"iq":	0.3
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"David",
 						"iq":	0.5
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Emma",
 						"iq":	0.1
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -577,7 +577,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithGe_ShouldFetchInRevertedOrder
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -605,42 +605,42 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLe_ShouldFetchInRevertedOrder
 						iq: Float @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"iq":	0.2
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"iq":	0.4
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"iq":	0.3
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"David",
 						"iq":	0.5
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Emma",
 						"iq":	0.1
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -659,7 +659,7 @@ func TestQueryWithIndex_IfFloatFieldInDescOrderWithLe_ShouldFetchInRevertedOrder
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
@@ -679,28 +679,28 @@ func TestQueryWithIndex_IfFloat32FieldInDescOrder_ShouldFetchInRevertedOrder(t *
 						iq: Float32 @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Alice",
 						"iq":	0.2
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Bob",
 						"iq":	0.4
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Kate",
 						"iq":	0.3
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {iq: {_lt: 1}}) {
@@ -740,25 +740,25 @@ func TestQueryWithIndex_IfStringFieldInDescOrder_ShouldFetchInRevertedOrder(t *t
 						name: String @index(direction: DESC)
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Alice"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Aaron"
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"Andy"
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						User(filter: {name: {_like: "A%"}}) {

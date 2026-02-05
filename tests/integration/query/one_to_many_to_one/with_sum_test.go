@@ -13,6 +13,7 @@ package one_to_many_to_one
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -21,7 +22,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			// Authors
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John Grisham",
@@ -30,7 +31,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 					"favouritePageNumbers": [-1, 2, -1, 1, 0]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				// Has written 1 Book
 				Doc: `{
@@ -40,7 +41,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 				}`,
 			},
 			// Books
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// Has 1 Publisher
 				DocMap: map[string]any{
@@ -49,7 +50,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// Has 1 Publisher
 				DocMap: map[string]any{
@@ -58,7 +59,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 					"_authorID": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				// Has no Publisher.
 				DocMap: map[string]any{
@@ -68,7 +69,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 				},
 			},
 			// Publishers
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of The Rooster Bar",
@@ -77,7 +78,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 2,
 				DocMap: map[string]any{
 					"name":       "Only Publisher of Theif Lord",
@@ -86,7 +87,7 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 					"_bookID":    testUtils.NewDocIndex(1, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Author {
 						name

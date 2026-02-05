@@ -17,16 +17,17 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{
@@ -81,7 +82,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -94,7 +95,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
@@ -165,10 +166,10 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_OtherActorCanUpdate(t *testing
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used with gql (only for update requests),
-				testUtils.CollectionNamedMutationType,
-				testUtils.CollectionSaveMutationType,
+				state.CollectionNamedMutationType,
+				state.CollectionSaveMutationType,
 			}),
 
 		Actions: []any{
@@ -223,7 +224,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -236,7 +237,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
@@ -298,7 +299,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can now also read.
 
 				Request: `
@@ -382,7 +383,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -423,7 +424,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can now also read.
 
 				Request: `
@@ -461,7 +462,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // Owner can still also read (ownership not transferred)
 
 				Request: `

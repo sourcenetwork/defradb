@@ -71,20 +71,20 @@ func TestView_OneToOneWithTransformOnOuter(t *testing.T) {
 				`,
 				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Ferdowsi"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "Shahnameh",
 					"author": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						AuthorView {

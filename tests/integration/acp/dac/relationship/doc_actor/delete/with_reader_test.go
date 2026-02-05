@@ -72,7 +72,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -187,7 +187,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -214,7 +214,7 @@ resources:
 				ExpectedExistence: false,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can read.
 
 				Request: `
@@ -252,7 +252,7 @@ resources:
 				ExpectedRecordFound: true,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read anymore.
 
 				Request: `

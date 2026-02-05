@@ -30,11 +30,11 @@ func TestPeerEvents_OnSubscribeToCollection_ShouldReceiveJoinEventOnCollectionTo
 					}
 				`,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
@@ -69,11 +69,11 @@ func TestPeerEvents_OnSubscribeToMultipleCollections_ShouldReceiveJoinEventsOnAl
 					}
 				`,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0, 1},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, 1},
 			},
@@ -107,15 +107,15 @@ func TestPeerEvents_MultipleNodesSubscribedToCollection_ShouldReceiveAllJoinEven
 					}
 				`,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        2,
 				CollectionIDs: []int{0},
 			},
@@ -151,11 +151,11 @@ func TestPeerEvents_OnUnsubscribeFromCollection_ShouldReceiveLeftEvent(t *testin
 					}
 				`,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
@@ -169,7 +169,7 @@ func TestPeerEvents_OnUnsubscribeFromCollection_ShouldReceiveLeftEvent(t *testin
 					0: {1},
 				},
 			},
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
@@ -201,11 +201,11 @@ func TestPeerEvents_OnUnsubscribeFromMultipleCollections_ShouldReceiveLeftEvents
 					}
 				`,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0, 1},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, 1},
 			},
@@ -220,7 +220,7 @@ func TestPeerEvents_OnUnsubscribeFromMultipleCollections_ShouldReceiveLeftEvents
 					1: {1},
 				},
 			},
-			testUtils.UnsubscribeToCollection{
+			testUtils.DeleteCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, 1},
 			},

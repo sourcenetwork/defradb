@@ -28,13 +28,13 @@ func TestDocSignature_WithEnabledSigning_ShouldQuery(t *testing.T) {
                         age: Int
                     }
                 `},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
                     query {
                         Users {
@@ -70,13 +70,13 @@ func TestDocSignature_WithEnabledSigning_ShouldQueryCommitsWithoutSignature(t *t
                         age: Int
                     }
                 `},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
                     query {
                         Users {

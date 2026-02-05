@@ -17,6 +17,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
@@ -57,6 +58,13 @@ func newIndexFetcher(
 	execInfo *ExecInfo,
 	ordering []mapper.OrderCondition,
 ) (*indexFetcher, error) {
+	// Check if the filter has an OR at the root level that spans different fields.
+	// This check MUST happen here before filter.CopyField strips out non-indexed fields,
+	// otherwise the orIndexIterator would only see partial OR branches and return incomplete results.
+	if docFilter != nil && hasOrWithMultipleFields(docFilter.Conditions, indexDesc, docMapper) {
+		return nil, nil
+	}
+
 	f := &indexFetcher{
 		ctx:        ctx,
 		txn:        txn,
@@ -85,7 +93,7 @@ func newIndexFetcher(
 		}
 	}
 
-	iter, err := f.createIndexIterator()
+	iter, err := f.createIndexIterator(f.indexFilter)
 	if err != nil || iter == nil {
 		return nil, err
 	}
@@ -188,4 +196,37 @@ func CanBeOrderedByIndex(
 	// also if ordering of all indexes doesn't match we can use index by reversing it
 	allMismatches := orderMismatchCount == len(ordering)
 	return orderMismatchCount == 0 || allMismatches, allMismatches
+}
+
+// hasOrWithMultipleFields checks if the filter conditions have an _or operator at the root level
+// where branches reference fields not covered by this index.
+// This check MUST happen here before filter.CopyField strips out non-indexed fields,
+// otherwise the orIndexIterator would only see partial OR branches and return incomplete results.
+func hasOrWithMultipleFields(
+	conditions map[connor.FilterKey]any,
+	indexDesc client.IndexDescription,
+	docMapper *core.DocumentMapping,
+) bool {
+	branches := extractOrBranches(conditions)
+	if branches == nil {
+		return false
+	}
+
+	for _, branch := range branches {
+		hasNonIndexedField := false
+		filter.TraverseProperties(branch, func(prop *mapper.PropertyIndex, _ map[connor.FilterKey]any) bool {
+			for _, field := range indexDesc.Fields {
+				if docMapper.FirstIndexOfName(field.Name) == prop.Index {
+					return true
+				}
+			}
+			hasNonIndexedField = true
+			return false // Field not in index, stop traversal
+		})
+
+		if hasNonIndexedField {
+			return true
+		}
+	}
+	return false
 }

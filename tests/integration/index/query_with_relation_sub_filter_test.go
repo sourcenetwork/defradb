@@ -42,11 +42,11 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Chris"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -54,7 +54,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -62,7 +62,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -70,7 +70,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -78,7 +78,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -93,7 +93,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
 			},
@@ -128,11 +128,11 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Chris"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -140,7 +140,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -148,7 +148,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -156,7 +156,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -171,7 +171,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 				},
 				NonOrderedResults: true,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request:  makeExplainQuery(req),
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
@@ -204,53 +204,53 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterAndOrderOnIndexedField_ShouldUseIn
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Chris"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Discman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Someman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Jumpman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Galaxy",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPod",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -264,7 +264,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterAndOrderOnIndexedField_ShouldUseIn
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 3 indexFetches: process indexes in order "Discman", "Galaxy", "Jumpman", stop when 2 found
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
@@ -300,15 +300,15 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -316,7 +316,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -324,7 +324,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -332,7 +332,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -340,7 +340,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -359,7 +359,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 6 indexFetches: 2 user order + 2 Walkman devices for each user
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
@@ -395,15 +395,15 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -411,7 +411,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -419,7 +419,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -427,7 +427,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -435,7 +435,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -448,7 +448,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 3 indexFetches: 1 for parent filter (Alice) + 2 for Walkman devices
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
@@ -482,43 +482,43 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterOnParentAndSubType_ShouldFilter
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPod",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Galaxy",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Pixel",
 					"owner": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -531,7 +531,7 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterOnParentAndSubType_ShouldFilter
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 2 indexFetches: 1 for parent filter (users with Walkman) + 1 for Galaxy devices
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
@@ -565,36 +565,36 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterValueOnParentAndSubType_ShouldR
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPod",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Pixel",
 					"owner": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -607,7 +607,7 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterValueOnParentAndSubType_ShouldR
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 2 indexFetches: 1 for parent filter (Walkman) + 1 for sub-filter (same Walkman)
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
@@ -643,15 +643,15 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -659,7 +659,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -667,7 +667,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -675,7 +675,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -683,7 +683,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Pixel",
@@ -691,7 +691,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -704,7 +704,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 4 indexFetches: 3 for parent filter (3 Walkman devices owned by Alice) + 1 for sub-filter (Sony)
 				// Note: For existence checks, we only need 1 match per user, but currently the index fetcher
@@ -742,15 +742,15 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -758,7 +758,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -766,7 +766,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Pixel",
@@ -774,7 +774,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -787,7 +787,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 2 indexFetches: for parent filter (2 Walkman devices owned by Alice), sub-filter applied in-memory
 				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
@@ -823,15 +823,15 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -839,7 +839,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -847,7 +847,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -855,7 +855,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -863,7 +863,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: req,
 				Results: map[string]any{
 					"User": []map[string]any{
@@ -876,7 +876,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: makeExplainQuery(req),
 				// 5 indexFetches: 3 device.model fetches (3 Walkman devices: 2 Alice, 1 Bob)
 				// and 2 device.manufacturer fetches (2 Sony devices)

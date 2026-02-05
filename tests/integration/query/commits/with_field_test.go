@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,14 +21,14 @@ func TestQueryCommitsWithField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (filter: {fieldName: {_eq: "age"}}) {
 							cid
@@ -51,14 +52,14 @@ func TestQueryCommitsWithFieldId(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (filter: {fieldName: {_eq: "1"}}) {
 							cid
@@ -78,14 +79,14 @@ func TestQueryCommitsWithCompositeField(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
@@ -111,14 +112,14 @@ func TestQueryCommitsWithCompositeFieldIdWithReturnedCollectionVersionID(t *test
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {fieldName: {_eq: "_C"}}) {
 							cid
@@ -144,13 +145,13 @@ func TestQueryCommits_WithFilterFieldNameNotEqualComposite_ReturnsFieldCommits(t
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(filter: {fieldName: {_neq: "_C"}}) {
 							fieldName
@@ -177,14 +178,14 @@ func TestQueryCommitsWithFieldAndCID(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (
 							filter: {fieldName: {_eq: "age"}}, 
@@ -211,14 +212,14 @@ func TestQueryCommits_WithWrongFieldAndCID_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (
 							filter: {fieldName: {_eq: "name"}}, 
@@ -241,14 +242,14 @@ func TestQueryCommits_WithInvalidFieldAndCID_ReturnEmptyList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits (
 							filter: {fieldName: {_eq: "NOT_A_FIELD"}}, 

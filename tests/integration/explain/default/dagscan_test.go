@@ -13,6 +13,7 @@ package test_explain_default
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -37,7 +38,7 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					_commits (
@@ -52,7 +53,7 @@ func TestDefaultExplainCommitsDagScanQueryOp(t *testing.T) {
 
 				ExpectedPatterns: dagScanPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "dagScanNode",
 						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.
@@ -77,7 +78,7 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 
 				Request: `query @explain {
 					_commits (docID: "bae-9e70648f-c722-5875-97f5-574ec6f703e9") {
@@ -89,7 +90,7 @@ func TestDefaultExplainCommitsDagScanQueryOpWithoutField(t *testing.T) {
 
 				ExpectedPatterns: dagScanPattern,
 
-				ExpectedTargets: []testUtils.PlanNodeTargetCase{
+				ExpectedTargets: []action.PlanNodeTargetCase{
 					{
 						TargetNodeName:    "dagScanNode",
 						IncludeChildNodes: true, // Shouldn't have any as this is the last node in the chain.

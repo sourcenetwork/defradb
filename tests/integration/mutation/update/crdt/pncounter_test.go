@@ -19,11 +19,15 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -33,7 +37,7 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -51,7 +55,7 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing
 					"points": 10
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -76,6 +80,9 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrement_ShouldIncrement(t *testing
 // This test documents what happens when an overflow occurs in a PN Counter with Int type.
 func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt64(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		SupportedClientTypes: immutable.Some([]state.ClientType{
 			// JS client does not support 64 bit integers
 			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#number_encoding
@@ -83,12 +90,12 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 			state.CLIClientType,
 			state.HTTPClientType,
 		}),
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a type error in this case
 			// because we are testing the internal overflow behaviour with
 			// a int64 but the GQL Int type is an int32.
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -99,7 +106,7 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %d
@@ -111,7 +118,7 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 					"points": 1
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -135,6 +142,9 @@ func TestPNCounterUpdate_IntKindWithPositiveIncrementOverflow_RollsOverToMinInt6
 
 func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -144,7 +154,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -162,7 +172,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 					"points": 10.2
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -187,6 +197,9 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrement_ShouldIncrement(t *testi
 
 func TestPNCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -196,7 +209,7 @@ func TestPNCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -214,7 +227,7 @@ func TestPNCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *tes
 					"points": 10.2
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -238,6 +251,9 @@ func TestPNCounterUpdate_Float32KindWithPositiveIncrement_ShouldIncrement(t *tes
 
 func TestPNCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -247,7 +263,7 @@ func TestPNCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 0
@@ -265,7 +281,7 @@ func TestPNCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *tes
 					"points": 10.2
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -291,6 +307,9 @@ func TestPNCounterUpdate_Float64KindWithPositiveIncrement_ShouldIncrement(t *tes
 // This test documents what happens when an overflow occurs in a PN Counter with Float type.
 func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
@@ -307,7 +326,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g
@@ -319,7 +338,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 					"points": %g
 				}`, math.MaxFloat64/10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -344,6 +363,9 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementOverflow_PositiveInf(t *t
 // This test documents what happens when an overflow occurs in a PN Counter with Float type.
 func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
@@ -360,7 +382,7 @@ func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g
@@ -372,7 +394,7 @@ func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T
 					"points": %g
 				}`, -math.MaxFloat64/10),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -396,6 +418,9 @@ func TestPNCounterUpdate_FloatKindWithDecrementOverflow_NegativeInf(t *testing.T
 
 func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNothing(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -405,7 +430,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNo
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: fmt.Sprintf(`{
 					"name": "John",
 					"points": %g
@@ -418,7 +443,7 @@ func TestPNCounterUpdate_FloatKindWithPositiveIncrementInsignificantValue_DoesNo
 					"points": 1
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

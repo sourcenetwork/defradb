@@ -71,7 +71,7 @@ func Test_SetKeyringBackend(t *testing.T) {
 	if !ok {
 		t.Fatal("failed to type assert keyring.backend value")
 	}
-	if checkedValue != "file" {
+	if checkedValue != keyring.KeyringBackendFile {
 		t.Fatal("keyring.backend is not set to file")
 	}
 
@@ -84,7 +84,7 @@ func Test_SetKeyringBackend(t *testing.T) {
 	if !ok {
 		t.Fatal("failed to type assert keyring.backend value")
 	}
-	if checkedValue != "system" {
+	if checkedValue != keyring.KeyringBackendSystem {
 		t.Fatal("keyring.backend is not set to system")
 	}
 }

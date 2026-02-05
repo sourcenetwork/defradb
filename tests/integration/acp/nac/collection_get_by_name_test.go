@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -39,7 +40,7 @@ func TestNAC_GatesCollectionGetByName_AuthorizedIdentity_AllowAccess(t *testing.
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.ClientIdentity(1),
 				FilterOptions: client.CollectionFetchOptions{
 					Name:            immutable.Some("Users"),
@@ -76,13 +77,13 @@ func TestNAC_GatesCollectionGetByName_NoIdentity_NotAuthorizedError(t *testing.T
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.NoIdentity(),
 				FilterOptions: client.CollectionFetchOptions{
 					Name:            immutable.Some("Users"),
 					IncludeInactive: immutable.Some(false),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}
@@ -101,13 +102,13 @@ func TestNAC_GatesCollectionGetByName_WrongIdentity_NotAuthorizedError(t *testin
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.ClientIdentity(2),
 				FilterOptions: client.CollectionFetchOptions{
 					Name:            immutable.Some("Users"),
 					IncludeInactive: immutable.Some(false),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
 	}

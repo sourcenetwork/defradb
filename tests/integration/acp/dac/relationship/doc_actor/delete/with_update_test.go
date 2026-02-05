@@ -17,14 +17,15 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_OwnerRevokesUpdateAccess_OtherActorCanNoLongerUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 
 		Actions: []any{
@@ -79,7 +80,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -122,7 +123,7 @@ resources:
 			},
 
 			// Ensure the other identity can read and update the document.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can also read.
 
 				Request: `
@@ -159,7 +160,7 @@ resources:
 			},
 
 			// The other identity can neither update nor read the other document anymore.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 
 				Request: `
@@ -193,7 +194,7 @@ resources:
 			},
 
 			// Ensure document was not accidentally updated using owner identity.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 
 				Request: `
@@ -223,9 +224,9 @@ resources:
 func TestACP_OwnerRevokesUpdateAccess_GQL_OtherActorCanNoLongerUpdate(t *testing.T) {
 	test := testUtils.TestCase{
 
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return no error.
-			testUtils.GQLRequestMutationType,
+			state.GQLRequestMutationType,
 		}),
 
 		Actions: []any{
@@ -280,7 +281,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -323,7 +324,7 @@ resources:
 			},
 
 			// Ensure the other identity can read and update the document.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can also read.
 
 				Request: `
@@ -360,7 +361,7 @@ resources:
 			},
 
 			// The other identity can neither update nor read the other document anymore.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2),
 
 				Request: `
@@ -394,7 +395,7 @@ resources:
 			},
 
 			// Ensure document was not accidentally updated using owner identity.
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(1),
 
 				Request: `

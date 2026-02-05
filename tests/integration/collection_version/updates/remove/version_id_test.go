@@ -28,7 +28,7 @@ func TestSchemaUpdatesRemoveVersionIDErrors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "remove", "path": "/Users/VersionID" }

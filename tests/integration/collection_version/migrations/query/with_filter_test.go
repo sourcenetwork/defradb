@@ -32,31 +32,31 @@ func TestSchemaMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T) {
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }]`,
 				Lens: immutable.Some(
 					model.Lens{
@@ -72,7 +72,7 @@ func TestSchemaMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T) {
 					},
 				),
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -86,7 +86,7 @@ func TestSchemaMigrationQuery_WithFilter_ShouldFilterFMigration(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 35}}) {
 						name
@@ -121,40 +121,40 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApp
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }]`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }]`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "rank", "Kind": "Int"} }]`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "score", "Kind": "Int"} }]`,
 			},
 			testUtils.ConfigureMigration{
@@ -174,7 +174,7 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApp
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -188,7 +188,7 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationBetweenOldVersions_ShouldApp
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 35}}) {
 						name
@@ -218,37 +218,37 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationInOldPatch_ShouldApplyMigrat
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Andy",
 					"age":  20,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 					"age":  30,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Fred",
 					"age":  25,
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "Islam",
 					"age":  32,
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "level", "Kind": "Int"} }]`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "points", "Kind": "Int"} }]`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "rank", "Kind": "Int"} }]`,
 				Lens: immutable.Some(model.Lens{
 					Lenses: []model.LensModule{
@@ -262,10 +262,10 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationInOldPatch_ShouldApplyMigrat
 					},
 				}),
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `[{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "score", "Kind": "Int"} }]`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 30}}) {
 						name
@@ -279,7 +279,7 @@ func TestSchemaMigrationQuery_WithFilterAndMigrationInOldPatch_ShouldApplyMigrat
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(filter: {age: {_eq: 35}}) {
 						name

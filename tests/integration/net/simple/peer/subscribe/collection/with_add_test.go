@@ -37,24 +37,24 @@ func TestP2PCollectionAddSingle(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(1),
 				Doc: `{
 					"name": "Fred"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(0),
 				Request: `query {
 					Users {
@@ -71,7 +71,7 @@ func TestP2PCollectionAddSingle(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {
@@ -118,24 +118,24 @@ func TestP2PCollectionAddMultiple(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, 2},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 1,
 				Doc: `{
 					"name": "Gillian"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:       immutable.Some(0),
 				CollectionID: 2,
 				Doc: `{
@@ -143,7 +143,7 @@ func TestP2PCollectionAddMultiple(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// John the User has been synced.
 				Request: `query {
 					Users {
@@ -158,7 +158,7 @@ func TestP2PCollectionAddMultiple(t *testing.T) {
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Gillian the Giraffe has not been synced, as the collection (1)
 				// was not subscribed to.
 				NodeID: immutable.Some(1),
@@ -171,7 +171,7 @@ func TestP2PCollectionAddMultiple(t *testing.T) {
 					"Giraffes": []map[string]any{},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				// Bjorn the Bear has been synced.
 				Request: `query {
 					Bears {
@@ -208,19 +208,19 @@ func TestP2PCollectionAddSingleErroneousCollectionID(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Nothing should sync
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -254,19 +254,19 @@ func TestP2PCollectionAddValidAndErroneousCollectionID(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0, testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Nothing should sync, although the collection 0 was valid, as it was included in the same
 				// `Add` call it should have been rolled back.
 				NodeID: immutable.Some(1),
@@ -301,23 +301,23 @@ func TestP2PCollectionAddValidThenErroneousCollectionID(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{testUtils.NonExistentCollectionID},
 				ExpectedError: "collection not found",
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// The subscription for collection 0 should still be active
 				NodeID: immutable.Some(1),
 				Request: `query {
@@ -355,18 +355,18 @@ func TestP2PCollectionAddNone(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John"
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				NodeID: immutable.Some(1),
 				Request: `query {
 					Users {

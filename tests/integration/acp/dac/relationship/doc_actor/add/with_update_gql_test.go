@@ -17,15 +17,16 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestACP_OwnerGivesUpdateAccessToAnotherActorTwice_GQL_ShowThatTheRelationshipAlreadyExists(t *testing.T) {
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used so test that separately.
-				testUtils.GQLRequestMutationType,
+				state.GQLRequestMutationType,
 			}),
 
 		Actions: []any{
@@ -80,7 +81,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -93,7 +94,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
@@ -164,9 +165,9 @@ func TestACP_OwnerGivesUpdateAccessToAnotherActor_GQL_OtherActorCanUpdate(t *tes
 	test := testUtils.TestCase{
 
 		SupportedMutationTypes: immutable.Some(
-			[]testUtils.MutationType{
+			[]state.MutationType{
 				// GQL mutation will return no error when wrong identity is used so test that separately.
-				testUtils.GQLRequestMutationType,
+				state.GQLRequestMutationType,
 			}),
 
 		Actions: []any{
@@ -221,7 +222,7 @@ resources:
 					`,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				CollectionID: 0,
@@ -234,7 +235,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can not read yet.
 
 				Request: `
@@ -296,7 +297,7 @@ resources:
 				`,
 			},
 
-			testUtils.Request{
+			&action.Request{
 				Identity: testUtils.ClientIdentity(2), // This identity can now also read.
 
 				Request: `

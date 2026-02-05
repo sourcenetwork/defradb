@@ -119,10 +119,10 @@ func (db *DB) ActivePeers(ctx context.Context) ([]string, error) {
 	return db.p2p.ActivePeers(ctx)
 }
 
-// AddP2PCollections adds the given collections to the P2P system and
+// CreateP2PCollections creates the given collections to the P2P system and
 // subscribes to their topics. It will error if any of the provided
 // collection names are invalid.
-func (db *DB) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (db *DB) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
 	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PCollectionCreatePerm); err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 	}
 	defer txn.Discard()
 
-	err = db.p2p.AddP2PCollections(ctx, collectionNames...)
+	err = db.p2p.CreateP2PCollections(ctx, collectionNames...)
 	if err != nil {
 		return err
 	}
@@ -144,10 +144,10 @@ func (db *DB) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 	return txn.Commit()
 }
 
-// RemoveP2PCollections removes the given collections from the P2P system and
+// DeleteP2PCollections deletes the given collections from the P2P system and
 // unsubscribes from their topics. It will error if the provided
 // collection names are invalid.
-func (db *DB) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (db *DB) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
 	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PCollectionDeletePerm); err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 	}
 	defer txn.Discard()
 
-	err = db.p2p.RemoveP2PCollections(ctx, collectionNames...)
+	err = db.p2p.DeleteP2PCollections(ctx, collectionNames...)
 	if err != nil {
 		return err
 	}
@@ -169,9 +169,9 @@ func (db *DB) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 	return txn.Commit()
 }
 
-// GetAllP2PCollections returns the list of persisted collection names that
+// ListP2PCollections returns the list of persisted collection names that
 // the P2P system subscribes to.
-func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (db *DB) ListP2PCollections(ctx context.Context) ([]string, error) {
 	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PCollectionListPerm); err != nil {
 		return nil, err
 	}
@@ -185,13 +185,13 @@ func (db *DB) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	}
 	defer txn.Discard()
 
-	return db.p2p.GetAllP2PCollections(ctx)
+	return db.p2p.ListP2PCollections(ctx)
 }
 
-// AddP2PDocuments adds the given docIDs to the P2P system and
+// CreateP2PDocuments adds the given docIDs to the P2P system and
 // subscribes to their topics. It will error if any of the provided
 // docIDs are invalid.
-func (db *DB) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (db *DB) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
 	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PDocumentCreatePerm); err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (db *DB) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	}
 	defer txn.Discard()
 
-	err = db.p2p.AddP2PDocuments(ctx, docIDs...)
+	err = db.p2p.CreateP2PDocuments(ctx, docIDs...)
 	if err != nil {
 		return err
 	}
@@ -213,10 +213,10 @@ func (db *DB) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	return txn.Commit()
 }
 
-// RemoveP2PDocuments removes the given docIDs from the P2P system and
+// DeleteP2PDocuments removes the given docIDs from the P2P system and
 // unsubscribes from their topics. It will error if the provided
 // docIDs are invalid.
-func (db *DB) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (db *DB) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
 	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PDocumentDeletePerm); err != nil {
 		return err
 	}
@@ -230,7 +230,7 @@ func (db *DB) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 	}
 	defer txn.Discard()
 
-	err = db.p2p.RemoveP2PDocuments(ctx, docIDs...)
+	err = db.p2p.DeleteP2PDocuments(ctx, docIDs...)
 	if err != nil {
 		return err
 	}
@@ -238,9 +238,9 @@ func (db *DB) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
 	return txn.Commit()
 }
 
-// GetAllP2PDocuments returns the list of persisted docIDs that
+// ListP2PDocuments returns the list of persisted docIDs that
 // the P2P system subscribes to.
-func (db *DB) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (db *DB) ListP2PDocuments(ctx context.Context) ([]string, error) {
 	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PDocumentListPerm); err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ func (db *DB) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
 	}
 	defer txn.Discard()
 
-	return db.p2p.GetAllP2PDocuments(ctx)
+	return db.p2p.ListP2PDocuments(ctx)
 }
 
 // SyncDocuments requests the latest versions of specified documents from the network

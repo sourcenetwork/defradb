@@ -13,6 +13,7 @@ package test_explain_execute
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	explainUtils "github.com/sourcenetwork/defradb/tests/integration/explain"
 )
@@ -23,7 +24,7 @@ func TestExecuteExplainQueryDeletedDocs(t *testing.T) {
 		Actions: []any{
 			explainUtils.SchemaForExplainTests,
 			create2AddressDocuments(),
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation  {
 					delete_ContactAddress(docID: ["bae-78bc4454-19a6-58ed-9e18-f0ca175dd12c"]) {
 						_docID
@@ -35,7 +36,7 @@ func TestExecuteExplainQueryDeletedDocs(t *testing.T) {
 					},
 				},
 			},
-			testUtils.ExplainRequest{
+			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					ContactAddress(showDeleted: true) {
 						city

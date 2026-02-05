@@ -159,7 +159,9 @@ func syncDocs(s *state.State, action SyncDocs) {
 
 	docIDStrings := make([]string, len(action.DocIDs))
 	for i, docIndex := range action.DocIDs {
+		s.DocIDsLock.RLock()
 		docIDStrings[i] = s.DocIDs[action.CollectionID][docIndex].String()
+		s.DocIDsLock.RUnlock()
 	}
 
 	collectionName := s.Nodes[action.NodeID].Collections[action.CollectionID].Name()
@@ -180,10 +182,12 @@ func syncDocs(s *state.State, action SyncDocs) {
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 
 	if !expectedErrorRaised {
+		s.DocIDsLock.RLock()
 		for i, docInd := range action.DocIDs {
 			nodeID := action.SourceNodes[i]
 			docID := s.DocIDs[action.CollectionID][docInd].String()
 			node.P2P.ExpectedDAGHeads[docID] = s.Nodes[nodeID].P2P.ActualDAGHeads[docID].CID
 		}
+		s.DocIDsLock.RUnlock()
 	}
 }

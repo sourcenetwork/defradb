@@ -13,20 +13,21 @@ package inline_array
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"testScores": [3, 4, 5],
 					"pageRatings": [1.0, 2.0, 3.0]
 				}`, // Average: 3.0
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"testScores": [30, 40, 50],
 					"pageRatings": [10.0, 20.0, 30.0]
@@ -34,7 +35,7 @@ func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 			},
 
 			// Test descending order
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
 						total: _avg(testScores: {}, pageRatings: {})
@@ -53,7 +54,7 @@ func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 			},
 
 			// Test ascending order
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
 						total: _avg(testScores: {}, pageRatings: {})
@@ -79,14 +80,14 @@ func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 func TestQueryInlineIntegerArrayWithNullWithAverageAndOrder_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"testScores": [3, 4, 5, null],
 					"pageRatings": [1.0, 2.0, 3.0, null]
 				}`, // Average: 3.0
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"testScores": [30, 40, 50, null],
 					"pageRatings": [10.0, 20.0, 30.0, null]
@@ -94,7 +95,7 @@ func TestQueryInlineIntegerArrayWithNullWithAverageAndOrder_Succeeds(t *testing.
 			},
 
 			// Test descending order
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
 						total: _avg(testScores: {}, pageRatings: {})
@@ -113,7 +114,7 @@ func TestQueryInlineIntegerArrayWithNullWithAverageAndOrder_Succeeds(t *testing.
 			},
 
 			// Test ascending order
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
 						total: _avg(testScores: {}, pageRatings: {})

@@ -40,12 +40,12 @@ func TestView_SimpleWithEmbeddings_DoesNotGenerateEmbedding(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"Alice"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

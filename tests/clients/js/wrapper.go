@@ -67,27 +67,27 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *Wrapper) CreateP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (w *Wrapper) DeleteP2PCollections(ctx context.Context, collectionIDs ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (w *Wrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
 	panic("not implemented")
 }
 
-func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *Wrapper) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *Wrapper) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (w *Wrapper) ListP2PDocuments(ctx context.Context) ([]string, error) {
 	panic("not implemented")
 }
 

@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
@@ -30,7 +31,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -40,10 +41,10 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						create_Users(input:{}) {
 							name
@@ -51,7 +52,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "create_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						update_Users(input:{}) {
 							name
@@ -59,7 +60,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "update_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -67,7 +68,7 @@ func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
 				}`,
 				ExpectedError: `Cannot query field "Users" on type "Query".`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					Users {
 						name
@@ -91,7 +92,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -101,10 +102,10 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				ExpectedResults: []client.CollectionVersion{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						create_Users(input:{}) {
 							name
@@ -112,7 +113,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "create_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 						update_Users(input:{}) {
 							name
@@ -120,7 +121,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 					}`,
 				ExpectedError: `Cannot query field "update_Users" on type "Mutation".`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -128,7 +129,7 @@ func TestColVersionUpdateRemoveCollections_ByName(t *testing.T) {
 				}`,
 				ExpectedError: `Cannot query field "Users" on type "Query".`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					Users {
 						name
@@ -152,12 +153,12 @@ func TestColVersionUpdateRemoveCollectionWithData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -184,7 +185,7 @@ func TestColVersionUpdateRemoveCollectionWithSoftDeletedData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
@@ -194,7 +195,7 @@ func TestColVersionUpdateRemoveCollectionWithSoftDeletedData(t *testing.T) {
 				CollectionID: 0,
 				DocID:        0,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -221,7 +222,7 @@ func TestColVersionUpdateCopyCollectionAddFieldRemoveOriginalCollection(t *testi
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// The net result of the `copy` followed by the `remove` is zero due to the way the internals are currently
 				// coded.
 				Patch: `
@@ -241,7 +242,7 @@ func TestColVersionUpdateCopyCollectionAddFieldRemoveOriginalCollection(t *testi
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -276,7 +277,7 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_SamePatch(t *testing.T
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Because the `remove` operation is applied before the new versionID is set by `add`, the end result
 				// of this patch is the deletion of the collection.
 				Patch: `
@@ -291,7 +292,7 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_SamePatch(t *testing.T
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -313,7 +314,7 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_DifferentPatches(t *te
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -322,7 +323,7 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_DifferentPatches(t *te
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -341,6 +342,8 @@ func TestColVersionUpdateAddFieldRemoveOriginalCollection_DifferentPatches(t *te
 
 func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing.T) {
 	test := testUtils.TestCase{
+		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -349,7 +352,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -358,7 +361,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Remove the active version, leaving the collection un-queriable
 				Patch: `
 					[
@@ -369,7 +372,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -392,7 +395,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollection_DifferentPatches(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -416,7 +419,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -425,7 +428,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Remove the active version, and activate the original verison
 				Patch: `
 					[
@@ -441,7 +444,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},
@@ -464,7 +467,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// It is important that this test creates and queries a document as it is possible
 				// for the code to be written in a way that erroneously deletes the field short ids
 				// for fields that existed for non-deleted versions.
@@ -472,7 +475,7 @@ func TestColVersionUpdateAddFieldRemoveNewCollectionAndActivateOriginal(t *testi
 					"name": "John",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -502,7 +505,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndLast(t *tes
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -511,7 +514,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndLast(t *tes
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -520,7 +523,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndLast(t *tes
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Remove the first and last versions
 				Patch: `
 					[
@@ -552,7 +555,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndMiddle(t *t
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -561,7 +564,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndMiddle(t *t
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -570,7 +573,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_FirstAndMiddle(t *t
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Remove the first and middle versions
 				Patch: `
 					[
@@ -602,7 +605,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *te
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -611,7 +614,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *te
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -620,7 +623,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *te
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Remove the middle and last versions
 				Patch: `
 					[
@@ -635,7 +638,7 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *te
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					IncludeInactive: immutable.Some(true),
 				},

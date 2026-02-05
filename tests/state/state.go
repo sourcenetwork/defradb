@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -12,6 +12,7 @@ package state
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/ipfs/go-cid"
@@ -32,6 +33,26 @@ type StatefulMatcher interface {
 	types.GomegaMatcher
 	// ResetMatcherState resets the state of the matcher.
 	ResetMatcherState()
+}
+
+// TestState is read-only interface for test state. It allows passing the state to custom matchers
+// without allowing them to modify the state.
+type TestState interface {
+	// GetClientType returns the client type of the test.
+	GetClientType() ClientType
+	// GetCurrentNodeID returns the node id that is currently being asserted.
+	GetCurrentNodeID() int
+	// GetIdentity returns the identity for the given node index.
+	GetIdentity(Identity) acpIdentity.Identity
+	// GetDocID returns the document ID for the given collection index and document index.
+	GetDocID(collectionIndex, docIndex int) client.DocID
+}
+
+// TestStateMatcher is a matcher that requires access to the test state.
+type TestStateMatcher interface {
+	types.GomegaMatcher
+	// SetTestState sets the test state.
+	SetTestState(s TestState)
 }
 
 type DatabaseType string
@@ -192,7 +213,8 @@ type NodeState struct {
 	// restarted with the same address configuration.
 	CachedAddresses []string
 	// Map of docIDs to their composite CIDs.
-	Composites map[string][]cid.Cid
+	Composites     map[string][]cid.Cid
+	CompositesLock sync.RWMutex
 }
 
 // State contains all testing State.
@@ -276,7 +298,8 @@ type State struct {
 	//
 	// Each index is assumed to be global, and may be expected across multiple
 	// nodes.
-	DocIDs [][]client.DocID
+	DocIDs     [][]client.DocID
+	DocIDsLock sync.RWMutex
 
 	// IsBench indicates wether the test is currently being benchmarked.
 	IsBench bool
@@ -315,7 +338,11 @@ func (s *State) GetIdentity(ident Identity) acpIdentity.Identity {
 }
 
 func (s *State) GetDocID(collectionIndex, docIndex int) client.DocID {
-	return s.DocIDs[collectionIndex][docIndex]
+	s.DocIDsLock.RLock()
+	docID := s.DocIDs[collectionIndex][docIndex]
+	s.DocIDsLock.RUnlock()
+
+	return docID
 }
 
 // NewState returns a new fresh state for the given testCase.

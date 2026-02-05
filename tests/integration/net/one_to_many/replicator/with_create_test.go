@@ -41,7 +41,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Saadi on the first node
 				NodeID:       immutable.Some(0),
 				CollectionID: 0,
@@ -49,7 +49,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 					"Name": "Saadi"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				// Create Gulistan on the first node
 				CollectionID: 1,
@@ -59,7 +59,7 @@ func TestP2POneToManyReplicator(t *testing.T) {
 				}`,
 			},
 			testUtils.WaitForSync{},
-			testUtils.Request{
+			&action.Request{
 				// Both Saadi and Gulistan should be synced to all nodes and linked correctly
 				Request: `query {
 					Book {

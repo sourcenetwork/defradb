@@ -31,14 +31,14 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -85,7 +85,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `
 					{
 						"name":	"John",
@@ -96,7 +96,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 				IndexName: "some_index",
 				FieldName: "name",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {

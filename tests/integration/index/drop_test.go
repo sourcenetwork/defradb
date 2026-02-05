@@ -29,7 +29,7 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -40,7 +40,7 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 			&action.DropIndex{
 				IndexName: "User_name_ASC",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {
@@ -74,7 +74,7 @@ func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -121,7 +121,7 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -134,7 +134,7 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 				IndexName:     "non_existing_index",
 				ExpectedError: "index with name doesn't exists. Name: non_existing_index",
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query  {
 						User {

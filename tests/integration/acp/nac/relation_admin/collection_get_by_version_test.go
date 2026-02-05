@@ -13,9 +13,12 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
-	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/immutable"
+
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/tests/action"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
@@ -29,13 +32,13 @@ func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.ClientIdentity(2),
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID:       immutable.Some("does not exist"),
 					IncludeInactive: immutable.Some(false),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.
@@ -47,7 +50,7 @@ func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.GetCollections{
+			&action.GetCollections{
 				Identity: testUtils.ClientIdentity(2),
 				FilterOptions: client.CollectionFetchOptions{
 					VersionID:       immutable.Some("does not exist"),

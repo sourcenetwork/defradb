@@ -20,6 +20,10 @@ Read the documentation on [docs.source.network](https://docs.source.network/).
 
 <!--ts-->
    * [Install](#install)
+   * [Build Requirements](#build-requirements)
+      * [Prerequisites](#prerequisites)
+      * [System Resources](#system-resources)
+      * [Building on Resource-Constrained Systems](#building-on-resource-constrained-systems)
    * [Key Management](#key-management)
    * [Start](#start)
    * [Configuration](#configuration)
@@ -60,6 +64,48 @@ export PATH=$PATH:$(go env GOPATH)/bin
 ```
 
 We recommend experimenting with queries using a native GraphQL client. GraphiQL is a popular option - [download and install it](https://altairgraphql.dev/#download).
+
+## Build Requirements
+
+Building DefraDB from source requires significant system resources. If you encounter out-of-memory errors or build failures, review the requirements below.
+
+### Prerequisites
+
+- [Go](https://golang.org/) 1.24 or later
+- [Rust toolchain](https://www.rust-lang.org/tools/install) (for WASM lens compilation, if running tests)
+- Git
+
+### System Resources
+
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| RAM | 2 GB | 4+ GB |
+| Disk Space | 3 GB | 5+ GB |
+
+The Go compiler requires substantial memory during compilation. Builds with less than 2 GB of available RAM will likely fail with out-of-memory errors.
+
+### Building on Resource-Constrained Systems
+
+If you're building on a system with limited RAM (e.g., a small VM or container), you may encounter build failures. Common issues and solutions:
+
+**Out of Memory (OOM) errors:**
+- Ensure at least 2 GB of RAM is available
+- Add swap space if physical RAM is limited
+- Use `-p 1` to limit compiler parallelism: `go build -p 1 ./cmd/defradb`
+
+**`/tmp` running out of space:**
+On systems where `/tmp` is a small tmpfs (RAM-backed filesystem), the Go compiler may exhaust available space. Redirect Go's temp directories to a location with more space:
+```sh
+export GOTMPDIR=/path/with/space
+export GOCACHE=/path/with/space/go-cache
+export GOMODCACHE=/path/with/space/go-mod
+```
+
+**Reducing memory usage:**
+For extremely constrained environments, disable optimizations (produces slower binary):
+```sh
+go build -p 1 -gcflags="all=-N -l" ./cmd/defradb
+```
 
 ## Key Management
 
@@ -506,5 +552,6 @@ DefraDB's code is released under the [Business Source License (BSL)](licenses/BS
 - Keenan Nemetz ([@nasdf](https://github.com/nasdf))
 - Ivan Vercenco ([@iverc](https://github.com/iverc))
 - Chris Quigley ([@ChrisBQu](https://github.com/ChrisBQu))
+- Jack Zampolin ([@jackzampolin](https://github.com/jackzampolin))
 
 You are invited to contribute to DefraDB. Follow the [Contributing guide](./CONTRIBUTING.md) to get started.

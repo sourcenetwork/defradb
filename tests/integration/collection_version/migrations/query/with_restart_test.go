@@ -31,12 +31,12 @@ func TestSchemaMigrationQueryWithRestart(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
@@ -61,7 +61,7 @@ func TestSchemaMigrationQueryWithRestart(t *testing.T) {
 				},
 			},
 			testUtils.Restart{},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name
@@ -93,7 +93,7 @@ func TestSchemaMigrationQueryWithRestartAndMigrationBeforePatchCollection(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John"
 				}`,
@@ -116,14 +116,14 @@ func TestSchemaMigrationQueryWithRestartAndMigrationBeforePatchCollection(t *tes
 				},
 			},
 			testUtils.Restart{},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "verified", "Kind": "Boolean"} }
 					]
 				`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users {
 						name

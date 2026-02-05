@@ -27,17 +27,17 @@ func TestQuerySimpleWithVersionAndCid(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "John",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"Name": "Chris",
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					Users(cid: "bafyreic2xpowsfqw5vh42kjlyykrewjd77rsofsdfuz4slgvaeviv7hbbq") {
 						Name

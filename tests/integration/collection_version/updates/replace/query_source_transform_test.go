@@ -72,7 +72,7 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 				`,
 				TransformCID: immutable.Some("{{.LensID0}}"),
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -83,14 +83,14 @@ func TestColVersionUpdateReplaceQuerySourceTransform(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Set the `name` field only
 				Doc: `{
 					"firstName": "John",
 					"lastName":  "S"
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `
 					query {
 						UserView {

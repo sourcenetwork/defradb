@@ -36,14 +36,14 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 			&action.AddSchema{
 				Schema: schemas,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				Doc: `{
 					"name": "John",
 					"age": 30
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "John and the philosopher are stoned",
@@ -51,7 +51,7 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"name":      "John has a chamber of secrets",
@@ -59,7 +59,7 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 					"_authorID": testUtils.NewDocIndex(1, 0),
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					delete_Book(docID: "bae-227565a8-81b1-5c96-90e2-30dbe75ad5bd") {
 							_docID
@@ -73,7 +73,7 @@ func TestDeletionOfADocumentUsingSingleDocIDWithShowDeletedDocumentQuery(t *test
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						Author(showDeleted: true) {
 							_deleted

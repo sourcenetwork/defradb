@@ -13,10 +13,12 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	"github.com/sourcenetwork/immutable"
+
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
-	"github.com/sourcenetwork/immutable"
 )
 
 func TestNAC_AdminRelation_CanP2PCollectionList(t *testing.T) {
@@ -54,18 +56,18 @@ func TestNAC_AdminRelation_CanP2PCollectionList(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.GetAllP2PCollections{
+			testUtils.ListP2PCollections{
 				Identity:              testUtils.ClientIdentity(2),
 				NodeID:                1,
 				ExpectedCollectionIDs: []int{0},
-				ExpectedError:         "not authorized to perform operation",
+				ExpectedError:         testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionListPerm),
 			},
 
 			// Grant access to user.
@@ -77,7 +79,7 @@ func TestNAC_AdminRelation_CanP2PCollectionList(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.GetAllP2PCollections{
+			testUtils.ListP2PCollections{
 				Identity:              testUtils.ClientIdentity(2),
 				NodeID:                1,
 				ExpectedCollectionIDs: []int{0},

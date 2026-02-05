@@ -13,13 +13,14 @@ package subscription
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
 func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					_commits {
 						cid
@@ -42,7 +43,7 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 					},
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "John",
@@ -51,7 +52,7 @@ func TestCommitSubscription_WithCreateMutations_ReturnCommits(t *testing.T) {
 					"verified": true
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name": "Addo",
@@ -74,7 +75,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.SubscriptionRequest{
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					_commits {
 						cid
@@ -108,7 +109,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "John", age: 27, points: 42.1, verified: true}) {
 						name
@@ -137,7 +138,7 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 					},
 				},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `mutation {
 					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
 						name
@@ -173,22 +174,31 @@ func TestCommitSubscription_WithCommitLinksCreateMutations_ValidLinks(t *testing
 }
 
 func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *testing.T) {
-	updateCid := testUtils.NewSameValue()
-
-	docID := "bae-45e90427-d499-598b-902a-6a3c65d0b504"
+	addoUpdateCid := testUtils.NewSameValue()
+	addoDocID := testUtils.NewSameValue()
 	test := testUtils.TestCase{
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
 						"age":	21
 					}`,
 			},
-			testUtils.SubscriptionRequest{
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc: `{
+						"name":	"Addo",
+						"age":	31,
+						"points": 42.1,
+						"verified": true
+					}`,
+			},
+			// subscription filtered on addo doc
+			&action.SubscriptionRequest{
 				Request: `subscription {
 					_commits(docID: "bae-45e90427-d499-598b-902a-6a3c65d0b504") {
-						cid		
+						cid
 						docID
 					}
 				}`,
@@ -196,30 +206,30 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 					{
 						"_commits": []map[string]any{
 							{
-								"cid":   updateCid,
-								"docID": docID,
+								"cid":   addoUpdateCid,
+								"docID": addoDocID,
 							},
 						},
 					},
 				},
 			},
-			// this mutation must be ignored by the subscription
-			testUtils.Request{
+			// this mutation will be ignored in the subscription (john doc)
+			&action.Request{
 				Request: `mutation {
-					create_User(input: {name: "Addo", age: 31, points: 42.1, verified: true}) {
-						name
+					update_User(docID: "bae-77e2140d-fee0-5f32-b63a-854c9d4311f9", input: {verified: true}) {
+						_docID
 					}
 				}`,
 				Results: map[string]any{
-					"create_User": []map[string]any{
+					"update_User": []map[string]any{
 						{
-							"name": "Addo",
+							"_docID": "bae-77e2140d-fee0-5f32-b63a-854c9d4311f9",
 						},
 					},
 				},
 			},
-			// this mutation will be included in the subscription
-			testUtils.Request{
+			// this mutation will be included in the subscription (addo doc)
+			&action.Request{
 				Request: `mutation {
 					update_User(docID: "bae-45e90427-d499-598b-902a-6a3c65d0b504", input: {verified: false}) {
 						_docID
@@ -231,10 +241,10 @@ func TestCommitSubscription_WithDocFilterAndMultipleMutations_FilteredDoc(t *tes
 				Results: map[string]any{
 					"update_User": []map[string]any{
 						{
-							"_docID": docID,
+							"_docID": addoDocID,
 							"_version": []map[string]any{
 								{
-									"cid": updateCid,
+									"cid": addoUpdateCid,
 								},
 							},
 						},

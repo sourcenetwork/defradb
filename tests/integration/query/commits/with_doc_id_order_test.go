@@ -13,6 +13,7 @@ package commits
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -20,7 +21,7 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -34,7 +35,7 @@ func TestQueryCommitsWithDocIDAndOrderHeightDesc(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: DESC}) {
 							cid
@@ -76,7 +77,7 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -90,7 +91,7 @@ func TestQueryCommitsWithDocIDAndOrderHeightAsc(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: ASC}) {
 							cid
@@ -132,7 +133,7 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -146,7 +147,7 @@ func TestQueryCommitsWithDocIDAndOrderCidDesc(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {cid: DESC}) {
 							cid
@@ -188,7 +189,7 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -202,7 +203,7 @@ func TestQueryCommitsWithDocIDAndOrderCidAsc(t *testing.T) {
 					"age":	22
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						_commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {cid: ASC}) {
 							cid
@@ -244,7 +245,7 @@ func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			updateUserCollectionSchema(),
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 						"name":	"John",
@@ -272,7 +273,7 @@ func TestQueryCommitsWithDocIDAndOrderAndMultiUpdatesCidAsc(t *testing.T) {
 					"age":	24
 				}`,
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 						 _commits(docID: "bae-1084671a-e3fb-5f2e-97a0-eb9d684e9738", order: {height: ASC}) {
 							 cid

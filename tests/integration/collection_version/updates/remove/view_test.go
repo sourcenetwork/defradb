@@ -42,7 +42,7 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -52,7 +52,7 @@ func TestColVersionUpdateRemoveView(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("UserView"),
 				},
@@ -86,12 +86,12 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -101,7 +101,7 @@ func TestColVersionUpdateRemoveNonMaterializedViewWithData(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("UserView"),
 				},
@@ -135,12 +135,12 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// We are removing the view *before* the view has been refreshed, it should be deleted
 				// as there is no reason for us to not be able to delete empty datasets - there are no
 				// complications such as secondary indexes.
@@ -153,7 +153,7 @@ func TestColVersionUpdateRemoveMaterializedViewWithUnrefreshedData(t *testing.T)
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("UserView"),
 				},
@@ -191,13 +191,13 @@ func TestColVersionUpdateRemoveMaterializedViewWithRefreshedData(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"name": "John",
 				},
 			},
 			&action.RefreshViews{},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -236,7 +236,7 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -246,13 +246,13 @@ func TestColVersionUpdateRemoveCollectionBackingUnmaterializedView(t *testing.T)
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("Users"),
 				},
 				ExpectedResults: []client.CollectionVersion{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					UserView {
 						name
@@ -291,7 +291,7 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -301,13 +301,13 @@ func TestColVersionUpdateRemoveCollectionBackingMaterializedView(t *testing.T) {
 					]
 				`,
 			},
-			testUtils.GetCollections{
+			&action.GetCollections{
 				FilterOptions: client.CollectionFetchOptions{
 					Name: immutable.Some("Users"),
 				},
 				ExpectedResults: []client.CollectionVersion{},
 			},
-			testUtils.Request{
+			&action.Request{
 				Request: `query {
 					UserView {
 						name
