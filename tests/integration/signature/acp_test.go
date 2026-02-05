@@ -49,8 +49,7 @@ func TestSignatureACP_IfHasNoAccessToDoc_ShouldError(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// Creating of signed documents over HTTP is not supported yet, because signing
-			// requires a private key which we do not pass over HTTP.
+			// Rust FFI: client identity signing not implemented yet
 			state.GoClientType,
 		}),
 		Actions: []any{
@@ -92,8 +91,7 @@ func TestSignatureACP_IfHasAccessToDoc_ValidateSignature(t *testing.T) {
 	test := testUtils.TestCase{
 		EnableSigning: true,
 		SupportedClientTypes: immutable.Some([]state.ClientType{
-			// Creating of signed documents over HTTP is not supported yet, because signing
-			// requires a private key which we do not pass over HTTP.
+			// Rust FFI: client identity signing not implemented yet
 			state.GoClientType,
 		}),
 		Actions: []any{
