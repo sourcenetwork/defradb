@@ -586,7 +586,7 @@ func (w *Wrapper) NewTxn(readOnly bool) (client.Txn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{w, tx}, nil
+	return &Transaction{w, tx, res.ID}, nil
 }
 
 func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
@@ -609,7 +609,7 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Transaction{w, tx}, nil
+	return &Transaction{w, tx, res.ID}, nil
 }
 
 func (w *Wrapper) Close() {

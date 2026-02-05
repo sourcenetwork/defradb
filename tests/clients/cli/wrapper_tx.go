@@ -29,10 +29,15 @@ var _ client.Txn = (*Transaction)(nil)
 type Transaction struct {
 	*Wrapper
 	tx client.Txn
+	id string
 }
 
 func (txn *Transaction) ID() uint64 {
 	return txn.tx.ID()
+}
+
+func (txn *Transaction) TokenID() string {
+	return txn.id
 }
 
 func (txn *Transaction) StartTS() time.Time {

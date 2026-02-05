@@ -58,7 +58,8 @@ func (w *cliWrapper) executeStream(ctx context.Context, args []string) (io.ReadC
 
 	tx, ok := datastore.CtxTryGetClientTxn(ctx)
 	if ok {
-		args = append(args, "--tx", fmt.Sprintf("%d", tx.ID()))
+		id := tx.(interface{ TokenID() string }).TokenID()
+		args = append(args, "--tx", id)
 	}
 	id := identity.FromContext(ctx)
 	if id.HasValue() {
