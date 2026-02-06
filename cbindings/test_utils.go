@@ -30,7 +30,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // unmarshalResult is a helper function that unmarshals JSON string into another type
@@ -46,26 +45,26 @@ func unmarshalResult[T any](value string) (T, error) {
 
 // identityFromOptions creates a cgo handle, wrapped as a pointer, from options that implement OptionWithIdentity.
 // If the options slice is empty or nil, returns 0.
-func identityFromOptions[T any, PT interface {
+/*func identityFromOptions[T any, PT interface {
 	*T
 	utils.OptionWithIdentity[PT]
 }](opts []options.Lister[T]) C.uintptr_t {
-	if len(opts) == 0 {
-		return C.uintptr_t(0)
-	}
-	optFuncs := opts[0].List()
-	if len(optFuncs) == 0 {
-		return C.uintptr_t(0)
-	}
-	var opt T
-	for _, f := range optFuncs {
-		f(&opt)
-	}
-	idf := PT(&opt).GetIdentity()
+	opt := utils.NewOptions(opts...)
+	idf := PT(opt).GetIdentity()
 	if !idf.HasValue() {
 		return C.uintptr_t(0)
 	}
 	val := idf.Value()
+	handle := cgo.NewHandle(val)
+	return C.uintptr_t(handle)
+}*/
+
+// optionToUintptr is a helper function that converts an immutable.Option to a C.uintptr_t representing a cgo.Handle.
+func optionToUintptr[T any](opt immutable.Option[T]) C.uintptr_t {
+	if !opt.HasValue() {
+		return C.uintptr_t(0)
+	}
+	val := opt.Value()
 	handle := cgo.NewHandle(val)
 	return C.uintptr_t(handle)
 }

@@ -148,7 +148,7 @@ func (w *CWrapper) CreateReplicator(
 ) error {
 	addrStr := C.CString(strings.Join(addresses, ","))
 	colStr := C.CString(strings.Join(collections, ","))
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(addrStr))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
@@ -169,7 +169,7 @@ func (w *CWrapper) DeleteReplicator(
 ) error {
 	peerID := C.CString(id)
 	colStr := C.CString(strings.Join(collections, ","))
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(peerID))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
@@ -186,7 +186,7 @@ func (w *CWrapper) ListReplicators(
 	ctx context.Context,
 	opts ...options.Lister[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	res := ConvertAndFreeCResult(C.P2PreplicatorList(C.uintptr_t(w.handle), cIdentity))
 
@@ -206,7 +206,7 @@ func (w *CWrapper) CreateP2PCollections(
 	collectionIDs []string,
 	opts ...options.Lister[options.CreateP2PCollectionsOptions],
 ) error {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
@@ -224,7 +224,7 @@ func (w *CWrapper) DeleteP2PCollections(
 	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
 ) error {
 	colStr := C.CString(strings.Join(collectionIDs, ","))
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
@@ -240,7 +240,7 @@ func (w *CWrapper) ListP2PCollections(
 	ctx context.Context,
 	opts ...options.Lister[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	res := ConvertAndFreeCResult(C.P2PcollectionList(C.uintptr_t(w.handle), cIdentity))
 
@@ -261,7 +261,7 @@ func (w *CWrapper) CreateP2PDocuments(
 	opts ...options.Lister[options.CreateP2PDocumentsOptions],
 ) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
@@ -279,7 +279,7 @@ func (w *CWrapper) DeleteP2PDocuments(
 	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
 ) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
@@ -295,7 +295,7 @@ func (w *CWrapper) ListP2PDocuments(
 	ctx context.Context,
 	opts ...options.Lister[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	res := ConvertAndFreeCResult(C.P2PdocumentList(C.uintptr_t(w.handle), cIdentity))
 
@@ -392,7 +392,7 @@ func (w *CWrapper) AddSchema(
 	schema string,
 	opts ...options.Lister[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	cSchema := C.CString(schema)
 	defer C.free(unsafe.Pointer(cSchema))
@@ -416,7 +416,7 @@ func (w *CWrapper) AddDACPolicy(
 	policy string,
 	opts ...options.Lister[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 	cPolicy := C.CString(policy)
 	defer C.free(unsafe.Pointer(cPolicy))
@@ -443,7 +443,7 @@ func (w *CWrapper) AddDACActorRelationship(
 	targetActor string,
 	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cCollectionName := C.CString(collectionName)
 	cDocID := C.CString(docID)
 	cRelation := C.CString(relation)
@@ -484,7 +484,7 @@ func (w *CWrapper) DeleteDACActorRelationship(
 	targetActor string,
 	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cCollectionName := C.CString(collectionName)
 	cDocID := C.CString(docID)
 	cRelation := C.CString(relation)
@@ -520,7 +520,7 @@ func (w *CWrapper) GetNACStatus(
 	ctx context.Context,
 	opts ...options.Lister[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
@@ -533,7 +533,7 @@ func (w *CWrapper) GetNACStatus(
 }
 
 func (w *CWrapper) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
@@ -546,7 +546,7 @@ func (w *CWrapper) ReEnableNAC(ctx context.Context, opts ...options.Lister[optio
 }
 
 func (w *CWrapper) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
@@ -564,7 +564,7 @@ func (w *CWrapper) AddNACActorRelationship(
 	targetActor string,
 	opts ...options.Lister[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cRelation := C.CString(relation)
 	cTargetActor := C.CString(targetActor)
 	defer C.free(unsafe.Pointer(cRelation))
@@ -587,7 +587,7 @@ func (w *CWrapper) DeleteNACActorRelationship(
 	targetActor string,
 	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cRelation := C.CString(relation)
 	cTargetActor := C.CString(targetActor)
 	defer C.free(unsafe.Pointer(cRelation))
@@ -609,7 +609,7 @@ func (w *CWrapper) PatchCollection(
 	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
 	cPatch := C.CString(patch)
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
@@ -640,7 +640,7 @@ func (w *CWrapper) SetActiveCollectionVersion(
 	collectionVersionID string,
 	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
 ) error {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cVersion := C.CString(collectionVersionID)
 	cCollectionID := C.CString("")
 	cName := C.CString("")
@@ -816,7 +816,7 @@ func (w *CWrapper) GetCollections(
 	defer C.free(unsafe.Pointer(copts.collectionID))
 	defer C.free(unsafe.Pointer(copts.name))
 
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
@@ -845,7 +845,7 @@ func (w *CWrapper) GetAllIndexes(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
@@ -908,7 +908,7 @@ func (w *CWrapper) ExecRequest(
 	}
 
 	cQuery := C.CString(query)
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cOperation := C.CString(operation)
 	cVariables := C.CString(variables)
 	defer C.free(unsafe.Pointer(cQuery))
@@ -1006,7 +1006,7 @@ func (w *CWrapper) Connect(
 	addresses []string,
 	opts ...options.Lister[options.ConnectOptions],
 ) error {
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	cPeerAddresses := C.CString(strings.Join(addresses, ","))
 	defer C.free(unsafe.Pointer(cPeerAddresses))
 	defer C.IdentityFree(cIdentity)
@@ -1047,7 +1047,7 @@ func (w *CWrapper) VerifySignature(
 	cPubKey := C.CString(pubKey.String())
 	cKeyType := C.CString(string(pubKey.Type()))
 	cBlockCid := C.CString(blockCid)
-	cIdentity := identityFromOptions(opts)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 
 	defer C.free(unsafe.Pointer(cPubKey))
 	defer C.free(unsafe.Pointer(cKeyType))
