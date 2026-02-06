@@ -193,6 +193,32 @@ func (n *Node) GetCollections(identityDID string) (string, error) {
 	return value, nil
 }
 
+// GetCollectionsInTxn returns all collection versions visible within a specific transaction.
+// This reads from the transaction's systemstore, which includes uncommitted writes
+// (e.g., placeholders from set_migration_in_txn).
+func (n *Node) GetCollectionsInTxn(txnID string, identityDID string) (string, error) {
+	cTxnID := C.CString(txnID)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.get_collections_in_txn(n.ptr, cTxnID, cIdentityDID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: get_collections_in_txn failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
 // QueryResult represents a GraphQL query response.
 type QueryResult struct {
 	Data   json.RawMessage `json:"data,omitempty"`

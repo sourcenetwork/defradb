@@ -131,7 +131,9 @@ func (txn *Transaction) RefreshViews(ctx context.Context, options client.Collect
 }
 
 func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
-	return txn.CWrapper.SetMigration(ctx, config)
+	// Delegate to the inner Go-native txn to preserve transaction context.
+	// Going through CWrapper.SetMigration loses the txn context because LensSet uses context.Background().
+	return txn.tx.SetMigration(ctx, config)
 }
 
 func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
@@ -153,7 +155,9 @@ func (txn *Transaction) GetCollections(
 	ctx context.Context,
 	options client.CollectionFetchOptions,
 ) ([]client.Collection, error) {
-	return txn.CWrapper.GetCollections(ctx, options)
+	// Delegate to the inner Go-native txn to see uncommitted writes within this transaction.
+	// CWrapper.GetCollections goes through FFI which loses the transaction context.
+	return txn.tx.GetCollections(ctx, options)
 }
 
 func (txn *Transaction) GetAllIndexes(

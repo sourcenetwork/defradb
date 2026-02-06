@@ -610,7 +610,19 @@ func (w *Wrapper) GetCollections(
 		return []client.Collection{&CollectionWrapper{wrapper: w, version: version}}, nil
 	}
 
-	responseJSON, err := w.node.GetCollections(identityDID)
+	// If the context carries a transaction, use the transaction-aware function
+	// so we can see uncommitted writes (e.g., placeholders from set_migration_in_txn).
+	var responseJSON string
+	var err error
+	if clientTxn, ok := datastore.CtxTryGetClientTxn(ctx); ok && clientTxn != nil {
+		if txnW, ok := clientTxn.(*TxnWrapper); ok {
+			responseJSON, err = w.node.GetCollectionsInTxn(txnW.txn.id, identityDID)
+		} else {
+			responseJSON, err = w.node.GetCollections(identityDID)
+		}
+	} else {
+		responseJSON, err = w.node.GetCollections(identityDID)
+	}
 	if err != nil {
 		return nil, err
 	}
