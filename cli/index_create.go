@@ -92,5 +92,10 @@ If no order is specified for the field, the default value will be "ASC"`,
 	cmd.Flags().StringSliceVar(&fieldsArg, "fields", []string{}, "Fields to index (required)")
 	cmd.Flags().BoolVarP(&uniqueArg, "unique", "u", false, "Make the index unique")
 
+	//nolint:errcheck
+	cmd.MarkFlagRequired("collection")
+	//nolint:errcheck
+	cmd.MarkFlagRequired("fields")
+
 	return cmd
 }

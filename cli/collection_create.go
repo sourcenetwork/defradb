@@ -25,7 +25,7 @@ func MakeCollectionCreateCommand(ctx context.Context) *cobra.Command {
 	var shouldEncryptDoc bool
 	var encryptedFields []string
 	var cmd = &cobra.Command{
-		Use:   "create <document>",
+		Use:   "create [document]",
 		Short: "Create a new document.",
 		Long: `Create a new document.
 		

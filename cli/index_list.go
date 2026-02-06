@@ -53,7 +53,7 @@ Otherwise, all indexes in the database will be shown.`,
 	EmbedCLIExample(ctx, cmd, "show all index for 'Users' collection",
 		`defradb client index list --collection Users`)
 
-	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name (required)")
+	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 
 	return cmd
 }

@@ -39,7 +39,12 @@ func MakeIndexDropCommand(ctx context.Context) *cobra.Command {
 		`defradb client index drop --collection Users --name UsersByName`)
 
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name (required)")
-	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
+	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name (required)")
+
+	//nolint:errcheck
+	cmd.MarkFlagRequired("collection")
+	//nolint:errcheck
+	cmd.MarkFlagRequired("name")
 
 	return cmd
 }
