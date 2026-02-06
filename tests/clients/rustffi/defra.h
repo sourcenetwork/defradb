@@ -96,6 +96,26 @@ typedef struct NodeInitOptions {
    Length of signing_private_key in bytes. 0 if null.
    */
   uintptr_t signing_private_key_len;
+  /*
+   SourceHub gRPC/LCD address (null = use local ACP).
+   */
+  const char *sourcehub_grpc_address;
+  /*
+   SourceHub CometBFT RPC address.
+   */
+  const char *sourcehub_comet_rpc_address;
+  /*
+   SourceHub chain ID (e.g., "sourcehub-test").
+   */
+  const char *sourcehub_chain_id;
+  /*
+   SourceHub secp256k1 signer key bytes (raw 32-byte private key).
+   */
+  const uint8_t *sourcehub_signer_key;
+  /*
+   Length of sourcehub_signer_key. 0 if null.
+   */
+  uintptr_t sourcehub_signer_key_len;
 } NodeInitOptions;
 
 /*

@@ -95,12 +95,20 @@ type Wrapper struct {
 	goNodeCloser     func() // Called during Close() to release Go node resources (e.g. badger lock)
 }
 
+// SourceHubConfig holds SourceHub connection info for Rust FFI nodes.
+type SourceHubConfig struct {
+	GRPCAddress     string
+	CometRPCAddress string
+	ChainID         string
+	SignerKey       []byte
+}
+
 // NewWrapper creates a new Rust FFI client wrapper.
 // This creates a standalone Rust FFI node (not wrapping a Go node).
 // If nodeIdentity is provided and enableSigning is true, the identity's private key
 // will be passed to the Rust FFI for block signing.
 // If dbPath is non-empty, the node uses file-based (redb) storage at that path.
-func NewWrapper(enableSigning bool, nodeIdentity identity.Identity, dbPath string) (*Wrapper, error) {
+func NewWrapper(enableSigning bool, nodeIdentity identity.Identity, dbPath string, shConfig *SourceHubConfig) (*Wrapper, error) {
 	Init() // Initialize FFI library
 
 	opts := NodeOptions{EnableSigning: enableSigning}
@@ -118,6 +126,14 @@ func NewWrapper(enableSigning bool, nodeIdentity identity.Identity, dbPath strin
 			opts.SigningKeyType = string(privKey.Type())
 			opts.SigningPrivateKey = privKey.Raw()
 		}
+	}
+
+	// Pass SourceHub config if provided
+	if shConfig != nil {
+		opts.SourceHubGRPCAddress = shConfig.GRPCAddress
+		opts.SourceHubCometRPCAddress = shConfig.CometRPCAddress
+		opts.SourceHubChainID = shConfig.ChainID
+		opts.SourceHubSignerKey = shConfig.SignerKey
 	}
 
 	node, err := NewNode(opts)
@@ -136,7 +152,7 @@ func NewWrapper(enableSigning bool, nodeIdentity identity.Identity, dbPath strin
 // If nodeIdentity is provided and enableSigning is true, the identity's private key
 // will be passed to the Rust FFI for block signing.
 // If dbPath is non-empty, the node uses file-based (redb) storage at that path.
-func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity identity.Identity, dbPath string) (*Wrapper, error) {
+func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity identity.Identity, dbPath string, shConfig *SourceHubConfig) (*Wrapper, error) {
 	Init() // Initialize FFI library
 
 	opts := NodeOptions{EnableSigning: enableSigning}
@@ -154,6 +170,14 @@ func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity ident
 			opts.SigningKeyType = string(privKey.Type())
 			opts.SigningPrivateKey = privKey.Raw()
 		}
+	}
+
+	// Pass SourceHub config if provided
+	if shConfig != nil {
+		opts.SourceHubGRPCAddress = shConfig.GRPCAddress
+		opts.SourceHubCometRPCAddress = shConfig.CometRPCAddress
+		opts.SourceHubChainID = shConfig.ChainID
+		opts.SourceHubSignerKey = shConfig.SignerKey
 	}
 
 	node, err := NewNodeWithP2P(opts, listenAddr)
