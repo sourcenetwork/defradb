@@ -77,8 +77,15 @@ func (c *Collection) Create(
 	doc *client.Document,
 	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
-	isEncrypted := isEncryptedFromCollectionCreateOptions(opts)
-	encryptedFields := encryptedFieldsFromCollectionCreateOptions(opts)
+	createOpts := utils.NewOptions(opts...)
+	isEncrypted := 0
+	if createOpts.EncryptDoc {
+		isEncrypted = 1
+	}
+	encryptedFields := C.CString("")
+	if len(createOpts.EncryptedFields) > 0 {
+		encryptedFields = C.CString(strings.Join(createOpts.EncryptedFields, ","))
+	}
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -106,7 +113,7 @@ func (c *Collection) Create(
 	res := ConvertAndFreeCResult(C.CollectionCreate(
 		C.uintptr_t(c.w.handle),
 		cJSON,
-		isEncrypted,
+		C.int(isEncrypted),
 		encryptedFields,
 		copts,
 		cIdentity,
@@ -125,8 +132,15 @@ func (c *Collection) CreateMany(
 	docs []*client.Document,
 	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
-	isEncrypted := isEncryptedFromCollectionCreateOptions(opts)
-	encryptedFields := encryptedFieldsFromCollectionCreateOptions(opts)
+	createOpts := utils.NewOptions(opts...)
+	isEncrypted := 0
+	if createOpts.EncryptDoc {
+		isEncrypted = 1
+	}
+	encryptedFields := C.CString("")
+	if len(createOpts.EncryptedFields) > 0 {
+		encryptedFields = C.CString(strings.Join(createOpts.EncryptedFields, ","))
+	}
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -162,7 +176,7 @@ func (c *Collection) CreateMany(
 	res := ConvertAndFreeCResult(C.CollectionCreate(
 		C.uintptr_t(c.w.handle),
 		cJSON,
-		isEncrypted,
+		C.int(isEncrypted),
 		encryptedFields,
 		copts,
 		cIdentity,

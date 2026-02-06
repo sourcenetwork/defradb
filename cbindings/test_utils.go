@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"runtime/cgo"
-	"strings"
 	"unsafe"
 
 	"github.com/sourcenetwork/immutable"
@@ -69,46 +68,6 @@ func identityFromOptions[T any, PT interface {
 	val := idf.Value()
 	handle := cgo.NewHandle(val)
 	return C.uintptr_t(handle)
-}
-
-// isEncryptedFromCollectionCreateOptions is a helper function that extracts as a C.int
-func isEncryptedFromCollectionCreateOptions(opts []options.Lister[options.CollectionCreateOptions]) C.int {
-	if len(opts) == 0 {
-		return 0
-	}
-	optFuncs := opts[0].List()
-	if len(optFuncs) == 0 {
-		return 0
-	}
-	var opt options.CollectionCreateOptions
-	for _, f := range optFuncs {
-		f(&opt)
-	}
-	if opt.EncryptDoc {
-		return 1
-	}
-	return 0
-}
-
-// encryptedFieldsFromCollectionCreateOptions is a helper function that returns a comma separated
-// C-string, or a blank string, representing the fields that should be encrypted
-// After calling this, the caller is responsible for freeing the string returned
-func encryptedFieldsFromCollectionCreateOptions(opts []options.Lister[options.CollectionCreateOptions]) *C.char {
-	if len(opts) == 0 {
-		return C.CString("")
-	}
-	optFuncs := opts[0].List()
-	if len(optFuncs) == 0 {
-		return C.CString("")
-	}
-	var opt options.CollectionCreateOptions
-	for _, f := range optFuncs {
-		f(&opt)
-	}
-	if len(opt.EncryptedFields) > 0 {
-		return C.CString(strings.Join(opt.EncryptedFields, ","))
-	}
-	return C.CString("")
 }
 
 // extractStringsFromRequestOptions is a helper function that extracts operation name and variables
