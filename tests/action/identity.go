@@ -46,11 +46,18 @@ func getIdentityForRequest(s *state.State, identity state.Identity, nodeIndex in
 	ident := identHolder.Identity
 
 	if fullIdent, ok := ident.(acpIdentity.FullIdentity); ok {
+		audience := state.GetNodeAudience(s, nodeIndex)
 		token, ok := identHolder.NodeTokens[nodeIndex]
 		if ok {
 			fullIdent.SetBearerToken(token)
-		} else {
-			audience := state.GetNodeAudience(s, nodeIndex)
+		}
+
+		// Generate/regenerate the token if:
+		// - No token exists yet, OR
+		// - An audience is now available but the token was generated without one
+		//   (this can happen when the token is created during node setup before the
+		//    HTTP wrapper is ready, causing the audience to be unavailable at that time).
+		if !ok || (audience.HasValue() && !state.TokenHasAudience(token)) {
 			if s.DocumentACPType == state.SourceHubDocumentACPType || audience.HasValue() {
 				err := fullIdent.UpdateToken(
 					AuthTokenExpiration,
