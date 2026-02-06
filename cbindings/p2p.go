@@ -33,8 +33,6 @@ func P2PInfo(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	// TODO: Support / patch the c-binding bug with NAC gate and P2P info
-	// https://github.com/sourcenetwork/defradb/issues/4250
 	addresses, err := node.DB.PeerInfo(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

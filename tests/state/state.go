@@ -314,6 +314,10 @@ type State struct {
 	// test run. After a single test run, the StatefulMatchers are reset.
 	StatefulMatchers []StatefulMatcher
 
+	// CurrentSetupNodeID is used during setup stage to find specific attributes that are unique to a
+	// node's unique ID, for example finding a specific node's NodeIdentity inorder to bypass NAC.
+	CurrentSetupNodeID int
+
 	// node id that is currently being asserted. This is used by [StatefulMatcher]s to know for which
 	// node they should be asserting. For example, the [UniqueValue] matcher checks that it is
 	// called with a value that it didn't see before, but the value should be the same for different

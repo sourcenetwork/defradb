@@ -71,7 +71,9 @@ func WithMaxRetries(num int) Option {
 
 func WithNodeIdentity(ident identity.Identity) Option {
 	return func(opts *dbOptions) {
-		opts.identity = immutable.Some(ident)
+		if ident != nil {
+			opts.identity = immutable.Some(ident)
+		}
 	}
 }
 
