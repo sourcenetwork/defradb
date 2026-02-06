@@ -182,7 +182,6 @@ func setupNode(
 
 		err = nodeObj.DB.ReEnableNAC(ctx)
 		require.NoError(s.T, err)
-
 	} else {
 		addresses, err = nodeObj.DB.PeerInfo(ctx)
 		require.NoError(s.T, err)

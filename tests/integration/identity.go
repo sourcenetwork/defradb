@@ -130,9 +130,3 @@ func getIdentityDID(s *state.State, identity immutable.Option[state.Identity]) s
 	}
 	return ""
 }
-
-// resetContextWithNoIdentity resets identity for the ctx to avoid, leaving it there and having the ctx
-// reuse the same identity for other requests that don't specify an identity.
-func resetStateContext(s *state.State) {
-	s.Ctx = acpIdentity.WithContext(s.Ctx, acpIdentity.None)
-}
