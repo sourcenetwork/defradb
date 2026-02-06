@@ -93,7 +93,7 @@ func (h *p2pHandler) ListReplicators(rw http.ResponseWriter, req *http.Request) 
 
 	reps, err := db.ListReplicators(req.Context())
 	if err != nil {
-		responseError(rw, err, http.StatusBadRequest)
+		responseError(rw, err, http.StatusInternalServerError)
 		return
 	}
 	responseJSON(rw, http.StatusOK, reps)
@@ -136,7 +136,7 @@ func (h *p2pHandler) ListP2PCollections(rw http.ResponseWriter, req *http.Reques
 
 	cols, err := db.ListP2PCollections(req.Context())
 	if err != nil {
-		responseError(rw, err, http.StatusBadRequest)
+		responseError(rw, err, http.StatusInternalServerError)
 		return
 	}
 	responseJSON(rw, http.StatusOK, cols)
@@ -179,7 +179,7 @@ func (h *p2pHandler) ListP2PDocuments(rw http.ResponseWriter, req *http.Request)
 
 	docIDs, err := db.ListP2PDocuments(req.Context())
 	if err != nil {
-		responseError(rw, err, http.StatusBadRequest)
+		responseError(rw, err, http.StatusInternalServerError)
 		return
 	}
 	responseJSON(rw, http.StatusOK, docIDs)
