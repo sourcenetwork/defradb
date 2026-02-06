@@ -87,9 +87,9 @@ If no order is specified for the field, the default value will be "ASC"`,
 	EmbedCLIExample(ctx, cmd, "create a unique index for 'Users' collection on 'name' and 'age'",
 		`defradb client index create --collection Users --fields name:ASC,age:DESC --unique`)
 
-	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
+	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name (required)")
 	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")
-	cmd.Flags().StringSliceVar(&fieldsArg, "fields", []string{}, "Fields to index")
+	cmd.Flags().StringSliceVar(&fieldsArg, "fields", []string{}, "Fields to index (required)")
 	cmd.Flags().BoolVarP(&uniqueArg, "unique", "u", false, "Make the index unique")
 
 	return cmd

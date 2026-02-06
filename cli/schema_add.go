@@ -21,7 +21,7 @@ import (
 func MakeSchemaAddCommand(ctx context.Context) *cobra.Command {
 	var schemaFiles []string
 	var cmd = &cobra.Command{
-		Use:   "add [schema]",
+		Use:   "add <schema>",
 		Short: "Add new schema",
 		Long: `Add new schema.
 

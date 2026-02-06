@@ -39,8 +39,8 @@ func MakeEncryptedIndexDeleteCommand(ctx context.Context) *cobra.Command {
 	EmbedCLIExample(ctx, cmd, "delete an encrypted index for 'Users' collection on 'name' field",
 		`defradb client encrypted-index delete --collection Users --field name`)
 
-	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
-	cmd.Flags().StringVar(&fieldArg, "field", "", "Field name to delete encrypted index from")
+	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name (required)")
+	cmd.Flags().StringVar(&fieldArg, "field", "", "Field name to delete encrypted index from (required)")
 
 	return cmd
 }

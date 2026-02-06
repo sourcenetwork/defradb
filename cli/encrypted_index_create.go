@@ -54,9 +54,9 @@ Currently only "equality" type is supported.`,
 	EmbedCLIExample(ctx, cmd, "create an index for 'Users' collection on 'name' field",
 		`defradb client encrypted-index create --collection Users --field name`)
 
-	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
-	cmd.Flags().StringVar(&fieldArg, "field", "", "Field to index")
-	cmd.Flags().StringVar(&typeArg, "type", "", "Type of index to create")
+	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name (required)")
+	cmd.Flags().StringVar(&fieldArg, "field", "", "Field to index (required)")
+	cmd.Flags().StringVar(&typeArg, "type", "", "Type of index to create (required)")
 
 	return cmd
 }

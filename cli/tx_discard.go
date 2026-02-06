@@ -21,7 +21,7 @@ import (
 
 func MakeTxDiscardCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "discard [id]",
+		Use:   "discard <id>",
 		Short: "Discard a DefraDB transaction.",
 		Long:  `Discard a DefraDB transaction.`,
 		Args:  cobra.ExactArgs(1),

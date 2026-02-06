@@ -27,7 +27,7 @@ import (
 func MakeLensSetCommand(ctx context.Context) *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
-		Use:   "set [src] [dst] [cfg]",
+		Use:   "set <src> <dst> <cfg>",
 		Short: "Set a schema migration within DefraDB",
 		Long: `Set a migration from a source schema version to a destination schema version for
 all collections that are on the given source schema version within the local DefraDB node.
