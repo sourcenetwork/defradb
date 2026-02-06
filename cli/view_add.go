@@ -62,6 +62,8 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 
 	cmd.MarkFlagsMutuallyExclusive("query", "query-file")
 	cmd.MarkFlagsMutuallyExclusive("sdl", "sdl-file")
+	cmd.MarkFlagsOneRequired("query", "query-file")
+	cmd.MarkFlagsOneRequired("sdl", "sdl-file")
 
 	EmbedCLIExample(ctx, cmd, "add a simple view from string flags",
 		`defradb client view add --query 'Foo { name, ...}' --sdl 'type Foo { ... }'`)
