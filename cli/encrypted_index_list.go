@@ -53,7 +53,7 @@ Otherwise, all encrypted indexes in the database will be shown.`,
 	EmbedCLIExample(ctx, cmd, "show all encrypted indexes for 'Users' collection",
 		`defradb client encrypted-index list --collection Users`)
 
-	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name (required)")
+	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 
 	return cmd
 }

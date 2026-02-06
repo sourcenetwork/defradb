@@ -80,8 +80,12 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 		`defradb client collection update -i 028d53f37a19afb9a0dbc5b4be30c65731479ee8cfa0c9bc8f8bf198cc3c075f --name User \
   --docID bae-123 --updater '{ "verified": true }'`)
 
-	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
-	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
-	cmd.Flags().StringVar(&updater, "updater", "", "Document updater")
+	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID (required if --filter not provided)")
+	cmd.Flags().StringVar(&filter, "filter", "", "Document filter (required if --docID not provided)")
+	cmd.Flags().StringVar(&updater, "updater", "", "Document updater (required)")
+
+	//nolint:errcheck
+	cmd.MarkFlagRequired("updater")
+
 	return cmd
 }

@@ -54,10 +54,10 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			return writeJSON(cmd, defs)
 		},
 	}
-	cmd.Flags().StringVarP(&query, "query", "", "", "Query")
-	cmd.Flags().StringVarP(&queryFile, "query-file", "", "", "Query file")
-	cmd.Flags().StringVarP(&sdl, "sdl", "", "", "SDL")
-	cmd.Flags().StringVarP(&sdlFile, "sdl-file", "", "", "SDL file")
+	cmd.Flags().StringVarP(&query, "query", "", "", "Query (required if --query-file not provided)")
+	cmd.Flags().StringVarP(&queryFile, "query-file", "", "", "Query file (required if --query not provided)")
+	cmd.Flags().StringVarP(&sdl, "sdl", "", "", "SDL (required if --sdl-file not provided)")
+	cmd.Flags().StringVarP(&sdlFile, "sdl-file", "", "", "SDL file (required if --sdl not provided)")
 	cmd.Flags().StringVar(&lensCID, "lens-cid", "", "CID of an existing lens transform (use 'lens add' first)")
 
 	cmd.MarkFlagsMutuallyExclusive("query", "query-file")

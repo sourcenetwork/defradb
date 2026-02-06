@@ -65,7 +65,7 @@ Notes:
 		"relation",
 		"r",
 		"",
-		"Relation that needs to be deleted within the relationship",
+		"Relation that needs to be deleted within the relationship (required)",
 	)
 	_ = cmd.MarkFlagRequired("relation")
 
@@ -74,7 +74,7 @@ Notes:
 		"actor",
 		"a",
 		"",
-		"Actor to delete relationship for",
+		"Actor to delete relationship for (required)",
 	)
 	_ = cmd.MarkFlagRequired("actor")
 

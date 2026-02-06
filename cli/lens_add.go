@@ -25,7 +25,7 @@ import (
 func MakeLensAddCommand(ctx context.Context) *cobra.Command {
 	var lensFile string
 	var cmd = &cobra.Command{
-		Use:   "add <cfg>",
+		Use:   "add [cfg]",
 		Short: "Add a lens to the lens store",
 		Long: `Add a lens configuration to the lens store and return its CID.
 

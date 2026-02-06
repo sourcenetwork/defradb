@@ -61,7 +61,7 @@ func MakeCollectionDeleteCommand(ctx context.Context) *cobra.Command {
 	EmbedCLIExample(ctx, cmd, "delete by filter",
 		`defradb client collection delete --name User --filter '{ "_gte": { "points": 100 } }'`)
 
-	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID")
-	cmd.Flags().StringVar(&filter, "filter", "", "Document filter")
+	cmd.Flags().StringVar(&argDocID, "docID", "", "Document ID (required if --filter not provided)")
+	cmd.Flags().StringVar(&filter, "filter", "", "Document filter (required if --docID not provided)")
 	return cmd
 }

@@ -76,7 +76,7 @@ Notes:
 		"collection",
 		"c",
 		"",
-		"Collection that has the resource and policy for object",
+		"Collection that has the resource and policy for object (required)",
 	)
 	_ = cmd.MarkFlagRequired("collection")
 
@@ -85,7 +85,7 @@ Notes:
 		"relation",
 		"r",
 		"",
-		"Relation that needs to be deleted within the relationship",
+		"Relation that needs to be deleted within the relationship (required)",
 	)
 	_ = cmd.MarkFlagRequired("relation")
 
@@ -94,7 +94,7 @@ Notes:
 		"actor",
 		"a",
 		"",
-		"Actor to delete relationship for",
+		"Actor to delete relationship for (required)",
 	)
 	_ = cmd.MarkFlagRequired("actor")
 
@@ -102,7 +102,7 @@ Notes:
 		&docIDArg,
 		"docID",
 		"",
-		"Document Identifier (ObjectID) to delete relationship for",
+		"Document Identifier (ObjectID) to delete relationship for (required)",
 	)
 	_ = cmd.MarkFlagRequired("docID")
 

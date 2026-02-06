@@ -58,5 +58,12 @@ Currently only "equality" type is supported.`,
 	cmd.Flags().StringVar(&fieldArg, "field", "", "Field to index (required)")
 	cmd.Flags().StringVar(&typeArg, "type", "", "Type of index to create (required)")
 
+	//nolint:errcheck
+	cmd.MarkFlagRequired("collection")
+	//nolint:errcheck
+	cmd.MarkFlagRequired("field")
+	//nolint:errcheck
+	cmd.MarkFlagRequired("type")
+
 	return cmd
 }

@@ -66,7 +66,7 @@ Notes:
 		"relation",
 		"r",
 		"",
-		"Relation that needs to be set for the relationship",
+		"Relation that needs to be set for the relationship (required)",
 	)
 	_ = cmd.MarkFlagRequired("relation")
 
@@ -75,7 +75,7 @@ Notes:
 		"actor",
 		"a",
 		"",
-		"Actor to add relationship with",
+		"Actor to add relationship with (required)",
 	)
 	_ = cmd.MarkFlagRequired("actor")
 

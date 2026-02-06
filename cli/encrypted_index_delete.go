@@ -42,5 +42,10 @@ func MakeEncryptedIndexDeleteCommand(ctx context.Context) *cobra.Command {
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name (required)")
 	cmd.Flags().StringVar(&fieldArg, "field", "", "Field name to delete encrypted index from (required)")
 
+	//nolint:errcheck
+	cmd.MarkFlagRequired("collection")
+	//nolint:errcheck
+	cmd.MarkFlagRequired("field")
+
 	return cmd
 }

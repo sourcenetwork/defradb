@@ -28,7 +28,7 @@ func MakeCollectionPatchCommand(ctx context.Context) *cobra.Command {
 	var patchFile string
 	var lensFile string
 	var cmd = &cobra.Command{
-		Use:   "patch <patch> <migration>",
+		Use:   "patch [patch] [migration]",
 		Short: "Patch existing collection versions",
 		Long: `Patch existing collection versions.
 
