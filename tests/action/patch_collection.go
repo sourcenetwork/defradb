@@ -11,6 +11,8 @@
 package action
 
 import (
+	"fmt"
+
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
@@ -65,10 +67,9 @@ func (a *PatchCollection) Execute() {
 		nodeID := nodeIDs[index]
 		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
 		err := node.PatchCollection(ctx, patch, a.Lens)
-		if a.SkipTestOnError != nil && err != nil {
-			if errors.Is(err, a.SkipTestOnError) {
-				a.s.T.Skipf("known error: %s", err.Error())
-			}
+		if a.SkipTestOnError != nil && err != nil && errors.Is(err, a.SkipTestOnError) {
+			a.s.SkipTest = fmt.Sprintf("known error: %s", err.Error())
+			return
 		}
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)

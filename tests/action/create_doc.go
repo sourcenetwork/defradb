@@ -125,7 +125,7 @@ func (a *CreateDoc) Execute() {
 				return err
 			},
 		)
-		if err != nil && !strings.Contains(err.Error(), a.IgnoreError) {
+		if err == nil || !(len(a.IgnoreError) > 0 && strings.Contains(err.Error(), a.IgnoreError)) {
 			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 		}
 	}

@@ -47,13 +47,11 @@ func (a *Async) Execute() {
 	childReady := sync.WaitGroup{}
 	childReady.Add(1)
 	go func() {
-		// T.Skip() respects `defer` statements, and `a.s.AsyncWG.Wait()` in the parent routine, but
-		// it does not respect lines after the `T.Skip()` call within this child-routine.
-		defer a.s.AsyncWG.Done()
-
 		childReady.Done()
 
 		a.Child.Execute()
+
+		a.s.AsyncWG.Done()
 	}()
 
 	// Wait for all the children to be ready before returning.
@@ -70,4 +68,10 @@ var _ Stateful = (*Await)(nil)
 
 func (a *Await) Execute() {
 	a.s.AsyncWG.Wait()
+
+	if len(a.s.SkipTest) > 0 {
+		// Child actions cannot skip the test from within their own routine, so we must check here
+		// to see if they want to.
+		a.s.T.Skip(a.s.SkipTest)
+	}
 }
