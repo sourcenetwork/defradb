@@ -87,8 +87,6 @@ func (i *collectionRepository) Cache(value client.CollectionVersion) {
 		if oldVersionCached && oldVersion.IsActive {
 			// If we are deactivating a collection we must remove the old values from the
 			// active caches.
-			// todo - the unforbidding is currently untested, and should be done as part of:
-			// https://github.com/sourcenetwork/defradb/issues/4268
 			delete(i.activeCollectionsByName, oldVersion.Name)
 			delete(i.activeCollectionsByCollectionID, oldVersion.CollectionID)
 		}
@@ -98,8 +96,6 @@ func (i *collectionRepository) Cache(value client.CollectionVersion) {
 	i.forbiddenLock.Lock()
 	// If this transaction writes a collection version that was previously forbidden, we must unforbid it
 	// within the context of this transaction.
-	// todo - the unforbidding is currently untested, and should be done as part of:
-	// https://github.com/sourcenetwork/defradb/issues/4268
 	delete(i.forbiddenCollectionIDs, value.CollectionID)
 	i.forbiddenLock.Unlock()
 }
