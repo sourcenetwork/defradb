@@ -50,7 +50,7 @@ func (h *p2pHandler) Connect(rw http.ResponseWriter, req *http.Request) {
 	}
 	err := db.Connect(req.Context(), resp)
 	if err != nil {
-		responseError(rw, err, http.StatusBadRequest)
+		responseError(rw, err, http.StatusInternalServerError)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -66,7 +66,7 @@ func (h *p2pHandler) CreateReplicator(rw http.ResponseWriter, req *http.Request)
 	}
 	err := db.CreateReplicator(req.Context(), rep.Addresses, rep.Collections...)
 	if err != nil {
-		responseError(rw, err, http.StatusBadRequest)
+		responseError(rw, err, http.StatusInternalServerError)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -82,7 +82,7 @@ func (h *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 	}
 	err := db.DeleteReplicator(req.Context(), rep.ID, rep.Collections...)
 	if err != nil {
-		responseError(rw, err, http.StatusBadRequest)
+		responseError(rw, err, http.StatusInternalServerError)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -109,7 +109,7 @@ func (h *p2pHandler) CreateP2PCollections(rw http.ResponseWriter, req *http.Requ
 	}
 	err := db.CreateP2PCollections(req.Context(), collectionIDs...)
 	if err != nil {
-		responseError(rw, err, http.StatusBadRequest)
+		responseError(rw, err, http.StatusInternalServerError)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -125,7 +125,7 @@ func (h *p2pHandler) DeleteP2PCollections(rw http.ResponseWriter, req *http.Requ
 	}
 	err := db.DeleteP2PCollections(req.Context(), collectionIDs...)
 	if err != nil {
-		responseError(rw, err, http.StatusBadRequest)
+		responseError(rw, err, http.StatusInternalServerError)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -152,7 +152,7 @@ func (h *p2pHandler) CreateP2PDocuments(rw http.ResponseWriter, req *http.Reques
 	}
 	err := db.CreateP2PDocuments(req.Context(), docIDs...)
 	if err != nil {
-		responseError(rw, err, http.StatusBadRequest)
+		responseError(rw, err, http.StatusInternalServerError)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -168,7 +168,7 @@ func (h *p2pHandler) DeleteP2PDocuments(rw http.ResponseWriter, req *http.Reques
 	}
 	err := db.DeleteP2PDocuments(req.Context(), docIDs...)
 	if err != nil {
-		responseError(rw, err, http.StatusBadRequest)
+		responseError(rw, err, http.StatusInternalServerError)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
