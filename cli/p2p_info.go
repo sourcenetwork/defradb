@@ -23,7 +23,7 @@ func MakeP2PInfoCommand(ctx context.Context) *cobra.Command {
 		Long:  `Get peer info from a DefraDB node`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			addresses, err := cliClient.PeerInfo()
+			addresses, err := cliClient.PeerInfo(cmd.Context())
 			if err != nil {
 				return err
 			}

@@ -22,12 +22,18 @@ import (
 )
 
 //export P2PInfo
-func P2PInfo(nodePtr C.uintptr_t) C.Result {
+func P2PInfo(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	node, err := getNodeFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	addresses, err := node.DB.PeerInfo()
+	addresses, err := node.DB.PeerInfo(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

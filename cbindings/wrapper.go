@@ -42,7 +42,7 @@ extern Result LensAdd(uintptr_t nodePtr, char* cfg);
 extern Result LensList(uintptr_t nodePtr);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
-extern Result P2PInfo(uintptr_t nodePtr);
+extern Result P2PInfo(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PActivePeers(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PlistReplicators(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PcreateReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
@@ -110,8 +110,11 @@ func NewCWrapper(node *node.Node) (*CWrapper, error) {
 	}, nil
 }
 
-func (w *CWrapper) PeerInfo() ([]string, error) {
-	res := ConvertAndFreeCResult(C.P2PInfo(C.uintptr_t(w.handle)))
+func (w *CWrapper) PeerInfo(ctx context.Context) ([]string, error) {
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
+
+	res := ConvertAndFreeCResult(C.P2PInfo(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

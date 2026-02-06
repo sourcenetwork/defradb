@@ -81,18 +81,32 @@ func connectPeers(
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	sourceAddresses, err := sourceNode.PeerInfo()
+	// Inject source/target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
+	// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
+	ctxWithSourceNodeIdentity := getContextWithIdentity(
+		s.Ctx,
+		s,
+		NodeIdentity(cfg.SourceNodeID),
+		cfg.SourceNodeID,
+	)
+	ctxWithTargetNodeIdentity := getContextWithIdentity(
+		s.Ctx,
+		s,
+		NodeIdentity(cfg.TargetNodeID),
+		cfg.TargetNodeID,
+	)
+	sourceAddresses, err := sourceNode.PeerInfo(ctxWithSourceNodeIdentity)
 	require.NoError(s.T, err)
-	targetAddresses, err := targetNode.PeerInfo()
+	targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
 	require.NoError(s.T, err)
 
 	log.InfoContext(s.Ctx, "Connect peers",
 		corelog.Any("Source", sourceAddresses),
-		corelog.Any("Target", targetAddresses))
+		corelog.Any("Target", targetAddresses),
+	)
 
-	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-
-	err = connectWithRetry(ctx, sourceNode, targetAddresses)
+	ctxWithSourceNodeUserIdentity := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
+	err = connectWithRetry(ctxWithSourceNodeUserIdentity, sourceNode, targetAddresses)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -109,26 +123,39 @@ func connectPeers(
 // reconnectPeers makes sure that all peers are connected after a node restart action.
 func reconnectPeers(s *state.State) {
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-		// Inject every source node's identity into the context while refreshing so the
-		// [Connect] call doesn't fail due to lack of authorization(s) if NAC is enabled.
-		nodeIdentity := NodeIdentity(nodeID)
-		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
-		for targetIndex := range node.P2P.Connections {
-			sourceNode := s.Nodes[index]
-			targetNode := s.Nodes[targetIndex]
+	for sourceIndex, sourceNode := range nodes {
+		sourceNodeID := nodeIDs[sourceIndex]
+		// Inject every source node's identity into the context while refreshing so the [Connect] & [PeerInfo]
+		// call doesn't fail due to lack of authorization(s) if NAC is enabled.
+		ctxWithSourceNodeIdentity := getContextWithIdentity(
+			s.Ctx,
+			s,
+			NodeIdentity(sourceNodeID),
+			sourceNodeID,
+		)
 
-			sourceAddresses, err := sourceNode.PeerInfo()
+		for targetIndex := range sourceNode.P2P.Connections {
+			targetNode := nodes[targetIndex]
+			targetNodeID := nodeIDs[targetIndex]
+			// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
+			// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
+			ctxWithTargetNodeIdentity := getContextWithIdentity(
+				s.Ctx,
+				s,
+				NodeIdentity(targetNodeID),
+				targetNodeID,
+			)
+			sourceAddresses, err := sourceNode.PeerInfo(ctxWithSourceNodeIdentity)
 			require.NoError(s.T, err)
-			targetAddresses, err := targetNode.PeerInfo()
+			targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
 			require.NoError(s.T, err)
 
-			log.InfoContext(ctx, "Connect peers",
+			log.InfoContext(s.Ctx, "Connect peers",
 				corelog.Any("Source", sourceAddresses),
-				corelog.Any("Target", targetAddresses))
+				corelog.Any("Target", targetAddresses),
+			)
 
-			err = connectWithRetry(ctx, sourceNode, targetAddresses)
+			err = connectWithRetry(ctxWithSourceNodeIdentity, sourceNode, targetAddresses)
 			require.NoError(s.T, err)
 		}
 	}
@@ -136,6 +163,9 @@ func reconnectPeers(s *state.State) {
 
 // connectWithRetry attempts to connect to target addresses with retry logic
 // to handle transient connection failures.
+//
+// Note: The input context should have the appropriate identity injected, if the caller
+// forgets to do that, and NAC system is enabled, there will be authorization error(s).
 func connectWithRetry(ctx context.Context, node *state.NodeState, targetAddresses []string) error {
 	const maxRetries = 5
 	const retryDelay = 50 * time.Millisecond

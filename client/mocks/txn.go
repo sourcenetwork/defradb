@@ -2214,8 +2214,8 @@ func (_c *Txn_PatchCollection_Call) RunAndReturn(run func(ctx context.Context, p
 }
 
 // PeerInfo provides a mock function for the type Txn
-func (_mock *Txn) PeerInfo() ([]string, error) {
-	ret := _mock.Called()
+func (_mock *Txn) PeerInfo(ctx context.Context) ([]string, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PeerInfo")
@@ -2223,18 +2223,18 @@ func (_mock *Txn) PeerInfo() ([]string, error) {
 
 	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() ([]string, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() []string); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2247,13 +2247,20 @@ type Txn_PeerInfo_Call struct {
 }
 
 // PeerInfo is a helper method to define mock.On call
-func (_e *Txn_Expecter) PeerInfo() *Txn_PeerInfo_Call {
-	return &Txn_PeerInfo_Call{Call: _e.mock.On("PeerInfo")}
+//   - ctx context.Context
+func (_e *Txn_Expecter) PeerInfo(ctx interface{}) *Txn_PeerInfo_Call {
+	return &Txn_PeerInfo_Call{Call: _e.mock.On("PeerInfo", ctx)}
 }
 
-func (_c *Txn_PeerInfo_Call) Run(run func()) *Txn_PeerInfo_Call {
+func (_c *Txn_PeerInfo_Call) Run(run func(ctx context.Context)) *Txn_PeerInfo_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -2263,7 +2270,7 @@ func (_c *Txn_PeerInfo_Call) Return(strings []string, err error) *Txn_PeerInfo_C
 	return _c
 }
 
-func (_c *Txn_PeerInfo_Call) RunAndReturn(run func() ([]string, error)) *Txn_PeerInfo_Call {
+func (_c *Txn_PeerInfo_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_PeerInfo_Call {
 	_c.Call.Return(run)
 	return _c
 }

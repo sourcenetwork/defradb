@@ -22,7 +22,7 @@ type p2pHandler struct{}
 
 func (h *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
-	addresses, err := db.PeerInfo()
+	addresses, err := db.PeerInfo(req.Context())
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return

@@ -809,11 +809,12 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.IsNetworkEnabled {
+		s.CurrentSetupNodeID = 0
 		st, err := setupNode(
 			s,
 			acpIdentity.None,
 			testCase,
-			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))),
+			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID))),
 		)
 		require.Nil(s.T, err)
 		s.Nodes = append(s.Nodes, st)
@@ -823,16 +824,18 @@ func setStartingNodes(
 func startNodes(s *state.State, testCase TestCase, action Start) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
-	for i := len(nodes) - 1; i >= 0; i-- {
-		nodeIndex := nodeIDs[i]
+	for index := len(nodes) - 1; index >= 0; index-- {
+		nodeID := nodeIDs[index]
 		originalPath := databaseDir
-		databaseDir = s.Nodes[nodeIndex].DbPath
-		opts := []node.Option{
-			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(nodeIndex))),
-		}
-		opts = append(opts, s.Nodes[nodeIndex].NetOpts...)
+		databaseDir = s.Nodes[nodeID].DbPath
 
-		opts = withWithListenAddresses(opts, s.Nodes[nodeIndex].CachedAddresses...)
+		s.CurrentSetupNodeID = nodeID
+		opts := []node.Option{
+			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID))),
+		}
+
+		opts = append(opts, s.Nodes[nodeID].NetOpts...)
+		opts = withWithListenAddresses(opts, s.Nodes[nodeID].CachedAddresses...)
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,
@@ -851,9 +854,8 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		}
 
 		require.Equal(s.T, action.ExpectedError, "")
-
-		node.P2P = s.Nodes[nodeIndex].P2P
-		s.Nodes[nodeIndex] = node
+		node.P2P = s.Nodes[nodeID].P2P
+		s.Nodes[nodeID] = node
 	}
 
 	// If the db was restarted we need to refresh the existing tokens as the audiance value changed,
@@ -971,7 +973,14 @@ func configureNode(
 
 	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	nodeOpts = append(nodeOpts, netNodeOpts...)
-	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
+
+	s.CurrentSetupNodeID = len(s.Nodes)
+	nodeOpts = append(
+		nodeOpts,
+		db.WithNodeIdentity(
+			state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)),
+		),
+	)
 
 	node, err := setupNode(s, acpIdentity.None, testCase, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.T, err)

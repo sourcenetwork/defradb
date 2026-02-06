@@ -108,11 +108,15 @@ func createReplicator(
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	targetAddresses, err := targetNode.PeerInfo()
+	// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
+	// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
+	nodeIdentity := NodeIdentity(cfg.TargetNodeID)
+	ctxWithTargetNodeIdentity := getContextWithIdentity(s.Ctx, s, nodeIdentity, cfg.TargetNodeID)
+	targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
 	require.NoError(s.T, err)
 
-	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.CreateReplicator(ctx, targetAddresses)
+	ctxWithSourceNodeUserIdentity := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
+	err = sourceNode.CreateReplicator(ctxWithSourceNodeUserIdentity, targetAddresses)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -129,7 +133,11 @@ func deleteReplicator(
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	targetAddresses, err := targetNode.PeerInfo()
+	// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
+	// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
+	nodeIdentity := NodeIdentity(cfg.TargetNodeID)
+	ctxWithTargetNodeIdentity := getContextWithIdentity(s.Ctx, s, nodeIdentity, cfg.TargetNodeID)
+	targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
 	require.NoError(s.T, err)
 	require.NotZero(s.T, len(targetAddresses))
 
@@ -138,8 +146,8 @@ func deleteReplicator(
 	id, err := maddr.ValueForProtocol(multiaddr.P_P2P)
 	require.NoError(s.T, err)
 
-	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.DeleteReplicator(ctx, id)
+	ctxWithSourceNodeUserIdentity := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
+	err = sourceNode.DeleteReplicator(ctxWithSourceNodeUserIdentity, id)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
