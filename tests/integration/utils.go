@@ -342,9 +342,6 @@ func performAction(
 	case Start:
 		startNodes(s, testCase, action)
 
-	case PeerInfo:
-		peerInfo(s, action)
-
 	case ConnectPeers:
 		connectPeers(s, action)
 

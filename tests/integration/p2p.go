@@ -14,9 +14,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/multiformats/go-multiaddr"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/corelog"
@@ -24,54 +21,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/state"
 )
-
-// PeerInfo returns the p2p host list of addresses.
-type PeerInfo struct {
-	// NodeID is the ID (index) of the node to execute the PeerInfo request on.
-	NodeID int
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// Expected number of total peers in the list of peers that will be returned, they will all
-	// be validated, we just don't assert them individually due to maintainance cost.
-	ExpectedNumberOfPeers int
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// peerInfo returns the p2p host list of addresses.
-func peerInfo(
-	s *state.State,
-	action PeerInfo,
-) {
-	node := s.Nodes[action.NodeID]
-
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
-	peerInfos, err := node.PeerInfo(ctx)
-
-	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
-	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
-
-	if !expectedErrorRaised {
-		assert.Equal(s.T, action.ExpectedNumberOfPeers, len(peerInfos))
-
-		// Check that all the returned addresses in the list are valid.
-		for _, peerInfo := range peerInfos {
-			maddr, err := multiaddr.NewMultiaddr(peerInfo)
-			require.NoError(s.T, err)
-
-			_, err = peer.IDFromP2PAddr(maddr)
-			require.NoError(s.T, err)
-		}
-	}
-}
 
 // ConnectPeers connects two nodes together as peers.
 //

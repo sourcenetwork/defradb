@@ -13,6 +13,7 @@ package test_acp_nac
 import (
 	"testing"
 
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
@@ -40,7 +41,7 @@ func TestNAC_GatesP2PPeerInfo_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.PeerInfo{
+			&action.PeerInfo{
 				Identity:              testUtils.ClientIdentity(1),
 				NodeID:                1,
 				ExpectedNumberOfPeers: 1,
@@ -65,7 +66,7 @@ func TestNAC_GatesP2PPeerInfo_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.PeerInfo{
+			&action.PeerInfo{
 				Identity:      testUtils.NoIdentity(),
 				NodeID:        1,
 				ExpectedError: "not authorized to perform operation",
@@ -90,7 +91,7 @@ func TestNAC_GatesP2PPeerInfo_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.PeerInfo{
+			&action.PeerInfo{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
 				ExpectedError: "not authorized to perform operation",
