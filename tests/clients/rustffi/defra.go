@@ -85,6 +85,19 @@ type NodeOptions struct {
 	// SigningPrivateKey is the raw private key bytes for signing.
 	// If nil, the node will auto-generate a key when EnableSigning is true.
 	SigningPrivateKey []byte
+
+	// SourceHubGRPCAddress is the gRPC/LCD address of the SourceHub node.
+	// When set, the node uses SourceHub for document ACP instead of local ACP.
+	SourceHubGRPCAddress string
+
+	// SourceHubCometRPCAddress is the CometBFT RPC address of the SourceHub node.
+	SourceHubCometRPCAddress string
+
+	// SourceHubChainID is the chain ID (e.g., "sourcehub-test").
+	SourceHubChainID string
+
+	// SourceHubSignerKey is the raw secp256k1 private key bytes for SourceHub transactions.
+	SourceHubSignerKey []byte
 }
 
 // NewNode creates a new DefraDB node.
@@ -120,6 +133,26 @@ func NewNode(opts NodeOptions) (*Node, error) {
 		cKeyType := C.CString(keyType)
 		defer C.free(unsafe.Pointer(cKeyType))
 		cOpts.signing_key_type = cKeyType
+	}
+
+	// Pass SourceHub config if provided
+	if opts.SourceHubGRPCAddress != "" {
+		cGRPC := C.CString(opts.SourceHubGRPCAddress)
+		defer C.free(unsafe.Pointer(cGRPC))
+		cOpts.sourcehub_grpc_address = cGRPC
+
+		cComet := C.CString(opts.SourceHubCometRPCAddress)
+		defer C.free(unsafe.Pointer(cComet))
+		cOpts.sourcehub_comet_rpc_address = cComet
+
+		cChainID := C.CString(opts.SourceHubChainID)
+		defer C.free(unsafe.Pointer(cChainID))
+		cOpts.sourcehub_chain_id = cChainID
+
+		if len(opts.SourceHubSignerKey) > 0 {
+			cOpts.sourcehub_signer_key = (*C.uint8_t)(unsafe.Pointer(&opts.SourceHubSignerKey[0]))
+			cOpts.sourcehub_signer_key_len = C.uintptr_t(len(opts.SourceHubSignerKey))
+		}
 	}
 
 	result := C.new_node(cOpts)
@@ -1633,6 +1666,26 @@ func NewNodeWithP2P(opts NodeOptions, listenAddr string) (*Node, error) {
 		cKeyType := C.CString(keyType)
 		defer C.free(unsafe.Pointer(cKeyType))
 		cOpts.signing_key_type = cKeyType
+	}
+
+	// Pass SourceHub config if provided
+	if opts.SourceHubGRPCAddress != "" {
+		cGRPC := C.CString(opts.SourceHubGRPCAddress)
+		defer C.free(unsafe.Pointer(cGRPC))
+		cOpts.sourcehub_grpc_address = cGRPC
+
+		cComet := C.CString(opts.SourceHubCometRPCAddress)
+		defer C.free(unsafe.Pointer(cComet))
+		cOpts.sourcehub_comet_rpc_address = cComet
+
+		cChainID := C.CString(opts.SourceHubChainID)
+		defer C.free(unsafe.Pointer(cChainID))
+		cOpts.sourcehub_chain_id = cChainID
+
+		if len(opts.SourceHubSignerKey) > 0 {
+			cOpts.sourcehub_signer_key = (*C.uint8_t)(unsafe.Pointer(&opts.SourceHubSignerKey[0]))
+			cOpts.sourcehub_signer_key_len = C.uintptr_t(len(opts.SourceHubSignerKey))
+		}
 	}
 
 	cListenAddr := C.CString(listenAddr)
