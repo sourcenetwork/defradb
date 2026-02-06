@@ -898,7 +898,8 @@ func (w *CWrapper) ExecRequest(
 	query string,
 	opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
-	operation, variables, err := extractStringsFromRequestOptions(opts)
+	execRequestOpts := utils.NewOptions(opts...)
+	operation, variables, err := extractStringsFromRequestOptions(execRequestOpts)
 	if err != nil {
 		return &client.RequestResult{
 			GQL: client.GQLResult{
@@ -908,7 +909,7 @@ func (w *CWrapper) ExecRequest(
 	}
 
 	cQuery := C.CString(query)
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	cIdentity := optionToUintptr(execRequestOpts.GetIdentity())
 	cOperation := C.CString(operation)
 	cVariables := C.CString(variables)
 	defer C.free(unsafe.Pointer(cQuery))

@@ -43,22 +43,6 @@ func unmarshalResult[T any](value string) (T, error) {
 	return result, nil
 }
 
-// identityFromOptions creates a cgo handle, wrapped as a pointer, from options that implement OptionWithIdentity.
-// If the options slice is empty or nil, returns 0.
-/*func identityFromOptions[T any, PT interface {
-	*T
-	utils.OptionWithIdentity[PT]
-}](opts []options.Lister[T]) C.uintptr_t {
-	opt := utils.NewOptions(opts...)
-	idf := PT(opt).GetIdentity()
-	if !idf.HasValue() {
-		return C.uintptr_t(0)
-	}
-	val := idf.Value()
-	handle := cgo.NewHandle(val)
-	return C.uintptr_t(handle)
-}*/
-
 // optionToUintptr is a helper function that converts an immutable.Option to a C.uintptr_t representing a cgo.Handle.
 func optionToUintptr[T any](opt immutable.Option[T]) C.uintptr_t {
 	if !opt.HasValue() {
@@ -71,19 +55,7 @@ func optionToUintptr[T any](opt immutable.Option[T]) C.uintptr_t {
 
 // extractStringsFromRequestOptions is a helper function that extracts operation name and variables
 // as strings from the request option object. They will be blank strings if not present.
-func extractStringsFromRequestOptions(opts []options.Lister[options.ExecRequestOptions]) (string, string, error) {
-	if len(opts) == 0 {
-		return "", "", nil
-	}
-	optFuncs := opts[0].List()
-	if len(optFuncs) == 0 {
-		return "", "", nil
-	}
-	var opt options.ExecRequestOptions
-	for _, f := range optFuncs {
-		f(&opt)
-	}
-
+func extractStringsFromRequestOptions(opt *options.ExecRequestOptions) (string, string, error) {
 	opName := ""
 	if opt.OperationName.HasValue() {
 		opName = opt.OperationName.Value()
