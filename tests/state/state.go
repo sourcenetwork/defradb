@@ -304,6 +304,12 @@ type State struct {
 	// The SourceHub address used to pay for SourceHub transactions.
 	SourcehubAddress string
 
+	// SourceHub connection info for Rust FFI (set by setupSourceHub).
+	SourcehubRestAddress     string
+	SourcehubCometRPCAddress string
+	SourcehubChainID         string
+	SourcehubSignerKey       []byte
+
 	// IsNetworkEnabled indicates whether the network is enabled.
 	IsNetworkEnabled bool
 

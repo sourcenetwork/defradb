@@ -108,11 +108,23 @@ func setupRustFFIClient(
 		rustDBPath = dbPath + "/rustffi"
 	}
 
+	// Build SourceHub config if SourceHub ACP is active.
+	// GRPCAddress here is actually the REST/LCD API address (the Rust client uses REST, not gRPC).
+	var shConfig *rustffi.SourceHubConfig
+	if s.DocumentACPType == state.SourceHubDocumentACPType && s.SourcehubRestAddress != "" {
+		shConfig = &rustffi.SourceHubConfig{
+			GRPCAddress:     s.SourcehubRestAddress,
+			CometRPCAddress: s.SourcehubCometRPCAddress,
+			ChainID:         s.SourcehubChainID,
+			SignerKey:       s.SourcehubSignerKey,
+		}
+	}
+
 	if s.IsNetworkEnabled {
 		listenAddr := "/ip4/" + getIPString() + "/tcp/0"
-		wrapper, err = rustffi.NewWrapperWithP2P(listenAddr, enableSigning, nodeIdentity, rustDBPath)
+		wrapper, err = rustffi.NewWrapperWithP2P(listenAddr, enableSigning, nodeIdentity, rustDBPath, shConfig)
 	} else {
-		wrapper, err = rustffi.NewWrapper(enableSigning, nodeIdentity, rustDBPath)
+		wrapper, err = rustffi.NewWrapper(enableSigning, nodeIdentity, rustDBPath, shConfig)
 	}
 	if err != nil {
 		return nil, err

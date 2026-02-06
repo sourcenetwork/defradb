@@ -119,6 +119,27 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		return nil, err
 	}
 
+	// Enable the REST/LCD API server (used by Rust FFI for SourceHub queries).
+	// This must be configured in app.toml since the CLI flag may not be supported.
+	appCfgPath := filepath.Join(directory, "config", "app.toml")
+	appCfg, err := toml.LoadFile(appCfgPath)
+	if err != nil {
+		return nil, err
+	}
+	appFo, err := os.Create(appCfgPath)
+	if err != nil {
+		return nil, err
+	}
+	appCfg.Set("api.enable", true)
+	_, err = appCfg.WriteTo(appFo)
+	if err != nil {
+		return nil, err
+	}
+	err = appFo.Close()
+	if err != nil {
+		return nil, err
+	}
+
 	args = []string{
 		"keys", "import-hex", validatorName, acpKeyHex,
 		"--keyring-backend", keyringBackend,
@@ -213,15 +234,22 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		return nil, err
 	}
 
+	apiPort, releaseApiPort, err := getFreePort()
+	if err != nil {
+		return nil, err
+	}
+
 	gRpcAddress := fmt.Sprintf("127.0.0.1:%v", gRpcPort)
 	rpcAddress := fmt.Sprintf("tcp://127.0.0.1:%v", rpcPort)
 	p2pAddress := fmt.Sprintf("tcp://127.0.0.1:%v", p2pPort)
 	pprofAddress := fmt.Sprintf("127.0.0.1:%v", pprofPort)
+	apiAddress := fmt.Sprintf("tcp://127.0.0.1:%v", apiPort)
 
 	releaseGrpcPort()
 	releaseRpcPort()
 	releaseP2pPort()
 	releasePprofPort()
+	releaseApiPort()
 
 	args = []string{
 		"start",
@@ -231,6 +259,7 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		"--rpc.laddr", rpcAddress,
 		"--p2p.laddr", p2pAddress,
 		"--rpc.pprof_laddr", pprofAddress,
+		"--api.address", apiAddress,
 	}
 	s.T.Log("$ sourcehubd " + strings.Join(args, " "))
 	sourceHubCmd := exec.Command("sourcehubd", args...)
@@ -280,6 +309,13 @@ cmdReaderLoop:
 	if err != nil {
 		return nil, err
 	}
+
+	// Store SourceHub connection info for Rust FFI.
+	// The REST/LCD API address is used as the query endpoint (not gRPC).
+	s.SourcehubRestAddress = apiAddress
+	s.SourcehubCometRPCAddress = rpcAddress
+	s.SourcehubChainID = chainID
+	s.SourcehubSignerKey = acpKey.Serialize()
 
 	return []node.DocumentACPOpt{
 		node.WithTxnSigner(immutable.Some[node.TxSigner](signer)),
