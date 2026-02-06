@@ -80,6 +80,9 @@ type CreateDoc struct {
 	// Setting this property to true whilst testing P2P functionality will probably result in a
 	// flaky test.
 	DoNotWaitForEvent bool
+
+	// If the given error is received, ignore the error and pretend the action succeeded.
+	IgnoreError string
 }
 
 var _ Action = (*CreateDoc)(nil)
@@ -122,7 +125,9 @@ func (a *CreateDoc) Execute() {
 				return err
 			},
 		)
-		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		if err != nil && !strings.Contains(err.Error(), a.IgnoreError) {
+			expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
+		}
 	}
 
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

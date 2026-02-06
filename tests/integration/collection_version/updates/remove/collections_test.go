@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/multiplier"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestColVersionUpdateRemoveCollections_ByID(t *testing.T) {
@@ -672,6 +673,11 @@ func TestColVersionUpdateAddFieldRemoveMultipleNewCollection_MiddleAndLast(t *te
 // https://github.com/sourcenetwork/defradb/issues/4268
 func TestColVersionUpdateRemoveCollections_ConcurrentWrite(t *testing.T) {
 	test := testUtils.TestCase{
+		SupportedClientTypes: immutable.Some([]state.ClientType{
+			// The other client types return different errors when occasionally executing the `CreateDoc`
+			// action.
+			state.GoClientType,
+		}),
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -702,6 +708,10 @@ func TestColVersionUpdateRemoveCollections_ConcurrentWrite(t *testing.T) {
 				DocMap: map[string]any{
 					"name": "John",
 				},
+				// This error can occur if the create-doc call starts after the patch collection call (mostly)
+				// completes, it is uncommon for this to happen, but it does sometimes, especially on slower
+				// machines.
+				IgnoreError: "Cannot query field \"create_Users\" on type \"Mutation\"",
 			},
 			&action.Await{},
 			&action.GetCollections{
