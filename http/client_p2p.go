@@ -38,10 +38,10 @@ type DeleteReplicatorParams struct {
 	Collections []string
 }
 
-func (c *Client) PeerInfo() ([]string, error) {
+func (c *Client) PeerInfo(ctx context.Context) ([]string, error) {
 	methodURL := c.http.apiURL.JoinPath("p2p", "info")
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *Client) PeerInfo() ([]string, error) {
 func (c *Client) ActivePeers(ctx context.Context) ([]string, error) {
 	methodURL := c.http.apiURL.JoinPath("p2p", "active-peers")
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}

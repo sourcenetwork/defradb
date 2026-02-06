@@ -68,10 +68,10 @@ func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() ([]string, error) {
+func (w *Wrapper) PeerInfo(ctx context.Context) ([]string, error) {
 	args := []string{"client", "p2p", "info"}
 
-	data, err := w.cmd.execute(context.Background(), args)
+	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func (w *Wrapper) SyncDocuments(
 	args = append(args, collectionName)
 	args = append(args, docIDs...)
 
-	_, err := w.cmd.execute(context.Background(), args)
+	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 
@@ -228,7 +228,7 @@ func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...stri
 
 	args = append(args, versionIDs...)
 
-	_, err := w.cmd.execute(context.Background(), args)
+	_, err := w.cmd.execute(ctx, args)
 	return err
 }
 

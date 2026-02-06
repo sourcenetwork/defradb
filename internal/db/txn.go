@@ -276,8 +276,8 @@ func (txn *Txn) BasicExport(ctx context.Context, config *client.BackupConfig) er
 	return txn.db.BasicExport(ctx, config)
 }
 
-func (txn *Txn) PeerInfo() ([]string, error) {
-	return txn.db.PeerInfo()
+func (txn *Txn) PeerInfo(ctx context.Context) ([]string, error) {
+	return txn.db.PeerInfo(ctx)
 }
 
 func (txn *Txn) ActivePeers(ctx context.Context) ([]string, error) {

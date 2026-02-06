@@ -47,8 +47,8 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() ([]string, error) {
-	return nil, nil
+func (w *Wrapper) PeerInfo(ctx context.Context) ([]string, error) {
+	panic("not implemented")
 }
 
 func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {

@@ -108,7 +108,7 @@ func createReplicator(
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	targetAddresses, err := targetNode.PeerInfo()
+	targetAddresses, err := targetNode.PeerInfo(s.Ctx)
 	require.NoError(s.T, err)
 
 	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
@@ -129,7 +129,7 @@ func deleteReplicator(
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	targetAddresses, err := targetNode.PeerInfo()
+	targetAddresses, err := targetNode.PeerInfo(s.Ctx)
 	require.NoError(s.T, err)
 	require.NotZero(s.T, len(targetAddresses))
 

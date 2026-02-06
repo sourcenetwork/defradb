@@ -23,7 +23,7 @@ import (
 // P2P is a peer connected database implementation.
 type P2P interface {
 	// PeerInfo returns the p2p host list of addresses.
-	PeerInfo() ([]string, error)
+	PeerInfo(ctx context.Context) ([]string, error)
 
 	// ActivePeers returns the addresses of peers that are currently connected to.
 	//

@@ -62,8 +62,8 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo() ([]string, error) {
-	return w.client.PeerInfo()
+func (w *Wrapper) PeerInfo(ctx context.Context) ([]string, error) {
+	return w.client.PeerInfo(ctx)
 }
 
 func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {

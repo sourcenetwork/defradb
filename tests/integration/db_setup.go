@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -144,16 +145,14 @@ func setupNode(
 		return nil, err
 	}
 
-	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
-	err = nodeObj.Start(s.Ctx)
+	ctx := acpIdentity.WithContext(s.Ctx, identity)
+	err = nodeObj.Start(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
 	c, err := setupClient(s, nodeObj)
-
-	resetStateContext(s)
 	require.Nil(s.T, err)
 
 	eventState, err := state.NewEventState(c.Events())
@@ -167,8 +166,28 @@ func setupNode(
 		NetOpts: netOpts,
 	}
 
-	addresses, err := nodeObj.DB.PeerInfo()
+	var addresses []string
+
+	// Temporarily turn NAC off if enabled to get the peer info we need to setup the node,
+	// otherwise we will get authorization errors as NAC gates [PeerInfo]. Re-nable NAC
+	// once [PeerInfo] operation is successfully bypassed.
+	nacStatus, err := nodeObj.DB.GetNACStatus(ctx)
 	require.NoError(s.T, err)
+	if nacStatus.Status == client.NACEnabled.String() {
+		err := nodeObj.DB.DisableNAC(ctx)
+		require.NoError(s.T, err)
+
+		addresses, err = nodeObj.DB.PeerInfo(ctx)
+		require.NoError(s.T, err)
+
+		err = nodeObj.DB.ReEnableNAC(ctx)
+		require.NoError(s.T, err)
+
+	} else {
+		addresses, err = nodeObj.DB.PeerInfo(ctx)
+		require.NoError(s.T, err)
+	}
+
 	// The addresses returned by PeerInfo include the /p2p/<peerID> part, but
 	// the libp2p.ListenAddrStrings cannot include it, so we need to remove it
 	// before caching the addresses on the state.
