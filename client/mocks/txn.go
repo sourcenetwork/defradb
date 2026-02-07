@@ -3041,12 +3041,12 @@ func (_c *Txn_SyncBranchableCollection_Call) RunAndReturn(run func(ctx context.C
 }
 
 // SyncCollectionVersions provides a mock function for the type Txn
-func (_mock *Txn) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+func (_mock *Txn) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Lister[options.SyncCollectionVersionsOptions]) error {
 	var tmpRet mock.Arguments
-	if len(versionIDs) > 0 {
-		tmpRet = _mock.Called(ctx, versionIDs)
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, versionIDs, opts)
 	} else {
-		tmpRet = _mock.Called(ctx)
+		tmpRet = _mock.Called(ctx, versionIDs)
 	}
 	ret := tmpRet
 
@@ -3055,8 +3055,8 @@ func (_mock *Txn) SyncCollectionVersions(ctx context.Context, versionIDs ...stri
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
-		r0 = returnFunc(ctx, versionIDs...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Lister[options.SyncCollectionVersionsOptions]) error); ok {
+		r0 = returnFunc(ctx, versionIDs, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -3070,27 +3070,33 @@ type Txn_SyncCollectionVersions_Call struct {
 
 // SyncCollectionVersions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - versionIDs ...string
-func (_e *Txn_Expecter) SyncCollectionVersions(ctx interface{}, versionIDs ...interface{}) *Txn_SyncCollectionVersions_Call {
+//   - versionIDs []string
+//   - opts ...options.Lister[options.SyncCollectionVersionsOptions]
+func (_e *Txn_Expecter) SyncCollectionVersions(ctx interface{}, versionIDs interface{}, opts ...interface{}) *Txn_SyncCollectionVersions_Call {
 	return &Txn_SyncCollectionVersions_Call{Call: _e.mock.On("SyncCollectionVersions",
-		append([]interface{}{ctx}, versionIDs...)...)}
+		append([]interface{}{ctx, versionIDs}, opts...)...)}
 }
 
-func (_c *Txn_SyncCollectionVersions_Call) Run(run func(ctx context.Context, versionIDs ...string)) *Txn_SyncCollectionVersions_Call {
+func (_c *Txn_SyncCollectionVersions_Call) Run(run func(ctx context.Context, versionIDs []string, opts ...options.Lister[options.SyncCollectionVersionsOptions])) *Txn_SyncCollectionVersions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
 		var arg1 []string
-		var variadicArgs []string
-		if len(args) > 1 {
-			variadicArgs = args[1].([]string)
+		if args[1] != nil {
+			arg1 = args[1].([]string)
 		}
-		arg1 = variadicArgs
+		var arg2 []options.Lister[options.SyncCollectionVersionsOptions]
+		var variadicArgs []options.Lister[options.SyncCollectionVersionsOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.SyncCollectionVersionsOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
-			arg1...,
+			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -3101,7 +3107,7 @@ func (_c *Txn_SyncCollectionVersions_Call) Return(err error) *Txn_SyncCollection
 	return _c
 }
 
-func (_c *Txn_SyncCollectionVersions_Call) RunAndReturn(run func(ctx context.Context, versionIDs ...string) error) *Txn_SyncCollectionVersions_Call {
+func (_c *Txn_SyncCollectionVersions_Call) RunAndReturn(run func(ctx context.Context, versionIDs []string, opts ...options.Lister[options.SyncCollectionVersionsOptions]) error) *Txn_SyncCollectionVersions_Call {
 	_c.Call.Return(run)
 	return _c
 }

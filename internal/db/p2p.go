@@ -346,7 +346,17 @@ func (db *DB) SyncDocuments(ctx context.Context, collectionName string, docIDs [
 //
 // It will not complete until a version is found, so it is strongly recommended
 // to set a timeout using `context.WithTimeout`.
-func (db *DB) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+func (db *DB) SyncCollectionVersions(
+	ctx context.Context,
+	versionIDs []string,
+	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PSyncCollectionVersionsPerm); err != nil {
+		return err
+	}
+
 	if db.p2p == nil {
 		return ErrNoP2P
 	}

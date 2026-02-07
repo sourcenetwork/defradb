@@ -331,6 +331,35 @@ func (b *CreateP2PDocumentsOptionsBuilder) SetIdentity(id identity.Identity) *Cr
 	return b
 }
 
+// SyncCollectionVersionsOptions contains options for SyncCollectionVersions operation.
+type SyncCollectionVersionsOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *SyncCollectionVersionsOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// SyncCollectionVersionsOptionsBuilder is a builder for SyncCollectionVersionsOptions.
+type SyncCollectionVersionsOptionsBuilder struct {
+	enumerableBuilder[SyncCollectionVersionsOptions]
+}
+
+// SyncCollectionVersions creates a new SyncCollectionVersionsOptionsBuilder instance.
+func SyncCollectionVersions() *SyncCollectionVersionsOptionsBuilder {
+	return &SyncCollectionVersionsOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *SyncCollectionVersionsOptionsBuilder) SetIdentity(id identity.Identity) *SyncCollectionVersionsOptionsBuilder {
+	b.append(func(opts *SyncCollectionVersionsOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
 // DeleteP2PDocumentsOptions contains options for RemoveP2PDocuments operation.
 type DeleteP2PDocumentsOptions struct {
 	// Identity is the identity of the actor performing the operation.

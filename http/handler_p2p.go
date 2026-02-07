@@ -293,7 +293,8 @@ func (h *p2pHandler) SyncCollectionVersions(rw http.ResponseWriter, req *http.Re
 		defer cancel()
 	}
 
-	err := db.SyncCollectionVersions(ctx, reqBody.VersionIDs...)
+	opts := options.WithIdentity(options.SyncCollectionVersions(), identity.FromContext(ctx))
+	err := db.SyncCollectionVersions(ctx, reqBody.VersionIDs, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return

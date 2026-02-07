@@ -150,7 +150,7 @@ func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docI
 	panic("not implemented")
 }
 
-func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Lister[options.SyncCollectionVersionsOptions]) error {
 	panic("not implemented")
 }
 
