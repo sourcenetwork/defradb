@@ -717,13 +717,17 @@ func (w *CWrapper) AddView(
 }
 
 func (w *CWrapper) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
-	copts := getCollectionsOptionsToCOptions(utils.NewOptions(opts...))
+	opt := utils.NewOptions(opts...)
+	copts := getCollectionsOptionsToCOptions(opt)
 	defer C.free(unsafe.Pointer(copts.version))
 	defer C.free(unsafe.Pointer(copts.collectionID))
 	defer C.free(unsafe.Pointer(copts.name))
 
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, copts, C.uintptr_t(0)))
+	res := ConvertAndFreeCResult(C.ViewRefresh(callHandle, copts, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

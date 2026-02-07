@@ -26,6 +26,11 @@ type RefreshViews struct {
 	// If a value is not provided the views will be refreshed on all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The set of fetch options for the views.
 	FilterOptions *options.RefreshViewsOptionsBuilder
 
@@ -41,9 +46,21 @@ var _ Stateful = (*RefreshViews)(nil)
 
 // Execute executes the refresh views action.
 func (a *RefreshViews) Execute() {
-	_, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for _, node := range nodes {
-		err := node.RefreshViews(a.s.Ctx, a.FilterOptions)
+	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+
+		opts := a.FilterOptions
+		if opts == nil {
+			opts = options.RefreshViews()
+		}
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
+		err := node.RefreshViews(a.s.Ctx, opts)
+
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}

@@ -113,6 +113,7 @@ const (
 	NodeSignatureVerifyPerm
 	NodeLensCreatePerm
 	NodeLensListPerm
+	NodeViewRefreshPerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
@@ -158,6 +159,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"signature-verify",
 	"lens-create",
 	"lens-list",
+	"view-refresh",
 }
 
 const NodeACPObject = "NodeObject"
@@ -254,6 +256,8 @@ resources:
   - name: lens-create
     expr: admin
   - name: lens-list
+    expr: admin
+  - name: view-refresh
     expr: admin
 
   relations:

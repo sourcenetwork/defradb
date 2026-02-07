@@ -468,6 +468,8 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Lister[optio
 		args = append(args, "--get-inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
 	}
 
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	_, err := w.cmd.execute(ctx, args)
 	return err
 }

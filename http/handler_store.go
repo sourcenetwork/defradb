@@ -262,7 +262,7 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	opt := options.RefreshViews()
+	opt := options.WithIdentity(options.RefreshViews(), identity.FromContext(req.Context()))
 	if req.URL.Query().Has("name") {
 		opt.SetCollectionName(req.URL.Query().Get("name"))
 	}
