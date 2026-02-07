@@ -95,6 +95,9 @@ type Update struct {
 	// also formed this update.
 	Block []byte
 
+	// CAR is the pre-built CAR file for this update.
+	CAR []byte
+
 	// IsRetry is true if this update is a retry of a previously failed update.
 	IsRetry bool
 

@@ -125,9 +125,14 @@ func (p *P2P) loadBlockLinks(
 		return err
 	}
 
-	txn := p.db.Rootstore().NewTxn(true)
-	defer txn.Discard()
-	txnCtx := corekv.SetCtxTxn(ctx, txn)
+	var txnCtx context.Context
+	if _, ok := corekv.TryGetCtxTxn(ctx); ok {
+		txnCtx = ctx
+	} else {
+		txn := p.db.Rootstore().NewTxn(true)
+		defer txn.Discard()
+		txnCtx = corekv.SetCtxTxn(ctx, txn)
+	}
 
 	for len(stack) > 0 {
 		current := stack[len(stack)-1]

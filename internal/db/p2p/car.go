@@ -22,6 +22,7 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corekv"
+
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
@@ -44,9 +45,15 @@ func (p *P2P) generateCARForBlocksWithBytes(ctx context.Context, rootBlocks []ro
 		return nil, nil
 	}
 
-	txn := p.db.Rootstore().NewTxn(true)
-	defer txn.Discard()
-	txnCtx := corekv.SetCtxTxn(ctx, txn)
+	var txnCtx context.Context
+	if _, ok := corekv.TryGetCtxTxn(ctx); ok {
+		txnCtx = ctx
+	} else {
+		txn := p.db.Rootstore().NewTxn(true)
+		defer txn.Discard()
+		txnCtx = corekv.SetCtxTxn(ctx, txn)
+	}
+
 	bstore := p.db.Multistore().Blockstore()
 	encStore := datastore.EncstoreFrom(p.db.Rootstore())
 	collectedBlocks := make(map[string]*collectedBlock)
@@ -284,55 +291,4 @@ func parseCAR(carData []byte) (*parsedCAR, error) {
 		regularBlocks: regularBlocks,
 		encBlocks:     encBlocks,
 	}, nil
-}
-
-// importCARBatch imports multiple parsed CAR files in a single transaction.
-func (p *P2P) importCARBatch(ctx context.Context, parsedCARs []*parsedCAR) error {
-	if len(parsedCARs) == 0 {
-		return nil
-	}
-
-	var allRegularBlocks []blocks.Block
-	var allEncBlocks []blocks.Block
-
-	for _, pc := range parsedCARs {
-		allRegularBlocks = append(allRegularBlocks, pc.regularBlocks...)
-		allEncBlocks = append(allEncBlocks, pc.encBlocks...)
-	}
-
-	txn := p.db.Rootstore().NewTxn(false)
-	defer txn.Discard()
-
-	txnCtx := corekv.SetCtxTxn(ctx, txn)
-	bstore := datastore.CARImportBlockstoreFrom(p.db.Rootstore())
-	encStore := datastore.EncstoreFrom(p.db.Rootstore())
-
-	if len(allRegularBlocks) > 0 {
-		if err := bstore.PutMany(txnCtx, allRegularBlocks); err != nil {
-			return err
-		}
-	}
-
-	if len(allEncBlocks) > 0 {
-		if err := encStore.PutMany(txnCtx, allEncBlocks); err != nil {
-			return err
-		}
-	}
-
-	return txn.Commit()
-}
-
-// importCAR extracts all blocks from a CAR file and stores them in the blockstore.
-func (p *P2P) importCAR(ctx context.Context, carData []byte) (*coreblock.Block, error) {
-	parsed, err := parseCAR(carData)
-	if err != nil {
-		return nil, err
-	}
-
-	err = p.importCARBatch(ctx, []*parsedCAR{parsed})
-	if err != nil {
-		return nil, err
-	}
-
-	return parsed.rootBlock, nil
 }

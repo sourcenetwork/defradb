@@ -63,8 +63,10 @@ const (
 	pubsubBatchTimeout = 200 * time.Millisecond
 	// maxPubsubMessageSize is the maximum size of a pubsub message (libp2p default is 1MB).
 	maxPubsubMessageSize = 1000 * 1024
-	// maxConcurrentProcessors limits the number of concurrent message processors.
-	maxConcurrentProcessors = 32
+	// dagSyncWorkers limits the number of concurrent DAG sync workers.
+	dagSyncWorkers = 32
+	// pubsubBatchWorkers is the number of concurrent pubsub batch workers.
+	pubsubBatchWorkers = 32
 )
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.
@@ -157,6 +159,9 @@ type P2P struct {
 	// collectionCache caches collection existence checks to reduce DB queries.
 	collectionCache   map[string]*cachedCollection
 	collectionCacheMu sync.RWMutex
+
+	// processQueue ensures only one worker processes a given CID at a time.
+	processQueue *processQueue
 }
 
 // cachedCollection stores a cached collection lookup result with expiry.
@@ -220,9 +225,10 @@ func New(
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 		collectionCache:      make(map[string]*cachedCollection),
 		msgQueue:             make(chan *protocol.PushLogRequest, 5000),
+		processQueue:         newProcessQueue(),
 	}
 
-	for i := 0; i < maxConcurrentProcessors; i++ {
+	for i := 0; i < dagSyncWorkers; i++ {
 		p.msgWorkers.Add(1)
 		go p.processMessageWorker()
 	}
@@ -291,7 +297,15 @@ func New(
 // Close shuts down the P2P system gracefully.
 func (p *P2P) Close() {
 	close(p.msgQueue)
-	p.msgWorkers.Wait()
+	done := make(chan struct{})
+	go func() {
+		p.msgWorkers.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+	}
 	p.pubsubBatcher.close()
 }
 
@@ -684,10 +698,16 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 	var mergeEvts []event.Merge
 	var validDocs []*protocol.DocumentInfo
 
+	bstore := p.db.Multistore().Blockstore()
+
 	for _, doc := range docs {
 		headCID, err := cid.Cast(doc.CID)
 		if err != nil {
 			log.ErrorE("Failed to parse CID", err, corelog.String("DocID", doc.DocID))
+			continue
+		}
+
+		if isMerged, err := bstore.IsMerged(ctx, headCID); err == nil && isMerged {
 			continue
 		}
 
@@ -716,6 +736,11 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 
 	headsCtx := coreblock.InitHeadsCache(ctx)
 
+	txn := p.db.Rootstore().NewTxn(false)
+	defer txn.Discard()
+
+	txnCtx := corekv.SetCtxTxn(headsCtx, txn)
+
 	docIDs := make([]string, 0, len(mergeEvts))
 	for _, evt := range mergeEvts {
 		if evt.DocID != "" {
@@ -723,22 +748,14 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 		}
 	}
 	if len(docIDs) > 0 {
-		readTxn := p.db.Rootstore().NewTxn(true)
-		readCtx := corekv.SetCtxTxn(headsCtx, readTxn)
 		headstore := datastore.HeadstoreFrom(p.db.Rootstore())
 		for _, docID := range docIDs {
-			_ = coreblock.PrefetchDocHeads(readCtx, headstore, docID)
+			_ = coreblock.PrefetchDocHeads(txnCtx, headstore, docID)
 		}
-		readTxn.Discard()
 	}
 
-	txn := p.db.Rootstore().NewTxn(false)
-	defer txn.Discard()
-
-	txnCtx := corekv.SetCtxTxn(headsCtx, txn)
-
 	if len(allRegularBlocks) > 0 {
-		bstore := datastore.CARImportBlockstoreFrom(p.db.Rootstore())
+		bstore := datastore.BlindWriteBlockstoreFrom(p.db.Rootstore(), immutable.None[int]())
 		if err := bstore.PutMany(txnCtx, allRegularBlocks); err != nil {
 			log.ErrorE("Batch CAR import failed", err)
 			return err
@@ -779,6 +796,7 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 			Cid:          mergeEvts[i].Cid,
 			CollectionID: req.CollectionID,
 			Block:        doc.Block,
+			CAR:          doc.CAR,
 			IsRelay:      true,
 		}
 		p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
@@ -812,15 +830,24 @@ func (p *P2P) processDocument(ctx context.Context, req *protocol.PushLogRequest,
 		}
 	}
 
-	hasBlock, err := p.db.Multistore().Blockstore().Has(ctx, headCID)
+	syncKey := headCID.String()
+	if isBranchableSync(req.CollectionID, doc.DocID) {
+		syncKey = req.CollectionID
+	}
+
+	p.processQueue.add(syncKey)
+	defer p.processQueue.doneOnce(syncKey)()
+
+	isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID)
 	if err != nil {
 		return err
 	}
+	if isMerged {
+		return nil
+	}
 
-	if !hasBlock {
-		if err := p.syncDAG(ctx, block); err != nil {
-			return err
-		}
+	if err := p.syncDAG(ctx, block); err != nil {
+		return err
 	}
 
 	txn := p.db.Rootstore().NewTxn(false)
@@ -937,12 +964,14 @@ func newPubsubBatcher(ctx context.Context, p2p *P2P, batchSize int, timeout time
 		ctx:       ctx,
 		cancel:    cancel,
 		p2p:       p2p,
-		queue:     make(chan pubsubRequest, batchSize*100),
+		queue:     make(chan pubsubRequest, batchSize*pubsubBatchWorkers*100),
 		batchSize: batchSize,
 		timeout:   timeout,
 	}
-	pb.wg.Add(1)
-	go pb.processBatches()
+	for range pubsubBatchWorkers {
+		pb.wg.Add(1)
+		go pb.processBatches()
+	}
 	return pb
 }
 
@@ -1093,11 +1122,21 @@ func (pb *pubsubBatcher) publishBatch(collectionID string, batch []pubsubRequest
 
 	documents := make([]protocol.DocumentInfo, len(batch))
 
+	batchTxn := pb.p2p.db.Rootstore().NewTxn(false)
+	defer batchTxn.Discard()
+	batchCtx := corekv.SetCtxTxn(pb.ctx, batchTxn)
+
 	for i, req := range batch {
 		documents[i] = protocol.DocumentInfo{
 			DocID: req.evt.DocID,
 			CID:   req.evt.Cid.Bytes(),
 			Block: req.evt.Block,
+		}
+
+		// Reuse CAR data from the event if available
+		if len(req.evt.CAR) > 0 {
+			documents[i].CAR = req.evt.CAR
+			continue
 		}
 
 		block, err := coreblock.GetFromBytes(req.evt.Block)
@@ -1106,7 +1145,7 @@ func (pb *pubsubBatcher) publishBatch(collectionID string, batch []pubsubRequest
 			continue
 		}
 
-		carData, err := pb.p2p.generateCARForBlocksWithBytes(pb.ctx, []rootBlockWithBytes{{
+		carData, err := pb.p2p.generateCARForBlocksWithBytes(batchCtx, []rootBlockWithBytes{{
 			block:    block,
 			rawBytes: req.evt.Block,
 		}})
@@ -1167,4 +1206,57 @@ func (pb *pubsubBatcher) publishBatch(collectionID string, batch []pubsubRequest
 func (pb *pubsubBatcher) close() {
 	pb.cancel()
 	pb.wg.Wait()
+}
+
+// processQueue ensures only one worker processes a given sync key at a time.
+// For regular documents the sync key is the head CID string.
+// For branchable collections (no DocID) the sync key is the CollectionID,
+// ensuring all updates for that collection are serialized.
+type processQueue struct {
+	keys  map[string]chan struct{}
+	mutex sync.Mutex
+}
+
+func newProcessQueue() *processQueue {
+	return &processQueue{
+		keys: make(map[string]chan struct{}),
+	}
+}
+
+// add adds a key to the queue. If the key is already in the queue, it will
+// wait for the key to be removed. For every add call, done must be called.
+func (m *processQueue) add(key string) {
+	for {
+		m.mutex.Lock()
+		done, ok := m.keys[key]
+		if !ok {
+			m.keys[key] = make(chan struct{})
+			m.mutex.Unlock()
+			return
+		}
+		m.mutex.Unlock()
+		<-done
+	}
+}
+
+func (m *processQueue) done(key string) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	done, ok := m.keys[key]
+	if ok {
+		delete(m.keys, key)
+		close(done)
+	}
+}
+
+// doneOnce returns a function that invokes done only once.
+func (m *processQueue) doneOnce(key string) func() {
+	return sync.OnceFunc(func() {
+		m.done(key)
+	})
+}
+
+// isBranchableSync returns true if this is a branchable collection sync.
+func isBranchableSync(collectionID, docID string) bool {
+	return collectionID != "" && docID == ""
 }

@@ -63,8 +63,7 @@ type channelBus struct {
 //
 // This bus is meant for use in environments that benefit from go routine concurrency.
 //
-// Publishing is non-blocking: if the command buffer or subscriber buffers are full,
-// events are dropped rather than blocking the caller.
+// Should the buffers be filled, subsequent calls on this bus will block.
 func NewChannelBus(commandBufferSize int, eventBufferSize int) Bus {
 	bus := channelBus{
 		subs:            make(map[uint64]*channelSub),
@@ -77,7 +76,7 @@ func NewChannelBus(commandBufferSize int, eventBufferSize int) Bus {
 	return &bus
 }
 
-// Publish broadcasts the given message to the bus subscribers. Non-blocking.
+// Publish broadcasts the given message to the bus subscribers.
 func (b *channelBus) Publish(msg Message) {
 	b.closeMutex.RLock()
 	defer b.closeMutex.RUnlock()
@@ -85,10 +84,7 @@ func (b *channelBus) Publish(msg Message) {
 	if b.isClosed {
 		return
 	}
-	select {
-	case b.commandChannel <- publishCommand(msg):
-	default:
-	}
+	b.commandChannel <- publishCommand(msg)
 }
 
 // Subscribe returns a new subscription that will receive all of the events
@@ -172,19 +168,13 @@ func (b *channelBus) handleChannel() {
 
 		case publishCommand:
 			for id := range b.events[WildCardName] {
-				select {
-				case b.subs[id].value <- Message(t):
-				default:
-				}
+				b.subs[id].value <- Message(t)
 			}
 			for id := range b.events[t.Name] {
 				if _, ok := b.events[WildCardName][id]; ok {
 					continue
 				}
-				select {
-				case b.subs[id].value <- Message(t):
-				default:
-				}
+				b.subs[id].value <- Message(t)
 			}
 		}
 	}

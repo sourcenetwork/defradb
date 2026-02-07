@@ -98,13 +98,6 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) (func()
 		byCollection[evt.CollectionID] = append(byCollection[evt.CollectionID], evt)
 	}
 
-	type indexSyncWork struct {
-		col     *collection
-		docIDs  []string
-		oldDocs map[string]*client.Document
-	}
-	var pendingIndexSync []indexSyncWork
-
 	for collectionID, colEvts := range byCollection {
 		col, err := getCollectionFromCollectionID(ctx, db, collectionID)
 		if err != nil {
@@ -137,23 +130,19 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) (func()
 		}
 
 		if batchResult != nil && len(batchResult.DocIDs) > 0 && len(col.indexes) > 0 {
-			pendingIndexSync = append(pendingIndexSync, indexSyncWork{
-				col:     col,
-				docIDs:  batchResult.DocIDs,
-				oldDocs: batchResult.OldDocs,
-			})
-		}
-	}
-
-	if len(pendingIndexSync) > 0 {
-		return func() {
-			for _, work := range pendingIndexSync {
-				if err := db.syncIndexesForBatch(context.Background(), work.col, work.docIDs, work.oldDocs); err != nil {
-					log.ErrorContextE(ctx, "Index sync after merge failed (indexes may be stale)", err,
-						corelog.Int("DocCount", len(work.docIDs)))
+			for _, docIDStr := range batchResult.DocIDs {
+				docID, err := client.NewDocIDFromString(docIDStr)
+				if err != nil {
+					log.ErrorContextE(ctx, "Failed to parse docID for index sync", err)
+					continue
+				}
+				oldDoc := batchResult.OldDocs[docIDStr]
+				if err := syncIndexedDoc(ctx, docID, col, oldDoc); err != nil {
+					log.ErrorContextE(ctx, "Index sync after merge failed", err,
+						corelog.String("DocID", docIDStr))
 				}
 			}
-		}, nil
+		}
 	}
 
 	return nil, nil
@@ -196,30 +185,6 @@ type MergeBatchResult struct {
 	CollectionID string
 	DocIDs       []string
 	OldDocs      map[string]*client.Document
-}
-
-// syncIndexesForBatch syncs indexes for documents after merge writes have been committed.
-func (db *DB) syncIndexesForBatch(ctx context.Context, col *collection, docIDs []string, oldDocs map[string]*client.Document) error {
-	if len(col.indexes) == 0 || len(docIDs) == 0 {
-		return nil
-	}
-	indexCtx, indexTxn, err := ensureContextTxn(ctx, db, false)
-	if err != nil {
-		return err
-	}
-	defer indexTxn.Discard()
-	for _, docIDStr := range docIDs {
-		docID, err := client.NewDocIDFromString(docIDStr)
-		if err != nil {
-			return err
-		}
-		oldDoc := oldDocs[docIDStr]
-		err = syncIndexedDoc(indexCtx, docID, col, oldDoc)
-		if err != nil {
-			return err
-		}
-	}
-	return indexTxn.Commit()
 }
 
 // executeMergeBatchWritesOnly performs batch merge writes only, returning docIDs for later index sync.

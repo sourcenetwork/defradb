@@ -397,20 +397,37 @@ func (db *DB) PrintDump(ctx context.Context) error {
 	return printStore(ctx, db.rootstore)
 }
 
-// prePopulateCaches ensures all caches are fully populated using a read-only
-// transaction, then copies the data to the target context's caches.
+// prePopulateCaches ensures all caches are fully populated, then copies the
+// data to the target context's caches.
 func (db *DB) prePopulateCaches(targetCtx context.Context) error {
-	readTxn, err := db.NewTxn(true)
-	if err != nil {
-		return err
+	cache := description.CollectionCacheFromContext(targetCtx)
+	if cache.IsFullyPopulated {
+		return nil
 	}
-	defer readTxn.Discard()
 
-	readCtx := context.Background()
-	readCtx = description.InitCollectionCache(readCtx)
-	readCtx = id.InitCollectionShortIDCache(readCtx)
-	readCtx = id.InitFieldShortIDCache(readCtx)
-	readCtx = datastore.CtxSetFromClientTxn(readCtx, readTxn)
+	var readCtx context.Context
+	var discardFn func()
+
+	if existingTxn, ok := datastore.CtxTryGetClientTxn(targetCtx); ok {
+		readCtx = context.Background()
+		readCtx = description.InitCollectionCache(readCtx)
+		readCtx = id.InitCollectionShortIDCache(readCtx)
+		readCtx = id.InitFieldShortIDCache(readCtx)
+		readCtx = datastore.CtxSetFromClientTxn(readCtx, existingTxn)
+		discardFn = func() {}
+	} else {
+		readTxn, err := db.NewTxn(true)
+		if err != nil {
+			return err
+		}
+		discardFn = readTxn.Discard
+		readCtx = context.Background()
+		readCtx = description.InitCollectionCache(readCtx)
+		readCtx = id.InitCollectionShortIDCache(readCtx)
+		readCtx = id.InitFieldShortIDCache(readCtx)
+		readCtx = datastore.CtxSetFromClientTxn(readCtx, readTxn)
+	}
+	defer discardFn()
 
 	cols, err := description.GetCollections(readCtx)
 	if err != nil {
