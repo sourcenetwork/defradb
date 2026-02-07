@@ -116,6 +116,10 @@ func (db *DB) ListReplicators(ctx context.Context) ([]client.Replicator, error) 
 }
 
 func (db *DB) ActivePeers(ctx context.Context) ([]string, error) {
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PPeerActivePerm); err != nil {
+		return nil, err
+	}
+
 	if db.p2p == nil {
 		return nil, ErrNoP2P
 	}
