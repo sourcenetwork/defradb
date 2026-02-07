@@ -39,19 +39,19 @@ func TestP2PDocumentAddRemoveGetSingle(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				NodeID:         1,
 				ExpectedDocIDs: []state.ColDocIndex{},
 			},
@@ -87,20 +87,20 @@ func TestP2PDocumentAddRemoveGetMultiple(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 					state.NewColDocIndex(0, 1),
 				},
 			},
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				NodeID: 1,
 				ExpectedDocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 1),

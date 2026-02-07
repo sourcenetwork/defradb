@@ -13,6 +13,7 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -31,7 +32,7 @@ func TestNAC_AdminRelation_CanCollectionList(t *testing.T) {
 			// This user, can not perform this gated operation yet.
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.

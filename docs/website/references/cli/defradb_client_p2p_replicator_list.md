@@ -1,30 +1,27 @@
-## defradb client p2p document add
+## defradb client p2p replicator list
 
-Add P2P documents
+List all replicators
 
 ### Synopsis
 
-Add P2P documents to the synchronized pubsub topics.
-The documents are synchronized between nodes of a pubsub network.
+List all the replicators active in the P2P data sync system.
+A replicator synchronizes one or all collection(s) from this instance to another.
 
 ```
-defradb client p2p document add [docIDs] [flags]
+defradb client p2p replicator list [flags]
 ```
 
 ### Examples
 
 ```
-add single document:  
-  defradb client p2p document add bae123
-
-add multiple documents:  
-  defradb client p2p document add bae123,bae456
+List all replicators:  
+  defradb client p2p replicator list
 ```
 
 ### Options
 
 ```
-  -h, --help   help for add
+  -h, --help   help for list
 ```
 
 ### Options inherited from parent commands
@@ -51,5 +48,5 @@ add multiple documents:
 
 ### SEE ALSO
 
-* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
+* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
 

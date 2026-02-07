@@ -18,8 +18,8 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-// P2PReplicatorGetAll executes the `client p2p replicator getall` command.
-type P2PReplicatorGetAll struct {
+// P2PReplicatorList executes the `client p2p replicator getall` command.
+type P2PReplicatorList struct {
 	stateful
 	augmented
 
@@ -31,10 +31,10 @@ type P2PReplicatorGetAll struct {
 	ExpectError string
 }
 
-var _ Action = (*P2PReplicatorGetAll)(nil)
+var _ Action = (*P2PReplicatorList)(nil)
 
-func (a *P2PReplicatorGetAll) Execute() {
-	args := []string{"client", "p2p", "replicator", "getall"}
+func (a *P2PReplicatorList) Execute() {
+	args := []string{"client", "p2p", "replicator", "list"}
 
 	args = a.AppendDirections(args)
 

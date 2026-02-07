@@ -58,7 +58,7 @@ func GetShortFieldID(
 			break
 		}
 
-		key, err := keys.NewFieldIDFromString(string(iter.Key()))
+		key, err := keys.NewFieldIDFromBytes(iter.Key())
 		if err != nil {
 			return 0, errors.Join(err, iter.Close())
 		}

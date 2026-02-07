@@ -13,6 +13,7 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
@@ -40,7 +41,7 @@ func TestNAC_AdminRelation_CanDeleteNACRelationship(t *testing.T) {
 				RequestorIdentity: testUtils.ClientIdentity(2),
 				TargetIdentity:    testUtils.ClientIdentity(3),
 				Relation:          "admin",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACRelationDeletePerm),
 			},
 
 			// Grant access to user.

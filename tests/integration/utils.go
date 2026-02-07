@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/testo/multiplier"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -49,7 +50,7 @@ import (
 )
 
 func init() {
-	multiplier.Init("DEFRA_MULTIPLIERS")
+	multiplier.Init(multipliersEnvName)
 }
 
 const (
@@ -57,6 +58,7 @@ const (
 	viewTypeEnvName         = "DEFRA_VIEW_TYPE"
 	skipNetworkTestsEnvName = "DEFRA_SKIP_NETWORK_TESTS"
 	vectorEmbeddingEnvName  = "DEFRA_VECTOR_EMBEDDING"
+	multipliersEnvName      = "DEFRA_MULTIPLIERS"
 )
 
 // ViewType is a type alias for backward compatibility.
@@ -257,6 +259,10 @@ func executeTestCase(
 		logAttrs = append(logAttrs, corelog.Any("KMS", kms))
 	}
 
+	if value, ok := os.LookupEnv(multipliersEnvName); ok {
+		logAttrs = append(logAttrs, corelog.String("multipliers", value))
+	}
+
 	log.InfoContext(ctx, t.Name(), logAttrs...)
 
 	startActionIndex, endActionIndex := getActionRange(t, testCase)
@@ -339,29 +345,29 @@ func performAction(
 	case ConnectPeers:
 		connectPeers(s, action)
 
-	case ConfigureReplicator:
-		configureReplicator(s, action)
+	case CreateReplicator:
+		createReplicator(s, action)
 
 	case DeleteReplicator:
 		deleteReplicator(s, action)
 
-	case SubscribeToCollection:
-		subscribeToCollection(s, action)
+	case CreateCollectionSubscription:
+		createCollectionSubscription(s, action)
 
-	case UnsubscribeToCollection:
-		unsubscribeToCollection(s, action)
+	case DeleteCollectionSubscription:
+		deleteCollectionSubscription(s, action)
 
-	case GetAllP2PCollections:
-		getAllP2PCollections(s, action)
+	case ListP2PCollections:
+		listP2PCollections(s, action)
 
-	case SubscribeToDocument:
-		subscribeToDocument(s, action)
+	case CreateDocumentSubscription:
+		createDocumentSubscription(s, action)
 
-	case UnsubscribeToDocument:
-		unsubscribeToDocument(s, action)
+	case DeleteDocumentSubscription:
+		deleteDocumentSubscription(s, action)
 
-	case GetAllP2PDocuments:
-		getAllP2PDocuments(s, action)
+	case ListP2PDocuments:
+		listP2PDocuments(s, action)
 
 	case SetActiveCollectionVersion:
 		setActiveCollectionVersion(s, action)
@@ -803,11 +809,12 @@ func setStartingNodes(
 
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.IsNetworkEnabled {
+		s.CurrentSetupNodeID = 0
 		st, err := setupNode(
 			s,
 			acpIdentity.None,
 			testCase,
-			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(0))),
+			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID))),
 		)
 		require.Nil(s.T, err)
 		s.Nodes = append(s.Nodes, st)
@@ -817,16 +824,18 @@ func setStartingNodes(
 func startNodes(s *state.State, testCase TestCase, action Start) {
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	// We need to restart the nodes in reverse order, to avoid dial backoff issues.
-	for i := len(nodes) - 1; i >= 0; i-- {
-		nodeIndex := nodeIDs[i]
+	for index := len(nodes) - 1; index >= 0; index-- {
+		nodeID := nodeIDs[index]
 		originalPath := databaseDir
-		databaseDir = s.Nodes[nodeIndex].DbPath
-		opts := []node.Option{
-			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(nodeIndex))),
-		}
-		opts = append(opts, s.Nodes[nodeIndex].NetOpts...)
+		databaseDir = s.Nodes[nodeID].DbPath
 
-		opts = withWithListenAddresses(opts, s.Nodes[nodeIndex].CachedAddresses...)
+		s.CurrentSetupNodeID = nodeID
+		opts := []node.Option{
+			db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID))),
+		}
+
+		opts = append(opts, s.Nodes[nodeID].NetOpts...)
+		opts = withWithListenAddresses(opts, s.Nodes[nodeID].CachedAddresses...)
 		opts = append(opts, node.WithEnableNodeACP(action.EnableNAC))
 		node, err := setupNode(
 			s,
@@ -845,9 +854,8 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		}
 
 		require.Equal(s.T, action.ExpectedError, "")
-
-		node.P2P = s.Nodes[nodeIndex].P2P
-		s.Nodes[nodeIndex] = node
+		node.P2P = s.Nodes[nodeID].P2P
+		s.Nodes[nodeID] = node
 	}
 
 	// If the db was restarted we need to refresh the existing tokens as the audiance value changed,
@@ -965,7 +973,14 @@ func configureNode(
 
 	nodeOpts := []node.Option{db.WithRetryInterval([]time.Duration{time.Millisecond * 1})}
 	nodeOpts = append(nodeOpts, netNodeOpts...)
-	nodeOpts = append(nodeOpts, db.WithNodeIdentity(state.GetIdentity(s, NodeIdentity(len(s.Nodes)))))
+
+	s.CurrentSetupNodeID = len(s.Nodes)
+	nodeOpts = append(
+		nodeOpts,
+		db.WithNodeIdentity(
+			state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)),
+		),
+	)
 
 	node, err := setupNode(s, acpIdentity.None, testCase, nodeOpts...) //disable change detector, or allow it?
 	require.NoError(s.T, err)
@@ -988,11 +1003,13 @@ func refreshDocuments(
 	// For now just do the initial setup using the collections on the first node,
 	// this may need to become more involved at a later date depending on testing
 	// requirements.
+	s.DocIDsLock.Lock()
 	s.DocIDs = make([][]client.DocID, len(s.Nodes[0].Collections))
 
 	for i := range s.Nodes[0].Collections {
 		s.DocIDs[i] = []client.DocID{}
 	}
+	s.DocIDsLock.Unlock()
 
 	for i := 0; i < startActionIndex; i++ {
 		// We need to add the existing documents in the order in which the test case lists them
@@ -1014,11 +1031,18 @@ func refreshDocuments(
 				// the test will fail later anyway
 				continue
 			}
+
+			s.Nodes[firstNodesID].CompositesLock.Lock()
 			if s.Nodes[firstNodesID].Composites == nil {
 				s.Nodes[firstNodesID].Composites = make(map[string][]cid.Cid)
 			}
+			s.Nodes[firstNodesID].CompositesLock.Unlock()
+
 			for _, doc := range docs {
+				s.DocIDsLock.Lock()
 				s.DocIDs[action.CollectionID] = append(s.DocIDs[action.CollectionID], doc.ID())
+				s.DocIDsLock.Unlock()
+
 				// We fetch the list of composite commits for the document so that
 				// they can be referenced later in the test if required.
 				result := s.Nodes[firstNodesID].Client.ExecRequest(s.Ctx, `query ($docID: ID!) {
@@ -1032,10 +1056,13 @@ func refreshDocuments(
 					if commits, ok := data["_commits"].([]map[string]any); ok {
 						for _, commit := range commits {
 							cid := cid.MustParse(commit[request.CidFieldName].(string))
+
+							s.Nodes[firstNodesID].CompositesLock.Lock()
 							s.Nodes[firstNodesID].Composites[doc.ID().String()] = append(
 								s.Nodes[firstNodesID].Composites[doc.ID().String()],
 								cid,
 							)
+							s.Nodes[firstNodesID].CompositesLock.Unlock()
 						}
 					}
 				}
@@ -1081,7 +1108,10 @@ func substituteRelations(
 			continue
 		}
 
+		s.DocIDsLock.RLock()
 		docID := s.DocIDs[index.CollectionIndex][index.Index]
+		s.DocIDsLock.RUnlock()
+
 		action.DocMap[k] = docID.String()
 	}
 }
@@ -1092,7 +1122,9 @@ func deleteDoc(
 	s *state.State,
 	action DeleteDoc,
 ) {
+	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
 
 	var expectedErrorRaised bool
 
@@ -1182,7 +1214,11 @@ func updateDocViaColSave(
 ) error {
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
-	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true)
+	s.DocIDsLock.RLock()
+	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
+
+	doc, err := collection.Get(ctx, docID, true)
 	if err != nil {
 		return err
 	}
@@ -1202,7 +1238,11 @@ func updateDocViaColUpdate(
 ) error {
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
 
-	doc, err := collection.Get(ctx, s.DocIDs[action.CollectionID][action.DocID], true)
+	s.DocIDsLock.RLock()
+	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
+
+	doc, err := collection.Get(ctx, docID, true)
 	if err != nil {
 		return err
 	}
@@ -1220,7 +1260,9 @@ func updateDocViaGQL(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
+	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
 
 	input, err := jsonToGQL(action.Doc)
 	require.NoError(s.T, err)
@@ -1945,4 +1987,8 @@ func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 			require.NoError(s.T, err)
 		}
 	}
+}
+
+func FormatExpectedErrorWithPermission(permission acpTypes.NodeResourcePermission) string {
+	return fmt.Sprintf("%s. Permission: %s", client.ErrNotAuthorizedToPerformOperation, permission.String())
 }

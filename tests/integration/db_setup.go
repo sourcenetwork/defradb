@@ -144,16 +144,14 @@ func setupNode(
 		return nil, err
 	}
 
-	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
-	err = nodeObj.Start(s.Ctx)
+	ctx := acpIdentity.WithContext(s.Ctx, identity)
+	err = nodeObj.Start(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
 	c, err := setupClient(s, nodeObj)
-
-	resetStateContext(s)
 	require.Nil(s.T, err)
 
 	eventState, err := state.NewEventState(c.Events())
@@ -167,8 +165,15 @@ func setupNode(
 		NetOpts: netOpts,
 	}
 
-	addresses, err := nodeObj.DB.PeerInfo()
+	var addresses []string
+
+	// Inject node identity to bypass NAC inorder to be able to call [PeerInfo] operation,
+	// otherwise when NAC is enabled, we will get authorization error.
+	nodeIdentity := NodeIdentity(s.CurrentSetupNodeID)
+	ctxWithNodeIdentity := getContextWithIdentity(s.Ctx, s, nodeIdentity, s.CurrentSetupNodeID)
+	addresses, err = nodeObj.DB.PeerInfo(ctxWithNodeIdentity)
 	require.NoError(s.T, err)
+
 	// The addresses returned by PeerInfo include the /p2p/<peerID> part, but
 	// the libp2p.ListenAddrStrings cannot include it, so we need to remove it
 	// before caching the addresses on the state.

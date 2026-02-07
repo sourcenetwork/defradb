@@ -284,8 +284,8 @@ func (txn *Txn) BasicExport(ctx context.Context, config *client.BackupConfig) er
 	return txn.db.BasicExport(ctx, config)
 }
 
-func (txn *Txn) PeerInfo() ([]string, error) {
-	return txn.db.PeerInfo()
+func (txn *Txn) PeerInfo(ctx context.Context) ([]string, error) {
+	return txn.db.PeerInfo(ctx)
 }
 
 func (txn *Txn) ActivePeers(ctx context.Context) ([]string, error) {
@@ -296,9 +296,9 @@ func (txn *Txn) Connect(ctx context.Context, addresses []string) error {
 	return txn.db.Connect(ctx, addresses)
 }
 
-func (txn *Txn) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
+func (txn *Txn) CreateReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.SetReplicator(ctx, addresses, collectionNames...)
+	return txn.db.CreateReplicator(ctx, addresses, collectionNames...)
 }
 
 func (txn *Txn) DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error {
@@ -306,39 +306,39 @@ func (txn *Txn) DeleteReplicator(ctx context.Context, id string, collectionNames
 	return txn.db.DeleteReplicator(ctx, id, collectionNames...)
 }
 
-func (txn *Txn) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (txn *Txn) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllReplicators(ctx)
+	return txn.db.ListReplicators(ctx)
 }
 
-func (txn *Txn) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (txn *Txn) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddP2PCollections(ctx, collectionNames...)
+	return txn.db.CreateP2PCollections(ctx, collectionNames...)
 }
 
-func (txn *Txn) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (txn *Txn) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.RemoveP2PCollections(ctx, collectionNames...)
+	return txn.db.DeleteP2PCollections(ctx, collectionNames...)
 }
 
-func (txn *Txn) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (txn *Txn) ListP2PCollections(ctx context.Context) ([]string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllP2PCollections(ctx)
+	return txn.db.ListP2PCollections(ctx)
 }
 
-func (txn *Txn) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (txn *Txn) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddP2PDocuments(ctx, docIDs...)
+	return txn.db.CreateP2PDocuments(ctx, docIDs...)
 }
 
-func (txn *Txn) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (txn *Txn) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.RemoveP2PDocuments(ctx, docIDs...)
+	return txn.db.DeleteP2PDocuments(ctx, docIDs...)
 }
 
-func (txn *Txn) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (txn *Txn) ListP2PDocuments(ctx context.Context) ([]string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllP2PDocuments(ctx)
+	return txn.db.ListP2PDocuments(ctx)
 }
 
 func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {

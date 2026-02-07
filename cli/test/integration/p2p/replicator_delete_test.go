@@ -29,7 +29,7 @@ func TestReplicatorDelete_WithNonExistentCollection_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorSet{
+			&action.P2PReplicatorCreate{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
@@ -56,7 +56,7 @@ func TestReplicatorDelete_WithInvalidPeerID_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorSet{
+			&action.P2PReplicatorCreate{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
@@ -83,7 +83,7 @@ func TestReplicatorDelete_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *tes
 					}
 				`,
 			},
-			&action.P2PReplicatorSet{
+			&action.P2PReplicatorCreate{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
@@ -113,7 +113,7 @@ func TestReplicatorDelete_WithMultiplePeersDeleteSinglePeer_ShouldSucceed(t *tes
 					}
 				`,
 			},
-			&action.P2PReplicatorSet{
+			&action.P2PReplicatorCreate{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},
@@ -142,7 +142,7 @@ func TestReplicatorDelete_WithMultipleCollectionsDeleteSingeCollection_ShouldSuc
 					}
 				`,
 			},
-			&action.P2PReplicatorSet{
+			&action.P2PReplicatorCreate{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},

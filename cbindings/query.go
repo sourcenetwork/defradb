@@ -69,7 +69,7 @@ func removeSubscription(id string) {
 // it exists will see if there's a message in its result channel. If there isn't, it will
 // return with status 2, and a blank payload. If there is, it will return with status 0,
 // and the payload of the message. If an error occurs, status 1 is returned.
-//
+
 //export PollSubscription
 func PollSubscription(id *C.char) C.Result {
 	subID := C.GoString(id)

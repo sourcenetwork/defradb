@@ -13,6 +13,7 @@ package test_acp_nac
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -105,7 +106,7 @@ func TestNAC_GatesDeletingDACRelationship_NoIdentity_NotAuthorizedError(t *testi
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationDeletePerm),
 			},
 		},
 	}
@@ -153,7 +154,7 @@ func TestNAC_GatesDeletingDACRelationship_WrongIdentity_NotAuthorizedError(t *te
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationDeletePerm),
 			},
 		},
 	}

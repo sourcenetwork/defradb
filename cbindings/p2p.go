@@ -22,12 +22,18 @@ import (
 )
 
 //export P2PInfo
-func P2PInfo(nodePtr C.uintptr_t) C.Result {
+func P2PInfo(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
 	node, err := getNodeFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	addresses, err := node.DB.PeerInfo()
+	addresses, err := node.DB.PeerInfo(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -55,8 +61,8 @@ func P2PActivePeers(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	return returnC(marshalJSONToGoCResult(peers))
 }
 
-//export P2PgetAllReplicators
-func P2PgetAllReplicators(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+//export P2PlistReplicators
+func P2PlistReplicators(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -66,15 +72,18 @@ func P2PgetAllReplicators(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	reps, err := node.DB.GetAllReplicators(ctx)
+	reps, err := node.DB.ListReplicators(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	return returnC(marshalJSONToGoCResult(reps))
 }
 
-//export P2PsetReplicator
-func P2PsetReplicator(nodePtr C.uintptr_t, collections *C.char, addresses *C.char, identityPtr C.uintptr_t) C.Result {
+//export P2PcreateReplicator
+func P2PcreateReplicator(nodePtr C.uintptr_t,
+	collections *C.char,
+	addresses *C.char,
+	identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -87,7 +96,7 @@ func P2PsetReplicator(nodePtr C.uintptr_t, collections *C.char, addresses *C.cha
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.SetReplicator(ctx, addressesArgs, colArgs...)
+	err = node.DB.CreateReplicator(ctx, addressesArgs, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -114,8 +123,8 @@ func P2PdeleteReplicator(nodePtr C.uintptr_t, collections *C.char, id *C.char, i
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionAdd
-func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export P2PcollectionCreate
+func P2PcollectionCreate(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -127,15 +136,15 @@ func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.ui
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.AddP2PCollections(ctx, colArgs...)
+	err = node.DB.CreateP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionRemove
-func P2PcollectionRemove(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export P2PcollectionDelete
+func P2PcollectionDelete(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -147,15 +156,15 @@ func P2PcollectionRemove(nodePtr C.uintptr_t, collections *C.char, identityPtr C
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.RemoveP2PCollections(ctx, colArgs...)
+	err = node.DB.DeleteP2PCollections(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionGetAll
-func P2PcollectionGetAll(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+//export P2PcollectionList
+func P2PcollectionList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -165,7 +174,7 @@ func P2PcollectionGetAll(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result 
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	cols, err := node.DB.GetAllP2PCollections(ctx)
+	cols, err := node.DB.ListP2PCollections(ctx)
 
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -173,8 +182,8 @@ func P2PcollectionGetAll(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result 
 	return returnC(marshalJSONToGoCResult(cols))
 }
 
-//export P2PdocumentAdd
-func P2PdocumentAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export P2PdocumentCreate
+func P2PdocumentCreate(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -186,15 +195,15 @@ func P2PdocumentAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uint
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.AddP2PDocuments(ctx, colArgs...)
+	err = node.DB.CreateP2PDocuments(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PdocumentRemove
-func P2PdocumentRemove(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export P2PdocumentDelete
+func P2PdocumentDelete(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -206,15 +215,15 @@ func P2PdocumentRemove(nodePtr C.uintptr_t, collections *C.char, identityPtr C.u
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.RemoveP2PDocuments(ctx, colArgs...)
+	err = node.DB.DeleteP2PDocuments(ctx, colArgs...)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PdocumentGetAll
-func P2PdocumentGetAll(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
+//export P2PdocumentList
+func P2PdocumentList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
@@ -224,7 +233,7 @@ func P2PdocumentGetAll(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	cols, err := node.DB.GetAllP2PDocuments(ctx)
+	cols, err := node.DB.ListP2PDocuments(ctx)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

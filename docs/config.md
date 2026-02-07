@@ -126,7 +126,6 @@ The LensVM wasm runtime to run lens modules in.
 
 Possible values:
 - `wasm-time` (default): https://github.com/bytecodealliance/wasmtime-go
-- `wasmer` (windows not supported): https://github.com/wasmerio/wasmer-go
 - `wazero`: https://github.com/tetratelabs/wazero
 
 ## `acp.document.type`

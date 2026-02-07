@@ -36,7 +36,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t
 					"Name": "John"
 				}`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -121,7 +121,7 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing
 					"Name": "John"
 				}`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},

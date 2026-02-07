@@ -97,6 +97,7 @@ type DB struct {
 	// To be able to close the context passed to NewDB on DB close,
 	// we need to keep a reference to the cancel function. Otherwise,
 	// some goroutines might leak.
+	ctx       context.Context
 	ctxCancel context.CancelFunc
 
 	// If true, block signing is disabled. By default, block signing is enabled.
@@ -158,6 +159,7 @@ func newDB(
 		parser:              parser,
 		options:             options,
 		events:              event.NewChannelBus(commandBufferSize, eventBufferSize),
+		ctx:                 ctx,
 		ctxCancel:           cancel,
 		docMergeQueue:       newMergeQueue(),
 		colMergeQueue:       newMergeQueue(),
@@ -216,6 +218,9 @@ func newDB(
 
 // NewTxn creates a new transaction.
 func (db *DB) NewTxn(readonly bool) (client.Txn, error) {
+	if db.ctx.Err() != nil {
+		return nil, db.ctx.Err()
+	}
 	txnId := db.previousTxnID.Add(1)
 	txn := datastore.NewTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil
@@ -234,6 +239,9 @@ func (db *DB) InitContext(ctx context.Context, txn client.Txn) context.Context {
 
 // NewConcurrentTxn creates a new transaction that supports concurrent API calls.
 func (db *DB) NewConcurrentTxn(readonly bool) (client.Txn, error) {
+	if db.ctx.Err() != nil {
+		return nil, db.ctx.Err()
+	}
 	txnId := db.previousTxnID.Add(1)
 	txn := datastore.NewConcurrentTxnFrom(db.rootstore, db.lockSet, txnId, readonly, db.blockStoreChunkSize)
 	return wrapDatastoreTxn(txn, db), nil

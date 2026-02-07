@@ -64,7 +64,7 @@ resources:
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -118,7 +118,7 @@ resources:
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},

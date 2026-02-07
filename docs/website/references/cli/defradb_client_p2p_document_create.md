@@ -1,27 +1,30 @@
-## defradb client p2p replicator getall
+## defradb client p2p document create
 
-Get all replicators
+Create P2P documents
 
 ### Synopsis
 
-Get all the replicators active in the P2P data sync system.
-A replicator synchronizes one or all collection(s) from this instance to another.
+Create P2P documents to the synchronized pubsub topics.
+The documents are synchronized between nodes of a pubsub network.
 
 ```
-defradb client p2p replicator getall [flags]
+defradb client p2p document create [docIDs] [flags]
 ```
 
 ### Examples
 
 ```
-Get all replicators:  
-  defradb client p2p replicator getall
+create single document:  
+  defradb client p2p document create bae123
+
+create multiple documents:  
+  defradb client p2p document create bae123,bae456
 ```
 
 ### Options
 
 ```
-  -h, --help   help for getall
+  -h, --help   help for create
 ```
 
 ### Options inherited from parent commands
@@ -48,5 +51,5 @@ Get all replicators:
 
 ### SEE ALSO
 
-* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
+* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
 

@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -27,9 +28,7 @@ func TestNAC_GatesP2PDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T)
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.GoClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -63,7 +62,7 @@ func TestNAC_GatesP2PDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T)
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -72,7 +71,7 @@ func TestNAC_GatesP2PDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T)
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -92,9 +91,7 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.GoClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -128,7 +125,7 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -137,13 +134,13 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				Identity: testUtils.NoIdentity(),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentDeletePerm),
 			},
 		},
 	}
@@ -158,9 +155,7 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 				state.HTTPClientType,
 				state.CLIClientType,
 				state.GoClientType,
-				// TODO: https://github.com/sourcenetwork/defradb/issues/4091
-				// We have to fix the c-binding identity passing issue to support c-client.
-				// state.CClientType,
+				state.CClientType,
 			},
 		),
 		Actions: []any{
@@ -194,7 +189,7 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -203,13 +198,13 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				Identity: testUtils.ClientIdentity(2),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentDeletePerm),
 			},
 		},
 	}

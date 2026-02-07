@@ -32,7 +32,7 @@ func TestP2POneToOneReplicatorWithRestart(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},

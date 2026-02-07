@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -45,7 +46,7 @@ func TestNAC_AdminRelation_CanCollectionGetByName(t *testing.T) {
 					Name:            immutable.Some("Users"),
 					IncludeInactive: immutable.Some(false),
 				},
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
 			// Grant access to user.
