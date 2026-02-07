@@ -37,7 +37,7 @@ func ViewAdd(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	opts := options.AddView()
+	opts := options.WithIdentity(options.AddView(), acpIdentity.FromContext(ctx))
 	transformCIDValue := C.GoString(transformCIDStr)
 	if transformCIDValue != "" {
 		opts.SetTransformCID(transformCIDValue)

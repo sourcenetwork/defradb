@@ -141,7 +141,7 @@ func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	opt := options.AddView()
+	opt := options.WithIdentity(options.AddView(), identity.FromContext(ctx))
 	if message.TransformCID.HasValue() {
 		opt.SetTransformCID(message.TransformCID.Value())
 	}

@@ -114,6 +114,7 @@ const (
 	NodeLensCreatePerm
 	NodeLensListPerm
 	NodeViewRefreshPerm
+	NodeViewAddPerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
@@ -160,6 +161,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"lens-create",
 	"lens-list",
 	"view-refresh",
+	"view-add",
 }
 
 const NodeACPObject = "NodeObject"
@@ -258,6 +260,8 @@ resources:
   - name: lens-list
     expr: admin
   - name: view-refresh
+    expr: admin
+  - name: view-add
     expr: admin
 
   relations:
