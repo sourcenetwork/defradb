@@ -30,7 +30,7 @@ func (m *mockTestState) GetClientType() state.ClientType {
 	return m.clientType
 }
 
-func (m *mockTestState) GetCurrentNodeID() int {
+func (m *mockTestState) GetCurrentAssertingNodeID() int {
 	return m.currentNodeID
 }
 
