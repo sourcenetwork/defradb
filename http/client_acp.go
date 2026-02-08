@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -28,7 +29,7 @@ func (c *Client) AddDACPolicy(
 	opts ...options.Lister[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("acp", "document", "policy")
 
@@ -67,7 +68,7 @@ func (c *Client) AddDACActorRelationship(
 	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("acp", "document", "relationship")
 
@@ -119,7 +120,7 @@ func (c *Client) DeleteDACActorRelationship(
 	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("acp", "document", "relationship")
 
@@ -167,7 +168,7 @@ func (c *Client) AddNACActorRelationship(
 	opts ...options.Lister[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "relationship")
 
@@ -213,7 +214,7 @@ func (c *Client) DeleteNACActorRelationship(
 	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "relationship")
 
@@ -249,7 +250,7 @@ func (c *Client) DeleteNACActorRelationship(
 
 func (c *Client) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "re-enable")
 
@@ -268,7 +269,7 @@ func (c *Client) ReEnableNAC(ctx context.Context, opts ...options.Lister[options
 
 func (c *Client) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "disable")
 
@@ -290,7 +291,7 @@ func (c *Client) GetNACStatus(
 	opts ...options.Lister[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("acp", "node", "status")
 

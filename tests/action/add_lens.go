@@ -39,16 +39,11 @@ var _ Stateful = (*AddLens)(nil)
 func (a *AddLens) Execute() {
 	var lensID string
 
-	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
-	for index, node := range nodes {
-		nodeID := nodeIDs[index]
-
-		a.s.Ctx = getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
-
+	_, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
+	for _, node := range nodes {
 		var err error
 		lensID, err = node.AddLens(a.s.Ctx, a.Lens)
 
-		resetStateContext(a.s)
 
 		if err != nil {
 			a.s.T.Fatalf("failed to add lens: %v", err)

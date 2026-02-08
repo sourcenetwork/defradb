@@ -105,9 +105,8 @@ func addDACPolicy(
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
 		opt := options.WithIdentity(options.AddDACPolicy(), getIdentityForRequestSpecificToNode(s, action.Identity, nodeID))
-		policyResult, err := node.AddDACPolicy(ctx, action.Policy, opt)
+		policyResult, err := node.AddDACPolicy(s.Ctx, action.Policy, opt)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -196,11 +195,10 @@ func addDACActorRelationship(
 		var collectionName string
 		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		ctx := getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID)
 		opt := options.WithIdentity(options.AddDACActorRelationship(),
 			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 		exists, err := node.AddDACActorRelationship(
-			ctx,
+			s.Ctx,
 			collectionName,
 			docID,
 			action.Relation,
@@ -290,11 +288,10 @@ func deleteDACActorRelationship(
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		ctx := getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID)
 		opt := options.WithIdentity(options.DeleteDACActorRelationship(),
 			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 		deleteActorRelationshipResult, err := node.DeleteDACActorRelationship(
-			ctx,
+			s.Ctx,
 			collectionName,
 			docID,
 			action.Relation,

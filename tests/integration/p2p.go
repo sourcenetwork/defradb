@@ -91,10 +91,10 @@ func connectPeers(
 		corelog.Any("Source", sourceAddresses),
 		corelog.Any("Target", targetAddresses))
 
-	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	opt := options.WithIdentity(options.Connect(), getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
+	opt := options.WithIdentity(options.Connect(),
+		getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
 
-	err = connectWithRetry(ctx, sourceNode, targetAddresses, opt)
+	err = connectWithRetry(s.Ctx, sourceNode, targetAddresses, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -116,7 +116,6 @@ func reconnectPeers(s *state.State) {
 		// Inject every source node's identity into the context while refreshing so the
 		// [Connect] call doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
-		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
 		for targetIndex := range node.P2P.Connections {
 			sourceNode := s.Nodes[index]
 			targetNode := s.Nodes[targetIndex]
@@ -126,12 +125,12 @@ func reconnectPeers(s *state.State) {
 			targetAddresses, err := targetNode.PeerInfo()
 			require.NoError(s.T, err)
 
-			log.InfoContext(ctx, "Connect peers",
+			log.InfoContext(s.Ctx, "Connect peers",
 				corelog.Any("Source", sourceAddresses),
 				corelog.Any("Target", targetAddresses))
 
 			opt := options.WithIdentity(options.Connect(), getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID))
-			err = connectWithRetry(ctx, sourceNode, targetAddresses, opt)
+			err = connectWithRetry(s.Ctx, sourceNode, targetAddresses, opt)
 			require.NoError(s.T, err)
 		}
 	}

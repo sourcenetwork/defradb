@@ -157,7 +157,7 @@ func createDocViaColSave(
 		return nil, err
 	}
 
-	ctx := getContextWithIdentity(db.InitContext(a.s.Ctx, txn), a.s, a.Identity, nodeIndex)
+	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseCreateDocs(ctx, a, collection)
 	if err != nil {
@@ -185,7 +185,7 @@ func createDocViaColCreate(
 		return nil, err
 	}
 
-	ctx := getContextWithIdentity(db.InitContext(a.s.Ctx, txn), a.s, a.Identity, nodeIndex)
+	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseCreateDocs(ctx, a, collection)
 	if err != nil {
@@ -254,7 +254,7 @@ func createDocViaGQL(
 		return nil, err
 	}
 
-	ctx := getContextWithIdentity(db.InitContext(a.s.Ctx, txn), a.s, a.Identity, nodeIndex)
+	ctx := db.InitContext(a.s.Ctx, txn)
 
 	result := node.ExecRequest(ctx, req)
 	if len(result.GQL.Errors) > 0 {

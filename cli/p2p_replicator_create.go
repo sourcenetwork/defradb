@@ -13,6 +13,8 @@ package cli
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +27,8 @@ func MakeP2PReplicatorCreateCommand(ctx context.Context) *cobra.Command {
 A replicator synchronizes one or all collection(s) from this instance to another.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.CreateReplicator(cmd.Context(), args, collections)
+			opt := options.WithIdentity(options.CreateReplicator(), identity.FromContext(cmd.Context()))
+			return cliClient.CreateReplicator(cmd.Context(), args, collections, opt)
 		},
 	}
 

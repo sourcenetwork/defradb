@@ -111,10 +111,9 @@ func createReplicator(
 	targetAddresses, err := targetNode.PeerInfo()
 	require.NoError(s.T, err)
 
-	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
 	opt := options.WithIdentity(options.CreateReplicator(),
 		getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
-	err = sourceNode.CreateReplicator(ctx, targetAddresses, nil, opt)
+	err = sourceNode.CreateReplicator(s.Ctx, targetAddresses, nil, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -140,10 +139,9 @@ func deleteReplicator(
 	id, err := maddr.ValueForProtocol(multiaddr.P_P2P)
 	require.NoError(s.T, err)
 
-	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
 	opt := options.WithIdentity(options.DeleteReplicator(),
 		getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
-	err = sourceNode.DeleteReplicator(ctx, id, nil, opt)
+	err = sourceNode.DeleteReplicator(s.Ctx, id, nil, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)

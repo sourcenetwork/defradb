@@ -128,7 +128,7 @@ func (c *Client) AddSchema(
 	opts ...options.Lister[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("schema")
 
@@ -155,7 +155,7 @@ func (c *Client) PatchCollection(
 	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections")
 
@@ -178,7 +178,7 @@ func (c *Client) SetActiveCollectionVersion(
 	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections", "default")
 
@@ -314,9 +314,10 @@ func (c *Client) GetCollectionByName(
 	opts ...options.Lister[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
-	cols, err := c.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
+	colsOpt := options.WithIdentity(options.GetCollections(), opt.GetIdentity())
+	cols, err := c.GetCollections(ctx, options.GetCollections().SetCollectionName(name), colsOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -334,7 +335,7 @@ func (c *Client) GetCollections(
 	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections")
 	params := url.Values{}
@@ -372,7 +373,7 @@ func (c *Client) GetAllIndexes(
 	opts ...options.Lister[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections", "indexes")
 
@@ -409,7 +410,7 @@ func (c *Client) ExecRequest(
 	opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("graphql")
 	result := &client.RequestResult{}
 
@@ -556,7 +557,7 @@ func (c *Client) VerifySignature(
 	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("block", "verify-signature")
 

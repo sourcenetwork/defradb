@@ -16,7 +16,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -71,7 +70,7 @@ func (db *DB) AddDACPolicy(
 
 	policyID, err := db.documentACP.Value().AddPolicy(
 		ctx,
-		identity.FromContext(ctx).Value(),
+		opt.Identity.Value(),
 		policy,
 	)
 	if err != nil {
@@ -119,7 +118,7 @@ func (db *DB) AddDACActorRelationship(
 		resourceName,
 		docID,
 		relation,
-		identity.FromContext(ctx).Value(),
+		opt.Identity.Value(),
 		targetActor,
 	)
 
@@ -175,7 +174,7 @@ func (db *DB) DeleteDACActorRelationship(
 		resourceName,
 		docID,
 		relation,
-		identity.FromContext(ctx).Value(),
+		opt.Identity.Value(),
 		targetActor,
 	)
 

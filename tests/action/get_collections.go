@@ -95,7 +95,6 @@ func (a *GetCollections) Execute() {
 			return
 		}
 		ctx := db.InitContext(a.s.Ctx, txn)
-		ctx = getContextWithIdentity(ctx, a.s, a.Identity, nodeID)
 
 		opts := a.FilterOptions
 		if opts == nil {

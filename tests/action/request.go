@@ -100,7 +100,7 @@ nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		txn := a.getTransaction(node)
-		ctx := getContextWithIdentity(db.InitContext(a.s.Ctx, txn), a.s, a.Identity, nodeID)
+		ctx := db.InitContext(a.s.Ctx, txn)
 
 		reqOption := options.ExecRequest()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)

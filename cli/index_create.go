@@ -16,7 +16,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeIndexCreateCommand(ctx context.Context) *cobra.Command {
@@ -65,12 +67,14 @@ If no order is specified for the field, the default value will be "ASC"`,
 				Fields: fields,
 				Unique: uniqueArg,
 			}
-			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
+			colOpt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(cmd.Context()))
+			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg, colOpt)
 			if err != nil {
 				return err
 			}
 
-			descWithID, err := col.CreateIndex(cmd.Context(), desc)
+			indOpt := options.WithIdentity(options.CollectionCreateIndex(), identity.FromContext(cmd.Context()))
+			descWithID, err := col.CreateIndex(cmd.Context(), desc, indOpt)
 			if err != nil {
 				return err
 			}

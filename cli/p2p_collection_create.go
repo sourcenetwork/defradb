@@ -14,6 +14,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +38,8 @@ The collections are synchronized between nodes of a pubsub network.`,
 				collectionNames = append(collectionNames, id)
 			}
 
-			return cliClient.CreateP2PCollections(cmd.Context(), collectionNames)
+			opt := options.WithIdentity(options.CreateP2PCollections(), identity.FromContext(cmd.Context()))
+			return cliClient.CreateP2PCollections(cmd.Context(), collectionNames, opt)
 		},
 	}
 

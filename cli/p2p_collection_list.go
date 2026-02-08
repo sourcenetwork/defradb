@@ -13,6 +13,8 @@ package cli
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +28,8 @@ This is the list of collections of the node that are synchronized on the pubsub 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			cols, err := cliClient.ListP2PCollections(cmd.Context())
+			opt := options.WithIdentity(options.ListP2PCollections(), identity.FromContext(cmd.Context()))
+			cols, err := cliClient.ListP2PCollections(cmd.Context(), opt)
 			if err != nil {
 				return err
 			}

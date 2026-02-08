@@ -15,6 +15,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/spf13/cobra"
 )
 
@@ -62,8 +64,9 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				return ErrEmptySchemaString
 			}
 
+			opt := options.WithIdentity(options.AddSchema(), identity.FromContext(cmd.Context()))
 			// Process the combined schema
-			cols, err := cli.AddSchema(cmd.Context(), combinedSchema)
+			cols, err := cli.AddSchema(cmd.Context(), combinedSchema, opt)
 			if err != nil {
 				return NewErrFailedToAddSchema(err)
 			}

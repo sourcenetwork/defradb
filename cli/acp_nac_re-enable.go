@@ -15,7 +15,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeNodeACPReEnableCommand(ctx context.Context) *cobra.Command {
@@ -33,7 +35,8 @@ Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/re
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			if err := cliClient.ReEnableNAC(cmd.Context()); err != nil {
+			opt := options.WithIdentity(options.ReEnableNAC(), identity.FromContext(cmd.Context()))
+			if err := cliClient.ReEnableNAC(cmd.Context(), opt); err != nil {
 				return err
 			}
 

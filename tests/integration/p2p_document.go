@@ -122,10 +122,9 @@ func createDocumentSubscription(
 		docIDs = append(docIDs, docID.String())
 	}
 
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
 	opt := options.WithIdentity(options.CreateP2PDocuments(),
 		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
-	err := node.CreateP2PDocuments(ctx, docIDs, opt)
+	err := node.CreateP2PDocuments(s.Ctx, docIDs, opt)
 	if err == nil {
 		waitForCreateDocumentSubscriptionEvent(s, action)
 	}
@@ -162,10 +161,9 @@ func deleteDocumentSubscription(
 		docIDs = append(docIDs, docID.String())
 	}
 
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
 	opt := options.WithIdentity(options.DeleteP2PDocuments(),
 		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
-	err := node.DeleteP2PDocuments(ctx, docIDs, opt)
+	err := node.DeleteP2PDocuments(s.Ctx, docIDs, opt)
 	if err == nil {
 		waitForDeleteDocumentSubscriptionEvent(s, action)
 	}
@@ -197,10 +195,9 @@ func listP2PDocuments(
 	}
 
 	node := s.Nodes[action.NodeID]
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
 	opt := options.WithIdentity(options.ListP2PDocuments(),
 		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
-	cols, err := node.ListP2PDocuments(ctx, opt)
+	cols, err := node.ListP2PDocuments(s.Ctx, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

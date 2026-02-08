@@ -13,6 +13,8 @@ package cli
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/spf13/cobra"
 )
 
@@ -44,6 +46,7 @@ Notes:
 				cmd.Context(),
 				relationArg,
 				targetActorArg,
+				options.WithIdentity(options.DeleteNACActorRelationship(), identity.FromContext(cmd.Context())),
 			)
 
 			if err != nil {

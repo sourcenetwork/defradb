@@ -55,15 +55,13 @@ func (a *DropIndex) Execute() {
 	for _, nodeID := range nodeIDs {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
 
-		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
-
 		opts := options.CollectionDropIndex()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := collection.DropIndex(ctx, a.IndexName, opts)
+		err := collection.DropIndex(a.s.Ctx, a.IndexName, opts)
 
 		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 	}

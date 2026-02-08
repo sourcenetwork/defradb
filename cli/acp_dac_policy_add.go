@@ -15,6 +15,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/spf13/cobra"
 )
 
@@ -66,9 +68,11 @@ Notes:
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
+			ctx := cmd.Context()
 			policyResult, err := cliClient.AddDACPolicy(
-				cmd.Context(),
+				ctx,
 				policy,
+				options.WithIdentity(options.AddDACPolicy(), identity.FromContext(ctx)),
 			)
 
 			if err != nil {

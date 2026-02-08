@@ -20,6 +20,7 @@ import (
 
 	sse "github.com/vito/go-sse/sse"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -56,7 +57,7 @@ func (c *Collection) Create(
 	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	body, err := doc.String()
@@ -85,7 +86,7 @@ func (c *Collection) CreateMany(
 	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	var docMapList []json.RawMessage
@@ -139,7 +140,7 @@ func (c *Collection) Update(
 	opts ...options.Lister[options.CollectionUpdateOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, doc.ID().String())
 
 	body, err := doc.ToJSONPatch()
@@ -165,7 +166,7 @@ func (c *Collection) Save(
 	opts ...options.Lister[options.CollectionSaveOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	//ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	getOpts := options.CollectionGet()
 	if opt.GetIdentity().HasValue() {
@@ -199,7 +200,7 @@ func (c *Collection) Delete(
 	opts ...options.Lister[options.CollectionDeleteOptions],
 ) (bool, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, docID.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
@@ -220,7 +221,7 @@ func (c *Collection) Exists(
 	opts ...options.Lister[options.CollectionExistsOptions],
 ) (bool, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	_, err := c.Get(ctx, docID, false)
 	if err != nil {
 		return false, err
@@ -235,7 +236,7 @@ func (c *Collection) UpdateWithFilter(
 	opts ...options.Lister[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	request := CollectionUpdateRequest{
@@ -265,7 +266,7 @@ func (c *Collection) DeleteWithFilter(
 	opts ...options.Lister[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	request := CollectionDeleteRequest{
@@ -296,7 +297,7 @@ func (c *Collection) Get(
 	opts ...options.Lister[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	query := url.Values{}
 	if showDeleted {
 		query.Add("show_deleted", "true")
@@ -331,7 +332,7 @@ func (c *Collection) GetAllDocIDs(
 	opts ...options.Lister[options.CollectionGetAllDocIDsOptions],
 ) (<-chan client.DocIDResult, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
@@ -391,7 +392,7 @@ func (c *Collection) CreateIndex(
 	opts ...options.Lister[options.CollectionCreateIndexOptions],
 ) (client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes")
 
 	body, err := json.Marshal(&indexDesc)
@@ -415,7 +416,7 @@ func (c *Collection) DropIndex(
 	opts ...options.Lister[options.CollectionDropIndexOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes", indexName)
 
@@ -432,7 +433,7 @@ func (c *Collection) GetIndexes(
 	opts ...options.Lister[options.CollectionGetIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes")
 
@@ -496,7 +497,7 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 
 func (c *Collection) Truncate(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error {
 	opt := utils.NewOptions(opts...)
-	ctx = utils.WithOptIdentity(ctx, opt)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "truncate")
 

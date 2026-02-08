@@ -51,13 +51,12 @@ func refreshCollections(
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
-		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
 		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
 		opts := options.GetCollections()
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		allCollections, err := node.GetCollections(ctx, opts)
+		allCollections, err := node.GetCollections(s.Ctx, opts)
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {

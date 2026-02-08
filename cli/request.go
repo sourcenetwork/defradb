@@ -18,6 +18,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 )
@@ -63,7 +64,7 @@ To learn more about the DefraDB GraphQL Query Language, refer to https://docs.so
 				return errors.New("request cannot be empty")
 			}
 
-			opts := options.ExecRequest()
+			opts := options.WithIdentity(options.ExecRequest(), identity.FromContext(cmd.Context()))
 			if variablesJSON != "" || operationName != "" {
 				if variablesJSON != "" {
 					var variables map[string]any

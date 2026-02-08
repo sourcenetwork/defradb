@@ -63,7 +63,6 @@ func (a *GetIndexes) Execute() {
 	for _, nodeID := range nodeIDs {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
 
-		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
 
 		opts := options.CollectionGetIndexes()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
@@ -71,7 +70,7 @@ func (a *GetIndexes) Execute() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		actualIndexes, err := collection.GetIndexes(ctx, opts)
+		actualIndexes, err := collection.GetIndexes(a.s.Ctx, opts)
 
 		if assertError(a.s.T, err, a.ExpectedError) {
 			expectedErrorRaised = true

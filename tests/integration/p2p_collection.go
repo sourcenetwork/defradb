@@ -119,10 +119,9 @@ func createCollectionSubscription(
 		collectionNames = append(collectionNames, col.Name())
 	}
 
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
 	opt := options.WithIdentity(options.CreateP2PCollections(),
 		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
-	err := node.CreateP2PCollections(ctx, collectionNames, opt)
+	err := node.CreateP2PCollections(s.Ctx, collectionNames, opt)
 	if err == nil {
 		waitForCreateCollectionSubscriptionEvent(s, action)
 	}
@@ -156,10 +155,9 @@ func deleteCollectionSubscription(
 		collectionNames = append(collectionNames, col.Name())
 	}
 
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
 	opt := options.WithIdentity(options.DeleteP2PCollections(),
 		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
-	err := node.DeleteP2PCollections(ctx, collectionNames, opt)
+	err := node.DeleteP2PCollections(s.Ctx, collectionNames, opt)
 	if err == nil {
 		waitForDeleteCollectionSubscriptionEvent(s, action)
 	}
@@ -188,10 +186,9 @@ func listP2PCollections(
 	}
 
 	node := s.Nodes[action.NodeID]
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
 	opt := options.WithIdentity(options.ListP2PCollections(),
 		getIdentityForRequestSpecificToNode(s, action.Identity, action.NodeID))
-	cols, err := node.ListP2PCollections(ctx, opt)
+	cols, err := node.ListP2PCollections(s.Ctx, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 	assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

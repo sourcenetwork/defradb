@@ -47,11 +47,9 @@ func (a *ListLenses) Execute() {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		a.s.Ctx = getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
 
 		lenses, err := node.ListLenses(a.s.Ctx)
 
-		resetStateContext(a.s)
 
 		if err != nil {
 			a.s.T.Fatalf("failed to list lenses: %v", err)

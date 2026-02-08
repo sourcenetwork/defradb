@@ -13,6 +13,8 @@ package cli
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +25,8 @@ func MakeP2PConnectCommand(ctx context.Context) *cobra.Command {
 		Long:  `Connect to one or more peers with the given addresses`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.Connect(cmd.Context(), args)
+			opt := options.WithIdentity(options.Connect(), identity.FromContext(cmd.Context()))
+			return cliClient.Connect(cmd.Context(), args, opt)
 		},
 	}
 

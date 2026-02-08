@@ -13,6 +13,8 @@ package cli
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +34,8 @@ Learn more about the DefraDB [ACP System](https://docs.source.network/defradb/re
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			status, err := cliClient.GetNACStatus(cmd.Context())
+			opt := options.WithIdentity(options.GetNACStatus(), identity.FromContext(cmd.Context()))
+			status, err := cliClient.GetNACStatus(cmd.Context(), opt)
 			if err != nil {
 				return err
 			}

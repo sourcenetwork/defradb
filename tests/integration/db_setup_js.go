@@ -64,7 +64,7 @@ func setupNode(
 	}
 	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
 	err = nodeObj.Start(s.Ctx)
-	resetStateContext(s)
+
 	if err != nil {
 		return nil, err
 	}

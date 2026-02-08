@@ -538,6 +538,7 @@ func (w *Wrapper) GetCollections(
 	if opt.IncludeInactive.HasValue() {
 		args = append(args, "--get-inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
 	}
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
@@ -597,6 +598,7 @@ func (w *Wrapper) ExecRequest(
 
 	result := &client.RequestResult{}
 	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 	if opt.OperationName.HasValue() {
 		args = append(args, "--operation", opt.OperationName.Value())
 	}
@@ -752,6 +754,9 @@ func (w *Wrapper) VerifySignature(
 	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
 	args := []string{"client", "block", "verify-signature"}
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	args = append(args, "--type", string(pubKey.Type()))
 	args = append(args, pubKey.String(), cid)

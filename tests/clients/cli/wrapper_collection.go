@@ -394,6 +394,9 @@ func (c *Collection) CreateIndex(
 
 	args = append(args, "--fields", strings.Join(orderedFields, ","))
 
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
 		return index, err
@@ -413,6 +416,9 @@ func (c *Collection) DropIndex(
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--name", indexName)
 
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	_, err := c.cmd.execute(ctx, args)
 	return err
 }
@@ -423,6 +429,9 @@ func (c *Collection) GetIndexes(
 ) ([]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 	args = append(args, "--collection", c.Version().Name)
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {

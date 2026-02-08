@@ -289,7 +289,7 @@ func executeTestCase(
 	// Documents and Collections may already exist in the database if actions have been split
 	// by the change detector so we should fetch them here at the start too (if they exist).
 	// collections are by node (index), as they are specific to nodes.
-	refreshCollections(s, immutable.None[int]())
+	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
 	refreshDocuments(s, testCase, startActionIndex)
 
 	for i := startActionIndex; i <= endActionIndex; i++ {
@@ -863,7 +863,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
 	// will reference the old (closed) database instances.
-	refreshCollections(s, immutable.None[int]())
+	refreshCollections(s, immutable.None[int](), action.Identity)
 }
 
 func restartNodes(
@@ -911,18 +911,20 @@ func refreshTokens(
 func refreshCollections(
 	s *state.State,
 	transactionID immutable.Option[int],
+	identity immutable.Option[state.Identity],
 ) {
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+		if !identity.HasValue() {
 		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
-		nodeIdentity := NodeIdentity(nodeID)
+			identity = NodeIdentity(nodeID)
+		}
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
 		txn := getTransaction(s, node, transactionID, "")
 		ctx := db.InitContext(s.Ctx, txn)
-		ctx = getContextWithIdentity(ctx, s, nodeIdentity, nodeID)
-		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, identity, nodeID)
 		opts := options.GetCollections()
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
@@ -1081,20 +1083,19 @@ func setActiveCollectionVersion(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
 
 		opts := options.SetActiveCollectionVersion()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := node.SetActiveCollectionVersion(ctx, versionID, opts)
+		err := node.SetActiveCollectionVersion(s.Ctx, versionID, opts)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
 	}
 
-	refreshCollections(s, immutable.None[int]())
+	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
 }
 
 // substituteRelations scans the fields defined in [action.DocMap], if any are of type [DocIndex]
@@ -1135,7 +1136,6 @@ func deleteDoc(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.Nodes[nodeID].Collections[action.CollectionID]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
 
 		opts := options.CollectionDelete()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
@@ -1145,7 +1145,7 @@ func deleteDoc(
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.Delete(ctx, docID, opts)
+				_, err := collection.Delete(s.Ctx, docID, opts)
 				return err
 			},
 		)
@@ -1221,8 +1221,6 @@ func updateDocViaColSave(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
-
 	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
 	s.DocIDsLock.RUnlock()
@@ -1232,11 +1230,11 @@ func updateDocViaColSave(
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(ctx, docID, true, getOpts)
+	doc, err := collection.Get(s.Ctx, docID, true, getOpts)
 	if err != nil {
 		return err
 	}
-	err = doc.SetWithJSON(ctx, []byte(action.Doc))
+	err = doc.SetWithJSON(s.Ctx, []byte(action.Doc))
 	if err != nil {
 		return err
 	}
@@ -1245,7 +1243,7 @@ func updateDocViaColSave(
 	if identOption.HasValue() {
 		saveOpts.SetIdentity(identOption.Value())
 	}
-	return collection.Save(ctx, doc, saveOpts)
+	return collection.Save(s.Ctx, doc, saveOpts)
 }
 
 func updateDocViaColUpdate(
@@ -1255,8 +1253,6 @@ func updateDocViaColUpdate(
 	nodeIndex int,
 	collection client.Collection,
 ) error {
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
-
 	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
 	s.DocIDsLock.RUnlock()
@@ -1266,11 +1262,11 @@ func updateDocViaColUpdate(
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(ctx, docID, true, getOpts)
+	doc, err := collection.Get(s.Ctx, docID, true, getOpts)
 	if err != nil {
 		return err
 	}
-	err = doc.SetWithJSON(ctx, []byte(action.Doc))
+	err = doc.SetWithJSON(s.Ctx, []byte(action.Doc))
 	if err != nil {
 		return err
 	}
@@ -1279,7 +1275,7 @@ func updateDocViaColUpdate(
 	if identOption.HasValue() {
 		updateOpts.SetIdentity(identOption.Value())
 	}
-	return collection.Update(ctx, doc, updateOpts)
+	return collection.Update(s.Ctx, doc, updateOpts)
 }
 
 func updateDocViaGQL(
@@ -1307,9 +1303,7 @@ func updateDocViaGQL(
 		input,
 	)
 
-	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeIndex)
-
-	result := node.ExecRequest(ctx, request)
+	result := node.ExecRequest(s.Ctx, request)
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}
@@ -1325,7 +1319,6 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		collection := s.Nodes[nodeID].Collections[action.CollectionID]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
 
 		opts := options.CollectionUpdateWithFilter()
 		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
@@ -1336,7 +1329,7 @@ func updateWithFilter(s *state.State, action UpdateWithFilter) {
 			node,
 			func() error {
 				var err error
-				res, err = collection.UpdateWithFilter(ctx, action.Filter, action.Updater, opts)
+				res, err = collection.UpdateWithFilter(s.Ctx, action.Filter, action.Updater, opts)
 				return err
 			},
 		)
@@ -2011,11 +2004,10 @@ func resetMatchers(s *state.State) {
 func performVerifySignatureAction(s *state.State, action VerifyBlockSignature) {
 	_, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for i, node := range nodes {
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, i)
 		actorIdentity := getIdentityForRequestSpecificToNode(s, action.Identity, i)
 		opt := options.WithIdentity(options.VerifySignature(), actorIdentity)
 		signerIdentity := state.GetIdentity(s, immutable.Some(action.SignerIdentity))
-		err := node.VerifySignature(ctx, action.Cid, signerIdentity.PublicKey(), opt)
+		err := node.VerifySignature(s.Ctx, action.Cid, signerIdentity.PublicKey(), opt)
 
 		if action.ExpectedError != "" {
 			require.Error(s.T, err)

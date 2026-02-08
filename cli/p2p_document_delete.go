@@ -14,6 +14,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +38,8 @@ The removed documents will no longer be synchronized between nodes.`,
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return cliClient.DeleteP2PDocuments(cmd.Context(), collectionIDs)
+			opt := options.WithIdentity(options.DeleteP2PDocuments(), identity.FromContext(cmd.Context()))
+			return cliClient.DeleteP2PDocuments(cmd.Context(), collectionIDs, opt)
 		},
 	}
 

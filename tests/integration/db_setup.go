@@ -152,8 +152,6 @@ func setupNode(
 	}
 
 	c, err := setupClient(s, nodeObj)
-
-	resetStateContext(s)
 	require.Nil(s.T, err)
 
 	eventState, err := state.NewEventState(c.Events())
