@@ -84,21 +84,21 @@ func connectPeers(
 
 	// Inject source/target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
 	// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
-	ctxWithSourceNodeIdentity := getContextWithIdentity(
-		s.Ctx,
-		s,
-		NodeIdentity(cfg.SourceNodeID),
-		cfg.SourceNodeID,
-	)
-	ctxWithTargetNodeIdentity := getContextWithIdentity(
-		s.Ctx,
-		s,
-		NodeIdentity(cfg.TargetNodeID),
-		cfg.TargetNodeID,
-	)
-	sourceAddresses, err := sourceNode.PeerInfo(ctxWithSourceNodeIdentity)
+	sourceOpts := options.PeerInfo()
+	sourceIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(cfg.SourceNodeID), cfg.SourceNodeID)
+	if sourceIdent.HasValue() {
+		sourceOpts.SetIdentity(sourceIdent.Value())
+	}
+
+	targetOpts := options.PeerInfo()
+	targetIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(cfg.TargetNodeID), cfg.TargetNodeID)
+	if targetIdent.HasValue() {
+		targetOpts.SetIdentity(targetIdent.Value())
+	}
+
+	sourceAddresses, err := sourceNode.PeerInfo(s.Ctx, sourceOpts)
 	require.NoError(s.T, err)
-	targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
+	targetAddresses, err := targetNode.PeerInfo(s.Ctx, targetOpts)
 	require.NoError(s.T, err)
 
 	log.InfoContext(s.Ctx, "Connect peers",
@@ -130,28 +130,26 @@ func reconnectPeers(s *state.State) {
 		sourceNodeID := nodeIDs[sourceIndex]
 		// Inject every source node's identity into the context while refreshing so the [Connect] & [PeerInfo]
 		// call doesn't fail due to lack of authorization(s) if NAC is enabled.
-		nodeIdentity := NodeIdentity(nodeID)
-		ctxWithSourceNodeIdentity := getContextWithIdentity(
-			s.Ctx,
-			s,
-			nodeIdentity,
-			sourceNodeID,
-		)
+		nodeIdentity := NodeIdentity(sourceNodeID)
+		sourceOpts := options.PeerInfo()
+		sourceIdent := getIdentityForRequestSpecificToNode(s, nodeIdentity, sourceNodeID)
+		if sourceIdent.HasValue() {
+			sourceOpts.SetIdentity(sourceIdent.Value())
+		}
 
 		for targetIndex := range sourceNode.P2P.Connections {
 			targetNode := nodes[targetIndex]
 			targetNodeID := nodeIDs[targetIndex]
 			// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
 			// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
-			ctxWithTargetNodeIdentity := getContextWithIdentity(
-				s.Ctx,
-				s,
-				nodeIdentity,
-				targetNodeID,
-			)
-			sourceAddresses, err := sourceNode.PeerInfo(ctxWithSourceNodeIdentity)
+			targetOpts := options.PeerInfo()
+			targetIdent := getIdentityForRequestSpecificToNode(s, nodeIdentity, targetNodeID)
+			if targetIdent.HasValue() {
+				targetOpts.SetIdentity(targetIdent.Value())
+			}
+			sourceAddresses, err := sourceNode.PeerInfo(s.Ctx, sourceOpts)
 			require.NoError(s.T, err)
-			targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
+			targetAddresses, err := targetNode.PeerInfo(s.Ctx, targetOpts)
 			require.NoError(s.T, err)
 
 			log.InfoContext(s.Ctx, "Connect peers",
@@ -159,7 +157,8 @@ func reconnectPeers(s *state.State) {
 				corelog.Any("Target", targetAddresses),
 			)
 
-			opt := options.WithIdentity(options.Connect(), getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID))
+			opt := options.WithIdentity(options.Connect(),
+				getIdentityForRequestSpecificToNode(s, nodeIdentity, sourceNodeID))
 			err = connectWithRetry(s.Ctx, sourceNode, targetAddresses, opt)
 			require.NoError(s.T, err)
 		}

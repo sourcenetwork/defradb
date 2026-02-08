@@ -32,8 +32,10 @@ func (db *DB) sendUpdate(evt event.Update) {
 }
 
 // PeerInfo returns the p2p host id and listening addresses.
-func (db *DB) PeerInfo(ctx context.Context) ([]string, error) {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeP2PPeerInfo); err != nil {
+func (db *DB) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PPeerInfo); err != nil {
 		return nil, err
 	}
 

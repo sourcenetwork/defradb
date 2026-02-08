@@ -50,6 +50,39 @@ func (b *ConnectOptionsBuilder) List() []func(*ConnectOptions) {
 	return b.Opts
 }
 
+type PeerInfoOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *PeerInfoOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// CreateReplicatorOptionsBuilder is a builder for SetReplicatorOptions.
+type PeerInfoOptionsBuilder struct {
+	Opts []func(*PeerInfoOptions)
+}
+
+// CreateReplicator creates a new SetReplicatorOptionsBuilder instance.
+func PeerInfo() *PeerInfoOptionsBuilder {
+	return &PeerInfoOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *PeerInfoOptionsBuilder) SetIdentity(id identity.Identity) *PeerInfoOptionsBuilder {
+	b.Opts = append(b.Opts, func(opts *PeerInfoOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// List returns the list of functional options.
+func (b *PeerInfoOptionsBuilder) List() []func(*PeerInfoOptions) {
+	return b.Opts
+}
+
 // CreateReplicatorOptions contains options for SetReplicator operation.
 type CreateReplicatorOptions struct {
 	// Identity is the identity of the actor performing the operation.

@@ -41,7 +41,10 @@ type DeleteReplicatorParams struct {
 	Collections []string
 }
 
-func (c *Client) PeerInfo(ctx context.Context) ([]string, error) {
+func (c *Client) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "info")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)

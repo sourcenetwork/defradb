@@ -19,6 +19,9 @@ import "C"
 import (
 	"context"
 	"time"
+
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 //export P2PInfo
@@ -33,7 +36,9 @@ func P2PInfo(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	addresses, err := node.DB.PeerInfo(ctx)
+
+	opts := options.WithIdentity(options.PeerInfo(), acpIdentity.FromContext(ctx))
+	addresses, err := node.DB.PeerInfo(ctx, opts)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

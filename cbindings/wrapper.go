@@ -112,8 +112,8 @@ func NewCWrapper(node *node.Node) (*CWrapper, error) {
 	}, nil
 }
 
-func (w *CWrapper) PeerInfo(ctx context.Context) ([]string, error) {
-	cIdentity := identityFromContext(ctx)
+func (w *CWrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	res := ConvertAndFreeCResult(C.P2PInfo(C.uintptr_t(w.handle), cIdentity))
