@@ -1122,7 +1122,7 @@ func (pb *pubsubBatcher) publishBatch(collectionID string, batch []pubsubRequest
 
 	documents := make([]protocol.DocumentInfo, len(batch))
 
-	batchTxn := pb.p2p.db.Rootstore().NewTxn(false)
+	batchTxn := pb.p2p.db.Rootstore().NewTxn(true)
 	defer batchTxn.Discard()
 	batchCtx := corekv.SetCtxTxn(pb.ctx, batchTxn)
 

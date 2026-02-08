@@ -745,6 +745,7 @@ func (c *collection) save(
 	}
 
 	links := make([]coreblock.DAGLink, 0)
+	var carBlocks []savedBlock
 	for k, v := range doc.Fields() {
 		val, err := doc.GetValueWithField(v)
 		if err != nil {
@@ -788,9 +789,13 @@ func (c *collection) save(
 				return err
 			}
 
-			link, _, err := coreblock.AddDelta(ctx, merkleCRDT, delta)
+			link, fieldBytes, err := coreblock.AddDelta(ctx, merkleCRDT, delta)
 			if err != nil {
 				return err
+			}
+
+			if fieldBytes != nil {
+				carBlocks = append(carBlocks, savedBlock{cid: link.Cid, data: fieldBytes})
 			}
 
 			links = append(links, coreblock.NewDAGLink(k, link))
@@ -808,12 +813,23 @@ func (c *collection) save(
 		return err
 	}
 
+	if headNode != nil {
+		carBlocks = append(carBlocks, savedBlock{cid: link.Cid, data: headNode})
+	}
+
+	// Generate CAR while we have all blocks
+	var carData []byte
+	if len(carBlocks) > 0 {
+		carData, _ = generateCAR(ctx, link.Cid, carBlocks)
+	}
+
 	// publish an update event when the txn succeeds
 	updateEvent := event.Update{
 		DocID:        doc.ID().String(),
 		Cid:          link.Cid,
 		CollectionID: c.Version().CollectionID,
 		Block:        headNode,
+		CAR:          carData,
 	}
 	txn.OnSuccess(func() {
 		c.db.sendUpdate(updateEvent)

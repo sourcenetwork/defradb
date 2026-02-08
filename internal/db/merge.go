@@ -769,9 +769,13 @@ func (mp *mergeProcessor) trackMergedDocument(ctx context.Context, docID client.
 		mp.docIDs[docID] = nil
 		return nil
 	}
-
 	_, exists := mp.docIDs[docID]
 	if exists {
+		return nil
+	}
+	// Skip the old doc read for new documents
+	if coreblock.IsNewDocCreateMode(ctx) {
+		mp.docIDs[docID] = nil
 		return nil
 	}
 	doc, err := mp.col.Get(ctx, docID, false)
