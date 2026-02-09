@@ -2168,7 +2168,8 @@ type Txn_ListLenses_Call struct {
 //   - ctx context.Context
 //   - opts ...options.Lister[options.ListLensesOptions]
 func (_e *Txn_Expecter) ListLenses(ctx interface{}, opts ...interface{}) *Txn_ListLenses_Call {
-	return &Txn_ListLenses_Call{Call: _e.mock.On("ListLenses", append([]interface{}{ctx}, opts...)...)}
+	return &Txn_ListLenses_Call{Call: _e.mock.On("ListLenses",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
 func (_c *Txn_ListLenses_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.ListLensesOptions])) *Txn_ListLenses_Call {

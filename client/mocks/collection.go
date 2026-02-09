@@ -222,10 +222,10 @@ func (_c *Collection_CreateEncryptedIndex_Call) RunAndReturn(run func(context1 c
 }
 
 // CreateIndex provides a mock function for the type Collection
-func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateRequest client.IndexCreateRequest, listers ...options.Lister[options.CollectionCreateIndexOptions]) (client.IndexDescription, error) {
+func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Lister[options.CollectionCreateIndexOptions]) (client.IndexDescription, error) {
 	var tmpRet mock.Arguments
-	if len(listers) > 0 {
-		tmpRet = _mock.Called(context1, indexCreateRequest, listers)
+	if len(vs) > 0 {
+		tmpRet = _mock.Called(context1, indexCreateRequest, vs)
 	} else {
 		tmpRet = _mock.Called(context1, indexCreateRequest)
 	}
@@ -238,15 +238,15 @@ func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateReques
 	var r0 client.IndexDescription
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest, ...options.Lister[options.CollectionCreateIndexOptions]) (client.IndexDescription, error)); ok {
-		return returnFunc(context1, indexCreateRequest, listers...)
+		return returnFunc(context1, indexCreateRequest, vs...)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest, ...options.Lister[options.CollectionCreateIndexOptions]) client.IndexDescription); ok {
-		r0 = returnFunc(context1, indexCreateRequest, listers...)
+		r0 = returnFunc(context1, indexCreateRequest, vs...)
 	} else {
 		r0 = ret.Get(0).(client.IndexDescription)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, client.IndexCreateRequest, ...options.Lister[options.CollectionCreateIndexOptions]) error); ok {
-		r1 = returnFunc(context1, indexCreateRequest, listers...)
+		r1 = returnFunc(context1, indexCreateRequest, vs...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -261,13 +261,13 @@ type Collection_CreateIndex_Call struct {
 // CreateIndex is a helper method to define mock.On call
 //   - context1 context.Context
 //   - indexCreateRequest client.IndexCreateRequest
-//   - listers ...options.Lister[options.CollectionCreateIndexOptions]
-func (_e *Collection_Expecter) CreateIndex(context1 interface{}, indexCreateRequest interface{}, listers ...interface{}) *Collection_CreateIndex_Call {
+//   - vs ...options.Lister[options.CollectionCreateIndexOptions]
+func (_e *Collection_Expecter) CreateIndex(context1 interface{}, indexCreateRequest interface{}, vs ...interface{}) *Collection_CreateIndex_Call {
 	return &Collection_CreateIndex_Call{Call: _e.mock.On("CreateIndex",
-		append([]interface{}{context1, indexCreateRequest}, listers...)...)}
+		append([]interface{}{context1, indexCreateRequest}, vs...)...)}
 }
 
-func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest, listers ...options.Lister[options.CollectionCreateIndexOptions])) *Collection_CreateIndex_Call {
+func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Lister[options.CollectionCreateIndexOptions])) *Collection_CreateIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -297,7 +297,7 @@ func (_c *Collection_CreateIndex_Call) Return(indexDescription client.IndexDescr
 	return _c
 }
 
-func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest, listers ...options.Lister[options.CollectionCreateIndexOptions]) (client.IndexDescription, error)) *Collection_CreateIndex_Call {
+func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Lister[options.CollectionCreateIndexOptions]) (client.IndexDescription, error)) *Collection_CreateIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
