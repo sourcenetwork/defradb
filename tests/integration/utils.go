@@ -919,8 +919,8 @@ func refreshCollections(
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		if !identity.HasValue() {
-		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
-		// doesn't fail due to lack of authorization(s) if NAC is enabled.
+			// Inject node's identity into the context and options while refreshing so the [GetCollections] call
+			// doesn't fail due to lack of authorization(s) if NAC is enabled.
 			identity = NodeIdentity(nodeID)
 		}
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
