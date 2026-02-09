@@ -646,3 +646,32 @@ func (b *BasicExportOptionsBuilder) SetCollections(collections []string) *BasicE
 	})
 	return b
 }
+
+// ListLensesOptions contains options for ListLenses operation.
+type ListLensesOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *ListLensesOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// ListLensesOptionsBuilder is a builder for ListLensesOptions.
+type ListLensesOptionsBuilder struct {
+	enumerableBuilder[ListLensesOptions]
+}
+
+// ListLenses creates a new ListLensesOptionsBuilder instance.
+func ListLenses() *ListLensesOptionsBuilder {
+	return &ListLensesOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *ListLensesOptionsBuilder) SetIdentity(id identity.Identity) *ListLensesOptionsBuilder {
+	b.append(func(opts *ListLensesOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}

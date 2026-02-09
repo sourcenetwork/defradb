@@ -301,9 +301,19 @@ func (db *DB) AddLens(ctx context.Context, lens model.Lens) (string, error) {
 	return lensID, nil
 }
 
-func (db *DB) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (db *DB) ListLenses(
+	ctx context.Context,
+	opts ...options.Lister[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensListPerm); err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {

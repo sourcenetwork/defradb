@@ -478,8 +478,22 @@ func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) 
 	return res[0].String(), err
 }
 
-func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
-	res, err := execute(ctx, w.value, "listLenses")
+func (w *Wrapper) ListLenses(
+	ctx context.Context,
+	opts ...options.Lister[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
+	var optsVal sysjs.Value
+	var err error
+	opt := utils.NewOptions(opts...)
+	if opt != nil {
+		optsVal, err = goji.MarshalJS(opt)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		optsVal = sysjs.Undefined()
+	}
+	res, err := execute(ctx, w.value, "listLenses", optsVal)
 	if err != nil {
 		return nil, err
 	}

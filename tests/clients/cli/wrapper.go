@@ -503,7 +503,10 @@ func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) 
 	return lensID, nil
 }
 
-func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (w *Wrapper) ListLenses(
+	ctx context.Context,
+	opts ...options.Lister[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
 	args := []string{"client", "lens", "list"}
 
 	data, err := w.cmd.execute(ctx, args)

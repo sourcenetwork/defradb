@@ -161,9 +161,12 @@ func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, e
 	return txn.Wrapper.AddLens(ctx, lens)
 }
 
-func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (txn *Transaction) ListLenses(
+	ctx context.Context,
+	opts ...options.Lister[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Wrapper.ListLenses(ctx)
+	return txn.Wrapper.ListLenses(ctx, opts...)
 }
 
 func (txn *Transaction) GetCollectionByName(

@@ -295,7 +295,7 @@ type Store interface {
 	AddLens(ctx context.Context, lens model.Lens) (string, error)
 
 	// ListLenses returns all stored lenses mapped by their CID.
-	ListLenses(ctx context.Context) (map[string]model.Lens, error)
+	ListLenses(ctx context.Context, opts ...options.Lister[options.ListLensesOptions]) (map[string]model.Lens, error)
 
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//

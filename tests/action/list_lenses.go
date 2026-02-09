@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -37,24 +38,46 @@ type ListLenses struct {
 	// to actual CIDs at execution time.
 	// If set, the action will verify the lens content matches.
 	ExpectedLenses map[string]model.Lens
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 var _ Action = (*ListLenses)(nil)
 var _ Stateful = (*ListLenses)(nil)
 
 func (a *ListLenses) Execute() {
+	if a.ExpectedError != "" && a.ExpectedLenses != nil {
+		a.s.T.Fatalf("ExpectedError and ExpectedLenses cannot both be set")
+	}
+
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		lenses, err := node.ListLenses(a.s.Ctx)
+		opts := options.ListLenses()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
+		lenses, err := node.ListLenses(a.s.Ctx, opts)
+
+		if a.ExpectedError != "" {
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			continue
+		}
 
 		if err != nil {
 			a.s.T.Fatalf("failed to list lenses: %v", err)
 		}
 
 		if a.ExpectedLenses == nil {
-			return
+			continue
 		}
 
 		templateKeys := make([]string, 0, len(a.ExpectedLenses))

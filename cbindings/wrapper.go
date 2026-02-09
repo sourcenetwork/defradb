@@ -754,7 +754,10 @@ func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error)
 	return res.Value, nil
 }
 
-func (w *CWrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (w *CWrapper) ListLenses(
+	ctx context.Context,
+	opts ...options.Lister[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
 	res := ConvertAndFreeCResult(C.LensList(callHandle))
 

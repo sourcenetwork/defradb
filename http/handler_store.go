@@ -209,8 +209,9 @@ type ListLensesResponse struct {
 
 func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	opts := options.WithIdentity(options.ListLenses(), identity.FromContext(req.Context()))
 
-	lenses, err := db.ListLenses(req.Context())
+	lenses, err := db.ListLenses(req.Context(), opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

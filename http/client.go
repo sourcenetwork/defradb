@@ -307,7 +307,10 @@ func (c *Client) AddLens(ctx context.Context, lens model.Lens) (string, error) {
 	return res.LensID, nil
 }
 
-func (c *Client) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (c *Client) ListLenses(
+	ctx context.Context,
+	opts ...options.Lister[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
 	methodURL := c.http.apiURL.JoinPath("lens")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
