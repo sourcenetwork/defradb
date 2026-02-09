@@ -924,7 +924,7 @@ func (n *Node) LensAdd(lensJSON string) (string, error) {
 
 // LensList returns all lens transforms as a map of ID -> LensModule JSON.
 func (n *Node) LensList() (string, error) {
-	result := C.lens_list(n.ptr)
+	result := C.lens_list(n.ptr, nil)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -1759,7 +1759,7 @@ func NewNodeWithP2P(opts NodeOptions, listenAddr string) (*Node, error) {
 
 // P2PPeerInfo returns the local peer info as a list of multiaddrs with peer ID.
 func (n *Node) P2PPeerInfo() ([]string, error) {
-	result := C.p2p_peer_info(n.ptr)
+	result := C.p2p_peer_info(n.ptr, nil)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -1847,12 +1847,12 @@ func (n *Node) P2PSetReplicator(identityDID string, peerAddr string, collections
 	cCollections := C.CString(string(collectionsJSON))
 	defer C.free(unsafe.Pointer(cCollections))
 
-	result := C.p2p_set_replicator(n.ptr, cIdentityDID, cPeerAddr, cCollections)
+	result := C.p2p_create_replicator(n.ptr, cIdentityDID, cPeerAddr, cCollections)
 
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_set_replicator failed: %s", errStr)
+		return fmt.Errorf("ffi: p2p_create_replicator failed: %s", errStr)
 	}
 
 	if result.value != nil {
@@ -1909,12 +1909,12 @@ func (n *Node) P2PGetAllReplicators(identityDID string) ([]ReplicatorInfo, error
 		defer C.free(unsafe.Pointer(cIdentityDID))
 	}
 
-	result := C.p2p_get_all_replicators(n.ptr, cIdentityDID)
+	result := C.p2p_list_replicators(n.ptr, cIdentityDID)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: p2p_get_all_replicators failed: %s", err)
+		return nil, fmt.Errorf("ffi: p2p_list_replicators failed: %s", err)
 	}
 
 	value := C.GoString(result.value)
@@ -1944,12 +1944,12 @@ func (n *Node) P2PAddCollections(identityDID string, collections []string) error
 	cCollections := C.CString(string(collectionsJSON))
 	defer C.free(unsafe.Pointer(cCollections))
 
-	result := C.p2p_add_collections(n.ptr, cIdentityDID, cCollections)
+	result := C.p2p_create_collections(n.ptr, cIdentityDID, cCollections)
 
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_add_collections failed: %s", errStr)
+		return fmt.Errorf("ffi: p2p_create_collections failed: %s", errStr)
 	}
 
 	if result.value != nil {
@@ -1975,12 +1975,12 @@ func (n *Node) P2PRemoveCollections(identityDID string, collections []string) er
 	cCollections := C.CString(string(collectionsJSON))
 	defer C.free(unsafe.Pointer(cCollections))
 
-	result := C.p2p_remove_collections(n.ptr, cIdentityDID, cCollections)
+	result := C.p2p_delete_collections(n.ptr, cIdentityDID, cCollections)
 
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_remove_collections failed: %s", errStr)
+		return fmt.Errorf("ffi: p2p_delete_collections failed: %s", errStr)
 	}
 
 	if result.value != nil {
@@ -1998,12 +1998,12 @@ func (n *Node) P2PGetAllCollections(identityDID string) ([]string, error) {
 		defer C.free(unsafe.Pointer(cIdentityDID))
 	}
 
-	result := C.p2p_get_all_collections(n.ptr, cIdentityDID)
+	result := C.p2p_list_collections(n.ptr, cIdentityDID)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: p2p_get_all_collections failed: %s", err)
+		return nil, fmt.Errorf("ffi: p2p_list_collections failed: %s", err)
 	}
 
 	value := C.GoString(result.value)
@@ -2033,12 +2033,12 @@ func (n *Node) P2PAddDocuments(identityDID string, docIDs []string) error {
 	cDocIDs := C.CString(string(docIDsJSON))
 	defer C.free(unsafe.Pointer(cDocIDs))
 
-	result := C.p2p_add_documents(n.ptr, cIdentityDID, cDocIDs)
+	result := C.p2p_create_documents(n.ptr, cIdentityDID, cDocIDs)
 
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_add_documents failed: %s", errStr)
+		return fmt.Errorf("ffi: p2p_create_documents failed: %s", errStr)
 	}
 
 	if result.value != nil {
@@ -2064,12 +2064,12 @@ func (n *Node) P2PRemoveDocuments(identityDID string, docIDs []string) error {
 	cDocIDs := C.CString(string(docIDsJSON))
 	defer C.free(unsafe.Pointer(cDocIDs))
 
-	result := C.p2p_remove_documents(n.ptr, cIdentityDID, cDocIDs)
+	result := C.p2p_delete_documents(n.ptr, cIdentityDID, cDocIDs)
 
 	if result.status != 0 {
 		errStr := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return fmt.Errorf("ffi: p2p_remove_documents failed: %s", errStr)
+		return fmt.Errorf("ffi: p2p_delete_documents failed: %s", errStr)
 	}
 
 	if result.value != nil {
@@ -2087,12 +2087,12 @@ func (n *Node) P2PGetAllDocuments(identityDID string) ([]string, error) {
 		defer C.free(unsafe.Pointer(cIdentityDID))
 	}
 
-	result := C.p2p_get_all_documents(n.ptr, cIdentityDID)
+	result := C.p2p_list_documents(n.ptr, cIdentityDID)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
-		return nil, fmt.Errorf("ffi: p2p_get_all_documents failed: %s", err)
+		return nil, fmt.Errorf("ffi: p2p_list_documents failed: %s", err)
 	}
 
 	value := C.GoString(result.value)

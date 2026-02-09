@@ -1105,7 +1105,7 @@ struct FfiResult lens_add(uintptr_t node_ptr, const char *lens_json);
 
  The caller must free the returned string with `defra_free_string`.
  */
-struct FfiResult lens_list(uintptr_t node_ptr);
+struct FfiResult lens_list(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Create a new DefraDB node.
@@ -1158,7 +1158,7 @@ struct NewNodeResult new_node_with_p2p(struct NodeInitOptions options, const cha
 
  The caller must free the returned string with `defra_free_string`.
  */
-struct FfiResult p2p_peer_info(uintptr_t node_ptr);
+struct FfiResult p2p_peer_info(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Get list of connected peers with full multiaddrs.
@@ -1198,10 +1198,10 @@ struct FfiResult p2p_connect(uintptr_t node_ptr, const char *identity_did, const
 
  All string pointers must be valid null-terminated UTF-8 strings.
  */
-struct FfiResult p2p_set_replicator(uintptr_t node_ptr,
-                                    const char *identity_did,
-                                    const char *peer_addr,
-                                    const char *collections_json);
+struct FfiResult p2p_create_replicator(uintptr_t node_ptr,
+                                       const char *identity_did,
+                                       const char *peer_addr,
+                                       const char *collections_json);
 
 /*
  Delete a replicator.
@@ -1238,7 +1238,7 @@ struct FfiResult p2p_delete_replicator(uintptr_t node_ptr,
 
  The caller must free the returned string with `defra_free_string`.
  */
-struct FfiResult p2p_get_all_replicators(uintptr_t node_ptr, const char *identity_did);
+struct FfiResult p2p_list_replicators(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Add collections to P2P replication.
@@ -1252,9 +1252,9 @@ struct FfiResult p2p_get_all_replicators(uintptr_t node_ptr, const char *identit
 
  `collections_json` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult p2p_add_collections(uintptr_t node_ptr,
-                                     const char *identity_did,
-                                     const char *collections_json);
+struct FfiResult p2p_create_collections(uintptr_t node_ptr,
+                                        const char *identity_did,
+                                        const char *collections_json);
 
 /*
  Remove collections from P2P replication.
@@ -1268,7 +1268,7 @@ struct FfiResult p2p_add_collections(uintptr_t node_ptr,
 
  `collections_json` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult p2p_remove_collections(uintptr_t node_ptr,
+struct FfiResult p2p_delete_collections(uintptr_t node_ptr,
                                         const char *identity_did,
                                         const char *collections_json);
 
@@ -1281,7 +1281,7 @@ struct FfiResult p2p_remove_collections(uintptr_t node_ptr,
 
  The caller must free the returned string with `defra_free_string`.
  */
-struct FfiResult p2p_get_all_collections(uintptr_t node_ptr, const char *identity_did);
+struct FfiResult p2p_list_collections(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Add documents to P2P replication by subscribing to their GossipSub topics.
@@ -1295,9 +1295,9 @@ struct FfiResult p2p_get_all_collections(uintptr_t node_ptr, const char *identit
 
  `doc_ids_json` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult p2p_add_documents(uintptr_t node_ptr,
-                                   const char *identity_did,
-                                   const char *doc_ids_json);
+struct FfiResult p2p_create_documents(uintptr_t node_ptr,
+                                      const char *identity_did,
+                                      const char *doc_ids_json);
 
 /*
  Remove documents from P2P replication by unsubscribing from their GossipSub topics.
@@ -1311,7 +1311,7 @@ struct FfiResult p2p_add_documents(uintptr_t node_ptr,
 
  `doc_ids_json` must be a valid null-terminated UTF-8 string.
  */
-struct FfiResult p2p_remove_documents(uintptr_t node_ptr,
+struct FfiResult p2p_delete_documents(uintptr_t node_ptr,
                                       const char *identity_did,
                                       const char *doc_ids_json);
 
@@ -1324,7 +1324,7 @@ struct FfiResult p2p_remove_documents(uintptr_t node_ptr,
 
  The caller must free the returned string with `defra_free_string`.
  */
-struct FfiResult p2p_get_all_documents(uintptr_t node_ptr, const char *identity_did);
+struct FfiResult p2p_list_documents(uintptr_t node_ptr, const char *identity_did);
 
 /*
  Sync specific documents from peers.
