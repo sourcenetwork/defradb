@@ -328,7 +328,11 @@ func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	return err
 }
 
-func (w *Wrapper) BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error {
+func (w *Wrapper) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Lister[options.BasicExportOptions],
+) error {
 	args := []string{"client", "backup", "export"}
 
 	opt := utils.NewOptions(opts...)

@@ -390,7 +390,11 @@ func (db *DB) BasicImport(ctx context.Context, filepath string) error {
 }
 
 // BasicExport exports the current data or subset of data to file in json format.
-func (db *DB) BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error {
+func (db *DB) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Lister[options.BasicExportOptions],
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
