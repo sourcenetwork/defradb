@@ -96,7 +96,7 @@ func (a *CreateView) Execute() {
 		opts := options.AddView()
 		if a.TransformCID.HasValue() {
 			transformCID := replace(a.s, nodeIDs[i], a.TransformCID.Value())
-			options.AddView().SetTransformCID(transformCID)
+			opts.SetTransformCID(transformCID)
 		}
 		results, err := node.AddView(a.s.Ctx, a.Query, sdl, opts)
 
