@@ -795,6 +795,30 @@ struct FfiResult set_migration_in_txn(uintptr_t node_ptr,
                                       const char *config);
 
 /*
+ Delete multiple collection versions by their version IDs.
+
+ Takes a JSON array of version ID strings. Versions are deleted in
+ topological order (children before parents).
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `version_ids_json` - JSON array of version ID strings
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `version_ids_json` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult delete_collection_versions(uintptr_t node_ptr,
+                                            const char *identity_did,
+                                            const char *version_ids_json);
+
+/*
  Create document(s) in a collection.
 
  This function automatically detects whether the input is a single document
@@ -1421,6 +1445,20 @@ struct FfiResult add_schema(uintptr_t node_ptr, const char *identity_did, const 
 struct FfiResult get_collections(uintptr_t node_ptr, const char *identity_did);
 
 /*
+ Get all collection versions visible within a specific transaction.
+
+ This reads from the transaction's systemstore, which includes uncommitted
+ writes (e.g., placeholders from set_migration_in_txn).
+
+ # Safety
+
+ Caller must ensure all pointer arguments are valid, non-null, and point to valid C strings.
+ */
+struct FfiResult get_collections_in_txn(uintptr_t node_ptr,
+                                        const char *txn_id,
+                                        const char *identity_did);
+
+/*
  Create a subscription to database events.
 
  # Arguments
@@ -1481,8 +1519,10 @@ struct CreateSubscriptionResult create_merge_complete_subscription(uintptr_t nod
 struct PollSubscriptionResult poll_subscription(uintptr_t subscription_handle);
 
 /*
- Alias for poll_subscription (for Go compatibility)
- Accepts a string subscription ID and parses it as a numeric handle.
+ Poll a GraphQL subscription for new results.
+
+ Results have already been processed by the background task at event time,
+ so this function simply checks the result buffer.
  */
 struct PollSubscriptionResult poll_graphql_subscription(const char *subscription_id);
 
@@ -1500,7 +1540,8 @@ struct PollSubscriptionResult poll_graphql_subscription(const char *subscription
 struct CloseSubscriptionResult close_subscription(uintptr_t subscription_handle);
 
 /*
- Alias for close_subscription (for Go compatibility)
+ Close a GraphQL subscription and release resources.
+
  Accepts a string subscription ID and parses it as a numeric handle.
  */
 struct CloseSubscriptionResult close_graphql_subscription(const char *subscription_id);
