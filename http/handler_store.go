@@ -51,13 +51,20 @@ func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 
 func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.BasicExport(req.Context(), &config)
+
+	opt := options.BasicExport().
+		SetFormat(config.Format).
+		SetPretty(config.Pretty).
+		SetCollections(config.Collections)
+
+	err := db.BasicExport(ctx, config.Filepath, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

@@ -228,7 +228,7 @@ func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error 
 	return txn.Client.BasicImport(ctx, filepath)
 }
 
-func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (txn *Transaction) BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.BasicExport(ctx, config)
+	return txn.Client.BasicExport(ctx, filepath, opts...)
 }

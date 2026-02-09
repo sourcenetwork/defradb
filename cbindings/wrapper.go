@@ -386,7 +386,11 @@ func (w *CWrapper) BasicImport(ctx context.Context, filepath string) error {
 	panic("not implemented")
 }
 
-func (w *CWrapper) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (w *CWrapper) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Lister[options.BasicExportOptions],
+) error {
 	panic("not implemented")
 }
 

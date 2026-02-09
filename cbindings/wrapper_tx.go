@@ -197,8 +197,12 @@ func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error 
 	return txn.CWrapper.BasicImport(ctx, filepath)
 }
 
-func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	return txn.CWrapper.BasicExport(ctx, config)
+func (txn *Transaction) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Lister[options.BasicExportOptions],
+) error {
+	return txn.CWrapper.BasicExport(ctx, filepath, opts...)
 }
 
 func (txn *Transaction) Blockstore() datastore.Blockstore {

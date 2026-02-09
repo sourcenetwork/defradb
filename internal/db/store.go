@@ -388,15 +388,24 @@ func (db *DB) BasicImport(ctx context.Context, filepath string) error {
 }
 
 // BasicExport exports the current data or subset of data to file in json format.
-func (db *DB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (db *DB) BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
 
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard()
+
+	config := &client.BackupConfig{
+		Filepath:    filepath,
+		Format:      opt.Format,
+		Pretty:      opt.Pretty,
+		Collections: opt.Collections,
+	}
 
 	err = db.basicExport(ctx, config)
 	if err != nil {

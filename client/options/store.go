@@ -689,3 +689,55 @@ func (b *ExecRequestOptionsBuilder) SetVariables(variables map[string]any) *Exec
 func (b *ExecRequestOptionsBuilder) List() []func(*ExecRequestOptions) {
 	return b.Opts
 }
+
+// BasicExportOptions contains options for BasicExport operation.
+type BasicExportOptions struct {
+	// Format specifies the export format (e.g., "json"). Only JSON is supported at the moment.
+	Format string
+	// Pretty enables pretty printing for JSON output.
+	Pretty bool
+	// Collections is a list of collection names to export. If empty, all collections are exported.
+	Collections []string
+}
+
+// BasicExportOptionsBuilder is a builder for BasicExportOptions.
+type BasicExportOptionsBuilder struct {
+	Opts []func(*BasicExportOptions)
+}
+
+// BasicExport creates a new BasicExportOptionsBuilder instance.
+func BasicExport() *BasicExportOptionsBuilder {
+	return &BasicExportOptionsBuilder{}
+}
+
+// SetFormat sets the export format.
+func (b *BasicExportOptionsBuilder) SetFormat(format string) *BasicExportOptionsBuilder {
+	b.Opts = append(b.Opts, func(opts *BasicExportOptions) {
+		opts.Format = format
+	})
+	return b
+}
+
+// SetPretty enables or disables pretty printing for JSON output.
+func (b *BasicExportOptionsBuilder) SetPretty(pretty bool) *BasicExportOptionsBuilder {
+	b.Opts = append(b.Opts, func(opts *BasicExportOptions) {
+		opts.Pretty = pretty
+	})
+	return b
+}
+
+// SetCollections sets the list of collections to export.
+func (b *BasicExportOptionsBuilder) SetCollections(collections []string) *BasicExportOptionsBuilder {
+	b.Opts = append(b.Opts, func(opts *BasicExportOptions) {
+		if collections != nil {
+			opts.Collections = make([]string, len(collections))
+			copy(opts.Collections, collections)
+		}
+	})
+	return b
+}
+
+// List returns the list of functional options.
+func (b *BasicExportOptionsBuilder) List() []func(*BasicExportOptions) {
+	return b.Opts
+}

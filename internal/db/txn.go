@@ -308,9 +308,9 @@ func (txn *Txn) BasicImport(ctx context.Context, filepath string) error {
 	return txn.db.BasicImport(ctx, filepath)
 }
 
-func (txn *Txn) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (txn *Txn) BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.BasicExport(ctx, config)
+	return txn.db.BasicExport(ctx, filepath, opts...)
 }
 
 func (txn *Txn) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {

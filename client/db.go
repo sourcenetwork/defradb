@@ -336,7 +336,8 @@ type Store interface {
 	BasicImport(ctx context.Context, filepath string) error
 
 	// BasicExport exports the current data or subset of data to file in json format.
-	BasicExport(ctx context.Context, config *BackupConfig) error
+	// The filepath parameter is required and specifies where to write the export file.
+	BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error
 
 	// P2P holds the methods that are related to P2P operations.
 	// Calling them when no networking stack has been configured should return an error.

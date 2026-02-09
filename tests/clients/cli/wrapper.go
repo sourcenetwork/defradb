@@ -328,19 +328,20 @@ func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	return err
 }
 
-func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (w *Wrapper) BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error {
 	args := []string{"client", "backup", "export"}
 
-	if len(config.Collections) > 0 {
-		args = append(args, "--collections", strings.Join(config.Collections, ","))
+	opt := utils.NewOptions(opts...)
+	if len(opt.Collections) > 0 {
+		args = append(args, "--collections", strings.Join(opt.Collections, ","))
 	}
-	if config.Format != "" {
-		args = append(args, "--format", config.Format)
+	if opt.Format != "" {
+		args = append(args, "--format", opt.Format)
 	}
-	if config.Pretty {
+	if opt.Pretty {
 		args = append(args, "--pretty")
 	}
-	args = append(args, config.Filepath)
+	args = append(args, filepath)
 
 	_, err := w.cmd.execute(ctx, args)
 	return err

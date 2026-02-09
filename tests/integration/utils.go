@@ -1505,9 +1505,14 @@ func backupExport(
 
 	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, node := range nodes {
+		opt := options.BasicExport().
+			SetFormat(action.Config.Format).
+			SetPretty(action.Config.Pretty).
+			SetCollections(action.Config.Collections)
+
 		err := withRetryOnNode(
 			node,
-			func() error { return node.BasicExport(s.Ctx, &action.Config) },
+			func() error { return node.BasicExport(s.Ctx, action.Config.Filepath, opt) },
 		)
 		expectedErrorRaised = AssertError(s.T, err, action.ExpectedError)
 

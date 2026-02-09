@@ -16,7 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 const jsonFileType = "json"
@@ -48,14 +48,12 @@ If the --pretty flag is provided, the JSON will be pretty printed.
 				collections[i] = strings.Trim(collections[i], " ")
 			}
 
-			data := client.BackupConfig{
-				Filepath:    outputPath,
-				Format:      format,
-				Pretty:      pretty,
-				Collections: collections,
-			}
+			opt := options.BasicExport().
+				SetFormat(format).
+				SetPretty(pretty).
+				SetCollections(collections)
 
-			return cliClient.BasicExport(cmd.Context(), &data)
+			return cliClient.BasicExport(cmd.Context(), outputPath, opt)
 		},
 	}
 

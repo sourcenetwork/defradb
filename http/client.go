@@ -107,8 +107,17 @@ func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 	return err
 }
 
-func (c *Client) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (c *Client) BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error {
+	opt := utils.NewOptions(opts...)
+
 	methodURL := c.http.apiURL.JoinPath("backup", "export")
+
+	config := &client.BackupConfig{
+		Filepath:    filepath,
+		Format:      opt.Format,
+		Pretty:      opt.Pretty,
+		Collections: opt.Collections,
+	}
 
 	body, err := json.Marshal(config)
 	if err != nil {
