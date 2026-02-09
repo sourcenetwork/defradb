@@ -109,6 +109,7 @@ const (
 	NodeP2PDocumentDeletePerm
 	NodeP2PDocumentListPerm
 	NodeSignatureVerifyPerm
+	NodeLensCreatePerm
 	NodeLensListPerm
 )
 
@@ -151,6 +152,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"p2p-document-delete",
 	"p2p-document-list",
 	"signature-verify",
+	"lens-create",
 	"lens-list",
 }
 
@@ -240,9 +242,11 @@ resources:
 
   - name: signature-verify
     expr: admin
+
+  - name: lens-create
+    expr: admin
   - name: lens-list
     expr: admin
-
 
   relations:
   - name: admin

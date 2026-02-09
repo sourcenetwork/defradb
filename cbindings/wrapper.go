@@ -38,7 +38,7 @@ extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
-extern Result LensAdd(uintptr_t nodePtr, char* cfg);
+extern Result LensAdd(uintptr_t nodePtr, uintptr_t identityPtr, char* cfg);
 extern Result LensList(uintptr_t nodePtr, uintptr_t identityPtr);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
@@ -710,8 +710,11 @@ func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error)
 	lensStr := C.CString(string(lensConfig))
 	defer C.free(unsafe.Pointer(lensStr))
 
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.LensAdd(callHandle, lensStr))
+	res := ConvertAndFreeCResult(C.LensAdd(callHandle, cIdentity, lensStr))
 
 	if res.Status != 0 {
 		return "", errors.New(res.Error)
