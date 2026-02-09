@@ -509,6 +509,9 @@ func (w *Wrapper) ListLenses(
 ) (map[string]model.Lens, error) {
 	args := []string{"client", "lens", "list"}
 
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
 		return nil, err

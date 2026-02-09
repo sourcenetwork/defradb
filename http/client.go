@@ -311,6 +311,9 @@ func (c *Client) ListLenses(
 	ctx context.Context,
 	opts ...options.Lister[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("lens")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
