@@ -230,6 +230,10 @@ char *defra_version(void);
  ```
 
  This function is NAC-gated with the `NacStatus` permission.
+
+ # Safety
+
+ Caller must ensure all pointer arguments are valid, non-null, and point to valid C strings.
  */
 struct FfiResult get_nac_status(uintptr_t node_ptr, const char *identity_did);
 
@@ -917,6 +921,10 @@ struct FfiResult list_encrypted_indexes(uintptr_t node_ptr,
 
 /*
  List all encrypted indexes across all collections.
+
+ # Safety
+
+ Caller must ensure all pointer arguments are valid, non-null, and point to valid C strings.
  */
 struct FfiResult list_all_encrypted_indexes(uintptr_t node_ptr, const char *identity_did);
 
@@ -1014,6 +1022,10 @@ struct FfiResult get_indexes(uintptr_t node_ptr,
      "Post": [{ "Name": "idx_title", ... }]
  }
  ```
+
+ # Safety
+
+ Caller must ensure all pointer arguments are valid, non-null, and point to valid C strings.
  */
 struct FfiResult get_all_indexes(uintptr_t node_ptr, const char *identity_did);
 
@@ -1401,6 +1413,10 @@ struct FfiResult add_schema(uintptr_t node_ptr, const char *identity_did, const 
  Get all collections from the database.
 
  Returns a JSON array of collection descriptions.
+
+ # Safety
+
+ Caller must ensure all pointer arguments are valid, non-null, and point to valid C strings.
  */
 struct FfiResult get_collections(uintptr_t node_ptr, const char *identity_did);
 
