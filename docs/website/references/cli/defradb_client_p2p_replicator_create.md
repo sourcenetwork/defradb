@@ -1,20 +1,31 @@
-## defradb client p2p document getall
+## defradb client p2p replicator create
 
-Get all P2P documents
+Create replicator(s) and start synchronization
 
 ### Synopsis
 
-Get all P2P documents in the pubsub topics.
-This is the list of documents of the node that are synchronized on the pubsub network.
+Create replicator(s) and start synchronization.
+A replicator synchronizes one or all collection(s) from this instance to another.
 
 ```
-defradb client p2p document getall [flags]
+defradb client p2p replicator create [-c, --collection] <addresses...> [flags]
+```
+
+### Examples
+
+```
+Create a replicator to replicate the "Users" collection to a peer:  
+  defradb client p2p replicator create -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko...
+
+Create a replicator to replicate the "Orders" collection to multiple peers:  
+  defradb client p2p replicator create -c Orders /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko... /ip4/0.0.0.0/tcp/9172/p2p/1543LK...
 ```
 
 ### Options
 
 ```
-  -h, --help   help for getall
+  -c, --collection strings   Collection(s) to replicate
+  -h, --help                 help for create
 ```
 
 ### Options inherited from parent commands
@@ -41,5 +52,5 @@ defradb client p2p document getall [flags]
 
 ### SEE ALSO
 
-* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
+* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
 

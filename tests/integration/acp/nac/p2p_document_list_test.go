@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -62,7 +63,7 @@ func TestNAC_GatesP2PDocumentList_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -71,7 +72,7 @@ func TestNAC_GatesP2PDocumentList_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				ExpectedDocIDs: []state.ColDocIndex{
@@ -126,7 +127,7 @@ func TestNAC_GatesP2PDocumentList_NoIdentity_NotAuthorizedError(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -135,10 +136,10 @@ func TestNAC_GatesP2PDocumentList_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				Identity:      testUtils.NoIdentity(),
 				NodeID:        1,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm),
 			},
 		},
 	}
@@ -188,7 +189,7 @@ func TestNAC_GatesP2PDocumentList_WrongIdentity_NotAuthorizedError(t *testing.T)
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -197,10 +198,10 @@ func TestNAC_GatesP2PDocumentList_WrongIdentity_NotAuthorizedError(t *testing.T)
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm),
 			},
 		},
 	}

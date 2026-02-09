@@ -35,7 +35,10 @@ func EncodeUint32Descending(b []byte, v uint32) []byte {
 // the input as a big-endian 4 byte uint32 representation. The remainder
 // of the input buffer and the decoded uint32 are returned.
 func DecodeUint32Ascending(b []byte) ([]byte, uint32, error) {
-	if len(b) < 4 {
+	// In the case where the first byte is '/', this indicates an empty
+	// value may have been encoded. We return an error here as uint32 cannot
+	// represent an empty value.
+	if len(b) < 4 || b[0] == byte('/') {
 		return nil, 0, NewErrInsufficientBytesToDecode(b, "uint32")
 	}
 	v := binary.BigEndian.Uint32(b)
@@ -68,7 +71,10 @@ func EncodeUint64Descending(b []byte, v uint64) []byte {
 // the input as a big-endian 8 byte uint64 representation. The remainder
 // of the input buffer and the decoded uint64 are returned.
 func DecodeUint64Ascending(b []byte) ([]byte, uint64, error) {
-	if len(b) < 8 {
+	// In the case where the first byte is '/', this indicates an empty
+	// value may have been encoded. We return an error here as uint64 cannot
+	// represent an empty value.
+	if len(b) < 8 || b[0] == byte('/') {
 		return nil, 0, NewErrInsufficientBytesToDecode(b, "uint64")
 	}
 	v := binary.BigEndian.Uint64(b)
@@ -124,7 +130,10 @@ func EncodeVarintDescending(b []byte, v int64) []byte {
 
 // DecodeVarintAscending decodes a value encoded by EncodeVarintAscending.
 func DecodeVarintAscending(b []byte) ([]byte, int64, error) {
-	if len(b) == 0 {
+	// In the case where the first byte is '/', this indicates an empty
+	// value may have been encoded. We return an error here as varint cannot
+	// represent an empty value.
+	if len(b) == 0 || b[0] == byte('/') {
 		return nil, 0, NewErrInsufficientBytesToDecode(b, "varint")
 	}
 	length := int(b[0]) - intZero
@@ -234,7 +243,10 @@ func EncodeUvarintDescending(b []byte, v uint64) []byte {
 // buffer. The remainder of the input buffer and the decoded uint64
 // are returned.
 func DecodeUvarintAscending(b []byte) ([]byte, uint64, error) {
-	if len(b) == 0 {
+	// In the case where the first byte is '/', this indicates an empty
+	// value may have been encoded. We return an error here as uvarint cannot
+	// represent an empty value.
+	if len(b) == 0 || b[0] == byte('/') {
 		return nil, 0, NewErrInsufficientBytesToDecode(b, "uvarint")
 	}
 	length := int(b[0]) - intZero
@@ -260,7 +272,10 @@ func DecodeUvarintAscending(b []byte) ([]byte, uint64, error) {
 // DecodeUvarintDescending decodes a uint64 value which was encoded
 // using EncodeUvarintDescending.
 func DecodeUvarintDescending(b []byte) ([]byte, uint64, error) {
-	if len(b) == 0 {
+	// In the case where the first byte is '/', this indicates an empty
+	// value may have been encoded. We return an error here as uvarint cannot
+	// represent an empty value.
+	if len(b) == 0 || b[0] == byte('/') {
 		return nil, 0, NewErrInsufficientBytesToDecode(b, "uvarint")
 	}
 	length := intZero - int(b[0])

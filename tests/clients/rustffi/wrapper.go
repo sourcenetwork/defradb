@@ -1402,7 +1402,7 @@ func (w *Wrapper) ListAllEncryptedIndexes(ctx context.Context) (map[client.Colle
 // client.P2P interface
 // ============================================================================
 
-func (w *Wrapper) PeerInfo() ([]string, error) {
+func (w *Wrapper) PeerInfo(ctx context.Context) ([]string, error) {
 	addrs, err := w.node.P2PPeerInfo()
 	if err != nil {
 		// Return empty addresses when P2P is not enabled
@@ -1429,7 +1429,7 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
 	return nil
 }
 
-func (w *Wrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (w *Wrapper) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
 	if len(addresses) == 0 {
 		return fmt.Errorf("at least one address is required")
 	}
@@ -1455,7 +1455,7 @@ func (w *Wrapper) DeleteReplicator(ctx context.Context, peerID string, collectio
 	return w.node.P2PDeleteReplicator(identityDID, peerID, collections)
 }
 
-func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (w *Wrapper) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
@@ -1478,7 +1478,7 @@ func (w *Wrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, e
 	return result, nil
 }
 
-func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (w *Wrapper) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
@@ -1487,7 +1487,7 @@ func (w *Wrapper) AddP2PCollections(ctx context.Context, collectionNames ...stri
 	return w.node.P2PAddCollections(identityDID, collectionNames)
 }
 
-func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (w *Wrapper) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
@@ -1496,7 +1496,7 @@ func (w *Wrapper) RemoveP2PCollections(ctx context.Context, collectionNames ...s
 	return w.node.P2PRemoveCollections(identityDID, collectionNames)
 }
 
-func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (w *Wrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
@@ -1505,7 +1505,7 @@ func (w *Wrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
 	return w.node.P2PGetAllCollections(identityDID)
 }
 
-func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *Wrapper) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
@@ -1514,7 +1514,7 @@ func (w *Wrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	return w.node.P2PAddDocuments(identityDID, docIDs)
 }
 
-func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *Wrapper) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
@@ -1523,7 +1523,7 @@ func (w *Wrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) erro
 	return w.node.P2PRemoveDocuments(identityDID, docIDs)
 }
 
-func (w *Wrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (w *Wrapper) ListP2PDocuments(ctx context.Context) ([]string, error) {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
@@ -1782,38 +1782,40 @@ func (t *TxnWrapper) ListAllEncryptedIndexes(ctx context.Context) (map[client.Co
 }
 
 // P2P methods - not available in transactions
-func (t *TxnWrapper) PeerInfo() ([]string, error) { return nil, fmt.Errorf("P2P not available") }
+func (t *TxnWrapper) PeerInfo(ctx context.Context) ([]string, error) {
+	return nil, fmt.Errorf("P2P not available")
+}
 func (t *TxnWrapper) ActivePeers(ctx context.Context) ([]string, error) {
 	return nil, fmt.Errorf("P2P not available")
 }
 func (t *TxnWrapper) Connect(ctx context.Context, addresses []string) error {
 	return fmt.Errorf("P2P not available")
 }
-func (t *TxnWrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (t *TxnWrapper) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
 	return fmt.Errorf("P2P not available")
 }
 func (t *TxnWrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
 	return fmt.Errorf("P2P not available")
 }
-func (t *TxnWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (t *TxnWrapper) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
 	return nil, fmt.Errorf("P2P not available")
 }
-func (t *TxnWrapper) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (t *TxnWrapper) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
 	return fmt.Errorf("P2P not available")
 }
-func (t *TxnWrapper) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (t *TxnWrapper) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
 	return fmt.Errorf("P2P not available")
 }
-func (t *TxnWrapper) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (t *TxnWrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
 	return nil, fmt.Errorf("P2P not available")
 }
-func (t *TxnWrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (t *TxnWrapper) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
 	return fmt.Errorf("P2P not available")
 }
-func (t *TxnWrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (t *TxnWrapper) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
 	return fmt.Errorf("P2P not available")
 }
-func (t *TxnWrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (t *TxnWrapper) ListP2PDocuments(ctx context.Context) ([]string, error) {
 	return nil, fmt.Errorf("P2P not available")
 }
 func (t *TxnWrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {

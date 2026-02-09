@@ -13,9 +13,13 @@ package db
 import (
 	"context"
 
+	"github.com/ipfs/go-cid"
+	ipld "github.com/ipfs/go-ipld-format"
+
 	"github.com/sourcenetwork/corekv"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/errors"
+	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -297,8 +301,6 @@ func (c *collection) hardDeleteDocumentBlocks(
 		return err
 	}
 
-	blockstore := txn.Blockstore()
-
 	for _, key := range keysToDelete {
 		// Not all store implementations support mutations whilst iterating, so whilst it would
 		// be simpler and probably more efficient to delete whilst iterating, it would not work
@@ -308,7 +310,7 @@ func (c *collection) hardDeleteDocumentBlocks(
 			return err
 		}
 
-		err = blockstore.DeleteBlock(ctx, key.Cid)
+		err = deleteBlocks(ctx, key.Cid)
 		if err != nil {
 			return err
 		}
@@ -368,8 +370,6 @@ func (c *collection) hardDeleteCollectionBlocks(
 		return err
 	}
 
-	blockstore := txn.Blockstore()
-
 	for _, key := range keysToDelete {
 		// Not all store implementations support mutations whilst iterating, so whilst it would
 		// be simpler and probably more efficient to delete whilst iterating, it would not work
@@ -379,7 +379,7 @@ func (c *collection) hardDeleteCollectionBlocks(
 			return err
 		}
 
-		err = blockstore.DeleteBlock(ctx, key.Cid)
+		err = deleteBlocks(ctx, key.Cid)
 		if err != nil {
 			return err
 		}
@@ -387,6 +387,75 @@ func (c *collection) hardDeleteCollectionBlocks(
 
 	if hasMore {
 		return c.hardDeleteCollectionBlocks(ctx, shortID)
+	}
+
+	return nil
+}
+
+// deleteBlocks deletes the block of the given cid and all the blocks it links to, if
+// a block with this cid is found.
+//
+// If the block is not found, it will not error.
+func deleteBlocks(ctx context.Context, head cid.Cid) error {
+	txn := datastore.CtxMustGetTxn(ctx)
+	blockstore := txn.Blockstore()
+
+	toDelete := map[cid.Cid]struct{}{
+		head: {},
+	}
+	for len(toDelete) != 0 {
+		var currentBlockCid cid.Cid
+		for v := range toDelete {
+			// Pop the first key off of the `toDelete` set.
+			currentBlockCid = v
+			delete(toDelete, currentBlockCid)
+			break
+		}
+
+		currentBlock, err := blockstore.Get(ctx, currentBlockCid)
+		if errors.Is(err, ipld.ErrNotFound{}) {
+			// We are looping through the links in a simple way that may result in us
+			// attempting to delete blocks we have already deleted, this can include
+			// blocks deleted by walking the dag pointed-to from another headstore key
+			// (another call to `deleteBlocks`).
+			//
+			// If we encounter such a block, we can skip over the error and continue.
+			continue
+		}
+		if err != nil {
+			return err
+		}
+
+		err = blockstore.DeleteBlock(ctx, currentBlockCid)
+		if err != nil {
+			return err
+		}
+
+		decodedBlock, err := coreblock.GetFromBytes(currentBlock.RawData())
+		if err != nil {
+			return err
+		}
+
+		switch {
+		case decodedBlock.Delta.IsField():
+			// At the time of writing, field blocks do not have any links besides Encryption and Signature,
+			// that will not already be linked to by other DAGs being deleted, so we have decided that the
+			// compute that we will save by not trying to `Get` them is worth the risk of potentially missing
+			// blocks in the future should this change.
+
+		default:
+			for _, link := range decodedBlock.AllLinks() {
+				toDelete[link.Cid] = struct{}{}
+			}
+		}
+
+		if decodedBlock.Encryption != nil {
+			toDelete[decodedBlock.Encryption.Cid] = struct{}{}
+		}
+
+		if decodedBlock.Signature != nil {
+			toDelete[decodedBlock.Signature.Cid] = struct{}{}
+		}
 	}
 
 	return nil

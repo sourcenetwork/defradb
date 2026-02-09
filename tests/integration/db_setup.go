@@ -53,7 +53,6 @@ func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
-	nodeIndex int,
 	opts ...node.Option,
 ) (*state.NodeState, error) {
 	opts = append(defaultNodeOpts(), opts...)
@@ -95,34 +94,36 @@ func setupNode(
 	}
 
 	var path string
-	switch s.DbType {
-	case BadgerIMType:
-		opts = append(opts, node.WithBadgerInMemory(true))
-
-	case BadgerFileType:
-		switch {
-		case databaseDir != "":
+	if s.DbType == BadgerFileType || s.DbType == LevelStoreType {
+		if databaseDir != "" {
 			// restarting database
 			path = databaseDir
-
-		case changeDetector.Enabled:
+		} else if changeDetector.Enabled {
 			// change detector
 			path = changeDetector.DatabaseDir(s.T)
-
-		default:
+		} else {
 			// default test case
 			path = s.T.TempDir()
 		}
-
-		opts = append(
-			opts,
+		opts = append(opts,
 			node.WithStorePath(path),
 			node.WithDocumentACPPath(path),
 			node.WithNodeACPPath(path),
 		)
+	}
+
+	switch s.DbType {
+	case BadgerFileType:
+		opts = append(opts, node.WithStoreType(node.BadgerStore))
+
+	case BadgerIMType:
+		opts = append(opts, node.WithStoreType(node.BadgerStore), node.WithBadgerInMemory(true))
 
 	case DefraIMType:
 		opts = append(opts, node.WithStoreType(node.MemoryStore))
+
+	case LevelStoreType:
+		opts = append(opts, node.WithStoreType(node.LevelStore))
 
 	default:
 		return nil, fmt.Errorf("invalid database type: %v", s.DbType)
@@ -143,16 +144,14 @@ func setupNode(
 		return nil, err
 	}
 
-	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
-	err = nodeObj.Start(s.Ctx)
+	ctx := acpIdentity.WithContext(s.Ctx, identity)
+	err = nodeObj.Start(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := setupClient(s, nodeObj, identity, nodeIndex, testCase.EnableSigning, path)
-
-	resetStateContext(s)
+	c, err := setupClient(s, nodeObj, identity, testCase.EnableSigning, path)
 	require.Nil(s.T, err)
 
 	eventState, err := state.NewEventState(c.Events())
@@ -166,8 +165,15 @@ func setupNode(
 		NetOpts: netOpts,
 	}
 
-	addresses, err := nodeObj.DB.PeerInfo()
+	var addresses []string
+
+	// Inject node identity to bypass NAC inorder to be able to call [PeerInfo] operation,
+	// otherwise when NAC is enabled, we will get authorization error.
+	nodeIdentity := NodeIdentity(s.CurrentSetupNodeID)
+	ctxWithNodeIdentity := getContextWithIdentity(s.Ctx, s, nodeIdentity, s.CurrentSetupNodeID)
+	addresses, err = nodeObj.DB.PeerInfo(ctxWithNodeIdentity)
 	require.NoError(s.T, err)
+
 	// The addresses returned by PeerInfo include the /p2p/<peerID> part, but
 	// the libp2p.ListenAddrStrings cannot include it, so we need to remove it
 	// before caching the addresses on the state.

@@ -17,11 +17,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func MakeP2PDocumentAddCommand(ctx context.Context) *cobra.Command {
+func MakeP2PDocumentCreateCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "add [docIDs]",
-		Short: "Add P2P documents",
-		Long: `Add P2P documents to the synchronized pubsub topics.
+		Use:   "create [docIDs]",
+		Short: "Create P2P documents",
+		Long: `Create P2P documents to the synchronized pubsub topics.
 The documents are synchronized between nodes of a pubsub network.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -36,15 +36,15 @@ The documents are synchronized between nodes of a pubsub network.`,
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return cliClient.AddP2PDocuments(cmd.Context(), collectionIDs...)
+			return cliClient.CreateP2PDocuments(cmd.Context(), collectionIDs...)
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "add single document",
-		`defradb client p2p document add bae123`)
+	EmbedCLIExample(ctx, cmd, "create single document",
+		`defradb client p2p document create bae123`)
 
-	EmbedCLIExample(ctx, cmd, "add multiple documents",
-		`defradb client p2p document add bae123,bae456`)
+	EmbedCLIExample(ctx, cmd, "create multiple documents",
+		`defradb client p2p document create bae123,bae456`)
 
 	return cmd
 }

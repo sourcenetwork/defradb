@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -42,7 +43,7 @@ func TestNAC_GatesP2PReplicatorCreate_AuthorizedIdentity_AllowAccess(t *testing.
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				Identity:     testUtils.ClientIdentity(1),
 				SourceNodeID: 1,
 				TargetNodeID: 0,
@@ -67,11 +68,11 @@ func TestNAC_GatesP2PReplicatorCreate_NoIdentity_NotAuthorizedError(t *testing.T
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				Identity:      testUtils.NoIdentity(),
 				SourceNodeID:  1,
 				TargetNodeID:  0,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm),
 			},
 		},
 	}
@@ -93,11 +94,11 @@ func TestNAC_GatesP2PReplicatorCreate_WrongIdentity_NotAuthorizedError(t *testin
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				Identity:      testUtils.ClientIdentity(2),
 				SourceNodeID:  1,
 				TargetNodeID:  0,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm),
 			},
 		},
 	}

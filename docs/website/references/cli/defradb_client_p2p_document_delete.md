@@ -1,20 +1,30 @@
-## defradb client p2p collection getall
+## defradb client p2p document delete
 
-Get all P2P collections
+Delete P2P documents
 
 ### Synopsis
 
-Get all P2P collections in the pubsub topics.
-This is the list of collections of the node that are synchronized on the pubsub network.
+Delete P2P documents from the followed pubsub topics.
+The removed documents will no longer be synchronized between nodes.
 
 ```
-defradb client p2p collection getall [flags]
+defradb client p2p document delete [docIDs] [flags]
+```
+
+### Examples
+
+```
+delete single document:  
+  defradb client p2p document delete bae123
+
+delete multiple documents:  
+  defradb client p2p document delete bae123,bae456
 ```
 
 ### Options
 
 ```
-  -h, --help   help for getall
+  -h, --help   help for delete
 ```
 
 ### Options inherited from parent commands
@@ -41,5 +51,5 @@ defradb client p2p collection getall [flags]
 
 ### SEE ALSO
 
-* [defradb client p2p collection](defradb_client_p2p_collection.md)	 - Configure the P2P collection system
+* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
 

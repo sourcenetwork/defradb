@@ -55,7 +55,6 @@ func setupClient(
 	s *state.State,
 	nodeObj *node.Node,
 	identity immutable.Option[acpIdentity.Identity],
-	nodeIndex int,
 	enableSigning bool,
 	dbPath string,
 ) (clients.Client, error) {
@@ -73,7 +72,7 @@ func setupClient(
 		return cbindings.NewCWrapper(nodeObj)
 
 	case state.RustFFIClientType:
-		return setupRustFFIClient(s, nodeObj, identity, nodeIndex, enableSigning, dbPath)
+		return setupRustFFIClient(s, nodeObj, identity, s.CurrentSetupNodeID, enableSigning, dbPath)
 
 	default:
 		return nil, fmt.Errorf("invalid client type: %v", s.ClientType)

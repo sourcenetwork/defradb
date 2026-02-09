@@ -24,7 +24,7 @@ import (
 
 const marker = byte(0xff)
 
-func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (p *P2P) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -59,7 +59,7 @@ func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 		}
 	}
 
-	txn.OnSuccess(func() {
+	txn.OnSuccessAsync(func() {
 		for _, col := range storeCollections {
 			err := p.host.AddPubSubTopic(col.CollectionID(), true, p.pubSubMessageHandler, p.peerEventHandler)
 			if err != nil {
@@ -71,7 +71,7 @@ func (p *P2P) AddP2PCollections(ctx context.Context, collectionNames ...string) 
 	return nil
 }
 
-func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (p *P2P) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -106,7 +106,7 @@ func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 		}
 	}
 
-	txn.OnSuccess(func() {
+	txn.OnSuccessAsync(func() {
 		for _, col := range storeCollections {
 			err := p.host.RemovePubSubTopic(col.CollectionID())
 			if err != nil {
@@ -118,7 +118,7 @@ func (p *P2P) RemoveP2PCollections(ctx context.Context, collectionNames ...strin
 	return nil
 }
 
-func (p *P2P) GetAllP2PCollections(ctx context.Context) ([]string, error) {
+func (p *P2P) ListP2PCollections(ctx context.Context) ([]string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

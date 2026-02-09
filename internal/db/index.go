@@ -85,6 +85,9 @@ func NewCollectionIndex(
 		if !isSupportedKind(field.Kind) {
 			return nil, NewErrUnsupportedIndexFieldType(field.Kind)
 		}
+		if field.Typ == client.PN_COUNTER || field.Typ == client.P_COUNTER {
+			return nil, NewErrCannotIndexAccumulatedCRDTField(field.Name, field.Typ.String())
+		}
 		base.fieldGenerators[i] = getFieldGenerator(field.Kind)
 	}
 	if desc.Unique {

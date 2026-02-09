@@ -34,7 +34,7 @@ const eventTimeout = 1 * time.Second
 // replicator completed event on the local event bus.
 //
 // Expected document heads will be updated for the targeted node.
-func waitForReplicatorConfigureEvent(s *state.State, cfg ConfigureReplicator) {
+func waitForReplicatorConfigureEvent(s *state.State, cfg CreateReplicator) {
 	select {
 	case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
 		if !ok {
@@ -74,11 +74,11 @@ func waitForReplicatorDeleteEvent(s *state.State, cfg DeleteReplicator) {
 	delete(s.Nodes[cfg.SourceNodeID].P2P.Replicators, cfg.TargetNodeID)
 }
 
-// waitForSubscribeToCollectionEvent waits for a node to publish a
+// waitForCreateCollectionSubscriptionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
 //
 // Expected document heads will be updated for the subscriber node.
-func waitForSubscribeToCollectionEvent(s *state.State, action SubscribeToCollection) {
+func waitForCreateCollectionSubscriptionEvent(s *state.State, action CreateCollectionSubscription) {
 	// update peer collections of target node
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
@@ -88,9 +88,9 @@ func waitForSubscribeToCollectionEvent(s *state.State, action SubscribeToCollect
 	}
 }
 
-// waitForUnsubscribeToCollectionEvent waits for a node to publish a
+// waitForDeleteCollectionSubscriptionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
-func waitForUnsubscribeToCollectionEvent(s *state.State, action UnsubscribeToCollection) {
+func waitForDeleteCollectionSubscriptionEvent(s *state.State, action DeleteCollectionSubscription) {
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
 			continue // don't track non existent collections
@@ -99,11 +99,11 @@ func waitForUnsubscribeToCollectionEvent(s *state.State, action UnsubscribeToCol
 	}
 }
 
-// waitForSubscribeToDocumentEvent waits for a node to publish a
+// waitForCreateDocumentSubscriptionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
 //
 // Expected document heads will be updated for the subscriber node.
-func waitForSubscribeToDocumentEvent(s *state.State, action SubscribeToDocument) {
+func waitForCreateDocumentSubscriptionEvent(s *state.State, action CreateDocumentSubscription) {
 	// update peer documents of target node
 	for _, colDocIndex := range action.DocIDs {
 		if colDocIndex.Doc == NonExistentDocID {
@@ -113,9 +113,9 @@ func waitForSubscribeToDocumentEvent(s *state.State, action SubscribeToDocument)
 	}
 }
 
-// waitForUnsubscribeToDocumentEvent waits for a node to publish a
+// waitForDeleteDocumentSubscriptionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
-func waitForUnsubscribeToDocumentEvent(s *state.State, action UnsubscribeToDocument) {
+func waitForDeleteDocumentSubscriptionEvent(s *state.State, action DeleteDocumentSubscription) {
 	for _, colDocIndex := range action.DocIDs {
 		if colDocIndex.Doc == NonExistentDocID {
 			continue // don't track non existent documents
@@ -167,6 +167,8 @@ func waitForUpdateEvents(
 						require.Fail(s.T, "subscription closed waiting for update event", "Node %d", i)
 					}
 					evt = msg.Data.(event.Update)
+
+					node.CompositesLock.Lock()
 					// We keep track of the list of cids for all documents in the test
 					// in case we want to use them in subsequent test actions without having
 					// to know in advance what the CID will be.
@@ -174,6 +176,7 @@ func waitForUpdateEvents(
 						node.Composites = make(map[string][]cid.Cid)
 					}
 					node.Composites[evt.DocID] = append(node.Composites[evt.DocID], evt.Cid)
+					node.CompositesLock.Unlock()
 
 					if !evt.IsRelay {
 						break relayCheck
@@ -260,6 +263,7 @@ func waitForMergeEvents(s *state.State, action WaitForSync) {
 
 func waitForSESync(s *state.State, action WaitForSESync) {
 	var docIDsToWait []string
+	s.DocIDsLock.RLock()
 	if len(action.DocIDs) > 0 {
 		for _, docIndex := range action.DocIDs {
 			if len(s.DocIDs[0]) <= docIndex {
@@ -273,6 +277,7 @@ func waitForSESync(s *state.State, action WaitForSESync) {
 			docIDsToWait = append(docIDsToWait, docID.String())
 		}
 	}
+	s.DocIDsLock.RUnlock()
 
 	// SE sync events are only published on replicator nodes (nodes that receive artifacts)
 	// We wait for events from any non-source node with active replicators
@@ -316,11 +321,13 @@ func updateNetworkState(s *state.State, nodeID int, evt event.Update, ident immu
 	}
 	docIndex := -1
 	if collectionID != -1 {
+		s.DocIDsLock.RLock()
 		for i, docID := range s.DocIDs[collectionID] {
 			if docID.String() == evt.DocID {
 				docIndex = i
 			}
 		}
+		s.DocIDsLock.RUnlock()
 	}
 
 	node := s.Nodes[nodeID]
@@ -379,7 +386,9 @@ func updateConnectedNodes(
 // getEventsForUpdateDoc returns a map of docIDs that should be
 // published to the local event bus after an UpdateDoc action.
 func getEventsForUpdateDoc(s *state.State, action UpdateDoc) map[string]struct{} {
+	s.DocIDsLock.RLock()
 	docID := s.DocIDs[action.CollectionID][action.DocID]
+	s.DocIDsLock.RUnlock()
 
 	docMap := make(map[string]any)
 	err := json.Unmarshal([]byte(action.Doc), &docMap)

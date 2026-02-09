@@ -111,7 +111,7 @@ func (matcher *UniqueValue) ResetMatcherState() {
 }
 
 func (matcher *UniqueValue) Match(actual any) (bool, error) {
-	nodeID := matcher.s.GetCurrentNodeID()
+	nodeID := matcher.s.GetCurrentAssertingNodeID()
 	for nodeID >= len(matcher.seenValues) {
 		matcher.seenValues = append(matcher.seenValues, make(map[any]bool))
 	}

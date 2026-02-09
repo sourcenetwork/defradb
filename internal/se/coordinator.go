@@ -34,10 +34,10 @@ var log = corelog.NewLogger("se")
 
 // DB defines the database operations needed by the SE coordinator
 type DB interface {
-	NewTxn(readOnly bool) (client.Txn, error)
 	MaxTxnRetries() int
 	GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)
 	Events() event.Bus
+	Multistore() *datastore.Multistore
 }
 
 type P2P interface {
@@ -217,14 +217,6 @@ func (coordinator *Coordinator) handleReplicationFailure(
 	docID, collectionID, peerID string,
 	fieldNames []string,
 ) error {
-	clientTxn, err := coordinator.db.NewTxn(false)
-	if err != nil {
-		return err
-	}
-	defer clientTxn.Discard()
-	txn := datastore.MustGetFromClientTxn(clientTxn)
-	ctx = datastore.CtxSetTxn(ctx, txn)
-
 	retryKey := keys.NewPeerstoreSERetry(peerID, collectionID, docID)
 
 	retryInfo := seRetryInfo{
@@ -240,12 +232,7 @@ func (coordinator *Coordinator) handleReplicationFailure(
 		return err
 	}
 
-	err = txn.Peerstore().Set(ctx, retryKey.Bytes(), b)
-	if err != nil {
-		return nil
-	}
-
-	return txn.Commit()
+	return coordinator.db.Multistore().Peerstore().Set(ctx, retryKey.Bytes(), b)
 }
 
 // HandlePushToReplicators processes document update events and generates SE artifacts.

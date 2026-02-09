@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -56,14 +57,14 @@ func TestNAC_GatesP2PCollectionList_AuthorizedIdentity_AllowAccess(t *testing.T)
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.GetAllP2PCollections{
+			testUtils.ListP2PCollections{
 				Identity:              testUtils.ClientIdentity(1),
 				NodeID:                1,
 				ExpectedCollectionIDs: []int{0},
@@ -110,17 +111,17 @@ func TestNAC_GatesP2PCollectionList_NoIdentity_NotAuthorizedError(t *testing.T) 
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.GetAllP2PCollections{
+			testUtils.ListP2PCollections{
 				Identity:      testUtils.NoIdentity(),
 				NodeID:        1,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionListPerm),
 			},
 		},
 	}
@@ -164,17 +165,17 @@ func TestNAC_GatesP2PCollectionList_WrongIdentity_NotAuthorizedError(t *testing.
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToCollection{
+			testUtils.CreateCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.GetAllP2PCollections{
+			testUtils.ListP2PCollections{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionListPerm),
 			},
 		},
 	}

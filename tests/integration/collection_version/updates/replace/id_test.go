@@ -25,7 +25,7 @@ func TestColVersionUpdateReplaceID_WithEmpty_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -51,7 +51,7 @@ func TestColVersionUpdateReplaceID_WithExisting_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -77,14 +77,14 @@ func TestColVersionUpdateReplaceID_WithExistingSameRoot_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} }
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -120,7 +120,7 @@ func TestColVersionUpdateReplaceID_WithExistingDifferentRoot_Errors(t *testing.T
 					type Dogs {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{
@@ -151,7 +151,7 @@ func TestColVersionUpdateReplaceID_WithNew_Errors(t *testing.T) {
 					type Users {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

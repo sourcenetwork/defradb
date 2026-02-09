@@ -29,9 +29,14 @@ import (
 // sets.
 var templateDataGenerators = map[string]func(*state.State, int) map[string]string{
 	"CID": func(s *state.State, nodeID int) map[string]string {
+		s.Nodes[nodeID].CompositesLock.RLock()
+		defer s.Nodes[nodeID].CompositesLock.RUnlock()
 		docIDsToCIDs := s.Nodes[nodeID].Composites
 
 		res := map[string]string{}
+
+		s.DocIDsLock.RLock()
+		defer s.DocIDsLock.RUnlock()
 		for colIndex, docIndexes := range s.DocIDs {
 			for docIndex, docID := range docIndexes {
 				cids := docIDsToCIDs[docID.String()]
@@ -75,7 +80,12 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 	"PeerAddresses": func(s *state.State, nodeID int) map[string]string {
 		res := map[string]string{}
 		for i, node := range s.Nodes {
-			addresses, err := node.PeerInfo()
+			// Inject node's identity into the context while generating templates, to bypass NAC for
+			// the gated [PeerInfo] operation, otherwise due to lack of authorization(s) we might not
+			// be able to see the peer addresses at all.
+			nodeIdentity := NodeIdentity(i)
+			ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, i)
+			addresses, err := node.PeerInfo(ctx)
 			require.NoError(s.T, err)
 
 			for j, address := range addresses {
