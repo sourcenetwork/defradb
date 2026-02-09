@@ -695,6 +695,14 @@ func (w *Wrapper) GetCollections(
 		identityDID = id.Value().DID()
 	}
 
+	// If the context carries a transaction, use the transaction-aware function
+	// so that uncommitted writes (e.g. placeholders from SetMigration) are visible.
+	if clientTxn, ok := datastore.CtxTryGetClientTxn(ctx); ok && clientTxn != nil {
+		if txnW, ok := clientTxn.(*TxnWrapper); ok {
+			return txnW.GetCollections(ctx, options)
+		}
+	}
+
 	// If VersionID is specified, use the dedicated FFI function which returns
 	// "key not found" for missing versions (matches Go behavior).
 	if options.VersionID.HasValue() {
@@ -1643,7 +1651,46 @@ func (t *TxnWrapper) GetCollectionByName(ctx context.Context, name client.Collec
 }
 
 func (t *TxnWrapper) GetCollections(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error) {
-	return t.wrapper.GetCollections(ctx, options)
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	responseJSON, err := t.wrapper.node.GetCollectionsInTxn(t.txn.id, identityDID)
+	if err != nil {
+		return nil, err
+	}
+
+	var versions []client.CollectionVersion
+	if err := json.Unmarshal([]byte(responseJSON), &versions); err != nil {
+		return nil, fmt.Errorf("failed to parse collections: %w", err)
+	}
+
+	// Apply filters
+	includeInactive := options.IncludeInactive.HasValue() && options.IncludeInactive.Value()
+	var filtered []client.CollectionVersion
+	for _, v := range versions {
+		if !includeInactive && !v.IsActive {
+			continue
+		}
+		if options.Name.HasValue() && v.Name != options.Name.Value() {
+			continue
+		}
+		if options.CollectionID.HasValue() && v.CollectionID != options.CollectionID.Value() {
+			continue
+		}
+		filtered = append(filtered, v)
+	}
+
+	collections := make([]client.Collection, len(filtered))
+	for i, v := range filtered {
+		collections[i] = &CollectionWrapper{
+			wrapper: t.wrapper,
+			version: v,
+		}
+	}
+
+	return collections, nil
 }
 
 func (t *TxnWrapper) SetActiveCollectionVersion(ctx context.Context, versionID string) error {
