@@ -21,6 +21,7 @@ import (
 // Returns nil if no valid options are provided.
 //
 // This follows the MongoDB Go driver pattern for option merging.
+// Option builders implement enumerable.Enumerable, allowing iteration via Next()/Value().
 //
 // Example usage:
 //
@@ -34,11 +35,20 @@ func NewOptions[T any](opts ...clientOptions.Lister[T]) *T {
 		if opt == nil || reflect.ValueOf(opt).IsNil() {
 			continue
 		}
-		for _, setArgs := range opt.List() {
+		for {
+			hasNext, err := opt.Next()
+			if err != nil || !hasNext {
+				break
+			}
+			setArgs, err := opt.Value()
+			if err != nil {
+				break
+			}
 			if setArgs != nil {
 				setArgs(args)
 			}
 		}
+		opt.Reset()
 	}
 	return args
 }

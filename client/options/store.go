@@ -31,7 +31,7 @@ func (o *AddDACPolicyOptions) GetIdentity() immutable.Option[identity.Identity] 
 
 // AddDACPolicyOptionsBuilder is a builder for AddDACPolicyOptions.
 type AddDACPolicyOptionsBuilder struct {
-	Opts []func(*AddDACPolicyOptions)
+	enumerableBuilder[AddDACPolicyOptions]
 }
 
 // AddDACPolicy creates a new AddDACPolicyOptionsBuilder instance.
@@ -41,15 +41,10 @@ func AddDACPolicy() *AddDACPolicyOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *AddDACPolicyOptionsBuilder) SetIdentity(id identity.Identity) *AddDACPolicyOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *AddDACPolicyOptions) {
+	b.append(func(opts *AddDACPolicyOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *AddDACPolicyOptionsBuilder) List() []func(*AddDACPolicyOptions) {
-	return b.Opts
 }
 
 // AddDACActorRelationshipOptions contains options for AddDACActorRelationship operation.
@@ -65,7 +60,7 @@ func (o *AddDACActorRelationshipOptions) GetIdentity() immutable.Option[identity
 
 // AddDACActorRelationshipOptionsBuilder is a builder for AddDACActorRelationshipOptions.
 type AddDACActorRelationshipOptionsBuilder struct {
-	Opts []func(*AddDACActorRelationshipOptions)
+	enumerableBuilder[AddDACActorRelationshipOptions]
 }
 
 // AddDACActorRelationship creates a new AddDACActorRelationshipOptionsBuilder instance.
@@ -77,15 +72,10 @@ func AddDACActorRelationship() *AddDACActorRelationshipOptionsBuilder {
 func (b *AddDACActorRelationshipOptionsBuilder) SetIdentity(
 	id identity.Identity,
 ) *AddDACActorRelationshipOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *AddDACActorRelationshipOptions) {
+	b.append(func(opts *AddDACActorRelationshipOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *AddDACActorRelationshipOptionsBuilder) List() []func(*AddDACActorRelationshipOptions) {
-	return b.Opts
 }
 
 // DeleteDACActorRelationshipOptions contains options for DeleteDACActorRelationship operation.
@@ -101,7 +91,7 @@ func (o *DeleteDACActorRelationshipOptions) GetIdentity() immutable.Option[ident
 
 // DeleteDACActorRelationshipOptionsBuilder is a builder for DeleteDACActorRelationshipOptions.
 type DeleteDACActorRelationshipOptionsBuilder struct {
-	Opts []func(*DeleteDACActorRelationshipOptions)
+	enumerableBuilder[DeleteDACActorRelationshipOptions]
 }
 
 // DeleteDACActorRelationship creates a new DeleteDACActorRelationshipOptionsBuilder instance.
@@ -113,15 +103,10 @@ func DeleteDACActorRelationship() *DeleteDACActorRelationshipOptionsBuilder {
 func (b *DeleteDACActorRelationshipOptionsBuilder) SetIdentity(
 	id identity.Identity,
 ) *DeleteDACActorRelationshipOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *DeleteDACActorRelationshipOptions) {
+	b.append(func(opts *DeleteDACActorRelationshipOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *DeleteDACActorRelationshipOptionsBuilder) List() []func(*DeleteDACActorRelationshipOptions) {
-	return b.Opts
 }
 
 // AddNACActorRelationshipOptions contains options for AddNACActorRelationship operation.
@@ -137,7 +122,7 @@ func (o *AddNACActorRelationshipOptions) GetIdentity() immutable.Option[identity
 
 // AddNACActorRelationshipOptionsBuilder is a builder for AddNACActorRelationshipOptions.
 type AddNACActorRelationshipOptionsBuilder struct {
-	Opts []func(*AddNACActorRelationshipOptions)
+	enumerableBuilder[AddNACActorRelationshipOptions]
 }
 
 // AddNACActorRelationship creates a new AddNACActorRelationshipOptionsBuilder instance.
@@ -149,15 +134,10 @@ func AddNACActorRelationship() *AddNACActorRelationshipOptionsBuilder {
 func (b *AddNACActorRelationshipOptionsBuilder) SetIdentity(
 	id identity.Identity,
 ) *AddNACActorRelationshipOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *AddNACActorRelationshipOptions) {
+	b.append(func(opts *AddNACActorRelationshipOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *AddNACActorRelationshipOptionsBuilder) List() []func(*AddNACActorRelationshipOptions) {
-	return b.Opts
 }
 
 // DeleteNACActorRelationshipOptions contains options for DeleteNACActorRelationship operation.
@@ -173,7 +153,7 @@ func (o *DeleteNACActorRelationshipOptions) GetIdentity() immutable.Option[ident
 
 // DeleteNACActorRelationshipOptionsBuilder is a builder for DeleteNACActorRelationshipOptions.
 type DeleteNACActorRelationshipOptionsBuilder struct {
-	Opts []func(*DeleteNACActorRelationshipOptions)
+	enumerableBuilder[DeleteNACActorRelationshipOptions]
 }
 
 // DeleteNACActorRelationship creates a new DeleteNACActorRelationshipOptionsBuilder instance.
@@ -185,15 +165,10 @@ func DeleteNACActorRelationship() *DeleteNACActorRelationshipOptionsBuilder {
 func (b *DeleteNACActorRelationshipOptionsBuilder) SetIdentity(
 	id identity.Identity,
 ) *DeleteNACActorRelationshipOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *DeleteNACActorRelationshipOptions) {
+	b.append(func(opts *DeleteNACActorRelationshipOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *DeleteNACActorRelationshipOptionsBuilder) List() []func(*DeleteNACActorRelationshipOptions) {
-	return b.Opts
 }
 
 // ReEnableNACOptions contains options for ReEnableNAC operation
@@ -209,7 +184,7 @@ func (o *ReEnableNACOptions) GetIdentity() immutable.Option[identity.Identity] {
 
 // ReEnableNACOptionsBuilder is a builder for ReEnableNACOptions.
 type ReEnableNACOptionsBuilder struct {
-	Opts []func(*ReEnableNACOptions)
+	enumerableBuilder[ReEnableNACOptions]
 }
 
 // ReEnableNAC creates a new NACOptions instance.
@@ -219,15 +194,10 @@ func ReEnableNAC() *ReEnableNACOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *ReEnableNACOptionsBuilder) SetIdentity(id identity.Identity) *ReEnableNACOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *ReEnableNACOptions) {
+	b.append(func(opts *ReEnableNACOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *ReEnableNACOptionsBuilder) List() []func(*ReEnableNACOptions) {
-	return b.Opts
 }
 
 // DisableNACOptions contains options for DisableNAC operation.
@@ -243,7 +213,7 @@ func (o *DisableNACOptions) GetIdentity() immutable.Option[identity.Identity] {
 
 // DisableNACOptionsBuilder is a builder for DisableNACOptions.
 type DisableNACOptionsBuilder struct {
-	Opts []func(*DisableNACOptions)
+	enumerableBuilder[DisableNACOptions]
 }
 
 // DisableNAC creates a new DisableNACOptionsBuilder instance.
@@ -253,15 +223,10 @@ func DisableNAC() *DisableNACOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *DisableNACOptionsBuilder) SetIdentity(id identity.Identity) *DisableNACOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *DisableNACOptions) {
+	b.append(func(opts *DisableNACOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *DisableNACOptionsBuilder) List() []func(*DisableNACOptions) {
-	return b.Opts
 }
 
 // GetNACStatusOptions contains options for GetNACStatus operation.
@@ -277,7 +242,7 @@ func (o *GetNACStatusOptions) GetIdentity() immutable.Option[identity.Identity] 
 
 // GetNACStatusOptionsBuilder is a builder for GetNACStatusOptions.
 type GetNACStatusOptionsBuilder struct {
-	Opts []func(*GetNACStatusOptions)
+	enumerableBuilder[GetNACStatusOptions]
 }
 
 // GetNACStatus creates a new GetNACStatusOptionsBuilder instance.
@@ -287,15 +252,10 @@ func GetNACStatus() *GetNACStatusOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *GetNACStatusOptionsBuilder) SetIdentity(id identity.Identity) *GetNACStatusOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *GetNACStatusOptions) {
+	b.append(func(opts *GetNACStatusOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *GetNACStatusOptionsBuilder) List() []func(*GetNACStatusOptions) {
-	return b.Opts
 }
 
 // VerifySignatureOptions contains options for VerifySignature operation.
@@ -311,7 +271,7 @@ func (o *VerifySignatureOptions) GetIdentity() immutable.Option[identity.Identit
 
 // VerifySignatureOptionsBuilder is a builder for VerifySignatureOptions.
 type VerifySignatureOptionsBuilder struct {
-	Opts []func(*VerifySignatureOptions)
+	enumerableBuilder[VerifySignatureOptions]
 }
 
 // VerifySignature creates a new VerifySignatureOptionsBuilder instance.
@@ -321,15 +281,10 @@ func VerifySignature() *VerifySignatureOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *VerifySignatureOptionsBuilder) SetIdentity(id identity.Identity) *VerifySignatureOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *VerifySignatureOptions) {
+	b.append(func(opts *VerifySignatureOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *VerifySignatureOptionsBuilder) List() []func(*VerifySignatureOptions) {
-	return b.Opts
 }
 
 // AddViewOptions contains options for AddView operation.
@@ -340,7 +295,7 @@ type AddViewOptions struct {
 
 // AddViewOptionsBuilder is a builder for AddViewOptions.
 type AddViewOptionsBuilder struct {
-	Opts []func(*AddViewOptions)
+	enumerableBuilder[AddViewOptions]
 }
 
 // AddView creates a new AddViewOptionsBuilder instance.
@@ -350,15 +305,10 @@ func AddView() *AddViewOptionsBuilder {
 
 // SetTransformCID sets the lens transform CID for the view.
 func (b *AddViewOptionsBuilder) SetTransformCID(cid string) *AddViewOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *AddViewOptions) {
+	b.append(func(opts *AddViewOptions) {
 		opts.TransformCID = immutable.Some(cid)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *AddViewOptionsBuilder) List() []func(*AddViewOptions) {
-	return b.Opts
 }
 
 // RefreshViewsOptions contains options for RefreshViews operation.
@@ -385,7 +335,7 @@ func (o *GetCollectionByNameOptions) GetIdentity() immutable.Option[identity.Ide
 
 // GetCollectionByNameOptionsBuilder is a builder for GetCollectionByNameOptions.
 type GetCollectionByNameOptionsBuilder struct {
-	Opts []func(*GetCollectionByNameOptions)
+	enumerableBuilder[GetCollectionByNameOptions]
 }
 
 // GetCollectionByName creates a new GetCollectionByNameOptionsBuilder instance.
@@ -395,15 +345,10 @@ func GetCollectionByName() *GetCollectionByNameOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *GetCollectionByNameOptionsBuilder) SetIdentity(id identity.Identity) *GetCollectionByNameOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *GetCollectionByNameOptions) {
+	b.append(func(opts *GetCollectionByNameOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *GetCollectionByNameOptionsBuilder) List() []func(*GetCollectionByNameOptions) {
-	return b.Opts
 }
 
 // GetCollectionsOptions contains options for GetCollections operation.
@@ -429,7 +374,7 @@ func (o *GetCollectionsOptions) GetIdentity() immutable.Option[identity.Identity
 
 // GetCollectionsOptionsBuilder is a builder for GetCollectionsOptions.
 type GetCollectionsOptionsBuilder struct {
-	Opts []func(*GetCollectionsOptions)
+	enumerableBuilder[GetCollectionsOptions]
 }
 
 // GetCollections creates a new GetCollectionsOptionsBuilder instance.
@@ -439,7 +384,7 @@ func GetCollections() *GetCollectionsOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *GetCollectionsOptionsBuilder) SetIdentity(id identity.Identity) *GetCollectionsOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *GetCollectionsOptions) {
+	b.append(func(opts *GetCollectionsOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
@@ -447,7 +392,7 @@ func (b *GetCollectionsOptionsBuilder) SetIdentity(id identity.Identity) *GetCol
 
 // SetVersionID sets the version ID filter.
 func (b *GetCollectionsOptionsBuilder) SetVersionID(versionID string) *GetCollectionsOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *GetCollectionsOptions) {
+	b.append(func(opts *GetCollectionsOptions) {
 		opts.VersionID = immutable.Some(versionID)
 	})
 	return b
@@ -455,7 +400,7 @@ func (b *GetCollectionsOptionsBuilder) SetVersionID(versionID string) *GetCollec
 
 // SetCollectionID sets the collection ID filter.
 func (b *GetCollectionsOptionsBuilder) SetCollectionID(collectionID string) *GetCollectionsOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *GetCollectionsOptions) {
+	b.append(func(opts *GetCollectionsOptions) {
 		opts.CollectionID = immutable.Some(collectionID)
 	})
 	return b
@@ -463,7 +408,7 @@ func (b *GetCollectionsOptionsBuilder) SetCollectionID(collectionID string) *Get
 
 // SetCollectionSetID sets the collection set ID filter.
 func (b *GetCollectionsOptionsBuilder) SetCollectionSetID(collectionSetID string) *GetCollectionsOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *GetCollectionsOptions) {
+	b.append(func(opts *GetCollectionsOptions) {
 		opts.CollectionSetID = immutable.Some(collectionSetID)
 	})
 	return b
@@ -471,7 +416,7 @@ func (b *GetCollectionsOptionsBuilder) SetCollectionSetID(collectionSetID string
 
 // SetCollectionName sets the name filter.
 func (b *GetCollectionsOptionsBuilder) SetCollectionName(name string) *GetCollectionsOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *GetCollectionsOptions) {
+	b.append(func(opts *GetCollectionsOptions) {
 		opts.CollectionName = immutable.Some(name)
 	})
 	return b
@@ -479,15 +424,10 @@ func (b *GetCollectionsOptionsBuilder) SetCollectionName(name string) *GetCollec
 
 // SetIncludeInactive sets whether to include inactive collections.
 func (b *GetCollectionsOptionsBuilder) SetIncludeInactive(includeInactive bool) *GetCollectionsOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *GetCollectionsOptions) {
+	b.append(func(opts *GetCollectionsOptions) {
 		opts.IncludeInactive = immutable.Some(includeInactive)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *GetCollectionsOptionsBuilder) List() []func(*GetCollectionsOptions) {
-	return b.Opts
 }
 
 // GetAllIndexesOptions contains options for GetAllIndexes operation.
@@ -503,7 +443,7 @@ func (o *GetAllIndexesOptions) GetIdentity() immutable.Option[identity.Identity]
 
 // GetAllIndexesOptionsBuilder is a builder for GetAllIndexesOptions.
 type GetAllIndexesOptionsBuilder struct {
-	Opts []func(*GetAllIndexesOptions)
+	enumerableBuilder[GetAllIndexesOptions]
 }
 
 // GetAllIndexes creates a new GetAllIndexesOptionsBuilder instance.
@@ -513,15 +453,10 @@ func GetAllIndexes() *GetAllIndexesOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *GetAllIndexesOptionsBuilder) SetIdentity(id identity.Identity) *GetAllIndexesOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *GetAllIndexesOptions) {
+	b.append(func(opts *GetAllIndexesOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *GetAllIndexesOptionsBuilder) List() []func(*GetAllIndexesOptions) {
-	return b.Opts
 }
 
 // AddSchemaOptions contains options for AddSchema operation.
@@ -537,7 +472,7 @@ func (o *AddSchemaOptions) GetIdentity() immutable.Option[identity.Identity] {
 
 // AddSchemaOptionsBuilder is a builder for AddSchemaOptions.
 type AddSchemaOptionsBuilder struct {
-	Opts []func(*AddSchemaOptions)
+	enumerableBuilder[AddSchemaOptions]
 }
 
 // AddSchema creates a new AddSchemaOptionsBuilder instance.
@@ -547,15 +482,10 @@ func AddSchema() *AddSchemaOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *AddSchemaOptionsBuilder) SetIdentity(id identity.Identity) *AddSchemaOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *AddSchemaOptions) {
+	b.append(func(opts *AddSchemaOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *AddSchemaOptionsBuilder) List() []func(*AddSchemaOptions) {
-	return b.Opts
 }
 
 // PatchCollectionOptions contains options for PatchCollection operation.
@@ -571,7 +501,7 @@ func (o *PatchCollectionOptions) GetIdentity() immutable.Option[identity.Identit
 
 // PatchCollectionOptionsBuilder is a builder for PatchCollectionOptions.
 type PatchCollectionOptionsBuilder struct {
-	Opts []func(*PatchCollectionOptions)
+	enumerableBuilder[PatchCollectionOptions]
 }
 
 // PatchCollection creates a new PatchCollectionOptionsBuilder instance.
@@ -581,15 +511,10 @@ func PatchCollection() *PatchCollectionOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *PatchCollectionOptionsBuilder) SetIdentity(id identity.Identity) *PatchCollectionOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *PatchCollectionOptions) {
+	b.append(func(opts *PatchCollectionOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *PatchCollectionOptionsBuilder) List() []func(*PatchCollectionOptions) {
-	return b.Opts
 }
 
 // SetActiveCollectionVersionOptions contains options for SetActiveCollectionVersion operation.
@@ -605,7 +530,7 @@ func (o *SetActiveCollectionVersionOptions) GetIdentity() immutable.Option[ident
 
 // SetActiveCollectionVersionOptionsBuilder is a builder for SetActiveCollectionVersionOptions.
 type SetActiveCollectionVersionOptionsBuilder struct {
-	Opts []func(*SetActiveCollectionVersionOptions)
+	enumerableBuilder[SetActiveCollectionVersionOptions]
 }
 
 // SetActiveCollectionVersion creates a new SetActiveCollectionVersionOptionsBuilder instance.
@@ -617,15 +542,10 @@ func SetActiveCollectionVersion() *SetActiveCollectionVersionOptionsBuilder {
 func (b *SetActiveCollectionVersionOptionsBuilder) SetIdentity(
 	id identity.Identity,
 ) *SetActiveCollectionVersionOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *SetActiveCollectionVersionOptions) {
+	b.append(func(opts *SetActiveCollectionVersionOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *SetActiveCollectionVersionOptionsBuilder) List() []func(*SetActiveCollectionVersionOptions) {
-	return b.Opts
 }
 
 // ExecRequestOptions contains options for ExecRequest operation.
@@ -645,7 +565,7 @@ func (o *ExecRequestOptions) GetIdentity() immutable.Option[identity.Identity] {
 
 // ExecRequestOptionsBuilder is a builder for ExecRequestOptions.
 type ExecRequestOptionsBuilder struct {
-	Opts []func(*ExecRequestOptions)
+	enumerableBuilder[ExecRequestOptions]
 }
 
 // ExecRequest creates a new ExecRequestOptionsBuilder instance.
@@ -655,7 +575,7 @@ func ExecRequest() *ExecRequestOptionsBuilder {
 
 // SetIdentity sets the identity for the operation.
 func (b *ExecRequestOptionsBuilder) SetIdentity(id identity.Identity) *ExecRequestOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *ExecRequestOptions) {
+	b.append(func(opts *ExecRequestOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b
@@ -663,7 +583,7 @@ func (b *ExecRequestOptionsBuilder) SetIdentity(id identity.Identity) *ExecReque
 
 // SetOperationName sets the operation name for a GQL request.
 func (b *ExecRequestOptionsBuilder) SetOperationName(operationName string) *ExecRequestOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *ExecRequestOptions) {
+	b.append(func(opts *ExecRequestOptions) {
 		opts.OperationName = immutable.Some(operationName)
 	})
 	return b
@@ -671,18 +591,13 @@ func (b *ExecRequestOptionsBuilder) SetOperationName(operationName string) *Exec
 
 // SetVariables sets the variables for a GQL request.
 func (b *ExecRequestOptionsBuilder) SetVariables(variables map[string]any) *ExecRequestOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *ExecRequestOptions) {
+	b.append(func(opts *ExecRequestOptions) {
 		if variables != nil {
 			opts.Variables = make(map[string]any, len(variables))
 			maps.Copy(opts.Variables, variables)
 		}
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *ExecRequestOptionsBuilder) List() []func(*ExecRequestOptions) {
-	return b.Opts
 }
 
 // BasicExportOptions contains options for BasicExport operation.
@@ -697,7 +612,7 @@ type BasicExportOptions struct {
 
 // BasicExportOptionsBuilder is a builder for BasicExportOptions.
 type BasicExportOptionsBuilder struct {
-	Opts []func(*BasicExportOptions)
+	enumerableBuilder[BasicExportOptions]
 }
 
 // BasicExport creates a new BasicExportOptionsBuilder instance.
@@ -707,7 +622,7 @@ func BasicExport() *BasicExportOptionsBuilder {
 
 // SetFormat sets the export format.
 func (b *BasicExportOptionsBuilder) SetFormat(format string) *BasicExportOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *BasicExportOptions) {
+	b.append(func(opts *BasicExportOptions) {
 		opts.Format = format
 	})
 	return b
@@ -715,7 +630,7 @@ func (b *BasicExportOptionsBuilder) SetFormat(format string) *BasicExportOptions
 
 // SetPretty enables or disables pretty printing for JSON output.
 func (b *BasicExportOptionsBuilder) SetPretty(pretty bool) *BasicExportOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *BasicExportOptions) {
+	b.append(func(opts *BasicExportOptions) {
 		opts.Pretty = pretty
 	})
 	return b
@@ -723,16 +638,11 @@ func (b *BasicExportOptionsBuilder) SetPretty(pretty bool) *BasicExportOptionsBu
 
 // SetCollections sets the list of collections to export.
 func (b *BasicExportOptionsBuilder) SetCollections(collections []string) *BasicExportOptionsBuilder {
-	b.Opts = append(b.Opts, func(opts *BasicExportOptions) {
+	b.append(func(opts *BasicExportOptions) {
 		if collections != nil {
 			opts.Collections = make([]string, len(collections))
 			copy(opts.Collections, collections)
 		}
 	})
 	return b
-}
-
-// List returns the list of functional options.
-func (b *BasicExportOptionsBuilder) List() []func(*BasicExportOptions) {
-	return b.Opts
 }
