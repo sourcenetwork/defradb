@@ -93,6 +93,7 @@ func TestNAC_AdminRelation_GoClient_CanVerifySignature(t *testing.T) {
 				// requires a private key which we do not pass over HTTP.
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
