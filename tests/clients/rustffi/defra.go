@@ -226,6 +226,32 @@ func (n *Node) GetCollections(identityDID string) (string, error) {
 	return value, nil
 }
 
+// GetCollectionsInTxn returns all collection versions visible within a specific transaction.
+// This reads from the transaction's systemstore, which includes uncommitted writes
+// (e.g., placeholders from set_migration_in_txn).
+func (n *Node) GetCollectionsInTxn(txnID string, identityDID string) (string, error) {
+	cTxnID := C.CString(txnID)
+	defer C.free(unsafe.Pointer(cTxnID))
+
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.get_collections_in_txn(n.ptr, cTxnID, cIdentityDID)
+
+	if result.status != 0 {
+		err := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return "", fmt.Errorf("ffi: get_collections_in_txn failed: %s", err)
+	}
+
+	value := C.GoString(result.value)
+	C.defra_free_string(result.value)
+	return value, nil
+}
+
 // QueryResult represents a GraphQL query response.
 type QueryResult struct {
 	Data   json.RawMessage `json:"data,omitempty"`
@@ -608,6 +634,35 @@ func (n *Node) DeleteCollection(identityDID string, name string) error {
 		err := C.GoString(result.error)
 		C.defra_free_string(result.error)
 		return fmt.Errorf("ffi: delete_collection failed: %s", err)
+	}
+
+	C.defra_free_string(result.value)
+	return nil
+}
+
+// DeleteCollectionVersions deletes multiple collection versions by their version IDs.
+// Versions are deleted in topological order (children before parents).
+func (n *Node) DeleteCollectionVersions(identityDID string, versionIDs []string) error {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	idsJSON, err := json.Marshal(versionIDs)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal version IDs: %w", err)
+	}
+
+	cIDs := C.CString(string(idsJSON))
+	defer C.free(unsafe.Pointer(cIDs))
+
+	result := C.delete_collection_versions(n.ptr, cIdentityDID, cIDs)
+
+	if result.status != 0 {
+		errStr := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: delete_collection_versions failed: %s", errStr)
 	}
 
 	C.defra_free_string(result.value)

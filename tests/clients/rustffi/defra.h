@@ -1519,10 +1519,8 @@ struct CreateSubscriptionResult create_merge_complete_subscription(uintptr_t nod
 struct PollSubscriptionResult poll_subscription(uintptr_t subscription_handle);
 
 /*
- Poll a GraphQL subscription for new results.
-
- Results have already been processed by the background task at event time,
- so this function simply checks the result buffer.
+ Alias for poll_subscription (for Go compatibility)
+ Accepts a string subscription ID and parses it as a numeric handle.
  */
 struct PollSubscriptionResult poll_graphql_subscription(const char *subscription_id);
 
@@ -1540,8 +1538,7 @@ struct PollSubscriptionResult poll_graphql_subscription(const char *subscription
 struct CloseSubscriptionResult close_subscription(uintptr_t subscription_handle);
 
 /*
- Close a GraphQL subscription and release resources.
-
+ Alias for close_subscription (for Go compatibility)
  Accepts a string subscription ID and parses it as a numeric handle.
  */
 struct CloseSubscriptionResult close_graphql_subscription(const char *subscription_id);
