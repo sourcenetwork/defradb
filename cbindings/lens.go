@@ -78,8 +78,12 @@ func LensAdd(nodePtr C.uintptr_t, cfg *C.char) C.Result {
 }
 
 //export LensList
-func LensList(nodePtr C.uintptr_t) C.Result {
+func LensList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
