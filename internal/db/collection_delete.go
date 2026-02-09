@@ -34,7 +34,7 @@ func (c *collection) DeleteWithFilter(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentDeletePerm); err != nil {
-		return nil, client.ErrDocumentNotFoundOrNotAuthorized
+		return nil, err
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)

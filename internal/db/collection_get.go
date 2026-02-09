@@ -33,7 +33,7 @@ func (c *collection) Get(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
-		return nil, client.ErrDocumentNotFoundOrNotAuthorized
+		return nil, err
 	}
 
 	// create txn

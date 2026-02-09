@@ -209,7 +209,12 @@ func (c *collection) GetAllDocIDs(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
-		return nil, client.ErrDocumentNotFoundOrNotAuthorized
+		return nil, err
+	}
+
+	ctx, _, err := ensureContextTxn(ctx, c.db, true)
+	if err != nil {
+		return nil, err
 	}
 	return c.getAllDocIDsChan(ctx)
 }
@@ -217,14 +222,16 @@ func (c *collection) GetAllDocIDs(
 func (c *collection) getAllDocIDsChan(
 	ctx context.Context,
 ) (<-chan client.DocIDResult, error) {
-	shortID, err := id.GetUncachedShortCollectionID(ctx, c.Version().CollectionID, c.db.Multistore().Systemstore())
+	txn := datastore.CtxMustGetTxn(ctx)
+
+	shortID, err := id.GetShortCollectionID(ctx, c.Version().CollectionID)
 	if err != nil {
 		return nil, err
 	}
 	prefix := keys.PrimaryDataStoreKey{ // empty path for all keys prefix
 		CollectionShortID: shortID,
 	}
-	iter, err := c.db.Multistore().Datastore().Iterator(ctx, datastore.IterOptions{
+	iter, err := txn.Datastore().Iterator(ctx, datastore.IterOptions{
 		Prefix:   prefix,
 		KeysOnly: true,
 	})
@@ -484,7 +491,7 @@ func (c *collection) Update(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
-		return client.ErrDocumentNotFoundOrNotAuthorized
+		return err
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -562,7 +569,7 @@ func (c *collection) Save(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
-		return client.ErrDocumentNotFoundOrNotAuthorized
+		return err
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -805,7 +812,7 @@ func (c *collection) Delete(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentDeletePerm); err != nil {
-		return false, client.ErrDocumentNotFoundOrNotAuthorized
+		return false, err
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -840,7 +847,7 @@ func (c *collection) Exists(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
-		return false, client.ErrDocumentNotFoundOrNotAuthorized
+		return false, err
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
