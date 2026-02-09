@@ -120,15 +120,16 @@ func (w *Wrapper) Connect(
 func (w *Wrapper) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	collections []string,
 	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
 	args := []string{"client", "p2p", "replicator", "create"}
-	args = append(args, "--collection", strings.Join(collections, ","))
-
-	args = append(args, strings.Join(addresses, ","))
 
 	opt := utils.NewOptions(opts...)
+	if len(opt.CollectionNames) > 0 {
+		args = append(args, "--collection", strings.Join(opt.CollectionNames, ","))
+	}
+
+	args = append(args, strings.Join(addresses, ","))
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
@@ -138,15 +139,16 @@ func (w *Wrapper) CreateReplicator(
 func (w *Wrapper) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	collections []string,
 	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
-	args = append(args, "--collection", strings.Join(collections, ","))
-
-	args = append(args, id)
 
 	opt := utils.NewOptions(opts...)
+	if len(opt.CollectionNames) > 0 {
+		args = append(args, "--collection", strings.Join(opt.CollectionNames, ","))
+	}
+
+	args = append(args, id)
 	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)

@@ -146,12 +146,12 @@ func (w *CWrapper) ActivePeers(ctx context.Context) ([]string, error) {
 func (w *CWrapper) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	collections []string,
 	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
+	opt := utils.NewOptions(opts...)
 	addrStr := C.CString(strings.Join(addresses, ","))
-	colStr := C.CString(strings.Join(collections, ","))
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	colStr := C.CString(strings.Join(opt.CollectionNames, ","))
+	cIdentity := optionToUintptr(opt.GetIdentity())
 	defer C.free(unsafe.Pointer(addrStr))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
@@ -167,12 +167,12 @@ func (w *CWrapper) CreateReplicator(
 func (w *CWrapper) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	collections []string,
 	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
+	opt := utils.NewOptions(opts...)
 	peerID := C.CString(id)
-	colStr := C.CString(strings.Join(collections, ","))
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	colStr := C.CString(strings.Join(opt.CollectionNames, ","))
+	cIdentity := optionToUintptr(opt.GetIdentity())
 	defer C.free(unsafe.Pointer(peerID))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)

@@ -101,7 +101,8 @@ func P2PreplicatorCreate(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.CreateReplicator(ctx, addressesArgs, colArgs)
+	opt := options.CreateReplicator().SetCollectionNames(colArgs)
+	err = node.DB.CreateReplicator(ctx, addressesArgs, opt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -121,7 +122,8 @@ func P2PreplicatorDelete(nodePtr C.uintptr_t, collections *C.char, id *C.char, i
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.DeleteReplicator(ctx, C.GoString(id), colArgs)
+	opt := options.DeleteReplicator().SetCollectionNames(colArgs)
+	err = node.DB.DeleteReplicator(ctx, C.GoString(id), opt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

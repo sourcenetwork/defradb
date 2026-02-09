@@ -97,7 +97,6 @@ func (c *Client) Connect(
 func (c *Client) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	collections []string,
 	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
@@ -107,7 +106,7 @@ func (c *Client) CreateReplicator(
 
 	body, err := json.Marshal(CreateReplicatorParams{
 		Addresses:   addresses,
-		Collections: collections,
+		Collections: opt.CollectionNames,
 	})
 	if err != nil {
 		return err
@@ -123,7 +122,6 @@ func (c *Client) CreateReplicator(
 func (c *Client) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	collections []string,
 	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
@@ -133,7 +131,7 @@ func (c *Client) DeleteReplicator(
 
 	body, err := json.Marshal(DeleteReplicatorParams{
 		ID:          id,
-		Collections: collections,
+		Collections: opt.CollectionNames,
 	})
 	if err != nil {
 		return err

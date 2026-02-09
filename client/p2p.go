@@ -40,7 +40,6 @@ type P2P interface {
 	CreateReplicator(
 		ctx context.Context,
 		addresses []string,
-		collectionNames []string,
 		opts ...options.Lister[options.CreateReplicatorOptions],
 	) error
 
@@ -49,7 +48,6 @@ type P2P interface {
 	DeleteReplicator(
 		ctx context.Context,
 		id string,
-		collectionNames []string,
 		opts ...options.Lister[options.DeleteReplicatorOptions],
 	) error
 

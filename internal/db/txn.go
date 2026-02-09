@@ -328,21 +328,19 @@ func (txn *Txn) Connect(ctx context.Context, addresses []string, opts ...options
 func (txn *Txn) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	collectionNames []string,
 	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.CreateReplicator(ctx, addresses, collectionNames, opts...)
+	return txn.db.CreateReplicator(ctx, addresses, opts...)
 }
 
 func (txn *Txn) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	collectionNames []string,
 	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.DeleteReplicator(ctx, id, collectionNames, opts...)
+	return txn.db.DeleteReplicator(ctx, id, opts...)
 }
 
 func (txn *Txn) ListReplicators(

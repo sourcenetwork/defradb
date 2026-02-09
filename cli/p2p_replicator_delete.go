@@ -29,8 +29,11 @@ A replicator synchronizes one or all collection(s) from this instance to another
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			opt := options.WithIdentity(options.DeleteReplicator(), identity.FromContext(cmd.Context()))
-			return cliClient.DeleteReplicator(cmd.Context(), args[0], collections, opt)
+			opt := options.WithIdentity(
+				options.DeleteReplicator().SetCollectionNames(collections),
+				identity.FromContext(cmd.Context()),
+			)
+			return cliClient.DeleteReplicator(cmd.Context(), args[0], opt)
 		},
 	}
 

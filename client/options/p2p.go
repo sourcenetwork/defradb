@@ -87,6 +87,8 @@ func (b *PeerInfoOptionsBuilder) List() []func(*PeerInfoOptions) {
 type CreateReplicatorOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// CollectionNames is the list of collection names to replicate.
+	CollectionNames []string
 }
 
 // GetIdentity returns the identity for the operation.
@@ -112,6 +114,17 @@ func (b *CreateReplicatorOptionsBuilder) SetIdentity(id identity.Identity) *Crea
 	return b
 }
 
+// SetCollectionNames sets the collection names to replicate.
+func (b *CreateReplicatorOptionsBuilder) SetCollectionNames(names []string) *CreateReplicatorOptionsBuilder {
+	b.Opts = append(b.Opts, func(opts *CreateReplicatorOptions) {
+		if names != nil {
+			opts.CollectionNames = make([]string, len(names))
+			copy(opts.CollectionNames, names)
+		}
+	})
+	return b
+}
+
 // List returns the list of functional options.
 func (b *CreateReplicatorOptionsBuilder) List() []func(*CreateReplicatorOptions) {
 	return b.Opts
@@ -121,6 +134,8 @@ func (b *CreateReplicatorOptionsBuilder) List() []func(*CreateReplicatorOptions)
 type DeleteReplicatorOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// CollectionNames is the list of collection names to stop replicating.
+	CollectionNames []string
 }
 
 // GetIdentity returns the identity for the operation.
@@ -142,6 +157,17 @@ func DeleteReplicator() *DeleteReplicatorOptionsBuilder {
 func (b *DeleteReplicatorOptionsBuilder) SetIdentity(id identity.Identity) *DeleteReplicatorOptionsBuilder {
 	b.Opts = append(b.Opts, func(opts *DeleteReplicatorOptions) {
 		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// SetCollectionNames sets the collection names to stop replicating.
+func (b *DeleteReplicatorOptionsBuilder) SetCollectionNames(names []string) *DeleteReplicatorOptionsBuilder {
+	b.Opts = append(b.Opts, func(opts *DeleteReplicatorOptions) {
+		if names != nil {
+			opts.CollectionNames = make([]string, len(names))
+			copy(opts.CollectionNames, names)
+		}
 	})
 	return b
 }

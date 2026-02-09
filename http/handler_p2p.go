@@ -74,9 +74,12 @@ func (h *p2pHandler) CreateReplicator(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	opt := options.WithIdentity(options.CreateReplicator(), identity.FromContext(ctx))
+	opt := options.WithIdentity(
+		options.CreateReplicator().SetCollectionNames(rep.Collections),
+		identity.FromContext(ctx),
+	)
 
-	err := db.CreateReplicator(ctx, rep.Addresses, rep.Collections, opt)
+	err := db.CreateReplicator(ctx, rep.Addresses, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -94,9 +97,12 @@ func (h *p2pHandler) DeleteReplicator(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	opt := options.WithIdentity(options.DeleteReplicator(), identity.FromContext(ctx))
+	opt := options.WithIdentity(
+		options.DeleteReplicator().SetCollectionNames(rep.Collections),
+		identity.FromContext(ctx),
+	)
 
-	err := db.DeleteReplicator(ctx, rep.ID, rep.Collections, opt)
+	err := db.DeleteReplicator(ctx, rep.ID, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

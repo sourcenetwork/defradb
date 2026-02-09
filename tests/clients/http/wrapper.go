@@ -82,19 +82,17 @@ func (w *Wrapper) Connect(
 func (w *Wrapper) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	collections []string,
 	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
-	return w.client.CreateReplicator(ctx, addresses, collections, opts...)
+	return w.client.CreateReplicator(ctx, addresses, opts...)
 }
 
 func (w *Wrapper) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	collections []string,
 	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
-	return w.client.DeleteReplicator(ctx, id, collections, opts...)
+	return w.client.DeleteReplicator(ctx, id, opts...)
 }
 
 func (w *Wrapper) ListReplicators(

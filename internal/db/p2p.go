@@ -61,7 +61,6 @@ func (db *DB) Connect(ctx context.Context, addresses []string, opts ...options.L
 func (db *DB) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	collectionNames []string,
 	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
@@ -83,7 +82,7 @@ func (db *DB) CreateReplicator(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.CreateReplicator(ctx, addresses, collectionNames...)
+	err = db.p2p.CreateReplicator(ctx, addresses, opt.CollectionNames...)
 	if err != nil {
 		return err
 	}
@@ -96,7 +95,6 @@ func (db *DB) CreateReplicator(
 func (db *DB) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	collectionNames []string,
 	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
@@ -118,7 +116,7 @@ func (db *DB) DeleteReplicator(
 	}
 	defer txn.Discard()
 
-	err = db.p2p.DeleteReplicator(ctx, id, collectionNames...)
+	err = db.p2p.DeleteReplicator(ctx, id, opt.CollectionNames...)
 	if err != nil {
 		return err
 	}
