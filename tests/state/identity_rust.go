@@ -8,7 +8,7 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
-//go:build !js
+//go:build !js && rust_ffi
 
 package state
 
@@ -16,14 +16,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/cbindings"
+	"github.com/sourcenetwork/defradb/tests/clients/rustffi"
 )
 
 // registerIdentityIfNeeded registers the identity with the Rust FFI layer
 // when the Rust FFI client is in use. This ensures block signing works correctly.
 func registerIdentityIfNeeded(s *State, identity acpIdentity.Identity) {
 	if s.ClientType == RustFFIClientType {
-		err := cbindings.RegisterIdentityWithRust(identity)
+		err := rustffi.RegisterIdentityWithRust(identity)
 		require.NoError(s.T, err, "failed to register identity with Rust FFI")
 	}
 }

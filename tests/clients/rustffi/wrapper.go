@@ -8,6 +8,8 @@
 // by the Apache License, Version 2.0, included in the file
 // licenses/APL.txt.
 
+//go:build rust_ffi
+
 // Package rustffi provides Go bindings for the DefraDB Rust FFI.
 //
 // This file implements the DefraDB client.TxnStore interface for integration testing.
