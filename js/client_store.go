@@ -121,27 +121,9 @@ func (c *Client) refreshViews(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := collectionFetchOptionsToRefreshViewsOptions(input)
+	opt := collectionFetchOptionsToGetCollectionsOptions(input)
 	err = c.node.DB.RefreshViews(ctx, opt)
 	return js.Undefined(), err
-}
-
-// collectionFetchOptionsToRefreshViewsOptions converts collectionFetchOptions to RefreshViewsOptions.
-func collectionFetchOptionsToRefreshViewsOptions(input collectionFetchOptions) *options.RefreshViewsOptionsBuilder {
-	opt := options.RefreshViews()
-	if input.VersionID.HasValue() {
-		opt.SetVersionID(input.VersionID.Value())
-	}
-	if input.CollectionID.HasValue() {
-		opt.SetCollectionID(input.CollectionID.Value())
-	}
-	if input.Name.HasValue() {
-		opt.SetCollectionName(input.Name.Value())
-	}
-	if input.IncludeInactive.HasValue() {
-		opt.SetIncludeInactive(input.IncludeInactive.Value())
-	}
-	return opt
 }
 
 func (c *Client) setMigration(this js.Value, args []js.Value) (js.Value, error) {

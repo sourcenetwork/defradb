@@ -162,7 +162,6 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		return nil, err
 	}
 
-	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
 		input:     parsed.CreateInput,
@@ -178,7 +177,6 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		},
 	}
 
-	// get collection
 	col, err := p.db.GetCollectionByName(
 		p.ctx,
 		parsed.Name,

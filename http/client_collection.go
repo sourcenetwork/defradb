@@ -166,7 +166,6 @@ func (c *Collection) Save(
 	opts ...options.Lister[options.CollectionSaveOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
-	//ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	getOpts := options.CollectionGet()
 	if opt.GetIdentity().HasValue() {

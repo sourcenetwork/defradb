@@ -93,12 +93,12 @@ func (a *CreateView) Execute() {
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for i, node := range nodes {
-		var opts []options.Lister[options.AddViewOptions]
+		opts := options.AddView()
 		if a.TransformCID.HasValue() {
 			transformCID := replace(a.s, nodeIDs[i], a.TransformCID.Value())
-			opts = append(opts, options.AddView().SetTransformCID(transformCID))
+			options.AddView().SetTransformCID(transformCID)
 		}
-		results, err := node.AddView(a.s.Ctx, a.Query, sdl, opts...)
+		results, err := node.AddView(a.s.Ctx, a.Query, sdl, opts)
 
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)

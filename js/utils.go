@@ -131,7 +131,6 @@ func contextIdentityArg(value js.Value) (immutable.Option[acpIdentity.Identity],
 func setOptIdentity[B any](opt B, args []js.Value, argIndex int) {
 	if len(args) > argIndex {
 		if ident, err := contextIdentityArg(args[argIndex]); err == nil && ident.HasValue() {
-			// Use type assertion to access SetIdentity method
 			if setter, ok := any(opt).(interface{ SetIdentity(identity.Identity) any }); ok {
 				setter.SetIdentity(ident.Value())
 			}
