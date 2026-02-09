@@ -521,7 +521,74 @@ func (w *Wrapper) ExecRequest(
 		gqlResult.Data = convertDateTimeStrings(gqlResult.Data)
 	}
 
+	// After successful mutation, emit update events so the test framework's
+	// waitForUpdateEvents can synchronize. Without this, GQL mutations via
+	// ExecRequest don't produce events (unlike CollectionWrapper.Create/Update/Delete
+	// which manually publish them).
+	if strings.HasPrefix(strings.TrimSpace(request), "mutation") && gqlResult.Data != nil {
+		w.emitMutationEvents(ctx, gqlResult.Data)
+	}
+
 	return &client.RequestResult{GQL: gqlResult}
+}
+
+// emitMutationEvents parses GQL mutation results and publishes update events
+// for each affected document.
+func (w *Wrapper) emitMutationEvents(ctx context.Context, data any) {
+	dataMap, ok := data.(map[string]any)
+	if !ok {
+		return
+	}
+	for key, value := range dataMap {
+		var collectionName string
+		if strings.HasPrefix(key, "create_") {
+			collectionName = strings.TrimPrefix(key, "create_")
+		} else if strings.HasPrefix(key, "update_") {
+			collectionName = strings.TrimPrefix(key, "update_")
+		} else if strings.HasPrefix(key, "delete_") {
+			collectionName = strings.TrimPrefix(key, "delete_")
+		} else {
+			continue
+		}
+
+		col, err := w.GetCollectionByName(ctx, client.CollectionName(collectionName))
+		if err != nil {
+			continue
+		}
+		cw, ok := col.(*CollectionWrapper)
+		if !ok {
+			continue
+		}
+
+		docs, ok := value.([]any)
+		if !ok {
+			continue
+		}
+		for _, d := range docs {
+			doc, ok := d.(map[string]any)
+			if !ok {
+				continue
+			}
+			docID, _ := doc["_docID"].(string)
+			if docID == "" {
+				continue
+			}
+			compositeCid := cw.getLatestCompositeCID(ctx, docID)
+			w.events.Publish(event.NewMessage(event.UpdateName, event.Update{
+				DocID:        docID,
+				CollectionID: cw.version.CollectionID,
+				Cid:          compositeCid,
+			}))
+
+			if cw.version.IsBranchable {
+				w.events.Publish(event.NewMessage(event.UpdateName, event.Update{
+					DocID:        "",
+					CollectionID: cw.version.CollectionID,
+					Cid:          compositeCid,
+				}))
+			}
+		}
+	}
 }
 
 // pollGraphQLSubscription polls a GraphQL subscription and sends results to the channel.
@@ -1879,25 +1946,6 @@ func (c *CollectionWrapper) Create(ctx context.Context, doc *client.Document, op
 					if err == nil && doc.ID().String() != docID {
 						doc.SetDocID(newDocID)
 					}
-
-					// Get CID for the event
-					compositeCid := c.getLatestCompositeCID(ctx, docID)
-
-					// Publish document-level event
-					c.wrapper.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-						DocID:        docID,
-						CollectionID: c.version.CollectionID,
-						Cid:          compositeCid,
-					}))
-
-					// For branchable collections, also publish a collection-level event
-					if c.version.IsBranchable {
-						c.wrapper.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-							DocID:        "",
-							CollectionID: c.version.CollectionID,
-							Cid:          compositeCid,
-						}))
-					}
 				}
 			}
 		}
@@ -1928,23 +1976,6 @@ func (c *CollectionWrapper) Update(ctx context.Context, doc *client.Document) er
 	result := c.wrapper.ExecRequest(ctx, mutation)
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
-	}
-
-	// Publish update event with CID from latest composite commit
-	compositeCid := c.getLatestCompositeCID(ctx, doc.ID().String())
-	c.wrapper.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-		DocID:        doc.ID().String(),
-		CollectionID: c.version.CollectionID,
-		Cid:          compositeCid,
-	}))
-
-	// For branchable collections, also publish a collection-level event
-	if c.version.IsBranchable {
-		c.wrapper.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-			DocID:        "",
-			CollectionID: c.version.CollectionID,
-			Cid:          compositeCid,
-		}))
 	}
 
 	return nil
@@ -2022,28 +2053,13 @@ func (c *CollectionWrapper) Delete(ctx context.Context, docID client.DocID) (boo
 		return false, result.GQL.Errors[0]
 	}
 
-	// Publish update event for delete with CID (Go DefraDB emits update events for deletes too)
-	if data, ok := result.GQL.Data.(map[string]any); ok {
-		mutationKey := "delete_" + c.version.Name
-		if mutResult, ok := data[mutationKey].([]any); ok && len(mutResult) > 0 {
-			if docData, ok := mutResult[0].(map[string]any); ok {
-				if deletedDocID, ok := docData["_docID"].(string); ok {
-					compositeCid := c.getLatestCompositeCID(ctx, deletedDocID)
-					c.wrapper.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-						DocID:        deletedDocID,
-						CollectionID: c.version.CollectionID,
-						Cid:          compositeCid,
-					}))
-
-					// For branchable collections, also publish a collection-level event
-					if c.version.IsBranchable {
-						c.wrapper.events.Publish(event.NewMessage(event.UpdateName, event.Update{
-							DocID:        "",
-							CollectionID: c.version.CollectionID,
-							Cid:          compositeCid,
-						}))
-					}
-				}
+	// When ACP is active and the mutation returned empty results, the document was
+	// invisible or unauthorized. Return the same error as Go's collection.Delete().
+	if c.version.Policy.HasValue() {
+		if data, ok := result.GQL.Data.(map[string]any); ok {
+			key := fmt.Sprintf("delete_%s", c.version.Name)
+			if docs, ok := data[key].([]any); ok && len(docs) == 0 {
+				return false, fmt.Errorf("document not found or not authorized to access")
 			}
 		}
 	}
