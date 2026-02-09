@@ -47,9 +47,7 @@ func (a *ListLenses) Execute() {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-
 		lenses, err := node.ListLenses(a.s.Ctx)
-
 
 		if err != nil {
 			a.s.T.Fatalf("failed to list lenses: %v", err)

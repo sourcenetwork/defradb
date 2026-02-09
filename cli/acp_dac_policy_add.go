@@ -15,9 +15,10 @@ import (
 	"io"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/spf13/cobra"
 )
 
 func MakeDocumentACPPolicyAddCommand(ctx context.Context) *cobra.Command {

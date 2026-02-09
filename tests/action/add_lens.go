@@ -44,7 +44,6 @@ func (a *AddLens) Execute() {
 		var err error
 		lensID, err = node.AddLens(a.s.Ctx, a.Lens)
 
-
 		if err != nil {
 			a.s.T.Fatalf("failed to add lens: %v", err)
 		}

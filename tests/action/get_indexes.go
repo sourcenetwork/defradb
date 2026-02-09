@@ -63,7 +63,6 @@ func (a *GetIndexes) Execute() {
 	for _, nodeID := range nodeIDs {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
 
-
 		opts := options.CollectionGetIndexes()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {

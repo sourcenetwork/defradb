@@ -48,7 +48,6 @@ func (a *Truncate) Execute() {
 		nodeID := nodeIDs[index]
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionIndex]
 
-
 		opts := options.CollectionTruncate()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {

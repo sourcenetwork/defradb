@@ -14,9 +14,10 @@ import (
 	"context"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
-	"github.com/spf13/cobra"
 )
 
 func MakeP2PCollectionCreateCommand(ctx context.Context) *cobra.Command {
