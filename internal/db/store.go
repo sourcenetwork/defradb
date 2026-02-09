@@ -318,10 +318,12 @@ func (db *DB) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -329,7 +331,7 @@ func (db *DB) AddView(
 	}
 	defer txn.Discard()
 
-	defs, err := db.addView(ctx, query, sdl, transformCID)
+	defs, err := db.addView(ctx, query, sdl, opt.TransformCID)
 	if err != nil {
 		return nil, err
 	}

@@ -132,6 +132,7 @@ func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *h
 
 func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var message addViewRequest
 	err := requestJSON(req, &message)
@@ -140,7 +141,12 @@ func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defs, err := db.AddView(req.Context(), message.Query, message.SDL, message.TransformCID)
+	opt := options.AddView()
+	if message.TransformCID.HasValue() {
+		opt.SetTransformCID(message.TransformCID.Value())
+	}
+
+	defs, err := db.AddView(ctx, message.Query, message.SDL, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

@@ -334,13 +334,8 @@ func (b *VerifySignatureOptionsBuilder) List() []func(*VerifySignatureOptions) {
 
 // AddViewOptions contains options for AddView operation.
 type AddViewOptions struct {
-	// Identity is the identity of the actor performing the operation.
-	Identity immutable.Option[identity.Identity]
-}
-
-// GetIdentity returns the identity for the operation.
-func (o *AddViewOptions) GetIdentity() immutable.Option[identity.Identity] {
-	return o.Identity
+	// TransformCID is the CID of the lens transform to apply to the view.
+	TransformCID immutable.Option[string]
 }
 
 // AddViewOptionsBuilder is a builder for AddViewOptions.
@@ -353,10 +348,10 @@ func AddView() *AddViewOptionsBuilder {
 	return &AddViewOptionsBuilder{}
 }
 
-// SetIdentity sets the identity for the operation.
-func (b *AddViewOptionsBuilder) SetIdentity(id identity.Identity) *AddViewOptionsBuilder {
+// SetTransformCID sets the lens transform CID for the view.
+func (b *AddViewOptionsBuilder) SetTransformCID(cid string) *AddViewOptionsBuilder {
 	b.Opts = append(b.Opts, func(opts *AddViewOptions) {
-		opts.Identity = immutable.Some(id)
+		opts.TransformCID = immutable.Some(cid)
 	})
 	return b
 }

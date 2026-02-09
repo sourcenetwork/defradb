@@ -236,10 +236,10 @@ func (txn *Txn) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddView(ctx, gqlQuery, sdl, transformCID)
+	return txn.db.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
 func (txn *Txn) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {

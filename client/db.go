@@ -262,7 +262,7 @@ type Store interface {
 		ctx context.Context,
 		gqlQuery string,
 		sdl string,
-		transformCID immutable.Option[string],
+		opts ...options.Lister[options.AddViewOptions],
 	) ([]CollectionVersion, error)
 
 	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set, all views

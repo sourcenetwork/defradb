@@ -16,7 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeViewAddCommand(ctx context.Context) *cobra.Command {
@@ -42,12 +42,12 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			if err != nil {
 				return err
 			}
-			var transformCIDOpt immutable.Option[string]
+			var opts []options.Lister[options.AddViewOptions]
 			if lensCID != "" {
-				transformCIDOpt = immutable.Some(lensCID)
+				opts = append(opts, options.AddView().SetTransformCID(lensCID))
 			}
 
-			defs, err := cliClient.AddView(cmd.Context(), query, sdl, transformCIDOpt)
+			defs, err := cliClient.AddView(cmd.Context(), query, sdl, opts...)
 			if err != nil {
 				return err
 			}

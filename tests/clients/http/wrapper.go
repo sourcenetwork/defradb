@@ -288,9 +288,9 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	return w.client.AddView(ctx, query, sdl, transformCID)
+	return w.client.AddView(ctx, query, sdl, opts...)
 }
 
 func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {

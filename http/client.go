@@ -210,11 +210,13 @@ func (c *Client) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
+	opt := utils.NewOptions(opts...)
+
 	methodURL := c.http.apiURL.JoinPath("view")
 
-	body, err := json.Marshal(addViewRequest{query, sdl, transformCID})
+	body, err := json.Marshal(addViewRequest{query, sdl, opt.TransformCID})
 	if err != nil {
 		return nil, err
 	}

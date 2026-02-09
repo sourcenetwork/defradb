@@ -25,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
+	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/js"
 	"github.com/sourcenetwork/defradb/node"
 )
@@ -409,9 +410,11 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	transformCIDVal, err := goji.MarshalJS(transformCID)
+	opt := utils.NewOptions(opts...)
+
+	transformCIDVal, err := goji.MarshalJS(opt.TransformCID)
 	if err != nil {
 		return nil, err
 	}

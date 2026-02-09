@@ -676,9 +676,11 @@ func (w *CWrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	cTransformCID := C.CString(stringFromImmutableOptionString(transformCID))
+	opt := utils.NewOptions(opts...)
+
+	cTransformCID := C.CString(stringFromImmutableOptionString(opt.TransformCID))
 	cQuery := C.CString(query)
 	cSDL := C.CString(sdl)
 	defer C.free(unsafe.Pointer(cTransformCID))
