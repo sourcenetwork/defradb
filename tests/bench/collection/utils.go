@@ -75,7 +75,7 @@ func runCollectionBenchGetSync(b *testing.B,
 				collections[k].Get( //nolint:errcheck
 					ctx,
 					listOfDocIDs[j][k],
-					false,
+					
 				)
 			}
 		}
@@ -105,7 +105,7 @@ func runCollectionBenchGetAsync(b *testing.B,
 					col.Get( //nolint:errcheck
 						ctx,
 						docID,
-						false,
+						
 					)
 					wg.Done()
 				}(ctx, collections[k], listOfDocIDs[j][k])

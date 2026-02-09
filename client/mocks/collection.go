@@ -749,12 +749,12 @@ func (_c *Collection_Exists_Call) RunAndReturn(run func(ctx context.Context, doc
 }
 
 // Get provides a mock function for the type Collection
-func (_mock *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bool, opts ...options.Lister[options.CollectionGetOptions]) (*client.Document, error) {
+func (_mock *Collection) Get(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionGetOptions]) (*client.Document, error) {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, docID, showDeleted, opts)
+		tmpRet = _mock.Called(ctx, docID, opts)
 	} else {
-		tmpRet = _mock.Called(ctx, docID, showDeleted)
+		tmpRet = _mock.Called(ctx, docID)
 	}
 	ret := tmpRet
 
@@ -764,18 +764,18 @@ func (_mock *Collection) Get(ctx context.Context, docID client.DocID, showDelete
 
 	var r0 *client.Document
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, bool, ...options.Lister[options.CollectionGetOptions]) (*client.Document, error)); ok {
-		return returnFunc(ctx, docID, showDeleted, opts...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Lister[options.CollectionGetOptions]) (*client.Document, error)); ok {
+		return returnFunc(ctx, docID, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, bool, ...options.Lister[options.CollectionGetOptions]) *client.Document); ok {
-		r0 = returnFunc(ctx, docID, showDeleted, opts...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Lister[options.CollectionGetOptions]) *client.Document); ok {
+		r0 = returnFunc(ctx, docID, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.Document)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID, bool, ...options.Lister[options.CollectionGetOptions]) error); ok {
-		r1 = returnFunc(ctx, docID, showDeleted, opts...)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID, ...options.Lister[options.CollectionGetOptions]) error); ok {
+		r1 = returnFunc(ctx, docID, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -790,14 +790,13 @@ type Collection_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docID client.DocID
-//   - showDeleted bool
 //   - opts ...options.Lister[options.CollectionGetOptions]
-func (_e *Collection_Expecter) Get(ctx interface{}, docID interface{}, showDeleted interface{}, opts ...interface{}) *Collection_Get_Call {
+func (_e *Collection_Expecter) Get(ctx interface{}, docID interface{}, opts ...interface{}) *Collection_Get_Call {
 	return &Collection_Get_Call{Call: _e.mock.On("Get",
-		append([]interface{}{ctx, docID, showDeleted}, opts...)...)}
+		append([]interface{}{ctx, docID}, opts...)...)}
 }
 
-func (_c *Collection_Get_Call) Run(run func(ctx context.Context, docID client.DocID, showDeleted bool, opts ...options.Lister[options.CollectionGetOptions])) *Collection_Get_Call {
+func (_c *Collection_Get_Call) Run(run func(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionGetOptions])) *Collection_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -807,21 +806,16 @@ func (_c *Collection_Get_Call) Run(run func(ctx context.Context, docID client.Do
 		if args[1] != nil {
 			arg1 = args[1].(client.DocID)
 		}
-		var arg2 bool
-		if args[2] != nil {
-			arg2 = args[2].(bool)
-		}
-		var arg3 []options.Lister[options.CollectionGetOptions]
+		var arg2 []options.Lister[options.CollectionGetOptions]
 		var variadicArgs []options.Lister[options.CollectionGetOptions]
-		if len(args) > 3 {
-			variadicArgs = args[3].([]options.Lister[options.CollectionGetOptions])
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.CollectionGetOptions])
 		}
-		arg3 = variadicArgs
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
-			arg2,
-			arg3...,
+			arg2...,
 		)
 	})
 	return _c
@@ -832,7 +826,7 @@ func (_c *Collection_Get_Call) Return(document *client.Document, err error) *Col
 	return _c
 }
 
-func (_c *Collection_Get_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID, showDeleted bool, opts ...options.Lister[options.CollectionGetOptions]) (*client.Document, error)) *Collection_Get_Call {
+func (_c *Collection_Get_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionGetOptions]) (*client.Document, error)) *Collection_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }

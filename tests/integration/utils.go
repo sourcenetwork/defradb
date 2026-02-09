@@ -1239,7 +1239,7 @@ func updateDocViaColSave(
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(s.Ctx, docID, true, getOpts)
+	doc, err := collection.Get(s.Ctx, docID, getOpts.SetShowDeleted(true))
 	if err != nil {
 		return err
 	}
@@ -1271,7 +1271,7 @@ func updateDocViaColUpdate(
 	if identOption.HasValue() {
 		getOpts.SetIdentity(identOption.Value())
 	}
-	doc, err := collection.Get(s.Ctx, docID, true, getOpts)
+	doc, err := collection.Get(s.Ctx, docID, getOpts.SetShowDeleted(true))
 	if err != nil {
 		return err
 	}

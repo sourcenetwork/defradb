@@ -172,7 +172,7 @@ func (c *Collection) Save(
 	if opt.GetIdentity().HasValue() {
 		getOpts.SetIdentity(opt.GetIdentity().Value())
 	}
-	_, err := c.Get(ctx, doc.ID(), true, getOpts)
+	_, err := c.Get(ctx, doc.ID(), getOpts.SetShowDeleted(true))
 	if err == nil {
 		updateOpts := options.CollectionUpdate()
 		if opt.GetIdentity().HasValue() {
@@ -222,7 +222,7 @@ func (c *Collection) Exists(
 ) (bool, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
-	_, err := c.Get(ctx, docID, false)
+	_, err := c.Get(ctx, docID)
 	if err != nil {
 		return false, err
 	}
@@ -293,13 +293,12 @@ func (c *Collection) DeleteWithFilter(
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	showDeleted bool,
 	opts ...options.Lister[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	query := url.Values{}
-	if showDeleted {
+	if opt.ShowDeleted {
 		query.Add("show_deleted", "true")
 	}
 

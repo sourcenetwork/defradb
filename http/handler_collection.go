@@ -144,9 +144,12 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	getOpt := options.WithIdentity(options.CollectionGet(), identity.FromContext(ctx))
+	getOpt := options.WithIdentity(
+		options.CollectionGet().SetShowDeleted(true),
+		identity.FromContext(ctx),
+	)
 
-	doc, err := col.Get(ctx, docID, true, getOpt)
+	doc, err := col.Get(ctx, docID, getOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -208,9 +211,12 @@ func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	getOpt := options.WithIdentity(options.CollectionGet(), identity.FromContext(ctx))
+	getOpt := options.WithIdentity(
+		options.CollectionGet().SetShowDeleted(showDeleted),
+		identity.FromContext(ctx),
+	)
 
-	doc, err := col.Get(ctx, docID, showDeleted, getOpt)
+	doc, err := col.Get(ctx, docID, getOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

@@ -143,7 +143,11 @@ func (t *transaction) addView(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	cols, err := t.txn.AddView(ctx, gqlQuery, sdl, transformCID)
+	opts := options.AddView()
+	if transformCID.HasValue() {
+		opts.SetTransformCID(transformCID.Value())
+	}
+	cols, err := t.txn.AddView(ctx, gqlQuery, sdl, opts)
 	if err != nil {
 		return js.Undefined(), err
 	}

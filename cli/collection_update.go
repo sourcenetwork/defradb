@@ -61,9 +61,12 @@ func MakeCollectionUpdateCommand(ctx context.Context) *cobra.Command {
 					return err
 				}
 
-				getOpt := options.WithIdentity(options.CollectionGet(), identity.FromContext(ctx))
+				getOpt := options.WithIdentity(
+					options.CollectionGet().SetShowDeleted(true),
+					identity.FromContext(ctx),
+				)
 
-				doc, err := col.Get(ctx, docID, true, getOpt)
+				doc, err := col.Get(ctx, docID, getOpt)
 				if err != nil {
 					return err
 				}

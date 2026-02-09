@@ -29,13 +29,13 @@ import (
 func (c *collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	showDeleted bool,
 	opts ...options.Lister[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	opt := utils.NewOptions(opts...)
+	showDeleted := opt.ShowDeleted
 
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err

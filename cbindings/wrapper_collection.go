@@ -242,7 +242,7 @@ func (c *Collection) Save(
 	doc *client.Document,
 	opts ...options.Lister[options.CollectionSaveOptions],
 ) error {
-	_, err := c.Get(ctx, doc.ID(), true)
+	_, err := c.Get(ctx, doc.ID(), options.CollectionGet().SetShowDeleted(true))
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
@@ -438,11 +438,11 @@ func (c *Collection) DeleteWithFilter(
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	showDeleted bool,
 	opts ...options.Lister[options.CollectionGetOptions],
 ) (*client.Document, error) {
+	opt := utils.NewOptions(opts...)
 	var cShowDeleted C.int = 0
-	if showDeleted {
+	if opt.ShowDeleted {
 		cShowDeleted = 1
 	}
 
@@ -450,7 +450,7 @@ func (c *Collection) Get(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.Version().Name)
-	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	cIdentity := optionToUintptr(opt.GetIdentity())
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))

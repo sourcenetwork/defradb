@@ -93,7 +93,11 @@ func (c *Client) addView(this js.Value, args []js.Value) (js.Value, error) {
 	if err != nil {
 		return js.Undefined(), err
 	}
-	cols, err := c.node.DB.AddView(ctx, gqlQuery, sdl, transformCID)
+	opts := options.AddView()
+	if transformCID.HasValue() {
+		opts.SetTransformCID(transformCID.Value())
+	}
+	cols, err := c.node.DB.AddView(ctx, gqlQuery, sdl, opts)
 	if err != nil {
 		return js.Undefined(), err
 	}

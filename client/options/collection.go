@@ -202,6 +202,8 @@ func (b *CollectionDeleteOptionsBuilder) List() []func(*CollectionDeleteOptions)
 type CollectionGetOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
+	// ShowDeleted specifies whether to return deleted documents.
+	ShowDeleted bool
 }
 
 // GetIdentity returns the identity for the operation.
@@ -223,6 +225,14 @@ func CollectionGet() *CollectionGetOptionsBuilder {
 func (b *CollectionGetOptionsBuilder) SetIdentity(id identity.Identity) *CollectionGetOptionsBuilder {
 	b.Opts = append(b.Opts, func(opts *CollectionGetOptions) {
 		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// SetShowDeleted sets whether to return deleted documents.
+func (b *CollectionGetOptionsBuilder) SetShowDeleted(showDeleted bool) *CollectionGetOptionsBuilder {
+	b.Opts = append(b.Opts, func(opts *CollectionGetOptions) {
+		opts.ShowDeleted = showDeleted
 	})
 	return b
 }

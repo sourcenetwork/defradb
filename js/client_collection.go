@@ -161,7 +161,7 @@ func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	doc, err := c.col.Get(ctx, docID, true)
+	doc, err := c.col.Get(ctx, docID, options.CollectionGet().SetShowDeleted(true))
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -275,9 +275,9 @@ func (c *clientCollection) get(this js.Value, args []js.Value) (js.Value, error)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionGet()
+	opt := options.CollectionGet().SetShowDeleted(showDeleted)
 	setOptIdentity(opt, args, 2)
-	doc, err := c.col.Get(ctx, docID, showDeleted, opt)
+	doc, err := c.col.Get(ctx, docID, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

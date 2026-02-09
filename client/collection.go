@@ -99,7 +99,6 @@ type Collection interface {
 	Get(
 		ctx context.Context,
 		docID DocID,
-		showDeleted bool,
 		opts ...options.Lister[options.CollectionGetOptions],
 	) (*Document, error)
 

@@ -54,7 +54,7 @@ func (n *upsertNode) Next() (bool, error) {
 				return false, err
 			}
 			getOpts := options.WithIdentity(options.CollectionGet(), n.p.identity)
-			doc, err := n.collection.Get(n.p.ctx, docID, false, getOpts)
+			doc, err := n.collection.Get(n.p.ctx, docID, getOpts)
 			if err != nil {
 				return false, err
 			}
