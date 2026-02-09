@@ -1,3 +1,5 @@
+//go:build rust_ffi
+
 // Package rustffi provides Go bindings for the DefraDB Rust FFI.
 //
 // This package wraps the C FFI exposed by the Rust `ffi` crate,
@@ -7,12 +9,14 @@
 //   - Rust library must be built first: cargo build --release -p ffi
 //   - CGO must be enabled: CGO_ENABLED=1
 //   - CGO_LDFLAGS must point to the Rust library: -L<path>/target/release -lffi -ldl -lpthread -lm
+//   - Build tag: -tags rust_ffi
 //
 // Example:
-//   CGO_ENABLED=1 \
-//   CGO_LDFLAGS="-L/path/to/defradb.rs/target/release -lffi -ldl -lpthread -lm" \
-//   DEFRA_CLIENT_RUST_FFI=true \
-//   go test ./tests/integration/query/simple/...
+//
+//	CGO_ENABLED=1 \
+//	CGO_LDFLAGS="-L/path/to/defradb.rs/target/release -lffi -ldl -lpthread -lm" \
+//	DEFRA_CLIENT_RUST_FFI=true \
+//	go test -tags rust_ffi ./tests/integration/query/simple/...
 package rustffi
 
 /*
