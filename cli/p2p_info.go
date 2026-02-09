@@ -13,6 +13,8 @@ package cli
 import (
 	"context"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +25,8 @@ func MakeP2PInfoCommand(ctx context.Context) *cobra.Command {
 		Long:  `Get peer info from a DefraDB node`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			addresses, err := cliClient.PeerInfo(cmd.Context())
+			opt := options.WithIdentity(options.PeerInfo(), identity.FromContext(cmd.Context()))
+			addresses, err := cliClient.PeerInfo(cmd.Context(), opt)
 			if err != nil {
 				return err
 			}
