@@ -678,19 +678,182 @@ func (w *Wrapper) PatchCollection(
 	patch string,
 	migration immutable.Option[lensmodel.Lens],
 ) error {
-	// Group patch operations by collection name and apply each group separately.
-	// Relation patches touch multiple collections (e.g., Book and Author).
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
 	}
 
+	// Parse all operations to classify into collection-level removes vs modifications.
+	// Go's patchCollection operates on a global dict of all versions atomically.
+	// The FFI wrapper must coordinate these since Rust operates per-collection.
+	var allOps []json.RawMessage
+	if err := json.Unmarshal([]byte(patch), &allOps); err != nil {
+		return fmt.Errorf("failed to parse patch JSON: %w", err)
+	}
+
+	type patchOp struct {
+		Op   string `json:"op"`
+		Path string `json:"path"`
+		From string `json:"from,omitempty"`
+	}
+
+	var removeTargets []string // collection names or version IDs to delete
+	var modOps []json.RawMessage
+	var hasCopy bool
+
+	for _, raw := range allOps {
+		var op patchOp
+		if err := json.Unmarshal(raw, &op); err != nil {
+			return fmt.Errorf("failed to parse patch operation: %w", err)
+		}
+
+		if op.Op == "remove" {
+			// Collection-level: path has no subpath (e.g., "/Users", "/bafyrei...")
+			// Field-level: path has subpath (e.g., "/Users/Name", "/Users/Fields/0")
+			target := strings.TrimPrefix(op.Path, "/")
+			if strings.Contains(target, "/") {
+				modOps = append(modOps, raw)
+			} else {
+				removeTargets = append(removeTargets, target)
+			}
+		} else {
+			modOps = append(modOps, raw)
+			if op.Op == "copy" {
+				hasCopy = true
+			}
+		}
+	}
+
+	// No collection-level removes — use the original grouping logic
+	if len(removeTargets) == 0 {
+		return w.applyPatchGroups(identityDID, patch, migration)
+	}
+
+	// Handle copy+add+remove pattern: rewrite as add-field on source, no deletion.
+	// In Go, copy creates a dict entry, add modifies it, remove deletes the source.
+	// The net effect is identical to add-field on the source collection.
+	if hasCopy && len(modOps) > 0 {
+		var copyOp patchOp
+		var addOps []json.RawMessage
+		for _, raw := range modOps {
+			var op patchOp
+			if err := json.Unmarshal(raw, &op); err != nil {
+				continue
+			}
+			if op.Op == "copy" {
+				copyOp = op
+			} else {
+				addOps = append(addOps, raw)
+			}
+		}
+
+		if copyOp.Op == "copy" {
+			copyFrom := strings.TrimPrefix(copyOp.From, "/")
+			if idx := strings.Index(copyFrom, "/"); idx != -1 {
+				copyFrom = copyFrom[:idx]
+			}
+			copyTo := strings.TrimPrefix(copyOp.Path, "/")
+			if idx := strings.Index(copyTo, "/"); idx != -1 {
+				copyTo = copyTo[:idx]
+			}
+
+			isSourceRemoved := false
+			for _, target := range removeTargets {
+				if target == copyFrom {
+					isSourceRemoved = true
+					break
+				}
+			}
+
+			if isSourceRemoved && len(addOps) > 0 {
+				// Rewrite add ops targeting the copy destination to target the source
+				var rewrittenOps []json.RawMessage
+				for _, raw := range addOps {
+					rawStr := string(raw)
+					rawStr = strings.ReplaceAll(rawStr, "/"+copyTo+"/", "/"+copyFrom+"/")
+					rawStr = strings.ReplaceAll(rawStr, "\""+copyTo+"\"", "\""+copyFrom+"\"")
+					rewrittenOps = append(rewrittenOps, json.RawMessage(rawStr))
+				}
+				rewrittenPatch, err := json.Marshal(rewrittenOps)
+				if err != nil {
+					return fmt.Errorf("failed to marshal rewritten patch: %w", err)
+				}
+				// Apply as add-field. The old version becomes inactive automatically.
+				_, err = w.node.PatchCollection(identityDID, copyFrom, string(rewrittenPatch))
+				return err
+			}
+		}
+	}
+
+	// Resolve remove targets to version IDs BEFORE applying any mods.
+	// This captures the current state so we know which versions to delete.
+	removeVersionIDs, err := w.resolveRemoveTargets(identityDID, removeTargets)
+	if err != nil {
+		return err
+	}
+
+	// Build a set of version IDs being deleted, so we can skip mods targeting them.
+	// In Go's global dict model, if an entry is both modified and removed, the remove wins.
+	removeSet := make(map[string]bool, len(removeVersionIDs))
+	for _, vid := range removeVersionIDs {
+		removeSet[vid] = true
+	}
+
+	// Filter mod groups: skip any whose target collection's version_id is being deleted.
+	var filteredModOps []json.RawMessage
+	if len(modOps) > 0 {
+		for _, raw := range modOps {
+			var op patchOp
+			if err := json.Unmarshal(raw, &op); err != nil {
+				filteredModOps = append(filteredModOps, raw)
+				continue
+			}
+			// Extract collection name from the path
+			target := strings.TrimPrefix(op.Path, "/")
+			if idx := strings.Index(target, "/"); idx != -1 {
+				target = target[:idx]
+			}
+			// Resolve target to version_id
+			targetVID := w.resolveToVersionID(identityDID, target)
+			if removeSet[targetVID] {
+				continue // Skip: this collection is being deleted
+			}
+			filteredModOps = append(filteredModOps, raw)
+		}
+	}
+
+	// Execute batch delete FIRST (before mods).
+	// This is needed for cases like remove+reactivate (Test 4) where the
+	// reactivation can only succeed after the conflicting active version is deleted.
+	if len(removeVersionIDs) > 0 {
+		if err := w.node.DeleteCollectionVersions(identityDID, removeVersionIDs); err != nil {
+			return err
+		}
+	}
+
+	// Apply remaining modification ops
+	if len(filteredModOps) > 0 {
+		modPatch, err := json.Marshal(filteredModOps)
+		if err != nil {
+			return fmt.Errorf("failed to marshal modification ops: %w", err)
+		}
+		return w.applyPatchGroups(identityDID, string(modPatch), migration)
+	}
+
+	return nil
+}
+
+// applyPatchGroups groups a patch by collection and applies each group.
+func (w *Wrapper) applyPatchGroups(
+	identityDID string,
+	patch string,
+	migration immutable.Option[lensmodel.Lens],
+) error {
 	groups, err := groupPatchByCollection(patch)
 	if err != nil {
 		return err
 	}
 	for _, g := range groups {
-		// If migration provided, capture old version ID before patching
 		var oldVersionID string
 		if migration.HasValue() {
 			oldCollJSON, err := w.node.GetCollectionByName(identityDID, g.Name)
@@ -707,8 +870,6 @@ func (w *Wrapper) PatchCollection(
 			return err
 		}
 
-		// If migration was provided, register it linking old → new version.
-		// This matches Go's patchCollection behavior in collection_define.go.
 		if migration.HasValue() && oldVersionID != "" {
 			var newVersion client.CollectionVersion
 			if err := json.Unmarshal([]byte(newSchemaJSON), &newVersion); err != nil {
@@ -731,6 +892,29 @@ func (w *Wrapper) PatchCollection(
 		}
 	}
 	return nil
+}
+
+// resolveRemoveTargets resolves collection names or version IDs to version IDs.
+func (w *Wrapper) resolveRemoveTargets(identityDID string, targets []string) ([]string, error) {
+	var versionIDs []string
+	for _, target := range targets {
+		vid := w.resolveToVersionID(identityDID, target)
+		versionIDs = append(versionIDs, vid)
+	}
+	return versionIDs, nil
+}
+
+// resolveToVersionID resolves a collection name to its active version ID,
+// or returns the input unchanged if it's already a version ID.
+func (w *Wrapper) resolveToVersionID(identityDID string, nameOrID string) string {
+	collJSON, err := w.node.GetCollectionByName(identityDID, nameOrID)
+	if err == nil {
+		var version client.CollectionVersion
+		if err := json.Unmarshal([]byte(collJSON), &version); err == nil {
+			return version.VersionID
+		}
+	}
+	return nameOrID
 }
 
 func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {

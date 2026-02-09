@@ -607,6 +607,35 @@ func (n *Node) DeleteCollection(identityDID string, name string) error {
 	return nil
 }
 
+// DeleteCollectionVersions deletes multiple collection versions by their version IDs.
+// Versions are deleted in topological order (children before parents).
+func (n *Node) DeleteCollectionVersions(identityDID string, versionIDs []string) error {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	idsJSON, err := json.Marshal(versionIDs)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal version IDs: %w", err)
+	}
+
+	cIDs := C.CString(string(idsJSON))
+	defer C.free(unsafe.Pointer(cIDs))
+
+	result := C.delete_collection_versions(n.ptr, cIdentityDID, cIDs)
+
+	if result.status != 0 {
+		errStr := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: delete_collection_versions failed: %s", errStr)
+	}
+
+	C.defra_free_string(result.value)
+	return nil
+}
+
 // TruncateCollection deletes all documents from a collection while preserving the schema.
 func (n *Node) TruncateCollection(identityDID string, name string) error {
 	var cIdentityDID *C.char

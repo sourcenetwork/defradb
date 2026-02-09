@@ -775,6 +775,30 @@ struct FfiResult set_migration_in_txn(uintptr_t node_ptr,
                                       const char *config);
 
 /*
+ Delete multiple collection versions by their version IDs.
+
+ Takes a JSON array of version ID strings. Versions are deleted in
+ topological order (children before parents).
+
+ # Arguments
+
+ * `node_ptr` - Handle to the node
+ * `version_ids_json` - JSON array of version ID strings
+
+ # Returns
+
+ - Status 0: Success (value is "{}")
+ - Status 1: Error (error field contains message)
+
+ # Safety
+
+ `version_ids_json` must be a valid null-terminated UTF-8 string.
+ */
+struct FfiResult delete_collection_versions(uintptr_t node_ptr,
+                                            const char *identity_did,
+                                            const char *version_ids_json);
+
+/*
  Create document(s) in a collection.
 
  This function automatically detects whether the input is a single document
