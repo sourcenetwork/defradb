@@ -1,3 +1,13 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
 // Package rustffi provides Go bindings for the DefraDB Rust FFI.
 //
 // This file implements the DefraDB client.TxnStore interface for integration testing.
@@ -13,6 +23,7 @@ import (
 	"time"
 
 	gocid "github.com/ipfs/go-cid"
+
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
@@ -21,6 +32,14 @@ import (
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/immutable"
 	lensmodel "github.com/sourcenetwork/lens/host-go/config/model"
+)
+
+const (
+	// nullStr is the string representation of a null value.
+	nullStr = "null"
+
+	// copyOp is the JSON Patch "copy" operation name.
+	copyOp = "copy"
 )
 
 // jsonToGraphQLInput converts a JSON object to GraphQL input format.
@@ -41,7 +60,7 @@ func jsonToGraphQLInput(jsonStr string) string {
 func valueToGQLInput(v any) string {
 	switch val := v.(type) {
 	case nil:
-		return "null"
+		return nullStr
 	case bool:
 		if val {
 			return "true"
@@ -87,12 +106,12 @@ var _ clients.Client = (*Wrapper)(nil)
 
 // Wrapper wraps an FFI Node to implement the DefraDB client.TxnStore interface.
 type Wrapper struct {
-	node             *Node
-	events           *eventBus
-	txnIDGen         uint64
-	stopMergePoller  chan struct{}
-	stopSEForwarder  chan struct{}
-	goNodeCloser     func() // Called during Close() to release Go node resources (e.g. badger lock)
+	node            *Node
+	events          *eventBus
+	txnIDGen        uint64
+	stopMergePoller chan struct{}
+	stopSEForwarder chan struct{}
+	goNodeCloser    func() // Called during Close() to release Go node resources (e.g. badger lock)
 }
 
 // SourceHubConfig holds SourceHub connection info for Rust FFI nodes.
@@ -108,7 +127,12 @@ type SourceHubConfig struct {
 // If nodeIdentity is provided and enableSigning is true, the identity's private key
 // will be passed to the Rust FFI for block signing.
 // If dbPath is non-empty, the node uses file-based (redb) storage at that path.
-func NewWrapper(enableSigning bool, nodeIdentity identity.Identity, dbPath string, shConfig *SourceHubConfig) (*Wrapper, error) {
+func NewWrapper(
+	enableSigning bool,
+	nodeIdentity identity.Identity,
+	dbPath string,
+	shConfig *SourceHubConfig,
+) (*Wrapper, error) {
 	Init() // Initialize FFI library
 
 	opts := NodeOptions{EnableSigning: enableSigning}
@@ -152,7 +176,13 @@ func NewWrapper(enableSigning bool, nodeIdentity identity.Identity, dbPath strin
 // If nodeIdentity is provided and enableSigning is true, the identity's private key
 // will be passed to the Rust FFI for block signing.
 // If dbPath is non-empty, the node uses file-based (redb) storage at that path.
-func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity identity.Identity, dbPath string, shConfig *SourceHubConfig) (*Wrapper, error) {
+func NewWrapperWithP2P(
+	listenAddr string,
+	enableSigning bool,
+	nodeIdentity identity.Identity,
+	dbPath string,
+	shConfig *SourceHubConfig,
+) (*Wrapper, error) {
 	Init() // Initialize FFI library
 
 	opts := NodeOptions{EnableSigning: enableSigning}
@@ -191,38 +221,39 @@ func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity ident
 	// Start merge complete event poller that bridges Rust events to Go eventBus
 	mergeSub, err := node.SubscribeMergeComplete()
 	if err != nil {
-		node.Close()
+		_ = node.Close()
 		return nil, fmt.Errorf("failed to create merge complete subscription: %w", err)
 	}
 
 	go func() {
 		defer mergeSub.Close()
-		fmt.Println("[FFI-MERGE-POLLER] Started merge complete poller")
+		fmt.Println("[FFI-MERGE-POLLER] Started merge complete poller") //nolint:forbidigo
 		for {
 			select {
 			case <-stopCh:
-				fmt.Println("[FFI-MERGE-POLLER] Stop signal received")
+				fmt.Println("[FFI-MERGE-POLLER] Stop signal received") //nolint:forbidigo
 				return
 			default:
 			}
 
 			result, err := mergeSub.Poll()
 			if err != nil {
-				fmt.Printf("[FFI-MERGE-POLLER] Poll error: %v\n", err)
+				fmt.Printf("[FFI-MERGE-POLLER] Poll error: %v\n", err) //nolint:forbidigo
 				continue
 			}
 			if result.IsClosed {
-				fmt.Println("[FFI-MERGE-POLLER] Subscription closed")
+				fmt.Println("[FFI-MERGE-POLLER] Subscription closed") //nolint:forbidigo
 				return
 			}
 			if result.HasEvent && result.Event != nil {
+				//nolint:forbidigo
 				fmt.Printf("[FFI-MERGE-POLLER] Got event: type=%s doc_id=%s cid=%s collection=%s by_peer=%s\n",
 					result.Event.Type, result.Event.DocID, result.Event.CID,
 					result.Event.CollectionID, result.Event.ByPeer)
 				if result.Event.Type == "merge_complete" {
 					cidObj, cidErr := gocid.Decode(result.Event.CID)
 					if cidErr != nil {
-						fmt.Printf("[FFI-MERGE-POLLER] CID decode error: %v\n", cidErr)
+						fmt.Printf("[FFI-MERGE-POLLER] CID decode error: %v\n", cidErr) //nolint:forbidigo
 						continue
 					}
 					mc := event.MergeComplete{
@@ -233,17 +264,19 @@ func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity ident
 							ByPeer:       result.Event.ByPeer,
 						},
 					}
+					//nolint:forbidigo
 					fmt.Printf("[FFI-MERGE-POLLER] Publishing MergeComplete to Go event bus: doc=%s cid=%s\n",
 						mc.Merge.DocID, mc.Merge.Cid)
 					eb.Publish(event.NewMessage(event.MergeCompleteName, mc))
 					continue
 				}
 				if result.Event.Type == "replicator_completed" {
-					fmt.Println("[FFI-MERGE-POLLER] Publishing ReplicatorCompleted to Go event bus")
+					fmt.Println("[FFI-MERGE-POLLER] Publishing ReplicatorCompleted to Go event bus") //nolint:forbidigo
 					eb.Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
 					continue
 				}
 				if result.Event.Type == "topic_peer_event" {
+					//nolint:forbidigo
 					fmt.Printf("[FFI-MERGE-POLLER] Publishing TopicPeerEvent to Go event bus: peer=%s topic=%s type=%s\n",
 						result.Event.PeerID, result.Event.Topic, result.Event.EventType)
 					eb.Publish(event.NewMessage(event.TopicPeerEventName, event.TopicPeerEvent{
@@ -254,6 +287,7 @@ func NewWrapperWithP2P(listenAddr string, enableSigning bool, nodeIdentity ident
 					continue
 				}
 				if result.Event.Type == "se_artifact_received" {
+					//nolint:forbidigo
 					fmt.Printf("[FFI-MERGE-POLLER] Publishing SEArtifactReceived to Go event bus: doc=%s\n",
 						result.Event.DocID)
 					eb.Publish(event.NewMessage(event.SEArtifactReceivedName, event.SEArtifactReceived{
@@ -366,7 +400,7 @@ func (w *Wrapper) Close() {
 		w.stopMergePoller = nil
 	}
 	if w.node != nil {
-		w.node.Close()
+		_ = w.node.Close()
 		w.node = nil
 	}
 	if w.events != nil {
@@ -401,7 +435,7 @@ func (w *Wrapper) ForwardSEEvents(goBus event.Bus) error {
 				if !ok {
 					return
 				}
-				fmt.Printf("[SE-FORWARDER] Forwarding SE event to wrapper bus: %s\n", msg.Name)
+				fmt.Printf("[SE-FORWARDER] Forwarding SE event to wrapper bus: %s\n", msg.Name) //nolint:forbidigo
 				w.events.Publish(msg)
 			}
 		}
@@ -551,7 +585,7 @@ func (w *Wrapper) emitMutationEvents(ctx context.Context, data any) {
 			continue
 		}
 
-		col, err := w.GetCollectionByName(ctx, client.CollectionName(collectionName))
+		col, err := w.GetCollectionByName(ctx, collectionName)
 		if err != nil {
 			continue
 		}
@@ -594,7 +628,7 @@ func (w *Wrapper) emitMutationEvents(ctx context.Context, data any) {
 // pollGraphQLSubscription polls a GraphQL subscription and sends results to the channel.
 func (w *Wrapper) pollGraphQLSubscription(ctx context.Context, subscriptionID string, ch chan client.GQLResult) {
 	defer close(ch)
-	defer CloseGraphQLSubscription(subscriptionID)
+	defer func() { _ = CloseGraphQLSubscription(subscriptionID) }()
 
 	for {
 		select {
@@ -710,7 +744,7 @@ func (w *Wrapper) GetCollections(
 		if err != nil {
 			return nil, err
 		}
-		if versionJSON == "null" || versionJSON == "" {
+		if versionJSON == nullStr || versionJSON == "" {
 			return nil, fmt.Errorf("key not found")
 		}
 		var version client.CollectionVersion
@@ -845,7 +879,7 @@ func (w *Wrapper) PatchCollection(
 			}
 		} else {
 			modOps = append(modOps, raw)
-			if op.Op == "copy" {
+			if op.Op == copyOp {
 				hasCopy = true
 			}
 		}
@@ -860,26 +894,26 @@ func (w *Wrapper) PatchCollection(
 	// In Go, copy creates a dict entry, add modifies it, remove deletes the source.
 	// The net effect is identical to add-field on the source collection.
 	if hasCopy && len(modOps) > 0 {
-		var copyOp patchOp
+		var copyPatchOp patchOp
 		var addOps []json.RawMessage
 		for _, raw := range modOps {
 			var op patchOp
 			if err := json.Unmarshal(raw, &op); err != nil {
 				continue
 			}
-			if op.Op == "copy" {
-				copyOp = op
+			if op.Op == copyOp {
+				copyPatchOp = op
 			} else {
 				addOps = append(addOps, raw)
 			}
 		}
 
-		if copyOp.Op == "copy" {
-			copyFrom := strings.TrimPrefix(copyOp.From, "/")
+		if copyPatchOp.Op == copyOp {
+			copyFrom := strings.TrimPrefix(copyPatchOp.From, "/")
 			if idx := strings.Index(copyFrom, "/"); idx != -1 {
 				copyFrom = copyFrom[:idx]
 			}
-			copyTo := strings.TrimPrefix(copyOp.Path, "/")
+			copyTo := strings.TrimPrefix(copyPatchOp.Path, "/")
 			if idx := strings.Index(copyTo, "/"); idx != -1 {
 				copyTo = copyTo[:idx]
 			}
@@ -1111,7 +1145,8 @@ func (w *Wrapper) AddDACActorRelationship(
 	}
 	added, err := w.node.AddDACActorRelationship(requestorDID, targetActor, collectionName, docID, relation)
 	if err != nil {
-		return client.AddActorRelationshipResult{}, fmt.Errorf("failed to add document actor relationship with acp: %w", err)
+		return client.AddActorRelationshipResult{},
+			fmt.Errorf("failed to add document actor relationship with acp: %w", err)
 	}
 
 	// Emit update event when relationship is newly added (matches Go behavior)
@@ -1135,7 +1170,8 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	}
 	deleted, err := w.node.DeleteDACActorRelationship(requestorDID, targetActor, collectionName, docID, relation)
 	if err != nil {
-		return client.DeleteActorRelationshipResult{}, fmt.Errorf("failed to delete document actor relationship with acp: %w", err)
+		return client.DeleteActorRelationshipResult{},
+			fmt.Errorf("failed to delete document actor relationship with acp: %w", err)
 	}
 
 	// Emit update event when relationship is deleted (matches Go behavior)
@@ -1150,7 +1186,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 // This matches Go DefraDB behavior where relationship add/delete triggers an update event
 // so the test framework's waitForUpdateEvents can synchronize.
 func (w *Wrapper) publishRelationshipEvent(ctx context.Context, collectionName string, docID string) {
-	col, err := w.GetCollectionByName(ctx, client.CollectionName(collectionName))
+	col, err := w.GetCollectionByName(ctx, collectionName)
 	if err != nil {
 		return
 	}
@@ -1370,10 +1406,12 @@ func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) 
 // ============================================================================
 
 func (w *Wrapper) PrintDump(ctx context.Context) error {
-	return fmt.Errorf("PrintDump not yet implemented in FFI")
+	return fmt.Errorf("printDump not yet implemented in FFI")
 }
 
-func (w *Wrapper) ListAllEncryptedIndexes(ctx context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+func (w *Wrapper) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
@@ -1393,7 +1431,7 @@ func (w *Wrapper) ListAllEncryptedIndexes(ctx context.Context) (map[client.Colle
 				Type:      client.EncryptedIndexType(idx.Type),
 			}
 		}
-		result[client.CollectionName(collName)] = clientIndexes
+		result[collName] = clientIndexes
 	}
 	return result, nil
 }
@@ -1587,7 +1625,11 @@ func (t *TxnWrapper) Discard() {
 }
 
 // Delegate Store methods to the underlying transaction
-func (t *TxnWrapper) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
+func (t *TxnWrapper) ExecRequest(
+	ctx context.Context,
+	request string,
+	opts ...client.RequestOption,
+) *client.RequestResult {
 	gqlOpts := &client.GQLOptions{}
 	for _, opt := range opts {
 		opt(gqlOpts)
@@ -1650,7 +1692,10 @@ func (t *TxnWrapper) GetCollectionByName(ctx context.Context, name client.Collec
 	return t.wrapper.GetCollectionByName(ctx, name)
 }
 
-func (t *TxnWrapper) GetCollections(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error) {
+func (t *TxnWrapper) GetCollections(
+	ctx context.Context,
+	options client.CollectionFetchOptions,
+) ([]client.Collection, error) {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
@@ -1697,11 +1742,17 @@ func (t *TxnWrapper) SetActiveCollectionVersion(ctx context.Context, versionID s
 	return t.wrapper.SetActiveCollectionVersion(ctx, versionID)
 }
 
-func (t *TxnWrapper) PatchCollection(ctx context.Context, patch string, migration immutable.Option[lensmodel.Lens]) error {
+func (t *TxnWrapper) PatchCollection(
+	ctx context.Context,
+	patch string,
+	migration immutable.Option[lensmodel.Lens],
+) error {
 	return t.wrapper.PatchCollection(ctx, patch, migration)
 }
 
-func (t *TxnWrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
+func (t *TxnWrapper) GetAllIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.IndexDescription, error) {
 	return t.wrapper.GetAllIndexes(ctx)
 }
 
@@ -1709,19 +1760,31 @@ func (t *TxnWrapper) AddDACPolicy(ctx context.Context, policy string) (client.Ad
 	return t.wrapper.AddDACPolicy(ctx, policy)
 }
 
-func (t *TxnWrapper) AddDACActorRelationship(ctx context.Context, collectionName, docID, relation, targetActor string) (client.AddActorRelationshipResult, error) {
+func (t *TxnWrapper) AddDACActorRelationship(
+	ctx context.Context,
+	collectionName, docID, relation, targetActor string,
+) (client.AddActorRelationshipResult, error) {
 	return t.wrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
-func (t *TxnWrapper) DeleteDACActorRelationship(ctx context.Context, collectionName, docID, relation, targetActor string) (client.DeleteActorRelationshipResult, error) {
+func (t *TxnWrapper) DeleteDACActorRelationship(
+	ctx context.Context,
+	collectionName, docID, relation, targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
 	return t.wrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
 }
 
-func (t *TxnWrapper) AddNACActorRelationship(ctx context.Context, relation, targetActor string) (client.AddActorRelationshipResult, error) {
+func (t *TxnWrapper) AddNACActorRelationship(
+	ctx context.Context,
+	relation, targetActor string,
+) (client.AddActorRelationshipResult, error) {
 	return t.wrapper.AddNACActorRelationship(ctx, relation, targetActor)
 }
 
-func (t *TxnWrapper) DeleteNACActorRelationship(ctx context.Context, relation, targetActor string) (client.DeleteActorRelationshipResult, error) {
+func (t *TxnWrapper) DeleteNACActorRelationship(
+	ctx context.Context,
+	relation, targetActor string,
+) (client.DeleteActorRelationshipResult, error) {
 	return t.wrapper.DeleteNACActorRelationship(ctx, relation, targetActor)
 }
 
@@ -1737,7 +1800,9 @@ func (t *TxnWrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, 
 	return t.wrapper.GetNACStatus(ctx)
 }
 
-func (t *TxnWrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+func (t *TxnWrapper) GetNodeIdentity(
+	ctx context.Context,
+) (immutable.Option[identity.PublicRawIdentity], error) {
 	return t.wrapper.GetNodeIdentity(ctx)
 }
 
@@ -1745,7 +1810,11 @@ func (t *TxnWrapper) VerifySignature(ctx context.Context, blockCid string, pubKe
 	return t.wrapper.VerifySignature(ctx, blockCid, pubKey)
 }
 
-func (t *TxnWrapper) AddView(ctx context.Context, gqlQuery, sdl string, transformCID immutable.Option[string]) ([]client.CollectionVersion, error) {
+func (t *TxnWrapper) AddView(
+	ctx context.Context,
+	gqlQuery, sdl string,
+	transformCID immutable.Option[string],
+) ([]client.CollectionVersion, error) {
 	return t.wrapper.AddView(ctx, gqlQuery, sdl, transformCID)
 }
 
@@ -1777,56 +1846,58 @@ func (t *TxnWrapper) PrintDump(ctx context.Context) error {
 	return t.wrapper.PrintDump(ctx)
 }
 
-func (t *TxnWrapper) ListAllEncryptedIndexes(ctx context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+func (t *TxnWrapper) ListAllEncryptedIndexes(
+	ctx context.Context,
+) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	return t.wrapper.ListAllEncryptedIndexes(ctx)
 }
 
 // P2P methods - not available in transactions
 func (t *TxnWrapper) PeerInfo(ctx context.Context) ([]string, error) {
-	return nil, fmt.Errorf("P2P not available")
+	return nil, fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) ActivePeers(ctx context.Context) ([]string, error) {
-	return nil, fmt.Errorf("P2P not available")
+	return nil, fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) Connect(ctx context.Context, addresses []string) error {
-	return fmt.Errorf("P2P not available")
+	return fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
-	return fmt.Errorf("P2P not available")
+	return fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
-	return fmt.Errorf("P2P not available")
+	return fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
-	return nil, fmt.Errorf("P2P not available")
+	return nil, fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
-	return fmt.Errorf("P2P not available")
+	return fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
-	return fmt.Errorf("P2P not available")
+	return fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
-	return nil, fmt.Errorf("P2P not available")
+	return nil, fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
-	return fmt.Errorf("P2P not available")
+	return fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
-	return fmt.Errorf("P2P not available")
+	return fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) ListP2PDocuments(ctx context.Context) ([]string, error) {
-	return nil, fmt.Errorf("P2P not available")
+	return nil, fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
-	return fmt.Errorf("P2P not available")
+	return fmt.Errorf("p2p not available")
 }
 func (t *TxnWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
-	return fmt.Errorf("P2P not available")
+	return fmt.Errorf("p2p not available")
 }
 
 func (t *TxnWrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
-	return fmt.Errorf("P2P not available")
+	return fmt.Errorf("p2p not available")
 }
 
 // ============================================================================
@@ -1848,7 +1919,7 @@ func (e *eventBus) Publish(msg event.Message) {
 	}
 	// Recover from send-on-closed-channel if Close() races with Publish()
 	defer func() {
-		if r := recover(); r != nil {
+		if r := recover(); r != nil { //nolint:staticcheck
 			// Channel was closed between our check and the send; safe to ignore.
 		}
 	}()
@@ -1863,13 +1934,15 @@ func (e *eventBus) Publish(msg event.Message) {
 				case es.ch <- msg:
 					delivered++
 				default:
-					fmt.Printf("[GO-EVENT-BUS] Channel full for event=%s\n", msg.Name)
+					fmt.Printf("[GO-EVENT-BUS] Channel full for event=%s\n", msg.Name) //nolint:forbidigo
 				}
 			}
 		}
 	}
 	if msg.Name == event.MergeCompleteName || msg.Name == event.ReplicatorCompletedName {
-		fmt.Printf("[GO-EVENT-BUS] Publish event=%s total_subs=%d delivered=%d\n", msg.Name, total, delivered)
+		//nolint:forbidigo
+		fmt.Printf("[GO-EVENT-BUS] Publish event=%s total_subs=%d delivered=%d\n",
+			msg.Name, total, delivered)
 	}
 }
 
@@ -1879,7 +1952,7 @@ func (e *eventBus) Subscribe(events ...event.Name) (event.Subscription, error) {
 		events: events,
 	}
 	e.subs = append(e.subs, sub)
-	fmt.Printf("[GO-EVENT-BUS] Subscribe events=%v total_subs=%d\n", events, len(e.subs))
+	fmt.Printf("[GO-EVENT-BUS] Subscribe events=%v total_subs=%d\n", events, len(e.subs)) //nolint:forbidigo
 	return sub, nil
 }
 
@@ -1971,9 +2044,7 @@ func (c *CollectionWrapper) Create(ctx context.Context, doc *client.Document, op
 	}
 	if len(createDocOpts.EncryptedFields) > 0 {
 		fields := make([]string, len(createDocOpts.EncryptedFields))
-		for i, f := range createDocOpts.EncryptedFields {
-			fields[i] = f
-		}
+		copy(fields, createDocOpts.EncryptedFields)
 		params += ", encryptFields: [" + strings.Join(fields, ", ") + "]"
 	}
 	mutation := fmt.Sprintf(`mutation { create_%s(%s) { _docID } }`, c.version.Name, params)
@@ -2003,7 +2074,11 @@ func (c *CollectionWrapper) Create(ctx context.Context, doc *client.Document, op
 	return nil
 }
 
-func (c *CollectionWrapper) CreateMany(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption) error {
+func (c *CollectionWrapper) CreateMany(
+	ctx context.Context,
+	docs []*client.Document,
+	opts ...client.DocCreateOption,
+) error {
 	for _, doc := range docs {
 		if err := c.Create(ctx, doc, opts...); err != nil {
 			return err
@@ -2130,7 +2205,11 @@ func (c *CollectionWrapper) Exists(ctx context.Context, docID client.DocID) (boo
 	return false, nil
 }
 
-func (c *CollectionWrapper) UpdateWithFilter(ctx context.Context, filter any, updater string) (*client.UpdateResult, error) {
+func (c *CollectionWrapper) UpdateWithFilter(
+	ctx context.Context,
+	filter any,
+	updater string,
+) (*client.UpdateResult, error) {
 	// Validate filter (mirrors Go's collection_update.go makeSelectionPlan validation)
 	var gqlFilter string
 	switch f := filter.(type) {
@@ -2328,7 +2407,11 @@ func (c *CollectionWrapper) Get(ctx context.Context, docID client.DocID, showDel
 	}
 
 	// Convert JSON types (json.Number -> int64/float64, datetime strings -> time.Time)
-	docData = convertDateTimeStrings(docData).(map[string]any)
+	converted, ok := convertDateTimeStrings(docData).(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("unexpected type after date conversion")
+	}
+	docData = converted
 
 	// Filter out secondary FK fields from docData before creating the document.
 	// Go's native Get() returns a Document directly without Set() validation,
@@ -2356,7 +2439,10 @@ func (c *CollectionWrapper) Get(ctx context.Context, docID client.DocID, showDel
 
 // checkIfDocumentDeleted checks if a document is deleted and returns the appropriate error
 func (c *CollectionWrapper) checkIfDocumentDeleted(ctx context.Context, docID client.DocID) error {
-	deletedQuery := fmt.Sprintf(`{ %s(docID: "%s", showDeleted: true) { _docID _deleted } }`, c.version.Name, docID.String())
+	deletedQuery := fmt.Sprintf(
+		`{ %s(docID: "%s", showDeleted: true) { _docID _deleted } }`,
+		c.version.Name, docID.String(),
+	)
 	deletedResult := c.wrapper.ExecRequest(ctx, deletedQuery)
 	if len(deletedResult.GQL.Errors) == 0 {
 		if deletedData, ok := deletedResult.GQL.Data.(map[string]any); ok {
@@ -2407,7 +2493,10 @@ func (c *CollectionWrapper) GetAllDocIDs(ctx context.Context) (<-chan client.Doc
 	return ch, nil
 }
 
-func (c *CollectionWrapper) CreateIndex(ctx context.Context, req client.IndexCreateRequest) (client.IndexDescription, error) {
+func (c *CollectionWrapper) CreateIndex(
+	ctx context.Context,
+	req client.IndexCreateRequest,
+) (client.IndexDescription, error) {
 	fields := make([]IndexField, len(req.Fields))
 	for i, f := range req.Fields {
 		fields[i] = IndexField{
@@ -2481,7 +2570,10 @@ func (c *CollectionWrapper) GetIndexes(ctx context.Context) ([]client.IndexDescr
 	return result, nil
 }
 
-func (c *CollectionWrapper) CreateEncryptedIndex(ctx context.Context, desc client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error) {
+func (c *CollectionWrapper) CreateEncryptedIndex(
+	ctx context.Context,
+	desc client.EncryptedIndexDescription,
+) (client.EncryptedIndexDescription, error) {
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
