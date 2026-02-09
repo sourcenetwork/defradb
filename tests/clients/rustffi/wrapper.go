@@ -653,6 +653,23 @@ func (w *Wrapper) GetCollections(
 		filtered = append(filtered, v)
 	}
 
+	// When filtering by CollectionID, Go returns the root version (whose VersionID == CollectionID)
+	// first, then remaining versions in KV order. Rust returns all versions in KV key order.
+	// Reorder to match Go's GetCollectionVersionIDs behavior.
+	if options.CollectionID.HasValue() {
+		rootID := options.CollectionID.Value()
+		var root []client.CollectionVersion
+		var rest []client.CollectionVersion
+		for _, v := range filtered {
+			if v.VersionID == rootID {
+				root = append(root, v)
+			} else {
+				rest = append(rest, v)
+			}
+		}
+		filtered = append(root, rest...)
+	}
+
 	collections := make([]client.Collection, len(filtered))
 	for i, v := range filtered {
 		collections[i] = &CollectionWrapper{
