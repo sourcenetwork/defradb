@@ -209,7 +209,7 @@ func (c *collection) GetAllDocIDs(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
-		return nil, err
+		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 	return c.getAllDocIDsChan(ctx)
 }
@@ -484,7 +484,7 @@ func (c *collection) Update(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
-		return err
+		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -562,7 +562,7 @@ func (c *collection) Save(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
-		return err
+		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -805,7 +805,7 @@ func (c *collection) Delete(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentDeletePerm); err != nil {
-		return false, err
+		return false, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
@@ -840,7 +840,7 @@ func (c *collection) Exists(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
-		return false, err
+		return false, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)

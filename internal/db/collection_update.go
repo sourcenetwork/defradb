@@ -36,7 +36,7 @@ func (c *collection) UpdateWithFilter(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
-		return nil, err
+		return nil, client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)

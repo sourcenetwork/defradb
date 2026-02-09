@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -36,7 +37,7 @@ func (c *collection) Truncate(
 	defer span.End()
 
 	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeCollectionTruncatePerm); err != nil {
-		return err
+		return client.ErrDocumentNotFoundOrNotAuthorized
 	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
