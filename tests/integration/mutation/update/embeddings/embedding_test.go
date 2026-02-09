@@ -31,6 +31,7 @@ func TestMutationUpdate_WithMultipleEmbeddingFields_ShouldSucceed(t *testing.T) 
 			// to fail sinces it receives an update on a docID that wasn't expected. We will look for a solution
 			// and update the test accordingly.
 			state.GoClientType,
+			state.RustFFIClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -109,6 +110,7 @@ func TestMutationUpdate_UserDefinedVectorEmbeddingDoesNotTriggerGeneration_Shoul
 			// to fail sinces it receives an update on a docID that wasn't expected. We will look for a solution
 			// and update the test accordingly.
 			state.GoClientType,
+			state.RustFFIClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -164,6 +166,7 @@ func TestMutationUpdate_FieldsForEmbeddingNotUpdatedDoesNotTriggerGeneration_Sho
 			// to fail sinces it receives an update on a docID that wasn't expected. We will look for a solution
 			// and update the test accordingly.
 			state.GoClientType,
+			state.RustFFIClientType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
