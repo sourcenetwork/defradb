@@ -77,6 +77,7 @@ func TestNAC_GatesVerifySignature_GoClient_AuthorizedIdentity_AllowAccess(t *tes
 				// requires a private key which we do not pass over HTTP.
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
