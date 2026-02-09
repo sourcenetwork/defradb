@@ -1977,6 +1977,25 @@ func convertDateTimeStrings(v any) any {
 		for i, v := range val {
 			val[i] = convertDateTimeStrings(v)
 		}
+		// If all elements are float64, convert to []float32 to match Go's
+		// GraphQL Float32 scalar behavior. JSON doesn't distinguish float32
+		// from float64, so we always convert float arrays to float32.
+		if len(val) > 0 {
+			allFloat := true
+			for _, v := range val {
+				if _, ok := v.(float64); !ok {
+					allFloat = false
+					break
+				}
+			}
+			if allFloat {
+				f32 := make([]float32, len(val))
+				for i, v := range val {
+					f32[i] = float32(v.(float64))
+				}
+				return f32
+			}
+		}
 		return val
 	case string:
 		if t, err := time.Parse(time.RFC3339Nano, val); err == nil {
