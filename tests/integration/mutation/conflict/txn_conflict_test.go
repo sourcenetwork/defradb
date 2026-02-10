@@ -20,11 +20,17 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
+// TestTxnConflict_UpdateVsDelete tests that when two concurrent transactions
+// target the same document — one updating and one deleting — the second
+// transaction to commit fails with a transaction conflict.
 func TestTxnConflict_UpdateVsDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		// LevelDB does not support concurrent transactions.
+		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,
 			testUtils.BadgerIMType,
+			testUtils.DefraIMType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -36,6 +42,7 @@ func TestTxnConflict_UpdateVsDelete(t *testing.T) {
 				`,
 			},
 			&action.CreateDoc{
+				CollectionID: 0,
 				Doc: `{
 					"name": "John",
 					"age": 27
@@ -46,12 +53,16 @@ func TestTxnConflict_UpdateVsDelete(t *testing.T) {
 				Request: `mutation {
 					update_User(input: {age: 28}) {
 						_docID
+						name
+						age
 					}
 				}`,
 				Results: map[string]any{
 					"update_User": []map[string]any{
 						{
 							"_docID": "bae-bb8ed746-4570-5651-ac69-39a21f733211",
+							"name":   "John",
+							"age":    int64(28),
 						},
 					},
 				},
@@ -78,17 +89,42 @@ func TestTxnConflict_UpdateVsDelete(t *testing.T) {
 				TransactionID: 1,
 				ExpectedError: "transaction conflict",
 			},
+			// Verify the update from transaction 0 took effect.
+			&action.Request{
+				Request: `query {
+					User {
+						_docID
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"_docID": "bae-bb8ed746-4570-5651-ac69-39a21f733211",
+							"name":   "John",
+							"age":    int64(28),
+						},
+					},
+				},
+			},
 		},
 	}
 
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TestTxnConflict_DeleteVsUpdate tests that when two concurrent transactions
+// target the same document — one deleting and one updating — the second
+// transaction to commit fails with a transaction conflict.
 func TestTxnConflict_DeleteVsUpdate(t *testing.T) {
 	test := testUtils.TestCase{
+		// LevelDB does not support concurrent transactions.
+		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,
 			testUtils.BadgerIMType,
+			testUtils.DefraIMType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -100,6 +136,7 @@ func TestTxnConflict_DeleteVsUpdate(t *testing.T) {
 				`,
 			},
 			&action.CreateDoc{
+				CollectionID: 0,
 				Doc: `{
 					"name": "John",
 					"age": 27
@@ -125,12 +162,16 @@ func TestTxnConflict_DeleteVsUpdate(t *testing.T) {
 				Request: `mutation {
 					update_User(input: {age: 28}) {
 						_docID
+						name
+						age
 					}
 				}`,
 				Results: map[string]any{
 					"update_User": []map[string]any{
 						{
 							"_docID": "bae-bb8ed746-4570-5651-ac69-39a21f733211",
+							"name":   "John",
+							"age":    int64(28),
 						},
 					},
 				},
@@ -142,17 +183,34 @@ func TestTxnConflict_DeleteVsUpdate(t *testing.T) {
 				TransactionID: 1,
 				ExpectedError: "transaction conflict",
 			},
+			// Verify the delete from transaction 0 took effect.
+			&action.Request{
+				Request: `query {
+					User {
+						_docID
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
+			},
 		},
 	}
 
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TestTxnConflict_DeleteVsDelete tests that when two concurrent transactions
+// both attempt to delete the same document, the second transaction to commit
+// fails with a transaction conflict.
 func TestTxnConflict_DeleteVsDelete(t *testing.T) {
 	test := testUtils.TestCase{
+		// LevelDB does not support concurrent transactions.
+		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,
 			testUtils.BadgerIMType,
+			testUtils.DefraIMType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -164,6 +222,7 @@ func TestTxnConflict_DeleteVsDelete(t *testing.T) {
 				`,
 			},
 			&action.CreateDoc{
+				CollectionID: 0,
 				Doc: `{
 					"name": "John",
 					"age": 27
@@ -206,17 +265,34 @@ func TestTxnConflict_DeleteVsDelete(t *testing.T) {
 				TransactionID: 1,
 				ExpectedError: "transaction conflict",
 			},
+			// Verify the document was deleted by transaction 0.
+			&action.Request{
+				Request: `query {
+					User {
+						_docID
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{},
+				},
+			},
 		},
 	}
 
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// TestTxnConflict_CreateVsCreate tests that when two concurrent transactions
+// both create a document with identical content (producing the same content-addressed
+// document ID), the second transaction to commit fails with a transaction conflict.
 func TestTxnConflict_CreateVsCreate(t *testing.T) {
 	test := testUtils.TestCase{
+		// LevelDB does not support concurrent transactions.
+		// TODO https://github.com/sourcenetwork/defradb/issues/4442
 		SupportedDatabaseTypes: immutable.Some([]state.DatabaseType{
 			testUtils.BadgerFileType,
 			testUtils.BadgerIMType,
+			testUtils.DefraIMType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -227,21 +303,23 @@ func TestTxnConflict_CreateVsCreate(t *testing.T) {
 					}
 				`,
 			},
-			// Both transactions try to create a document that generates the same ID (same content)
-			// Wait, if they have same content, do they get same ID?
-			// Defradb document IDs are content-addressable dependent (bae-...).
-			// If I create {name: "John", age: 27} twice, they should produce same DocID.
+			// Both transactions create a document with identical content. Because document
+			// IDs are content-addressed, both produce the same docID, causing a conflict.
 			&action.Request{
 				TransactionID: immutable.Some(0),
 				Request: `mutation {
 					create_User(input: {name: "John", age: 27}) {
 						_docID
+						name
+						age
 					}
 				}`,
 				Results: map[string]any{
 					"create_User": []map[string]any{
 						{
 							"_docID": "bae-bb8ed746-4570-5651-ac69-39a21f733211",
+							"name":   "John",
+							"age":    int64(27),
 						},
 					},
 				},
@@ -251,12 +329,16 @@ func TestTxnConflict_CreateVsCreate(t *testing.T) {
 				Request: `mutation {
 					create_User(input: {name: "John", age: 27}) {
 						_docID
+						name
+						age
 					}
 				}`,
 				Results: map[string]any{
 					"create_User": []map[string]any{
 						{
 							"_docID": "bae-bb8ed746-4570-5651-ac69-39a21f733211",
+							"name":   "John",
+							"age":    int64(27),
 						},
 					},
 				},
@@ -267,6 +349,25 @@ func TestTxnConflict_CreateVsCreate(t *testing.T) {
 			testUtils.TransactionCommit{
 				TransactionID: 1,
 				ExpectedError: "transaction conflict",
+			},
+			// Verify only one document exists (created by transaction 0).
+			&action.Request{
+				Request: `query {
+					User {
+						_docID
+						name
+						age
+					}
+				}`,
+				Results: map[string]any{
+					"User": []map[string]any{
+						{
+							"_docID": "bae-bb8ed746-4570-5651-ac69-39a21f733211",
+							"name":   "John",
+							"age":    int64(27),
+						},
+					},
+				},
 			},
 		},
 	}
