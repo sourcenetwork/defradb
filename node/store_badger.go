@@ -14,6 +14,7 @@ import (
 	"context"
 
 	badgerds "github.com/dgraph-io/badger/v4"
+	badgeropts "github.com/dgraph-io/badger/v4/options"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/badger"
@@ -35,6 +36,9 @@ func init() {
 		badgerOpts.ValueLogFileSize = options.badgerFileSize
 		badgerOpts.EncryptionKey = options.badgerEncryptionKey
 		badgerOpts.IndexCacheSize = 100 << 20
+		badgerOpts.ValueThreshold = 1 << 8
+		badgerOpts.Compression = badgeropts.ZSTD
+		badgerOpts.ZSTDCompressionLevel = 1
 
 		if options.badgerMemTableSize > 0 {
 			badgerOpts.MemTableSize = options.badgerMemTableSize

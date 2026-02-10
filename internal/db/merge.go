@@ -17,6 +17,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
@@ -137,6 +138,26 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) (func()
 					continue
 				}
 				oldDoc := batchResult.OldDocs[docIDStr]
+
+				if oldDoc == nil {
+					if fields, ok := batchResult.MergedFields[docIDStr]; ok && len(fields) > 0 {
+						newDoc, buildErr := buildDocFromMergeFields(ctx, docIDStr, col, fields)
+						if buildErr != nil {
+							log.ErrorContextE(ctx, "Failed to build doc from merge data, falling back to read", buildErr)
+							if err := syncIndexedDoc(ctx, docID, col, oldDoc); err != nil {
+								log.ErrorContextE(ctx, "Index sync after merge failed", err,
+									corelog.String("DocID", docIDStr))
+							}
+							continue
+						}
+						if err := syncDocIndex(ctx, col, nil, newDoc); err != nil {
+							log.ErrorContextE(ctx, "Index sync from merge data failed", err,
+								corelog.String("DocID", docIDStr))
+						}
+						continue
+					}
+				}
+
 				if err := syncIndexedDoc(ctx, docID, col, oldDoc); err != nil {
 					log.ErrorContextE(ctx, "Index sync after merge failed", err,
 						corelog.String("DocID", docIDStr))
@@ -185,11 +206,13 @@ type MergeBatchResult struct {
 	CollectionID string
 	DocIDs       []string
 	OldDocs      map[string]*client.Document
+	MergedFields map[string]map[string][]byte
 }
 
 // executeMergeBatchWritesOnly performs batch merge writes only, returning docIDs for later index sync.
 func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, evts []event.Merge) (*MergeBatchResult, error) {
 	allDocIDs := make(map[string]*client.Document)
+	var allMergedFields map[string]map[string][]byte
 
 	for _, dagMerge := range evts {
 		var key keys.HeadstoreKey
@@ -235,6 +258,13 @@ func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, 
 			docIDStr := docID.String()
 			allDocIDs[docIDStr] = oldDoc
 		}
+
+		for docIDStr, fields := range mp.mergedFields {
+			if allMergedFields == nil {
+				allMergedFields = make(map[string]map[string][]byte)
+			}
+			allMergedFields[docIDStr] = fields
+		}
 	}
 
 	sortedDocIDs := make([]string, 0, len(allDocIDs))
@@ -247,6 +277,7 @@ func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, 
 		CollectionID: col.Version().CollectionID,
 		DocIDs:       sortedDocIDs,
 		OldDocs:      allDocIDs,
+		MergedFields: allMergedFields,
 	}, nil
 }
 
@@ -291,11 +322,8 @@ func (db *DB) mergeWithTxn(ctx context.Context, col *collection, evt event.Merge
 		return err
 	}
 
-	for docID, oldDoc := range mp.docIDs {
-		err = syncIndexedDoc(ctx, docID, col, oldDoc)
-		if err != nil {
-			return err
-		}
+	if err := mp.syncIndexes(ctx); err != nil {
+		return err
 	}
 
 	return nil
@@ -350,11 +378,8 @@ func (db *DB) executeMerge(ctx context.Context, col *collection, dagMerge event.
 		return err
 	}
 
-	for docID, oldDoc := range mp.docIDs {
-		err = syncIndexedDoc(ctx, docID, mp.col, oldDoc)
-		if err != nil {
-			return err
-		}
+	if err := mp.syncIndexes(ctx); err != nil {
+		return err
 	}
 
 	// Get the current transaction (may be different from original if batching occurred)
@@ -432,6 +457,9 @@ type mergeProcessor struct {
 
 	// blocksProcessed tracks how many blocks have been processed in the current transaction.
 	blocksProcessed int
+
+	// mergedFields collects field values during merge for new documents.
+	mergedFields map[string]map[string][]byte
 }
 
 func (db *DB) newMergeProcessor(
@@ -634,6 +662,21 @@ func (mp *mergeProcessor) processBlock(
 		err = coreblock.ProcessBlock(ctx, crdt, block, blockLink)
 		if err != nil {
 			return ctx, err
+		}
+
+		if coreblock.IsNewDocCreateMode(ctx) && !block.Delta.IsComposite() && !block.Delta.IsCollection() {
+			docID := string(block.Delta.GetDocID())
+			fieldName := block.Delta.GetFieldName()
+			data := block.Delta.GetData()
+			if len(data) > 0 && fieldName != "" {
+				if mp.mergedFields == nil {
+					mp.mergedFields = make(map[string]map[string][]byte)
+				}
+				if mp.mergedFields[docID] == nil {
+					mp.mergedFields[docID] = make(map[string][]byte)
+				}
+				mp.mergedFields[docID][fieldName] = data
+			}
 		}
 
 		mp.blocksProcessed++
@@ -862,6 +905,33 @@ func loadBlockFromBlockStore(ctx context.Context, cid cid.Cid) (*coreblock.Block
 	return block, nil
 }
 
+// syncIndexes syncs indexes for all documents processed by this merge processor.
+func (mp *mergeProcessor) syncIndexes(ctx context.Context) error {
+	if len(mp.col.indexes) == 0 {
+		return nil
+	}
+
+	for docID, oldDoc := range mp.docIDs {
+		if oldDoc == nil {
+			docIDStr := docID.String()
+			if fields, ok := mp.mergedFields[docIDStr]; ok && len(fields) > 0 {
+				newDoc, err := buildDocFromMergeFields(ctx, docIDStr, mp.col, fields)
+				if err == nil {
+					if err := syncDocIndex(ctx, mp.col, nil, newDoc); err != nil {
+						return err
+					}
+					continue
+				}
+			}
+		}
+
+		if err := syncIndexedDoc(ctx, docID, mp.col, oldDoc); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func syncIndexedDoc(
 	ctx context.Context,
 	docID client.DocID,
@@ -873,6 +943,42 @@ func syncIndexedDoc(
 		return err
 	}
 	return syncDocIndex(ctx, col, oldDoc, newDoc)
+}
+
+// buildDocFromMergeFields constructs a *client.Document from field values collected during merge.
+func buildDocFromMergeFields(
+	ctx context.Context,
+	docIDStr string,
+	col *collection,
+	fields map[string][]byte,
+) (*client.Document, error) {
+	docID, err := client.NewDocIDFromString(docIDStr)
+	if err != nil {
+		return nil, err
+	}
+	doc, err := client.NewDocWithID(ctx, docID, col.Version())
+	if err != nil {
+		return nil, err
+	}
+	for fieldName, rawBytes := range fields {
+		fd, ok := col.Version().GetFieldByName(fieldName)
+		if !ok {
+			continue
+		}
+		var val any
+		if err := cbor.Unmarshal(rawBytes, &val); err != nil {
+			continue
+		}
+		typedVal, err := core.NormalizeFieldValue(fd, val)
+		if err != nil {
+			continue
+		}
+		if err := doc.Set(ctx, fieldName, typedVal); err != nil {
+			continue
+		}
+	}
+	doc.Clean()
+	return doc, nil
 }
 
 // syncDocIndex updates the index for a document given its old and new state.
