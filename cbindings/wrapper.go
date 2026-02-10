@@ -129,8 +129,12 @@ func (w *CWrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.
 	return addresses, nil
 }
 
-func (w *CWrapper) ActivePeers(ctx context.Context) ([]string, error) {
-	res := ConvertAndFreeCResult(C.P2PActivePeers(C.uintptr_t(w.handle), C.uintptr_t(0)))
+func (w *CWrapper) ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
+	res := ConvertAndFreeCResult(C.P2PActivePeers(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

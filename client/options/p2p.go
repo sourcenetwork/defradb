@@ -16,6 +16,35 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
+// ActivePeersOptions contains options for ActivePeers operation.
+type ActivePeersOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *ActivePeersOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// ActivePeersOptionsBuilder is a builder for ActivePeersOptions.
+type ActivePeersOptionsBuilder struct {
+	enumerableBuilder[ActivePeersOptions]
+}
+
+// ActivePeers creates a new ActivePeersOptionsBuilder instance.
+func ActivePeers() *ActivePeersOptionsBuilder {
+	return &ActivePeersOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *ActivePeersOptionsBuilder) SetIdentity(id identity.Identity) *ActivePeersOptionsBuilder {
+	b.append(func(opts *ActivePeersOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
 // ConnectOptions contains options for Connect operation.
 type ConnectOptions struct {
 	// Identity is the identity of the actor performing the operation.

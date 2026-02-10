@@ -328,8 +328,8 @@ func (txn *Txn) PeerInfo(ctx context.Context, opts ...options.Lister[options.Pee
 	return txn.db.PeerInfo(ctx, opts...)
 }
 
-func (txn *Txn) ActivePeers(ctx context.Context) ([]string, error) {
-	return txn.db.ActivePeers(ctx)
+func (txn *Txn) ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error) {
+	return txn.db.ActivePeers(ctx, opts...)
 }
 
 func (txn *Txn) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {

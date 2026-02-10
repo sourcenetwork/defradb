@@ -45,8 +45,14 @@ func (_m *Txn) EXPECT() *Txn_Expecter {
 }
 
 // ActivePeers provides a mock function for the type Txn
-func (_mock *Txn) ActivePeers(ctx context.Context) ([]string, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for ActivePeers")
@@ -54,18 +60,18 @@ func (_mock *Txn) ActivePeers(ctx context.Context) ([]string, error) {
 
 	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ActivePeersOptions]) ([]string, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ActivePeersOptions]) []string); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.ActivePeersOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -79,18 +85,27 @@ type Txn_ActivePeers_Call struct {
 
 // ActivePeers is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) ActivePeers(ctx interface{}) *Txn_ActivePeers_Call {
-	return &Txn_ActivePeers_Call{Call: _e.mock.On("ActivePeers", ctx)}
+//   - opts ...options.Lister[options.ActivePeersOptions]
+func (_e *Txn_Expecter) ActivePeers(ctx interface{}, opts ...interface{}) *Txn_ActivePeers_Call {
+	return &Txn_ActivePeers_Call{Call: _e.mock.On("ActivePeers",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_ActivePeers_Call) Run(run func(ctx context.Context)) *Txn_ActivePeers_Call {
+func (_c *Txn_ActivePeers_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions])) *Txn_ActivePeers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.ActivePeersOptions]
+		var variadicArgs []options.Lister[options.ActivePeersOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.ActivePeersOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -101,7 +116,7 @@ func (_c *Txn_ActivePeers_Call) Return(strings []string, err error) *Txn_ActiveP
 	return _c
 }
 
-func (_c *Txn_ActivePeers_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_ActivePeers_Call {
+func (_c *Txn_ActivePeers_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error)) *Txn_ActivePeers_Call {
 	_c.Call.Return(run)
 	return _c
 }

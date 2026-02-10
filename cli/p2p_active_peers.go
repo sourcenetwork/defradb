@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeP2PActivePeersCommand(ctx context.Context) *cobra.Command {
@@ -25,7 +28,8 @@ func MakeP2PActivePeersCommand(ctx context.Context) *cobra.Command {
 Results are returned in the multiaddr format (e.g. /ip4/127.0.0.1/tcp/4001/p2p/<PeerID>).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			peers, err := cliClient.ActivePeers(cmd.Context())
+			opt := options.WithIdentity(options.ActivePeers(), identity.FromContext(cmd.Context()))
+			peers, err := cliClient.ActivePeers(cmd.Context(), opt)
 			if err != nil {
 				return err
 			}

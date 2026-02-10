@@ -67,8 +67,11 @@ func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.P
 	return w.client.PeerInfo(ctx, opts...)
 }
 
-func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
-	return w.client.ActivePeers(ctx)
+func (w *Wrapper) ActivePeers(
+	ctx context.Context,
+	opts ...options.Lister[options.ActivePeersOptions],
+) ([]string, error) {
+	return w.client.ActivePeers(ctx, opts...)
 }
 
 func (w *Wrapper) Connect(

@@ -58,7 +58,8 @@ func P2PActivePeers(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	peers, err := node.DB.ActivePeers(ctx)
+	opts := options.WithIdentity(options.ActivePeers(), acpIdentity.FromContext(ctx))
+	peers, err := node.DB.ActivePeers(ctx, opts)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

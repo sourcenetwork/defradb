@@ -30,7 +30,7 @@ type P2P interface {
 	// ActivePeers returns the addresses of peers that are currently connected to.
 	//
 	// Addresses are returned in the multiaddr format (e.g. /ip4/127.0.0.1/tcp/4001/p2p/<PeerID>).
-	ActivePeers(ctx context.Context) ([]string, error)
+	ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error)
 
 	// Connect tries to connect to the peer with the given [PeerInfo].
 	Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error

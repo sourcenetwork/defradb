@@ -73,7 +73,10 @@ func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.P
 	return nil, nil
 }
 
-func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
+func (w *Wrapper) ActivePeers(
+	ctx context.Context,
+	opts ...options.Lister[options.ActivePeersOptions],
+) ([]string, error) {
 	panic("not implemented")
 }
 

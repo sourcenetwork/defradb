@@ -36,7 +36,8 @@ func (h *p2pHandler) PeerInfo(rw http.ResponseWriter, req *http.Request) {
 
 func (h *p2pHandler) ActivePeers(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
-	peers, err := db.ActivePeers(req.Context())
+	opt := options.WithIdentity(options.ActivePeers(), identity.FromContext(req.Context()))
+	peers, err := db.ActivePeers(req.Context(), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return

@@ -87,8 +87,14 @@ func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.P
 	return addresses, nil
 }
 
-func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
+func (w *Wrapper) ActivePeers(
+	ctx context.Context,
+	opts ...options.Lister[options.ActivePeersOptions],
+) ([]string, error) {
 	args := []string{"client", "p2p", "active-peers"}
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
