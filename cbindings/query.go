@@ -23,6 +23,7 @@ import (
 
 	"github.com/google/uuid"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 )
@@ -124,6 +125,11 @@ func ExecuteQuery(
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	ident := acpIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		opt.SetIdentity(ident.Value())
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
