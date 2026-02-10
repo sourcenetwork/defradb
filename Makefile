@@ -514,7 +514,6 @@ ifndef RUST_LIB
 	$(error RUST_LIB is required. Usage: make test:ffi RUST_LIB=/path/to/defradb.rs FFI_PKG=query/simple)
 endif
 	@echo "=== Generating defra.h from $(RUST_LIB) ==="
-	@echo "=== Generating defra.h from $(RUST_LIB) ==="
 	@cd $(RUST_LIB) && cbindgen --config crates/ffi/cbindgen.toml --crate ffi --output $(CURDIR)/tests/clients/rustffi/defra.h 2>&1
 	@echo "=== Copying Rust FFI library ==="
 	@cp -f $(RUST_LIB)/target/release/libffi.dylib $(CURDIR)/tests/clients/rustffi/libdefra_ffi.dylib 2>/dev/null && \

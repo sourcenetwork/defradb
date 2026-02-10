@@ -79,7 +79,7 @@ func (a *SyncBranchableCollection) Execute() {
 	// Set up expected merge events for WaitForSync.
 	// Copy document-level heads from connected peers so WaitForSync
 	// knows which MergeComplete events to wait for.
-	if !expectedErrorRaised {
+	if !expectedErrorRaised && a.CollectionID < len(a.s.DocIDs) {
 		for peerID := range nodeState.P2P.Connections {
 			peerNode := a.s.Nodes[peerID]
 			docIDs := a.s.DocIDs[a.CollectionID]

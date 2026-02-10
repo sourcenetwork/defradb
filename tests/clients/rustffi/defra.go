@@ -38,9 +38,6 @@ import (
 var (
 	// initOnce ensures Init is only called once
 	initOnce sync.Once
-
-	// ErrNotInitialized is returned when FFI functions are called before Init
-	ErrNotInitialized = errors.New("ffi: not initialized - call Init() first")
 )
 
 // Init initializes the FFI library.
@@ -1931,7 +1928,10 @@ func (n *Node) P2PDeleteReplicator(identityDID string, peerID string, collection
 	cPeerID := C.CString(peerID)
 	defer C.free(unsafe.Pointer(cPeerID))
 
-	collectionsJSON, _ := json.Marshal(collections)
+	collectionsJSON, err := json.Marshal(collections)
+	if err != nil {
+		return fmt.Errorf("ffi: failed to marshal collections: %w", err)
+	}
 	cCollections := C.CString(string(collectionsJSON))
 	defer C.free(unsafe.Pointer(cCollections))
 

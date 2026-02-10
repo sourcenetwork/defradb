@@ -610,7 +610,8 @@ func (doc *Document) SetHead(head cid.Cid) {
 
 // ID returns the generated DocID for this document.
 func (doc *Document) ID() DocID {
-	// Reading without a read-lock as we assume the DocID is immutable
+	doc.mu.RLock()
+	defer doc.mu.RUnlock()
 	return doc.id
 }
 

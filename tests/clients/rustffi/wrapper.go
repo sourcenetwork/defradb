@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -228,34 +229,25 @@ func NewWrapperWithP2P(
 	}
 
 	go func() {
-		defer mergeSub.Close()
-		fmt.Println("[FFI-MERGE-POLLER] Started merge complete poller") //nolint:forbidigo
+		defer func() { _ = mergeSub.Close() }()
 		for {
 			select {
 			case <-stopCh:
-				fmt.Println("[FFI-MERGE-POLLER] Stop signal received") //nolint:forbidigo
 				return
 			default:
 			}
 
 			result, err := mergeSub.Poll()
 			if err != nil {
-				fmt.Printf("[FFI-MERGE-POLLER] Poll error: %v\n", err) //nolint:forbidigo
 				continue
 			}
 			if result.IsClosed {
-				fmt.Println("[FFI-MERGE-POLLER] Subscription closed") //nolint:forbidigo
 				return
 			}
 			if result.HasEvent && result.Event != nil {
-				//nolint:forbidigo
-				fmt.Printf("[FFI-MERGE-POLLER] Got event: type=%s doc_id=%s cid=%s collection=%s by_peer=%s\n",
-					result.Event.Type, result.Event.DocID, result.Event.CID,
-					result.Event.CollectionID, result.Event.ByPeer)
 				if result.Event.Type == "merge_complete" {
 					cidObj, cidErr := gocid.Decode(result.Event.CID)
 					if cidErr != nil {
-						fmt.Printf("[FFI-MERGE-POLLER] CID decode error: %v\n", cidErr) //nolint:forbidigo
 						continue
 					}
 					mc := event.MergeComplete{
@@ -266,21 +258,14 @@ func NewWrapperWithP2P(
 							ByPeer:       result.Event.ByPeer,
 						},
 					}
-					//nolint:forbidigo
-					fmt.Printf("[FFI-MERGE-POLLER] Publishing MergeComplete to Go event bus: doc=%s cid=%s\n",
-						mc.Merge.DocID, mc.Merge.Cid)
 					eb.Publish(event.NewMessage(event.MergeCompleteName, mc))
 					continue
 				}
 				if result.Event.Type == "replicator_completed" {
-					fmt.Println("[FFI-MERGE-POLLER] Publishing ReplicatorCompleted to Go event bus") //nolint:forbidigo
 					eb.Publish(event.NewMessage(event.ReplicatorCompletedName, nil))
 					continue
 				}
 				if result.Event.Type == "topic_peer_event" {
-					//nolint:forbidigo
-					fmt.Printf("[FFI-MERGE-POLLER] Publishing TopicPeerEvent to Go event bus: peer=%s topic=%s type=%s\n",
-						result.Event.PeerID, result.Event.Topic, result.Event.EventType)
 					eb.Publish(event.NewMessage(event.TopicPeerEventName, event.TopicPeerEvent{
 						PeerID:    result.Event.PeerID,
 						Topic:     result.Event.Topic,
@@ -289,9 +274,6 @@ func NewWrapperWithP2P(
 					continue
 				}
 				if result.Event.Type == "se_artifact_received" {
-					//nolint:forbidigo
-					fmt.Printf("[FFI-MERGE-POLLER] Publishing SEArtifactReceived to Go event bus: doc=%s\n",
-						result.Event.DocID)
 					eb.Publish(event.NewMessage(event.SEArtifactReceivedName, event.SEArtifactReceived{
 						DocID: result.Event.DocID,
 					}))
@@ -386,8 +368,6 @@ func groupPatchByCollection(patch string) ([]struct{ Name, Patch string }, error
 // clients.Client interface
 // ============================================================================
 
-// SetGoNodeCloser sets a callback to close the Go node during wrapper Close().
-// This ensures the Go node's badger lock is released on restart.
 // RetryReplicators re-pushes all existing documents to connected replicator peers.
 func (w *Wrapper) RetryReplicators() error {
 	if w.node == nil {
@@ -404,6 +384,8 @@ func (w *Wrapper) SetSEEncryptionKey(key []byte) error {
 	return w.node.SetSEEncryptionKey(key)
 }
 
+// SetGoNodeCloser sets a callback to close the Go node during wrapper Close().
+// This ensures the Go node's badger lock is released on restart.
 func (w *Wrapper) SetGoNodeCloser(closer func()) {
 	w.goNodeCloser = closer
 }
@@ -453,7 +435,6 @@ func (w *Wrapper) ForwardSEEvents(goBus event.Bus) error {
 				if !ok {
 					return
 				}
-				fmt.Printf("[SE-FORWARDER] Forwarding SE event to wrapper bus: %s\n", msg.Name) //nolint:forbidigo
 				w.events.Publish(msg)
 			}
 		}
@@ -745,14 +726,6 @@ func (w *Wrapper) GetCollections(
 	identityDID := ""
 	if id := identity.FromContext(ctx); id.HasValue() {
 		identityDID = id.Value().DID()
-	}
-
-	// If the context carries a transaction, use the transaction-aware function
-	// so that uncommitted writes (e.g. placeholders from SetMigration) are visible.
-	if clientTxn, ok := datastore.CtxTryGetClientTxn(ctx); ok && clientTxn != nil {
-		if txnW, ok := clientTxn.(*TxnWrapper); ok {
-			return txnW.GetCollections(ctx, options)
-		}
 	}
 
 	// If VersionID is specified, use the dedicated FFI function which returns
@@ -1952,6 +1925,7 @@ func (t *TxnWrapper) SyncBranchableCollection(ctx context.Context, collectionID 
 // ============================================================================
 
 type eventBus struct {
+	mu     sync.RWMutex
 	closed bool
 	subs   []event.Subscription
 }
@@ -1961,49 +1935,48 @@ func newEventBus() *eventBus {
 }
 
 func (e *eventBus) Publish(msg event.Message) {
+	e.mu.RLock()
 	if e.closed {
+		e.mu.RUnlock()
 		return
 	}
-	// Recover from send-on-closed-channel if Close() races with Publish()
-	defer func() {
-		if r := recover(); r != nil { //nolint:staticcheck
-			// Channel was closed between our check and the send; safe to ignore.
-		}
-	}()
-	// Deliver message to all matching subscribers
-	delivered := 0
-	total := len(e.subs)
-	for _, sub := range e.subs {
+	subs := make([]event.Subscription, len(e.subs))
+	copy(subs, e.subs)
+	e.mu.RUnlock()
+
+	for _, sub := range subs {
 		if es, ok := sub.(*eventSubscription); ok {
-			// Check if subscription wants this event
 			if es.wantsEvent(msg.Name) {
-				select {
-				case es.ch <- msg:
-					delivered++
-				default:
-					fmt.Printf("[GO-EVENT-BUS] Channel full for event=%s\n", msg.Name) //nolint:forbidigo
-				}
+				// Recover from send-on-closed-channel if Close() races with Publish()
+				func() {
+					defer func() {
+						if r := recover(); r != nil { //nolint:staticcheck
+						}
+					}()
+					select {
+					case es.ch <- msg:
+					default:
+					}
+				}()
 			}
 		}
-	}
-	if msg.Name == event.MergeCompleteName || msg.Name == event.ReplicatorCompletedName {
-		//nolint:forbidigo
-		fmt.Printf("[GO-EVENT-BUS] Publish event=%s total_subs=%d delivered=%d\n",
-			msg.Name, total, delivered)
 	}
 }
 
 func (e *eventBus) Subscribe(events ...event.Name) (event.Subscription, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	sub := &eventSubscription{
 		ch:     make(chan event.Message, 100),
 		events: events,
 	}
 	e.subs = append(e.subs, sub)
-	fmt.Printf("[GO-EVENT-BUS] Subscribe events=%v total_subs=%d\n", events, len(e.subs)) //nolint:forbidigo
 	return sub, nil
 }
 
 func (e *eventBus) Unsubscribe(sub event.Subscription) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	for i, s := range e.subs {
 		if s == sub {
 			e.subs = append(e.subs[:i], e.subs[i+1:]...)
@@ -2013,8 +1986,10 @@ func (e *eventBus) Unsubscribe(sub event.Subscription) {
 }
 
 func (e *eventBus) Close() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	if e.closed {
-		return // already closed, prevent double-close panic
+		return
 	}
 	e.closed = true
 	for _, sub := range e.subs {
@@ -2090,9 +2065,11 @@ func (c *CollectionWrapper) Create(ctx context.Context, doc *client.Document, op
 		params += ", encrypt: true"
 	}
 	if len(createDocOpts.EncryptedFields) > 0 {
-		fields := make([]string, len(createDocOpts.EncryptedFields))
-		copy(fields, createDocOpts.EncryptedFields)
-		params += ", encryptFields: [" + strings.Join(fields, ", ") + "]"
+		quoted := make([]string, len(createDocOpts.EncryptedFields))
+		for i, f := range createDocOpts.EncryptedFields {
+			quoted[i] = `"` + f + `"`
+		}
+		params += ", encryptFields: [" + strings.Join(quoted, ", ") + "]"
 	}
 	mutation := fmt.Sprintf(`mutation { create_%s(%s) { _docID } }`, c.version.Name, params)
 	result := c.wrapper.ExecRequest(ctx, mutation)
@@ -2242,7 +2219,7 @@ func (c *CollectionWrapper) Exists(ctx context.Context, docID client.DocID) (boo
 	query := fmt.Sprintf(`{ %s(docID: "%s") { _docID } }`, c.version.Name, docID.String())
 	result := c.wrapper.ExecRequest(ctx, query)
 	if len(result.GQL.Errors) > 0 {
-		return false, nil
+		return false, result.GQL.Errors[0]
 	}
 	if data, ok := result.GQL.Data.(map[string]any); ok {
 		if docs, ok := data[c.version.Name].([]any); ok {
@@ -2354,6 +2331,10 @@ func trimJSONWhitespace(s string) string {
 // - json.Number values into int64 or float64 as appropriate
 // This is needed because the Rust FFI returns datetimes as JSON strings and numbers
 // as json.Number, while Go's native implementation returns time.Time and int64/float64.
+// convertDateTimeStrings recursively converts RFC 3339 date-time strings to time.Time
+// and json.Number values to their Go numeric types. Note: this converts ANY string that
+// parses as RFC 3339, not just schema-declared DateTime fields. If a plain string field
+// happens to contain a date-like value, it will be coerced to time.Time.
 func convertDateTimeStrings(v any) any {
 	switch val := v.(type) {
 	case map[string]any:
