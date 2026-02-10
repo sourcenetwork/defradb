@@ -1866,6 +1866,24 @@ func (n *Node) P2PSetReplicator(identityDID string, peerAddr string, collections
 	return nil
 }
 
+// P2PRetryReplicators re-pushes all existing documents to connected replicator peers.
+// Call this after reconnecting peers following a node restart.
+func (n *Node) P2PRetryReplicators() error {
+	result := C.p2p_retry_replicators(n.ptr)
+
+	if result.status != 0 {
+		errStr := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: p2p_retry_replicators failed: %s", errStr)
+	}
+
+	if result.value != nil {
+		C.defra_free_string(result.value)
+	}
+
+	return nil
+}
+
 // P2PDeleteReplicator removes a replicator by peer ID.
 // If collections is non-empty, only those collections are removed from the replicator.
 // If collections is empty, the entire replicator is deleted.
