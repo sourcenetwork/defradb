@@ -737,7 +737,11 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (
 	return res.Value, nil
 }
 
-func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (w *CWrapper) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Lister[options.AddLensOptions],
+) (string, error) {
 	lensConfig, err := json.Marshal(lens)
 	if err != nil {
 		return "", err
@@ -745,7 +749,7 @@ func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error)
 	lensStr := C.CString(string(lensConfig))
 	defer C.free(unsafe.Pointer(lensStr))
 
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
@@ -761,8 +765,11 @@ func (w *CWrapper) ListLenses(
 	ctx context.Context,
 	opts ...options.Lister[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.LensList(callHandle))
+	res := ConvertAndFreeCResult(C.LensList(callHandle, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

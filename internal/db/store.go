@@ -278,11 +278,18 @@ func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	return lensID, nil
 }
 
-func (db *DB) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (db *DB) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Lister[options.AddLensOptions],
+) (string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeLensCreatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensCreatePerm); err != nil {
 		return "", err
 	}
 

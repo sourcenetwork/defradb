@@ -172,9 +172,13 @@ func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConf
 	return txn.Client.SetMigration(ctx, config)
 }
 
-func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (txn *Transaction) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Lister[options.AddLensOptions],
+) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddLens(ctx, lens)
+	return txn.Client.AddLens(ctx, lens, opts...)
 }
 
 func (txn *Transaction) ListLenses(

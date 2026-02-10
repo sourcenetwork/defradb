@@ -151,7 +151,9 @@ func (c *Client) addLens(this js.Value, args []js.Value) (js.Value, error) {
 	if err != nil {
 		return js.Undefined(), err
 	}
-	lensID, err := c.node.DB.AddLens(ctx, lens)
+	opt := options.AddLens()
+	setOptIdentity(opt, args, 0)
+	lensID, err := c.node.DB.AddLens(ctx, lens, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

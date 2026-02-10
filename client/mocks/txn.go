@@ -287,8 +287,14 @@ func (_c *Txn_AddDACPolicy_Call) RunAndReturn(run func(ctx context.Context, poli
 }
 
 // AddLens provides a mock function for the type Txn
-func (_mock *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) {
-	ret := _mock.Called(ctx, lens)
+func (_mock *Txn) AddLens(ctx context.Context, lens model.Lens, opts ...options.Lister[options.AddLensOptions]) (string, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, lens, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, lens)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddLens")
@@ -296,16 +302,16 @@ func (_mock *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) 
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens) (string, error)); ok {
-		return returnFunc(ctx, lens)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens, ...options.Lister[options.AddLensOptions]) (string, error)); ok {
+		return returnFunc(ctx, lens, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens) string); ok {
-		r0 = returnFunc(ctx, lens)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens, ...options.Lister[options.AddLensOptions]) string); ok {
+		r0 = returnFunc(ctx, lens, opts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, model.Lens) error); ok {
-		r1 = returnFunc(ctx, lens)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, model.Lens, ...options.Lister[options.AddLensOptions]) error); ok {
+		r1 = returnFunc(ctx, lens, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -320,11 +326,12 @@ type Txn_AddLens_Call struct {
 // AddLens is a helper method to define mock.On call
 //   - ctx context.Context
 //   - lens model.Lens
-func (_e *Txn_Expecter) AddLens(ctx interface{}, lens interface{}) *Txn_AddLens_Call {
-	return &Txn_AddLens_Call{Call: _e.mock.On("AddLens", ctx, lens)}
+//   - opts ...options.Lister[options.AddLensOptions]
+func (_e *Txn_Expecter) AddLens(ctx interface{}, lens interface{}, opts ...interface{}) *Txn_AddLens_Call {
+	return &Txn_AddLens_Call{Call: _e.mock.On("AddLens", append([]interface{}{ctx, lens}, opts...)...)}
 }
 
-func (_c *Txn_AddLens_Call) Run(run func(ctx context.Context, lens model.Lens)) *Txn_AddLens_Call {
+func (_c *Txn_AddLens_Call) Run(run func(ctx context.Context, lens model.Lens, opts ...options.Lister[options.AddLensOptions])) *Txn_AddLens_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -334,9 +341,16 @@ func (_c *Txn_AddLens_Call) Run(run func(ctx context.Context, lens model.Lens)) 
 		if args[1] != nil {
 			arg1 = args[1].(model.Lens)
 		}
+		variadicArgs := make([]options.Lister[options.AddLensOptions], len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(options.Lister[options.AddLensOptions])
+			}
+		}
 		run(
 			arg0,
 			arg1,
+			variadicArgs...,
 		)
 	})
 	return _c
@@ -347,7 +361,7 @@ func (_c *Txn_AddLens_Call) Return(s string, err error) *Txn_AddLens_Call {
 	return _c
 }
 
-func (_c *Txn_AddLens_Call) RunAndReturn(run func(ctx context.Context, lens model.Lens) (string, error)) *Txn_AddLens_Call {
+func (_c *Txn_AddLens_Call) RunAndReturn(run func(ctx context.Context, lens model.Lens, opts ...options.Lister[options.AddLensOptions]) (string, error)) *Txn_AddLens_Call {
 	_c.Call.Return(run)
 	return _c
 }

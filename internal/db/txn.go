@@ -252,9 +252,13 @@ func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) (str
 	return txn.db.SetMigration(ctx, config)
 }
 
-func (txn *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (txn *Txn) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Lister[options.AddLensOptions],
+) (string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddLens(ctx, lens)
+	return txn.db.AddLens(ctx, lens, opts...)
 }
 
 func (txn *Txn) ListLenses(

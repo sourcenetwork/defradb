@@ -193,7 +193,9 @@ func (t *transaction) addLens(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	lensID, err := t.txn.AddLens(ctx, lens)
+	opt := options.AddLens()
+	setOptIdentity(opt, args, 0)
+	lensID, err := t.txn.AddLens(ctx, lens, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

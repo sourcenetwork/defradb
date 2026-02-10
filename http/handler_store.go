@@ -194,7 +194,9 @@ func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	lensID, err := db.AddLens(req.Context(), addLensReq.Lens)
+	opts := options.WithIdentity(options.AddLens(), identity.FromContext(req.Context()))
+
+	lensID, err := db.AddLens(req.Context(), addLensReq.Lens, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

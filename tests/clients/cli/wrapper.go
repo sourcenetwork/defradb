@@ -482,7 +482,11 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 	return lensID, nil
 }
 
-func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (w *Wrapper) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Lister[options.AddLensOptions],
+) (string, error) {
 	args := []string{"client", "lens", "add"}
 
 	lensJSON, err := json.Marshal(lens)

@@ -292,7 +292,7 @@ type Store interface {
 	//
 	// The lens store is content-addressed, so identical lens configurations
 	// will return the same CID without duplicating storage.
-	AddLens(ctx context.Context, lens model.Lens) (string, error)
+	AddLens(ctx context.Context, lens model.Lens, opts ...options.Lister[options.AddLensOptions]) (string, error)
 
 	// ListLenses returns all stored lenses mapped by their CID.
 	ListLenses(ctx context.Context, opts ...options.Lister[options.ListLensesOptions]) (map[string]model.Lens, error)

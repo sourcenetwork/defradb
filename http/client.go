@@ -286,7 +286,11 @@ func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (st
 	return res.LensID, nil
 }
 
-func (c *Client) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (c *Client) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Lister[options.AddLensOptions],
+) (string, error) {
 	methodURL := c.http.apiURL.JoinPath("lens")
 
 	body, err := json.Marshal(AddLensRequest{Lens: lens})
