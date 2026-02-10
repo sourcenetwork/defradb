@@ -33,7 +33,7 @@ func TestQuerySimpleWithoutGroupByWithCountOnGroup(t *testing.T) {
 						COUNT(GROUP: {})
 					}
 				}`,
-				ExpectedError: "GROUP may only be referenced when within a groupBy request",
+				ExpectedError: "group may only be referenced when within a groupBy request",
 			},
 		},
 	}
@@ -60,7 +60,7 @@ func TestQuerySimpleWithGroupByNumberWithCountOnInnerNonExistantGroup(t *testing
 						}
 					}
 				}`,
-				ExpectedError: "GROUP may only be referenced when within a groupBy request",
+				ExpectedError: "group may only be referenced when within a groupBy request",
 			},
 		},
 	}
