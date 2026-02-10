@@ -17,7 +17,7 @@ options:
         - ci
         - chore
         - bot
-  commit_groups:
+  commitGROUPs:
     title_maps:
       feat: Features
       fix: Fixes

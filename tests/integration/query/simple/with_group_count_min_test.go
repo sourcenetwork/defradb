@@ -59,10 +59,10 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfCount_Succeed
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: _count})
-						_group (groupBy: [Verified]){
+						_min(GROUP: {field: COUNT})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_count(_group: {})
+							COUNT(GROUP: {})
 						}
 					}
 				}`,
@@ -71,34 +71,34 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfCount_Succeed
 						{
 							"Name": "John",
 							"_min": int64(1),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_count":   int(2),
+									"COUNT":    int(2),
 								},
 								{
 									"Verified": false,
-									"_count":   int(1),
+									"COUNT":    int(1),
 								},
 							},
 						},
 						{
 							"Name": "Alice",
 							"_min": int64(1),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
-									"_count":   int(1),
+									"COUNT":    int(1),
 								},
 							},
 						},
 						{
 							"Name": "Carlo",
 							"_min": int64(1),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_count":   int(1),
+									"COUNT":    int(1),
 								},
 							},
 						},

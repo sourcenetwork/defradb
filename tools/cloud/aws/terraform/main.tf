@@ -29,13 +29,13 @@ data "aws_ami" "ami" {
 resource "aws_instance" "instance" {
   ami             = data.aws_ami.ami.id
   instance_type   = var.instance_type
-  security_groups = ["${aws_security_group.sg.name}"]
+  securityGROUPs = ["${aws_securityGROUP.sg.name}"]
   key_name        = var.keypair
   tags            = local.common_tags
 }
 
 
-resource "aws_security_group" "sg" {
+resource "aws_securityGROUP" "sg" {
   dynamic "ingress" {
     for_each = var.ports[*]
     content {
@@ -44,7 +44,7 @@ resource "aws_security_group" "sg" {
       protocol         = "tcp"
       cidr_blocks      = ingress.value.from != 1433 ? [ingress.value.source] : null
       ipv6_cidr_blocks = ingress.value.source == "::/0" ? [ingress.value.source] : null
-      security_groups  = ingress.value.from == 1433 ? [ingress.value.source] : null
+      securityGROUPs  = ingress.value.from == 1433 ? [ingress.value.source] : null
     }
   }
 

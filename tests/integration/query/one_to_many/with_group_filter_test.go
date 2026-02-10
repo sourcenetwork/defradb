@@ -96,7 +96,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 				Request: `query {
 						Author (groupBy: [age]) {
 							age
-							_group {
+							GROUP {
 								name
 								published (filter: {rating: {_gt: 4.6}}) {
 									name
@@ -110,7 +110,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 					"Author": []map[string]any{
 						{
 							"age": int64(327),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Voltaire",
 									"published": []map[string]any{
@@ -132,7 +132,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnJoin(t *testing
 						},
 						{
 							"age": int64(65),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "John Grisham",
 									"published": []map[string]any{
@@ -233,7 +233,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 				Request: `query {
 						Author (groupBy: [age]) {
 							age
-							_group (filter: {published: {rating: {_gt: 4.6}}}) {
+							GROUP (filter: {published: {rating: {_gt: 4.6}}}) {
 								name
 								published {
 									name
@@ -246,7 +246,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 					"Author": []map[string]any{
 						{
 							"age": int64(327),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Voltaire",
 									"published": []map[string]any{
@@ -264,7 +264,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroup(t *testin
 						},
 						{
 							"age": int64(65),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "John Grisham",
 									"published": []map[string]any{
@@ -373,7 +373,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 				Request: `query {
 						Author (groupBy: [age], filter: {age: {_gt: 300}}) {
 							age
-							_group {
+							GROUP {
 								name
 								published (filter: {rating: {_gt: 4.91}}){
 									name
@@ -386,7 +386,7 @@ func TestQueryOneToManyWithParentJoinGroupNumberAndNumberFilterOnGroupAndOnGroup
 					"Author": []map[string]any{
 						{
 							"age": int64(327),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":      "Simon Pelloutier",
 									"published": []map[string]any{},

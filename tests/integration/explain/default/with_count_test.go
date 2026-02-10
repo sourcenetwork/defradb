@@ -45,7 +45,7 @@ func TestDefaultExplainRequestWithCountOnInlineArrayField(t *testing.T) {
 				Request: `query @explain {
 					Book {
 						name
-						_count(chapterPages: {})
+						COUNT(chapterPages: {})
 					}
 				}`,
 

@@ -40,10 +40,10 @@ func TestQuerySimpleWithSumWithFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_sum(Users: {field: Age, filter: {Age: {_gt: 26}}})
+					SUM(Users: {field: Age, filter: {Age: {_gt: 26}}})
 				}`,
 				Results: map[string]any{
-					"_sum": int64(62),
+					"SUM": int64(62),
 				},
 			},
 		},

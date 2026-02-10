@@ -42,7 +42,7 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithFilter_
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_min(_group: {field: Age, filter: {Age: {_gt: 26}}})
+						_min(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
 					}
 				}`,
 				Results: map[string]any{
@@ -89,8 +89,8 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Suc
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_min(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						_group {
+						_min(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						GROUP {
 							Name
 						}
 					}
@@ -100,7 +100,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Suc
 						{
 							"Age":  int64(32),
 							"_min": int64(32),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Name": "Bob",
 								},
@@ -112,7 +112,7 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupAndChildMinWithFilter_Suc
 						{
 							"Age":  int64(19),
 							"_min": nil,
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Name": "Alice",
 								},
@@ -153,8 +153,8 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_min(_group: {field: Age, filter: {Name: {_eq: "John"}}})
-						_group(filter: {Name: {_eq: "John"}}) {
+						_min(GROUP: {field: Age, filter: {Name: {_eq: "John"}}})
+						GROUP(filter: {Name: {_eq: "John"}}) {
 							Name
 						}
 					}
@@ -164,16 +164,16 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 						{
 							"Age":  int64(32),
 							"_min": int64(32),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Name": "John",
 								},
 							},
 						},
 						{
-							"Age":    int64(19),
-							"_min":   nil,
-							"_group": []map[string]any{},
+							"Age":   int64(19),
+							"_min":  nil,
+							"GROUP": []map[string]any{},
 						},
 					},
 				},
@@ -209,8 +209,8 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_min(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						_group(filter: {Name: {_eq: "John"}}) {
+						_min(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						GROUP(filter: {Name: {_eq: "John"}}) {
 							Name
 						}
 					}
@@ -220,16 +220,16 @@ func TestQuerySimple_WithGroupByNumberWithRenderedGroupWithFilterAndChildMinWith
 						{
 							"Age":  int64(32),
 							"_min": int64(32),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Name": "John",
 								},
 							},
 						},
 						{
-							"Age":    int64(19),
-							"_min":   nil,
-							"_group": []map[string]any{},
+							"Age":   int64(19),
+							"_min":  nil,
+							"GROUP": []map[string]any{},
 						},
 					},
 				},
@@ -265,8 +265,8 @@ func TestQuerySimple_WithGroupByNumberWithoutRenderedGroupAndChildMinWithDiffere
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						S1: _min(_group: {field: Age, filter: {Age: {_gt: 26}}})
-						S2: _min(_group: {field: Age, filter: {Age: {_lt: 26}}})
+						S1: _min(GROUP: {field: Age, filter: {Age: {_gt: 26}}})
+						S2: _min(GROUP: {field: Age, filter: {Age: {_lt: 26}}})
 					}
 				}`,
 				Results: map[string]any{

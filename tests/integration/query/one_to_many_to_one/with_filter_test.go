@@ -136,8 +136,8 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeOfBothDescAndAsc(t *testing.T) 
 				Request: `query {
 					Author {
 						name
-						s1: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
-						s2: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_geq: 2020}}}})
+						s1: SUM(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
+						s2: SUM(book: {field: rating, filter: {publisher: {yearOpened: {_geq: 2020}}}})
 					}
 				}`,
 				Results: map[string]any{
@@ -178,7 +178,7 @@ func TestOneToManyToOneWithSumOfDeepFilterSubTypeAndDeepOrderBySubtypeOppositeDi
 				Request: `query {
 					Author {
 						name
-						s1: _sum(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
+						s1: SUM(book: {field: rating, filter: {publisher: {yearOpened: {_eq: 2013}}}})
 						books2020: book(filter: {publisher: {yearOpened: {_geq: 2020}}}) {
 							name
 						}

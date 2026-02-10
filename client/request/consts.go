@@ -40,17 +40,17 @@ const (
 	CidArgName    = "cid"
 	HeightArgName = "height"
 
-	AverageFieldName    = "_avg"
-	CountFieldName      = "_count"
+	AverageFieldName    = "AVG"
+	CountFieldName      = "COUNT"
 	DocIDFieldName      = "_docID"
-	GroupFieldName      = "_group"
+	GroupFieldName      = "GROUP"
 	DeletedFieldName    = "_deleted"
-	SumFieldName        = "_sum"
+	SumFieldName        = "SUM"
 	VersionFieldName    = "_version"
-	MaxFieldName        = "_max"
+	MaxFieldName        = "MAX"
 	MinFieldName        = "_min"
 	AliasFieldName      = "_alias"
-	SimilarityFieldName = "_similarity"
+	SimilarityFieldName = "SIMILARITY"
 
 	// New generated document id from a backed up document,
 	// which might have a different _docID originally.

@@ -30,7 +30,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteIntegers: {offset: 1, limit: 3, order: ASC})
+						SUM(favouriteIntegers: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -38,7 +38,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testin
 						{
 							"name": "Shahzad",
 							// 0 + 1 + 2
-							"_sum": int64(3),
+							"SUM": int64(3),
 						},
 					},
 				},
@@ -62,7 +62,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteIntegers: {offset: 1, limit: 3, order: DESC})
+						SUM(favouriteIntegers: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -70,7 +70,7 @@ func TestQueryInlineIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testi
 						{
 							"name": "Shahzad",
 							// 5 + 2 + 1
-							"_sum": int64(8),
+							"SUM": int64(8),
 						},
 					},
 				},
@@ -94,7 +94,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 				Request: `query {
 					Users {
 						name
-						_sum(testScores: {offset: 1, limit: 3, order: ASC})
+						SUM(testScores: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -102,7 +102,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderAsc(t
 						{
 							"name": "Shahzad",
 							// 0 + 1 + 2
-							"_sum": int64(3),
+							"SUM": int64(3),
 						},
 					},
 				},
@@ -126,7 +126,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 				Request: `query {
 					Users {
 						name
-						_sum(testScores: {offset: 1, limit: 3, order: DESC})
+						SUM(testScores: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -134,7 +134,7 @@ func TestQueryInlineNillableIntegerArrayWithSumWithOffsetWithLimitWithOrderDesc(
 						{
 							"name": "Shahzad",
 							// 5 + 2 + 1
-							"_sum": int64(8),
+							"SUM": int64(8),
 						},
 					},
 				},
@@ -158,7 +158,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteFloats: {offset: 1, limit: 3, order: ASC})
+						SUM(favouriteFloats: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -166,7 +166,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *testing.
 						{
 							"name": "Shahzad",
 							// 0.577 + 2.718 + 3.1425
-							"_sum": float64(6.4375),
+							"SUM": float64(6.4375),
 						},
 					},
 				},
@@ -190,7 +190,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteFloats: {offset: 1, limit: 3, order: DESC})
+						SUM(favouriteFloats: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -198,7 +198,7 @@ func TestQueryInlineFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t *testing
 						{
 							"name": "Shahzad",
 							// 6.283 + 3.1425 + 2.718
-							"_sum": float64(12.1435),
+							"SUM": float64(12.1435),
 						},
 					},
 				},
@@ -222,7 +222,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 				Request: `query {
 					Users {
 						name
-						_sum(pageRatings: {offset: 1, limit: 3, order: ASC})
+						SUM(pageRatings: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -230,7 +230,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderAsc(t *
 						{
 							"name": "Shahzad",
 							// 0.577 + 2.718 + 3.1425
-							"_sum": float64(6.4375),
+							"SUM": float64(6.4375),
 						},
 					},
 				},
@@ -254,7 +254,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t 
 				Request: `query {
 					Users {
 						name
-						_sum(pageRatings: {offset: 1, limit: 3, order: DESC})
+						SUM(pageRatings: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -262,7 +262,7 @@ func TestQueryInlineNillableFloatArrayWithSumWithOffsetWithLimitWithOrderDesc(t 
 						{
 							"name": "Shahzad",
 							// 6.283 + 3.1425 + 2.718
-							"_sum": float64(12.1435),
+							"SUM": float64(12.1435),
 						},
 					},
 				},

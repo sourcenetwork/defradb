@@ -45,7 +45,7 @@ func TestDebugExplainRequestWithMaxOnInlineArrayField_ChildFieldWillBeEmpty(t *t
 				Request: `query @explain(type: debug) {
 					Book {
 						name
-						MaxChapterPages: _max(chapterPages: {})
+						MaxChapterPages: MAX(chapterPages: {})
 					}
 				}`,
 

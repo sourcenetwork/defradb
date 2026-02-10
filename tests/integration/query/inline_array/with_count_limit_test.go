@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArrayWithCountWithLimitGreaterThanLength(t *testing.T
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {limit: 3})
+						COUNT(favouriteIntegers: {limit: 3})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineIntegerArrayWithCountWithLimit(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {limit: 3})
+						COUNT(favouriteIntegers: {limit: 3})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 3,
+							"name":  "Shahzad",
+							"COUNT": 3,
 						},
 					},
 				},

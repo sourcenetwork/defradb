@@ -17,8 +17,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// Note: this test should follow a different code path to `_avg` on it's own
-// utilising the existing `_sum` node instead of adding a new one.  This test cannot
+// Note: this test should follow a different code path to `AVG` on it's own
+// utilising the existing `SUM` node instead of adding a new one.  This test cannot
 // verify that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
@@ -34,16 +34,16 @@ func TestQueryInlineIntegerArrayWithAverageAndSum(t *testing.T) {
 				Request: `query {
 					Users(groupBy: [name]) {
 						name
-						_avg(favouriteIntegers: {})
-						_sum(favouriteIntegers: {})
+						AVG(favouriteIntegers: {})
+						SUM(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(2),
-							"_sum": int64(8),
+							"AVG":  float64(2),
+							"SUM":  int64(8),
 						},
 					},
 				},

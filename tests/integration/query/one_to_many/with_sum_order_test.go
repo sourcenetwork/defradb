@@ -72,7 +72,7 @@ func TestQueryOneToMany_WithSumWithAliasOrder_ShouldOrderResults(t *testing.T) {
 				Request: `query {
 					Author(order: {_alias: {totalRating: DESC}}) {
 						name
-						totalRating: _sum(published: {field: rating})
+						totalRating: SUM(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{

@@ -59,10 +59,10 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: _avg})
-						_group (groupBy: [Verified]){
+						_min(GROUP: {field: AVG})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_avg(_group: {field: Age})
+							AVG(GROUP: {field: Age})
 						}
 					}
 				}`,
@@ -71,34 +71,34 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_
 						{
 							"Name": "John",
 							"_min": float64(28.5),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_avg":     float64(28.5),
+									"AVG":      float64(28.5),
 								},
 								{
 									"Verified": false,
-									"_avg":     float64(34),
+									"AVG":      float64(34),
 								},
 							},
 						},
 						{
 							"Name": "Alice",
 							"_min": float64(19),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
-									"_avg":     float64(19),
+									"AVG":      float64(19),
 								},
 							},
 						},
 						{
 							"Name": "Carlo",
 							"_min": float64(55),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_avg":     float64(55),
+									"AVG":      float64(55),
 								},
 							},
 						},
@@ -138,20 +138,20 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerAverage
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age})
-						_min(_group: {field: Age})
+						AVG(GROUP: {field: Age})
+						_min(GROUP: {field: Age})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(35),
+							"AVG":  float64(35),
 							"_min": int64(32),
 						},
 						{
 							"Name": "Alice",
-							"_avg": float64(-19),
+							"AVG":  float64(-19),
 							"_min": int64(-19),
 						},
 					},

@@ -30,14 +30,14 @@ func TestQueryInlineBoolArrayWithCountWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(likedIndexes: {filter: {_eq: true}})
+						COUNT(likedIndexes: {filter: {_eq: true}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 3,
+							"name":  "Shahzad",
+							"COUNT": 3,
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineNillableBoolArrayWithCountWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(indexLikesDislikes: {filter: {_eq: true}})
+						COUNT(indexLikesDislikes: {filter: {_eq: true}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "John",
-							"_count": 2,
+							"name":  "John",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -92,14 +92,14 @@ func TestQueryInlineIntegerArrayWithCountWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {filter: {_gt: 0}})
+						COUNT(favouriteIntegers: {filter: {_gt: 0}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -123,14 +123,14 @@ func TestQueryInlineNillableIntegerArrayWithCountWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(testScores: {filter: {_gt: 0}})
+						COUNT(testScores: {filter: {_gt: 0}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -154,14 +154,14 @@ func TestQueryInlineIntegerArrayWithsWithCountWithAndFilterAndPopulatedArray(t *
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {filter: {_and: [{_gt: -2}, {_lt: 2}]}})
+						COUNT(favouriteIntegers: {filter: {_and: [{_gt: -2}, {_lt: 2}]}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 4,
+							"name":  "Shahzad",
+							"COUNT": 4,
 						},
 					},
 				},
@@ -185,14 +185,14 @@ func TestQueryInlineFloatArrayWithCountWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(favouriteFloats: {filter: {_lt: 9}})
+						COUNT(favouriteFloats: {filter: {_lt: 9}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -216,14 +216,14 @@ func TestQueryInlineNillableFloatArrayWithCountWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(pageRatings: {filter: {_lt: 9}})
+						COUNT(pageRatings: {filter: {_lt: 9}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -247,14 +247,14 @@ func TestQueryInlineStringArrayWithCountWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(preferredStrings: {filter: {_in: ["", "the first"]}})
+						COUNT(preferredStrings: {filter: {_in: ["", "the first"]}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -278,14 +278,14 @@ func TestQueryInlineNillableStringArrayWithCountWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(pageHeaders: {filter: {_in: ["", "the first", "empty string"]}})
+						COUNT(pageHeaders: {filter: {_in: ["", "the first", "empty string"]}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},

@@ -47,7 +47,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 				Request: `query @explain {
 					Author {
 						name
-						numberOfBooks: _count(books: {})
+						numberOfBooks: COUNT(books: {})
 					}
 				}`,
 
@@ -120,7 +120,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 				Request: `query @explain {
 					Author {
 						name
-						numberOfBooks: _count(
+						numberOfBooks: COUNT(
 							books: {}
 							articles: {}
 						)
@@ -249,7 +249,7 @@ func TestDefaultExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *
 }
 
 // This test asserts that only a single index join is used (not parallelNode) because the
-// _count reuses the rendered join as they have matching filters.
+// COUNT reuses the rendered join as they have matching filters.
 func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJoinField(t *testing.T) {
 	test := testUtils.TestCase{
 
@@ -261,7 +261,7 @@ func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJo
 				Request: `query @explain {
 					Author {
 						name
-						_count(books: {filter: {rating: {_neq: null}}})
+						COUNT(books: {filter: {rating: {_neq: null}}})
 						books(filter: {rating: {_neq: null}}){
 							name
 						}
@@ -290,7 +290,7 @@ func TestDefaultExplainRequestOneToManyWithCountWithFilterAndChildFilterSharesJo
 	explainUtils.ExecuteTestCase(t, test)
 }
 
-// This test asserts that two joins are used (with parallelNode) because _count cannot
+// This test asserts that two joins are used (with parallelNode) because COUNT cannot
 // reuse the rendered join as they dont have matching filters.
 func TestDefaultExplainRequestOneToManyWithCountAndChildFilterDoesNotShareJoinField(t *testing.T) {
 	test := testUtils.TestCase{
@@ -303,7 +303,7 @@ func TestDefaultExplainRequestOneToManyWithCountAndChildFilterDoesNotShareJoinFi
 				Request: `query @explain {
 					Author {
 						name
-						_count(books: {})
+						COUNT(books: {})
 						books(filter: {rating: {_neq: null}}){
 							name
 						}

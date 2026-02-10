@@ -75,7 +75,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 							age
 							published (groupBy: [rating]){
 								rating
-								_group {
+								GROUP {
 									name
 								}
 							}
@@ -89,7 +89,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 							"published": []map[string]any{
 								{
 									"rating": 4.9,
-									"_group": []map[string]any{
+									"GROUP": []map[string]any{
 										{
 											"name": "Painted House",
 										},
@@ -97,7 +97,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 								},
 								{
 									"rating": 4.5,
-									"_group": []map[string]any{
+									"GROUP": []map[string]any{
 										{
 											"name": "A Time for Mercy",
 										},
@@ -114,7 +114,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumber(t *testing.T) {
 							"published": []map[string]any{
 								{
 									"rating": 4.8,
-									"_group": []map[string]any{
+									"GROUP": []map[string]any{
 										{
 											"name": "Theif Lord",
 										},
@@ -211,7 +211,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 				Request: `query {
 					Author (groupBy: [age]) {
 						age
-						_group {
+						GROUP {
 							name
 							published {
 								name
@@ -224,7 +224,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 					"Author": []map[string]any{
 						{
 							"age": int64(327),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Voltaire",
 									"published": []map[string]any{
@@ -251,7 +251,7 @@ func TestQueryOneToManyWithParentJoinGroupNumber(t *testing.T) {
 						},
 						{
 							"age": int64(65),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "John Grisham",
 									"published": []map[string]any{
@@ -292,7 +292,7 @@ func TestQueryOneToManyWithInnerJoinGroupNumberWithNonGroupFieldsSelected(t *tes
 						published (groupBy: [rating]){
 							rating
 							name
-							_group {
+							GROUP {
 								name
 							}
 						}

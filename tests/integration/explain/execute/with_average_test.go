@@ -33,7 +33,7 @@ func TestExecuteExplainAverageRequestOnArrayField(t *testing.T) {
 				Request: `query @explain(type: execute) {
 					Book {
 						name
-						_avg(chapterPages: {})
+						AVG(chapterPages: {})
 					}
 				}`,
 
@@ -91,7 +91,7 @@ func TestExplainExplainAverageRequestOnJoinedField(t *testing.T) {
 				Request: `query @explain(type: execute) {
 					Author {
 						name
-						_avg(books: {field: pages})
+						AVG(books: {field: pages})
 					}
 				}`,
 

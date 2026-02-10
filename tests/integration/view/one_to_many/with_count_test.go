@@ -38,13 +38,13 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 				Query: `
 					Author {
 						name
-						_count(books: {})
+						COUNT(books: {})
 					}
 				`,
 				SDL: `
 					type AuthorView @materialized(if: false) {
 						name: String
-						_count: Int
+						COUNT: Int
 					}
 				`,
 			},
@@ -73,7 +73,7 @@ func TestView_OneToManyWithCount_Errors(t *testing.T) {
 				Request: `query {
 							AuthorView {
 								name
-								_count
+								COUNT
 							}
 						}`,
 				ExpectedError: "aggregate must be provided with a property to aggregate",
@@ -103,7 +103,7 @@ func TestView_OneToManyWithAliasedCount(t *testing.T) {
 				Query: `
 					Author {
 						name
-						numberOfBooks: _count(books: {})
+						numberOfBooks: COUNT(books: {})
 					}
 				`,
 				SDL: `
@@ -176,7 +176,7 @@ func TestView_OneToManyWithCountInQueryButNotSDL(t *testing.T) {
 				Query: `
 					Author {
 						name
-						_count(books: {})
+						COUNT(books: {})
 					}
 				`,
 				SDL: `

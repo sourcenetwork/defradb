@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArrayWithSumWithLimit(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteIntegers: {limit: 2})
+						SUM(favouriteIntegers: {limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_sum": int64(1),
+							"SUM":  int64(1),
 						},
 					},
 				},

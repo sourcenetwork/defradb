@@ -48,7 +48,7 @@ func TestDefaultExplainTopLevelSumRequest(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain {
-					_sum(
+					SUM(
 						Author: {
 							field: age
 						}
@@ -100,7 +100,7 @@ func TestDefaultExplainTopLevelSumRequestWithFilter(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain {
-					_sum(
+					SUM(
 						Author: {
 							field: age,
 							filter: {

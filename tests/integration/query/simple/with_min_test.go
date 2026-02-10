@@ -119,10 +119,10 @@ func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_max(Users: {field: Age})
+					MAX(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_max": int64(math.MaxInt64),
+					"MAX": int64(math.MaxInt64),
 				},
 			},
 		},

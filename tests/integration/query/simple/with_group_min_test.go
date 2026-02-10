@@ -48,7 +48,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinOnEm
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_min(_group: {field: Age})
+						_min(GROUP: {field: Age})
 					}
 				}`,
 				Results: map[string]any{
@@ -87,7 +87,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMin_Suc
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: Age})
+						_min(GROUP: {field: Age})
 					}
 				}`,
 				Results: map[string]any{
@@ -134,7 +134,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildNilMin_Succeed
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: Age})
+						_min(GROUP: {field: Age})
 					}
 				}`,
 				Results: map[string]any{
@@ -198,10 +198,10 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfInt_Succ
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: _min})
-						_group (groupBy: [Verified]){
+						_min(GROUP: {field: _min})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_min(_group: {field: Age})
+							_min(GROUP: {field: Age})
 						}
 					}
 				}`,
@@ -210,7 +210,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfInt_Succ
 						{
 							"Name": "John",
 							"_min": int64(25),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
 									"_min":     int64(25),
@@ -224,7 +224,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfInt_Succ
 						{
 							"Name": "Alice",
 							"_min": int64(19),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
 									"_min":     int64(19),
@@ -234,7 +234,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfInt_Succ
 						{
 							"Name": "Carlo",
 							"_min": int64(55),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
 									"_min":     int64(55),
@@ -275,7 +275,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildEmptyFloatMin_
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: HeightM})
+						_min(GROUP: {field: HeightM})
 					}
 				}`,
 				Results: map[string]any{
@@ -322,7 +322,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildFloatMin_Succe
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: HeightM})
+						_min(GROUP: {field: HeightM})
 					}
 				}`,
 				Results: map[string]any{
@@ -386,10 +386,10 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfFloat_Su
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: _min})
-						_group (groupBy: [Verified]){
+						_min(GROUP: {field: _min})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_min(_group: {field: HeightM})
+							_min(GROUP: {field: HeightM})
 						}
 					}
 				}`,
@@ -398,7 +398,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfFloat_Su
 						{
 							"Name": "Carlo",
 							"_min": float64(1.74),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
 									"_min":     float64(1.74),
@@ -408,7 +408,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfFloat_Su
 						{
 							"Name": "John",
 							"_min": float64(1.61),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
 									"_min":     float64(1.61),
@@ -422,7 +422,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfFloat_Su
 						{
 							"Name": "Alice",
 							"_min": float64(2.04),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
 									"_min":     float64(2.04),
@@ -486,13 +486,13 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfMinOfFlo
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: _min})
-						_group (groupBy: [Verified]){
+						_min(GROUP: {field: _min})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_min(_group: {field: HeightM})
-							_group (groupBy: [Age]){
+							_min(GROUP: {field: HeightM})
+							GROUP (groupBy: [Age]){
 								Age
-								_min(_group: {field: HeightM})
+								_min(GROUP: {field: HeightM})
 							}
 						}
 					}
@@ -502,11 +502,11 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfMinOfFlo
 						{
 							"Name": "Alice",
 							"_min": float64(2.04),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
 									"_min":     float64(2.04),
-									"_group": []map[string]any{
+									"GROUP": []map[string]any{
 										{
 											"Age":  int64(19),
 											"_min": float64(2.04),
@@ -518,11 +518,11 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfMinOfFlo
 						{
 							"Name": "John",
 							"_min": float64(1.61),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
 									"_min":     float64(1.61),
-									"_group": []map[string]any{
+									"GROUP": []map[string]any{
 										{
 											"Age":  int64(32),
 											"_min": float64(1.61),
@@ -536,7 +536,7 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfMinOfFlo
 								{
 									"Verified": false,
 									"_min":     float64(2.22),
-									"_group": []map[string]any{
+									"GROUP": []map[string]any{
 										{
 											"Age":  int64(34),
 											"_min": float64(2.22),
@@ -548,11 +548,11 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMinOfMinOfMinOfFlo
 						{
 							"Name": "Carlo",
 							"_min": float64(1.74),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
 									"_min":     float64(1.74),
-									"_group": []map[string]any{
+									"GROUP": []map[string]any{
 										{
 											"Age":  int64(55),
 											"_min": float64(1.74),
