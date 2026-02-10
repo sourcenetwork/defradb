@@ -95,7 +95,7 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 								IsPrimary:    true,
 							},
 							{
-								Name:         "MINionID",
+								Name:         "_minionID",
 								Kind:         client.FieldKind_DocID,
 								Typ:          client.LWW_REGISTER,
 								RelationName: immutable.Some("user_user"),
@@ -166,7 +166,7 @@ func TestSchemaOneOne_SelfUsingActualName(t *testing.T) {
 								},
 							},
 							Field{
-								"name": "MINionID",
+								"name": "_minionID",
 								"type": map[string]any{
 									"kind": "SCALAR",
 									"name": "ID",
