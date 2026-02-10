@@ -344,6 +344,7 @@ func performAction(
 
 	case Start:
 		startNodes(s, testCase, action)
+		reconnectPeers(s)
 
 	case ConnectPeers:
 		connectPeers(s, action)
