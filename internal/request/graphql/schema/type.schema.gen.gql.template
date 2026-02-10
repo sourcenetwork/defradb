@@ -44,7 +44,7 @@ input  {TYPE_NAME}FilterBaseArg {
 # Having arguments
 input {TYPE_NAME}HavingArg {
     COUNT: {TYPE_NAME}HavingBlock
-    _min: {TYPE_NAME}HavingBlock
+    MIN: {TYPE_NAME}HavingBlock
     MAX: {TYPE_NAME}HavingBlock
     SUM: {TYPE_NAME}HavingBlock
     AVG: {TYPE_NAME}HavingBlock

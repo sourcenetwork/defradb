@@ -21,8 +21,8 @@ var schemas = (`
 	type User {
 		name: String
 		age: Int
-		boss: User @primary @relation(name: "boss_minion")
-		minion: User @relation(name: "boss_minion")
+		boss: User @primary @relation(name: "bossMINion")
+		minion: User @relation(name: "bossMINion")
 	}
 `)
 

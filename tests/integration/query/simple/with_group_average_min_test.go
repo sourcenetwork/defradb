@@ -59,7 +59,7 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(GROUP: {field: AVG})
+						MIN(GROUP: {field: AVG})
 						GROUP (groupBy: [Verified]){
 							Verified
 							AVG(GROUP: {field: Age})
@@ -70,7 +70,7 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_min": float64(28.5),
+							"MIN":  float64(28.5),
 							"GROUP": []map[string]any{
 								{
 									"Verified": true,
@@ -84,7 +84,7 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_
 						},
 						{
 							"Name": "Alice",
-							"_min": float64(19),
+							"MIN":  float64(19),
 							"GROUP": []map[string]any{
 								{
 									"Verified": false,
@@ -94,7 +94,7 @@ func TestQuery_SimpleWithGroupByStringWithInnerGroupBooleanAndMinOfAverageOfInt_
 						},
 						{
 							"Name": "Carlo",
-							"_min": float64(55),
+							"MIN":  float64(55),
 							"GROUP": []map[string]any{
 								{
 									"Verified": true,
@@ -139,7 +139,7 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerAverage
 					Users(groupBy: [Name]) {
 						Name
 						AVG(GROUP: {field: Age})
-						_min(GROUP: {field: Age})
+						MIN(GROUP: {field: Age})
 					}
 				}`,
 				Results: map[string]any{
@@ -147,12 +147,12 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerAverage
 						{
 							"Name": "John",
 							"AVG":  float64(35),
-							"_min": int64(32),
+							"MIN":  int64(32),
 						},
 						{
 							"Name": "Alice",
 							"AVG":  float64(-19),
-							"_min": int64(-19),
+							"MIN":  int64(-19),
 						},
 					},
 				},

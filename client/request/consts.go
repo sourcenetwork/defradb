@@ -48,7 +48,7 @@ const (
 	SumFieldName        = "SUM"
 	VersionFieldName    = "_version"
 	MaxFieldName        = "MAX"
-	MinFieldName        = "_min"
+	MinFieldName        = "MIN"
 	AliasFieldName      = "_alias"
 	SimilarityFieldName = "SIMILARITY"
 

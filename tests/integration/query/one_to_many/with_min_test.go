@@ -64,7 +64,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchAll(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {minRating: {_gt: 0}}}) {
 						name
-						minRating: _min(published: {field: rating})
+						minRating: MIN(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{
@@ -134,7 +134,7 @@ func TestQueryOneToMany_WithMinAliasFilter_ShouldMatchOne(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {minRating: {_lt: 4.7}}}) {
 						name
-						minRating: _min(published: {field: rating})
+						minRating: MIN(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{

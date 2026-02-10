@@ -188,7 +188,7 @@ points: ScalarAggregateNumericBlock): Float
     will be returned as a single value.
 
     """
-    _min(GROUP: User__NumericSelector,     """
+    MIN(GROUP: User__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -962,7 +962,7 @@ order: [commitsOrderArg]): [Commit]
     will be returned as a single value.
 
     """
-    _min(User: User__NumericSelector): Float
+    MIN(User: User__NumericSelector): Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
@@ -2296,7 +2296,7 @@ input NotNullBlobOperatorBlock {
 enum UserNumericFieldsArg {
     SUM
     AVG
-    _min
+    MIN
     MAX
     points
     COUNT

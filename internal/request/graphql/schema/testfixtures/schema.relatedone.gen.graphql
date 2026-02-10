@@ -231,7 +231,7 @@ enum BookNumericFieldsArg {
     COUNT
     SUM
     AVG
-    _min
+    MIN
     MAX
 }
 
@@ -438,7 +438,7 @@ order: [commitsOrderArg]): [Commit]
     will be returned as a single value.
 
     """
-    _min(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    MIN(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
@@ -553,7 +553,7 @@ input Author__NumericSelector {
 
 enum AuthorNumericFieldsArg {
     AVG
-    _min
+    MIN
     MAX
     COUNT
     age
@@ -2149,7 +2149,7 @@ age: ScalarAggregateNumericBlock): Float
     will be returned as a single value.
 
     """
-    _min(GROUP: Author__NumericSelector,     """
+    MIN(GROUP: Author__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -2668,7 +2668,7 @@ rating: ScalarAggregateNumericBlock): Float
     will be returned as a single value.
 
     """
-    _min(GROUP: Book__NumericSelector,     """
+    MIN(GROUP: Book__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 

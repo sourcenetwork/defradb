@@ -130,7 +130,7 @@ var aggregateFields = fields{
 		},
 	},
 	map[string]any{
-		"name": "_min",
+		"name": "MIN",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",

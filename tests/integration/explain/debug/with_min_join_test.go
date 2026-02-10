@@ -48,7 +48,7 @@ func TestDebugExplainRequest_WithMinOnOneToManyJoinedField_Succeeds(t *testing.T
 					Author {
 						name
 						_docID
-						MinPages: _min(
+						MinPages: MIN(
 							books: {field: pages}
 						)
 					}
@@ -73,7 +73,7 @@ func TestDebugExplainRequest_WithMinOnOneToManyJoinedFieldWithFilter_Succeeds(t 
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						MinPages: _min(
+						MinPages: MIN(
 							articles: {
 								field: pages,
 								filter: {
@@ -105,7 +105,7 @@ func TestDebugExplainRequest_WithMinOnOneToManyJoinedFieldWithManySources_Succee
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						MinPages: _min(
+						MinPages: MIN(
 							books: {field: pages},
 							articles: {field: pages}
 						)

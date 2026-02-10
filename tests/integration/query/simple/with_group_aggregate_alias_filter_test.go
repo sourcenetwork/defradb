@@ -164,7 +164,7 @@ func TestQuerySimple_WithGroupMinAliasFilter_FiltersResults(t *testing.T) {
 				Request: `query {
 					Users(groupBy: [Name], filter: {_alias: {minScore: {_eq: 0}}}) {
 						Name
-						minScore: _min(GROUP: {field: Score})
+						minScore: MIN(GROUP: {field: Score})
 					}
 				}`,
 				Results: map[string]any{

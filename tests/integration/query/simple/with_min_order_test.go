@@ -38,7 +38,7 @@ func TestQuerySimpleWithMinWithOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _min(HeightM: {}, Age: {})
+						total: MIN(HeightM: {}, Age: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -57,7 +57,7 @@ func TestQuerySimpleWithMinWithOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _min(HeightM: {}, Age: {})
+						total: MIN(HeightM: {}, Age: {})
 					}
 				}`,
 				Results: map[string]any{
