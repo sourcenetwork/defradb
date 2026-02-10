@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/encryption"
@@ -38,7 +39,7 @@ type docIDResult struct {
 // a C.CollectionOptions struct into a GetCollectionsOptions
 func parseCollectionOptionsToGetCollectionsOptions(
 	opts C.CollectionOptions,
-) options.Lister[options.GetCollectionsOptions] {
+) *options.GetCollectionsOptionsBuilder {
 	versionID := C.GoString(opts.version)
 	collectionID := C.GoString(opts.collectionID)
 	name := C.GoString(opts.name)
@@ -97,6 +98,10 @@ func CollectionCreate(
 	}
 
 	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
+	ident := acpIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		colOptions.SetIdentity(ident.Value())
+	}
 
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
@@ -119,6 +124,8 @@ func CollectionCreate(
 	}
 	ctx = encryption.SetContextConfigFromParams(ctx, isEncrypted != 0, encryptFields)
 
+	createOpt := options.WithIdentity(options.CollectionCreate(), acpIdentity.FromContext(ctx))
+
 	// Determine if JSON is array or object by looking for the first character being [
 	jsonString := strings.TrimSpace(C.GoString(json))
 	if strings.HasPrefix(jsonString, "[") {
@@ -127,7 +134,7 @@ func CollectionCreate(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.CreateMany(ctx, docs)
+		err = col.CreateMany(ctx, docs, createOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -137,7 +144,7 @@ func CollectionCreate(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.Create(ctx, doc)
+		err = col.Create(ctx, doc, createOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -153,11 +160,16 @@ func CollectionDelete(nodePtr C.uintptr_t,
 	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
+	ident := acpIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		colOptions.SetIdentity(ident.Value())
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -169,6 +181,7 @@ func CollectionDelete(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
+
 	docID := C.GoString(docIDStr)
 	filter := C.GoString(filterStr)
 	switch {
@@ -177,7 +190,7 @@ func CollectionDelete(nodePtr C.uintptr_t,
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		_, err = col.Delete(ctx, ID)
+		_, err = col.Delete(ctx, ID, options.WithIdentity(options.CollectionDelete(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -187,7 +200,7 @@ func CollectionDelete(nodePtr C.uintptr_t,
 		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		res, err := col.DeleteWithFilter(ctx, filterValue)
+		res, err := col.DeleteWithFilter(ctx, filterValue, options.WithIdentity(options.CollectionDeleteWithFilter(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -204,11 +217,16 @@ func CollectionDelete(nodePtr C.uintptr_t,
 //export CollectionDescribe
 func CollectionDescribe(nodePtr C.uintptr_t, opts C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
+	ident := acpIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		colOptions.SetIdentity(ident.Value())
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -232,11 +250,16 @@ func CollectionDescribe(nodePtr C.uintptr_t, opts C.CollectionOptions, identityP
 //export CollectionListDocIDs
 func CollectionListDocIDs(nodePtr C.uintptr_t, opts C.CollectionOptions, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
+	ident := acpIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		colOptions.SetIdentity(ident.Value())
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -251,7 +274,7 @@ func CollectionListDocIDs(nodePtr C.uintptr_t, opts C.CollectionOptions, identit
 
 	// Get and return the Doc IDs as a JSON list
 	// Note: This is different from the format returned by the CLI, which contains error fields
-	docCh, err := col.GetAllDocIDs(ctx)
+	docCh, err := col.GetAllDocIDs(ctx, options.WithIdentity(options.CollectionGetAllDocIDs(), acpIdentity.FromContext(ctx)))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -283,11 +306,16 @@ func CollectionGet(nodePtr C.uintptr_t,
 	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
+	ident := acpIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		colOptions.SetIdentity(ident.Value())
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -304,7 +332,8 @@ func CollectionGet(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	doc, err := col.Get(ctx, docID, options.CollectionGet().SetShowDeleted(showDeleted != 0))
+	getOpt := options.WithIdentity(options.CollectionGet().SetShowDeleted(showDeleted != 0), acpIdentity.FromContext(ctx))
+	doc, err := col.Get(ctx, docID, getOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -349,7 +378,8 @@ func CollectionPatch(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	err = store.PatchCollection(ctx, C.GoString(patch), migration)
+	err = store.PatchCollection(ctx, C.GoString(patch), migration,
+		options.WithIdentity(options.PatchCollection(), acpIdentity.FromContext(ctx)))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -366,11 +396,16 @@ func CollectionUpdate(
 	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
+	ident := acpIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		colOptions.SetIdentity(ident.Value())
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -393,7 +428,8 @@ func CollectionUpdate(
 		if err := json.Unmarshal([]byte(filter), &filterValue); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		res, err := col.UpdateWithFilter(ctx, filterValue, updater)
+		res, err := col.UpdateWithFilter(ctx, filterValue, updater,
+			options.WithIdentity(options.CollectionUpdateWithFilter(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -409,14 +445,15 @@ func CollectionUpdate(
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		doc, err := col.Get(ctx, newDocID, options.CollectionGet().SetShowDeleted(true))
+		doc, err := col.Get(ctx, newDocID,
+			options.WithIdentity(options.CollectionGet().SetShowDeleted(true), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		if err := doc.SetWithJSON(ctx, []byte(updater)); err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		err = col.Update(ctx, doc)
+		err = col.Update(ctx, doc, options.WithIdentity(options.CollectionUpdate(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -442,7 +479,8 @@ func SetActiveCollection(nodePtr C.uintptr_t, opts C.CollectionOptions, identity
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	err = store.SetActiveCollectionVersion(ctx, versionID)
+	err = store.SetActiveCollectionVersion(ctx, versionID,
+		options.WithIdentity(options.SetActiveCollectionVersion(), acpIdentity.FromContext(ctx)))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -456,11 +494,16 @@ func CollectionTruncate(
 	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
-	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
 
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	colOptions := parseCollectionOptionsToGetCollectionsOptions(opts)
+	ident := acpIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		colOptions.SetIdentity(ident.Value())
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -473,7 +516,7 @@ func CollectionTruncate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	err = col.Truncate(ctx)
+	err = col.Truncate(ctx, options.WithIdentity(options.CollectionTruncate(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

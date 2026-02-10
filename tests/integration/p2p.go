@@ -143,7 +143,7 @@ func reconnectPeers(s *state.State) {
 			// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
 			// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
 			targetOpts := options.PeerInfo()
-			targetIdent := getIdentityForRequestSpecificToNode(s, nodeIdentity, targetNodeID)
+			targetIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(targetNodeID), targetNodeID)
 			if targetIdent.HasValue() {
 				targetOpts.SetIdentity(targetIdent.Value())
 			}

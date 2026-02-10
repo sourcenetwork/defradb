@@ -242,17 +242,21 @@ func (c *Collection) Save(
 	doc *client.Document,
 	opts ...options.Lister[options.CollectionSaveOptions],
 ) error {
-	_, err := c.Get(ctx, doc.ID(), options.CollectionGet().SetShowDeleted(true))
+	saveOpt := utils.NewOptions(opts...)
+	getOpts := options.CollectionGet().SetShowDeleted(true)
+	if saveOpt.Identity.HasValue() {
+		getOpts.SetIdentity(saveOpt.Identity.Value())
+	}
+	_, err := c.Get(ctx, doc.ID(), getOpts)
 	if err == nil {
-		return c.Update(ctx, doc)
+		updateOpts := options.CollectionUpdate()
+		if saveOpt.Identity.HasValue() {
+			updateOpts.SetIdentity(saveOpt.Identity.Value())
+		}
+		return c.Update(ctx, doc, updateOpts)
 	}
 	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
-		saveOpt := utils.NewOptions(opts...)
-		createOpts :=
-			options.CollectionCreate().
-				SetEncryptDoc(saveOpt.EncryptDoc).
-				SetEncryptedFields(saveOpt.EncryptedFields)
-		return c.Create(ctx, doc, createOpts)
+		return c.Create(ctx, doc, opts...)
 	}
 	return err
 }
