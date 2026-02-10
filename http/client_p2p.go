@@ -58,7 +58,10 @@ func (c *Client) PeerInfo(ctx context.Context, opts ...options.Lister[options.Pe
 	return res, nil
 }
 
-func (c *Client) ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error) {
+func (c *Client) ActivePeers(
+	ctx context.Context,
+	opts ...options.Lister[options.ActivePeersOptions],
+) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 

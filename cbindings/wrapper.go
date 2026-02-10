@@ -129,7 +129,10 @@ func (w *CWrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.
 	return addresses, nil
 }
 
-func (w *CWrapper) ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error) {
+func (w *CWrapper) ActivePeers(
+	ctx context.Context,
+	opts ...options.Lister[options.ActivePeersOptions],
+) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 	cIdentity := optionToUintptr(opt.GetIdentity())
 	defer C.IdentityFree(cIdentity)
