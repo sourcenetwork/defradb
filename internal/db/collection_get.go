@@ -41,6 +41,8 @@ func (c *collection) Get(
 		return nil, err
 	}
 
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	// create txn
 	ctx, txn, err := ensureContextTxn(ctx, c.db, true)
 	if err != nil {

@@ -105,7 +105,8 @@ func addDACPolicy(
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		opt := options.WithIdentity(options.AddDACPolicy(), getIdentityForRequestSpecificToNode(s, action.Identity, nodeID))
+		identOpt := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		opt := options.WithIdentity(options.AddDACPolicy(), identOpt)
 		policyResult, err := node.AddDACPolicy(s.Ctx, action.Policy, opt)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)

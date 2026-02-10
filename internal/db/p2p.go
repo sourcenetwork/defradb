@@ -69,9 +69,7 @@ func (db *DB) CreateReplicator(
 		return err
 	}
 
-	if opt.Identity.HasValue() {
-		ctx = identity.WithContext(ctx, opt.Identity)
-	}
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	if db.p2p == nil {
 		return ErrNoP2P
@@ -103,9 +101,7 @@ func (db *DB) DeleteReplicator(
 		return err
 	}
 
-	if opt.Identity.HasValue() {
-		ctx = identity.WithContext(ctx, opt.Identity)
-	}
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	if db.p2p == nil {
 		return ErrNoP2P

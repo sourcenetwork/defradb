@@ -157,6 +157,8 @@ func (db *DB) AddNACActorRelationship(
 		return client.AddActorRelationshipResult{}, err
 	}
 
+	ctx = acpIdentity.WithContext(ctx, opt.Identity)
+
 	return db.addNACActorRelationship(ctx, relation, targetActor)
 }
 
@@ -174,6 +176,8 @@ func (db *DB) DeleteNACActorRelationship(
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationDeletePerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
+
+	ctx = acpIdentity.WithContext(ctx, opt.Identity)
 
 	return db.deleteNACActorRelationship(ctx, relation, targetActor)
 }

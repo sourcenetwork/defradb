@@ -219,6 +219,9 @@ func (c *collection) GetAllDocIDs(
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	return c.getAllDocIDsChan(ctx)
 }
 
@@ -345,6 +348,8 @@ func (c *collection) Create(
 		return err
 	}
 
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -374,6 +379,8 @@ func (c *collection) CreateMany(
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -504,6 +511,8 @@ func (c *collection) Update(
 		return err
 	}
 
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return err
@@ -583,6 +592,8 @@ func (c *collection) Save(
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -830,6 +841,8 @@ func (c *collection) Delete(
 		return false, err
 	}
 
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return false, err
@@ -867,6 +880,8 @@ func (c *collection) Exists(
 	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return false, err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {

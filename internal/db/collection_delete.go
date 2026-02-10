@@ -42,6 +42,8 @@ func (c *collection) DeleteWithFilter(
 		return nil, err
 	}
 
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
 		return nil, err
