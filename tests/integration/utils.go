@@ -1312,7 +1312,13 @@ func updateDocViaGQL(
 		input,
 	)
 
-	result := node.ExecRequest(s.Ctx, request)
+	reqOption := options.ExecRequest()
+	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
+	if identOption.HasValue() {
+		reqOption.SetIdentity(identOption.Value())
+	}
+
+	result := node.ExecRequest(s.Ctx, request, reqOption)
 	if len(result.GQL.Errors) > 0 {
 		return result.GQL.Errors[0]
 	}

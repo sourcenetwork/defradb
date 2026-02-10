@@ -256,7 +256,13 @@ func createDocViaGQL(
 
 	ctx := db.InitContext(a.s.Ctx, txn)
 
-	result := node.ExecRequest(ctx, req)
+	reqOption := options.ExecRequest()
+	identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIndex)
+	if identOption.HasValue() {
+		reqOption.SetIdentity(identOption.Value())
+	}
+
+	result := node.ExecRequest(ctx, req, reqOption)
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
