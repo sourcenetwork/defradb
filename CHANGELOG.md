@@ -116,7 +116,7 @@ To get a full outline of the changes, we invite you to review the official chang
 
 ### Fixes
 
-* Allow operations on SIMILARITY results ([#3927](https://github.com/sourcenetwork/defradb/issues/3927))
+* Allow operations on _similarity results ([#3927](https://github.com/sourcenetwork/defradb/issues/3927))
 * Playground keypair reset ([#3922](https://github.com/sourcenetwork/defradb/issues/3922))
 * Race condition on connection access ([#3814](https://github.com/sourcenetwork/defradb/issues/3814))
 
@@ -1097,7 +1097,7 @@ To get a full outline of the changes, we invite you to review the official chang
 * Improve NonNull error message ([#1362](https://github.com/sourcenetwork/defradb/issues/1362))
 * Use ring-buffer for WaitForFoo chans ([#1359](https://github.com/sourcenetwork/defradb/issues/1359))
 * Guarantee event processing order ([#1352](https://github.com/sourcenetwork/defradb/issues/1352))
-* Explain of GROUP with dockeys filter to be []string ([#1348](https://github.com/sourcenetwork/defradb/issues/1348))
+* Explain of _group with dockeys filter to be []string ([#1348](https://github.com/sourcenetwork/defradb/issues/1348))
 
 ### Refactoring
 
@@ -1412,10 +1412,10 @@ DefraDB v0.3.1 is a minor release, primarily focusing on additional/extended fea
 * Ensure CLI outputs JSON to stdout when directed to pipe ([#804](https://github.com/sourcenetwork/defradb/issues/804))
 * Error if given the wrong side of a one-one relationship ([#795](https://github.com/sourcenetwork/defradb/issues/795))
 * Add object marker to enable return of empty docs ([#800](https://github.com/sourcenetwork/defradb/issues/800))
-* Resolve the extra `typeIndexJoin`s for `AVG` aggregate ([#774](https://github.com/sourcenetwork/defradb/issues/774))
+* Resolve the extra `typeIndexJoin`s for `_avg` aggregate ([#774](https://github.com/sourcenetwork/defradb/issues/774))
 * Remove _like filter operator ([#797](https://github.com/sourcenetwork/defradb/issues/797))
 * Remove having gql types ([#785](https://github.com/sourcenetwork/defradb/issues/785))
-* Error if child GROUP selected without parent groupBy ([#781](https://github.com/sourcenetwork/defradb/issues/781))
+* Error if child _group selected without parent groupBy ([#781](https://github.com/sourcenetwork/defradb/issues/781))
 * Error nicely on missing field specifier ([#782](https://github.com/sourcenetwork/defradb/issues/782))
 * Handle order input field argument being nil ([#701](https://github.com/sourcenetwork/defradb/issues/701))
 * Change output to outputpath in config file template for logger ([#716](https://github.com/sourcenetwork/defradb/issues/716))
