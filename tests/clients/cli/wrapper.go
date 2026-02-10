@@ -495,6 +495,9 @@ func (w *Wrapper) AddLens(
 	}
 	args = append(args, string(lensJSON))
 
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
+
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {
 		return "", err

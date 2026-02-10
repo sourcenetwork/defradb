@@ -291,6 +291,9 @@ func (c *Client) AddLens(
 	lens model.Lens,
 	opts ...options.Lister[options.AddLensOptions],
 ) (string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("lens")
 
 	body, err := json.Marshal(AddLensRequest{Lens: lens})
