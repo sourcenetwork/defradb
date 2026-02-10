@@ -97,56 +97,13 @@ func (b *CollectionUpdateOptionsBuilder) SetIdentity(id identity.Identity) *Coll
 	return b
 }
 
-// CollectionSaveOptions contains options for Save operation.
-type CollectionSaveOptions struct {
-	// Identity is the identity of the actor performing the operation.
-	Identity immutable.Option[identity.Identity]
-	// EncryptDoc enables document encryption when creating a document.
-	EncryptDoc bool
-	// EncryptedFields specifies a list of fields to be encrypted.
-	EncryptedFields []string
-}
+type CollectionSaveOptions = CollectionCreateOptions
 
-// GetIdentity returns the identity for the operation.
-func (o *CollectionSaveOptions) GetIdentity() immutable.Option[identity.Identity] {
-	return o.Identity
-}
-
-// CollectionSaveOptionsBuilder is a builder for CollectionSaveOptions.
-type CollectionSaveOptionsBuilder struct {
-	enumerableBuilder[CollectionSaveOptions]
-}
+type CollectionSaveOptionsBuilder = CollectionCreateOptionsBuilder
 
 // CollectionSave creates a new CollectionSaveOptionsBuilder instance.
 func CollectionSave() *CollectionSaveOptionsBuilder {
 	return &CollectionSaveOptionsBuilder{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (b *CollectionSaveOptionsBuilder) SetIdentity(id identity.Identity) *CollectionSaveOptionsBuilder {
-	b.append(func(opts *CollectionSaveOptions) {
-		opts.Identity = immutable.Some(id)
-	})
-	return b
-}
-
-// SetEncryptDoc enables or disables document encryption.
-func (b *CollectionSaveOptionsBuilder) SetEncryptDoc(encrypt bool) *CollectionSaveOptionsBuilder {
-	b.append(func(opts *CollectionSaveOptions) {
-		opts.EncryptDoc = encrypt
-	})
-	return b
-}
-
-// SetEncryptedFields specifies fields to be encrypted.
-func (b *CollectionSaveOptionsBuilder) SetEncryptedFields(fields []string) *CollectionSaveOptionsBuilder {
-	b.append(func(opts *CollectionSaveOptions) {
-		if fields != nil {
-			opts.EncryptedFields = make([]string, len(fields))
-			copy(opts.EncryptedFields, fields)
-		}
-	})
-	return b
 }
 
 // CollectionDeleteOptions contains options for Delete operation.

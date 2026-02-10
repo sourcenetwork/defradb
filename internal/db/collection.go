@@ -608,12 +608,7 @@ func (c *collection) Save(
 	if exists {
 		err = c.update(ctx, doc)
 	} else {
-		opt := utils.NewOptions(opts...)
-		createOpts :=
-			options.CollectionCreate().
-				SetEncryptDoc(opt.EncryptDoc).
-				SetEncryptedFields(opt.EncryptedFields)
-		err = c.create(ctx, doc, createOpts)
+		err = c.create(ctx, doc, opts...)
 	}
 	if err != nil {
 		return err
