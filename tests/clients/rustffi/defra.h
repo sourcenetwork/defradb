@@ -1204,6 +1204,19 @@ struct FfiResult p2p_create_replicator(uintptr_t node_ptr,
                                        const char *collections_json);
 
 /*
+ Retry pushing existing documents to all registered replicators.
+
+ For each registered replicator, re-pushes all existing documents.
+ `push_existing_docs` internally waits up to 5s for the peer connection
+ to be established, so this can be called immediately after dialing.
+
+ # Safety
+
+ `node_ptr` must be a valid node handle.
+ */
+struct FfiResult p2p_retry_replicators(uintptr_t node_ptr);
+
+/*
  Delete a replicator.
 
  # Arguments

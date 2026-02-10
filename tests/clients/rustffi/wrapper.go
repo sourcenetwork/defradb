@@ -388,6 +388,14 @@ func groupPatchByCollection(patch string) ([]struct{ Name, Patch string }, error
 
 // SetGoNodeCloser sets a callback to close the Go node during wrapper Close().
 // This ensures the Go node's badger lock is released on restart.
+// RetryReplicators re-pushes all existing documents to connected replicator peers.
+func (w *Wrapper) RetryReplicators() error {
+	if w.node == nil {
+		return nil
+	}
+	return w.node.P2PRetryReplicators()
+}
+
 func (w *Wrapper) SetGoNodeCloser(closer func()) {
 	w.goNodeCloser = closer
 }
@@ -1058,11 +1066,26 @@ func (w *Wrapper) applyPatchGroups(
 }
 
 // resolveRemoveTargets resolves collection names or version IDs to version IDs.
+// If a target is neither a known collection name nor a version ID (e.g. "EncryptedIndexes"),
+// returns the same error Go produces for removing a nonexistent key from the global dict.
 func (w *Wrapper) resolveRemoveTargets(identityDID string, targets []string) ([]string, error) {
 	var versionIDs []string
 	for _, target := range targets {
-		vid := w.resolveToVersionID(identityDID, target)
-		versionIDs = append(versionIDs, vid)
+		collJSON, err := w.node.GetCollectionByName(identityDID, target)
+		if err == nil {
+			var version client.CollectionVersion
+			if err := json.Unmarshal([]byte(collJSON), &version); err == nil {
+				versionIDs = append(versionIDs, version.VersionID)
+				continue
+			}
+		}
+		// Not a collection name — check if it looks like a version ID (CID).
+		if strings.HasPrefix(target, "bafyrei") || strings.HasPrefix(target, "bafkrei") {
+			versionIDs = append(versionIDs, target)
+			continue
+		}
+		// Neither a collection name nor a version ID — Go returns this error.
+		return nil, fmt.Errorf("unable to remove nonexistent key")
 	}
 	return versionIDs, nil
 }

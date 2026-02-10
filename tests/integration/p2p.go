@@ -125,6 +125,12 @@ func connectPeers(
 }
 
 // reconnectPeers makes sure that all peers are connected after a node restart action.
+// replicatorRetrier is implemented by clients that support retrying failed
+// replicator pushes after peer reconnection (e.g., the Rust FFI wrapper).
+type replicatorRetrier interface {
+	RetryReplicators() error
+}
+
 func reconnectPeers(s *state.State) {
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for sourceIndex, sourceNode := range nodes {
@@ -162,6 +168,17 @@ func reconnectPeers(s *state.State) {
 				getIdentityForRequestSpecificToNode(s, nodeIdentity, sourceNodeID))
 			err = connectWithRetry(s.Ctx, sourceNode, targetAddresses, opt)
 			require.NoError(s.T, err)
+		}
+	}
+
+	// After all peers are reconnected, retry pushing existing documents to
+	// replicators. In Go's native P2P, a background retry loop handles this.
+	// The Rust FFI has no retry loop, so we trigger it explicitly here.
+	for _, node := range nodes {
+		if retrier, ok := node.Client.(replicatorRetrier); ok {
+			if err := retrier.RetryReplicators(); err != nil {
+				log.ErrorContext(s.Ctx, "Failed to retry replicators", corelog.Any("Error", err))
+			}
 		}
 	}
 }
