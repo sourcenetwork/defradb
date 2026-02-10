@@ -75,4 +75,22 @@ func (a *SyncBranchableCollection) Execute() {
 
 	expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+
+	// For the Rust FFI client, set up expected merge events for WaitForSync.
+	// The FFI merge poller delivers events asynchronously, so WaitForSync needs
+	// to know which MergeComplete events to wait for. The Go client processes
+	// merges synchronously so this is not needed.
+	if !expectedErrorRaised && a.s.ClientType == state.RustFFIClientType &&
+		a.CollectionID < len(a.s.DocIDs) {
+		for peerID := range nodeState.P2P.Connections {
+			peerNode := a.s.Nodes[peerID]
+			docIDs := a.s.DocIDs[a.CollectionID]
+			for _, docID := range docIDs {
+				docIDStr := docID.String()
+				if head, ok := peerNode.P2P.ActualDAGHeads[docIDStr]; ok {
+					nodeState.P2P.ExpectedDAGHeads[docIDStr] = head.CID
+				}
+			}
+		}
+	}
 }
