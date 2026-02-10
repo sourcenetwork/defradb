@@ -13,11 +13,11 @@ package datastore
 import (
 	"context"
 
+	lru "github.com/hashicorp/golang-lru/v2"
 	ipfsBlockstore "github.com/ipfs/boxo/blockstore"
 	blocks "github.com/ipfs/go-block-format"
 	"github.com/ipfs/go-cid"
 
-	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 )
@@ -195,4 +195,3 @@ func (bs *blindWriteBlockstore) PutMany(ctx context.Context, blocks []blocks.Blo
 	}
 	return nil
 }
-

@@ -617,6 +617,10 @@ func (w *Wrapper) NewBlindWriteTxn() (client.Txn, error) {
 	return w.NewTxn(false)
 }
 
+func (w *Wrapper) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	return w.node.DB.InitContext(ctx, txn)
+}
+
 func (w *Wrapper) Close() {
 	w.serverCancel()
 	w.httpServer.Close()

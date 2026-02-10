@@ -32,22 +32,18 @@ var (
 	// BlockSchema is the IPLD schema type that represents a `Block`.
 	BlockSchema          schema.Type
 	BlockSchemaPrototype ipld.NodePrototype
-	// blockTypedPrototype caches the typed prototype for Block to avoid repeated schema verification.
-	blockTypedPrototype schema.TypedPrototype
 	// EncryptionSchema is the IPLD schema type that represents an `Encryption`.
 	EncryptionSchema          schema.Type
 	EncryptionSchemaPrototype ipld.NodePrototype
-	encryptionTypedPrototype  schema.TypedPrototype
 	// SignatureSchema is the IPLD schema type that represents a `Signature`.
 	SignatureSchema          schema.Type
 	SignatureSchemaPrototype ipld.NodePrototype
-	signatureTypedPrototype  schema.TypedPrototype
 
 	log = corelog.NewLogger("coreblock")
 )
 
 func init() {
-	BlockSchema, BlockSchemaPrototype, blockTypedPrototype = mustSetSchema(
+	BlockSchema, BlockSchemaPrototype, _ = mustSetSchema(
 		"Block",
 		&Block{},
 		&DAGLink{},
@@ -61,12 +57,12 @@ func init() {
 		&crdt.FieldDefinitionDelta{},
 	)
 
-	EncryptionSchema, EncryptionSchemaPrototype, encryptionTypedPrototype = mustSetSchema(
+	EncryptionSchema, EncryptionSchemaPrototype, _ = mustSetSchema(
 		"Encryption",
 		&Encryption{},
 	)
 
-	SignatureSchema, SignatureSchemaPrototype, signatureTypedPrototype = mustSetSchema(
+	SignatureSchema, SignatureSchemaPrototype, _ = mustSetSchema(
 		"Signature",
 		&Signature{},
 		&SignatureHeader{},
@@ -78,7 +74,9 @@ type schemaDefinition interface {
 	IPLDSchemaBytes() []byte
 }
 
-func mustSetSchema(schemaName string, schemas ...schemaDefinition) (schema.Type, ipld.NodePrototype, schema.TypedPrototype) {
+func mustSetSchema(
+	schemaName string, schemas ...schemaDefinition,
+) (schema.Type, ipld.NodePrototype, schema.TypedPrototype) {
 	schemaBytes := make([][]byte, 0, len(schemas))
 	for _, s := range schemas {
 		schemaBytes = append(schemaBytes, s.IPLDSchemaBytes())

@@ -303,6 +303,10 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 	return &Transaction{w, serverTxn}, nil
 }
 
+func (w *Wrapper) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	return w.node.DB.InitContext(ctx, txn)
+}
+
 func (w *Wrapper) NewBlindWriteTxn() (client.Txn, error) {
 	clientTxn, err := w.client.NewBlindWriteTxn()
 	if err != nil {

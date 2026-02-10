@@ -809,7 +809,9 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 }
 
 // processDocument handles a document that doesn't have CAR data (needs DAG sync).
-func (p *P2P) processDocument(ctx context.Context, req *protocol.PushLogRequest, doc *protocol.DocumentInfo, isReplicator bool) error {
+func (p *P2P) processDocument(
+	ctx context.Context, req *protocol.PushLogRequest, doc *protocol.DocumentInfo, isReplicator bool,
+) error {
 	headCID, err := cid.Cast(doc.CID)
 	if err != nil {
 		return err

@@ -170,7 +170,9 @@ func (db *DB) MergeBatchWithTxn(ctx context.Context, evts []event.Merge) (func()
 }
 
 // executeMergeBatchWithTxn merges events using an existing transaction from context.
-func (db *DB) executeMergeBatchWithTxn(ctx context.Context, col *collection, evts []event.Merge) (*MergeBatchResult, error) {
+func (db *DB) executeMergeBatchWithTxn(
+	ctx context.Context, col *collection, evts []event.Merge,
+) (*MergeBatchResult, error) {
 	docIDs := make([]string, 0, len(evts))
 	for _, evt := range evts {
 		if evt.DocID != "" {
@@ -210,7 +212,9 @@ type MergeBatchResult struct {
 }
 
 // executeMergeBatchWritesOnly performs batch merge writes only, returning docIDs for later index sync.
-func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, evts []event.Merge) (*MergeBatchResult, error) {
+func (db *DB) executeMergeBatchWritesOnly(
+	ctx context.Context, col *collection, evts []event.Merge,
+) (*MergeBatchResult, error) {
 	allDocIDs := make(map[string]*client.Document)
 	var allMergedFields map[string]map[string][]byte
 
@@ -249,7 +253,7 @@ func (db *DB) executeMergeBatchWritesOnly(ctx context.Context, col *collection, 
 			return nil, err
 		}
 
-		mergeCtx, err = mp.mergeComposites(mergeCtx)
+		_, err = mp.mergeComposites(mergeCtx)
 		if err != nil {
 			return nil, err
 		}

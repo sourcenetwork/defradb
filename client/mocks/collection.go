@@ -1048,6 +1048,73 @@ func (_c *Collection_Save_Call) RunAndReturn(run func(ctx context.Context, doc *
 	return _c
 }
 
+// SaveMany provides a mock function for the type Collection
+func (_mock *Collection) SaveMany(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docs, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, docs)
+	}
+	ret := tmpRet
+	if len(ret) == 0 {
+		panic("no return value specified for SaveMany")
+	}
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*client.Document, ...client.DocCreateOption) error); ok {
+		r0 = returnFunc(ctx, docs, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Collection_SaveMany_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveMany'
+type Collection_SaveMany_Call struct {
+	*mock.Call
+}
+
+// SaveMany is a helper method to define mock.On call
+func (_e *Collection_Expecter) SaveMany(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_SaveMany_Call {
+	return &Collection_SaveMany_Call{Call: _e.mock.On("SaveMany",
+		append([]interface{}{ctx, docs}, opts...)...)}
+}
+
+func (_c *Collection_SaveMany_Call) Run(run func(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption)) *Collection_SaveMany_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []*client.Document
+		if args[1] != nil {
+			arg1 = args[1].([]*client.Document)
+		}
+		var arg2 []client.DocCreateOption
+		var variadicArgs []client.DocCreateOption
+		if len(args) > 2 {
+			variadicArgs = args[2].([]client.DocCreateOption)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_SaveMany_Call) Return(err error) *Collection_SaveMany_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Collection_SaveMany_Call) RunAndReturn(run func(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption) error) *Collection_SaveMany_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Truncate provides a mock function for the type Collection
 func (_mock *Collection) Truncate(ctx context.Context) error {
 	ret := _mock.Called(ctx)

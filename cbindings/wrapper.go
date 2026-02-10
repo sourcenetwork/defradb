@@ -969,6 +969,10 @@ func (w *CWrapper) NewBlindWriteTxn() (client.Txn, error) {
 	return w.NewTxn(false)
 }
 
+func (w *CWrapper) InitContext(ctx context.Context, txn client.Txn) context.Context {
+	return w.node.DB.InitContext(ctx, txn)
+}
+
 func (w *CWrapper) Close() {
 	C.NodeClose(C.uintptr_t(w.handle))
 }

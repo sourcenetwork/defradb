@@ -13,6 +13,7 @@ package p2p
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 
 	blocks "github.com/ipfs/go-block-format"
@@ -257,7 +258,7 @@ func parseCAR(carData []byte) (*parsedCAR, error) {
 
 	for {
 		carBlock, err := reader.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

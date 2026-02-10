@@ -57,7 +57,9 @@ func NewMultistore(rootstore corekv.ReaderWriter, lockSet *lock.LockSet, chunkSi
 }
 
 // NewBlindWriteMultistore creates a Multistore with a blind-write blockstore.
-func NewBlindWriteMultistore(rootstore corekv.ReaderWriter, lockSet *lock.LockSet, chunkSize immutable.Option[int]) *Multistore {
+func NewBlindWriteMultistore(
+	rootstore corekv.ReaderWriter, lockSet *lock.LockSet, chunkSize immutable.Option[int],
+) *Multistore {
 	return &Multistore{
 		block:  BlindWriteBlockstoreFrom(rootstore, chunkSize),
 		data:   newDatastore(rootstore, lockSet),

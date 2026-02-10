@@ -180,7 +180,7 @@ func PrefetchDocHeads(ctx context.Context, store corekv.ReaderWriter, docID stri
 	if err != nil {
 		return err
 	}
-	defer iter.Close()
+	defer iter.Close() //nolint:errcheck
 
 	// Map from full namespace key to heads
 	headsMap := make(map[string]*headsCacheEntry)
