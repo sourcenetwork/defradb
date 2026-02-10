@@ -84,12 +84,19 @@ func setupRustFFIClient(
 	}
 
 	// Mirror the Go node's NAC state onto the Rust FFI node.
-	nacStatus, nacErr := nodeObj.DB.GetNACStatus(s.Ctx)
+	// Use identity context for NAC-gated operations (GetNACStatus requires NacStatus permission).
+	var identityCtx context.Context
+	if identity.HasValue() {
+		identityCtx = acpIdentity.WithContext(s.Ctx, identity)
+	} else {
+		identityCtx = s.Ctx
+	}
+	nacStatus, nacErr := nodeObj.DB.GetNACStatus(identityCtx)
 	if nacErr == nil && identity.HasValue() {
 		ownerDID := identity.Value().DID()
 		if ownerDID != "" && (nacStatus.Status == "enabled" || nacStatus.Status == "disabled temporarily") {
 			// Check if Rust node already has NAC enabled (from persistent store)
-			rustStatus, rustErr := wrapper.GetNACStatus(s.Ctx)
+			rustStatus, rustErr := wrapper.GetNACStatus(identityCtx)
 			needsEnable := rustErr != nil || rustStatus.Status == "not configured"
 
 			if needsEnable {
@@ -100,7 +107,7 @@ func setupRustFFIClient(
 			}
 			// Mirror Go's nodeIdentity shortcut
 			nodeIdentityDID := getIdentityDID(s, NodeIdentity(nodeIndex))
-			rustStatusForAdmin, _ := wrapper.GetNACStatus(s.Ctx)
+			rustStatusForAdmin, _ := wrapper.GetNACStatus(identityCtx)
 			if nodeIdentityDID != "" && nodeIdentityDID != ownerDID && rustStatusForAdmin.Status != "disabled temporarily" {
 				if err := wrapper.AddNACAdminForInit(ownerDID, nodeIdentityDID); err != nil {
 					wrapper.Close()
@@ -110,7 +117,7 @@ func setupRustFFIClient(
 
 			// If Go says "disabled temporarily", mirror that state on Rust
 			if nacStatus.Status == "disabled temporarily" {
-				rustStatus2, rustErr2 := wrapper.GetNACStatus(s.Ctx)
+				rustStatus2, rustErr2 := wrapper.GetNACStatus(identityCtx)
 				if rustErr2 != nil || rustStatus2.Status != "disabled temporarily" {
 					ctx := acpIdentity.WithContext(s.Ctx, identity)
 					if err := wrapper.DisableNAC(ctx); err != nil {

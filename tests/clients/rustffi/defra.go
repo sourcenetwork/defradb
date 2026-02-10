@@ -927,8 +927,14 @@ func (n *Node) LensAdd(lensJSON string) (string, error) {
 }
 
 // LensList returns all lens transforms as a map of ID -> LensModule JSON.
-func (n *Node) LensList() (string, error) {
-	result := C.lens_list(n.ptr, nil)
+func (n *Node) LensList(identityDID string) (string, error) {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.lens_list(n.ptr, cIdentityDID)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
@@ -1762,8 +1768,14 @@ func NewNodeWithP2P(opts NodeOptions, listenAddr string) (*Node, error) {
 }
 
 // P2PPeerInfo returns the local peer info as a list of multiaddrs with peer ID.
-func (n *Node) P2PPeerInfo() ([]string, error) {
-	result := C.p2p_peer_info(n.ptr, nil)
+func (n *Node) P2PPeerInfo(identityDID string) ([]string, error) {
+	var cIdentityDID *C.char
+	if identityDID != "" {
+		cIdentityDID = C.CString(identityDID)
+		defer C.free(unsafe.Pointer(cIdentityDID))
+	}
+
+	result := C.p2p_peer_info(n.ptr, cIdentityDID)
 
 	if result.status != 0 {
 		err := C.GoString(result.error)
