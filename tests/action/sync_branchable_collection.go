@@ -75,20 +75,4 @@ func (a *SyncBranchableCollection) Execute() {
 
 	expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
-
-	// Set up expected merge events for WaitForSync.
-	// Copy document-level heads from connected peers so WaitForSync
-	// knows which MergeComplete events to wait for.
-	if !expectedErrorRaised && a.CollectionID < len(a.s.DocIDs) {
-		for peerID := range nodeState.P2P.Connections {
-			peerNode := a.s.Nodes[peerID]
-			docIDs := a.s.DocIDs[a.CollectionID]
-			for _, docID := range docIDs {
-				docIDStr := docID.String()
-				if head, ok := peerNode.P2P.ActualDAGHeads[docIDStr]; ok {
-					nodeState.P2P.ExpectedDAGHeads[docIDStr] = head.CID
-				}
-			}
-		}
-	}
 }
