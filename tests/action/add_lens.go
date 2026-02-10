@@ -31,6 +31,12 @@ type AddLens struct {
 
 	// The lens configuration to add.
 	Lens model.Lens
+
+	// Any error expected from the action. Optional.
+	//
+	// String can be a partial, and the test will pass if an error is returned that
+	// contains this string.
+	ExpectedError string
 }
 
 var _ Action = (*AddLens)(nil)
@@ -43,17 +49,23 @@ func (a *AddLens) Execute() {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		a.s.Ctx = getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
+		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
 
 		var err error
-		lensID, err = node.AddLens(a.s.Ctx, a.Lens)
+		lensID, err = node.AddLens(ctx, a.Lens)
 
-		resetStateContext(a.s)
+		if a.ExpectedError != "" {
+			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+			assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+			continue
+		}
 
 		if err != nil {
 			a.s.T.Fatalf("failed to add lens: %v", err)
 		}
 	}
 
-	a.s.LensIDs = append(a.s.LensIDs, lensID)
+	if a.ExpectedError == "" {
+		a.s.LensIDs = append(a.s.LensIDs, lensID)
+	}
 }

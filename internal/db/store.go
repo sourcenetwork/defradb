@@ -250,6 +250,10 @@ func (db *DB) AddLens(ctx context.Context, lens model.Lens) (string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeLensCreatePerm); err != nil {
+		return "", err
+	}
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return "", err
@@ -272,6 +276,10 @@ func (db *DB) AddLens(ctx context.Context, lens model.Lens) (string, error) {
 func (db *DB) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	if err := db.checkNodeAccess(ctx, acpTypes.NodeLensListPerm); err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {

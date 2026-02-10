@@ -109,6 +109,8 @@ const (
 	NodeP2PDocumentDeletePerm
 	NodeP2PDocumentListPerm
 	NodeSignatureVerifyPerm
+	NodeLensCreatePerm
+	NodeLensListPerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
@@ -150,6 +152,8 @@ var RequiredResourcePermissionsForNode = []string{
 	"p2p-document-delete",
 	"p2p-document-list",
 	"signature-verify",
+	"lens-create",
+	"lens-list",
 }
 
 const NodeACPObject = "NodeObject"
@@ -237,6 +241,11 @@ resources:
     expr: admin
 
   - name: signature-verify
+    expr: admin
+
+  - name: lens-create
+    expr: admin
+  - name: lens-list
     expr: admin
 
   relations:
