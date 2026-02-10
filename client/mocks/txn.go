@@ -328,7 +328,8 @@ type Txn_AddLens_Call struct {
 //   - lens model.Lens
 //   - opts ...options.Lister[options.AddLensOptions]
 func (_e *Txn_Expecter) AddLens(ctx interface{}, lens interface{}, opts ...interface{}) *Txn_AddLens_Call {
-	return &Txn_AddLens_Call{Call: _e.mock.On("AddLens", append([]interface{}{ctx, lens}, opts...)...)}
+	return &Txn_AddLens_Call{Call: _e.mock.On("AddLens",
+		append([]interface{}{ctx, lens}, opts...)...)}
 }
 
 func (_c *Txn_AddLens_Call) Run(run func(ctx context.Context, lens model.Lens, opts ...options.Lister[options.AddLensOptions])) *Txn_AddLens_Call {
@@ -341,16 +342,16 @@ func (_c *Txn_AddLens_Call) Run(run func(ctx context.Context, lens model.Lens, o
 		if args[1] != nil {
 			arg1 = args[1].(model.Lens)
 		}
-		variadicArgs := make([]options.Lister[options.AddLensOptions], len(args)-2)
-		for i, a := range args[2:] {
-			if a != nil {
-				variadicArgs[i] = a.(options.Lister[options.AddLensOptions])
-			}
+		var arg2 []options.Lister[options.AddLensOptions]
+		var variadicArgs []options.Lister[options.AddLensOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.AddLensOptions])
 		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
-			variadicArgs...,
+			arg2...,
 		)
 	})
 	return _c
