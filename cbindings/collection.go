@@ -274,7 +274,8 @@ func CollectionListDocIDs(nodePtr C.uintptr_t, opts C.CollectionOptions, identit
 
 	// Get and return the Doc IDs as a JSON list
 	// Note: This is different from the format returned by the CLI, which contains error fields
-	docCh, err := col.GetAllDocIDs(ctx, options.WithIdentity(options.CollectionGetAllDocIDs(), acpIdentity.FromContext(ctx)))
+	docCh, err := col.GetAllDocIDs(ctx, options.WithIdentity(options.CollectionGetAllDocIDs(),
+		acpIdentity.FromContext(ctx)))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
