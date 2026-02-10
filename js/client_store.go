@@ -163,7 +163,9 @@ func (c *Client) listLenses(this js.Value, args []js.Value) (js.Value, error) {
 	if err != nil {
 		return js.Undefined(), err
 	}
-	lenses, err := c.node.DB.ListLenses(ctx)
+	opt := options.ListLenses()
+	setOptIdentity(opt, args, 0)
+	lenses, err := c.node.DB.ListLenses(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

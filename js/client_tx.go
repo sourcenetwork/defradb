@@ -205,7 +205,9 @@ func (t *transaction) listLenses(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	lenses, err := t.txn.ListLenses(ctx)
+	opt := options.ListLenses()
+	setOptIdentity(opt, args, 0)
+	lenses, err := t.txn.ListLenses(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
