@@ -356,7 +356,7 @@ func (c *collection) Create(
 	}
 	defer txn.Discard()
 
-	err = c.create(ctx, doc, opts...)
+	err = c.create(ctx, doc, opt)
 	if err != nil {
 		return err
 	}
@@ -389,7 +389,7 @@ func (c *collection) CreateMany(
 	defer txn.Discard()
 
 	for _, doc := range docs {
-		err = c.create(ctx, doc, opts...)
+		err = c.create(ctx, doc, opt)
 		if err != nil {
 			return err
 		}
@@ -421,7 +421,7 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 func (c *collection) create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionCreateOptions],
+	opt *options.CollectionCreateOptions,
 ) error {
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
@@ -466,7 +466,7 @@ func (c *collection) create(
 		}
 	}
 
-	ctx = setContextDocEncryption(ctx, opts)
+	ctx = setContextDocEncryption(ctx, opt)
 
 	// write data to DB via MerkleClock/CRDT
 	err = c.save(ctx, doc, true)
@@ -484,9 +484,8 @@ func (c *collection) create(
 
 func setContextDocEncryption(
 	ctx context.Context,
-	opts []options.Lister[options.CollectionCreateOptions],
+	opt *options.CollectionCreateOptions,
 ) context.Context {
-	opt := utils.NewOptions(opts...)
 	if !opt.EncryptDoc && len(opt.EncryptedFields) == 0 {
 		return ctx
 	}
@@ -619,7 +618,7 @@ func (c *collection) Save(
 	if exists {
 		err = c.update(ctx, doc)
 	} else {
-		err = c.create(ctx, doc, opts...)
+		err = c.create(ctx, doc, opt)
 	}
 	if err != nil {
 		return err
