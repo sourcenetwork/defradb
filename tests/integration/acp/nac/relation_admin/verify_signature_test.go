@@ -47,7 +47,7 @@ func TestNAC_AdminRelation_CanVerifySignature(t *testing.T) {
 				SDL: `
 					type Users {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{

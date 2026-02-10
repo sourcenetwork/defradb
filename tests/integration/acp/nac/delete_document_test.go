@@ -76,6 +76,7 @@ func TestNAC_GatesDeleteDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 			[]state.ClientType{
 				state.GoClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -92,7 +93,7 @@ func TestNAC_GatesDeleteDocument_NoIdentity_NotAuthorizedError(t *testing.T) {
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{
@@ -149,7 +150,7 @@ func TestNAC_GatesDeleteDocument_NoIdentity_CLIandCandHTTPClient_NotAuthorizedEr
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{
@@ -189,6 +190,7 @@ func TestNAC_GatesDeleteDocument_WrongIdentity_NotAuthorizedError(t *testing.T) 
 			[]state.ClientType{
 				state.GoClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -205,7 +207,7 @@ func TestNAC_GatesDeleteDocument_WrongIdentity_NotAuthorizedError(t *testing.T) 
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{
@@ -262,7 +264,7 @@ func TestNAC_GatesDeleteDocument_WrongIdentity_CLIandCandHTTPClient_NotAuthorize
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{

@@ -70,6 +70,7 @@ func TestNAC_GatesListIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.GoClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -150,6 +151,7 @@ func TestNAC_GatesListIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				state.GoClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

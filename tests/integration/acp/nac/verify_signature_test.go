@@ -47,7 +47,7 @@ func TestNAC_GatesVerifySignature_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				SDL: `
 					type Users {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{

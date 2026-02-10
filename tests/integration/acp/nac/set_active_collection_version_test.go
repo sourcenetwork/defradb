@@ -71,6 +71,7 @@ func TestNAC_GatesSetActiveCollectionVersion_NoIdentity_NotAuthorizedError(t *te
 				state.HTTPClientType,
 				state.CClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -170,6 +171,7 @@ func TestNAC_GatesSetActiveCollectionVersion_WrongIdentity_NotAuthorizedError(t 
 				state.HTTPClientType,
 				state.CClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

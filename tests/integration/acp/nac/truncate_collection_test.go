@@ -58,6 +58,7 @@ func TestNAC_GatesTruncateCollection_NoIdentity_NotAuthorizedError(t *testing.T)
 			[]state.ClientType{
 				state.GoClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -134,6 +135,7 @@ func TestNAC_GatesTruncateCollection_WrongIdentity_NotAuthorizedError(t *testing
 			[]state.ClientType{
 				state.GoClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

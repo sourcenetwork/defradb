@@ -70,6 +70,7 @@ func TestNAC_GatesNewIndex_NoIdentity_NotAuthorizedError(t *testing.T) {
 			[]state.ClientType{
 				state.GoClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -153,6 +154,7 @@ func TestNAC_GatesNewIndex_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			[]state.ClientType{
 				state.GoClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

@@ -29,6 +29,7 @@ func TestNAC_AdminRelation_CanGetP2PPeerInfo(t *testing.T) {
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

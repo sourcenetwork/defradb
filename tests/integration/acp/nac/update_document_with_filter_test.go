@@ -77,6 +77,7 @@ func TestNAC_GatesUpdateDocumentWithFilter_NoIdentity_NotAuthorizedError(t *test
 			[]state.ClientType{
 				state.GoClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -93,7 +94,7 @@ func TestNAC_GatesUpdateDocumentWithFilter_NoIdentity_NotAuthorizedError(t *test
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{
@@ -151,7 +152,7 @@ func TestNAC_GatesUpdateDocumentWithFilter_NoIdentity_CLIandCandHTTPClient_NotAu
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{
@@ -192,6 +193,7 @@ func TestNAC_GatesUpdateDocumentWithFilter_WrongIdentity_NotAuthorizedError(t *t
 			[]state.ClientType{
 				state.GoClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
@@ -208,7 +210,7 @@ func TestNAC_GatesUpdateDocumentWithFilter_WrongIdentity_NotAuthorizedError(t *t
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{
@@ -266,7 +268,7 @@ func TestNAC_GatesUpdateDocumentWithFilter_WrongIdentity_CLIandCandHTTPClient_No
 				SDL: `
 					type User {
 						name: String
-						age: Int 
+						age: Int
 					}`,
 			},
 			&action.AddDoc{

@@ -31,6 +31,7 @@ func TestNAC_AdminRelation_CanSetActiveCollectionVersion(t *testing.T) {
 				state.HTTPClientType,
 				state.CClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

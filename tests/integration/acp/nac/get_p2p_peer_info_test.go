@@ -28,6 +28,7 @@ func TestNAC_GatesGetP2PPeerInfo_AuthorizedIdentity_AllowAccess(t *testing.T) {
 				state.CLIClientType,
 				state.GoClientType,
 				state.CClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{

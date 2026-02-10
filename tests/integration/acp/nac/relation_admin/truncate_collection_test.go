@@ -29,6 +29,7 @@ func TestNAC_AdminRelation_CanTruncateCollection(t *testing.T) {
 			[]state.ClientType{
 				state.GoClientType,
 				state.JSClientType,
+				state.RustFFIClientType,
 			},
 		),
 		Actions: []any{
