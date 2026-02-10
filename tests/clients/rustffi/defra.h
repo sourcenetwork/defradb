@@ -1472,6 +1472,21 @@ struct FfiResult get_collections_in_txn(uintptr_t node_ptr,
                                         const char *identity_did);
 
 /*
+ Set the searchable encryption key for a node.
+
+ The key is a 32-byte AES-256 key used by the SE coordinator
+ for HMAC tag generation during artifact creation.
+
+ # Safety
+
+ * `node_ptr` must be a valid node handle
+ * `key_ptr` must point to `key_len` valid bytes
+ */
+struct FfiResult set_se_encryption_key(uintptr_t node_ptr,
+                                       const uint8_t *key_ptr,
+                                       uintptr_t key_len);
+
+/*
  Create a subscription to database events.
 
  # Arguments

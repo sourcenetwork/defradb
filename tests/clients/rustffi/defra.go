@@ -1884,6 +1884,28 @@ func (n *Node) P2PRetryReplicators() error {
 	return nil
 }
 
+// SetSEEncryptionKey sets the searchable encryption key for the node.
+// The key must be exactly 32 bytes (AES-256).
+func (n *Node) SetSEEncryptionKey(key []byte) error {
+	if len(key) == 0 {
+		return fmt.Errorf("ffi: SE encryption key is empty")
+	}
+
+	result := C.set_se_encryption_key(
+		n.ptr,
+		(*C.uint8_t)(unsafe.Pointer(&key[0])),
+		C.uintptr_t(len(key)),
+	)
+
+	if result.status != 0 {
+		errStr := C.GoString(result.error)
+		C.defra_free_string(result.error)
+		return fmt.Errorf("ffi: set_se_encryption_key failed: %s", errStr)
+	}
+
+	return nil
+}
+
 // P2PDeleteReplicator removes a replicator by peer ID.
 // If collections is non-empty, only those collections are removed from the replicator.
 // If collections is empty, the entire replicator is deleted.
