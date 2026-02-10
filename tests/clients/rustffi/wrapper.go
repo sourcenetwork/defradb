@@ -1362,7 +1362,12 @@ func (w *Wrapper) AddLens(ctx context.Context, lens lensmodel.Lens) (string, err
 }
 
 func (w *Wrapper) ListLenses(ctx context.Context) (map[string]lensmodel.Lens, error) {
-	raw, err := w.node.LensList()
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	raw, err := w.node.LensList(identityDID)
 	if err != nil {
 		return nil, err
 	}
@@ -1442,9 +1447,18 @@ func (w *Wrapper) ListAllEncryptedIndexes(
 // client.P2P interface
 // ============================================================================
 
-func (w *Wrapper) PeerInfo() ([]string, error) {
-	addrs, err := w.node.P2PPeerInfo()
+func (w *Wrapper) PeerInfo(ctx context.Context) ([]string, error) {
+	identityDID := ""
+	if id := identity.FromContext(ctx); id.HasValue() {
+		identityDID = id.Value().DID()
+	}
+
+	addrs, err := w.node.P2PPeerInfo(identityDID)
 	if err != nil {
+		// Propagate authorization errors
+		if strings.Contains(err.Error(), "not authorized") {
+			return nil, err
+		}
 		// Return empty addresses when P2P is not enabled
 		return []string{}, nil
 	}
