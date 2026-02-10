@@ -865,7 +865,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 
 	// If the db was restarted we need to refresh the collection definitions as the old instances
 	// will reference the old (closed) database instances.
-	refreshCollections(s, immutable.None[int](), action.Identity)
+	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
 }
 
 func restartNodes(
@@ -918,15 +918,16 @@ func refreshCollections(
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		if !identity.HasValue() {
+		nodeIdentity := identity
+		if !nodeIdentity.HasValue() {
 			// Inject node's identity into the context and options while refreshing so the [GetCollections] call
 			// doesn't fail due to lack of authorization(s) if NAC is enabled.
-			identity = NodeIdentity(nodeID)
+			nodeIdentity = NodeIdentity(nodeID)
 		}
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
 		txn := getTransaction(s, node, transactionID, "")
 		ctx := db.InitContext(s.Ctx, txn)
-		identOption := getIdentityForRequestSpecificToNode(s, identity, nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
 		opts := options.GetCollections()
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
