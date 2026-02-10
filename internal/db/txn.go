@@ -254,7 +254,7 @@ func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) (str
 
 func (txn *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.addLens(ctx, lens)
+	return txn.db.AddLens(ctx, lens)
 }
 
 func (txn *Txn) ListLenses(
@@ -262,7 +262,7 @@ func (txn *Txn) ListLenses(
 	opts ...options.Lister[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.listLenses(ctx)
+	return txn.db.ListLenses(ctx)
 }
 
 func (txn *Txn) GetCollectionByName(
