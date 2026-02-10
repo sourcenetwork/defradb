@@ -396,6 +396,14 @@ func (w *Wrapper) RetryReplicators() error {
 	return w.node.P2PRetryReplicators()
 }
 
+// SetSEEncryptionKey passes the searchable encryption key to the Rust FFI node.
+func (w *Wrapper) SetSEEncryptionKey(key []byte) error {
+	if w.node == nil {
+		return fmt.Errorf("node not initialized")
+	}
+	return w.node.SetSEEncryptionKey(key)
+}
+
 func (w *Wrapper) SetGoNodeCloser(closer func()) {
 	w.goNodeCloser = closer
 }

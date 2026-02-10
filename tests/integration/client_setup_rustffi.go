@@ -83,6 +83,20 @@ func setupRustFFIClient(
 		return nil, fmt.Errorf("failed to forward SE events: %w", err)
 	}
 
+	// Pass the SE encryption key to the Rust FFI node so it can generate
+	// SE artifacts during replication (push_existing_docs).
+	type seKeyProvider interface {
+		SearchableEncryptionKey() []byte
+	}
+	if skp, ok := nodeObj.DB.(seKeyProvider); ok {
+		if seKey := skp.SearchableEncryptionKey(); len(seKey) > 0 {
+			if err := wrapper.SetSEEncryptionKey(seKey); err != nil {
+				wrapper.Close()
+				return nil, fmt.Errorf("failed to set SE encryption key on Rust FFI node: %w", err)
+			}
+		}
+	}
+
 	// Mirror the Go node's NAC state onto the Rust FFI node.
 	// Use identity context for NAC-gated operations (GetNACStatus requires NacStatus permission).
 	var identityCtx context.Context
