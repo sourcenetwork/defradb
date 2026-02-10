@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"reflect"
 	"sync"
 	"syscall/js"
 
@@ -127,12 +128,15 @@ func contextIdentityArg(value js.Value) (immutable.Option[acpIdentity.Identity],
 }
 
 // setOptIdentity extracts identity from args at the given index and sets it on the option builder.
-// We use reflection-like approach by taking any type and asserting it has SetIdentity.
+// We use reflection to call SetIdentity if the builder has it, ignoring the return value.
 func setOptIdentity[B any](opt B, args []js.Value, argIndex int) {
 	if len(args) > argIndex {
 		if ident, err := contextIdentityArg(args[argIndex]); err == nil && ident.HasValue() {
-			if setter, ok := any(opt).(interface{ SetIdentity(identity.Identity) any }); ok {
-				setter.SetIdentity(ident.Value())
+			// Use reflect to call SetIdentity regardless of return type.
+			v := reflect.ValueOf(opt)
+			m := v.MethodByName("SetIdentity")
+			if m.IsValid() {
+				m.Call([]reflect.Value{reflect.ValueOf(ident.Value())})
 			}
 		}
 	}

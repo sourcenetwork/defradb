@@ -74,6 +74,8 @@ func (c *Collection) Create(
 	doc *client.Document,
 	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	docVal, err := goji.MarshalJS(doc)
 	if err != nil {
 		return err
@@ -110,6 +112,8 @@ func (c *Collection) CreateMany(
 	docs []*client.Document,
 	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	docsVal, err := goji.MarshalJS(docs)
 	if err != nil {
 		return err
@@ -129,6 +133,8 @@ func (c *Collection) Update(
 	doc *client.Document,
 	opts ...options.Lister[options.CollectionUpdateOptions],
 ) error {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	patch, err := doc.ToJSONPatch()
 	if err != nil {
 		return err
@@ -147,12 +153,13 @@ func (c *Collection) Save(
 	doc *client.Document,
 	opts ...options.Lister[options.CollectionSaveOptions],
 ) error {
+	saveOpts := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, saveOpts)
 	_, err := c.Get(ctx, doc.ID(), options.CollectionGet().SetShowDeleted(true))
 	if err == nil {
 		return c.Update(ctx, doc)
 	}
 	if err.Error() == client.ErrDocumentNotFoundOrNotAuthorized.Error() {
-		saveOpts := utils.NewOptions(opts...)
 		createOpts := options.CollectionCreate().
 			SetEncryptDoc(saveOpts.EncryptDoc).
 			SetEncryptedFields(saveOpts.EncryptedFields)
@@ -166,6 +173,8 @@ func (c *Collection) Delete(
 	docID client.DocID,
 	opts ...options.Lister[options.CollectionDeleteOptions],
 ) (bool, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	res, err := execute(ctx, c.client, "delete", docID.String())
 	if err != nil {
 		return false, err
@@ -178,6 +187,8 @@ func (c *Collection) Exists(
 	docID client.DocID,
 	opts ...options.Lister[options.CollectionExistsOptions],
 ) (bool, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	res, err := execute(ctx, c.client, "exists", docID.String())
 	if err != nil {
 		return false, err
@@ -191,6 +202,8 @@ func (c *Collection) UpdateWithFilter(
 	updater string,
 	opts ...options.Lister[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	res, err := execute(ctx, c.client, "updateWithFilter", filter, updater)
 	if err != nil {
 		return nil, err
@@ -207,6 +220,8 @@ func (c *Collection) DeleteWithFilter(
 	filter any,
 	opts ...options.Lister[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	res, err := execute(ctx, c.client, "deleteWithFilter", filter)
 	if err != nil {
 		return nil, err
@@ -224,6 +239,7 @@ func (c *Collection) Get(
 	opts ...options.Lister[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	showDeleted := opt.ShowDeleted
 	res, err := execute(ctx, c.client, "get", docID.String(), showDeleted)
 	if err != nil {
@@ -258,6 +274,8 @@ func (c *Collection) CreateIndex(
 	indexDesc client.IndexCreateRequest,
 	opts ...options.Lister[options.CollectionCreateIndexOptions],
 ) (client.IndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	indexDescVal, err := goji.MarshalJS(indexDesc)
 	if err != nil {
 		return client.IndexDescription{}, err
@@ -274,11 +292,15 @@ func (c *Collection) CreateIndex(
 }
 
 func (c *Collection) DropIndex(ctx context.Context, indexName string, opts ...options.Lister[options.CollectionDropIndexOptions]) error {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	_, err := execute(ctx, c.client, "dropIndex", indexName)
 	return err
 }
 
 func (c *Collection) GetIndexes(ctx context.Context, opts ...options.Lister[options.CollectionGetIndexesOptions]) ([]client.IndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	res, err := execute(ctx, c.client, "getIndexes")
 	if err != nil {
 		return nil, err
@@ -327,6 +349,8 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 }
 
 func (c *Collection) Truncate(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	_, err := execute(ctx, c.client, "truncate")
 	return err
 }

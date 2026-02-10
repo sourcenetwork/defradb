@@ -106,7 +106,7 @@ func (c *Client) addView(this js.Value, args []js.Value) (js.Value, error) {
 
 // collectionFetchOptions is a local type for JSON serialization from the JS client.
 type collectionFetchOptions struct {
-	Name            immutable.Option[string]
+	CollectionName  immutable.Option[string]
 	VersionID       immutable.Option[string]
 	CollectionID    immutable.Option[string]
 	IncludeInactive immutable.Option[bool]
@@ -152,7 +152,7 @@ func (c *Client) addLens(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	opt := options.AddLens()
-	setOptIdentity(opt, args, 0)
+	setOptIdentity(opt, args, 1)
 	lensID, err := c.node.DB.AddLens(ctx, lens, opt)
 	if err != nil {
 		return js.Undefined(), err
@@ -202,6 +202,7 @@ func (c *Client) getCollections(this js.Value, args []js.Value) (js.Value, error
 		return js.Undefined(), err
 	}
 	opt := collectionFetchOptionsToGetCollectionsOptions(input)
+	setOptIdentity(opt, args, 1)
 	cols, err := c.node.DB.GetCollections(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
@@ -222,8 +223,8 @@ func collectionFetchOptionsToGetCollectionsOptions(input collectionFetchOptions)
 	if input.CollectionID.HasValue() {
 		opt.SetCollectionID(input.CollectionID.Value())
 	}
-	if input.Name.HasValue() {
-		opt.SetCollectionName(input.Name.Value())
+	if input.CollectionName.HasValue() {
+		opt.SetCollectionName(input.CollectionName.Value())
 	}
 	if input.IncludeInactive.HasValue() {
 		opt.SetIncludeInactive(input.IncludeInactive.Value())
@@ -265,11 +266,11 @@ func (c *Client) execRequest(this js.Value, args []js.Value) (js.Value, error) {
 	var opt *options.ExecRequestOptionsBuilder
 	if args[1].Type() == js.TypeObject {
 		opt = options.ExecRequest()
-		operationName := args[1].Get("operationName")
+		operationName := args[1].Get("OperationName")
 		if operationName.Type() == js.TypeString {
 			opt.SetOperationName(operationName.String())
 		}
-		variables := args[1].Get("variables")
+		variables := args[1].Get("Variables")
 		if variables.Type() == js.TypeObject {
 			var variablesMap map[string]any
 			if err := goji.UnmarshalJS(variables, &variablesMap); err != nil {
@@ -282,6 +283,10 @@ func (c *Client) execRequest(this js.Value, args []js.Value) (js.Value, error) {
 	if err != nil {
 		return js.Undefined(), err
 	}
+	if opt == nil {
+		opt = options.ExecRequest()
+	}
+	setOptIdentity(opt, args, 2)
 	res := c.node.DB.ExecRequest(ctx, request, opt)
 	gql, err := goji.MarshalJS(res.GQL)
 	if err != nil {

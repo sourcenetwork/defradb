@@ -161,7 +161,9 @@ func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	doc, err := c.col.Get(ctx, docID, options.CollectionGet().SetShowDeleted(true))
+	getOpt := options.CollectionGet().SetShowDeleted(true)
+	setOptIdentity(getOpt, args, 2)
+	doc, err := c.col.Get(ctx, docID, getOpt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -398,6 +400,8 @@ func (c *clientCollection) truncate(this js.Value, args []js.Value) (js.Value, e
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.Truncate(ctx)
+	opt := options.CollectionTruncate()
+	setOptIdentity(opt, args, 0)
+	err = c.col.Truncate(ctx, opt)
 	return js.Undefined(), err
 }

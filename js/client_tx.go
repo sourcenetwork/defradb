@@ -194,7 +194,7 @@ func (t *transaction) addLens(this js.Value, args []js.Value) (js.Value, error) 
 		return js.Undefined(), err
 	}
 	opt := options.AddLens()
-	setOptIdentity(opt, args, 0)
+	setOptIdentity(opt, args, 1)
 	lensID, err := t.txn.AddLens(ctx, lens, opt)
 	if err != nil {
 		return js.Undefined(), err
@@ -244,6 +244,7 @@ func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, 
 		return js.Undefined(), err
 	}
 	opt := collectionFetchOptionsToGetCollectionsOptions(input)
+	setOptIdentity(opt, args, 1)
 	cols, err := t.txn.GetCollections(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
@@ -289,11 +290,11 @@ func (t *transaction) execRequest(this js.Value, args []js.Value) (js.Value, err
 	var opt *options.ExecRequestOptionsBuilder
 	if args[1].Type() == js.TypeObject {
 		opt = options.ExecRequest()
-		operationName := args[1].Get("operationName")
+		operationName := args[1].Get("OperationName")
 		if operationName.Type() == js.TypeString {
 			opt.SetOperationName(operationName.String())
 		}
-		variables := args[1].Get("variables")
+		variables := args[1].Get("Variables")
 		if variables.Type() == js.TypeObject {
 			var variablesMap map[string]any
 			if err := goji.UnmarshalJS(variables, &variablesMap); err != nil {
@@ -306,6 +307,10 @@ func (t *transaction) execRequest(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
+	if opt == nil {
+		opt = options.ExecRequest()
+	}
+	setOptIdentity(opt, args, 2)
 	res := t.txn.ExecRequest(ctx, request, opt)
 	gql, err := goji.MarshalJS(res.GQL)
 	if err != nil {
