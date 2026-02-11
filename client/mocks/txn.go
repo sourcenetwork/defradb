@@ -10,6 +10,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
@@ -44,8 +45,14 @@ func (_m *Txn) EXPECT() *Txn_Expecter {
 }
 
 // ActivePeers provides a mock function for the type Txn
-func (_mock *Txn) ActivePeers(ctx context.Context) ([]string, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for ActivePeers")
@@ -53,18 +60,18 @@ func (_mock *Txn) ActivePeers(ctx context.Context) ([]string, error) {
 
 	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ActivePeersOptions]) ([]string, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ActivePeersOptions]) []string); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.ActivePeersOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -78,18 +85,27 @@ type Txn_ActivePeers_Call struct {
 
 // ActivePeers is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) ActivePeers(ctx interface{}) *Txn_ActivePeers_Call {
-	return &Txn_ActivePeers_Call{Call: _e.mock.On("ActivePeers", ctx)}
+//   - opts ...options.Lister[options.ActivePeersOptions]
+func (_e *Txn_Expecter) ActivePeers(ctx interface{}, opts ...interface{}) *Txn_ActivePeers_Call {
+	return &Txn_ActivePeers_Call{Call: _e.mock.On("ActivePeers",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_ActivePeers_Call) Run(run func(ctx context.Context)) *Txn_ActivePeers_Call {
+func (_c *Txn_ActivePeers_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions])) *Txn_ActivePeers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.ActivePeersOptions]
+		var variadicArgs []options.Lister[options.ActivePeersOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.ActivePeersOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -100,14 +116,20 @@ func (_c *Txn_ActivePeers_Call) Return(strings []string, err error) *Txn_ActiveP
 	return _c
 }
 
-func (_c *Txn_ActivePeers_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_ActivePeers_Call {
+func (_c *Txn_ActivePeers_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error)) *Txn_ActivePeers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddDACActorRelationship provides a mock function for the type Txn
-func (_mock *Txn) AddDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
-	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
+func (_mock *Txn) AddDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...options.Lister[options.AddDACActorRelationshipOptions]) (client.AddActorRelationshipResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, collectionName, docID, relation, targetActor, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, collectionName, docID, relation, targetActor)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddDACActorRelationship")
@@ -115,16 +137,16 @@ func (_mock *Txn) AddDACActorRelationship(ctx context.Context, collectionName st
 
 	var r0 client.AddActorRelationshipResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.AddActorRelationshipResult, error)); ok {
-		return returnFunc(ctx, collectionName, docID, relation, targetActor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...options.Lister[options.AddDACActorRelationshipOptions]) (client.AddActorRelationshipResult, error)); ok {
+		return returnFunc(ctx, collectionName, docID, relation, targetActor, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.AddActorRelationshipResult); ok {
-		r0 = returnFunc(ctx, collectionName, docID, relation, targetActor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...options.Lister[options.AddDACActorRelationshipOptions]) client.AddActorRelationshipResult); ok {
+		r0 = returnFunc(ctx, collectionName, docID, relation, targetActor, opts...)
 	} else {
 		r0 = ret.Get(0).(client.AddActorRelationshipResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
-		r1 = returnFunc(ctx, collectionName, docID, relation, targetActor)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, ...options.Lister[options.AddDACActorRelationshipOptions]) error); ok {
+		r1 = returnFunc(ctx, collectionName, docID, relation, targetActor, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -142,11 +164,13 @@ type Txn_AddDACActorRelationship_Call struct {
 //   - docID string
 //   - relation string
 //   - targetActor string
-func (_e *Txn_Expecter) AddDACActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}) *Txn_AddDACActorRelationship_Call {
-	return &Txn_AddDACActorRelationship_Call{Call: _e.mock.On("AddDACActorRelationship", ctx, collectionName, docID, relation, targetActor)}
+//   - opts ...options.Lister[options.AddDACActorRelationshipOptions]
+func (_e *Txn_Expecter) AddDACActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}, opts ...interface{}) *Txn_AddDACActorRelationship_Call {
+	return &Txn_AddDACActorRelationship_Call{Call: _e.mock.On("AddDACActorRelationship",
+		append([]interface{}{ctx, collectionName, docID, relation, targetActor}, opts...)...)}
 }
 
-func (_c *Txn_AddDACActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string)) *Txn_AddDACActorRelationship_Call {
+func (_c *Txn_AddDACActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...options.Lister[options.AddDACActorRelationshipOptions])) *Txn_AddDACActorRelationship_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -168,12 +192,19 @@ func (_c *Txn_AddDACActorRelationship_Call) Run(run func(ctx context.Context, co
 		if args[4] != nil {
 			arg4 = args[4].(string)
 		}
+		var arg5 []options.Lister[options.AddDACActorRelationshipOptions]
+		var variadicArgs []options.Lister[options.AddDACActorRelationshipOptions]
+		if len(args) > 5 {
+			variadicArgs = args[5].([]options.Lister[options.AddDACActorRelationshipOptions])
+		}
+		arg5 = variadicArgs
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
 			arg4,
+			arg5...,
 		)
 	})
 	return _c
@@ -184,14 +215,20 @@ func (_c *Txn_AddDACActorRelationship_Call) Return(addActorRelationshipResult cl
 	return _c
 }
 
-func (_c *Txn_AddDACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.AddActorRelationshipResult, error)) *Txn_AddDACActorRelationship_Call {
+func (_c *Txn_AddDACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...options.Lister[options.AddDACActorRelationshipOptions]) (client.AddActorRelationshipResult, error)) *Txn_AddDACActorRelationship_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddDACPolicy provides a mock function for the type Txn
-func (_mock *Txn) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
-	ret := _mock.Called(ctx, policy)
+func (_mock *Txn) AddDACPolicy(ctx context.Context, policy string, opts ...options.Lister[options.AddDACPolicyOptions]) (client.AddPolicyResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, policy, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, policy)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddDACPolicy")
@@ -199,16 +236,16 @@ func (_mock *Txn) AddDACPolicy(ctx context.Context, policy string) (client.AddPo
 
 	var r0 client.AddPolicyResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (client.AddPolicyResult, error)); ok {
-		return returnFunc(ctx, policy)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.AddDACPolicyOptions]) (client.AddPolicyResult, error)); ok {
+		return returnFunc(ctx, policy, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) client.AddPolicyResult); ok {
-		r0 = returnFunc(ctx, policy)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.AddDACPolicyOptions]) client.AddPolicyResult); ok {
+		r0 = returnFunc(ctx, policy, opts...)
 	} else {
 		r0 = ret.Get(0).(client.AddPolicyResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, policy)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, ...options.Lister[options.AddDACPolicyOptions]) error); ok {
+		r1 = returnFunc(ctx, policy, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -223,11 +260,13 @@ type Txn_AddDACPolicy_Call struct {
 // AddDACPolicy is a helper method to define mock.On call
 //   - ctx context.Context
 //   - policy string
-func (_e *Txn_Expecter) AddDACPolicy(ctx interface{}, policy interface{}) *Txn_AddDACPolicy_Call {
-	return &Txn_AddDACPolicy_Call{Call: _e.mock.On("AddDACPolicy", ctx, policy)}
+//   - opts ...options.Lister[options.AddDACPolicyOptions]
+func (_e *Txn_Expecter) AddDACPolicy(ctx interface{}, policy interface{}, opts ...interface{}) *Txn_AddDACPolicy_Call {
+	return &Txn_AddDACPolicy_Call{Call: _e.mock.On("AddDACPolicy",
+		append([]interface{}{ctx, policy}, opts...)...)}
 }
 
-func (_c *Txn_AddDACPolicy_Call) Run(run func(ctx context.Context, policy string)) *Txn_AddDACPolicy_Call {
+func (_c *Txn_AddDACPolicy_Call) Run(run func(ctx context.Context, policy string, opts ...options.Lister[options.AddDACPolicyOptions])) *Txn_AddDACPolicy_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -237,9 +276,16 @@ func (_c *Txn_AddDACPolicy_Call) Run(run func(ctx context.Context, policy string
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 []options.Lister[options.AddDACPolicyOptions]
+		var variadicArgs []options.Lister[options.AddDACPolicyOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.AddDACPolicyOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -250,14 +296,20 @@ func (_c *Txn_AddDACPolicy_Call) Return(addPolicyResult client.AddPolicyResult, 
 	return _c
 }
 
-func (_c *Txn_AddDACPolicy_Call) RunAndReturn(run func(ctx context.Context, policy string) (client.AddPolicyResult, error)) *Txn_AddDACPolicy_Call {
+func (_c *Txn_AddDACPolicy_Call) RunAndReturn(run func(ctx context.Context, policy string, opts ...options.Lister[options.AddDACPolicyOptions]) (client.AddPolicyResult, error)) *Txn_AddDACPolicy_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddLens provides a mock function for the type Txn
-func (_mock *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) {
-	ret := _mock.Called(ctx, lens)
+func (_mock *Txn) AddLens(ctx context.Context, lens model.Lens, opts ...options.Lister[options.AddLensOptions]) (string, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, lens, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, lens)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddLens")
@@ -265,16 +317,16 @@ func (_mock *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) 
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens) (string, error)); ok {
-		return returnFunc(ctx, lens)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens, ...options.Lister[options.AddLensOptions]) (string, error)); ok {
+		return returnFunc(ctx, lens, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens) string); ok {
-		r0 = returnFunc(ctx, lens)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, model.Lens, ...options.Lister[options.AddLensOptions]) string); ok {
+		r0 = returnFunc(ctx, lens, opts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, model.Lens) error); ok {
-		r1 = returnFunc(ctx, lens)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, model.Lens, ...options.Lister[options.AddLensOptions]) error); ok {
+		r1 = returnFunc(ctx, lens, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -289,11 +341,13 @@ type Txn_AddLens_Call struct {
 // AddLens is a helper method to define mock.On call
 //   - ctx context.Context
 //   - lens model.Lens
-func (_e *Txn_Expecter) AddLens(ctx interface{}, lens interface{}) *Txn_AddLens_Call {
-	return &Txn_AddLens_Call{Call: _e.mock.On("AddLens", ctx, lens)}
+//   - opts ...options.Lister[options.AddLensOptions]
+func (_e *Txn_Expecter) AddLens(ctx interface{}, lens interface{}, opts ...interface{}) *Txn_AddLens_Call {
+	return &Txn_AddLens_Call{Call: _e.mock.On("AddLens",
+		append([]interface{}{ctx, lens}, opts...)...)}
 }
 
-func (_c *Txn_AddLens_Call) Run(run func(ctx context.Context, lens model.Lens)) *Txn_AddLens_Call {
+func (_c *Txn_AddLens_Call) Run(run func(ctx context.Context, lens model.Lens, opts ...options.Lister[options.AddLensOptions])) *Txn_AddLens_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -303,9 +357,16 @@ func (_c *Txn_AddLens_Call) Run(run func(ctx context.Context, lens model.Lens)) 
 		if args[1] != nil {
 			arg1 = args[1].(model.Lens)
 		}
+		var arg2 []options.Lister[options.AddLensOptions]
+		var variadicArgs []options.Lister[options.AddLensOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.AddLensOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -316,14 +377,20 @@ func (_c *Txn_AddLens_Call) Return(s string, err error) *Txn_AddLens_Call {
 	return _c
 }
 
-func (_c *Txn_AddLens_Call) RunAndReturn(run func(ctx context.Context, lens model.Lens) (string, error)) *Txn_AddLens_Call {
+func (_c *Txn_AddLens_Call) RunAndReturn(run func(ctx context.Context, lens model.Lens, opts ...options.Lister[options.AddLensOptions]) (string, error)) *Txn_AddLens_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddNACActorRelationship provides a mock function for the type Txn
-func (_mock *Txn) AddNACActorRelationship(ctx context.Context, relation string, targetActor string) (client.AddActorRelationshipResult, error) {
-	ret := _mock.Called(ctx, relation, targetActor)
+func (_mock *Txn) AddNACActorRelationship(ctx context.Context, relation string, targetActor string, opts ...options.Lister[options.AddNACActorRelationshipOptions]) (client.AddActorRelationshipResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, relation, targetActor, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, relation, targetActor)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddNACActorRelationship")
@@ -331,16 +398,16 @@ func (_mock *Txn) AddNACActorRelationship(ctx context.Context, relation string, 
 
 	var r0 client.AddActorRelationshipResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (client.AddActorRelationshipResult, error)); ok {
-		return returnFunc(ctx, relation, targetActor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, ...options.Lister[options.AddNACActorRelationshipOptions]) (client.AddActorRelationshipResult, error)); ok {
+		return returnFunc(ctx, relation, targetActor, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) client.AddActorRelationshipResult); ok {
-		r0 = returnFunc(ctx, relation, targetActor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, ...options.Lister[options.AddNACActorRelationshipOptions]) client.AddActorRelationshipResult); ok {
+		r0 = returnFunc(ctx, relation, targetActor, opts...)
 	} else {
 		r0 = ret.Get(0).(client.AddActorRelationshipResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = returnFunc(ctx, relation, targetActor)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, ...options.Lister[options.AddNACActorRelationshipOptions]) error); ok {
+		r1 = returnFunc(ctx, relation, targetActor, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -356,11 +423,13 @@ type Txn_AddNACActorRelationship_Call struct {
 //   - ctx context.Context
 //   - relation string
 //   - targetActor string
-func (_e *Txn_Expecter) AddNACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}) *Txn_AddNACActorRelationship_Call {
-	return &Txn_AddNACActorRelationship_Call{Call: _e.mock.On("AddNACActorRelationship", ctx, relation, targetActor)}
+//   - opts ...options.Lister[options.AddNACActorRelationshipOptions]
+func (_e *Txn_Expecter) AddNACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}, opts ...interface{}) *Txn_AddNACActorRelationship_Call {
+	return &Txn_AddNACActorRelationship_Call{Call: _e.mock.On("AddNACActorRelationship",
+		append([]interface{}{ctx, relation, targetActor}, opts...)...)}
 }
 
-func (_c *Txn_AddNACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string)) *Txn_AddNACActorRelationship_Call {
+func (_c *Txn_AddNACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string, opts ...options.Lister[options.AddNACActorRelationshipOptions])) *Txn_AddNACActorRelationship_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -374,10 +443,17 @@ func (_c *Txn_AddNACActorRelationship_Call) Run(run func(ctx context.Context, re
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
+		var arg3 []options.Lister[options.AddNACActorRelationshipOptions]
+		var variadicArgs []options.Lister[options.AddNACActorRelationshipOptions]
+		if len(args) > 3 {
+			variadicArgs = args[3].([]options.Lister[options.AddNACActorRelationshipOptions])
+		}
+		arg3 = variadicArgs
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3...,
 		)
 	})
 	return _c
@@ -388,14 +464,20 @@ func (_c *Txn_AddNACActorRelationship_Call) Return(addActorRelationshipResult cl
 	return _c
 }
 
-func (_c *Txn_AddNACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string) (client.AddActorRelationshipResult, error)) *Txn_AddNACActorRelationship_Call {
+func (_c *Txn_AddNACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string, opts ...options.Lister[options.AddNACActorRelationshipOptions]) (client.AddActorRelationshipResult, error)) *Txn_AddNACActorRelationship_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddSchema provides a mock function for the type Txn
-func (_mock *Txn) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
-	ret := _mock.Called(ctx, sdl)
+func (_mock *Txn) AddSchema(ctx context.Context, sdl string, opts ...options.Lister[options.AddSchemaOptions]) ([]client.CollectionVersion, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, sdl, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, sdl)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddSchema")
@@ -403,18 +485,18 @@ func (_mock *Txn) AddSchema(ctx context.Context, sdl string) ([]client.Collectio
 
 	var r0 []client.CollectionVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]client.CollectionVersion, error)); ok {
-		return returnFunc(ctx, sdl)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.AddSchemaOptions]) ([]client.CollectionVersion, error)); ok {
+		return returnFunc(ctx, sdl, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []client.CollectionVersion); ok {
-		r0 = returnFunc(ctx, sdl)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.AddSchemaOptions]) []client.CollectionVersion); ok {
+		r0 = returnFunc(ctx, sdl, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.CollectionVersion)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, sdl)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, ...options.Lister[options.AddSchemaOptions]) error); ok {
+		r1 = returnFunc(ctx, sdl, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -429,11 +511,13 @@ type Txn_AddSchema_Call struct {
 // AddSchema is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sdl string
-func (_e *Txn_Expecter) AddSchema(ctx interface{}, sdl interface{}) *Txn_AddSchema_Call {
-	return &Txn_AddSchema_Call{Call: _e.mock.On("AddSchema", ctx, sdl)}
+//   - opts ...options.Lister[options.AddSchemaOptions]
+func (_e *Txn_Expecter) AddSchema(ctx interface{}, sdl interface{}, opts ...interface{}) *Txn_AddSchema_Call {
+	return &Txn_AddSchema_Call{Call: _e.mock.On("AddSchema",
+		append([]interface{}{ctx, sdl}, opts...)...)}
 }
 
-func (_c *Txn_AddSchema_Call) Run(run func(ctx context.Context, sdl string)) *Txn_AddSchema_Call {
+func (_c *Txn_AddSchema_Call) Run(run func(ctx context.Context, sdl string, opts ...options.Lister[options.AddSchemaOptions])) *Txn_AddSchema_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -443,9 +527,16 @@ func (_c *Txn_AddSchema_Call) Run(run func(ctx context.Context, sdl string)) *Tx
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 []options.Lister[options.AddSchemaOptions]
+		var variadicArgs []options.Lister[options.AddSchemaOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.AddSchemaOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -456,14 +547,20 @@ func (_c *Txn_AddSchema_Call) Return(collectionVersions []client.CollectionVersi
 	return _c
 }
 
-func (_c *Txn_AddSchema_Call) RunAndReturn(run func(ctx context.Context, sdl string) ([]client.CollectionVersion, error)) *Txn_AddSchema_Call {
+func (_c *Txn_AddSchema_Call) RunAndReturn(run func(ctx context.Context, sdl string, opts ...options.Lister[options.AddSchemaOptions]) ([]client.CollectionVersion, error)) *Txn_AddSchema_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddView provides a mock function for the type Txn
-func (_mock *Txn) AddView(ctx context.Context, gqlQuery string, sdl string, transformCID immutable.Option[string]) ([]client.CollectionVersion, error) {
-	ret := _mock.Called(ctx, gqlQuery, sdl, transformCID)
+func (_mock *Txn) AddView(ctx context.Context, gqlQuery string, sdl string, opts ...options.Lister[options.AddViewOptions]) ([]client.CollectionVersion, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, gqlQuery, sdl, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, gqlQuery, sdl)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddView")
@@ -471,18 +568,18 @@ func (_mock *Txn) AddView(ctx context.Context, gqlQuery string, sdl string, tran
 
 	var r0 []client.CollectionVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[string]) ([]client.CollectionVersion, error)); ok {
-		return returnFunc(ctx, gqlQuery, sdl, transformCID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, ...options.Lister[options.AddViewOptions]) ([]client.CollectionVersion, error)); ok {
+		return returnFunc(ctx, gqlQuery, sdl, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, immutable.Option[string]) []client.CollectionVersion); ok {
-		r0 = returnFunc(ctx, gqlQuery, sdl, transformCID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, ...options.Lister[options.AddViewOptions]) []client.CollectionVersion); ok {
+		r0 = returnFunc(ctx, gqlQuery, sdl, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.CollectionVersion)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, immutable.Option[string]) error); ok {
-		r1 = returnFunc(ctx, gqlQuery, sdl, transformCID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, ...options.Lister[options.AddViewOptions]) error); ok {
+		r1 = returnFunc(ctx, gqlQuery, sdl, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -498,12 +595,13 @@ type Txn_AddView_Call struct {
 //   - ctx context.Context
 //   - gqlQuery string
 //   - sdl string
-//   - transformCID immutable.Option[string]
-func (_e *Txn_Expecter) AddView(ctx interface{}, gqlQuery interface{}, sdl interface{}, transformCID interface{}) *Txn_AddView_Call {
-	return &Txn_AddView_Call{Call: _e.mock.On("AddView", ctx, gqlQuery, sdl, transformCID)}
+//   - opts ...options.Lister[options.AddViewOptions]
+func (_e *Txn_Expecter) AddView(ctx interface{}, gqlQuery interface{}, sdl interface{}, opts ...interface{}) *Txn_AddView_Call {
+	return &Txn_AddView_Call{Call: _e.mock.On("AddView",
+		append([]interface{}{ctx, gqlQuery, sdl}, opts...)...)}
 }
 
-func (_c *Txn_AddView_Call) Run(run func(ctx context.Context, gqlQuery string, sdl string, transformCID immutable.Option[string])) *Txn_AddView_Call {
+func (_c *Txn_AddView_Call) Run(run func(ctx context.Context, gqlQuery string, sdl string, opts ...options.Lister[options.AddViewOptions])) *Txn_AddView_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -517,15 +615,17 @@ func (_c *Txn_AddView_Call) Run(run func(ctx context.Context, gqlQuery string, s
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
-		var arg3 immutable.Option[string]
-		if args[3] != nil {
-			arg3 = args[3].(immutable.Option[string])
+		var arg3 []options.Lister[options.AddViewOptions]
+		var variadicArgs []options.Lister[options.AddViewOptions]
+		if len(args) > 3 {
+			variadicArgs = args[3].([]options.Lister[options.AddViewOptions])
 		}
+		arg3 = variadicArgs
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
+			arg3...,
 		)
 	})
 	return _c
@@ -536,22 +636,28 @@ func (_c *Txn_AddView_Call) Return(collectionVersions []client.CollectionVersion
 	return _c
 }
 
-func (_c *Txn_AddView_Call) RunAndReturn(run func(ctx context.Context, gqlQuery string, sdl string, transformCID immutable.Option[string]) ([]client.CollectionVersion, error)) *Txn_AddView_Call {
+func (_c *Txn_AddView_Call) RunAndReturn(run func(ctx context.Context, gqlQuery string, sdl string, opts ...options.Lister[options.AddViewOptions]) ([]client.CollectionVersion, error)) *Txn_AddView_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // BasicExport provides a mock function for the type Txn
-func (_mock *Txn) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	ret := _mock.Called(ctx, config)
+func (_mock *Txn) BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, filepath, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, filepath)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for BasicExport")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.BackupConfig) error); ok {
-		r0 = returnFunc(ctx, config)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.BasicExportOptions]) error); ok {
+		r0 = returnFunc(ctx, filepath, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -565,24 +671,33 @@ type Txn_BasicExport_Call struct {
 
 // BasicExport is a helper method to define mock.On call
 //   - ctx context.Context
-//   - config *client.BackupConfig
-func (_e *Txn_Expecter) BasicExport(ctx interface{}, config interface{}) *Txn_BasicExport_Call {
-	return &Txn_BasicExport_Call{Call: _e.mock.On("BasicExport", ctx, config)}
+//   - filepath string
+//   - opts ...options.Lister[options.BasicExportOptions]
+func (_e *Txn_Expecter) BasicExport(ctx interface{}, filepath interface{}, opts ...interface{}) *Txn_BasicExport_Call {
+	return &Txn_BasicExport_Call{Call: _e.mock.On("BasicExport",
+		append([]interface{}{ctx, filepath}, opts...)...)}
 }
 
-func (_c *Txn_BasicExport_Call) Run(run func(ctx context.Context, config *client.BackupConfig)) *Txn_BasicExport_Call {
+func (_c *Txn_BasicExport_Call) Run(run func(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions])) *Txn_BasicExport_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *client.BackupConfig
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(*client.BackupConfig)
+			arg1 = args[1].(string)
 		}
+		var arg2 []options.Lister[options.BasicExportOptions]
+		var variadicArgs []options.Lister[options.BasicExportOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.BasicExportOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -593,7 +708,7 @@ func (_c *Txn_BasicExport_Call) Return(err error) *Txn_BasicExport_Call {
 	return _c
 }
 
-func (_c *Txn_BasicExport_Call) RunAndReturn(run func(ctx context.Context, config *client.BackupConfig) error) *Txn_BasicExport_Call {
+func (_c *Txn_BasicExport_Call) RunAndReturn(run func(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error) *Txn_BasicExport_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -700,16 +815,22 @@ func (_c *Txn_Commit_Call) RunAndReturn(run func() error) *Txn_Commit_Call {
 }
 
 // Connect provides a mock function for the type Txn
-func (_mock *Txn) Connect(ctx context.Context, addresses []string) error {
-	ret := _mock.Called(ctx, addresses)
+func (_mock *Txn) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, addresses, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, addresses)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for Connect")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []string) error); ok {
-		r0 = returnFunc(ctx, addresses)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Lister[options.ConnectOptions]) error); ok {
+		r0 = returnFunc(ctx, addresses, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -724,11 +845,13 @@ type Txn_Connect_Call struct {
 // Connect is a helper method to define mock.On call
 //   - ctx context.Context
 //   - addresses []string
-func (_e *Txn_Expecter) Connect(ctx interface{}, addresses interface{}) *Txn_Connect_Call {
-	return &Txn_Connect_Call{Call: _e.mock.On("Connect", ctx, addresses)}
+//   - opts ...options.Lister[options.ConnectOptions]
+func (_e *Txn_Expecter) Connect(ctx interface{}, addresses interface{}, opts ...interface{}) *Txn_Connect_Call {
+	return &Txn_Connect_Call{Call: _e.mock.On("Connect",
+		append([]interface{}{ctx, addresses}, opts...)...)}
 }
 
-func (_c *Txn_Connect_Call) Run(run func(ctx context.Context, addresses []string)) *Txn_Connect_Call {
+func (_c *Txn_Connect_Call) Run(run func(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions])) *Txn_Connect_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -738,9 +861,16 @@ func (_c *Txn_Connect_Call) Run(run func(ctx context.Context, addresses []string
 		if args[1] != nil {
 			arg1 = args[1].([]string)
 		}
+		var arg2 []options.Lister[options.ConnectOptions]
+		var variadicArgs []options.Lister[options.ConnectOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.ConnectOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -751,18 +881,18 @@ func (_c *Txn_Connect_Call) Return(err error) *Txn_Connect_Call {
 	return _c
 }
 
-func (_c *Txn_Connect_Call) RunAndReturn(run func(ctx context.Context, addresses []string) error) *Txn_Connect_Call {
+func (_c *Txn_Connect_Call) RunAndReturn(run func(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error) *Txn_Connect_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateP2PCollections provides a mock function for the type Txn
-func (_mock *Txn) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (_mock *Txn) CreateP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Lister[options.CreateP2PCollectionsOptions]) error {
 	var tmpRet mock.Arguments
-	if len(collectionNames) > 0 {
-		tmpRet = _mock.Called(ctx, collectionNames)
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, collectionNames, opts)
 	} else {
-		tmpRet = _mock.Called(ctx)
+		tmpRet = _mock.Called(ctx, collectionNames)
 	}
 	ret := tmpRet
 
@@ -771,8 +901,8 @@ func (_mock *Txn) CreateP2PCollections(ctx context.Context, collectionNames ...s
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
-		r0 = returnFunc(ctx, collectionNames...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Lister[options.CreateP2PCollectionsOptions]) error); ok {
+		r0 = returnFunc(ctx, collectionNames, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -786,27 +916,33 @@ type Txn_CreateP2PCollections_Call struct {
 
 // CreateP2PCollections is a helper method to define mock.On call
 //   - ctx context.Context
-//   - collectionNames ...string
-func (_e *Txn_Expecter) CreateP2PCollections(ctx interface{}, collectionNames ...interface{}) *Txn_CreateP2PCollections_Call {
+//   - collectionNames []string
+//   - opts ...options.Lister[options.CreateP2PCollectionsOptions]
+func (_e *Txn_Expecter) CreateP2PCollections(ctx interface{}, collectionNames interface{}, opts ...interface{}) *Txn_CreateP2PCollections_Call {
 	return &Txn_CreateP2PCollections_Call{Call: _e.mock.On("CreateP2PCollections",
-		append([]interface{}{ctx}, collectionNames...)...)}
+		append([]interface{}{ctx, collectionNames}, opts...)...)}
 }
 
-func (_c *Txn_CreateP2PCollections_Call) Run(run func(ctx context.Context, collectionNames ...string)) *Txn_CreateP2PCollections_Call {
+func (_c *Txn_CreateP2PCollections_Call) Run(run func(ctx context.Context, collectionNames []string, opts ...options.Lister[options.CreateP2PCollectionsOptions])) *Txn_CreateP2PCollections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
 		var arg1 []string
-		var variadicArgs []string
-		if len(args) > 1 {
-			variadicArgs = args[1].([]string)
+		if args[1] != nil {
+			arg1 = args[1].([]string)
 		}
-		arg1 = variadicArgs
+		var arg2 []options.Lister[options.CreateP2PCollectionsOptions]
+		var variadicArgs []options.Lister[options.CreateP2PCollectionsOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.CreateP2PCollectionsOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
-			arg1...,
+			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -817,18 +953,18 @@ func (_c *Txn_CreateP2PCollections_Call) Return(err error) *Txn_CreateP2PCollect
 	return _c
 }
 
-func (_c *Txn_CreateP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionNames ...string) error) *Txn_CreateP2PCollections_Call {
+func (_c *Txn_CreateP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionNames []string, opts ...options.Lister[options.CreateP2PCollectionsOptions]) error) *Txn_CreateP2PCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateP2PDocuments provides a mock function for the type Txn
-func (_mock *Txn) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (_mock *Txn) CreateP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Lister[options.CreateP2PDocumentsOptions]) error {
 	var tmpRet mock.Arguments
-	if len(docIDs) > 0 {
-		tmpRet = _mock.Called(ctx, docIDs)
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docIDs, opts)
 	} else {
-		tmpRet = _mock.Called(ctx)
+		tmpRet = _mock.Called(ctx, docIDs)
 	}
 	ret := tmpRet
 
@@ -837,8 +973,8 @@ func (_mock *Txn) CreateP2PDocuments(ctx context.Context, docIDs ...string) erro
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
-		r0 = returnFunc(ctx, docIDs...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Lister[options.CreateP2PDocumentsOptions]) error); ok {
+		r0 = returnFunc(ctx, docIDs, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -852,27 +988,33 @@ type Txn_CreateP2PDocuments_Call struct {
 
 // CreateP2PDocuments is a helper method to define mock.On call
 //   - ctx context.Context
-//   - docIDs ...string
-func (_e *Txn_Expecter) CreateP2PDocuments(ctx interface{}, docIDs ...interface{}) *Txn_CreateP2PDocuments_Call {
+//   - docIDs []string
+//   - opts ...options.Lister[options.CreateP2PDocumentsOptions]
+func (_e *Txn_Expecter) CreateP2PDocuments(ctx interface{}, docIDs interface{}, opts ...interface{}) *Txn_CreateP2PDocuments_Call {
 	return &Txn_CreateP2PDocuments_Call{Call: _e.mock.On("CreateP2PDocuments",
-		append([]interface{}{ctx}, docIDs...)...)}
+		append([]interface{}{ctx, docIDs}, opts...)...)}
 }
 
-func (_c *Txn_CreateP2PDocuments_Call) Run(run func(ctx context.Context, docIDs ...string)) *Txn_CreateP2PDocuments_Call {
+func (_c *Txn_CreateP2PDocuments_Call) Run(run func(ctx context.Context, docIDs []string, opts ...options.Lister[options.CreateP2PDocumentsOptions])) *Txn_CreateP2PDocuments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
 		var arg1 []string
-		var variadicArgs []string
-		if len(args) > 1 {
-			variadicArgs = args[1].([]string)
+		if args[1] != nil {
+			arg1 = args[1].([]string)
 		}
-		arg1 = variadicArgs
+		var arg2 []options.Lister[options.CreateP2PDocumentsOptions]
+		var variadicArgs []options.Lister[options.CreateP2PDocumentsOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.CreateP2PDocumentsOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
-			arg1...,
+			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -883,16 +1025,16 @@ func (_c *Txn_CreateP2PDocuments_Call) Return(err error) *Txn_CreateP2PDocuments
 	return _c
 }
 
-func (_c *Txn_CreateP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs ...string) error) *Txn_CreateP2PDocuments_Call {
+func (_c *Txn_CreateP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs []string, opts ...options.Lister[options.CreateP2PDocumentsOptions]) error) *Txn_CreateP2PDocuments_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateReplicator provides a mock function for the type Txn
-func (_mock *Txn) CreateReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
+func (_mock *Txn) CreateReplicator(ctx context.Context, addresses []string, opts ...options.Lister[options.CreateReplicatorOptions]) error {
 	var tmpRet mock.Arguments
-	if len(collectionNames) > 0 {
-		tmpRet = _mock.Called(ctx, addresses, collectionNames)
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, addresses, opts)
 	} else {
 		tmpRet = _mock.Called(ctx, addresses)
 	}
@@ -903,8 +1045,8 @@ func (_mock *Txn) CreateReplicator(ctx context.Context, addresses []string, coll
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...string) error); ok {
-		r0 = returnFunc(ctx, addresses, collectionNames...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Lister[options.CreateReplicatorOptions]) error); ok {
+		r0 = returnFunc(ctx, addresses, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -919,13 +1061,13 @@ type Txn_CreateReplicator_Call struct {
 // CreateReplicator is a helper method to define mock.On call
 //   - ctx context.Context
 //   - addresses []string
-//   - collectionNames ...string
-func (_e *Txn_Expecter) CreateReplicator(ctx interface{}, addresses interface{}, collectionNames ...interface{}) *Txn_CreateReplicator_Call {
+//   - opts ...options.Lister[options.CreateReplicatorOptions]
+func (_e *Txn_Expecter) CreateReplicator(ctx interface{}, addresses interface{}, opts ...interface{}) *Txn_CreateReplicator_Call {
 	return &Txn_CreateReplicator_Call{Call: _e.mock.On("CreateReplicator",
-		append([]interface{}{ctx, addresses}, collectionNames...)...)}
+		append([]interface{}{ctx, addresses}, opts...)...)}
 }
 
-func (_c *Txn_CreateReplicator_Call) Run(run func(ctx context.Context, addresses []string, collectionNames ...string)) *Txn_CreateReplicator_Call {
+func (_c *Txn_CreateReplicator_Call) Run(run func(ctx context.Context, addresses []string, opts ...options.Lister[options.CreateReplicatorOptions])) *Txn_CreateReplicator_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -935,10 +1077,10 @@ func (_c *Txn_CreateReplicator_Call) Run(run func(ctx context.Context, addresses
 		if args[1] != nil {
 			arg1 = args[1].([]string)
 		}
-		var arg2 []string
-		var variadicArgs []string
+		var arg2 []options.Lister[options.CreateReplicatorOptions]
+		var variadicArgs []options.Lister[options.CreateReplicatorOptions]
 		if len(args) > 2 {
-			variadicArgs = args[2].([]string)
+			variadicArgs = args[2].([]options.Lister[options.CreateReplicatorOptions])
 		}
 		arg2 = variadicArgs
 		run(
@@ -955,14 +1097,20 @@ func (_c *Txn_CreateReplicator_Call) Return(err error) *Txn_CreateReplicator_Cal
 	return _c
 }
 
-func (_c *Txn_CreateReplicator_Call) RunAndReturn(run func(ctx context.Context, addresses []string, collectionNames ...string) error) *Txn_CreateReplicator_Call {
+func (_c *Txn_CreateReplicator_Call) RunAndReturn(run func(ctx context.Context, addresses []string, opts ...options.Lister[options.CreateReplicatorOptions]) error) *Txn_CreateReplicator_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteDACActorRelationship provides a mock function for the type Txn
-func (_mock *Txn) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
-	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
+func (_mock *Txn) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...options.Lister[options.DeleteDACActorRelationshipOptions]) (client.DeleteActorRelationshipResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, collectionName, docID, relation, targetActor, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, collectionName, docID, relation, targetActor)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteDACActorRelationship")
@@ -970,16 +1118,16 @@ func (_mock *Txn) DeleteDACActorRelationship(ctx context.Context, collectionName
 
 	var r0 client.DeleteActorRelationshipResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (client.DeleteActorRelationshipResult, error)); ok {
-		return returnFunc(ctx, collectionName, docID, relation, targetActor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...options.Lister[options.DeleteDACActorRelationshipOptions]) (client.DeleteActorRelationshipResult, error)); ok {
+		return returnFunc(ctx, collectionName, docID, relation, targetActor, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) client.DeleteActorRelationshipResult); ok {
-		r0 = returnFunc(ctx, collectionName, docID, relation, targetActor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, ...options.Lister[options.DeleteDACActorRelationshipOptions]) client.DeleteActorRelationshipResult); ok {
+		r0 = returnFunc(ctx, collectionName, docID, relation, targetActor, opts...)
 	} else {
 		r0 = ret.Get(0).(client.DeleteActorRelationshipResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
-		r1 = returnFunc(ctx, collectionName, docID, relation, targetActor)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, ...options.Lister[options.DeleteDACActorRelationshipOptions]) error); ok {
+		r1 = returnFunc(ctx, collectionName, docID, relation, targetActor, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -997,11 +1145,13 @@ type Txn_DeleteDACActorRelationship_Call struct {
 //   - docID string
 //   - relation string
 //   - targetActor string
-func (_e *Txn_Expecter) DeleteDACActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}) *Txn_DeleteDACActorRelationship_Call {
-	return &Txn_DeleteDACActorRelationship_Call{Call: _e.mock.On("DeleteDACActorRelationship", ctx, collectionName, docID, relation, targetActor)}
+//   - opts ...options.Lister[options.DeleteDACActorRelationshipOptions]
+func (_e *Txn_Expecter) DeleteDACActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}, opts ...interface{}) *Txn_DeleteDACActorRelationship_Call {
+	return &Txn_DeleteDACActorRelationship_Call{Call: _e.mock.On("DeleteDACActorRelationship",
+		append([]interface{}{ctx, collectionName, docID, relation, targetActor}, opts...)...)}
 }
 
-func (_c *Txn_DeleteDACActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string)) *Txn_DeleteDACActorRelationship_Call {
+func (_c *Txn_DeleteDACActorRelationship_Call) Run(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...options.Lister[options.DeleteDACActorRelationshipOptions])) *Txn_DeleteDACActorRelationship_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1023,12 +1173,19 @@ func (_c *Txn_DeleteDACActorRelationship_Call) Run(run func(ctx context.Context,
 		if args[4] != nil {
 			arg4 = args[4].(string)
 		}
+		var arg5 []options.Lister[options.DeleteDACActorRelationshipOptions]
+		var variadicArgs []options.Lister[options.DeleteDACActorRelationshipOptions]
+		if len(args) > 5 {
+			variadicArgs = args[5].([]options.Lister[options.DeleteDACActorRelationshipOptions])
+		}
+		arg5 = variadicArgs
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
 			arg4,
+			arg5...,
 		)
 	})
 	return _c
@@ -1039,14 +1196,20 @@ func (_c *Txn_DeleteDACActorRelationship_Call) Return(deleteActorRelationshipRes
 	return _c
 }
 
-func (_c *Txn_DeleteDACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteActorRelationshipResult, error)) *Txn_DeleteDACActorRelationship_Call {
+func (_c *Txn_DeleteDACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docID string, relation string, targetActor string, opts ...options.Lister[options.DeleteDACActorRelationshipOptions]) (client.DeleteActorRelationshipResult, error)) *Txn_DeleteDACActorRelationship_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteNACActorRelationship provides a mock function for the type Txn
-func (_mock *Txn) DeleteNACActorRelationship(ctx context.Context, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
-	ret := _mock.Called(ctx, relation, targetActor)
+func (_mock *Txn) DeleteNACActorRelationship(ctx context.Context, relation string, targetActor string, opts ...options.Lister[options.DeleteNACActorRelationshipOptions]) (client.DeleteActorRelationshipResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, relation, targetActor, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, relation, targetActor)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteNACActorRelationship")
@@ -1054,16 +1217,16 @@ func (_mock *Txn) DeleteNACActorRelationship(ctx context.Context, relation strin
 
 	var r0 client.DeleteActorRelationshipResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (client.DeleteActorRelationshipResult, error)); ok {
-		return returnFunc(ctx, relation, targetActor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, ...options.Lister[options.DeleteNACActorRelationshipOptions]) (client.DeleteActorRelationshipResult, error)); ok {
+		return returnFunc(ctx, relation, targetActor, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) client.DeleteActorRelationshipResult); ok {
-		r0 = returnFunc(ctx, relation, targetActor)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, ...options.Lister[options.DeleteNACActorRelationshipOptions]) client.DeleteActorRelationshipResult); ok {
+		r0 = returnFunc(ctx, relation, targetActor, opts...)
 	} else {
 		r0 = ret.Get(0).(client.DeleteActorRelationshipResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = returnFunc(ctx, relation, targetActor)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, ...options.Lister[options.DeleteNACActorRelationshipOptions]) error); ok {
+		r1 = returnFunc(ctx, relation, targetActor, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1079,11 +1242,13 @@ type Txn_DeleteNACActorRelationship_Call struct {
 //   - ctx context.Context
 //   - relation string
 //   - targetActor string
-func (_e *Txn_Expecter) DeleteNACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}) *Txn_DeleteNACActorRelationship_Call {
-	return &Txn_DeleteNACActorRelationship_Call{Call: _e.mock.On("DeleteNACActorRelationship", ctx, relation, targetActor)}
+//   - opts ...options.Lister[options.DeleteNACActorRelationshipOptions]
+func (_e *Txn_Expecter) DeleteNACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}, opts ...interface{}) *Txn_DeleteNACActorRelationship_Call {
+	return &Txn_DeleteNACActorRelationship_Call{Call: _e.mock.On("DeleteNACActorRelationship",
+		append([]interface{}{ctx, relation, targetActor}, opts...)...)}
 }
 
-func (_c *Txn_DeleteNACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string)) *Txn_DeleteNACActorRelationship_Call {
+func (_c *Txn_DeleteNACActorRelationship_Call) Run(run func(ctx context.Context, relation string, targetActor string, opts ...options.Lister[options.DeleteNACActorRelationshipOptions])) *Txn_DeleteNACActorRelationship_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1097,10 +1262,17 @@ func (_c *Txn_DeleteNACActorRelationship_Call) Run(run func(ctx context.Context,
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
+		var arg3 []options.Lister[options.DeleteNACActorRelationshipOptions]
+		var variadicArgs []options.Lister[options.DeleteNACActorRelationshipOptions]
+		if len(args) > 3 {
+			variadicArgs = args[3].([]options.Lister[options.DeleteNACActorRelationshipOptions])
+		}
+		arg3 = variadicArgs
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3...,
 		)
 	})
 	return _c
@@ -1111,18 +1283,18 @@ func (_c *Txn_DeleteNACActorRelationship_Call) Return(deleteActorRelationshipRes
 	return _c
 }
 
-func (_c *Txn_DeleteNACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string) (client.DeleteActorRelationshipResult, error)) *Txn_DeleteNACActorRelationship_Call {
+func (_c *Txn_DeleteNACActorRelationship_Call) RunAndReturn(run func(ctx context.Context, relation string, targetActor string, opts ...options.Lister[options.DeleteNACActorRelationshipOptions]) (client.DeleteActorRelationshipResult, error)) *Txn_DeleteNACActorRelationship_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteP2PCollections provides a mock function for the type Txn
-func (_mock *Txn) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (_mock *Txn) DeleteP2PCollections(ctx context.Context, collectionNames []string, opts ...options.Lister[options.DeleteP2PCollectionsOptions]) error {
 	var tmpRet mock.Arguments
-	if len(collectionNames) > 0 {
-		tmpRet = _mock.Called(ctx, collectionNames)
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, collectionNames, opts)
 	} else {
-		tmpRet = _mock.Called(ctx)
+		tmpRet = _mock.Called(ctx, collectionNames)
 	}
 	ret := tmpRet
 
@@ -1131,8 +1303,8 @@ func (_mock *Txn) DeleteP2PCollections(ctx context.Context, collectionNames ...s
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
-		r0 = returnFunc(ctx, collectionNames...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Lister[options.DeleteP2PCollectionsOptions]) error); ok {
+		r0 = returnFunc(ctx, collectionNames, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1146,27 +1318,33 @@ type Txn_DeleteP2PCollections_Call struct {
 
 // DeleteP2PCollections is a helper method to define mock.On call
 //   - ctx context.Context
-//   - collectionNames ...string
-func (_e *Txn_Expecter) DeleteP2PCollections(ctx interface{}, collectionNames ...interface{}) *Txn_DeleteP2PCollections_Call {
+//   - collectionNames []string
+//   - opts ...options.Lister[options.DeleteP2PCollectionsOptions]
+func (_e *Txn_Expecter) DeleteP2PCollections(ctx interface{}, collectionNames interface{}, opts ...interface{}) *Txn_DeleteP2PCollections_Call {
 	return &Txn_DeleteP2PCollections_Call{Call: _e.mock.On("DeleteP2PCollections",
-		append([]interface{}{ctx}, collectionNames...)...)}
+		append([]interface{}{ctx, collectionNames}, opts...)...)}
 }
 
-func (_c *Txn_DeleteP2PCollections_Call) Run(run func(ctx context.Context, collectionNames ...string)) *Txn_DeleteP2PCollections_Call {
+func (_c *Txn_DeleteP2PCollections_Call) Run(run func(ctx context.Context, collectionNames []string, opts ...options.Lister[options.DeleteP2PCollectionsOptions])) *Txn_DeleteP2PCollections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
 		var arg1 []string
-		var variadicArgs []string
-		if len(args) > 1 {
-			variadicArgs = args[1].([]string)
+		if args[1] != nil {
+			arg1 = args[1].([]string)
 		}
-		arg1 = variadicArgs
+		var arg2 []options.Lister[options.DeleteP2PCollectionsOptions]
+		var variadicArgs []options.Lister[options.DeleteP2PCollectionsOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.DeleteP2PCollectionsOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
-			arg1...,
+			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -1177,18 +1355,18 @@ func (_c *Txn_DeleteP2PCollections_Call) Return(err error) *Txn_DeleteP2PCollect
 	return _c
 }
 
-func (_c *Txn_DeleteP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionNames ...string) error) *Txn_DeleteP2PCollections_Call {
+func (_c *Txn_DeleteP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionNames []string, opts ...options.Lister[options.DeleteP2PCollectionsOptions]) error) *Txn_DeleteP2PCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteP2PDocuments provides a mock function for the type Txn
-func (_mock *Txn) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (_mock *Txn) DeleteP2PDocuments(ctx context.Context, docIDs []string, opts ...options.Lister[options.DeleteP2PDocumentsOptions]) error {
 	var tmpRet mock.Arguments
-	if len(docIDs) > 0 {
-		tmpRet = _mock.Called(ctx, docIDs)
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docIDs, opts)
 	} else {
-		tmpRet = _mock.Called(ctx)
+		tmpRet = _mock.Called(ctx, docIDs)
 	}
 	ret := tmpRet
 
@@ -1197,8 +1375,8 @@ func (_mock *Txn) DeleteP2PDocuments(ctx context.Context, docIDs ...string) erro
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
-		r0 = returnFunc(ctx, docIDs...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...options.Lister[options.DeleteP2PDocumentsOptions]) error); ok {
+		r0 = returnFunc(ctx, docIDs, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1212,27 +1390,33 @@ type Txn_DeleteP2PDocuments_Call struct {
 
 // DeleteP2PDocuments is a helper method to define mock.On call
 //   - ctx context.Context
-//   - docIDs ...string
-func (_e *Txn_Expecter) DeleteP2PDocuments(ctx interface{}, docIDs ...interface{}) *Txn_DeleteP2PDocuments_Call {
+//   - docIDs []string
+//   - opts ...options.Lister[options.DeleteP2PDocumentsOptions]
+func (_e *Txn_Expecter) DeleteP2PDocuments(ctx interface{}, docIDs interface{}, opts ...interface{}) *Txn_DeleteP2PDocuments_Call {
 	return &Txn_DeleteP2PDocuments_Call{Call: _e.mock.On("DeleteP2PDocuments",
-		append([]interface{}{ctx}, docIDs...)...)}
+		append([]interface{}{ctx, docIDs}, opts...)...)}
 }
 
-func (_c *Txn_DeleteP2PDocuments_Call) Run(run func(ctx context.Context, docIDs ...string)) *Txn_DeleteP2PDocuments_Call {
+func (_c *Txn_DeleteP2PDocuments_Call) Run(run func(ctx context.Context, docIDs []string, opts ...options.Lister[options.DeleteP2PDocumentsOptions])) *Txn_DeleteP2PDocuments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
 		var arg1 []string
-		var variadicArgs []string
-		if len(args) > 1 {
-			variadicArgs = args[1].([]string)
+		if args[1] != nil {
+			arg1 = args[1].([]string)
 		}
-		arg1 = variadicArgs
+		var arg2 []options.Lister[options.DeleteP2PDocumentsOptions]
+		var variadicArgs []options.Lister[options.DeleteP2PDocumentsOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.DeleteP2PDocumentsOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
-			arg1...,
+			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -1243,16 +1427,16 @@ func (_c *Txn_DeleteP2PDocuments_Call) Return(err error) *Txn_DeleteP2PDocuments
 	return _c
 }
 
-func (_c *Txn_DeleteP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs ...string) error) *Txn_DeleteP2PDocuments_Call {
+func (_c *Txn_DeleteP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs []string, opts ...options.Lister[options.DeleteP2PDocumentsOptions]) error) *Txn_DeleteP2PDocuments_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteReplicator provides a mock function for the type Txn
-func (_mock *Txn) DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error {
+func (_mock *Txn) DeleteReplicator(ctx context.Context, id string, opts ...options.Lister[options.DeleteReplicatorOptions]) error {
 	var tmpRet mock.Arguments
-	if len(collectionNames) > 0 {
-		tmpRet = _mock.Called(ctx, id, collectionNames)
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, id, opts)
 	} else {
 		tmpRet = _mock.Called(ctx, id)
 	}
@@ -1263,8 +1447,8 @@ func (_mock *Txn) DeleteReplicator(ctx context.Context, id string, collectionNam
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...string) error); ok {
-		r0 = returnFunc(ctx, id, collectionNames...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.DeleteReplicatorOptions]) error); ok {
+		r0 = returnFunc(ctx, id, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1279,13 +1463,13 @@ type Txn_DeleteReplicator_Call struct {
 // DeleteReplicator is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - collectionNames ...string
-func (_e *Txn_Expecter) DeleteReplicator(ctx interface{}, id interface{}, collectionNames ...interface{}) *Txn_DeleteReplicator_Call {
+//   - opts ...options.Lister[options.DeleteReplicatorOptions]
+func (_e *Txn_Expecter) DeleteReplicator(ctx interface{}, id interface{}, opts ...interface{}) *Txn_DeleteReplicator_Call {
 	return &Txn_DeleteReplicator_Call{Call: _e.mock.On("DeleteReplicator",
-		append([]interface{}{ctx, id}, collectionNames...)...)}
+		append([]interface{}{ctx, id}, opts...)...)}
 }
 
-func (_c *Txn_DeleteReplicator_Call) Run(run func(ctx context.Context, id string, collectionNames ...string)) *Txn_DeleteReplicator_Call {
+func (_c *Txn_DeleteReplicator_Call) Run(run func(ctx context.Context, id string, opts ...options.Lister[options.DeleteReplicatorOptions])) *Txn_DeleteReplicator_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1295,10 +1479,10 @@ func (_c *Txn_DeleteReplicator_Call) Run(run func(ctx context.Context, id string
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 []string
-		var variadicArgs []string
+		var arg2 []options.Lister[options.DeleteReplicatorOptions]
+		var variadicArgs []options.Lister[options.DeleteReplicatorOptions]
 		if len(args) > 2 {
-			variadicArgs = args[2].([]string)
+			variadicArgs = args[2].([]options.Lister[options.DeleteReplicatorOptions])
 		}
 		arg2 = variadicArgs
 		run(
@@ -1315,22 +1499,28 @@ func (_c *Txn_DeleteReplicator_Call) Return(err error) *Txn_DeleteReplicator_Cal
 	return _c
 }
 
-func (_c *Txn_DeleteReplicator_Call) RunAndReturn(run func(ctx context.Context, id string, collectionNames ...string) error) *Txn_DeleteReplicator_Call {
+func (_c *Txn_DeleteReplicator_Call) RunAndReturn(run func(ctx context.Context, id string, opts ...options.Lister[options.DeleteReplicatorOptions]) error) *Txn_DeleteReplicator_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DisableNAC provides a mock function for the type Txn
-func (_mock *Txn) DisableNAC(ctx context.Context) error {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for DisableNAC")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.DisableNACOptions]) error); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1344,18 +1534,27 @@ type Txn_DisableNAC_Call struct {
 
 // DisableNAC is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) DisableNAC(ctx interface{}) *Txn_DisableNAC_Call {
-	return &Txn_DisableNAC_Call{Call: _e.mock.On("DisableNAC", ctx)}
+//   - opts ...options.Lister[options.DisableNACOptions]
+func (_e *Txn_Expecter) DisableNAC(ctx interface{}, opts ...interface{}) *Txn_DisableNAC_Call {
+	return &Txn_DisableNAC_Call{Call: _e.mock.On("DisableNAC",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_DisableNAC_Call) Run(run func(ctx context.Context)) *Txn_DisableNAC_Call {
+func (_c *Txn_DisableNAC_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.DisableNACOptions])) *Txn_DisableNAC_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.DisableNACOptions]
+		var variadicArgs []options.Lister[options.DisableNACOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.DisableNACOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -1366,7 +1565,7 @@ func (_c *Txn_DisableNAC_Call) Return(err error) *Txn_DisableNAC_Call {
 	return _c
 }
 
-func (_c *Txn_DisableNAC_Call) RunAndReturn(run func(ctx context.Context) error) *Txn_DisableNAC_Call {
+func (_c *Txn_DisableNAC_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error) *Txn_DisableNAC_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1405,7 +1604,7 @@ func (_c *Txn_Discard_Call) RunAndReturn(run func()) *Txn_Discard_Call {
 }
 
 // ExecRequest provides a mock function for the type Txn
-func (_mock *Txn) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
+func (_mock *Txn) ExecRequest(ctx context.Context, request string, opts ...options.Lister[options.ExecRequestOptions]) *client.RequestResult {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, request, opts)
@@ -1419,7 +1618,7 @@ func (_mock *Txn) ExecRequest(ctx context.Context, request string, opts ...clien
 	}
 
 	var r0 *client.RequestResult
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...client.RequestOption) *client.RequestResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.ExecRequestOptions]) *client.RequestResult); ok {
 		r0 = returnFunc(ctx, request, opts...)
 	} else {
 		if ret.Get(0) != nil {
@@ -1437,13 +1636,13 @@ type Txn_ExecRequest_Call struct {
 // ExecRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request string
-//   - opts ...client.RequestOption
+//   - opts ...options.Lister[options.ExecRequestOptions]
 func (_e *Txn_Expecter) ExecRequest(ctx interface{}, request interface{}, opts ...interface{}) *Txn_ExecRequest_Call {
 	return &Txn_ExecRequest_Call{Call: _e.mock.On("ExecRequest",
 		append([]interface{}{ctx, request}, opts...)...)}
 }
 
-func (_c *Txn_ExecRequest_Call) Run(run func(ctx context.Context, request string, opts ...client.RequestOption)) *Txn_ExecRequest_Call {
+func (_c *Txn_ExecRequest_Call) Run(run func(ctx context.Context, request string, opts ...options.Lister[options.ExecRequestOptions])) *Txn_ExecRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1453,10 +1652,10 @@ func (_c *Txn_ExecRequest_Call) Run(run func(ctx context.Context, request string
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 []client.RequestOption
-		var variadicArgs []client.RequestOption
+		var arg2 []options.Lister[options.ExecRequestOptions]
+		var variadicArgs []options.Lister[options.ExecRequestOptions]
 		if len(args) > 2 {
-			variadicArgs = args[2].([]client.RequestOption)
+			variadicArgs = args[2].([]options.Lister[options.ExecRequestOptions])
 		}
 		arg2 = variadicArgs
 		run(
@@ -1473,14 +1672,20 @@ func (_c *Txn_ExecRequest_Call) Return(requestResult *client.RequestResult) *Txn
 	return _c
 }
 
-func (_c *Txn_ExecRequest_Call) RunAndReturn(run func(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult) *Txn_ExecRequest_Call {
+func (_c *Txn_ExecRequest_Call) RunAndReturn(run func(ctx context.Context, request string, opts ...options.Lister[options.ExecRequestOptions]) *client.RequestResult) *Txn_ExecRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAllIndexes provides a mock function for the type Txn
-func (_mock *Txn) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) GetAllIndexes(ctx context.Context, opts ...options.Lister[options.GetAllIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllIndexes")
@@ -1488,18 +1693,18 @@ func (_mock *Txn) GetAllIndexes(ctx context.Context) (map[client.CollectionName]
 
 	var r0 map[client.CollectionName][]client.IndexDescription
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (map[client.CollectionName][]client.IndexDescription, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetAllIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) map[client.CollectionName][]client.IndexDescription); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetAllIndexesOptions]) map[client.CollectionName][]client.IndexDescription); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[client.CollectionName][]client.IndexDescription)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.GetAllIndexesOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1513,18 +1718,27 @@ type Txn_GetAllIndexes_Call struct {
 
 // GetAllIndexes is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) GetAllIndexes(ctx interface{}) *Txn_GetAllIndexes_Call {
-	return &Txn_GetAllIndexes_Call{Call: _e.mock.On("GetAllIndexes", ctx)}
+//   - opts ...options.Lister[options.GetAllIndexesOptions]
+func (_e *Txn_Expecter) GetAllIndexes(ctx interface{}, opts ...interface{}) *Txn_GetAllIndexes_Call {
+	return &Txn_GetAllIndexes_Call{Call: _e.mock.On("GetAllIndexes",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_GetAllIndexes_Call) Run(run func(ctx context.Context)) *Txn_GetAllIndexes_Call {
+func (_c *Txn_GetAllIndexes_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.GetAllIndexesOptions])) *Txn_GetAllIndexes_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.GetAllIndexesOptions]
+		var variadicArgs []options.Lister[options.GetAllIndexesOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.GetAllIndexesOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -1535,14 +1749,20 @@ func (_c *Txn_GetAllIndexes_Call) Return(vToIndexDescriptions map[client.Collect
 	return _c
 }
 
-func (_c *Txn_GetAllIndexes_Call) RunAndReturn(run func(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error)) *Txn_GetAllIndexes_Call {
+func (_c *Txn_GetAllIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.GetAllIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error)) *Txn_GetAllIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetCollectionByName provides a mock function for the type Txn
-func (_mock *Txn) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	ret := _mock.Called(ctx, name)
+func (_mock *Txn) GetCollectionByName(ctx context.Context, name client.CollectionName, opts ...options.Lister[options.GetCollectionByNameOptions]) (client.Collection, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, name, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, name)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCollectionByName")
@@ -1550,18 +1770,18 @@ func (_mock *Txn) GetCollectionByName(ctx context.Context, name client.Collectio
 
 	var r0 client.Collection
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.CollectionName) (client.Collection, error)); ok {
-		return returnFunc(ctx, name)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.CollectionName, ...options.Lister[options.GetCollectionByNameOptions]) (client.Collection, error)); ok {
+		return returnFunc(ctx, name, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.CollectionName) client.Collection); ok {
-		r0 = returnFunc(ctx, name)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.CollectionName, ...options.Lister[options.GetCollectionByNameOptions]) client.Collection); ok {
+		r0 = returnFunc(ctx, name, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(client.Collection)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.CollectionName) error); ok {
-		r1 = returnFunc(ctx, name)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.CollectionName, ...options.Lister[options.GetCollectionByNameOptions]) error); ok {
+		r1 = returnFunc(ctx, name, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1576,11 +1796,13 @@ type Txn_GetCollectionByName_Call struct {
 // GetCollectionByName is a helper method to define mock.On call
 //   - ctx context.Context
 //   - name client.CollectionName
-func (_e *Txn_Expecter) GetCollectionByName(ctx interface{}, name interface{}) *Txn_GetCollectionByName_Call {
-	return &Txn_GetCollectionByName_Call{Call: _e.mock.On("GetCollectionByName", ctx, name)}
+//   - opts ...options.Lister[options.GetCollectionByNameOptions]
+func (_e *Txn_Expecter) GetCollectionByName(ctx interface{}, name interface{}, opts ...interface{}) *Txn_GetCollectionByName_Call {
+	return &Txn_GetCollectionByName_Call{Call: _e.mock.On("GetCollectionByName",
+		append([]interface{}{ctx, name}, opts...)...)}
 }
 
-func (_c *Txn_GetCollectionByName_Call) Run(run func(ctx context.Context, name client.CollectionName)) *Txn_GetCollectionByName_Call {
+func (_c *Txn_GetCollectionByName_Call) Run(run func(ctx context.Context, name client.CollectionName, opts ...options.Lister[options.GetCollectionByNameOptions])) *Txn_GetCollectionByName_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1590,9 +1812,16 @@ func (_c *Txn_GetCollectionByName_Call) Run(run func(ctx context.Context, name c
 		if args[1] != nil {
 			arg1 = args[1].(client.CollectionName)
 		}
+		var arg2 []options.Lister[options.GetCollectionByNameOptions]
+		var variadicArgs []options.Lister[options.GetCollectionByNameOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.GetCollectionByNameOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -1603,14 +1832,20 @@ func (_c *Txn_GetCollectionByName_Call) Return(collection client.Collection, err
 	return _c
 }
 
-func (_c *Txn_GetCollectionByName_Call) RunAndReturn(run func(ctx context.Context, name client.CollectionName) (client.Collection, error)) *Txn_GetCollectionByName_Call {
+func (_c *Txn_GetCollectionByName_Call) RunAndReturn(run func(ctx context.Context, name client.CollectionName, opts ...options.Lister[options.GetCollectionByNameOptions]) (client.Collection, error)) *Txn_GetCollectionByName_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetCollections provides a mock function for the type Txn
-func (_mock *Txn) GetCollections(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error) {
-	ret := _mock.Called(ctx, options)
+func (_mock *Txn) GetCollections(ctx context.Context, opts ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCollections")
@@ -1618,18 +1853,18 @@ func (_mock *Txn) GetCollections(ctx context.Context, options client.CollectionF
 
 	var r0 []client.Collection
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)); ok {
-		return returnFunc(ctx, options)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.CollectionFetchOptions) []client.Collection); ok {
-		r0 = returnFunc(ctx, options)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetCollectionsOptions]) []client.Collection); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.Collection)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.CollectionFetchOptions) error); ok {
-		r1 = returnFunc(ctx, options)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.GetCollectionsOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1643,24 +1878,27 @@ type Txn_GetCollections_Call struct {
 
 // GetCollections is a helper method to define mock.On call
 //   - ctx context.Context
-//   - options client.CollectionFetchOptions
-func (_e *Txn_Expecter) GetCollections(ctx interface{}, options interface{}) *Txn_GetCollections_Call {
-	return &Txn_GetCollections_Call{Call: _e.mock.On("GetCollections", ctx, options)}
+//   - opts ...options.Lister[options.GetCollectionsOptions]
+func (_e *Txn_Expecter) GetCollections(ctx interface{}, opts ...interface{}) *Txn_GetCollections_Call {
+	return &Txn_GetCollections_Call{Call: _e.mock.On("GetCollections",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_GetCollections_Call) Run(run func(ctx context.Context, options client.CollectionFetchOptions)) *Txn_GetCollections_Call {
+func (_c *Txn_GetCollections_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.GetCollectionsOptions])) *Txn_GetCollections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 client.CollectionFetchOptions
-		if args[1] != nil {
-			arg1 = args[1].(client.CollectionFetchOptions)
+		var arg1 []options.Lister[options.GetCollectionsOptions]
+		var variadicArgs []options.Lister[options.GetCollectionsOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.GetCollectionsOptions])
 		}
+		arg1 = variadicArgs
 		run(
 			arg0,
-			arg1,
+			arg1...,
 		)
 	})
 	return _c
@@ -1671,14 +1909,20 @@ func (_c *Txn_GetCollections_Call) Return(collections []client.Collection, err e
 	return _c
 }
 
-func (_c *Txn_GetCollections_Call) RunAndReturn(run func(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error)) *Txn_GetCollections_Call {
+func (_c *Txn_GetCollections_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error)) *Txn_GetCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetNACStatus provides a mock function for the type Txn
-func (_mock *Txn) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) GetNACStatus(ctx context.Context, opts ...options.Lister[options.GetNACStatusOptions]) (client.NACStatusResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNACStatus")
@@ -1686,16 +1930,16 @@ func (_mock *Txn) GetNACStatus(ctx context.Context) (client.NACStatusResult, err
 
 	var r0 client.NACStatusResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (client.NACStatusResult, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetNACStatusOptions]) (client.NACStatusResult, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) client.NACStatusResult); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetNACStatusOptions]) client.NACStatusResult); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		r0 = ret.Get(0).(client.NACStatusResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.GetNACStatusOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1709,18 +1953,27 @@ type Txn_GetNACStatus_Call struct {
 
 // GetNACStatus is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) GetNACStatus(ctx interface{}) *Txn_GetNACStatus_Call {
-	return &Txn_GetNACStatus_Call{Call: _e.mock.On("GetNACStatus", ctx)}
+//   - opts ...options.Lister[options.GetNACStatusOptions]
+func (_e *Txn_Expecter) GetNACStatus(ctx interface{}, opts ...interface{}) *Txn_GetNACStatus_Call {
+	return &Txn_GetNACStatus_Call{Call: _e.mock.On("GetNACStatus",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_GetNACStatus_Call) Run(run func(ctx context.Context)) *Txn_GetNACStatus_Call {
+func (_c *Txn_GetNACStatus_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.GetNACStatusOptions])) *Txn_GetNACStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.GetNACStatusOptions]
+		var variadicArgs []options.Lister[options.GetNACStatusOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.GetNACStatusOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -1731,7 +1984,7 @@ func (_c *Txn_GetNACStatus_Call) Return(nACStatusResult client.NACStatusResult, 
 	return _c
 }
 
-func (_c *Txn_GetNACStatus_Call) RunAndReturn(run func(ctx context.Context) (client.NACStatusResult, error)) *Txn_GetNACStatus_Call {
+func (_c *Txn_GetNACStatus_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.GetNACStatusOptions]) (client.NACStatusResult, error)) *Txn_GetNACStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1903,8 +2156,14 @@ func (_c *Txn_ListAllEncryptedIndexes_Call) RunAndReturn(run func(context1 conte
 }
 
 // ListLenses provides a mock function for the type Txn
-func (_mock *Txn) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) ListLenses(ctx context.Context, opts ...options.Lister[options.ListLensesOptions]) (map[string]model.Lens, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListLenses")
@@ -1912,18 +2171,18 @@ func (_mock *Txn) ListLenses(ctx context.Context) (map[string]model.Lens, error)
 
 	var r0 map[string]model.Lens
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (map[string]model.Lens, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ListLensesOptions]) (map[string]model.Lens, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) map[string]model.Lens); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ListLensesOptions]) map[string]model.Lens); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]model.Lens)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.ListLensesOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1937,18 +2196,27 @@ type Txn_ListLenses_Call struct {
 
 // ListLenses is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) ListLenses(ctx interface{}) *Txn_ListLenses_Call {
-	return &Txn_ListLenses_Call{Call: _e.mock.On("ListLenses", ctx)}
+//   - opts ...options.Lister[options.ListLensesOptions]
+func (_e *Txn_Expecter) ListLenses(ctx interface{}, opts ...interface{}) *Txn_ListLenses_Call {
+	return &Txn_ListLenses_Call{Call: _e.mock.On("ListLenses",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_ListLenses_Call) Run(run func(ctx context.Context)) *Txn_ListLenses_Call {
+func (_c *Txn_ListLenses_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.ListLensesOptions])) *Txn_ListLenses_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.ListLensesOptions]
+		var variadicArgs []options.Lister[options.ListLensesOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.ListLensesOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -1959,14 +2227,20 @@ func (_c *Txn_ListLenses_Call) Return(stringToLens map[string]model.Lens, err er
 	return _c
 }
 
-func (_c *Txn_ListLenses_Call) RunAndReturn(run func(ctx context.Context) (map[string]model.Lens, error)) *Txn_ListLenses_Call {
+func (_c *Txn_ListLenses_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.ListLensesOptions]) (map[string]model.Lens, error)) *Txn_ListLenses_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListP2PCollections provides a mock function for the type Txn
-func (_mock *Txn) ListP2PCollections(ctx context.Context) ([]string, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) ListP2PCollections(ctx context.Context, opts ...options.Lister[options.ListP2PCollectionsOptions]) ([]string, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListP2PCollections")
@@ -1974,18 +2248,18 @@ func (_mock *Txn) ListP2PCollections(ctx context.Context) ([]string, error) {
 
 	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ListP2PCollectionsOptions]) ([]string, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ListP2PCollectionsOptions]) []string); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.ListP2PCollectionsOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1999,18 +2273,27 @@ type Txn_ListP2PCollections_Call struct {
 
 // ListP2PCollections is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) ListP2PCollections(ctx interface{}) *Txn_ListP2PCollections_Call {
-	return &Txn_ListP2PCollections_Call{Call: _e.mock.On("ListP2PCollections", ctx)}
+//   - opts ...options.Lister[options.ListP2PCollectionsOptions]
+func (_e *Txn_Expecter) ListP2PCollections(ctx interface{}, opts ...interface{}) *Txn_ListP2PCollections_Call {
+	return &Txn_ListP2PCollections_Call{Call: _e.mock.On("ListP2PCollections",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_ListP2PCollections_Call) Run(run func(ctx context.Context)) *Txn_ListP2PCollections_Call {
+func (_c *Txn_ListP2PCollections_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.ListP2PCollectionsOptions])) *Txn_ListP2PCollections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.ListP2PCollectionsOptions]
+		var variadicArgs []options.Lister[options.ListP2PCollectionsOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.ListP2PCollectionsOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -2021,14 +2304,20 @@ func (_c *Txn_ListP2PCollections_Call) Return(strings []string, err error) *Txn_
 	return _c
 }
 
-func (_c *Txn_ListP2PCollections_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_ListP2PCollections_Call {
+func (_c *Txn_ListP2PCollections_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.ListP2PCollectionsOptions]) ([]string, error)) *Txn_ListP2PCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListP2PDocuments provides a mock function for the type Txn
-func (_mock *Txn) ListP2PDocuments(ctx context.Context) ([]string, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) ListP2PDocuments(ctx context.Context, opts ...options.Lister[options.ListP2PDocumentsOptions]) ([]string, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListP2PDocuments")
@@ -2036,18 +2325,18 @@ func (_mock *Txn) ListP2PDocuments(ctx context.Context) ([]string, error) {
 
 	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ListP2PDocumentsOptions]) ([]string, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ListP2PDocumentsOptions]) []string); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.ListP2PDocumentsOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2061,18 +2350,27 @@ type Txn_ListP2PDocuments_Call struct {
 
 // ListP2PDocuments is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) ListP2PDocuments(ctx interface{}) *Txn_ListP2PDocuments_Call {
-	return &Txn_ListP2PDocuments_Call{Call: _e.mock.On("ListP2PDocuments", ctx)}
+//   - opts ...options.Lister[options.ListP2PDocumentsOptions]
+func (_e *Txn_Expecter) ListP2PDocuments(ctx interface{}, opts ...interface{}) *Txn_ListP2PDocuments_Call {
+	return &Txn_ListP2PDocuments_Call{Call: _e.mock.On("ListP2PDocuments",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_ListP2PDocuments_Call) Run(run func(ctx context.Context)) *Txn_ListP2PDocuments_Call {
+func (_c *Txn_ListP2PDocuments_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.ListP2PDocumentsOptions])) *Txn_ListP2PDocuments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.ListP2PDocumentsOptions]
+		var variadicArgs []options.Lister[options.ListP2PDocumentsOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.ListP2PDocumentsOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -2083,14 +2381,20 @@ func (_c *Txn_ListP2PDocuments_Call) Return(strings []string, err error) *Txn_Li
 	return _c
 }
 
-func (_c *Txn_ListP2PDocuments_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_ListP2PDocuments_Call {
+func (_c *Txn_ListP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.ListP2PDocumentsOptions]) ([]string, error)) *Txn_ListP2PDocuments_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListReplicators provides a mock function for the type Txn
-func (_mock *Txn) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) ListReplicators(ctx context.Context, opts ...options.Lister[options.ListReplicatorsOptions]) ([]client.Replicator, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListReplicators")
@@ -2098,18 +2402,18 @@ func (_mock *Txn) ListReplicators(ctx context.Context) ([]client.Replicator, err
 
 	var r0 []client.Replicator
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]client.Replicator, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ListReplicatorsOptions]) ([]client.Replicator, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []client.Replicator); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ListReplicatorsOptions]) []client.Replicator); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.Replicator)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.ListReplicatorsOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2123,18 +2427,27 @@ type Txn_ListReplicators_Call struct {
 
 // ListReplicators is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) ListReplicators(ctx interface{}) *Txn_ListReplicators_Call {
-	return &Txn_ListReplicators_Call{Call: _e.mock.On("ListReplicators", ctx)}
+//   - opts ...options.Lister[options.ListReplicatorsOptions]
+func (_e *Txn_Expecter) ListReplicators(ctx interface{}, opts ...interface{}) *Txn_ListReplicators_Call {
+	return &Txn_ListReplicators_Call{Call: _e.mock.On("ListReplicators",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_ListReplicators_Call) Run(run func(ctx context.Context)) *Txn_ListReplicators_Call {
+func (_c *Txn_ListReplicators_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.ListReplicatorsOptions])) *Txn_ListReplicators_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.ListReplicatorsOptions]
+		var variadicArgs []options.Lister[options.ListReplicatorsOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.ListReplicatorsOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -2145,22 +2458,28 @@ func (_c *Txn_ListReplicators_Call) Return(replicators []client.Replicator, err 
 	return _c
 }
 
-func (_c *Txn_ListReplicators_Call) RunAndReturn(run func(ctx context.Context) ([]client.Replicator, error)) *Txn_ListReplicators_Call {
+func (_c *Txn_ListReplicators_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.ListReplicatorsOptions]) ([]client.Replicator, error)) *Txn_ListReplicators_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // PatchCollection provides a mock function for the type Txn
-func (_mock *Txn) PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens]) error {
-	ret := _mock.Called(ctx, patch, migration)
+func (_mock *Txn) PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens], opts ...options.Lister[options.PatchCollectionOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, patch, migration, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, patch, migration)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for PatchCollection")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, immutable.Option[model.Lens]) error); ok {
-		r0 = returnFunc(ctx, patch, migration)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, immutable.Option[model.Lens], ...options.Lister[options.PatchCollectionOptions]) error); ok {
+		r0 = returnFunc(ctx, patch, migration, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -2176,11 +2495,13 @@ type Txn_PatchCollection_Call struct {
 //   - ctx context.Context
 //   - patch string
 //   - migration immutable.Option[model.Lens]
-func (_e *Txn_Expecter) PatchCollection(ctx interface{}, patch interface{}, migration interface{}) *Txn_PatchCollection_Call {
-	return &Txn_PatchCollection_Call{Call: _e.mock.On("PatchCollection", ctx, patch, migration)}
+//   - opts ...options.Lister[options.PatchCollectionOptions]
+func (_e *Txn_Expecter) PatchCollection(ctx interface{}, patch interface{}, migration interface{}, opts ...interface{}) *Txn_PatchCollection_Call {
+	return &Txn_PatchCollection_Call{Call: _e.mock.On("PatchCollection",
+		append([]interface{}{ctx, patch, migration}, opts...)...)}
 }
 
-func (_c *Txn_PatchCollection_Call) Run(run func(ctx context.Context, patch string, migration immutable.Option[model.Lens])) *Txn_PatchCollection_Call {
+func (_c *Txn_PatchCollection_Call) Run(run func(ctx context.Context, patch string, migration immutable.Option[model.Lens], opts ...options.Lister[options.PatchCollectionOptions])) *Txn_PatchCollection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2194,10 +2515,17 @@ func (_c *Txn_PatchCollection_Call) Run(run func(ctx context.Context, patch stri
 		if args[2] != nil {
 			arg2 = args[2].(immutable.Option[model.Lens])
 		}
+		var arg3 []options.Lister[options.PatchCollectionOptions]
+		var variadicArgs []options.Lister[options.PatchCollectionOptions]
+		if len(args) > 3 {
+			variadicArgs = args[3].([]options.Lister[options.PatchCollectionOptions])
+		}
+		arg3 = variadicArgs
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3...,
 		)
 	})
 	return _c
@@ -2208,14 +2536,20 @@ func (_c *Txn_PatchCollection_Call) Return(err error) *Txn_PatchCollection_Call 
 	return _c
 }
 
-func (_c *Txn_PatchCollection_Call) RunAndReturn(run func(ctx context.Context, patch string, migration immutable.Option[model.Lens]) error) *Txn_PatchCollection_Call {
+func (_c *Txn_PatchCollection_Call) RunAndReturn(run func(ctx context.Context, patch string, migration immutable.Option[model.Lens], opts ...options.Lister[options.PatchCollectionOptions]) error) *Txn_PatchCollection_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // PeerInfo provides a mock function for the type Txn
-func (_mock *Txn) PeerInfo(ctx context.Context) ([]string, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for PeerInfo")
@@ -2223,18 +2557,18 @@ func (_mock *Txn) PeerInfo(ctx context.Context) ([]string, error) {
 
 	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.PeerInfoOptions]) ([]string, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.PeerInfoOptions]) []string); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.PeerInfoOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2248,18 +2582,27 @@ type Txn_PeerInfo_Call struct {
 
 // PeerInfo is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) PeerInfo(ctx interface{}) *Txn_PeerInfo_Call {
-	return &Txn_PeerInfo_Call{Call: _e.mock.On("PeerInfo", ctx)}
+//   - opts ...options.Lister[options.PeerInfoOptions]
+func (_e *Txn_Expecter) PeerInfo(ctx interface{}, opts ...interface{}) *Txn_PeerInfo_Call {
+	return &Txn_PeerInfo_Call{Call: _e.mock.On("PeerInfo",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_PeerInfo_Call) Run(run func(ctx context.Context)) *Txn_PeerInfo_Call {
+func (_c *Txn_PeerInfo_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions])) *Txn_PeerInfo_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.PeerInfoOptions]
+		var variadicArgs []options.Lister[options.PeerInfoOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.PeerInfoOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -2270,7 +2613,7 @@ func (_c *Txn_PeerInfo_Call) Return(strings []string, err error) *Txn_PeerInfo_C
 	return _c
 }
 
-func (_c *Txn_PeerInfo_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_PeerInfo_Call {
+func (_c *Txn_PeerInfo_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error)) *Txn_PeerInfo_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2327,16 +2670,22 @@ func (_c *Txn_PrintDump_Call) RunAndReturn(run func(ctx context.Context) error) 
 }
 
 // ReEnableNAC provides a mock function for the type Txn
-func (_mock *Txn) ReEnableNAC(ctx context.Context) error {
-	ret := _mock.Called(ctx)
+func (_mock *Txn) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for ReEnableNAC")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.ReEnableNACOptions]) error); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -2350,18 +2699,27 @@ type Txn_ReEnableNAC_Call struct {
 
 // ReEnableNAC is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Txn_Expecter) ReEnableNAC(ctx interface{}) *Txn_ReEnableNAC_Call {
-	return &Txn_ReEnableNAC_Call{Call: _e.mock.On("ReEnableNAC", ctx)}
+//   - opts ...options.Lister[options.ReEnableNACOptions]
+func (_e *Txn_Expecter) ReEnableNAC(ctx interface{}, opts ...interface{}) *Txn_ReEnableNAC_Call {
+	return &Txn_ReEnableNAC_Call{Call: _e.mock.On("ReEnableNAC",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_ReEnableNAC_Call) Run(run func(ctx context.Context)) *Txn_ReEnableNAC_Call {
+func (_c *Txn_ReEnableNAC_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions])) *Txn_ReEnableNAC_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.ReEnableNACOptions]
+		var variadicArgs []options.Lister[options.ReEnableNACOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.ReEnableNACOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -2372,22 +2730,28 @@ func (_c *Txn_ReEnableNAC_Call) Return(err error) *Txn_ReEnableNAC_Call {
 	return _c
 }
 
-func (_c *Txn_ReEnableNAC_Call) RunAndReturn(run func(ctx context.Context) error) *Txn_ReEnableNAC_Call {
+func (_c *Txn_ReEnableNAC_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error) *Txn_ReEnableNAC_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RefreshViews provides a mock function for the type Txn
-func (_mock *Txn) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
-	ret := _mock.Called(ctx, options)
+func (_mock *Txn) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefreshViews")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.CollectionFetchOptions) error); ok {
-		r0 = returnFunc(ctx, options)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.RefreshViewsOptions]) error); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -2401,24 +2765,27 @@ type Txn_RefreshViews_Call struct {
 
 // RefreshViews is a helper method to define mock.On call
 //   - ctx context.Context
-//   - options client.CollectionFetchOptions
-func (_e *Txn_Expecter) RefreshViews(ctx interface{}, options interface{}) *Txn_RefreshViews_Call {
-	return &Txn_RefreshViews_Call{Call: _e.mock.On("RefreshViews", ctx, options)}
+//   - opts ...options.Lister[options.RefreshViewsOptions]
+func (_e *Txn_Expecter) RefreshViews(ctx interface{}, opts ...interface{}) *Txn_RefreshViews_Call {
+	return &Txn_RefreshViews_Call{Call: _e.mock.On("RefreshViews",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Txn_RefreshViews_Call) Run(run func(ctx context.Context, options client.CollectionFetchOptions)) *Txn_RefreshViews_Call {
+func (_c *Txn_RefreshViews_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions])) *Txn_RefreshViews_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 client.CollectionFetchOptions
-		if args[1] != nil {
-			arg1 = args[1].(client.CollectionFetchOptions)
+		var arg1 []options.Lister[options.RefreshViewsOptions]
+		var variadicArgs []options.Lister[options.RefreshViewsOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.RefreshViewsOptions])
 		}
+		arg1 = variadicArgs
 		run(
 			arg0,
-			arg1,
+			arg1...,
 		)
 	})
 	return _c
@@ -2429,22 +2796,28 @@ func (_c *Txn_RefreshViews_Call) Return(err error) *Txn_RefreshViews_Call {
 	return _c
 }
 
-func (_c *Txn_RefreshViews_Call) RunAndReturn(run func(ctx context.Context, options client.CollectionFetchOptions) error) *Txn_RefreshViews_Call {
+func (_c *Txn_RefreshViews_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error) *Txn_RefreshViews_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SetActiveCollectionVersion provides a mock function for the type Txn
-func (_mock *Txn) SetActiveCollectionVersion(ctx context.Context, versionID string) error {
-	ret := _mock.Called(ctx, versionID)
+func (_mock *Txn) SetActiveCollectionVersion(ctx context.Context, versionID string, opts ...options.Lister[options.SetActiveCollectionVersionOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, versionID, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, versionID)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetActiveCollectionVersion")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, versionID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.SetActiveCollectionVersionOptions]) error); ok {
+		r0 = returnFunc(ctx, versionID, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -2459,11 +2832,13 @@ type Txn_SetActiveCollectionVersion_Call struct {
 // SetActiveCollectionVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - versionID string
-func (_e *Txn_Expecter) SetActiveCollectionVersion(ctx interface{}, versionID interface{}) *Txn_SetActiveCollectionVersion_Call {
-	return &Txn_SetActiveCollectionVersion_Call{Call: _e.mock.On("SetActiveCollectionVersion", ctx, versionID)}
+//   - opts ...options.Lister[options.SetActiveCollectionVersionOptions]
+func (_e *Txn_Expecter) SetActiveCollectionVersion(ctx interface{}, versionID interface{}, opts ...interface{}) *Txn_SetActiveCollectionVersion_Call {
+	return &Txn_SetActiveCollectionVersion_Call{Call: _e.mock.On("SetActiveCollectionVersion",
+		append([]interface{}{ctx, versionID}, opts...)...)}
 }
 
-func (_c *Txn_SetActiveCollectionVersion_Call) Run(run func(ctx context.Context, versionID string)) *Txn_SetActiveCollectionVersion_Call {
+func (_c *Txn_SetActiveCollectionVersion_Call) Run(run func(ctx context.Context, versionID string, opts ...options.Lister[options.SetActiveCollectionVersionOptions])) *Txn_SetActiveCollectionVersion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2473,9 +2848,16 @@ func (_c *Txn_SetActiveCollectionVersion_Call) Run(run func(ctx context.Context,
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 []options.Lister[options.SetActiveCollectionVersionOptions]
+		var variadicArgs []options.Lister[options.SetActiveCollectionVersionOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.SetActiveCollectionVersionOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -2486,7 +2868,7 @@ func (_c *Txn_SetActiveCollectionVersion_Call) Return(err error) *Txn_SetActiveC
 	return _c
 }
 
-func (_c *Txn_SetActiveCollectionVersion_Call) RunAndReturn(run func(ctx context.Context, versionID string) error) *Txn_SetActiveCollectionVersion_Call {
+func (_c *Txn_SetActiveCollectionVersion_Call) RunAndReturn(run func(ctx context.Context, versionID string, opts ...options.Lister[options.SetActiveCollectionVersionOptions]) error) *Txn_SetActiveCollectionVersion_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2788,16 +3170,22 @@ func (_c *Txn_SyncDocuments_Call) RunAndReturn(run func(ctx context.Context, col
 }
 
 // VerifySignature provides a mock function for the type Txn
-func (_mock *Txn) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	ret := _mock.Called(ctx, blockCid, pubKey)
+func (_mock *Txn) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey, opts ...options.Lister[options.VerifySignatureOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, blockCid, pubKey, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, blockCid, pubKey)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for VerifySignature")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, crypto.PublicKey) error); ok {
-		r0 = returnFunc(ctx, blockCid, pubKey)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, crypto.PublicKey, ...options.Lister[options.VerifySignatureOptions]) error); ok {
+		r0 = returnFunc(ctx, blockCid, pubKey, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -2813,11 +3201,13 @@ type Txn_VerifySignature_Call struct {
 //   - ctx context.Context
 //   - blockCid string
 //   - pubKey crypto.PublicKey
-func (_e *Txn_Expecter) VerifySignature(ctx interface{}, blockCid interface{}, pubKey interface{}) *Txn_VerifySignature_Call {
-	return &Txn_VerifySignature_Call{Call: _e.mock.On("VerifySignature", ctx, blockCid, pubKey)}
+//   - opts ...options.Lister[options.VerifySignatureOptions]
+func (_e *Txn_Expecter) VerifySignature(ctx interface{}, blockCid interface{}, pubKey interface{}, opts ...interface{}) *Txn_VerifySignature_Call {
+	return &Txn_VerifySignature_Call{Call: _e.mock.On("VerifySignature",
+		append([]interface{}{ctx, blockCid, pubKey}, opts...)...)}
 }
 
-func (_c *Txn_VerifySignature_Call) Run(run func(ctx context.Context, blockCid string, pubKey crypto.PublicKey)) *Txn_VerifySignature_Call {
+func (_c *Txn_VerifySignature_Call) Run(run func(ctx context.Context, blockCid string, pubKey crypto.PublicKey, opts ...options.Lister[options.VerifySignatureOptions])) *Txn_VerifySignature_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2831,10 +3221,17 @@ func (_c *Txn_VerifySignature_Call) Run(run func(ctx context.Context, blockCid s
 		if args[2] != nil {
 			arg2 = args[2].(crypto.PublicKey)
 		}
+		var arg3 []options.Lister[options.VerifySignatureOptions]
+		var variadicArgs []options.Lister[options.VerifySignatureOptions]
+		if len(args) > 3 {
+			variadicArgs = args[3].([]options.Lister[options.VerifySignatureOptions])
+		}
+		arg3 = variadicArgs
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3...,
 		)
 	})
 	return _c
@@ -2845,7 +3242,7 @@ func (_c *Txn_VerifySignature_Call) Return(err error) *Txn_VerifySignature_Call 
 	return _c
 }
 
-func (_c *Txn_VerifySignature_Call) RunAndReturn(run func(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error) *Txn_VerifySignature_Call {
+func (_c *Txn_VerifySignature_Call) RunAndReturn(run func(ctx context.Context, blockCid string, pubKey crypto.PublicKey, opts ...options.Lister[options.VerifySignatureOptions]) error) *Txn_VerifySignature_Call {
 	_c.Call.Return(run)
 	return _c
 }

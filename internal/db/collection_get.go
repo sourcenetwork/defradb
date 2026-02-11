@@ -18,23 +18,30 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (c *collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	showDeleted bool,
+	opts ...options.Lister[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+	showDeleted := opt.ShowDeleted
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	// create txn
 	ctx, txn, err := ensureContextTxn(ctx, c.db, true)

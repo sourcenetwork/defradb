@@ -20,6 +20,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
@@ -83,7 +85,8 @@ To learn more about the DefraDB GraphQL Schema Language, refer to https://docs.s
 				migration = immutable.Some(lensCfg)
 			}
 
-			return cliClient.PatchCollection(cmd.Context(), patch, migration)
+			opt := options.WithIdentity(options.PatchCollection(), identity.FromContext(cmd.Context()))
+			return cliClient.PatchCollection(cmd.Context(), patch, migration, opt)
 		},
 	}
 

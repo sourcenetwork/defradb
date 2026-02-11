@@ -15,7 +15,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeCollectionDeleteCommand(ctx context.Context) *cobra.Command {
@@ -31,16 +33,24 @@ func MakeCollectionDeleteCommand(ctx context.Context) *cobra.Command {
 				return cmd.Usage()
 			}
 
+			ctx := cmd.Context()
+
 			switch {
 			case argDocID != "":
 				docID, err := client.NewDocIDFromString(argDocID)
 				if err != nil {
 					return err
 				}
-				_, err = col.Delete(cmd.Context(), docID)
+
+				deleteOpt := options.WithIdentity(options.CollectionDelete(), identity.FromContext(ctx))
+
+				_, err = col.Delete(ctx, docID, deleteOpt)
 				return err
 			case filter != "":
-				res, err := col.DeleteWithFilter(cmd.Context(), filter)
+				deleteWithFilterOpt := options.WithIdentity(
+					options.CollectionDeleteWithFilter(), identity.FromContext(ctx))
+
+				res, err := col.DeleteWithFilter(ctx, filter, deleteWithFilterOpt)
 				if err != nil {
 					return err
 				}

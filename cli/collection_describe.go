@@ -15,9 +15,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/immutable"
-
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
@@ -32,23 +32,23 @@ func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			options := client.CollectionFetchOptions{}
+			opt := options.WithIdentity(options.GetCollections(), acpIdentity.FromContext(cmd.Context()))
 			if versionID != "" {
-				options.VersionID = immutable.Some(versionID)
+				opt.SetVersionID(versionID)
 			}
 			if collectionID != "" {
-				options.CollectionID = immutable.Some(collectionID)
+				opt.SetCollectionID(collectionID)
 			}
 			if name != "" {
-				options.Name = immutable.Some(name)
+				opt.SetCollectionName(name)
 			}
 			if getInactive {
-				options.IncludeInactive = immutable.Some(getInactive)
+				opt.SetIncludeInactive(getInactive)
 			}
 
 			cols, err := cliClient.GetCollections(
 				cmd.Context(),
-				options,
+				opt,
 			)
 			if err != nil {
 				return err

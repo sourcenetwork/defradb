@@ -18,6 +18,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
@@ -117,9 +118,13 @@ func (txn *Txn) PrintDump(ctx context.Context) error {
 	return printStore(ctx, txn.Rootstore())
 }
 
-func (txn *Txn) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
+func (txn *Txn) AddDACPolicy(
+	ctx context.Context,
+	policy string,
+	opts ...options.Lister[options.AddDACPolicyOptions],
+) (client.AddPolicyResult, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddDACPolicy(ctx, policy)
+	return txn.db.AddDACPolicy(ctx, policy, opts...)
 }
 
 func (txn *Txn) AddDACActorRelationship(
@@ -128,9 +133,10 @@ func (txn *Txn) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	return txn.db.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (txn *Txn) DeleteDACActorRelationship(
@@ -139,42 +145,48 @@ func (txn *Txn) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	return txn.db.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (txn *Txn) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddNACActorRelationship(ctx, relation, targetActor)
+	return txn.db.AddNACActorRelationship(ctx, relation, targetActor, opts...)
 }
 
 func (txn *Txn) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.DeleteNACActorRelationship(ctx, relation, targetActor)
+	return txn.db.DeleteNACActorRelationship(ctx, relation, targetActor, opts...)
 }
 
-func (txn *Txn) ReEnableNAC(ctx context.Context) error {
+func (txn *Txn) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.ReEnableNAC(ctx)
+	return txn.db.ReEnableNAC(ctx, opts...)
 }
 
-func (txn *Txn) DisableNAC(ctx context.Context) error {
+func (txn *Txn) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.DisableNAC(ctx)
+	return txn.db.DisableNAC(ctx, opts...)
 }
 
-func (txn *Txn) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+func (txn *Txn) GetNACStatus(
+	ctx context.Context,
+	opts ...options.Lister[options.GetNACStatusOptions],
+) (client.NACStatusResult, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetNACStatus(ctx)
+	return txn.db.GetNACStatus(ctx, opts...)
 }
 
 func (txn *Txn) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
@@ -182,43 +194,57 @@ func (txn *Txn) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.
 	return txn.db.GetNodeIdentity(ctx)
 }
 
-func (txn *Txn) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
+func (txn *Txn) VerifySignature(
+	ctx context.Context,
+	blockCid string,
+	pubKey crypto.PublicKey,
+	opts ...options.Lister[options.VerifySignatureOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.VerifySignature(ctx, blockCid, pubKey)
+	return txn.db.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
-func (txn *Txn) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
+func (txn *Txn) AddSchema(
+	ctx context.Context,
+	sdl string,
+	opts ...options.Lister[options.AddSchemaOptions],
+) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddSchema(ctx, sdl)
+	return txn.db.AddSchema(ctx, sdl, opts...)
 }
 
 func (txn *Txn) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
+	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.PatchCollection(ctx, patch, migration)
+	return txn.db.PatchCollection(ctx, patch, migration, opts...)
 }
 
-func (txn *Txn) SetActiveCollectionVersion(ctx context.Context, version string) error {
+func (txn *Txn) SetActiveCollectionVersion(
+	ctx context.Context,
+	version string,
+	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.SetActiveCollectionVersion(ctx, version)
+	return txn.db.SetActiveCollectionVersion(ctx, version, opts...)
 }
 
 func (txn *Txn) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddView(ctx, gqlQuery, sdl, transformCID)
+	return txn.db.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
-func (txn *Txn) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
+func (txn *Txn) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.RefreshViews(ctx, options)
+	return txn.db.RefreshViews(ctx, opts...)
 }
 
 func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
@@ -226,32 +252,46 @@ func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) (str
 	return txn.db.SetMigration(ctx, config)
 }
 
-func (txn *Txn) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (txn *Txn) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Lister[options.AddLensOptions],
+) (string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.AddLens(ctx, lens)
+	return txn.db.AddLens(ctx, lens, opts...)
 }
 
-func (txn *Txn) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (txn *Txn) ListLenses(
+	ctx context.Context,
+	opts ...options.Lister[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ListLenses(ctx)
 }
 
-func (txn *Txn) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
+func (txn *Txn) GetCollectionByName(
+	ctx context.Context,
+	name client.CollectionName,
+	opts ...options.Lister[options.GetCollectionByNameOptions],
+) (client.Collection, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetCollectionByName(ctx, name)
+	return txn.db.GetCollectionByName(ctx, name, opts...)
 }
 
 func (txn *Txn) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetCollections(ctx, options)
+	return txn.db.GetCollections(ctx, opts...)
 }
 
-func (txn *Txn) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
+func (txn *Txn) GetAllIndexes(
+	ctx context.Context,
+	opts ...options.Lister[options.GetAllIndexesOptions],
+) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllIndexes(ctx)
+	return txn.db.GetAllIndexes(ctx, opts...)
 }
 
 func (txn *Txn) ListAllEncryptedIndexes(
@@ -261,7 +301,11 @@ func (txn *Txn) ListAllEncryptedIndexes(
 	return txn.db.ListAllEncryptedIndexes(ctx)
 }
 
-func (txn *Txn) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
+func (txn *Txn) ExecRequest(
+	ctx context.Context,
+	request string,
+	opts ...options.Lister[options.ExecRequestOptions],
+) *client.RequestResult {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ExecRequest(ctx, request, opts...)
 }
@@ -271,66 +315,103 @@ func (txn *Txn) BasicImport(ctx context.Context, filepath string) error {
 	return txn.db.BasicImport(ctx, filepath)
 }
 
-func (txn *Txn) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (txn *Txn) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Lister[options.BasicExportOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.BasicExport(ctx, config)
+	return txn.db.BasicExport(ctx, filepath, opts...)
 }
 
-func (txn *Txn) PeerInfo(ctx context.Context) ([]string, error) {
-	return txn.db.PeerInfo(ctx)
+func (txn *Txn) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+	return txn.db.PeerInfo(ctx, opts...)
 }
 
-func (txn *Txn) ActivePeers(ctx context.Context) ([]string, error) {
-	return txn.db.ActivePeers(ctx)
+func (txn *Txn) ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error) {
+	return txn.db.ActivePeers(ctx, opts...)
 }
 
-func (txn *Txn) Connect(ctx context.Context, addresses []string) error {
-	return txn.db.Connect(ctx, addresses)
+func (txn *Txn) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
+	return txn.db.Connect(ctx, addresses, opts...)
 }
 
-func (txn *Txn) CreateReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
+func (txn *Txn) CreateReplicator(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Lister[options.CreateReplicatorOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.CreateReplicator(ctx, addresses, collectionNames...)
+	return txn.db.CreateReplicator(ctx, addresses, opts...)
 }
 
-func (txn *Txn) DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error {
+func (txn *Txn) DeleteReplicator(
+	ctx context.Context,
+	id string,
+	opts ...options.Lister[options.DeleteReplicatorOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.DeleteReplicator(ctx, id, collectionNames...)
+	return txn.db.DeleteReplicator(ctx, id, opts...)
 }
 
-func (txn *Txn) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (txn *Txn) ListReplicators(
+	ctx context.Context,
+	opts ...options.Lister[options.ListReplicatorsOptions],
+) ([]client.Replicator, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.ListReplicators(ctx)
+	return txn.db.ListReplicators(ctx, opts...)
 }
 
-func (txn *Txn) CreateP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (txn *Txn) CreateP2PCollections(
+	ctx context.Context,
+	collectionNames []string,
+	opts ...options.Lister[options.CreateP2PCollectionsOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.CreateP2PCollections(ctx, collectionNames...)
+	return txn.db.CreateP2PCollections(ctx, collectionNames, opts...)
 }
 
-func (txn *Txn) DeleteP2PCollections(ctx context.Context, collectionNames ...string) error {
+func (txn *Txn) DeleteP2PCollections(
+	ctx context.Context,
+	collectionNames []string,
+	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.DeleteP2PCollections(ctx, collectionNames...)
+	return txn.db.DeleteP2PCollections(ctx, collectionNames, opts...)
 }
 
-func (txn *Txn) ListP2PCollections(ctx context.Context) ([]string, error) {
+func (txn *Txn) ListP2PCollections(
+	ctx context.Context,
+	opts ...options.Lister[options.ListP2PCollectionsOptions],
+) ([]string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.ListP2PCollections(ctx)
+	return txn.db.ListP2PCollections(ctx, opts...)
 }
 
-func (txn *Txn) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (txn *Txn) CreateP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...options.Lister[options.CreateP2PDocumentsOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.CreateP2PDocuments(ctx, docIDs...)
+	return txn.db.CreateP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (txn *Txn) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (txn *Txn) DeleteP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.DeleteP2PDocuments(ctx, docIDs...)
+	return txn.db.DeleteP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (txn *Txn) ListP2PDocuments(ctx context.Context) ([]string, error) {
+func (txn *Txn) ListP2PDocuments(
+	ctx context.Context,
+	opts ...options.Lister[options.ListP2PDocumentsOptions],
+) ([]string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.ListP2PDocuments(ctx)
+	return txn.db.ListP2PDocuments(ctx, opts...)
 }
 
 func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {

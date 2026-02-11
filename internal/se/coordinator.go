@@ -21,6 +21,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -35,7 +36,7 @@ var log = corelog.NewLogger("se")
 // DB defines the database operations needed by the SE coordinator
 type DB interface {
 	MaxTxnRetries() int
-	GetCollections(context.Context, client.CollectionFetchOptions) ([]client.Collection, error)
+	GetCollections(context.Context, ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error)
 	Events() event.Bus
 	Multistore() *datastore.Multistore
 }
@@ -316,9 +317,7 @@ func (coordinator *Coordinator) generateSEArtifacts(
 	docID, collectionID string,
 	fieldNames []string,
 ) ([]secore.Artifact, error) {
-	cols, err := coordinator.db.GetCollections(ctx, client.CollectionFetchOptions{
-		CollectionID: immutable.Some(collectionID),
-	})
+	cols, err := coordinator.db.GetCollections(ctx, options.GetCollections().SetCollectionID(collectionID))
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +335,8 @@ func (coordinator *Coordinator) generateSEArtifacts(
 		ctx = acpIdentity.WithContext(ctx, coordinator.nodeIdentity)
 	}
 
-	doc, err := col.Get(ctx, docIDType, false)
+	getOpt := options.WithIdentity(options.CollectionGet(), coordinator.nodeIdentity)
+	doc, err := col.Get(ctx, docIDType, getOpt)
 	if err != nil {
 		if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
 			return nil, nil

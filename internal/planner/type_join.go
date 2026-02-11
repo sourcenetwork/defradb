@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -200,24 +201,9 @@ func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		result := map[string]any{
+		return map[string]any{
 			"iterations": n.execInfo.iterations,
-		}
-		var subScan *scanNode
-		if joinMany, isJoinMany := n.joinPlan.(*typeJoinMany); isJoinMany {
-			subScan = getNode[*scanNode](joinMany.childSide.plan)
-		}
-		if joinOne, isJoinOne := n.joinPlan.(*typeJoinOne); isJoinOne {
-			subScan = getNode[*scanNode](joinOne.childSide.plan)
-		}
-		if subScan != nil {
-			subScanExplain, err := subScan.Explain(explainType)
-			if err != nil {
-				return nil, err
-			}
-			result["subTypeScanNode"] = subScanExplain
-		}
-		return result, nil
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
@@ -326,7 +312,11 @@ func (p *Planner) newInvertableTypeJoin(
 		}
 	}
 
-	subCol, err := p.db.GetCollectionByName(p.ctx, subSelect.CollectionName)
+	subCol, err := p.db.GetCollectionByName(
+		p.ctx,
+		subSelect.CollectionName,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return invertibleTypeJoin{}, err
 	}
@@ -543,6 +533,9 @@ func (join *invertibleTypeJoin) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (join *invertibleTypeJoin) Source() planNode { return join.parentSide.plan }
+
+func (join *invertibleTypeJoin) parentPlan() planNode { return join.parentSide.plan }
+func (join *invertibleTypeJoin) childPlan() planNode  { return join.childSide.plan }
 
 type primaryObjectsRetriever struct {
 	relIDFieldDef client.CollectionFieldDescription

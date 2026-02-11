@@ -65,7 +65,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(3),
 			},
 			&action.Request{
 				Request: req2,
@@ -77,7 +77,7 @@ func TestQueryWithIndexOnOneToManyRelation_IfFilterOnIndexedRelation_ShouldFilte
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(1),
 			},
 		},
 	}
@@ -130,7 +130,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(1),
 			},
 			&action.Request{
 				Request: req2,
@@ -145,7 +145,7 @@ func TestQueryWithIndexOnOneToOnesSecondaryRelation_IfFilterOnIndexedRelation_Sh
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(3),
 			},
 		},
 	}
@@ -199,9 +199,9 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			&action.Request{
 				Request: makeExplainQuery(req1),
-				// we make 2 index fetches: 1. to get the only address with city == "London"
-				// and 2. to get the corresponding user
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				// 1 index fetch on subType (Address city index) + 1 index fetch on root (User _addressID index)
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(1).
+					WithLevel("root").WithIndexFetches(1),
 			},
 			&action.Request{
 				Request: req2,
@@ -215,9 +215,9 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			&action.Request{
 				Request: makeExplainQuery(req2),
-				// we make 3 index fetches to get the 3 address with city == "Montreal"
-				// and 3 more index fetches to get the corresponding users
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
+				// 3 index fetches on subType (Address city index) + 3 index fetches on root (User _addressID index)
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(3).
+					WithLevel("root").WithIndexFetches(3),
 			},
 		},
 	}
@@ -271,11 +271,10 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			&action.Request{
 				Request: makeExplainQuery(req1),
-				// With the auto-created unique index on _addressID:
-				// 1 index fetch to get the address with city == "London"
-				// 1 index fetch to find the user with matching _addressID
-				// 5 field fetches total
-				Asserter: testUtils.NewExplainAsserter().WithFieldFetches(5).WithIndexFetches(2),
+				// subType: 2 fieldFetches, 1 indexFetch (Address city index)
+				// root: 3 fieldFetches, 1 indexFetch (User _addressID index)
+				Asserter: testUtils.NewExplainAsserter("subType").WithFieldFetches(2).WithIndexFetches(1).
+					WithLevel("root").WithFieldFetches(3).WithIndexFetches(1),
 			},
 			&action.Request{
 				Request: req2,
@@ -289,10 +288,10 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedFieldOfRelatio
 			},
 			&action.Request{
 				Request: makeExplainQuery(req2),
-				// With the auto-created unique index on _addressID:
-				// 3 index fetches to get the 3 addresses with city == "Montreal"
-				// 3 index fetches to find the users with matching _addressID
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
+				// subType: 6 fieldFetches, 3 indexFetches (Address city index)
+				// root: 9 fieldFetches, 3 indexFetches (User _addressID index)
+				Asserter: testUtils.NewExplainAsserter("subType").WithFieldFetches(6).WithIndexFetches(3).
+					WithLevel("root").WithFieldFetches(9).WithIndexFetches(3),
 			},
 		},
 	}
@@ -337,8 +336,10 @@ func TestQueryWithIndexOnOneToOnePrimaryRelation_IfFilterOnIndexedRelationWhileI
 				},
 			},
 			&action.Request{
-				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				Request: makeExplainQuery(req),
+				// subType: 1 indexFetch (Address city index), root: 1 indexFetch (User _addressID index)
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(1).
+					WithLevel("root").WithIndexFetches(1),
 			},
 		},
 	}
@@ -615,7 +616,7 @@ func TestQueryWithIndexOnOneToMany_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(2),
 			},
 		},
 	}
@@ -668,7 +669,7 @@ func TestQueryWithIndexOnOneToOne_IfFilterOnIndexedRelation_ShouldFilter(t *test
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(1),
 			},
 		},
 	}
@@ -736,8 +737,8 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedField_ShouldFilterWithExplai
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// we make 3 index fetches to get all 3 devices with year 2021
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				// 3 index fetches on root (Device year index) to get devices with year 2021
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(3),
 			},
 		},
 	}
@@ -787,9 +788,10 @@ func TestQueryWithIndexOnManyToOne_IfFilterOnIndexedRelation_ShouldFilterWithExp
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// we make 1 index fetch to get the owner by it's name
-				// and 3 index fetches to get all 3 devices of the owner
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+				// subType: 1 indexFetch (get owner by name)
+				// root: 3 indexFetches (get devices by _ownerID)
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(1).
+					WithLevel("root").WithIndexFetches(3),
 			},
 		},
 	}
@@ -869,8 +871,8 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_NeNilFilterShouldUseIn
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// we make 4 index fetches to find 2 devices with _ownerID != null
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+				// 4 index fetches on root (Device _ownerID index) to find devices with _ownerID != null
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(4),
 			},
 		},
 	}
@@ -949,8 +951,8 @@ func TestQueryWithIndexOnOneToMany_IfIndexedRelationIsNil_EqNilFilterShouldUseIn
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// we make 2 index fetches to get all 2 devices with _ownerID == null
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				// 2 index fetches on root (Device _ownerID index) to get devices with _ownerID == null
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(2),
 			},
 		},
 	}

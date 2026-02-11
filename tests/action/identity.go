@@ -11,7 +11,6 @@
 package action
 
 import (
-	"context"
 	"strconv"
 	"time"
 
@@ -82,22 +81,4 @@ func getIdentityForRequestSpecificToNode(
 		return acpIdentity.None
 	}
 	return immutable.Some(getIdentityForRequest(s, identity.Value(), nodeIndex))
-}
-
-// getContextWithIdentity returns a context with the identity for the given reference and node index.
-// If the identity does not exist, it will be generated.
-// The identity added to the context is prepared for a request, i.e. its [Identity.BearerToken] is set.
-func getContextWithIdentity(
-	ctx context.Context,
-	s *state.State,
-	identity immutable.Option[state.Identity],
-	nodeIndex int,
-) context.Context {
-	return acpIdentity.WithContext(ctx, getIdentityForRequestSpecificToNode(s, identity, nodeIndex))
-}
-
-// resetStateContext resets identity for the ctx to avoid leaving it there and having the ctx
-// reuse the same identity for other requests that don't specify an identity.
-func resetStateContext(s *state.State) {
-	s.Ctx = acpIdentity.WithContext(s.Ctx, acpIdentity.None)
 }

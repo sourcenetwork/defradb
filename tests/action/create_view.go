@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -92,11 +93,12 @@ func (a *CreateView) Execute() {
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for i, node := range nodes {
-		transformCID := a.TransformCID
-		if transformCID.HasValue() {
-			transformCID = immutable.Some(replace(a.s, nodeIDs[i], transformCID.Value()))
+		opts := options.AddView()
+		if a.TransformCID.HasValue() {
+			transformCID := replace(a.s, nodeIDs[i], a.TransformCID.Value())
+			opts.SetTransformCID(transformCID)
 		}
-		results, err := node.AddView(a.s.Ctx, a.Query, sdl, transformCID)
+		results, err := node.AddView(a.s.Ctx, a.Query, sdl, opts)
 
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)

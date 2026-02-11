@@ -82,7 +82,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldDescending_ShouldOrder(t
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(3),
 			},
 		},
 	}
@@ -155,7 +155,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscending_ShouldOrder(t 
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(3),
 			},
 		},
 	}
@@ -226,7 +226,7 @@ func TestQueryWithOrderOnOneToMany_WithIndexOnOrderFieldAscendingWithLimit_Shoul
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(1),
 			},
 		},
 	}
@@ -323,7 +323,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthors_ShouldOrderEachAuthorsBoo
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// index fetches 8: 4 for ordering all books for each author
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(8),
 			},
 		},
 	}
@@ -420,7 +420,7 @@ func TestQueryWithOrderOnOneToMany_WithMultipleAuthorsAndIndexOnRelation_ShouldO
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// index fetches 4: relation ID index fetches 2 books per author, then sorts in memory
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(4),
 			},
 		},
 	}
@@ -516,7 +516,7 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 				Request: makeExplainQuery(req),
 				// 6 indexFetches: sub-filter uses rating index (3 books match filter rating _geq: 4.0) for 2 authors,
 				// DESC instructs the index to iterate in reverse order, so no in-memory sort needed
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(6),
 			},
 		},
 	}
@@ -607,7 +607,225 @@ func TestQueryWithOrderOnOneToMany_WithParentFilterOnRelationAndSubOrder_ShouldO
 				Request: makeExplainQuery(req),
 				// 5 indexFetch: parent filter uses rating index via inverted join (1 book matches _ge: 4.0)
 				// For the matched author full index scan is done to get all 4 books
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(5),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_RecursiveExplain(t *testing.T) {
+	req := `query {
+		Author {
+			name
+			published(order: {publisher: {establishedYear: DESC}}, limit: 2) {
+				title
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+						published: [Book]
+					}
+					type Book {
+						title: String
+						author: Author
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						establishedYear: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2020",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2010",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2000",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "OrphanBook",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2020",
+					"establishedYear": 2020,
+					"book":            testUtils.NewDocIndex(1, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2010",
+					"establishedYear": 2010,
+					"book":            testUtils.NewDocIndex(1, 1),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2000",
+					"establishedYear": 2000,
+					"book":            testUtils.NewDocIndex(1, 2),
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John",
+							"published": []map[string]any{
+								{"title": "Book2020"},
+								{"title": "Book2010"},
+							},
+						},
+					},
+				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// The index on Publisher.establishedYear is used by the nested Book->Publisher join.
+				// Publisher is at subType/subType (nested inside Book which is at subType).
+				Asserter: testUtils.NewExplainAsserter("subType", "subType").WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_RecursiveExplain(t *testing.T) {
+	req := `query {
+		Author {
+			name
+			published(order: {publisher: {establishedYear: ASC}}, limit: 2) {
+				title
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+						published: [Book]
+					}
+					type Book {
+						title: String
+						author: Author
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						establishedYear: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2020",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2010",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2000",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2020",
+					"establishedYear": 2020,
+					"book":            testUtils.NewDocIndex(1, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2010",
+					"establishedYear": 2010,
+					"book":            testUtils.NewDocIndex(1, 1),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2000",
+					"establishedYear": 2000,
+					"book":            testUtils.NewDocIndex(1, 2),
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John",
+							"published": []map[string]any{
+								{"title": "Book2000"},
+								{"title": "Book2010"},
+							},
+						},
+					},
+				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Author root: 1 docFetch
+				// Book (subType): 2 docFetches
+				// Publisher (subType/subType): 2 docFetches, 2 indexFetches
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).
+					WithLevel("subType").WithDocFetches(2).
+					WithLevel("subType", "subType").WithDocFetches(2).WithIndexFetches(2),
 			},
 		},
 	}

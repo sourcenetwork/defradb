@@ -21,6 +21,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -170,8 +171,12 @@ func setupNode(
 	// Inject node identity to bypass NAC inorder to be able to call [PeerInfo] operation,
 	// otherwise when NAC is enabled, we will get authorization error.
 	nodeIdentity := NodeIdentity(s.CurrentSetupNodeID)
-	ctxWithNodeIdentity := getContextWithIdentity(s.Ctx, s, nodeIdentity, s.CurrentSetupNodeID)
-	addresses, err = nodeObj.DB.PeerInfo(ctxWithNodeIdentity)
+	peerInfoOpts := options.PeerInfo()
+	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, s.CurrentSetupNodeID)
+	if identOption.HasValue() {
+		peerInfoOpts.SetIdentity(identOption.Value())
+	}
+	addresses, err = nodeObj.DB.PeerInfo(s.Ctx, peerInfoOpts)
 	require.NoError(s.T, err)
 
 	// The addresses returned by PeerInfo include the /p2p/<peerID> part, but

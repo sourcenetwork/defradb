@@ -16,8 +16,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sourcenetwork/defradb/client"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -63,7 +61,7 @@ func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
 	err = n.PurgeAndRestart(ctx)
 	require.NoError(t, err)
 
-	schemas, err := n.DB.GetCollections(ctx, client.CollectionFetchOptions{})
+	schemas, err := n.DB.GetCollections(ctx)
 	require.NoError(t, err)
 
 	assert.Len(t, schemas, 0)

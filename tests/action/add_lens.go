@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -49,10 +50,14 @@ func (a *AddLens) Execute() {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
+		opts := options.AddLens()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
 
 		var err error
-		lensID, err = node.AddLens(ctx, a.Lens)
+		lensID, err = node.AddLens(a.s.Ctx, a.Lens, opts)
 
 		if a.ExpectedError != "" {
 			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)

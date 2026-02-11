@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -83,7 +84,7 @@ func (_c *Collection_CollectionID_Call) RunAndReturn(run func() string) *Collect
 }
 
 // Create provides a mock function for the type Collection
-func (_mock *Collection) Create(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error {
+func (_mock *Collection) Create(ctx context.Context, doc *client.Document, opts ...options.Lister[options.CollectionCreateOptions]) error {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, doc, opts)
@@ -97,7 +98,7 @@ func (_mock *Collection) Create(ctx context.Context, doc *client.Document, opts 
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...client.DocCreateOption) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...options.Lister[options.CollectionCreateOptions]) error); ok {
 		r0 = returnFunc(ctx, doc, opts...)
 	} else {
 		r0 = ret.Error(0)
@@ -113,13 +114,13 @@ type Collection_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - doc *client.Document
-//   - opts ...client.DocCreateOption
+//   - opts ...options.Lister[options.CollectionCreateOptions]
 func (_e *Collection_Expecter) Create(ctx interface{}, doc interface{}, opts ...interface{}) *Collection_Create_Call {
 	return &Collection_Create_Call{Call: _e.mock.On("Create",
 		append([]interface{}{ctx, doc}, opts...)...)}
 }
 
-func (_c *Collection_Create_Call) Run(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption)) *Collection_Create_Call {
+func (_c *Collection_Create_Call) Run(run func(ctx context.Context, doc *client.Document, opts ...options.Lister[options.CollectionCreateOptions])) *Collection_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -129,10 +130,10 @@ func (_c *Collection_Create_Call) Run(run func(ctx context.Context, doc *client.
 		if args[1] != nil {
 			arg1 = args[1].(*client.Document)
 		}
-		var arg2 []client.DocCreateOption
-		var variadicArgs []client.DocCreateOption
+		var arg2 []options.Lister[options.CollectionCreateOptions]
+		var variadicArgs []options.Lister[options.CollectionCreateOptions]
 		if len(args) > 2 {
-			variadicArgs = args[2].([]client.DocCreateOption)
+			variadicArgs = args[2].([]options.Lister[options.CollectionCreateOptions])
 		}
 		arg2 = variadicArgs
 		run(
@@ -149,7 +150,7 @@ func (_c *Collection_Create_Call) Return(err error) *Collection_Create_Call {
 	return _c
 }
 
-func (_c *Collection_Create_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error) *Collection_Create_Call {
+func (_c *Collection_Create_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...options.Lister[options.CollectionCreateOptions]) error) *Collection_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -221,8 +222,14 @@ func (_c *Collection_CreateEncryptedIndex_Call) RunAndReturn(run func(context1 c
 }
 
 // CreateIndex provides a mock function for the type Collection
-func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateRequest client.IndexCreateRequest) (client.IndexDescription, error) {
-	ret := _mock.Called(context1, indexCreateRequest)
+func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Lister[options.CollectionCreateIndexOptions]) (client.IndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(vs) > 0 {
+		tmpRet = _mock.Called(context1, indexCreateRequest, vs)
+	} else {
+		tmpRet = _mock.Called(context1, indexCreateRequest)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateIndex")
@@ -230,16 +237,16 @@ func (_mock *Collection) CreateIndex(context1 context.Context, indexCreateReques
 
 	var r0 client.IndexDescription
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest) (client.IndexDescription, error)); ok {
-		return returnFunc(context1, indexCreateRequest)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest, ...options.Lister[options.CollectionCreateIndexOptions]) (client.IndexDescription, error)); ok {
+		return returnFunc(context1, indexCreateRequest, vs...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest) client.IndexDescription); ok {
-		r0 = returnFunc(context1, indexCreateRequest)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.IndexCreateRequest, ...options.Lister[options.CollectionCreateIndexOptions]) client.IndexDescription); ok {
+		r0 = returnFunc(context1, indexCreateRequest, vs...)
 	} else {
 		r0 = ret.Get(0).(client.IndexDescription)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.IndexCreateRequest) error); ok {
-		r1 = returnFunc(context1, indexCreateRequest)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.IndexCreateRequest, ...options.Lister[options.CollectionCreateIndexOptions]) error); ok {
+		r1 = returnFunc(context1, indexCreateRequest, vs...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -254,11 +261,13 @@ type Collection_CreateIndex_Call struct {
 // CreateIndex is a helper method to define mock.On call
 //   - context1 context.Context
 //   - indexCreateRequest client.IndexCreateRequest
-func (_e *Collection_Expecter) CreateIndex(context1 interface{}, indexCreateRequest interface{}) *Collection_CreateIndex_Call {
-	return &Collection_CreateIndex_Call{Call: _e.mock.On("CreateIndex", context1, indexCreateRequest)}
+//   - vs ...options.Lister[options.CollectionCreateIndexOptions]
+func (_e *Collection_Expecter) CreateIndex(context1 interface{}, indexCreateRequest interface{}, vs ...interface{}) *Collection_CreateIndex_Call {
+	return &Collection_CreateIndex_Call{Call: _e.mock.On("CreateIndex",
+		append([]interface{}{context1, indexCreateRequest}, vs...)...)}
 }
 
-func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest)) *Collection_CreateIndex_Call {
+func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Lister[options.CollectionCreateIndexOptions])) *Collection_CreateIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -268,9 +277,16 @@ func (_c *Collection_CreateIndex_Call) Run(run func(context1 context.Context, in
 		if args[1] != nil {
 			arg1 = args[1].(client.IndexCreateRequest)
 		}
+		var arg2 []options.Lister[options.CollectionCreateIndexOptions]
+		var variadicArgs []options.Lister[options.CollectionCreateIndexOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.CollectionCreateIndexOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -281,13 +297,13 @@ func (_c *Collection_CreateIndex_Call) Return(indexDescription client.IndexDescr
 	return _c
 }
 
-func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest) (client.IndexDescription, error)) *Collection_CreateIndex_Call {
+func (_c *Collection_CreateIndex_Call) RunAndReturn(run func(context1 context.Context, indexCreateRequest client.IndexCreateRequest, vs ...options.Lister[options.CollectionCreateIndexOptions]) (client.IndexDescription, error)) *Collection_CreateIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateMany provides a mock function for the type Collection
-func (_mock *Collection) CreateMany(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption) error {
+func (_mock *Collection) CreateMany(ctx context.Context, docs []*client.Document, opts ...options.Lister[options.CollectionCreateOptions]) error {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, docs, opts)
@@ -301,7 +317,7 @@ func (_mock *Collection) CreateMany(ctx context.Context, docs []*client.Document
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []*client.Document, ...client.DocCreateOption) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*client.Document, ...options.Lister[options.CollectionCreateOptions]) error); ok {
 		r0 = returnFunc(ctx, docs, opts...)
 	} else {
 		r0 = ret.Error(0)
@@ -317,13 +333,13 @@ type Collection_CreateMany_Call struct {
 // CreateMany is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docs []*client.Document
-//   - opts ...client.DocCreateOption
+//   - opts ...options.Lister[options.CollectionCreateOptions]
 func (_e *Collection_Expecter) CreateMany(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_CreateMany_Call {
 	return &Collection_CreateMany_Call{Call: _e.mock.On("CreateMany",
 		append([]interface{}{ctx, docs}, opts...)...)}
 }
 
-func (_c *Collection_CreateMany_Call) Run(run func(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption)) *Collection_CreateMany_Call {
+func (_c *Collection_CreateMany_Call) Run(run func(ctx context.Context, docs []*client.Document, opts ...options.Lister[options.CollectionCreateOptions])) *Collection_CreateMany_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -333,10 +349,10 @@ func (_c *Collection_CreateMany_Call) Run(run func(ctx context.Context, docs []*
 		if args[1] != nil {
 			arg1 = args[1].([]*client.Document)
 		}
-		var arg2 []client.DocCreateOption
-		var variadicArgs []client.DocCreateOption
+		var arg2 []options.Lister[options.CollectionCreateOptions]
+		var variadicArgs []options.Lister[options.CollectionCreateOptions]
 		if len(args) > 2 {
-			variadicArgs = args[2].([]client.DocCreateOption)
+			variadicArgs = args[2].([]options.Lister[options.CollectionCreateOptions])
 		}
 		arg2 = variadicArgs
 		run(
@@ -353,14 +369,20 @@ func (_c *Collection_CreateMany_Call) Return(err error) *Collection_CreateMany_C
 	return _c
 }
 
-func (_c *Collection_CreateMany_Call) RunAndReturn(run func(ctx context.Context, docs []*client.Document, opts ...client.DocCreateOption) error) *Collection_CreateMany_Call {
+func (_c *Collection_CreateMany_Call) RunAndReturn(run func(ctx context.Context, docs []*client.Document, opts ...options.Lister[options.CollectionCreateOptions]) error) *Collection_CreateMany_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Delete provides a mock function for the type Collection
-func (_mock *Collection) Delete(ctx context.Context, docID client.DocID) (bool, error) {
-	ret := _mock.Called(ctx, docID)
+func (_mock *Collection) Delete(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionDeleteOptions]) (bool, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docID, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, docID)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
@@ -368,16 +390,16 @@ func (_mock *Collection) Delete(ctx context.Context, docID client.DocID) (bool, 
 
 	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID) (bool, error)); ok {
-		return returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Lister[options.CollectionDeleteOptions]) (bool, error)); ok {
+		return returnFunc(ctx, docID, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID) bool); ok {
-		r0 = returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Lister[options.CollectionDeleteOptions]) bool); ok {
+		r0 = returnFunc(ctx, docID, opts...)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID) error); ok {
-		r1 = returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID, ...options.Lister[options.CollectionDeleteOptions]) error); ok {
+		r1 = returnFunc(ctx, docID, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -392,11 +414,13 @@ type Collection_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docID client.DocID
-func (_e *Collection_Expecter) Delete(ctx interface{}, docID interface{}) *Collection_Delete_Call {
-	return &Collection_Delete_Call{Call: _e.mock.On("Delete", ctx, docID)}
+//   - opts ...options.Lister[options.CollectionDeleteOptions]
+func (_e *Collection_Expecter) Delete(ctx interface{}, docID interface{}, opts ...interface{}) *Collection_Delete_Call {
+	return &Collection_Delete_Call{Call: _e.mock.On("Delete",
+		append([]interface{}{ctx, docID}, opts...)...)}
 }
 
-func (_c *Collection_Delete_Call) Run(run func(ctx context.Context, docID client.DocID)) *Collection_Delete_Call {
+func (_c *Collection_Delete_Call) Run(run func(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionDeleteOptions])) *Collection_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -406,9 +430,16 @@ func (_c *Collection_Delete_Call) Run(run func(ctx context.Context, docID client
 		if args[1] != nil {
 			arg1 = args[1].(client.DocID)
 		}
+		var arg2 []options.Lister[options.CollectionDeleteOptions]
+		var variadicArgs []options.Lister[options.CollectionDeleteOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.CollectionDeleteOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -419,7 +450,7 @@ func (_c *Collection_Delete_Call) Return(b bool, err error) *Collection_Delete_C
 	return _c
 }
 
-func (_c *Collection_Delete_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID) (bool, error)) *Collection_Delete_Call {
+func (_c *Collection_Delete_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionDeleteOptions]) (bool, error)) *Collection_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -482,8 +513,14 @@ func (_c *Collection_DeleteEncryptedIndex_Call) RunAndReturn(run func(ctx contex
 }
 
 // DeleteWithFilter provides a mock function for the type Collection
-func (_mock *Collection) DeleteWithFilter(ctx context.Context, filter any) (*client.DeleteResult, error) {
-	ret := _mock.Called(ctx, filter)
+func (_mock *Collection) DeleteWithFilter(ctx context.Context, filter any, opts ...options.Lister[options.CollectionDeleteWithFilterOptions]) (*client.DeleteResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, filter, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, filter)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteWithFilter")
@@ -491,18 +528,18 @@ func (_mock *Collection) DeleteWithFilter(ctx context.Context, filter any) (*cli
 
 	var r0 *client.DeleteResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, any) (*client.DeleteResult, error)); ok {
-		return returnFunc(ctx, filter)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, any, ...options.Lister[options.CollectionDeleteWithFilterOptions]) (*client.DeleteResult, error)); ok {
+		return returnFunc(ctx, filter, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, any) *client.DeleteResult); ok {
-		r0 = returnFunc(ctx, filter)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, any, ...options.Lister[options.CollectionDeleteWithFilterOptions]) *client.DeleteResult); ok {
+		r0 = returnFunc(ctx, filter, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.DeleteResult)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, any) error); ok {
-		r1 = returnFunc(ctx, filter)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, any, ...options.Lister[options.CollectionDeleteWithFilterOptions]) error); ok {
+		r1 = returnFunc(ctx, filter, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -517,11 +554,13 @@ type Collection_DeleteWithFilter_Call struct {
 // DeleteWithFilter is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filter any
-func (_e *Collection_Expecter) DeleteWithFilter(ctx interface{}, filter interface{}) *Collection_DeleteWithFilter_Call {
-	return &Collection_DeleteWithFilter_Call{Call: _e.mock.On("DeleteWithFilter", ctx, filter)}
+//   - opts ...options.Lister[options.CollectionDeleteWithFilterOptions]
+func (_e *Collection_Expecter) DeleteWithFilter(ctx interface{}, filter interface{}, opts ...interface{}) *Collection_DeleteWithFilter_Call {
+	return &Collection_DeleteWithFilter_Call{Call: _e.mock.On("DeleteWithFilter",
+		append([]interface{}{ctx, filter}, opts...)...)}
 }
 
-func (_c *Collection_DeleteWithFilter_Call) Run(run func(ctx context.Context, filter any)) *Collection_DeleteWithFilter_Call {
+func (_c *Collection_DeleteWithFilter_Call) Run(run func(ctx context.Context, filter any, opts ...options.Lister[options.CollectionDeleteWithFilterOptions])) *Collection_DeleteWithFilter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -531,9 +570,16 @@ func (_c *Collection_DeleteWithFilter_Call) Run(run func(ctx context.Context, fi
 		if args[1] != nil {
 			arg1 = args[1].(any)
 		}
+		var arg2 []options.Lister[options.CollectionDeleteWithFilterOptions]
+		var variadicArgs []options.Lister[options.CollectionDeleteWithFilterOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.CollectionDeleteWithFilterOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -544,22 +590,28 @@ func (_c *Collection_DeleteWithFilter_Call) Return(deleteResult *client.DeleteRe
 	return _c
 }
 
-func (_c *Collection_DeleteWithFilter_Call) RunAndReturn(run func(ctx context.Context, filter any) (*client.DeleteResult, error)) *Collection_DeleteWithFilter_Call {
+func (_c *Collection_DeleteWithFilter_Call) RunAndReturn(run func(ctx context.Context, filter any, opts ...options.Lister[options.CollectionDeleteWithFilterOptions]) (*client.DeleteResult, error)) *Collection_DeleteWithFilter_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DropIndex provides a mock function for the type Collection
-func (_mock *Collection) DropIndex(ctx context.Context, indexName string) error {
-	ret := _mock.Called(ctx, indexName)
+func (_mock *Collection) DropIndex(ctx context.Context, indexName string, opts ...options.Lister[options.CollectionDropIndexOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, indexName, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, indexName)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for DropIndex")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, indexName)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.CollectionDropIndexOptions]) error); ok {
+		r0 = returnFunc(ctx, indexName, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -574,11 +626,13 @@ type Collection_DropIndex_Call struct {
 // DropIndex is a helper method to define mock.On call
 //   - ctx context.Context
 //   - indexName string
-func (_e *Collection_Expecter) DropIndex(ctx interface{}, indexName interface{}) *Collection_DropIndex_Call {
-	return &Collection_DropIndex_Call{Call: _e.mock.On("DropIndex", ctx, indexName)}
+//   - opts ...options.Lister[options.CollectionDropIndexOptions]
+func (_e *Collection_Expecter) DropIndex(ctx interface{}, indexName interface{}, opts ...interface{}) *Collection_DropIndex_Call {
+	return &Collection_DropIndex_Call{Call: _e.mock.On("DropIndex",
+		append([]interface{}{ctx, indexName}, opts...)...)}
 }
 
-func (_c *Collection_DropIndex_Call) Run(run func(ctx context.Context, indexName string)) *Collection_DropIndex_Call {
+func (_c *Collection_DropIndex_Call) Run(run func(ctx context.Context, indexName string, opts ...options.Lister[options.CollectionDropIndexOptions])) *Collection_DropIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -588,9 +642,16 @@ func (_c *Collection_DropIndex_Call) Run(run func(ctx context.Context, indexName
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 []options.Lister[options.CollectionDropIndexOptions]
+		var variadicArgs []options.Lister[options.CollectionDropIndexOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.CollectionDropIndexOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -601,14 +662,20 @@ func (_c *Collection_DropIndex_Call) Return(err error) *Collection_DropIndex_Cal
 	return _c
 }
 
-func (_c *Collection_DropIndex_Call) RunAndReturn(run func(ctx context.Context, indexName string) error) *Collection_DropIndex_Call {
+func (_c *Collection_DropIndex_Call) RunAndReturn(run func(ctx context.Context, indexName string, opts ...options.Lister[options.CollectionDropIndexOptions]) error) *Collection_DropIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Exists provides a mock function for the type Collection
-func (_mock *Collection) Exists(ctx context.Context, docID client.DocID) (bool, error) {
-	ret := _mock.Called(ctx, docID)
+func (_mock *Collection) Exists(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionExistsOptions]) (bool, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docID, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, docID)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for Exists")
@@ -616,16 +683,16 @@ func (_mock *Collection) Exists(ctx context.Context, docID client.DocID) (bool, 
 
 	var r0 bool
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID) (bool, error)); ok {
-		return returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Lister[options.CollectionExistsOptions]) (bool, error)); ok {
+		return returnFunc(ctx, docID, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID) bool); ok {
-		r0 = returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Lister[options.CollectionExistsOptions]) bool); ok {
+		r0 = returnFunc(ctx, docID, opts...)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID) error); ok {
-		r1 = returnFunc(ctx, docID)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID, ...options.Lister[options.CollectionExistsOptions]) error); ok {
+		r1 = returnFunc(ctx, docID, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -640,11 +707,13 @@ type Collection_Exists_Call struct {
 // Exists is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docID client.DocID
-func (_e *Collection_Expecter) Exists(ctx interface{}, docID interface{}) *Collection_Exists_Call {
-	return &Collection_Exists_Call{Call: _e.mock.On("Exists", ctx, docID)}
+//   - opts ...options.Lister[options.CollectionExistsOptions]
+func (_e *Collection_Expecter) Exists(ctx interface{}, docID interface{}, opts ...interface{}) *Collection_Exists_Call {
+	return &Collection_Exists_Call{Call: _e.mock.On("Exists",
+		append([]interface{}{ctx, docID}, opts...)...)}
 }
 
-func (_c *Collection_Exists_Call) Run(run func(ctx context.Context, docID client.DocID)) *Collection_Exists_Call {
+func (_c *Collection_Exists_Call) Run(run func(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionExistsOptions])) *Collection_Exists_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -654,9 +723,16 @@ func (_c *Collection_Exists_Call) Run(run func(ctx context.Context, docID client
 		if args[1] != nil {
 			arg1 = args[1].(client.DocID)
 		}
+		var arg2 []options.Lister[options.CollectionExistsOptions]
+		var variadicArgs []options.Lister[options.CollectionExistsOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.CollectionExistsOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -667,14 +743,20 @@ func (_c *Collection_Exists_Call) Return(b bool, err error) *Collection_Exists_C
 	return _c
 }
 
-func (_c *Collection_Exists_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID) (bool, error)) *Collection_Exists_Call {
+func (_c *Collection_Exists_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionExistsOptions]) (bool, error)) *Collection_Exists_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Get provides a mock function for the type Collection
-func (_mock *Collection) Get(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error) {
-	ret := _mock.Called(ctx, docID, showDeleted)
+func (_mock *Collection) Get(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionGetOptions]) (*client.Document, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docID, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, docID)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
@@ -682,18 +764,18 @@ func (_mock *Collection) Get(ctx context.Context, docID client.DocID, showDelete
 
 	var r0 *client.Document
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, bool) (*client.Document, error)); ok {
-		return returnFunc(ctx, docID, showDeleted)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Lister[options.CollectionGetOptions]) (*client.Document, error)); ok {
+		return returnFunc(ctx, docID, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, bool) *client.Document); ok {
-		r0 = returnFunc(ctx, docID, showDeleted)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.DocID, ...options.Lister[options.CollectionGetOptions]) *client.Document); ok {
+		r0 = returnFunc(ctx, docID, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.Document)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID, bool) error); ok {
-		r1 = returnFunc(ctx, docID, showDeleted)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.DocID, ...options.Lister[options.CollectionGetOptions]) error); ok {
+		r1 = returnFunc(ctx, docID, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -708,12 +790,13 @@ type Collection_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docID client.DocID
-//   - showDeleted bool
-func (_e *Collection_Expecter) Get(ctx interface{}, docID interface{}, showDeleted interface{}) *Collection_Get_Call {
-	return &Collection_Get_Call{Call: _e.mock.On("Get", ctx, docID, showDeleted)}
+//   - opts ...options.Lister[options.CollectionGetOptions]
+func (_e *Collection_Expecter) Get(ctx interface{}, docID interface{}, opts ...interface{}) *Collection_Get_Call {
+	return &Collection_Get_Call{Call: _e.mock.On("Get",
+		append([]interface{}{ctx, docID}, opts...)...)}
 }
 
-func (_c *Collection_Get_Call) Run(run func(ctx context.Context, docID client.DocID, showDeleted bool)) *Collection_Get_Call {
+func (_c *Collection_Get_Call) Run(run func(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionGetOptions])) *Collection_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -723,14 +806,16 @@ func (_c *Collection_Get_Call) Run(run func(ctx context.Context, docID client.Do
 		if args[1] != nil {
 			arg1 = args[1].(client.DocID)
 		}
-		var arg2 bool
-		if args[2] != nil {
-			arg2 = args[2].(bool)
+		var arg2 []options.Lister[options.CollectionGetOptions]
+		var variadicArgs []options.Lister[options.CollectionGetOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.CollectionGetOptions])
 		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
-			arg2,
+			arg2...,
 		)
 	})
 	return _c
@@ -741,14 +826,20 @@ func (_c *Collection_Get_Call) Return(document *client.Document, err error) *Col
 	return _c
 }
 
-func (_c *Collection_Get_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID, showDeleted bool) (*client.Document, error)) *Collection_Get_Call {
+func (_c *Collection_Get_Call) RunAndReturn(run func(ctx context.Context, docID client.DocID, opts ...options.Lister[options.CollectionGetOptions]) (*client.Document, error)) *Collection_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAllDocIDs provides a mock function for the type Collection
-func (_mock *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDResult, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Collection) GetAllDocIDs(ctx context.Context, opts ...options.Lister[options.CollectionGetAllDocIDsOptions]) (<-chan client.DocIDResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllDocIDs")
@@ -756,18 +847,18 @@ func (_mock *Collection) GetAllDocIDs(ctx context.Context) (<-chan client.DocIDR
 
 	var r0 <-chan client.DocIDResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (<-chan client.DocIDResult, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.CollectionGetAllDocIDsOptions]) (<-chan client.DocIDResult, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) <-chan client.DocIDResult); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.CollectionGetAllDocIDsOptions]) <-chan client.DocIDResult); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(<-chan client.DocIDResult)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.CollectionGetAllDocIDsOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -781,18 +872,27 @@ type Collection_GetAllDocIDs_Call struct {
 
 // GetAllDocIDs is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Collection_Expecter) GetAllDocIDs(ctx interface{}) *Collection_GetAllDocIDs_Call {
-	return &Collection_GetAllDocIDs_Call{Call: _e.mock.On("GetAllDocIDs", ctx)}
+//   - opts ...options.Lister[options.CollectionGetAllDocIDsOptions]
+func (_e *Collection_Expecter) GetAllDocIDs(ctx interface{}, opts ...interface{}) *Collection_GetAllDocIDs_Call {
+	return &Collection_GetAllDocIDs_Call{Call: _e.mock.On("GetAllDocIDs",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Collection_GetAllDocIDs_Call) Run(run func(ctx context.Context)) *Collection_GetAllDocIDs_Call {
+func (_c *Collection_GetAllDocIDs_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.CollectionGetAllDocIDsOptions])) *Collection_GetAllDocIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.CollectionGetAllDocIDsOptions]
+		var variadicArgs []options.Lister[options.CollectionGetAllDocIDsOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.CollectionGetAllDocIDsOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -803,14 +903,20 @@ func (_c *Collection_GetAllDocIDs_Call) Return(docIDResultCh <-chan client.DocID
 	return _c
 }
 
-func (_c *Collection_GetAllDocIDs_Call) RunAndReturn(run func(ctx context.Context) (<-chan client.DocIDResult, error)) *Collection_GetAllDocIDs_Call {
+func (_c *Collection_GetAllDocIDs_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.CollectionGetAllDocIDsOptions]) (<-chan client.DocIDResult, error)) *Collection_GetAllDocIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetIndexes provides a mock function for the type Collection
-func (_mock *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Collection) GetIndexes(ctx context.Context, opts ...options.Lister[options.CollectionGetIndexesOptions]) ([]client.IndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetIndexes")
@@ -818,18 +924,18 @@ func (_mock *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescript
 
 	var r0 []client.IndexDescription
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]client.IndexDescription, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.CollectionGetIndexesOptions]) ([]client.IndexDescription, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []client.IndexDescription); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.CollectionGetIndexesOptions]) []client.IndexDescription); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.IndexDescription)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.CollectionGetIndexesOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -843,18 +949,27 @@ type Collection_GetIndexes_Call struct {
 
 // GetIndexes is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Collection_Expecter) GetIndexes(ctx interface{}) *Collection_GetIndexes_Call {
-	return &Collection_GetIndexes_Call{Call: _e.mock.On("GetIndexes", ctx)}
+//   - opts ...options.Lister[options.CollectionGetIndexesOptions]
+func (_e *Collection_Expecter) GetIndexes(ctx interface{}, opts ...interface{}) *Collection_GetIndexes_Call {
+	return &Collection_GetIndexes_Call{Call: _e.mock.On("GetIndexes",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Collection_GetIndexes_Call) Run(run func(ctx context.Context)) *Collection_GetIndexes_Call {
+func (_c *Collection_GetIndexes_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.CollectionGetIndexesOptions])) *Collection_GetIndexes_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.CollectionGetIndexesOptions]
+		var variadicArgs []options.Lister[options.CollectionGetIndexesOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.CollectionGetIndexesOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -865,7 +980,7 @@ func (_c *Collection_GetIndexes_Call) Return(indexDescriptions []client.IndexDes
 	return _c
 }
 
-func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(ctx context.Context) ([]client.IndexDescription, error)) *Collection_GetIndexes_Call {
+func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.CollectionGetIndexesOptions]) ([]client.IndexDescription, error)) *Collection_GetIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -977,7 +1092,7 @@ func (_c *Collection_Name_Call) RunAndReturn(run func() string) *Collection_Name
 }
 
 // Save provides a mock function for the type Collection
-func (_mock *Collection) Save(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error {
+func (_mock *Collection) Save(ctx context.Context, doc *client.Document, opts ...options.Lister[options.CollectionSaveOptions]) error {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, doc, opts)
@@ -991,7 +1106,7 @@ func (_mock *Collection) Save(ctx context.Context, doc *client.Document, opts ..
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...client.DocCreateOption) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...options.Lister[options.CollectionSaveOptions]) error); ok {
 		r0 = returnFunc(ctx, doc, opts...)
 	} else {
 		r0 = ret.Error(0)
@@ -1007,13 +1122,13 @@ type Collection_Save_Call struct {
 // Save is a helper method to define mock.On call
 //   - ctx context.Context
 //   - doc *client.Document
-//   - opts ...client.DocCreateOption
+//   - opts ...options.Lister[options.CollectionSaveOptions]
 func (_e *Collection_Expecter) Save(ctx interface{}, doc interface{}, opts ...interface{}) *Collection_Save_Call {
 	return &Collection_Save_Call{Call: _e.mock.On("Save",
 		append([]interface{}{ctx, doc}, opts...)...)}
 }
 
-func (_c *Collection_Save_Call) Run(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption)) *Collection_Save_Call {
+func (_c *Collection_Save_Call) Run(run func(ctx context.Context, doc *client.Document, opts ...options.Lister[options.CollectionSaveOptions])) *Collection_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1023,10 +1138,10 @@ func (_c *Collection_Save_Call) Run(run func(ctx context.Context, doc *client.Do
 		if args[1] != nil {
 			arg1 = args[1].(*client.Document)
 		}
-		var arg2 []client.DocCreateOption
-		var variadicArgs []client.DocCreateOption
+		var arg2 []options.Lister[options.CollectionSaveOptions]
+		var variadicArgs []options.Lister[options.CollectionSaveOptions]
 		if len(args) > 2 {
-			variadicArgs = args[2].([]client.DocCreateOption)
+			variadicArgs = args[2].([]options.Lister[options.CollectionSaveOptions])
 		}
 		arg2 = variadicArgs
 		run(
@@ -1043,22 +1158,28 @@ func (_c *Collection_Save_Call) Return(err error) *Collection_Save_Call {
 	return _c
 }
 
-func (_c *Collection_Save_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...client.DocCreateOption) error) *Collection_Save_Call {
+func (_c *Collection_Save_Call) RunAndReturn(run func(ctx context.Context, doc *client.Document, opts ...options.Lister[options.CollectionSaveOptions]) error) *Collection_Save_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Truncate provides a mock function for the type Collection
-func (_mock *Collection) Truncate(ctx context.Context) error {
-	ret := _mock.Called(ctx)
+func (_mock *Collection) Truncate(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for Truncate")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.CollectionTruncateOptions]) error); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1072,18 +1193,27 @@ type Collection_Truncate_Call struct {
 
 // Truncate is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Collection_Expecter) Truncate(ctx interface{}) *Collection_Truncate_Call {
-	return &Collection_Truncate_Call{Call: _e.mock.On("Truncate", ctx)}
+//   - opts ...options.Lister[options.CollectionTruncateOptions]
+func (_e *Collection_Expecter) Truncate(ctx interface{}, opts ...interface{}) *Collection_Truncate_Call {
+	return &Collection_Truncate_Call{Call: _e.mock.On("Truncate",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Collection_Truncate_Call) Run(run func(ctx context.Context)) *Collection_Truncate_Call {
+func (_c *Collection_Truncate_Call) Run(run func(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions])) *Collection_Truncate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Lister[options.CollectionTruncateOptions]
+		var variadicArgs []options.Lister[options.CollectionTruncateOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Lister[options.CollectionTruncateOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -1094,22 +1224,28 @@ func (_c *Collection_Truncate_Call) Return(err error) *Collection_Truncate_Call 
 	return _c
 }
 
-func (_c *Collection_Truncate_Call) RunAndReturn(run func(ctx context.Context) error) *Collection_Truncate_Call {
+func (_c *Collection_Truncate_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error) *Collection_Truncate_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type Collection
-func (_mock *Collection) Update(ctx context.Context, docs *client.Document) error {
-	ret := _mock.Called(ctx, docs)
+func (_mock *Collection) Update(ctx context.Context, docs *client.Document, opts ...options.Lister[options.CollectionUpdateOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, docs, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, docs)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document) error); ok {
-		r0 = returnFunc(ctx, docs)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *client.Document, ...options.Lister[options.CollectionUpdateOptions]) error); ok {
+		r0 = returnFunc(ctx, docs, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1124,11 +1260,13 @@ type Collection_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docs *client.Document
-func (_e *Collection_Expecter) Update(ctx interface{}, docs interface{}) *Collection_Update_Call {
-	return &Collection_Update_Call{Call: _e.mock.On("Update", ctx, docs)}
+//   - opts ...options.Lister[options.CollectionUpdateOptions]
+func (_e *Collection_Expecter) Update(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_Update_Call {
+	return &Collection_Update_Call{Call: _e.mock.On("Update",
+		append([]interface{}{ctx, docs}, opts...)...)}
 }
 
-func (_c *Collection_Update_Call) Run(run func(ctx context.Context, docs *client.Document)) *Collection_Update_Call {
+func (_c *Collection_Update_Call) Run(run func(ctx context.Context, docs *client.Document, opts ...options.Lister[options.CollectionUpdateOptions])) *Collection_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1138,9 +1276,16 @@ func (_c *Collection_Update_Call) Run(run func(ctx context.Context, docs *client
 		if args[1] != nil {
 			arg1 = args[1].(*client.Document)
 		}
+		var arg2 []options.Lister[options.CollectionUpdateOptions]
+		var variadicArgs []options.Lister[options.CollectionUpdateOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.CollectionUpdateOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -1151,14 +1296,20 @@ func (_c *Collection_Update_Call) Return(err error) *Collection_Update_Call {
 	return _c
 }
 
-func (_c *Collection_Update_Call) RunAndReturn(run func(ctx context.Context, docs *client.Document) error) *Collection_Update_Call {
+func (_c *Collection_Update_Call) RunAndReturn(run func(ctx context.Context, docs *client.Document, opts ...options.Lister[options.CollectionUpdateOptions]) error) *Collection_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateWithFilter provides a mock function for the type Collection
-func (_mock *Collection) UpdateWithFilter(ctx context.Context, filter any, updater string) (*client.UpdateResult, error) {
-	ret := _mock.Called(ctx, filter, updater)
+func (_mock *Collection) UpdateWithFilter(ctx context.Context, filter any, updater string, opts ...options.Lister[options.CollectionUpdateWithFilterOptions]) (*client.UpdateResult, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, filter, updater, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, filter, updater)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateWithFilter")
@@ -1166,18 +1317,18 @@ func (_mock *Collection) UpdateWithFilter(ctx context.Context, filter any, updat
 
 	var r0 *client.UpdateResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, any, string) (*client.UpdateResult, error)); ok {
-		return returnFunc(ctx, filter, updater)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, any, string, ...options.Lister[options.CollectionUpdateWithFilterOptions]) (*client.UpdateResult, error)); ok {
+		return returnFunc(ctx, filter, updater, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, any, string) *client.UpdateResult); ok {
-		r0 = returnFunc(ctx, filter, updater)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, any, string, ...options.Lister[options.CollectionUpdateWithFilterOptions]) *client.UpdateResult); ok {
+		r0 = returnFunc(ctx, filter, updater, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*client.UpdateResult)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, any, string) error); ok {
-		r1 = returnFunc(ctx, filter, updater)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, any, string, ...options.Lister[options.CollectionUpdateWithFilterOptions]) error); ok {
+		r1 = returnFunc(ctx, filter, updater, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1193,11 +1344,13 @@ type Collection_UpdateWithFilter_Call struct {
 //   - ctx context.Context
 //   - filter any
 //   - updater string
-func (_e *Collection_Expecter) UpdateWithFilter(ctx interface{}, filter interface{}, updater interface{}) *Collection_UpdateWithFilter_Call {
-	return &Collection_UpdateWithFilter_Call{Call: _e.mock.On("UpdateWithFilter", ctx, filter, updater)}
+//   - opts ...options.Lister[options.CollectionUpdateWithFilterOptions]
+func (_e *Collection_Expecter) UpdateWithFilter(ctx interface{}, filter interface{}, updater interface{}, opts ...interface{}) *Collection_UpdateWithFilter_Call {
+	return &Collection_UpdateWithFilter_Call{Call: _e.mock.On("UpdateWithFilter",
+		append([]interface{}{ctx, filter, updater}, opts...)...)}
 }
 
-func (_c *Collection_UpdateWithFilter_Call) Run(run func(ctx context.Context, filter any, updater string)) *Collection_UpdateWithFilter_Call {
+func (_c *Collection_UpdateWithFilter_Call) Run(run func(ctx context.Context, filter any, updater string, opts ...options.Lister[options.CollectionUpdateWithFilterOptions])) *Collection_UpdateWithFilter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1211,10 +1364,17 @@ func (_c *Collection_UpdateWithFilter_Call) Run(run func(ctx context.Context, fi
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
+		var arg3 []options.Lister[options.CollectionUpdateWithFilterOptions]
+		var variadicArgs []options.Lister[options.CollectionUpdateWithFilterOptions]
+		if len(args) > 3 {
+			variadicArgs = args[3].([]options.Lister[options.CollectionUpdateWithFilterOptions])
+		}
+		arg3 = variadicArgs
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3...,
 		)
 	})
 	return _c
@@ -1225,7 +1385,7 @@ func (_c *Collection_UpdateWithFilter_Call) Return(updateResult *client.UpdateRe
 	return _c
 }
 
-func (_c *Collection_UpdateWithFilter_Call) RunAndReturn(run func(ctx context.Context, filter any, updater string) (*client.UpdateResult, error)) *Collection_UpdateWithFilter_Call {
+func (_c *Collection_UpdateWithFilter_Call) RunAndReturn(run func(ctx context.Context, filter any, updater string, opts ...options.Lister[options.CollectionUpdateWithFilterOptions]) (*client.UpdateResult, error)) *Collection_UpdateWithFilter_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -47,7 +48,7 @@ type GetCollections struct {
 	ExpectedResults []client.CollectionVersion
 
 	// An optional set of fetch options for the collections.
-	FilterOptions client.CollectionFetchOptions
+	FilterOptions *options.GetCollectionsOptionsBuilder
 
 	// Any error expected from the action. Optional.
 	//
@@ -94,9 +95,16 @@ func (a *GetCollections) Execute() {
 			return
 		}
 		ctx := db.InitContext(a.s.Ctx, txn)
-		ctx = getContextWithIdentity(ctx, a.s, a.Identity, nodeID)
 
-		results, err := node.GetCollections(ctx, a.FilterOptions)
+		opts := a.FilterOptions
+		if opts == nil {
+			opts = options.GetCollections()
+		}
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		results, err := node.GetCollections(ctx, opts)
 		resultDescriptions := make([]client.CollectionVersion, len(results))
 		for i, col := range results {
 			resultDescriptions[i] = col.Version()

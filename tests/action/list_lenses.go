@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -57,9 +58,13 @@ func (a *ListLenses) Execute() {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
+		opts := options.ListLenses()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
 
-		lenses, err := node.ListLenses(ctx)
+		lenses, err := node.ListLenses(a.s.Ctx, opts)
 
 		if a.ExpectedError != "" {
 			expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)

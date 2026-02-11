@@ -20,9 +20,9 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -53,9 +53,7 @@ type syncBranchableCollectionReply struct {
 func (p *P2P) SyncBranchableCollection(ctx context.Context, collectionID string) error {
 	cols, err := p.db.GetCollections(
 		ctx,
-		client.CollectionFetchOptions{
-			CollectionID: immutable.Some(collectionID),
-		},
+		options.GetCollections().SetCollectionID(collectionID),
 	)
 	if err != nil {
 		return err
@@ -266,9 +264,7 @@ func (p *P2P) syncBranchableCollectionMessageHandler(from string, topic string, 
 func (p *P2P) processSyncBranchableCollection(collectionID string) ([][]byte, error) {
 	cols, err := p.db.GetCollections(
 		p.ctx,
-		client.CollectionFetchOptions{
-			CollectionID: immutable.Some(collectionID),
-		},
+		options.GetCollections().SetCollectionID(collectionID),
 	)
 	if err != nil || len(cols) == 0 {
 		return nil, err

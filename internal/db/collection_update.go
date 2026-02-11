@@ -20,8 +20,10 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/planner"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // UpdateWithFilter updates using a filter to target documents for update.
@@ -31,13 +33,18 @@ func (c *collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
+	opts ...options.Lister[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return nil, err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {

@@ -14,9 +14,9 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sourcenetwork/immutable"
-
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // CreateReplicator configures a directional replicator relationship between
@@ -111,12 +111,18 @@ func createReplicator(
 	// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
 	// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
 	nodeIdentity := NodeIdentity(cfg.TargetNodeID)
-	ctxWithTargetNodeIdentity := getContextWithIdentity(s.Ctx, s, nodeIdentity, cfg.TargetNodeID)
-	targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
+
+	peerInfoOpts := options.PeerInfo()
+	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, cfg.TargetNodeID)
+	if identOption.HasValue() {
+		peerInfoOpts.SetIdentity(identOption.Value())
+	}
+	targetAddresses, err := targetNode.PeerInfo(s.Ctx, peerInfoOpts)
 	require.NoError(s.T, err)
 
-	ctxWithSourceNodeUserIdentity := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.CreateReplicator(ctxWithSourceNodeUserIdentity, targetAddresses)
+	opt := options.WithIdentity(options.CreateReplicator(),
+		getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
+	err = sourceNode.CreateReplicator(s.Ctx, targetAddresses, nil, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -136,8 +142,12 @@ func deleteReplicator(
 	// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
 	// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
 	nodeIdentity := NodeIdentity(cfg.TargetNodeID)
-	ctxWithTargetNodeIdentity := getContextWithIdentity(s.Ctx, s, nodeIdentity, cfg.TargetNodeID)
-	targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
+	peerInfoOpts := options.PeerInfo()
+	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, cfg.TargetNodeID)
+	if identOption.HasValue() {
+		peerInfoOpts.SetIdentity(identOption.Value())
+	}
+	targetAddresses, err := targetNode.PeerInfo(s.Ctx, peerInfoOpts)
 	require.NoError(s.T, err)
 	require.NotZero(s.T, len(targetAddresses))
 
@@ -146,8 +156,9 @@ func deleteReplicator(
 	id, err := maddr.ValueForProtocol(multiaddr.P_P2P)
 	require.NoError(s.T, err)
 
-	ctxWithSourceNodeUserIdentity := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.DeleteReplicator(ctxWithSourceNodeUserIdentity, id)
+	opt := options.WithIdentity(options.DeleteReplicator(),
+		getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
+	err = sourceNode.DeleteReplicator(s.Ctx, id, nil, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)

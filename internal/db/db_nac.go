@@ -22,10 +22,12 @@ import (
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (db *DB) NodeACP() acpDB.NACInfo {
@@ -66,7 +68,7 @@ func (db *DB) PurgeNACState(ctx context.Context) error {
 //
 // Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 // authorized to perform this operation.
-func (db *DB) ReEnableNAC(ctx context.Context) error {
+func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -78,9 +80,11 @@ func (db *DB) ReEnableNAC(ctx context.Context) error {
 		return ErrNACIsAlreadyEnabled
 	}
 
+	opt := utils.NewOptions(opts...)
+
 	// User trying to re-enable a disabled nac state.
 	// Check if this request is authorized to re-enable node access control.
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeNACReEnablePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACReEnablePerm); err != nil {
 		return err
 	}
 
@@ -97,7 +101,7 @@ func (db *DB) ReEnableNAC(ctx context.Context) error {
 //
 // Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 // authorized to perform this operation.
-func (db *DB) DisableNAC(ctx context.Context) error {
+func (db *DB) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -109,8 +113,10 @@ func (db *DB) DisableNAC(ctx context.Context) error {
 		return ErrNACIsAlreadyDisabled
 	}
 
+	opt := utils.NewOptions(opts...)
+
 	// Check if this request is authorized to disable node access control.
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeNACDisablePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACDisablePerm); err != nil {
 		return err
 	}
 
@@ -118,11 +124,16 @@ func (db *DB) DisableNAC(ctx context.Context) error {
 	return db.saveNodeACPDesc(ctx)
 }
 
-func (db *DB) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
+func (db *DB) GetNACStatus(
+	ctx context.Context,
+	opts ...options.Lister[options.GetNACStatusOptions],
+) (client.NACStatusResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeNACStatusPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACStatusPerm); err != nil {
 		return client.NACStatusResult{}, err
 	}
 
@@ -135,13 +146,18 @@ func (db *DB) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeNACRelationAddPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationAddPerm); err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
+
+	ctx = acpIdentity.WithContext(ctx, opt.Identity)
 
 	return db.addNACActorRelationship(ctx, relation, targetActor)
 }
@@ -150,13 +166,18 @@ func (db *DB) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeNACRelationDeletePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeNACRelationDeletePerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
+
+	ctx = acpIdentity.WithContext(ctx, opt.Identity)
 
 	return db.deleteNACActorRelationship(ctx, relation, targetActor)
 }
@@ -258,6 +279,7 @@ func (db *DB) deleteNACActorRelationship(
 // - If the operation needs the nac permission to execute, it must have nac configured (not clean).
 func (db *DB) checkNodeAccess(
 	ctx context.Context,
+	ident immutable.Option[acpIdentity.Identity],
 	permissionNeeded acpTypes.NodeResourcePermission,
 ) error {
 	// For nac specific operations, the node acp setup must be configured.
@@ -267,18 +289,17 @@ func (db *DB) checkNodeAccess(
 		return ErrNACIsNotConfigured
 	}
 
-	identity := acpIdentity.FromContext(ctx)
-	if identity.HasValue() &&
+	if ident.HasValue() &&
 		db.nodeIdentity.HasValue() &&
-		identity.Value().DID() == db.nodeIdentity.Value().DID() {
+		ident.Value().DID() == db.nodeIdentity.Value().DID() {
 		return nil
 	}
 
 	var identityValue string
 	// Note: The following must be done to handle the "*" edge case before
 	// calling [acpDB.CheckNodeOperationAccess]
-	if identity.HasValue() {
-		identityValue = identity.Value().DID()
+	if ident.HasValue() {
+		identityValue = ident.Value().DID()
 	} else {
 		// We can't assume that there is no-access just because there is no identity even if the operation
 		// is registered with acp, this is because it is possible that acp has a registered relation targeting

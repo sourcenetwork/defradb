@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/lenses"
@@ -74,10 +75,8 @@ func TestSyncColVersion_WithView(t *testing.T) {
 				VersionIDs: []string{"{{.CollectionVersionID1}}"},
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-				},
-				NodeID: immutable.Some(1),
+				FilterOptions: options.GetCollections().SetIncludeInactive(true),
+				NodeID:        immutable.Some(1),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name: "UserView",

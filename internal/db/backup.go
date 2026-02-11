@@ -18,8 +18,10 @@ import (
 	"os"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/db/description"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (db *DB) basicImport(ctx context.Context, filepath string) (err error) {
@@ -123,7 +125,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 
 	cols := []client.Collection{}
 	if len(config.Collections) == 0 {
-		cols, err = db.getCollections(ctx, client.CollectionFetchOptions{})
+		cols, err = db.getCollections(ctx, utils.NewOptions(options.GetCollections()))
 		if err != nil {
 			return NewErrFailedToGetAllCollections(err)
 		}
@@ -201,7 +203,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 					return err
 				}
 			}
-			doc, err := col.Get(ctx, docResultWithID.ID, false)
+			doc, err := col.Get(ctx, docResultWithID.ID)
 			if err != nil {
 				return err
 			}
@@ -237,7 +239,7 @@ func (db *DB) basicExport(ctx context.Context, config *client.BackupConfig) (err
 							if err != nil {
 								return err
 							}
-							foreignDoc, err := foreignCol.Get(ctx, foreignDocID, false)
+							foreignDoc, err := foreignCol.Get(ctx, foreignDocID)
 							if err != nil {
 								err := doc.Set(ctx, request.ToFieldID(field.Name), nil)
 								if err != nil {
