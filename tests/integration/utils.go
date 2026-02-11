@@ -917,6 +917,9 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 	// If the db was restarted we need to refresh the collection definitions as the old instances
 	// will reference the old (closed) database instances.
 	refreshCollections(s, immutable.None[int](), immutable.None[state.Identity]())
+
+	// Reconnect peers after node restart to re-establish P2P connections.
+	reconnectPeers(s)
 }
 
 func restartNodes(

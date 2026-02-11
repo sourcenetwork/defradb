@@ -1056,20 +1056,18 @@ struct FfiResult get_all_indexes(uintptr_t node_ptr, const char *identity_did);
 /*
  Add a lens transform to the database.
 
- This registers a lens transform without linking it to schema versions.
- Use `set_migration` to link a transform between specific versions.
+ Builds Go-compatible IPLD blocks (ConfigBlock -> ModuleBlock -> LensBlock),
+ stores them in the blockstore for P2P Bitswap, and registers the transform
+ under the ConfigBlock CID.
 
  # Arguments
 
  * `node_ptr` - Handle to the node
- * `lens_json` - JSON string containing the lens configuration:
-   - `Path`: Optional path to WASM module file
-   - `Module`: Optional base64-encoded WASM bytes
-   - `Arguments`: Optional JSON arguments for the module
+ * `lens_json` - JSON string containing the lens configuration
 
  # Returns
 
- - Status 0: Success (value contains the lens ID)
+ - Status 0: Success (value contains the lens CID)
  - Status 1: Error (error field contains message)
 
  # Safety
@@ -1082,24 +1080,6 @@ struct FfiResult lens_add(uintptr_t node_ptr, const char *lens_json);
  List all lens transforms.
 
  Returns a JSON object mapping lens IDs to their configurations.
-
- # Arguments
-
- * `node_ptr` - Handle to the node
-
- # Returns
-
- - Status 0: Success (value contains JSON object of lenses)
- - Status 1: Error (error field contains message)
-
- # Example Response
-
- ```json
- {
-   "lens_0": {"Path": "/path/to/transform.wasm"},
-   "lens_1": {"Module": "base64...", "Arguments": {...}}
- }
- ```
 
  # Safety
 
