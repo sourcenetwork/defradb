@@ -133,7 +133,7 @@ func TestOrderQueryWithIndex_WithLimitDescending_ShouldUseIndex(t *testing.T) {
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithLimit().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -181,7 +181,7 @@ func TestOrderQueryWithIndex_WithLimitAscending_ShouldUseIndex(t *testing.T) {
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithLimit().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -320,7 +320,7 @@ func TestOrderQueryWithIndex_WithFilterOnIndexedFieldAscending_ShouldUseIndex(t 
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// we fetch docs starting from the lowest age and skip the first one
-				Asserter: testUtils.NewExplainAsserter().WithLimit().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -369,7 +369,7 @@ func TestOrderQueryWithIndex_WithFilterOnIndexedFieldDescending_ShouldUseIndex(t
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// we fetch docs starting from the highest age, skipping the first 2
-				Asserter: testUtils.NewExplainAsserter().WithLimit().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -398,39 +398,39 @@ func TestOrderQueryWithIndex_WithOrderOnNestedField_ShouldUseIndexForOrdering(t 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Addo"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Shahzad"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPhone",
 					"owner": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "pixel",
@@ -449,7 +449,7 @@ func TestOrderQueryWithIndex_WithOrderOnNestedField_ShouldUseIndexForOrdering(t 
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(3),
 			},
 		},
 	}
@@ -478,39 +478,39 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Addo"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Shahzad"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPhone",
 					"owner": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "pixel",
@@ -529,7 +529,7 @@ func TestOrderQueryWithIndex_WithOrderOnRelationIDField_ShouldUseIndexForOrderin
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(3),
 			},
 		},
 	}
@@ -577,7 +577,7 @@ func TestOrderQueryWithIndex_WithAscendingQueryOnDescendingIndexedField_ShouldRe
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithLimit().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
 			},
 		},
 	}
@@ -609,7 +609,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(
 					age: Int
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -617,7 +617,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -625,7 +625,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(
 						"age":	29
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -633,7 +633,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(
 						"age":	38
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -666,7 +666,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 			&action.Request{
 				Request: req2,
@@ -693,7 +693,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndDESC_ShouldNotUseIndex(
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}
@@ -725,7 +725,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(
 						age: Int
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -733,7 +733,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -741,7 +741,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(
 						"age":	29
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -749,7 +749,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(
 						"age":	38
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -782,7 +782,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 			&action.Request{
 				Request: req2,
@@ -809,7 +809,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndASC_ShouldNotUseIndex(
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}
@@ -841,7 +841,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t
 					age: Int
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -849,7 +849,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -857,7 +857,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t
 						"age":	29
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -865,7 +865,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t
 						"age":	38
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -898,7 +898,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 			&action.Request{
 				Request: req2,
@@ -925,7 +925,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchASCAndASC_ShouldNotUseIndex(t
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}
@@ -957,7 +957,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex
 					age: Int
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -965,7 +965,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex
 						"age":	22
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -973,7 +973,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex
 						"age":	29
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -981,7 +981,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex
 						"age":	38
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1014,7 +1014,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req1),
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 			&action.Request{
 				Request: req2,
@@ -1041,7 +1041,7 @@ func TestOrderQueryWithCompositeIndex_OrderMismatchDESCAndDESC_ShouldNotUseIndex
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req2),
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}
@@ -1068,7 +1068,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIn
 					level: Int
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1077,7 +1077,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIn
 						"level": 1
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1086,7 +1086,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIn
 						"level": 2
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1095,7 +1095,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIn
 						"level": 3
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1104,7 +1104,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIn
 						"level": 2
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1113,7 +1113,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIn
 						"level": 1
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1161,7 +1161,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInMiddle_ShouldNotUseIn
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}
@@ -1188,7 +1188,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex
 					level: Int
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1197,7 +1197,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex
 						"level": 1
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1206,7 +1206,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex
 						"level": 2
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1215,7 +1215,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex
 						"level": 3
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1224,7 +1224,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex
 						"level": 2
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1233,7 +1233,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex
 						"level": 1
 					}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `
 					{
@@ -1281,7 +1281,7 @@ func TestOrderQueryWithCompositeIndex_WithOrderOnNonIndexInEnd_ShouldNotUseIndex
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithOrder().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
 			},
 		},
 	}
@@ -1313,13 +1313,13 @@ func TestOrderQueryWithIndexOnRelation_OrderByPrimaryDoc_ShouldOrderWithIndex(t 
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Fred"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Playstation",
@@ -1327,13 +1327,13 @@ func TestOrderQueryWithIndexOnRelation_OrderByPrimaryDoc_ShouldOrderWithIndex(t 
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Andy"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "XBox",
@@ -1341,13 +1341,13 @@ func TestOrderQueryWithIndexOnRelation_OrderByPrimaryDoc_ShouldOrderWithIndex(t 
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Shahzad"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Arduino",
@@ -1355,13 +1355,13 @@ func TestOrderQueryWithIndexOnRelation_OrderByPrimaryDoc_ShouldOrderWithIndex(t 
 					"owner":        testUtils.NewDocIndex(0, 2),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc: `{
 					"name":	"Keenan"
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Galaxy",
@@ -1382,7 +1382,7 @@ func TestOrderQueryWithIndexOnRelation_OrderByPrimaryDoc_ShouldOrderWithIndex(t 
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(4),
 			},
 		},
 	}
@@ -1414,56 +1414,56 @@ func TestOrderQueryWithIndexOnRelation_OrderBySecondaryDoc_ShouldOrderWithIndex(
 					} 
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"model":        "Playstation",
 					"manufacturer": "Sony",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "Fred",
 					"device": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"model":        "XBox",
 					"manufacturer": "Microsoft",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "Andy",
 					"device": testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"model":        "Arduino",
 					"manufacturer": "Arduino",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "Shahzad",
 					"device": testUtils.NewDocIndex(0, 2),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				DocMap: map[string]any{
 					"model":        "Galaxy",
 					"manufacturer": "Samsung",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"name":   "Keenan",
@@ -1484,7 +1484,8 @@ func TestOrderQueryWithIndexOnRelation_OrderBySecondaryDoc_ShouldOrderWithIndex(
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// 4 indexFetches for device model index + 4 for the auto-created unique index on _deviceID
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(8),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(4).
+					WithLevel("root").WithIndexFetches(4),
 			},
 		},
 	}

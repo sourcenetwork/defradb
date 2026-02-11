@@ -35,14 +35,14 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -53,7 +53,7 @@ func TestP2PWithMultipleDocumentsSingleDelete(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -101,14 +101,14 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -119,7 +119,7 @@ func TestP2PWithMultipleDocumentsSingleDeleteWithShowDeleted(t *testing.T) {
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -173,14 +173,14 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -199,7 +199,7 @@ func TestP2PWithMultipleDocumentsWithSingleUpdateBeforeConnectSingleDeleteWithSh
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -253,14 +253,14 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -287,7 +287,7 @@ func TestP2PWithMultipleDocumentsWithMultipleUpdatesBeforeConnectSingleDeleteWit
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -341,14 +341,14 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 43
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create Andy on all nodes
 				Doc: `{
 					"Name": "Andy",
@@ -379,7 +379,7 @@ func TestP2PWithMultipleDocumentsWithUpdateAndDeleteBeforeConnectSingleDeleteWit
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 1),

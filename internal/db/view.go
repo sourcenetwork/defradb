@@ -29,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (db *DB) addView(
@@ -98,7 +99,7 @@ func (db *DB) addView(
 
 	for _, view := range returnDescriptions {
 		if view.Query.HasValue() && view.IsMaterialized {
-			err := db.refreshViews(ctx, options.GetCollections().SetVersionID(view.VersionID))
+			err := db.refreshViews(ctx, utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID)))
 			if err != nil {
 				return nil, err
 			}
@@ -350,7 +351,7 @@ func (db *DB) generateMaximalSelectFromCollection(
 
 // lensCIDExists checks if a lens with the given CID exists in the lens store.
 func (db *DB) lensCIDExists(ctx context.Context, cidStr string) (bool, error) {
-	targetCID, err := cid.Decode(cidStr)
+	_, err := cid.Decode(cidStr)
 	if err != nil {
 		return false, err
 	}
@@ -361,7 +362,7 @@ func (db *DB) lensCIDExists(ctx context.Context, cidStr string) (bool, error) {
 	}
 
 	for storedCID := range lenses {
-		if storedCID.Equals(targetCID) {
+		if storedCID == cidStr {
 			return true, nil
 		}
 	}

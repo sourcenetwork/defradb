@@ -24,10 +24,12 @@ import (
 
 const (
 	documentACPTypeEnvName = "DEFRA_DOCUMENT_ACP_TYPE"
+	sourcehubImageEnvName  = "DEFRA_SOURCEHUB_IMAGE"
 )
 
 var (
 	documentACPType state.DocumentACPType
+	sourcehubImage  string
 )
 
 const (
@@ -45,6 +47,10 @@ func init() {
 	documentACPType = state.DocumentACPType(os.Getenv(documentACPTypeEnvName))
 	if documentACPType == "" {
 		documentACPType = state.LocalDocumentACPType
+	}
+	sourcehubImage = os.Getenv(sourcehubImageEnvName)
+	if sourcehubImage == "" {
+		sourcehubImage = "ghcr.io/sourcenetwork/sourcehub:dev"
 	}
 }
 
@@ -99,9 +105,9 @@ func addDACPolicy(
 
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		opt := options.WithIdentity(options.AddDACPolicy(), getIdentityForRequestSpecificToNode(s, action.Identity, nodeID))
-		policyResult, err := node.AddDACPolicy(ctx, action.Policy, opt)
+		identOpt := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		opt := options.WithIdentity(options.AddDACPolicy(), identOpt)
+		policyResult, err := node.AddDACPolicy(s.Ctx, action.Policy, opt)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -190,11 +196,10 @@ func addDACActorRelationship(
 		var collectionName string
 		collectionName, docID = getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		ctx := getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID)
-		ident := getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID)
-		opt := options.WithIdentity(options.AddDACActorRelationship(), ident)
+		opt := options.WithIdentity(options.AddDACActorRelationship(),
+			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 		exists, err := node.AddDACActorRelationship(
-			ctx,
+			s.Ctx,
 			collectionName,
 			docID,
 			action.Relation,
@@ -284,11 +289,10 @@ func deleteDACActorRelationship(
 
 		collectionName, docID := getCollectionAndDocInfo(s, action.CollectionID, action.DocID, nodeID)
 
-		ctx := getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID)
-		ident := getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID)
-		opt := options.WithIdentity(options.DeleteDACActorRelationship(), ident)
+		opt := options.WithIdentity(options.DeleteDACActorRelationship(),
+			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 		deleteActorRelationshipResult, err := node.DeleteDACActorRelationship(
-			ctx,
+			s.Ctx,
 			collectionName,
 			docID,
 			action.Relation,
@@ -323,7 +327,9 @@ func getCollectionAndDocInfo(s *state.State, collectionID, docInd, nodeID int) (
 		collectionName = collection.Version().Name
 
 		if docInd != -1 {
+			s.DocIDsLock.RLock()
 			docID = s.DocIDs[collectionID][docInd].String()
+			s.DocIDsLock.RUnlock()
 		}
 	}
 	return collectionName, docID

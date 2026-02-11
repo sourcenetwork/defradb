@@ -90,7 +90,7 @@ func assertRequestResults(
 	nodeID int,
 	ordered bool,
 ) bool {
-	s.CurrentNodeID = nodeID
+	s.CurrentAssertingNodeID = nodeID
 	// we skip assertion benchmark because you don't specify expected result for benchmark.
 	if assertErrors(s.T, result.Errors, expectedError) || s.IsBench {
 		return true
@@ -256,7 +256,10 @@ func assertRequestResultDoc(
 			}
 
 		case DocIndex:
+			s.DocIDsLock.RLock()
 			expectedDocID := s.DocIDs[expectedValue.CollectionIndex][expectedValue.Index].String()
+			s.DocIDsLock.RUnlock()
+
 			if ordered {
 				assertResultsEqual(
 					s.T,

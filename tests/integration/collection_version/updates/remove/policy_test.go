@@ -59,7 +59,7 @@ func TestColVersionUpdateRemovePolicy_Errors(t *testing.T) {
 				`,
 			},
 
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{

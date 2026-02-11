@@ -34,7 +34,7 @@ func TestSchemaUpdatesAddFieldSimple(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -99,7 +99,7 @@ func TestSchemaUpdates_AddFieldSimpleInactiveFalse_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
@@ -134,7 +134,7 @@ func TestSchemaUpdates_AddFieldSimpleDoNotSetDefault_VersionIsQueryable(t *testi
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
@@ -191,7 +191,7 @@ func TestSchemaUpdatesAddFieldSimpleErrorsAddingToUnknownCollection(t *testing.T
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Authors/Schema/Fields/-", "value": {"Name": "email", "Kind": 11} }
@@ -224,7 +224,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatch(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },
@@ -259,14 +259,14 @@ func TestSchemaUpdatesAddFieldMultiplePatches(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} }
 					]
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "city", "Kind": 11} }
@@ -300,7 +300,7 @@ func TestSchemaUpdatesAddFieldSimpleWithoutName(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Kind": 11} }
@@ -323,7 +323,7 @@ func TestSchemaUpdatesAddFieldMultipleInPatchPartialSuccess(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Email field is valid, City field has invalid kind
 				Patch: `
 					[
@@ -369,7 +369,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": 11} }
@@ -392,7 +392,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateOfExistingFieldMultiple(t *testing.
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": 11} },
@@ -416,7 +416,7 @@ func TestSchemaUpdatesAddFieldSimpleDuplicateField(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "email", "Kind": 11} },

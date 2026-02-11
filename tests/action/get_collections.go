@@ -48,7 +48,7 @@ type GetCollections struct {
 	ExpectedResults []client.CollectionVersion
 
 	// An optional set of fetch options for the collections.
-	FilterOptions *options.GetCollectionsOptions
+	FilterOptions *options.GetCollectionsOptionsBuilder
 
 	// Any error expected from the action. Optional.
 	//
@@ -95,7 +95,6 @@ func (a *GetCollections) Execute() {
 			return
 		}
 		ctx := db.InitContext(a.s.Ctx, txn)
-		ctx = getContextWithIdentity(ctx, a.s, a.Identity, nodeID)
 
 		opts := a.FilterOptions
 		if opts == nil {

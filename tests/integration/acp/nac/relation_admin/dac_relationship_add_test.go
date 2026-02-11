@@ -13,6 +13,7 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -36,7 +37,7 @@ func TestNAC_AdminRelation_WithDACManagerRelation_CanAddDACActorRelationship(t *
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -57,7 +58,7 @@ func TestNAC_AdminRelation_WithDACManagerRelation_CanAddDACActorRelationship(t *
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationAddPerm),
 			},
 
 			// Grant access to user.
@@ -102,7 +103,7 @@ func TestNAC_AdminRelation_WithoutManagerDACRelation_CanNotAddDACActorRelationsh
 				Identity: testUtils.ClientIdentity(1),
 				Schema:   `type Users @policy(id: "{{.Policy0}}", resource: "users") { name: String }`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity:     testUtils.ClientIdentity(1),
 				CollectionID: 0,
 				Doc:          `{ "name": "Shahzad" }`,
@@ -123,7 +124,7 @@ func TestNAC_AdminRelation_WithoutManagerDACRelation_CanNotAddDACActorRelationsh
 				CollectionID:      0,
 				DocID:             0,
 				Relation:          "reader",
-				ExpectedError:     "not authorized to perform operation",
+				ExpectedError:     testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeDACRelationAddPerm),
 			},
 
 			// Grant access to user.

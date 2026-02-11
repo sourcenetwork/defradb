@@ -79,7 +79,7 @@ func (txn *Transaction) PrintDump(ctx context.Context) error {
 func (txn *Transaction) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...*options.AddDACPolicyOptions,
+	opts ...options.Lister[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.AddDACPolicy(ctx, policy, opts...)
@@ -91,7 +91,7 @@ func (txn *Transaction) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.AddDACActorRelationshipOptions,
+	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
@@ -103,7 +103,7 @@ func (txn *Transaction) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...*options.DeleteDACActorRelationshipOptions,
+	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
@@ -118,7 +118,7 @@ func (txn *Transaction) VerifySignature(
 	ctx context.Context,
 	blockCid string,
 	pubKey crypto.PublicKey,
-	opts ...*options.VerifySignatureOptions,
+	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.VerifySignature(ctx, blockCid, pubKey, opts...)
@@ -127,7 +127,7 @@ func (txn *Transaction) VerifySignature(
 func (txn *Transaction) AddSchema(
 	ctx context.Context,
 	sdl string,
-	opts ...*options.AddSchemaOptions,
+	opts ...options.Lister[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.AddSchema(ctx, sdl, opts...)
@@ -137,7 +137,7 @@ func (txn *Transaction) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...*options.PatchCollectionOptions,
+	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.PatchCollection(ctx, patch, migration, opts...)
@@ -146,7 +146,7 @@ func (txn *Transaction) PatchCollection(
 func (txn *Transaction) SetActiveCollectionVersion(
 	ctx context.Context,
 	version string,
-	opts ...*options.SetActiveCollectionVersionOptions,
+	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
 ) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.SetActiveCollectionVersion(ctx, version, opts...)
@@ -156,13 +156,13 @@ func (txn *Transaction) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddView(ctx, gqlQuery, sdl, transformCID)
+	return txn.Client.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
-func (txn *Transaction) RefreshViews(ctx context.Context, opts ...*options.RefreshViewsOptions) error {
+func (txn *Transaction) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.RefreshViews(ctx, opts...)
 }
@@ -172,20 +172,27 @@ func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConf
 	return txn.Client.SetMigration(ctx, config)
 }
 
-func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (txn *Transaction) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Lister[options.AddLensOptions],
+) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.AddLens(ctx, lens)
+	return txn.Client.AddLens(ctx, lens, opts...)
 }
 
-func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (txn *Transaction) ListLenses(
+	ctx context.Context,
+	opts ...options.Lister[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.ListLenses(ctx)
+	return txn.Client.ListLenses(ctx, opts...)
 }
 
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...*options.GetCollectionByNameOptions,
+	opts ...options.Lister[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.GetCollectionByName(ctx, name, opts...)
@@ -193,7 +200,7 @@ func (txn *Transaction) GetCollectionByName(
 
 func (txn *Transaction) GetCollections(
 	ctx context.Context,
-	opts ...*options.GetCollectionsOptions,
+	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.GetCollections(ctx, opts...)
@@ -201,7 +208,7 @@ func (txn *Transaction) GetCollections(
 
 func (txn *Transaction) GetAllIndexes(
 	ctx context.Context,
-	opts ...*options.GetAllIndexesOptions,
+	opts ...options.Lister[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.GetAllIndexes(ctx, opts...)
@@ -217,7 +224,7 @@ func (txn *Transaction) ListAllEncryptedIndexes(
 func (txn *Transaction) ExecRequest(
 	ctx context.Context,
 	request string,
-	opts ...*options.ExecRequestOptions,
+	opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.ExecRequest(ctx, request, opts...)
@@ -228,7 +235,11 @@ func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error 
 	return txn.Client.BasicImport(ctx, filepath)
 }
 
-func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (txn *Transaction) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Lister[options.BasicExportOptions],
+) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Client.BasicExport(ctx, config)
+	return txn.Client.BasicExport(ctx, filepath, opts...)
 }

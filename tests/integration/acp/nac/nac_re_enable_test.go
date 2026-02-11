@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -58,7 +59,7 @@ func TestNAC_ReEnableWithNoIdentityWhenTemporarilyDisabled_Error(t *testing.T) {
 			},
 
 			testUtils.ReEnableNAC{
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACReEnablePerm),
 			},
 
 			testUtils.GetNACStatus{ // Still disabled
@@ -84,7 +85,7 @@ func TestNAC_ReEnableWithWrongIdentityWhenTemporarilyDisabled_Error(t *testing.T
 
 			testUtils.ReEnableNAC{
 				Identity:      testUtils.ClientIdentity(2),
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACReEnablePerm),
 			},
 
 			testUtils.GetNACStatus{ // Still disabled
@@ -114,7 +115,7 @@ func TestNAC_ReEnableWithValidIdentityWhenTemporarilyDisabled_NACReEnabled(t *te
 			},
 
 			testUtils.GetNACStatus{ // NAC was successfully re-enabled so this won't work
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			testUtils.GetNACStatus{ // This works and shows that nac is enabled.
@@ -234,7 +235,7 @@ func TestNAC_ReEnableSuccessfullyThenRestartWithNoArgs_RemainsReEnabled(t *testi
 
 			// Can not do this as nac is enabled.
 			testUtils.GetNACStatus{
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 		},
 	}
@@ -281,7 +282,7 @@ func TestNAC_ReEnableSuccessfullyThenRestartWithStartArgs_RemainsReEnabled(t *te
 
 			// Can not do this as nac is enabled.
 			testUtils.GetNACStatus{
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 		},
 	}
@@ -322,7 +323,7 @@ func TestNAC_ReEnableTemporarilyDisabledNACAfterRestart_ReEnabledSuccessfully(t 
 			},
 
 			testUtils.GetNACStatus{ // This should then not work.
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeNACStatusPerm),
 			},
 
 			// This will work and show the status.

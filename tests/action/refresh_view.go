@@ -27,7 +27,7 @@ type RefreshViews struct {
 	NodeID immutable.Option[int]
 
 	// The set of fetch options for the views.
-	FilterOptions *options.RefreshViewsOptions
+	FilterOptions *options.RefreshViewsOptionsBuilder
 
 	// Any error expected from the action. Optional.
 	//

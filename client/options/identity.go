@@ -16,20 +16,19 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 )
 
-// OptionWithIdentity is an interface for options that provide and can set an identity.
-// T is the concrete options type (for fluent API support).
-type OptionWithIdentity[T any] interface {
-	// GetIdentity returns the identity associated with this option, if any.
-	GetIdentity() immutable.Option[identity.Identity]
-	// SetIdentity sets the identity for this option and returns the option for chaining.
-	SetIdentity(id identity.Identity) T
+// BuilderWithIdentity is an interface for option builders that can set identity.
+// T is the options type, B is the builder type (for fluent API support).
+type BuilderWithIdentity[T any, B any] interface {
+	Lister[T]
+	// SetIdentity sets the identity for this option and returns the builder for chaining.
+	SetIdentity(id identity.Identity) B
 }
 
-// WithIdentity sets the identity on an option if the identity is present.
-// Returns the option for chaining.
-func WithIdentity[T OptionWithIdentity[T]](opt T, ident immutable.Option[identity.Identity]) T {
+// WithIdentity sets the identity on a builder if the identity is present.
+// Returns the builder for chaining.
+func WithIdentity[T any, B BuilderWithIdentity[T, B]](builder B, ident immutable.Option[identity.Identity]) B {
 	if ident.HasValue() {
-		opt.SetIdentity(ident.Value())
+		return builder.SetIdentity(ident.Value())
 	}
-	return opt
+	return builder
 }

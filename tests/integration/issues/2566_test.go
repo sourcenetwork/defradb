@@ -19,12 +19,16 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // This test documents https://github.com/sourcenetwork/defradb/issues/2566
 func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsitency(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
@@ -43,7 +47,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: fmt.Sprintf(`{
 					"Name": "John",
@@ -70,13 +74,13 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -133,6 +137,9 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowIncrement_DoesNotReachConsit
 // This test documents https://github.com/sourcenetwork/defradb/issues/2566
 func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsitency(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
 				// This test only supports the Go client at the moment due to
@@ -151,7 +158,7 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on all nodes
 				Doc: fmt.Sprintf(`{
 					"Name": "John",
@@ -178,13 +185,13 @@ func TestP2PUpdate_WithPNCounterSimultaneousOverflowDecrement_DoesNotReachConsit
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),

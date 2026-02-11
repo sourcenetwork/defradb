@@ -35,7 +35,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch first node only
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -62,7 +62,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 					},
 				},
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch second node with different patch
 				NodeID: immutable.Some(1),
 				Patch: `
@@ -82,11 +82,11 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocOnOtherSchemaBranch(t *testing.
 					},
 				}),
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// Create John on the first (source) node only, and allow the value to sync
 				NodeID: immutable.Some(0),
 				Doc: `{

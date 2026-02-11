@@ -51,13 +51,20 @@ func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 
 func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var config client.BackupConfig
 	if err := requestJSON(req, &config); err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err := db.BasicExport(req.Context(), &config)
+
+	opt := options.BasicExport().
+		SetFormat(config.Format).
+		SetPretty(config.Pretty).
+		SetCollections(config.Collections)
+
+	err := db.BasicExport(ctx, config.Filepath, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -125,6 +132,7 @@ func (h *storeHandler) SetActiveCollectionVersion(rw http.ResponseWriter, req *h
 
 func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 
 	var message addViewRequest
 	err := requestJSON(req, &message)
@@ -133,7 +141,12 @@ func (h *storeHandler) AddView(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	defs, err := db.AddView(req.Context(), message.Query, message.SDL, message.TransformCID)
+	opt := options.AddView()
+	if message.TransformCID.HasValue() {
+		opt.SetTransformCID(message.TransformCID.Value())
+	}
+
+	defs, err := db.AddView(ctx, message.Query, message.SDL, opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -181,7 +194,9 @@ func (h *storeHandler) AddLens(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	lensID, err := db.AddLens(req.Context(), addLensReq.Lens)
+	opts := options.WithIdentity(options.AddLens(), identity.FromContext(req.Context()))
+
+	lensID, err := db.AddLens(req.Context(), addLensReq.Lens, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -196,8 +211,9 @@ type ListLensesResponse struct {
 
 func (h *storeHandler) ListLenses(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	opts := options.WithIdentity(options.ListLenses(), identity.FromContext(req.Context()))
 
-	lenses, err := db.ListLenses(req.Context())
+	lenses, err := db.ListLenses(req.Context(), opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -329,14 +345,14 @@ func execHTTPRequest(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
-	request, opt, err := extractGraphQLRequest(req)
+	request, opts, err := extractGraphQLRequest(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	opt = options.WithIdentity(opt, identity.FromContext(ctx))
-	result := db.ExecRequest(ctx, request.Query, opt)
+	opts = options.WithIdentity(opts, identity.FromContext(ctx))
+	result := db.ExecRequest(ctx, request.Query, opts)
 
 	// if at this point the we get a subscription query, it isn't using
 	// the correct accept headers, and we error
@@ -352,13 +368,13 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
-	request, opt, err := extractGraphQLRequest(req)
+	request, opts, err := extractGraphQLRequest(req)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
 
-	opt = options.WithIdentity(opt, identity.FromContext(ctx))
+	opts = options.WithIdentity(opts, identity.FromContext(ctx))
 
 	// upgrade to SSE connection
 	flusher, ok := rw.(http.Flusher)
@@ -373,7 +389,7 @@ func execSSESubscription(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 	flusher.Flush()
 
-	result := db.ExecRequest(ctx, request.Query, opt)
+	result := db.ExecRequest(ctx, request.Query, opts)
 
 	// if we get an error in the initial GQL request, we need to emit
 	// it as a SSE event, then we can close the connection/subscription
@@ -444,7 +460,7 @@ func emitSSEEvent(rw http.ResponseWriter, flusher http.Flusher, eventType string
 	return nil
 }
 
-func extractGraphQLRequest(req *http.Request) (GraphQLRequest, *options.ExecRequestOptions, error) {
+func extractGraphQLRequest(req *http.Request) (GraphQLRequest, *options.ExecRequestOptionsBuilder, error) {
 	var request GraphQLRequest
 	switch {
 	case req.URL.Query().Get("query") != "":

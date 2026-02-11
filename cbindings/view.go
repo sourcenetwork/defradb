@@ -19,8 +19,6 @@ import "C"
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
@@ -38,10 +36,10 @@ func ViewAdd(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	var transformCID immutable.Option[string]
+	opts := options.AddView()
 	transformCIDValue := C.GoString(transformCIDStr)
 	if transformCIDValue != "" {
-		transformCID = immutable.Some(transformCIDValue)
+		opts.SetTransformCID(transformCIDValue)
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -49,7 +47,7 @@ func ViewAdd(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), transformCID)
+	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), opts)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

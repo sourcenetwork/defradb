@@ -17,14 +17,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.P2P = (*Client)(nil)
 
-// SetReplicatorParams contains the replicator fields that can be modified by the user.
-type SetReplicatorParams struct {
+// CreateReplicatorParams contains the replicator fields that can be modified by the user.
+type CreateReplicatorParams struct {
 	// Addresses list of peer addresses.
 	Addresses []string
 	// Collections is the list of collection names to replicate.
@@ -39,10 +41,13 @@ type DeleteReplicatorParams struct {
 	Collections []string
 }
 
-func (c *Client) PeerInfo() ([]string, error) {
+func (c *Client) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "info")
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +58,16 @@ func (c *Client) PeerInfo() ([]string, error) {
 	return res, nil
 }
 
-func (c *Client) ActivePeers(ctx context.Context) ([]string, error) {
+func (c *Client) ActivePeers(
+	ctx context.Context,
+	opts ...options.Lister[options.ActivePeersOptions],
+) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "active-peers")
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, methodURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -67,10 +78,13 @@ func (c *Client) ActivePeers(ctx context.Context) ([]string, error) {
 	return res, nil
 }
 
-func (c *Client) Connect(ctx context.Context, addresses []string, opts ...*options.ConnectOptions) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+func (c *Client) Connect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Lister[options.ConnectOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "connect")
 
@@ -86,21 +100,19 @@ func (c *Client) Connect(ctx context.Context, addresses []string, opts ...*optio
 	return err
 }
 
-func (c *Client) SetReplicator(
+func (c *Client) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	collections []string,
-	opts ...*options.SetReplicatorOptions,
+	opts ...options.Lister[options.CreateReplicatorOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(SetReplicatorParams{
+	body, err := json.Marshal(CreateReplicatorParams{
 		Addresses:   addresses,
-		Collections: collections,
+		Collections: opt.CollectionNames,
 	})
 	if err != nil {
 		return err
@@ -116,18 +128,16 @@ func (c *Client) SetReplicator(
 func (c *Client) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	collections []string,
-	opts ...*options.DeleteReplicatorOptions,
+	opts ...options.Lister[options.DeleteReplicatorOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(DeleteReplicatorParams{
 		ID:          id,
-		Collections: collections,
+		Collections: opt.CollectionNames,
 	})
 	if err != nil {
 		return err
@@ -140,13 +150,12 @@ func (c *Client) DeleteReplicator(
 	return err
 }
 
-func (c *Client) GetAllReplicators(
+func (c *Client) ListReplicators(
 	ctx context.Context,
-	opts ...*options.GetAllReplicatorsOptions,
+	opts ...options.Lister[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
@@ -161,14 +170,13 @@ func (c *Client) GetAllReplicators(
 	return reps, nil
 }
 
-func (c *Client) AddP2PCollections(
+func (c *Client) CreateP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.AddP2PCollectionsOptions,
+	opts ...options.Lister[options.CreateP2PCollectionsOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
@@ -184,14 +192,13 @@ func (c *Client) AddP2PCollections(
 	return err
 }
 
-func (c *Client) RemoveP2PCollections(
+func (c *Client) DeleteP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...*options.RemoveP2PCollectionsOptions,
+	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
@@ -207,13 +214,12 @@ func (c *Client) RemoveP2PCollections(
 	return err
 }
 
-func (c *Client) GetAllP2PCollections(
+func (c *Client) ListP2PCollections(
 	ctx context.Context,
-	opts ...*options.GetAllP2PCollectionsOptions,
+	opts ...options.Lister[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
@@ -228,14 +234,13 @@ func (c *Client) GetAllP2PCollections(
 	return cols, nil
 }
 
-func (c *Client) AddP2PDocuments(
+func (c *Client) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.AddP2PDocumentsOptions,
+	opts ...options.Lister[options.CreateP2PDocumentsOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
@@ -251,14 +256,13 @@ func (c *Client) AddP2PDocuments(
 	return err
 }
 
-func (c *Client) RemoveP2PDocuments(
+func (c *Client) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...*options.RemoveP2PDocumentsOptions,
+	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
@@ -274,10 +278,12 @@ func (c *Client) RemoveP2PDocuments(
 	return err
 }
 
-func (c *Client) GetAllP2PDocuments(ctx context.Context, opts ...*options.GetAllP2PDocumentsOptions) ([]string, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+func (c *Client) ListP2PDocuments(
+	ctx context.Context,
+	opts ...options.Lister[options.ListP2PDocumentsOptions],
+) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 

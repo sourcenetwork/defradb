@@ -15,10 +15,14 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -28,7 +32,7 @@ func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10
@@ -58,6 +62,9 @@ func TestPNCounterCreate_IntKindWithPositiveValue_NoError(t *testing.T) {
 
 func TestPNCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -67,7 +74,7 @@ func TestPNCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10.1
@@ -97,6 +104,9 @@ func TestPNCounterCreate_Float32KindWithPositiveValue_NoError(t *testing.T) {
 
 func TestPNCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
 	test := testUtils.TestCase{
+		// Accumulated CRDT fields (pncounter/pcounter) cannot be indexed.
+		// https://github.com/sourcenetwork/defradb/issues/4439
+		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -106,7 +116,7 @@ func TestPNCounterCreate_Float64KindWithPositiveValue_NoError(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"points": 10.1

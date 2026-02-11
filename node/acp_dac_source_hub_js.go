@@ -15,16 +15,17 @@ package node
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/acp/dac"
-	"github.com/sourcenetwork/defradb/client/options"
+
+	"github.com/sourcenetwork/immutable"
 )
 
+const SourceHubDocumentACPType DocumentACPType = "source-hub"
+
 func init() {
-	documentACPConstructors[options.NodeSourceHubDocumentACPType] = func(
+	documentACPConstructors[SourceHubDocumentACPType] = func(
 		ctx context.Context,
-		opts *options.NodeDocumentACPOptions,
+		options *DocumentACPOptions,
 	) (immutable.Option[dac.DocumentACP], error) {
 		acpSourceHub := dac.NewSourceHubDocumentACP()
 		return immutable.Some(acpSourceHub), nil

@@ -20,7 +20,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
@@ -58,52 +57,52 @@ type Node struct {
 	server *http.Server
 	// config values after applying options
 	config *Config
-	// opts contains the unified node options
-	opts *options.NodeOptions
+	// options the node was created with
+	options []Option
 	// the URL the API is served at.
 	APIURL string
 }
 
 // New returns a new node instance configured with the given options.
-// If no options are provided, default options are used.
-func New(ctx context.Context, opts ...*options.NodeOptions) (*Node, error) {
-	var nodeOpts *options.NodeOptions
-	if len(opts) > 0 && opts[0] != nil {
-		nodeOpts = opts[0]
-	} else {
-		nodeOpts = options.Node()
-	}
+func New(ctx context.Context, options ...Option) (*Node, error) {
 	n := Node{
-		config: DefaultConfig(),
-		opts:   nodeOpts,
+		config:  DefaultConfig(),
+		options: options,
 	}
-	n.config.applyNodeOptions(nodeOpts)
+	for _, opt := range filterOptions[NodeOpt](options) {
+		opt(n.config)
+	}
 	return &n, nil
 }
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	rootstore, isValueSizeLimited, err := NewStore(ctx, &n.opts.Store)
+	rootstore, isValueSizeLimited, err := NewStore(ctx, filterOptions[StoreOpt](n.options)...)
+	if err != nil {
+		return err
+	}
+	documentACP, err := NewDocumentACP(ctx, filterOptions[DocumentACPOpt](n.options)...)
 	if err != nil {
 		return err
 	}
 
-	documentACP, err := NewDocumentACP(ctx, &n.opts.DocumentACP)
-	if err != nil {
-		return err
-	}
-
-	nodeACP, err := NewNodeACP(ctx, &n.opts.NodeACP)
+	nodeACP, err := NewNodeACP(ctx, filterOptions[NodeACPOpt](n.options)...)
 	if err != nil {
 		return err
 	}
 
 	var chunkSize immutable.Option[int]
-	var lensOpts []lensNode.Option
 	if isValueSizeLimited {
 		chunkSize = immutable.Some(defaultChunkSize)
-		lensOpts = append(lensOpts, lensNode.WithBlockstoreChunkSize(defaultChunkSize))
-		n.opts.DB.ChunkSize = immutable.Some(defaultChunkSize)
+
+		n.options = append(n.options,
+			db.WithLensOpts(
+				lensNode.WithBlockstoreChunkSize(defaultChunkSize),
+			),
+		)
+		n.options = append(n.options,
+			db.WithBlockStoreChunkSize(defaultChunkSize),
+		)
 	}
 
 	err = n.startP2P(ctx, rootstore, chunkSize)
@@ -111,50 +110,12 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	dbOpts := n.buildDBOptions(lensOpts)
-
-	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, dbOpts...)
+	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, filterOptions[db.Option](n.options)...)
 	if err != nil {
 		return err
 	}
 
 	return n.startAPI(ctx)
-}
-
-// buildDBOptions converts NodeDBOptions to db.Option slice.
-func (n *Node) buildDBOptions(lensOpts []lensNode.Option) []db.Option {
-	dbConfig := &n.opts.DB
-	var opts []db.Option
-
-	if dbConfig.MaxTxnRetries.HasValue() {
-		opts = append(opts, db.WithMaxRetries(dbConfig.MaxTxnRetries.Value()))
-	}
-	if dbConfig.Identity.HasValue() {
-		opts = append(opts, db.WithNodeIdentity(dbConfig.Identity.Value()))
-	}
-	opts = append(opts, db.WithEnabledSigning(dbConfig.EnableSigning))
-	if len(dbConfig.SearchableEncryptionKey) > 0 {
-		opts = append(opts, db.WithSearchableEncryptionKey(dbConfig.SearchableEncryptionKey))
-	}
-	if len(dbConfig.RetryIntervals) > 0 {
-		opts = append(opts, db.WithRetryInterval(dbConfig.RetryIntervals))
-	}
-	if dbConfig.P2PBlockSyncTimeout > 0 {
-		opts = append(opts, db.WithP2PBlockSyncTimeout(dbConfig.P2PBlockSyncTimeout))
-	}
-	if dbConfig.LensRuntime != "" {
-		opts = append(opts, db.WithLensRuntime(db.LensRuntimeType(dbConfig.LensRuntime)))
-	}
-	if len(lensOpts) > 0 {
-		opts = append(opts, db.WithLensOpts(lensOpts...))
-	}
-	if dbConfig.ChunkSize.HasValue() {
-		opts = append(opts, db.WithBlockStoreChunkSize(dbConfig.ChunkSize.Value()))
-	}
-	if n.peer != nil {
-		opts = append(opts, db.WithP2P(n.peer))
-	}
-	return opts
 }
 
 // Close stops the node sub-systems.
@@ -197,7 +158,7 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 		return err
 	}
 
-	err = purgeStore(ctx, &n.opts.Store)
+	err = purgeStore(ctx, filterOptions[StoreOpt](n.options)...)
 	if err != nil {
 		return err
 	}

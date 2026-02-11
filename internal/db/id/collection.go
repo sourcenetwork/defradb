@@ -14,13 +14,37 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
+// GetUncachedShortCollectionID returns the local, shortened, internal, collection id, which is used
+// only in locations where using the full CID would be a waste of storage space.
+//
+// GetShortCollectionID should be preferred over this method because it utilizes the cache.
+func GetUncachedShortCollectionID(
+	ctx context.Context,
+	collectionID string,
+	systemStore corekv.ReaderWriter,
+) (uint32, error) {
+	key := keys.NewCollectionID(collectionID)
+	valueBytes, err := systemStore.Get(ctx, key.Bytes())
+	if err != nil {
+		return 0, err
+	}
+	v, err := strconv.ParseUint(string(valueBytes), 10, 0)
+	if err != nil {
+		return 0, err
+	}
+	return uint32(v), nil
+}
+
 // GetShortCollectionID returns the local, shortened, internal, collection id, which is used
 // only in locations where using the full CID would be a waste of storage space.
+//
+// This method should be preferred over NewShortCollectionID because it utilizes the cache.
 func GetShortCollectionID(
 	ctx context.Context,
 	collectionID string,
@@ -30,21 +54,11 @@ func GetShortCollectionID(
 	if ok {
 		return shortID, nil
 	}
-
-	key := keys.NewCollectionID(collectionID)
-
 	txn := datastore.CtxMustGetTxn(ctx)
-	valueBytes, err := txn.Systemstore().Get(ctx, key.Bytes())
+	shortID, err := GetUncachedShortCollectionID(ctx, collectionID, txn.Systemstore())
 	if err != nil {
 		return 0, err
 	}
-
-	v, err := strconv.ParseUint(string(valueBytes), 10, 0)
-	if err != nil {
-		return 0, err
-	}
-	shortID = uint32(v)
-
 	cache[collectionID] = shortID
 	return shortID, nil
 }

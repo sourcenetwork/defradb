@@ -274,6 +274,14 @@ func (m *orderedMap) appendChild(key string, childIndex int, value core.Doc, map
 		index = len(m.values)
 
 		parent = mapping.NewDoc()
+		// Copy non-child fields from the child document to the new parent.
+		// This ensures groupBy fields are properly set even if the parent
+		// document never arrives (e.g., due to filtering).
+		for i, fieldValue := range value.Fields {
+			if i != childIndex && i < len(parent.Fields) {
+				parent.Fields[i] = fieldValue
+			}
+		}
 		m.values = append(m.values, parent)
 
 		m.indexesByKey[key] = index

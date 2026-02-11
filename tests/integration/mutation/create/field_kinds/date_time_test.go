@@ -28,7 +28,7 @@ func TestMutationCreateFieldKinds_WithDateTime(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"time": "2017-07-23T03:46:56.000Z",
 				},
@@ -63,17 +63,17 @@ func TestMutationCreateFieldKinds_WithDateTimesNanoSecondsAppart(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"time": "2017-07-23T03:46:56.000Z",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"time": "2017-07-23T03:46:56.000000001Z",
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				DocMap: map[string]any{
 					"time": "2017-07-23T03:46:56.000000002Z",
 				},

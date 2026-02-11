@@ -20,9 +20,11 @@ import (
 
 	sse "github.com/vito/go-sse/sse"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -52,11 +54,10 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...*options.CollectionCreateOptions,
+	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	body, err := doc.String()
@@ -69,7 +70,7 @@ func (c *Collection) Create(
 		return err
 	}
 
-	setDocEncryptionFlagIfNeeded(req, opts)
+	setDocEncryptionFlagIfNeeded(req, opt)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -82,11 +83,10 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...*options.CollectionCreateOptions,
+	opts ...options.Lister[options.CollectionCreateOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	var docMapList []json.RawMessage
@@ -108,7 +108,7 @@ func (c *Collection) CreateMany(
 		return err
 	}
 
-	setDocEncryptionFlagIfNeeded(req, opts)
+	setDocEncryptionFlagIfNeeded(req, opt)
 
 	_, err = c.http.request(req)
 	if err != nil {
@@ -121,12 +121,7 @@ func (c *Collection) CreateMany(
 	return nil
 }
 
-func setDocEncryptionFlagIfNeeded(req *http.Request, opts []*options.CollectionCreateOptions) {
-	if len(opts) == 0 || opts[0] == nil {
-		return
-	}
-	opt := opts[0]
-
+func setDocEncryptionFlagIfNeeded(req *http.Request, opt *options.CollectionCreateOptions) {
 	q := req.URL.Query()
 	if opt.EncryptDoc {
 		q.Set(docEncryptParam, "true")
@@ -142,11 +137,10 @@ func setDocEncryptionFlagIfNeeded(req *http.Request, opts []*options.CollectionC
 func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...*options.CollectionUpdateOptions,
+	opts ...options.Lister[options.CollectionUpdateOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, doc.ID().String())
 
 	body, err := doc.ToJSONPatch()
@@ -169,33 +163,29 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...*options.CollectionSaveOptions,
+	opts ...options.Lister[options.CollectionSaveOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
+	opt := utils.NewOptions(opts...)
+
+	getOpts := options.CollectionGet()
+	if opt.GetIdentity().HasValue() {
+		getOpts.SetIdentity(opt.GetIdentity().Value())
 	}
-	var getOpts *options.CollectionGetOptions
-	if len(opts) > 0 && opts[0] != nil && opts[0].GetIdentity().HasValue() {
-		getOpts = options.CollectionGet().SetIdentity(opts[0].GetIdentity().Value())
-	}
-	_, err := c.Get(ctx, doc.ID(), true, getOpts)
+	_, err := c.Get(ctx, doc.ID(), getOpts.SetShowDeleted(true))
 	if err == nil {
-		var updateOpts *options.CollectionUpdateOptions
-		if len(opts) > 0 && opts[0] != nil && opts[0].GetIdentity().HasValue() {
-			updateOpts = options.CollectionUpdate().SetIdentity(opts[0].GetIdentity().Value())
+		updateOpts := options.CollectionUpdate()
+		if opt.GetIdentity().HasValue() {
+			updateOpts.SetIdentity(opt.GetIdentity().Value())
 		}
 		return c.Update(ctx, doc, updateOpts)
 	}
 	if errors.Is(err, client.ErrDocumentNotFoundOrNotAuthorized) {
-		var createOpts *options.CollectionCreateOptions
-		if len(opts) > 0 && opts[0] != nil {
-			createOpts = options.CollectionCreate().
-				SetEncryptDoc(opts[0].EncryptDoc).
-				SetEncryptedFields(opts[0].EncryptedFields)
+		createOpts := options.CollectionCreate().
+			SetEncryptDoc(opt.EncryptDoc).
+			SetEncryptedFields(opt.EncryptedFields)
 
-			if opts[0].GetIdentity().HasValue() {
-				createOpts = createOpts.SetIdentity(opts[0].GetIdentity().Value())
-			}
+		if opt.GetIdentity().HasValue() {
+			createOpts.SetIdentity(opt.GetIdentity().Value())
 		}
 
 		return c.Create(ctx, doc, createOpts)
@@ -206,11 +196,10 @@ func (c *Collection) Save(
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...*options.CollectionDeleteOptions,
+	opts ...options.Lister[options.CollectionDeleteOptions],
 ) (bool, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, docID.String())
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)
@@ -228,12 +217,11 @@ func (c *Collection) Delete(
 func (c *Collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...*options.CollectionExistsOptions,
+	opts ...options.Lister[options.CollectionExistsOptions],
 ) (bool, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
-	_, err := c.Get(ctx, docID, false)
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+	_, err := c.Get(ctx, docID)
 	if err != nil {
 		return false, err
 	}
@@ -244,11 +232,10 @@ func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
-	opts ...*options.CollectionUpdateWithFilterOptions,
+	opts ...options.Lister[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	request := CollectionUpdateRequest{
@@ -275,11 +262,10 @@ func (c *Collection) UpdateWithFilter(
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
-	opts ...*options.CollectionDeleteWithFilterOptions,
+	opts ...options.Lister[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
 	request := CollectionDeleteRequest{
@@ -306,14 +292,12 @@ func (c *Collection) DeleteWithFilter(
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	showDeleted bool,
-	opts ...*options.CollectionGetOptions,
+	opts ...options.Lister[options.CollectionGetOptions],
 ) (*client.Document, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	query := url.Values{}
-	if showDeleted {
+	if opt.ShowDeleted {
 		query.Add("show_deleted", "true")
 	}
 
@@ -343,11 +327,10 @@ func (c *Collection) Get(
 
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
-	opts ...*options.CollectionGetAllDocIDsOptions,
+	opts ...options.Lister[options.CollectionGetAllDocIDsOptions],
 ) (<-chan client.DocIDResult, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name)
 
@@ -404,11 +387,10 @@ func (c *Collection) GetAllDocIDs(
 func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
-	opts ...*options.CollectionCreateIndexOptions,
+	opts ...options.Lister[options.CollectionCreateIndexOptions],
 ) (client.IndexDescription, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes")
 
 	body, err := json.Marshal(&indexDesc)
@@ -429,11 +411,10 @@ func (c *Collection) CreateIndex(
 func (c *Collection) DropIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...*options.CollectionDropIndexOptions,
+	opts ...options.Lister[options.CollectionDropIndexOptions],
 ) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes", indexName)
 
@@ -447,11 +428,10 @@ func (c *Collection) DropIndex(
 
 func (c *Collection) GetIndexes(
 	ctx context.Context,
-	opts ...*options.CollectionGetIndexesOptions,
+	opts ...options.Lister[options.CollectionGetIndexesOptions],
 ) ([]client.IndexDescription, error) {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "indexes")
 
@@ -513,10 +493,9 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 	return err
 }
 
-func (c *Collection) Truncate(ctx context.Context, opts ...*options.CollectionTruncateOptions) error {
-	if len(opts) > 0 && opts[0] != nil {
-		ctx = withOptIdentity(ctx, opts[0])
-	}
+func (c *Collection) Truncate(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "truncate")
 

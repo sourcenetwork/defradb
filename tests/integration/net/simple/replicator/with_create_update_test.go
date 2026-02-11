@@ -33,11 +33,11 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in node `0` after the replicator has
 				// been set up. Its creation and future updates should be synced
 				// across all configured nodes.
@@ -88,11 +88,11 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in node `0` after the replicator has
 				// been set up. Its creation and future updates should be synced
 				// across all configured nodes.
@@ -105,7 +105,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 			// Wait for John to be synced to the target before attempting to update
 			// it.
 			testUtils.WaitForSync{},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -153,21 +153,21 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in all nodes
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				// Replication must happen after creating documents
 				// on both nodes, or a race condition can occur
 				// on the second node when creating the document
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				// This document is created in the second node (target) only
 				NodeID: immutable.Some(1),
 				Doc: `{

@@ -42,11 +42,11 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Chris"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -54,7 +54,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -62,7 +62,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -70,7 +70,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -95,7 +95,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnIndexedField_ShouldFilter(t *tes
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(2),
 			},
 		},
 	}
@@ -128,11 +128,11 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Chris"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -140,7 +140,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -148,7 +148,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -173,7 +173,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterOnNonIndexedField_ShouldNotUseInde
 			},
 			&action.Request{
 				Request:  makeExplainQuery(req),
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(0),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(0),
 			},
 		},
 	}
@@ -204,46 +204,46 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterAndOrderOnIndexedField_ShouldUseIn
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Chris"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Discman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Someman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Jumpman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Galaxy",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPod",
@@ -267,7 +267,7 @@ func TestQueryWithIndexOnOneToMany_IfSubFilterAndOrderOnIndexedField_ShouldUseIn
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// 3 indexFetches: process indexes in order "Discman", "Galaxy", "Jumpman", stop when 2 found
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(3),
 			},
 		},
 	}
@@ -300,15 +300,15 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -316,7 +316,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -324,7 +324,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -332,7 +332,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -361,8 +361,9 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterPer
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// 6 indexFetches: 2 user order + 2 Walkman devices for each user
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(6),
+				// root: 2 indexFetches (user order), subType: 4 indexFetches (2 Walkman devices per user)
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(4).
+					WithLevel("root").WithIndexFetches(2),
 			},
 		},
 	}
@@ -395,15 +396,15 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -411,7 +412,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -419,7 +420,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -427,7 +428,7 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 					"owner":        testUtils.NewDocIndex(0, 1),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Discman",
@@ -450,8 +451,9 @@ func TestQueryWithIndexOnOneToMany_WithOrderOnParentAndSubFilter_ShouldFilterBot
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// 3 indexFetches: 1 for parent filter (Alice) + 2 for Walkman devices
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3),
+				// root: 1 indexFetch (Alice filter), subType: 2 indexFetches (Walkman devices)
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(2).
+					WithLevel("root").WithIndexFetches(1),
 			},
 		},
 	}
@@ -482,36 +484,36 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterOnParentAndSubType_ShouldFilter
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPod",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Galaxy",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Pixel",
@@ -534,7 +536,7 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterOnParentAndSubType_ShouldFilter
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// 2 indexFetches: 1 for parent filter (users with Walkman) + 1 for Galaxy devices
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(2),
 			},
 		},
 	}
@@ -565,29 +567,29 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterValueOnParentAndSubType_ShouldR
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Walkman",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "iPod",
 					"owner": testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model": "Pixel",
@@ -610,7 +612,7 @@ func TestQueryWithIndexOnOneToMany_WithSameFilterValueOnParentAndSubType_ShouldR
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// 2 indexFetches: 1 for parent filter (Walkman) + 1 for sub-filter (same Walkman)
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(2),
 			},
 		},
 	}
@@ -643,15 +645,15 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -659,7 +661,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -667,7 +669,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -675,7 +677,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -683,7 +685,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Pixel",
@@ -706,10 +708,12 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnDiffe
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// 4 indexFetches: 3 for parent filter (3 Walkman devices owned by Alice) + 1 for sub-filter (Sony)
+				// root (User) has no index
+				// subType (Device): 4 indexFetches - 3 for parent filter (3 Walkman devices) + 1 for sub-filter (Sony)
 				// Note: For existence checks, we only need 1 match per user, but currently the index fetcher
 				// doesn't know about parent relationships. https://github.com/sourcenetwork/defradb/issues/4347
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(4),
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
+					WithLevel("subType").WithIndexFetches(4),
 			},
 		},
 	}
@@ -742,15 +746,15 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -758,7 +762,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -766,7 +770,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Pixel",
@@ -789,8 +793,10 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// 2 indexFetches: for parent filter (2 Walkman devices owned by Alice), sub-filter applied in-memory
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				// root (User) has no index
+				// subType (Device): 2 indexFetches for parent filter (2 Walkman devices), sub-filter (manufacturer) applied in-memory
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
+					WithLevel("subType").WithIndexFetches(2),
 			},
 		},
 	}
@@ -823,15 +829,15 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Alice"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 0,
 				Doc:          `{"name": "Bob"}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -839,7 +845,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -847,7 +853,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "iPod",
@@ -855,7 +861,7 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 					"owner":        testUtils.NewDocIndex(0, 0),
 				},
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				CollectionID: 1,
 				DocMap: map[string]any{
 					"model":        "Walkman",
@@ -878,10 +884,11 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnOwnFieldAndRelationAndSubFi
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// 5 indexFetches: 3 device.model fetches (3 Walkman devices: 2 Alice, 1 Bob)
+				// root (User) has no index
+				// subType (Device): 5 indexFetches - 3 device.model fetches (3 Walkman devices)
 				// and 2 device.manufacturer fetches (2 Sony devices)
-				// Note: name="Alice" filter is checked after docID lookup (no index)
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(5),
+				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
+					WithLevel("subType").WithIndexFetches(5),
 			},
 		},
 	}

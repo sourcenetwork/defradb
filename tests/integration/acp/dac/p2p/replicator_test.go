@@ -64,7 +64,7 @@ resources:
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -118,11 +118,11 @@ resources:
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID:   immutable.Some(0),
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{

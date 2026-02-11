@@ -43,21 +43,21 @@ func TestSEReplicator_IfDocCreatedWhileReplicatorIsOffline_ShouldRetry(t *testin
 					}
 				`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
 			testUtils.Close{
 				NodeID: immutable.Some(1),
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "John",
 					"age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				NodeID: immutable.Some(0),
 				Doc: `{
 					"name": "Fred",

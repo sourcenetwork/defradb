@@ -16,36 +16,37 @@ import (
 	"path/filepath"
 
 	"github.com/sourcenetwork/corekv"
-
-	"github.com/sourcenetwork/defradb/client/options"
 )
 
-// TODO: remove all types for backward compatibility
-// StoreType is an alias for options.NodeStoreType for backward compatibility.
-type StoreType = options.NodeStoreType
+type StoreType string
 
 const (
-	// DefaultStore is the default store type.
-	DefaultStore = options.NodeDefaultStore
+	// The Go-enum default StoreType.
+	//
+	// The actual store type that this resolves to depends on the build target.
+	DefaultStore StoreType = ""
 )
 
 // storeConstructors is a map of [StoreType]s to store constructors.
 //
 // Is is populated by the `init` functions in the runtime-specific files - this
 // allows it's population to be managed by build flags.
-var storeConstructors = map[StoreType]func(
-	ctx context.Context,
-	opts *options.NodeStoreOptions,
-) (corekv.TxnStore, error){}
+var storeConstructors = map[StoreType]func(ctx context.Context, options *StoreOptions) (corekv.TxnStore, error){}
 
 // storePurgeFuncs is a map of [StoreType]s to store purge functions.
 //
 // Is is populated by the `init` functions in the runtime-specific files - this
 // allows it's population to be managed by build flags.
-var storePurgeFuncs = map[StoreType]func(ctx context.Context, opts *options.NodeStoreOptions) error{}
+var storePurgeFuncs = map[StoreType]func(ctx context.Context, options *StoreOptions) error{}
 
-// StoreOptions is an alias for options.NodeStoreOptions for backward compatibility.
-type StoreOptions = options.NodeStoreOptions
+// StoreOptions contains store configuration values.
+type StoreOptions struct {
+	store               StoreType
+	path                string
+	badgerFileSize      int64
+	badgerEncryptionKey []byte
+	badgerInMemory      bool
+}
 
 // GetDefaultStorePath is a helper function that returns '$HOME/.defradb', but which
 // relies on Go to handle the platform-specific path resolution.
@@ -60,41 +61,60 @@ func GetDefaultStorePath() string {
 }
 
 // DefaultStoreOptions returns new options with default values.
-func DefaultStoreOptions() *options.NodeStoreOptions {
-	return options.NodeStore().SetPath(GetDefaultStorePath())
+func DefaultStoreOptions() *StoreOptions {
+	return &StoreOptions{
+		path:           GetDefaultStorePath(),
+		badgerInMemory: false,
+		badgerFileSize: 1 << 30,
+	}
+}
+
+// StoreOpt is a function for setting configuration values.
+type StoreOpt func(*StoreOptions)
+
+// WithStoreType sets the store type to use.
+func WithStoreType(store StoreType) StoreOpt {
+	return func(o *StoreOptions) {
+		o.store = store
+	}
+}
+
+// WithStorePath sets the store path.
+func WithStorePath(path string) StoreOpt {
+	return func(o *StoreOptions) {
+		o.path = path
+	}
 }
 
 // NewStore returns a new store with the given options.
-func NewStore(ctx context.Context, opts ...*options.NodeStoreOptions) (corekv.TxnStore, bool, error) {
-	var opt *options.NodeStoreOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
-	if opt == nil {
-		opt = DefaultStoreOptions()
+func NewStore(ctx context.Context, opts ...StoreOpt) (corekv.TxnStore, bool, error) {
+	options := DefaultStoreOptions()
+	for _, opt := range opts {
+		opt(options)
 	}
 
 	var isValueSizeLimited bool
-	if opt.BadgerInMemory {
+	if options.badgerInMemory {
 		isValueSizeLimited = true
 	}
 
-	storeConstructor, ok := storeConstructors[opt.Store]
+	storeConstructor, ok := storeConstructors[options.store]
 	if ok {
-		store, err := storeConstructor(ctx, opt)
+		store, err := storeConstructor(ctx, options)
 		return store, isValueSizeLimited, err
 	}
 
-	return nil, false, NewErrStoreTypeNotSupported(opt.Store)
+	return nil, false, NewErrStoreTypeNotSupported(options.store)
 }
 
-func purgeStore(ctx context.Context, opts *options.NodeStoreOptions) error {
-	if opts == nil {
-		opts = DefaultStoreOptions()
+func purgeStore(ctx context.Context, opts ...StoreOpt) error {
+	options := DefaultStoreOptions()
+	for _, opt := range opts {
+		opt(options)
 	}
-	purgeFunc, ok := storePurgeFuncs[opts.Store]
+	purgeFunc, ok := storePurgeFuncs[options.store]
 	if ok {
-		return purgeFunc(ctx, opts)
+		return purgeFunc(ctx, options)
 	}
-	return NewErrStoreTypeNotSupported(opts.Store)
+	return NewErrStoreTypeNotSupported(options.store)
 }

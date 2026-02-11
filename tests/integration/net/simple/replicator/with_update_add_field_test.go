@@ -31,16 +31,16 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersionMultistep(t
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the schema on the node that we will update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `
@@ -116,16 +116,16 @@ func TestP2PReplicatorUpdateWithNewFieldSyncsDocsToOlderSchemaVersion(t *testing
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John"
 				}`,
 			},
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				// Patch the schema on the node that we will directly update the doc on
 				NodeID: immutable.Some(0),
 				Patch: `

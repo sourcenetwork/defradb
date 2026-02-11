@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
@@ -29,33 +30,16 @@ func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSiz
 		return nil
 	}
 
-	p2pConfig := &n.opts.P2P
-	var p2pOpts []p2p.NodeOpt
+	n.options = append(n.options, p2p.WithBlockstore(datastore.P2PBlockstoreFrom(store, chunkSize)))
 
-	if len(p2pConfig.ListenAddresses) > 0 {
-		p2pOpts = append(p2pOpts, p2p.WithListenAddresses(p2pConfig.ListenAddresses...))
-	}
-	if len(p2pConfig.BootstrapPeers) > 0 {
-		p2pOpts = append(p2pOpts, p2p.WithBootstrapPeers(p2pConfig.BootstrapPeers...))
-	}
-	if p2pConfig.EnablePubSub {
-		p2pOpts = append(p2pOpts, p2p.WithEnablePubSub(true))
-	}
-	if p2pConfig.EnableRelay {
-		p2pOpts = append(p2pOpts, p2p.WithEnableRelay(true))
-	}
-	if p2pConfig.EnableClearBackoffOnRetry {
-		p2pOpts = append(p2pOpts, p2p.WithClearBackoffOnRetry(true))
-	}
-	if len(p2pConfig.PrivateKey) > 0 {
-		p2pOpts = append(p2pOpts, p2p.WithPrivateKey(p2pConfig.PrivateKey))
-	}
-	p2pOpts = append(p2pOpts, p2p.WithBlockstore(datastore.P2PBlockstoreFrom(store, chunkSize)))
-
-	peer, err := p2p.NewPeer(ctx, p2pOpts...)
+	peer, err := p2p.NewPeer(
+		ctx,
+		filterOptions[p2p.NodeOpt](n.options)...,
+	)
 	if err != nil {
 		return err
 	}
+	n.options = append(n.options, db.WithP2P(peer))
 	n.peer = peer
 	return nil
 }

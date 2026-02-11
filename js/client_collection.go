@@ -127,7 +127,7 @@ type createOptionsInput struct {
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
-func getCreateOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]*options.CollectionCreateOptions, error) {
+func getCreateOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]options.Lister[options.CollectionCreateOptions], error) {
 	var input createOptionsInput
 	if err := structArg(args, argIndex, "options", &input); err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func getCreateOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]
 		opt.SetEncryptedFields(input.EncryptedFields)
 	}
 	setOptIdentity(opt, args, ctxArgIndex)
-	return []*options.CollectionCreateOptions{opt}, nil
+	return []options.Lister[options.CollectionCreateOptions]{opt}, nil
 }
 
 func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, error) {
@@ -161,7 +161,9 @@ func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, err
 	if err != nil {
 		return js.Undefined(), err
 	}
-	doc, err := c.col.Get(ctx, docID, true)
+	getOpt := options.CollectionGet().SetShowDeleted(true)
+	setOptIdentity(getOpt, args, 2)
+	doc, err := c.col.Get(ctx, docID, getOpt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -275,9 +277,9 @@ func (c *clientCollection) get(this js.Value, args []js.Value) (js.Value, error)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CollectionGet()
+	opt := options.CollectionGet().SetShowDeleted(showDeleted)
 	setOptIdentity(opt, args, 2)
-	doc, err := c.col.Get(ctx, docID, showDeleted, opt)
+	doc, err := c.col.Get(ctx, docID, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -398,6 +400,8 @@ func (c *clientCollection) truncate(this js.Value, args []js.Value) (js.Value, e
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.Truncate(ctx)
+	opt := options.CollectionTruncate()
+	setOptIdentity(opt, args, 0)
+	err = c.col.Truncate(ctx, opt)
 	return js.Undefined(), err
 }

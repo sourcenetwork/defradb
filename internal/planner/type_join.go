@@ -201,24 +201,9 @@ func (n *typeIndexJoin) Explain(explainType request.ExplainType) (map[string]any
 		return n.simpleExplain()
 
 	case request.ExecuteExplain:
-		result := map[string]any{
+		return map[string]any{
 			"iterations": n.execInfo.iterations,
-		}
-		var subScan *scanNode
-		if joinMany, isJoinMany := n.joinPlan.(*typeJoinMany); isJoinMany {
-			subScan = getNode[*scanNode](joinMany.childSide.plan)
-		}
-		if joinOne, isJoinOne := n.joinPlan.(*typeJoinOne); isJoinOne {
-			subScan = getNode[*scanNode](joinOne.childSide.plan)
-		}
-		if subScan != nil {
-			subScanExplain, err := subScan.Explain(explainType)
-			if err != nil {
-				return nil, err
-			}
-			result["subTypeScanNode"] = subScanExplain
-		}
-		return result, nil
+		}, nil
 
 	default:
 		return nil, ErrUnknownExplainRequestType
@@ -518,6 +503,10 @@ func (join *invertibleTypeJoin) replaceRoot(node planNode) {
 }
 
 func (join *invertibleTypeJoin) Init() error {
+	// Clear state from previous iterations to ensure fresh iteration when reinitializing.
+	// This is important for aggregates where we iterate multiple times for different parent docs.
+	join.encounteredDocIDs = nil
+	join.docsToYield = nil
 	if err := join.childSide.plan.Init(); err != nil {
 		return err
 	}
@@ -544,6 +533,9 @@ func (join *invertibleTypeJoin) Prefixes(prefixes []keys.Walkable) {
 }
 
 func (join *invertibleTypeJoin) Source() planNode { return join.parentSide.plan }
+
+func (join *invertibleTypeJoin) parentPlan() planNode { return join.parentSide.plan }
+func (join *invertibleTypeJoin) childPlan() planNode  { return join.childSide.plan }
 
 type primaryObjectsRetriever struct {
 	relIDFieldDef client.CollectionFieldDescription
@@ -802,7 +794,6 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 	}
 
 	secondaryDocOpt, err := fetchDocWithIDAndItsSubDocs(secondSide.plan, secondaryDocID)
-
 	if err != nil {
 		return false, err
 	}

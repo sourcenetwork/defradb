@@ -48,14 +48,12 @@ func (a *Truncate) Execute() {
 		nodeID := nodeIDs[index]
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionIndex]
 
-		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
-
 		opts := options.CollectionTruncate()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
-		err := collection.Truncate(ctx, opts)
+		err := collection.Truncate(a.s.Ctx, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

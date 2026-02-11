@@ -97,7 +97,9 @@ const (
 	NodeIndexListPerm
 	NodeIndexCreatePerm
 	NodeIndexDropPerm
+	NodeP2PPeerInfo
 	NodeP2PPeerConnectPerm
+	NodeP2PPeerActivePerm
 	NodeP2PReplicatorCreatePerm
 	NodeP2PReplicatorDeletePerm
 	NodeP2PReplicatorListPerm
@@ -108,6 +110,8 @@ const (
 	NodeP2PDocumentDeletePerm
 	NodeP2PDocumentListPerm
 	NodeSignatureVerifyPerm
+	NodeLensCreatePerm
+	NodeLensListPerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
@@ -137,7 +141,9 @@ var RequiredResourcePermissionsForNode = []string{
 	"index-list",
 	"index-create",
 	"index-drop",
+	"p2p-peer-info",
 	"p2p-peer-connect",
+	"p2p-peer-active",
 	"p2p-replicator-create",
 	"p2p-replicator-delete",
 	"p2p-replicator-list",
@@ -148,6 +154,8 @@ var RequiredResourcePermissionsForNode = []string{
 	"p2p-document-delete",
 	"p2p-document-list",
 	"signature-verify",
+	"lens-create",
+	"lens-list",
 }
 
 const NodeACPObject = "NodeObject"
@@ -211,7 +219,11 @@ resources:
   - name: index-drop
     expr: admin
 
+  - name: p2p-peer-info
+    expr: admin
   - name: p2p-peer-connect
+    expr: admin
+  - name: p2p-peer-active
     expr: admin
   - name: p2p-replicator-create
     expr: admin
@@ -233,6 +245,11 @@ resources:
     expr: admin
 
   - name: signature-verify
+    expr: admin
+
+  - name: lens-create
+    expr: admin
+  - name: lens-list
     expr: admin
 
   relations:

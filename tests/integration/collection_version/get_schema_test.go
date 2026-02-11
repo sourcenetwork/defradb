@@ -85,7 +85,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 					type Books {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} },
@@ -162,7 +162,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 					type Books {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} },
@@ -229,7 +229,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 					type Books {}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				Patch: `
 					[
 						{ "op": "add", "path": "/Users/Fields/-", "value": {"Name": "name", "Kind": "String"} },

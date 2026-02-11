@@ -18,15 +18,13 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
-	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // VerifySignature verifies the signatures of a block using a public key.
@@ -35,14 +33,11 @@ func (db *DB) VerifySignature(
 	ctx context.Context,
 	blockCid string,
 	pubKey crypto.PublicKey,
-	opts ...*options.VerifySignatureOptions,
+	opts ...options.Lister[options.VerifySignatureOptions],
 ) error {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeSignatureVerifyPerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeSignatureVerifyPerm); err != nil {
 		return err
 	}
 
@@ -72,14 +67,14 @@ func (db *DB) VerifySignature(
 
 	if db.documentACP.HasValue() {
 		docID := string(block.Delta.GetDocID())
-		collection, err := NewCollectionRetriever(db).WithIdentity(ident).RetrieveCollectionFromDocID(ctx, docID)
+		collection, err := NewCollectionRetriever(db).WithIdentity(opt.Identity).RetrieveCollectionFromDocID(ctx, docID)
 		if err != nil {
 			return err
 		}
 
 		hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
 			ctx,
-			ident,
+			opt.Identity,
 			db.nodeACP,
 			db.documentACP.Value(),
 			collection,

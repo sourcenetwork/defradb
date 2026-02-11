@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -26,32 +26,46 @@ type CollectionCreateOptions struct {
 	EncryptedFields []string
 }
 
-// CollectionCreate creates a new CollectionCreateOptions instance.
-func CollectionCreate() *CollectionCreateOptions {
-	return &CollectionCreateOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionCreateOptions) SetIdentity(id identity.Identity) *CollectionCreateOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionCreateOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
+// CollectionCreateOptionsBuilder is a builder for CollectionCreateOptions.
+type CollectionCreateOptionsBuilder struct {
+	enumerableBuilder[CollectionCreateOptions]
+}
+
+// CollectionCreate creates a new CollectionCreateOptionsBuilder instance.
+func CollectionCreate() *CollectionCreateOptionsBuilder {
+	return &CollectionCreateOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionCreateOptionsBuilder) SetIdentity(id identity.Identity) *CollectionCreateOptionsBuilder {
+	b.append(func(opts *CollectionCreateOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
 // SetEncryptDoc enables or disables document encryption.
-func (o *CollectionCreateOptions) SetEncryptDoc(encrypt bool) *CollectionCreateOptions {
-	o.EncryptDoc = encrypt
-	return o
+func (b *CollectionCreateOptionsBuilder) SetEncryptDoc(encrypt bool) *CollectionCreateOptionsBuilder {
+	b.append(func(opts *CollectionCreateOptions) {
+		opts.EncryptDoc = encrypt
+	})
+	return b
 }
 
 // SetEncryptedFields specifies fields to be encrypted.
-func (o *CollectionCreateOptions) SetEncryptedFields(fields []string) *CollectionCreateOptions {
-	o.EncryptedFields = fields
-	return o
+func (b *CollectionCreateOptionsBuilder) SetEncryptedFields(fields []string) *CollectionCreateOptionsBuilder {
+	b.append(func(opts *CollectionCreateOptions) {
+		if fields != nil {
+			opts.EncryptedFields = make([]string, len(fields))
+			copy(opts.EncryptedFields, fields)
+		}
+	})
+	return b
 }
 
 // CollectionUpdateOptions contains options for Update operation.
@@ -60,58 +74,36 @@ type CollectionUpdateOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-// CollectionUpdate creates a new CollectionUpdateOptions instance.
-func CollectionUpdate() *CollectionUpdateOptions {
-	return &CollectionUpdateOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionUpdateOptions) SetIdentity(id identity.Identity) *CollectionUpdateOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionUpdateOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// CollectionSaveOptions contains options for Save operation.
-type CollectionSaveOptions struct {
-	// Identity is the identity of the actor performing the operation.
-	Identity immutable.Option[identity.Identity]
-	// EncryptDoc enables document encryption when creating a document.
-	EncryptDoc bool
-	// EncryptedFields specifies a list of fields to be encrypted.
-	EncryptedFields []string
+// CollectionUpdateOptionsBuilder is a builder for CollectionUpdateOptions.
+type CollectionUpdateOptionsBuilder struct {
+	enumerableBuilder[CollectionUpdateOptions]
 }
 
-// CollectionSave creates a new CollectionSaveOptions instance.
-func CollectionSave() *CollectionSaveOptions {
-	return &CollectionSaveOptions{}
+// CollectionUpdate creates a new CollectionUpdateOptionsBuilder instance.
+func CollectionUpdate() *CollectionUpdateOptionsBuilder {
+	return &CollectionUpdateOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (o *CollectionSaveOptions) SetIdentity(id identity.Identity) *CollectionSaveOptions {
-	o.Identity = immutable.Some(id)
-	return o
+func (b *CollectionUpdateOptionsBuilder) SetIdentity(id identity.Identity) *CollectionUpdateOptionsBuilder {
+	b.append(func(opts *CollectionUpdateOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
 }
 
-// GetIdentity returns the identity for the operation.
-func (o *CollectionSaveOptions) GetIdentity() immutable.Option[identity.Identity] {
-	return o.Identity
-}
+type CollectionSaveOptions = CollectionCreateOptions
 
-// SetEncryptDoc enables or disables document encryption.
-func (o *CollectionSaveOptions) SetEncryptDoc(encrypt bool) *CollectionSaveOptions {
-	o.EncryptDoc = encrypt
-	return o
-}
+type CollectionSaveOptionsBuilder = CollectionCreateOptionsBuilder
 
-// SetEncryptedFields specifies fields to be encrypted.
-func (o *CollectionSaveOptions) SetEncryptedFields(fields []string) *CollectionSaveOptions {
-	o.EncryptedFields = fields
-	return o
+// CollectionSave creates a new CollectionSaveOptionsBuilder instance.
+func CollectionSave() *CollectionSaveOptionsBuilder {
+	return &CollectionSaveOptionsBuilder{}
 }
 
 // CollectionDeleteOptions contains options for Delete operation.
@@ -120,42 +112,66 @@ type CollectionDeleteOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-// CollectionDelete creates a new CollectionDeleteOptions instance.
-func CollectionDelete() *CollectionDeleteOptions {
-	return &CollectionDeleteOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionDeleteOptions) SetIdentity(id identity.Identity) *CollectionDeleteOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionDeleteOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// CollectionDeleteOptionsBuilder is a builder for CollectionDeleteOptions.
+type CollectionDeleteOptionsBuilder struct {
+	enumerableBuilder[CollectionDeleteOptions]
+}
+
+// CollectionDelete creates a new CollectionDeleteOptionsBuilder instance.
+func CollectionDelete() *CollectionDeleteOptionsBuilder {
+	return &CollectionDeleteOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionDeleteOptionsBuilder) SetIdentity(id identity.Identity) *CollectionDeleteOptionsBuilder {
+	b.append(func(opts *CollectionDeleteOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
 }
 
 // CollectionGetOptions contains options for Get operation.
 type CollectionGetOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
-}
-
-// CollectionGet creates a new CollectionGetOptions instance.
-func CollectionGet() *CollectionGetOptions {
-	return &CollectionGetOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionGetOptions) SetIdentity(id identity.Identity) *CollectionGetOptions {
-	o.Identity = immutable.Some(id)
-	return o
+	// ShowDeleted specifies whether to return deleted documents.
+	ShowDeleted bool
 }
 
 // GetIdentity returns the identity for the operation.
 func (o *CollectionGetOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// CollectionGetOptionsBuilder is a builder for CollectionGetOptions.
+type CollectionGetOptionsBuilder struct {
+	enumerableBuilder[CollectionGetOptions]
+}
+
+// CollectionGet creates a new CollectionGetOptionsBuilder instance.
+func CollectionGet() *CollectionGetOptionsBuilder {
+	return &CollectionGetOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionGetOptionsBuilder) SetIdentity(id identity.Identity) *CollectionGetOptionsBuilder {
+	b.append(func(opts *CollectionGetOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
+// SetShowDeleted sets whether to return deleted documents.
+func (b *CollectionGetOptionsBuilder) SetShowDeleted(showDeleted bool) *CollectionGetOptionsBuilder {
+	b.append(func(opts *CollectionGetOptions) {
+		opts.ShowDeleted = showDeleted
+	})
+	return b
 }
 
 // CollectionUpdateWithFilterOptions contains options for UpdateWithFilter operation.
@@ -164,20 +180,29 @@ type CollectionUpdateWithFilterOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-// CollectionUpdateWithFilter creates a new CollectionUpdateWithFilterOptions instance.
-func CollectionUpdateWithFilter() *CollectionUpdateWithFilterOptions {
-	return &CollectionUpdateWithFilterOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionUpdateWithFilterOptions) SetIdentity(id identity.Identity) *CollectionUpdateWithFilterOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionUpdateWithFilterOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// CollectionUpdateWithFilterOptionsBuilder is a builder for CollectionUpdateWithFilterOptions.
+type CollectionUpdateWithFilterOptionsBuilder struct {
+	enumerableBuilder[CollectionUpdateWithFilterOptions]
+}
+
+// CollectionUpdateWithFilter creates a new CollectionUpdateWithFilterOptionsBuilder instance.
+func CollectionUpdateWithFilter() *CollectionUpdateWithFilterOptionsBuilder {
+	return &CollectionUpdateWithFilterOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionUpdateWithFilterOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *CollectionUpdateWithFilterOptionsBuilder {
+	b.append(func(opts *CollectionUpdateWithFilterOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
 }
 
 // CollectionDeleteWithFilterOptions contains options for DeleteWithFilter operation.
@@ -186,20 +211,29 @@ type CollectionDeleteWithFilterOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-// CollectionDeleteWithFilter creates a new CollectionDeleteWithFilterOptions instance.
-func CollectionDeleteWithFilter() *CollectionDeleteWithFilterOptions {
-	return &CollectionDeleteWithFilterOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionDeleteWithFilterOptions) SetIdentity(id identity.Identity) *CollectionDeleteWithFilterOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionDeleteWithFilterOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// CollectionDeleteWithFilterOptionsBuilder is a builder for CollectionDeleteWithFilterOptions.
+type CollectionDeleteWithFilterOptionsBuilder struct {
+	enumerableBuilder[CollectionDeleteWithFilterOptions]
+}
+
+// CollectionDeleteWithFilter creates a new CollectionDeleteWithFilterOptionsBuilder instance.
+func CollectionDeleteWithFilter() *CollectionDeleteWithFilterOptionsBuilder {
+	return &CollectionDeleteWithFilterOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionDeleteWithFilterOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *CollectionDeleteWithFilterOptionsBuilder {
+	b.append(func(opts *CollectionDeleteWithFilterOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
 }
 
 // CollectionCreateIndexOptions contains options for CreateIndex operation.
@@ -208,20 +242,27 @@ type CollectionCreateIndexOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-// CollectionCreateIndex creates a new CollectionCreateIndexOptions instance.
-func CollectionCreateIndex() *CollectionCreateIndexOptions {
-	return &CollectionCreateIndexOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionCreateIndexOptions) SetIdentity(id identity.Identity) *CollectionCreateIndexOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionCreateIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// CollectionCreateIndexOptionsBuilder is a builder for CollectionCreateIndexOptions.
+type CollectionCreateIndexOptionsBuilder struct {
+	enumerableBuilder[CollectionCreateIndexOptions]
+}
+
+// CollectionCreateIndex creates a new CollectionCreateIndexOptionsBuilder instance.
+func CollectionCreateIndex() *CollectionCreateIndexOptionsBuilder {
+	return &CollectionCreateIndexOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionCreateIndexOptionsBuilder) SetIdentity(id identity.Identity) *CollectionCreateIndexOptionsBuilder {
+	b.append(func(opts *CollectionCreateIndexOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
 }
 
 // CollectionDropIndexOptions contains options for DropIndex operation.
@@ -230,20 +271,27 @@ type CollectionDropIndexOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-// CollectionDropIndex creates a new CollectionDropIndexOptions instance.
-func CollectionDropIndex() *CollectionDropIndexOptions {
-	return &CollectionDropIndexOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionDropIndexOptions) SetIdentity(id identity.Identity) *CollectionDropIndexOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionDropIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// CollectionDropIndexOptionsBuilder is a builder for CollectionDropIndexOptions.
+type CollectionDropIndexOptionsBuilder struct {
+	enumerableBuilder[CollectionDropIndexOptions]
+}
+
+// CollectionDropIndex creates a new CollectionDropIndexOptionsBuilder instance.
+func CollectionDropIndex() *CollectionDropIndexOptionsBuilder {
+	return &CollectionDropIndexOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionDropIndexOptionsBuilder) SetIdentity(id identity.Identity) *CollectionDropIndexOptionsBuilder {
+	b.append(func(opts *CollectionDropIndexOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
 }
 
 // CollectionGetIndexesOptions contains options for GetIndexes operation.
@@ -252,20 +300,27 @@ type CollectionGetIndexesOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-// CollectionGetIndexes creates a new CollectionGetIndexesOptions instance.
-func CollectionGetIndexes() *CollectionGetIndexesOptions {
-	return &CollectionGetIndexesOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionGetIndexesOptions) SetIdentity(id identity.Identity) *CollectionGetIndexesOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionGetIndexesOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// CollectionGetIndexesOptionsBuilder is a builder for CollectionGetIndexesOptions.
+type CollectionGetIndexesOptionsBuilder struct {
+	enumerableBuilder[CollectionGetIndexesOptions]
+}
+
+// CollectionGetIndexes creates a new CollectionGetIndexesOptionsBuilder instance.
+func CollectionGetIndexes() *CollectionGetIndexesOptionsBuilder {
+	return &CollectionGetIndexesOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionGetIndexesOptionsBuilder) SetIdentity(id identity.Identity) *CollectionGetIndexesOptionsBuilder {
+	b.append(func(opts *CollectionGetIndexesOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
 }
 
 // CollectionGetAllDocIDsOptions contains options for GetAllDocIDs operation.
@@ -274,20 +329,27 @@ type CollectionGetAllDocIDsOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-// CollectionGetAllDocIDs creates a new CollectionGetAllDocIDsOptions instance.
-func CollectionGetAllDocIDs() *CollectionGetAllDocIDsOptions {
-	return &CollectionGetAllDocIDsOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionGetAllDocIDsOptions) SetIdentity(id identity.Identity) *CollectionGetAllDocIDsOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionGetAllDocIDsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// CollectionGetAllDocIDsOptionsBuilder is a builder for CollectionGetAllDocIDsOptions.
+type CollectionGetAllDocIDsOptionsBuilder struct {
+	enumerableBuilder[CollectionGetAllDocIDsOptions]
+}
+
+// CollectionGetAllDocIDs creates a new CollectionGetAllDocIDsOptionsBuilder instance.
+func CollectionGetAllDocIDs() *CollectionGetAllDocIDsOptionsBuilder {
+	return &CollectionGetAllDocIDsOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionGetAllDocIDsOptionsBuilder) SetIdentity(id identity.Identity) *CollectionGetAllDocIDsOptionsBuilder {
+	b.append(func(opts *CollectionGetAllDocIDsOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
 }
 
 // CollectionExistsOptions contains options for Exists operation.
@@ -296,20 +358,27 @@ type CollectionExistsOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-// CollectionExists creates a new CollectionExistsOptions instance.
-func CollectionExists() *CollectionExistsOptions {
-	return &CollectionExistsOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionExistsOptions) SetIdentity(id identity.Identity) *CollectionExistsOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionExistsOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// CollectionExistsOptionsBuilder is a builder for CollectionExistsOptions.
+type CollectionExistsOptionsBuilder struct {
+	enumerableBuilder[CollectionExistsOptions]
+}
+
+// CollectionExists creates a new CollectionExistsOptionsBuilder instance.
+func CollectionExists() *CollectionExistsOptionsBuilder {
+	return &CollectionExistsOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionExistsOptionsBuilder) SetIdentity(id identity.Identity) *CollectionExistsOptionsBuilder {
+	b.append(func(opts *CollectionExistsOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
 }
 
 // CollectionTruncateOptions contains options for Truncate operation.
@@ -318,18 +387,25 @@ type CollectionTruncateOptions struct {
 	Identity immutable.Option[identity.Identity]
 }
 
-// CollectionTruncate creates a new CollectionTruncateOptions instance.
-func CollectionTruncate() *CollectionTruncateOptions {
-	return &CollectionTruncateOptions{}
-}
-
-// SetIdentity sets the identity for the operation.
-func (o *CollectionTruncateOptions) SetIdentity(id identity.Identity) *CollectionTruncateOptions {
-	o.Identity = immutable.Some(id)
-	return o
-}
-
 // GetIdentity returns the identity for the operation.
 func (o *CollectionTruncateOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
+}
+
+// CollectionTruncateOptionsBuilder is a builder for CollectionTruncateOptions.
+type CollectionTruncateOptionsBuilder struct {
+	enumerableBuilder[CollectionTruncateOptions]
+}
+
+// CollectionTruncate creates a new CollectionTruncateOptionsBuilder instance.
+func CollectionTruncate() *CollectionTruncateOptionsBuilder {
+	return &CollectionTruncateOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionTruncateOptionsBuilder) SetIdentity(id identity.Identity) *CollectionTruncateOptionsBuilder {
+	b.append(func(opts *CollectionTruncateOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
 }

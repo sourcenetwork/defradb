@@ -85,13 +85,13 @@ resources:
 					`,
 			},
 
-			testUtils.ConfigureReplicator{
+			testUtils.CreateReplicator{
 				SourceNodeID: 0,
 
 				TargetNodeID: 1,
 			},
 
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 
 				NodeID: immutable.Some(0),

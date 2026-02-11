@@ -16,6 +16,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema/types"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -65,40 +66,39 @@ func (a *CreateView) Execute() {
 		}
 
 	default:
-		if a.s.ViewType == state.MaterializedViewType {
-			typeIndex := strings.Index(sdl, "\ttype ")
-			if typeIndex == -1 {
-				a.s.T.Fatal("materialized view SDL must contain '\ttype ' declaration")
-				return
-			}
-
-			subStrSquigglyIndex := strings.Index(sdl[typeIndex:], "{")
-			if subStrSquigglyIndex == -1 {
-				a.s.T.Fatal("materialized view SDL type declaration must contain '{'")
-				return
-			}
-
-			squigglyIndex := typeIndex + subStrSquigglyIndex
-			sdl = strings.Join([]string{
-				sdl[:squigglyIndex],
-				"@",
-				types.MaterializedDirectiveLabel,
-				"(if: ",
-				fmt.Sprint(a.s.ViewType == state.MaterializedViewType),
-				") ",
-				sdl[squigglyIndex:],
-				"",
-			}, "")
+		typeIndex := strings.Index(sdl, "\ttype ")
+		if typeIndex == -1 {
+			a.s.T.Fatal("materialized view SDL must contain '\ttype ' declaration")
+			return
 		}
+
+		subStrSquigglyIndex := strings.Index(sdl[typeIndex:], "{")
+		if subStrSquigglyIndex == -1 {
+			a.s.T.Fatal("materialized view SDL type declaration must contain '{'")
+			return
+		}
+
+		squigglyIndex := typeIndex + subStrSquigglyIndex
+		sdl = strings.Join([]string{
+			sdl[:squigglyIndex],
+			"@",
+			types.MaterializedDirectiveLabel,
+			"(if: ",
+			fmt.Sprint(a.s.ViewType == state.MaterializedViewType),
+			") ",
+			sdl[squigglyIndex:],
+			"",
+		}, "")
 	}
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for i, node := range nodes {
-		transformCID := a.TransformCID
-		if transformCID.HasValue() {
-			transformCID = immutable.Some(replace(a.s, nodeIDs[i], transformCID.Value()))
+		opts := options.AddView()
+		if a.TransformCID.HasValue() {
+			transformCID := replace(a.s, nodeIDs[i], a.TransformCID.Value())
+			opts.SetTransformCID(transformCID)
 		}
-		results, err := node.AddView(a.s.Ctx, a.Query, sdl, transformCID)
+		results, err := node.AddView(a.s.Ctx, a.Query, sdl, opts)
 
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)
@@ -108,4 +108,6 @@ func (a *CreateView) Execute() {
 
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
 	}
+
+	refreshCollections(a.s)
 }

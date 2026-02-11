@@ -13,8 +13,6 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
@@ -26,25 +24,25 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // DeleteWithFilter deletes using a filter to target documents for delete.
 func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
-	opts ...*options.CollectionDeleteWithFilterOptions,
+	opts ...options.Lister[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentDeletePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentDeletePerm); err != nil {
 		return nil, err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {

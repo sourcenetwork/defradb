@@ -19,6 +19,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 )
 
@@ -63,7 +65,8 @@ will return the same CID without duplicating storage.`,
 				return NewErrInvalidLensConfig(err)
 			}
 
-			lensID, err := cliClient.AddLens(cmd.Context(), lensCfg)
+			opt := options.WithIdentity(options.AddLens(), identity.FromContext(cmd.Context()))
+			lensID, err := cliClient.AddLens(cmd.Context(), lensCfg, opt)
 			if err != nil {
 				return err
 			}

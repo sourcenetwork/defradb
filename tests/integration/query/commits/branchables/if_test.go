@@ -37,7 +37,7 @@ func TestQueryCommitsBranchables_WithIfDirectiveTrue(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21
@@ -89,7 +89,7 @@ func TestQueryCommitsBranchables_WithIfDirectiveFalse(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name":	"John",
 					"age":	21

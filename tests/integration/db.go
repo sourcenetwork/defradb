@@ -17,30 +17,20 @@ import (
 	"testing"
 	"time"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/client/options"
+	lensNode "github.com/sourcenetwork/lens/host-go/node"
+
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
-
-// NodeSetupOptions contains options for setting up a node in tests.
-type NodeSetupOptions struct {
-	// P2POpts contains P2P configuration options.
-	P2POpts options.NodeP2POptions
-	// NodeIdentity is the identity to use for the node.
-	NodeIdentity acpIdentity.Identity
-	// EnableNAC enables Node Access Control.
-	EnableNAC bool
-	// RetryIntervals specifies replicator retry intervals.
-	RetryIntervals []time.Duration
-}
 
 const (
 	memoryBadgerEnvName     = "DEFRA_BADGER_MEMORY"
 	fileBadgerEnvName       = "DEFRA_BADGER_FILE"
 	fileBadgerPathEnvName   = "DEFRA_BADGER_FILE_PATH"
 	badgerEncryptionEnvName = "DEFRA_BADGER_ENCRYPTION"
+	levelEnvName            = "DEFRA_LEVEL"
 	inMemoryEnvName         = "DEFRA_IN_MEMORY"
 )
 
@@ -48,12 +38,14 @@ const (
 	BadgerIMType   state.DatabaseType = "badger-in-memory"
 	DefraIMType    state.DatabaseType = "defra-memory-datastore"
 	BadgerFileType state.DatabaseType = "badger-file-system"
+	LevelStoreType state.DatabaseType = "level"
 )
 
 var (
 	badgerInMemory   bool
 	badgerFile       bool
 	inMemoryStore    bool
+	levelStore       bool
 	databaseDir      string
 	badgerEncryption bool
 	encryptionKey    []byte
@@ -65,6 +57,7 @@ func init() {
 	badgerFile, _ = strconv.ParseBool(os.Getenv(fileBadgerEnvName))
 	badgerInMemory, _ = strconv.ParseBool(os.Getenv(memoryBadgerEnvName))
 	inMemoryStore, _ = strconv.ParseBool(os.Getenv(inMemoryEnvName))
+	levelStore, _ = strconv.ParseBool(os.Getenv((levelEnvName)))
 	badgerEncryption, _ = strconv.ParseBool(os.Getenv(badgerEncryptionEnvName))
 
 	if changeDetector.Enabled {
@@ -72,62 +65,68 @@ func init() {
 		badgerFile = true
 		badgerInMemory = false
 		inMemoryStore = false
-	} else if !badgerInMemory && !badgerFile && !inMemoryStore {
+		levelStore = false
+	} else if !badgerInMemory && !badgerFile && !inMemoryStore && !levelStore {
 		// Default is to test all but filesystem db types.
 		badgerFile = false
 		badgerInMemory = true
 		inMemoryStore = false
+		levelStore = false
 	}
 }
 
-func defaultNodeOpts() *options.NodeOptions {
-	nodeOpts := options.Node()
-	// The test framework sets this up elsewhere when required so that it may be wrapped
-	// into a [client.TxnStore].
-	nodeOpts.DisableAPI = true
-	// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
-	// to keep the tests as lightweight as possible.
-	nodeOpts.DisableP2P = true
-	nodeOpts.DB.LensPoolSize = lensPoolSize
-	nodeOpts.DB.LensRuntime = options.NodeLensRuntimeType(lensType)
-	// The default is 5 and that is never going to be needed in a testing scenario where all the
-	// nodes are on the same machine with no network latency.
-	nodeOpts.DB.P2PBlockSyncTimeout = 1 * time.Second
-	return nodeOpts
+func defaultNodeOpts() []node.Option {
+	return []node.Option{
+		db.WithLensOpts(
+			lensNode.WithPoolSize(lensPoolSize),
+		),
+		db.WithLensRuntime(lensType),
+		// The test framework sets this up elsewhere when required so that it may be wrapped
+		// into a [client.TxnStore].
+		node.WithDisableAPI(true),
+		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
+		// to keep the tests as lightweight as possible.
+		node.WithDisableP2P(true),
+		// The default is 5 and that is never going to be needed in a testing scenario where all the
+		// nodes are on the same machine with no network latency.
+		db.WithP2PBlockSyncTimeout(1 * time.Second),
+	}
 }
 
 func NewBadgerMemoryDB(ctx context.Context) (node.DB, error) {
-	nodeOpts := options.Node()
-	nodeOpts.DisableP2P = true
-	nodeOpts.DisableAPI = true
-	nodeOpts.Store.BadgerInMemory = true
+	opts := []node.Option{
+		node.WithDisableP2P(true),
+		node.WithDisableAPI(true),
+		node.WithBadgerInMemory(true),
+	}
 
-	n, err := node.New(ctx, nodeOpts)
+	node, err := node.New(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
-	err = n.Start(ctx)
+	err = node.Start(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return n.DB, err
+	return node.DB, err
 }
 
 func NewBadgerFileDB(ctx context.Context, t testing.TB) (node.DB, error) {
 	path := t.TempDir()
 
-	nodeOpts := options.Node()
-	nodeOpts.DisableP2P = true
-	nodeOpts.DisableAPI = true
-	nodeOpts.Store.Path = path
+	opts := []node.Option{
+		node.WithDisableP2P(true),
+		node.WithDisableAPI(true),
+		node.WithStorePath(path),
+	}
 
-	n, err := node.New(ctx, nodeOpts)
+	node, err := node.New(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
-	err = n.Start(ctx)
+	err = node.Start(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return n.DB, err
+	return node.DB, err
 }

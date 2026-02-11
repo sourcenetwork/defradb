@@ -121,7 +121,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 								age: Int
 							}`,
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "John",
 							"custom": map[string]any{
@@ -130,7 +130,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 							"age": 30,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Islam",
 							"custom": map[string]any{
@@ -139,7 +139,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 							"age": 25,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Shahzad",
 							"custom": map[string]any{
@@ -148,7 +148,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 							"age": 25,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Keenan",
 							"custom": map[string]any{
@@ -157,7 +157,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 							"age": 35,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Addo",
 							"custom": map[string]any{
@@ -166,7 +166,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 							"age": 35,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Bruno",
 							"custom": map[string]any{
@@ -175,7 +175,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 							"age": 40,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Andy",
 							"custom": map[string]any{
@@ -184,7 +184,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithEqFilter_ShouldFetchUsingIndex(t *
 							"age": 50,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Chris",
 							"custom": map[string]any{
@@ -284,7 +284,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 								age: Int
 							}`,
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "John",
 							"custom": map[string]any{
@@ -293,7 +293,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 							"age": 30,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Islam",
 							"custom": map[string]any{
@@ -302,7 +302,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 							"age": 25,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Shahzad",
 							"custom": map[string]any{
@@ -311,7 +311,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 							"age": 25,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Keenan",
 							"custom": map[string]any{
@@ -320,7 +320,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 							"age": 35,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Addo",
 							"custom": map[string]any{
@@ -329,7 +329,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 							"age": 35,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Bruno",
 							"custom": map[string]any{
@@ -338,7 +338,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 							"age": 40,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Andy",
 							"custom": map[string]any{
@@ -347,7 +347,7 @@ func TestJSONCompositeIndex_JSONWithScalarWithOtherFilters_ShouldFetchUsingIndex
 							"age": 50,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Chris",
 							"custom": map[string]any{
@@ -476,7 +476,7 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 								age: Int
 							}`,
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "John",
 							"custom": map[string]any{
@@ -485,7 +485,7 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 							"age": 30,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Islam",
 							"custom": map[string]any{
@@ -494,7 +494,7 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 							"age": 25,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Shahzad",
 							"custom": map[string]any{
@@ -503,7 +503,7 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 							"age": 25,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Keenan",
 							"custom": map[string]any{
@@ -512,7 +512,7 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 							"age": 35,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Addo",
 							"custom": map[string]any{
@@ -521,7 +521,7 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 							"age": 35,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Bruno",
 							"custom": map[string]any{
@@ -530,7 +530,7 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 							"age": 40,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Andy",
 							"custom": map[string]any{
@@ -539,7 +539,7 @@ func TestJSONCompositeIndex_ScalarWithJSON_ShouldFetchUsingIndex(t *testing.T) {
 							"age": 50,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Chris",
 							"custom": map[string]any{
@@ -668,7 +668,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 								age: Int
 							}`,
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "John",
 							"custom": map[string]any{
@@ -677,7 +677,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 							"age": 30,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Islam",
 							"custom": map[string]any{
@@ -686,7 +686,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 							"age": 25,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Shahzad",
 							"custom": map[string]any{
@@ -695,7 +695,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 							"age": 30,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Keenan",
 							"custom": map[string]any{
@@ -704,7 +704,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 							"age": 35,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Addo",
 							"custom": map[string]any{
@@ -713,7 +713,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 							"age": 35,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Bruno",
 							"custom": map[string]any{
@@ -722,7 +722,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 							"age": 40,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Andy",
 							"custom": map[string]any{
@@ -731,7 +731,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithScalar_ShouldFetchUsingIndex(t *te
 							"age": 35,
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Chris",
 							"custom": map[string]any{
@@ -860,7 +860,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 								tags: [String]
 							}`,
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "John",
 							"custom": map[string]any{
@@ -869,7 +869,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"tags": []any{"colleague", "mentor", "unique"},
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Islam",
 							"custom": map[string]any{
@@ -878,7 +878,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"tags": []any{"friend", "mentor"},
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Shahzad",
 							"custom": map[string]any{
@@ -887,7 +887,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"tags": []any{"colleague"},
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Keenan",
 							"custom": map[string]any{
@@ -896,7 +896,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"tags": []any{"family"},
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Addo",
 							"custom": map[string]any{
@@ -905,7 +905,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"tags": []any{"family"},
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Bruno",
 							"custom": map[string]any{
@@ -914,7 +914,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"tags": []any{"dude"},
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Andy",
 							"custom": map[string]any{
@@ -923,7 +923,7 @@ func TestJSONArrayCompositeIndex_JSONArrayWithArrayField_ShouldFetchUsingIndex(t
 							"tags": []any{"friend"},
 						},
 					},
-					testUtils.CreateDoc{
+					&action.CreateDoc{
 						DocMap: map[string]any{
 							"name": "Chris",
 							"custom": map[string]any{

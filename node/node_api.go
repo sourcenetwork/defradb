@@ -27,24 +27,7 @@ func (n *Node) startAPI(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
-	httpConfig := &n.opts.HTTP
-	var httpOpts []http.ServerOpt
-
-	if httpConfig.Address != "" {
-		httpOpts = append(httpOpts, http.WithAddress(httpConfig.Address))
-	}
-	if len(httpConfig.AllowedOrigins) > 0 {
-		httpOpts = append(httpOpts, http.WithAllowedOrigins(httpConfig.AllowedOrigins...))
-	}
-	if httpConfig.TLSCertPath != "" {
-		httpOpts = append(httpOpts, http.WithTLSCertPath(httpConfig.TLSCertPath))
-	}
-	if httpConfig.TLSKeyPath != "" {
-		httpOpts = append(httpOpts, http.WithTLSKeyPath(httpConfig.TLSKeyPath))
-	}
-
-	n.server, err = http.NewServer(handler, httpOpts...)
+	n.server, err = http.NewServer(handler, filterOptions[http.ServerOpt](n.options)...)
 	if err != nil {
 		return err
 	}

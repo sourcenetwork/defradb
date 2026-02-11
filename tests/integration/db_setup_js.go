@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -27,45 +27,43 @@ func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
-	_ *NodeSetupOptions,
+	opts ...node.Option,
 ) (*state.NodeState, error) {
-	nodeOpts := defaultNodeOpts()
-	nodeOpts.DB.EnableSigning = testCase.EnableSigning
-	nodeOpts.DB.LensRuntime = options.NodeJSLensRuntime
-
+	opts = append(defaultNodeOpts(), opts...)
+	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
+	opts = append(opts, db.WithLensRuntime(db.JSLensRuntime))
 	// Note: Since we are hard-coding to run with badger in-mem only, we have a function that
 	// handles some edge-cases by skipping js client testing when a db type is something else.
 	// If this hard-coding is changed in future, don't forget to tweak the following func:
 	// [skipJSClientIfUnsupportedDBType]
-	nodeOpts.Store.BadgerInMemory = true
+	opts = append(opts, node.WithBadgerInMemory(true))
 
 	switch documentACPType {
 	case state.LocalDocumentACPType:
-		nodeOpts.DocumentACP.DocumentACPType = options.NodeLocalDocumentACPType
+		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
 
 	case state.SourceHubDocumentACPType:
-		if s.DocumentACPOptions == nil {
+		if len(s.DocumentACPOptions) == 0 {
 			var err error
 			s.DocumentACPOptions, err = setupSourceHub(s)
 			require.NoError(s.T, err)
 		}
 
-		nodeOpts.DocumentACP.DocumentACPType = options.NodeSourceHubDocumentACPType
-		if s.DocumentACPOptions != nil {
-			nodeOpts.DocumentACP = *s.DocumentACPOptions
+		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
+		for _, opt := range s.DocumentACPOptions {
+			opts = append(opts, opt)
 		}
 
 	default:
 		// no-op, use the `node` package default
 	}
 
-	nodeObj, err := node.New(s.Ctx, nodeOpts)
+	nodeObj, err := node.New(s.Ctx, opts...)
 	if err != nil {
 		return nil, err
 	}
-	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
-	err = nodeObj.Start(s.Ctx)
-	resetStateContext(s)
+	ctx := acpIdentity.WithContext(s.Ctx, identity)
+	err = nodeObj.Start(ctx)
 	if err != nil {
 		return nil, err
 	}

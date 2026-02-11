@@ -23,25 +23,25 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (c *collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	showDeleted bool,
-	opts ...*options.CollectionGetOptions,
+	opts ...options.Lister[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	opt := utils.NewOptions(opts...)
+	showDeleted := opt.ShowDeleted
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeDocumentReadPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	// create txn
 	ctx, txn, err := ensureContextTxn(ctx, c.db, true)

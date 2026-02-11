@@ -46,7 +46,7 @@ type createNode struct {
 
 	execInfo createExecInfo
 
-	createOptions []*options.CollectionCreateOptions
+	createOptions []options.Lister[options.CollectionCreateOptions]
 }
 
 type createExecInfo struct {
@@ -162,13 +162,12 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		return nil, err
 	}
 
-	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
 		input:     parsed.CreateInput,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
-		createOptions: []*options.CollectionCreateOptions{
+		createOptions: []options.Lister[options.CollectionCreateOptions]{
 			options.WithIdentity(
 				options.CollectionCreate().
 					SetEncryptDoc(parsed.Encrypt).
@@ -178,7 +177,6 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		},
 	}
 
-	// get collection
 	col, err := p.db.GetCollectionByName(
 		p.ctx,
 		parsed.Name,

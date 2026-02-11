@@ -22,12 +22,10 @@ import (
 	"errors"
 	"fmt"
 	"runtime/cgo"
-	"strings"
 	"unsafe"
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/immutable/enumerable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
@@ -45,53 +43,19 @@ func unmarshalResult[T any](value string) (T, error) {
 	return result, nil
 }
 
-// identityFromOptions creates a cgo handle, wrapped as a pointer, from options that implement OptionWithIdentity.
-// If the options slice is empty or nil, returns 0.
-func identityFromOptions[T options.OptionWithIdentity[T]](opts []T) C.uintptr_t {
-	if len(opts) == 0 {
+// optionToUintptr is a helper function that converts an immutable.Option to a C.uintptr_t representing a cgo.Handle.
+func optionToUintptr[T any](opt immutable.Option[T]) C.uintptr_t {
+	if !opt.HasValue() {
 		return C.uintptr_t(0)
 	}
-	idf := opts[0].GetIdentity()
-	if !idf.HasValue() {
-		return C.uintptr_t(0)
-	}
-	val := idf.Value()
+	val := opt.Value()
 	handle := cgo.NewHandle(val)
 	return C.uintptr_t(handle)
 }
 
-// isEncryptedFromCollectionCreateOptions is a helper function that extracts as a C.int
-func isEncryptedFromCollectionCreateOptions(opts []*options.CollectionCreateOptions) C.int {
-	if len(opts) == 0 || opts[0] == nil {
-		return 0
-	}
-	if opts[0].EncryptDoc {
-		return 1
-	}
-	return 0
-}
-
-// encryptedFieldsFromCollectionCreateOptions is a helper function that returns a comma separated
-// C-string, or a blank string, representing the fields that should be encrypted
-// After calling this, the caller is responsible for freeing the string returned
-func encryptedFieldsFromCollectionCreateOptions(opts []*options.CollectionCreateOptions) *C.char {
-	if len(opts) == 0 || opts[0] == nil {
-		return C.CString("")
-	}
-	if len(opts[0].EncryptedFields) > 0 {
-		return C.CString(strings.Join(opts[0].EncryptedFields, ","))
-	}
-	return C.CString("")
-}
-
 // extractStringsFromRequestOptions is a helper function that extracts operation name and variables
 // as strings from the request option object. They will be blank strings if not present.
-func extractStringsFromRequestOptions(opts []*options.ExecRequestOptions) (string, string, error) {
-	if len(opts) == 0 || opts[0] == nil {
-		return "", "", nil
-	}
-	opt := opts[0]
-
+func extractStringsFromRequestOptions(opt *options.ExecRequestOptions) (string, string, error) {
 	opName := ""
 	if opt.OperationName.HasValue() {
 		opName = opt.OperationName.Value()
@@ -119,19 +83,6 @@ func optionToString[T any](opt immutable.Option[T]) (string, error) {
 		return "", err
 	}
 	return string(jsonBytes), nil
-}
-
-// stringFromLensOption is a helper function to extract a simple string
-func stringFromLensOption(opt immutable.Option[model.Lens]) (string, error) {
-	if !opt.HasValue() {
-		return "", nil
-	}
-	lens := opt.Value()
-	data, err := json.Marshal(lens)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
 }
 
 // stringFromImmutableOptionString is a helper function to extract a simple string

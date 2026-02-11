@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // getAllIndexDescriptions returns all the index descriptions in the database.
@@ -165,17 +166,14 @@ func (c *collection) deleteIndexedDocWithID(
 func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexCreateRequest,
-	opts ...*options.CollectionCreateIndexOptions,
+	opts ...options.Lister[options.CollectionCreateIndexOptions],
 ) (client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexCreatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexCreatePerm); err != nil {
 		return client.IndexDescription{}, err
 	}
 
@@ -363,17 +361,14 @@ func (c *collection) indexExistingDocs(
 func (c *collection) DropIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...*options.CollectionDropIndexOptions,
+	opts ...options.Lister[options.CollectionDropIndexOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexDropPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexDropPerm); err != nil {
 		return err
 	}
 
@@ -428,14 +423,11 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 // GetIndexes returns all indexes for the collection.
 func (c *collection) GetIndexes(
 	ctx context.Context,
-	opts ...*options.CollectionGetIndexesOptions,
+	opts ...options.Lister[options.CollectionGetIndexesOptions],
 ) ([]client.IndexDescription, error) {
-	var ident immutable.Option[identity.Identity]
-	if len(opts) > 0 && opts[0] != nil {
-		ident = opts[0].Identity
-	}
+	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeIndexListPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
 	}
 

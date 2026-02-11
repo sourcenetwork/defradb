@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -50,7 +51,7 @@ func TestNAC_AdminRelation_CanP2PDocumentList(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Identity: testUtils.ClientIdentity(1),
 				DocMap: map[string]any{
 					"name": "Shahzad Lone",
@@ -61,7 +62,7 @@ func TestNAC_AdminRelation_CanP2PDocumentList(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -70,10 +71,10 @@ func TestNAC_AdminRelation_CanP2PDocumentList(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				Identity:      testUtils.ClientIdentity(2),
 				NodeID:        1,
-				ExpectedError: "not authorized to perform operation",
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentListPerm),
 			},
 
 			// Grant access to user.
@@ -85,7 +86,7 @@ func TestNAC_AdminRelation_CanP2PDocumentList(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.GetAllP2PDocuments{
+			testUtils.ListP2PDocuments{
 				Identity: testUtils.ClientIdentity(2),
 				NodeID:   1,
 				ExpectedDocIDs: []state.ColDocIndex{

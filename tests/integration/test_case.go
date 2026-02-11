@@ -14,14 +14,13 @@ import (
 	"time"
 
 	"github.com/sourcenetwork/immutable"
-	"github.com/sourcenetwork/lens/host-go/config/model"
-	"github.com/sourcenetwork/testo/multiplier"
 
 	"github.com/sourcenetwork/defradb/client"
-	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/action"
 	"github.com/sourcenetwork/defradb/tests/gen"
+	"github.com/sourcenetwork/defradb/tests/multiplier"
 	"github.com/sourcenetwork/defradb/tests/predefined"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -38,7 +37,7 @@ type TestCase struct {
 	//
 	// This is to only be used in the very rare cases where we really do want behavioural
 	// differences between mutation types, or we need to temporarily document a bug.
-	SupportedMutationTypes immutable.Option[[]MutationType]
+	SupportedMutationTypes immutable.Option[[]state.MutationType]
 
 	// If provided a value, SupportedClientTypes will limit the client types under test to those
 	// within this set.  If no active clients pass this filter the test will be skipped.
@@ -116,7 +115,7 @@ type SetupComplete struct{}
 // Nodes may be explicitly referenced by index by other actions using `NodeID` properties.
 // If the action has a `NodeID` property and it is not specified, the action will be
 // effected on all nodes.
-type ConfigureNode func() options.NodeP2POptions
+type ConfigureNode func() []node.Option
 
 // Restart is an action that will close and then start all nodes.
 type Restart struct{}
@@ -164,32 +163,6 @@ type Start struct {
 	ExpectedError string
 }
 
-// PatchCollection executes a patch collection command, updating 0 to many collections and applying
-// a migration if one is provided.
-type PatchCollection struct {
-	// NodeID may hold the ID (index) of a node to apply this patch to.
-	//
-	// If a value is not provided the patch will be applied to all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// The Patch to apply to the collection version.
-	Patch string
-
-	// An optional migration that will be set if the patch creates any new CollectionVersions.
-	Lens immutable.Option[model.Lens]
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
 // SetActiveCollectionVersion is an action that will set the active collection version to the
 // given value.
 type SetActiveCollectionVersion struct {
@@ -205,53 +178,6 @@ type SetActiveCollectionVersion struct {
 
 	// VersionID to set as active collection version.
 	VersionID string
-
-	// Any error expected from the action. Optional.
-	//
-	// String can be a partial, and the test will pass if an error is returned that
-	// contains this string.
-	ExpectedError string
-}
-
-// CreateDoc will attempt to create the given document in the given collection
-// using the set [MutationType].
-type CreateDoc struct {
-	// NodeID may hold the ID (index) of a node to apply this create to.
-	//
-	// If a value is not provided the document will be created in all nodes.
-	NodeID immutable.Option[int]
-
-	// The identity of this request. Optional.
-	//
-	// If an Identity is not provided the created document(s) will be public.
-	//
-	// If an Identity is provided and the collection has a policy, then the
-	// created document(s) will be owned by this Identity.
-	//
-	// Use `ClientIdentity` to create a client identity and `NodeIdentity` to create a node identity.
-	// Default value is `NoIdentity()`.
-	//
-	// If node acp is enabled, identity will be used to check if this operation can be performed.
-	Identity immutable.Option[state.Identity]
-
-	// Specifies whether the document should be encrypted.
-	IsDocEncrypted bool
-
-	// Individual fields of the document to encrypt.
-	EncryptedFields []string
-
-	// The collection in which this document should be created.
-	CollectionID int
-
-	// The document to create, in JSON string format.
-	//
-	// If [DocMap] is provided this value will be ignored.
-	Doc string
-
-	// The document to create, in map format.
-	//
-	// If this is provided [Doc] will be ignored.
-	DocMap map[string]any
 
 	// Any error expected from the action. Optional.
 	//
@@ -316,7 +242,7 @@ type DeleteDoc struct {
 	ExpectedError string
 }
 
-// UpdateDoc will attempt to update the given document using the set [MutationType].
+// UpdateDoc will attempt to update the given document using the set [state.MutationType].
 type UpdateDoc struct {
 	// NodeID may hold the ID (index) of a node to apply this update to.
 	//

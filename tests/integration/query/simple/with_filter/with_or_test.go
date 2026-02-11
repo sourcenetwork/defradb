@@ -23,25 +23,25 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
 		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "John",
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"Age": 32
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Carlo",
 					"Age": 55
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"Age": 19
@@ -66,6 +66,7 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}
@@ -84,13 +85,13 @@ func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T)
 					FavoriteNumbers: [Int!]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Bob",
 					"FavoriteNumbers": [10, 20]
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"Name": "Alice",
 					"FavoriteNumbers": [30, 40]
@@ -115,6 +116,7 @@ func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T)
 						},
 					},
 				},
+				NonOrderedResults: true,
 			},
 		},
 	}

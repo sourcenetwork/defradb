@@ -35,7 +35,7 @@ func TestSyncColVersion_WithPatchVersionOfUnknownCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				NodeID: immutable.Some(0),
 				Patch: `
 					[
@@ -120,7 +120,7 @@ func TestSyncColVersion_WithPatchVersionOfKnownCollection(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.PatchCollection{
+			&action.PatchCollection{
 				NodeID: immutable.Some(0),
 				Patch: `
 					[

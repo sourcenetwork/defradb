@@ -15,18 +15,16 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/memory"
-
-	"github.com/sourcenetwork/defradb/client/options"
 )
 
 // MemoryStore specifies the defradb in memory datastore
-const MemoryStore = options.NodeMemoryStore
+const MemoryStore = StoreType("memory")
 
 func init() {
-	constructor := func(ctx context.Context, opts *options.NodeStoreOptions) (corekv.TxnStore, error) {
+	constructor := func(ctx context.Context, options *StoreOptions) (corekv.TxnStore, error) {
 		return memory.NewDatastore(ctx), nil
 	}
-	purge := func(ctx context.Context, opts *options.NodeStoreOptions) error {
+	purge := func(ctx context.Context, options *StoreOptions) error {
 		return nil
 	}
 	// don't override the default constructor if previously set

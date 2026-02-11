@@ -17,15 +17,16 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// GQL mutation will return a different error
 			// when field types do not match
-			testUtils.CollectionNamedMutationType,
-			testUtils.CollectionSaveMutationType,
+			state.CollectionNamedMutationType,
+			state.CollectionSaveMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -35,7 +36,7 @@ func TestMutationCreate_GivenNonExistantField_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"fieldDoesNotExist": 27
@@ -72,7 +73,7 @@ func TestMutationCreate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 27
@@ -106,11 +107,11 @@ func TestMutationCreate(t *testing.T) {
 
 func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedMutationTypes: immutable.Some([]testUtils.MutationType{
+		SupportedMutationTypes: immutable.Some([]state.MutationType{
 			// Collection.Save would treat the second create as an update, and so
 			// is excluded from this test.
-			testUtils.CollectionNamedMutationType,
-			testUtils.GQLRequestMutationType,
+			state.CollectionNamedMutationType,
+			state.GQLRequestMutationType,
 		}),
 		Actions: []any{
 			&action.AddSchema{
@@ -121,13 +122,13 @@ func TestMutationCreate_GivenDuplicate_Errors(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 27
 				}`,
 			},
-			testUtils.CreateDoc{
+			&action.CreateDoc{
 				Doc: `{
 					"name": "John",
 					"age": 27
@@ -160,6 +161,68 @@ func TestMutationCreate_GivenEmptyInput(t *testing.T) {
 					"create_Users": []map[string]any{
 						{
 							"_docID": "bae-d97a4927-9fad-53a0-bda2-8e9d8dd33551",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestMutationCreate_With10Collections(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Foo1 {
+						# The name used for the fields is important as the field shortID
+						# is serially assigned based on the alphabetical order of field names.
+						about: String
+						name: String
+					}
+					type Foo2 {
+						name: String
+					}
+					type Foo3 {
+						name: String
+					}
+					type Foo4 {
+						name: String
+					}
+					type Foo5 {
+						name: String
+					}
+					type Foo6 {
+						name: String
+					}
+					type Foo7 {
+						name: String
+					}
+					type Foo8 {
+						name: String
+					}
+					type Foo9 {
+						name: String
+					}
+					type Foo10 {
+						name: String
+					}
+				`,
+			},
+			&action.Request{
+				Request: `mutation {
+					create_Foo1(input: {about: "something", name: "John"}) {
+						about
+						name
+					}
+				}`,
+				Results: map[string]any{
+					"create_Foo1": []map[string]any{
+						{
+							"about": "something",
+							"name":  "John",
 						},
 					},
 				},

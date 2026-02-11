@@ -23,6 +23,7 @@ import (
 
 	"github.com/google/uuid"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 )
@@ -71,7 +72,7 @@ func removeSubscription(id string) {
 // it exists will see if there's a message in its result channel. If there isn't, it will
 // return with status 2, and a blank payload. If there is, it will return with status 0,
 // and the payload of the message. If an error occurs, status 1 is returned.
-//
+
 //export PollSubscription
 func PollSubscription(id *C.char) C.Result {
 	subID := C.GoString(id)
@@ -124,6 +125,11 @@ func ExecuteQuery(
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
+	}
+
+	ident := acpIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		opt.SetIdentity(ident.Value())
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
