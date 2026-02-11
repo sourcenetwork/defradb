@@ -40,17 +40,18 @@ const (
 	CidArgName    = "cid"
 	HeightArgName = "height"
 
-	AverageFieldName    = "AVG"
-	CountFieldName      = "COUNT"
-	DocIDFieldName      = "_docID"
-	GroupFieldName      = "GROUP"
-	DeletedFieldName    = "_deleted"
-	SumFieldName        = "SUM"
-	VersionFieldName    = "_version"
+	DocIDFieldName   = "_docID"
+	DeletedFieldName = "_deleted"
+	VersionFieldName = "_version"
+	AliasFieldName   = "_alias"
+
 	MaxFieldName        = "MAX"
 	MinFieldName        = "MIN"
-	AliasFieldName      = "_alias"
 	SimilarityFieldName = "SIMILARITY"
+	SumFieldName        = "SUM"
+	GroupFieldName      = "GROUP"
+	AverageFieldName    = "AVG"
+	CountFieldName      = "COUNT"
 
 	// New generated document id from a backed up document,
 	// which might have a different _docID originally.
@@ -87,6 +88,16 @@ const (
 	ASC  = OrderDirection("ASC")
 	DESC = OrderDirection("DESC")
 )
+
+var AggregateFields = []string{
+	MaxFieldName,
+	MinFieldName,
+	SimilarityFieldName,
+	SumFieldName,
+	GroupFieldName,
+	AverageFieldName,
+	CountFieldName,
+}
 
 var (
 	NameToOrderDirection = map[string]OrderDirection{
