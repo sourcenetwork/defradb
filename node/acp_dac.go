@@ -36,7 +36,10 @@ var documentACPConstructors = map[options.NodeDocumentACPType]func(
 }
 
 // NewDocumentACP returns a new ACP module with the given options.
-func NewDocumentACP(ctx context.Context, opts *options.NodeDocumentACPOptions) (immutable.Option[dac.DocumentACP], error) {
+func NewDocumentACP(
+	ctx context.Context,
+	opts *options.NodeDocumentACPOptions,
+) (immutable.Option[dac.DocumentACP], error) {
 	acpConstructor, ok := documentACPConstructors[opts.DocumentACPType]
 	if ok {
 		return acpConstructor(ctx, opts)

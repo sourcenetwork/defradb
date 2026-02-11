@@ -20,7 +20,10 @@ import (
 )
 
 func init() {
-	constructor := func(ctx context.Context, opts *options.NodeDocumentACPOptions) (immutable.Option[dac.DocumentACP], error) {
+	constructor := func(
+		ctx context.Context,
+		opts *options.NodeDocumentACPOptions,
+	) (immutable.Option[dac.DocumentACP], error) {
 		localDocumentACP, err := dac.NewLocalDocumentACP(opts.Path)
 		if err != nil {
 			return dac.NoDocumentACP, err

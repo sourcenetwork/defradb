@@ -21,8 +21,8 @@ import (
 func RandomNetworkingConfig() ConfigureNode {
 	return func() options.NodeP2POptions {
 		return options.NodeP2POptions{
-			ListenAddresses:         []string{"/ip4/" + getIPString() + "/tcp/0"},
-			EnableRelay:             true,
+			ListenAddresses:           []string{"/ip4/" + getIPString() + "/tcp/0"},
+			EnableRelay:               true,
 			EnableClearBackoffOnRetry: true,
 		}
 	}
