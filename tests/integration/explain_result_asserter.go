@@ -11,6 +11,7 @@
 package tests
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -142,12 +143,12 @@ func (a *ExplainAsserter) Assert(t testing.TB, result map[string]any) {
 	assert.Equal(t, true, explainNode[executionSuccessProp], "Expected executionSuccess property")
 
 	if a.sizeOfResults.HasValue() {
-		actual := explainNode[sizeOfResultProp]
-		assert.Equal(t, a.sizeOfResults.Value(), actual,
+		actual := toUint64(explainNode[sizeOfResultProp])
+		assert.Equal(t, uint64(a.sizeOfResults.Value()), actual,
 			"Expected %d sizeOfResult, got %d", a.sizeOfResults.Value(), actual)
 	}
 	if a.planExecutions.HasValue() {
-		actual := explainNode[planExecutionsProp]
+		actual := toUint64(explainNode[planExecutionsProp])
 		assert.Equal(t, a.planExecutions.Value(), actual,
 			"Expected %d planExecutions, got %d", a.planExecutions.Value(), actual)
 	}
@@ -163,7 +164,7 @@ func (a *ExplainAsserter) Assert(t testing.TB, result map[string]any) {
 	if a.filterMatches.HasValue() {
 		filterMatches, hasFilterMatches := selectNode[filterMatchesProp]
 		require.True(t, hasFilterMatches, "Expected filterMatches property")
-		assert.Equal(t, uint64(a.filterMatches.Value()), filterMatches,
+		assert.Equal(t, uint64(a.filterMatches.Value()), toUint64(filterMatches),
 			"Expected %d filterMatches, got %d", a.filterMatches.Value(), filterMatches)
 	}
 
@@ -354,10 +355,22 @@ func findScanNodeAtLevel(node dataMap) dataMap {
 
 // getMetric extracts a metric value from a node.
 func getMetric(node dataMap, prop string) uint64 {
-	if val, has := node[prop]; has {
-		if num, ok := val.(uint64); ok {
-			return num
-		}
+	return toUint64(node[prop])
+}
+
+// toUint64 converts a value to uint64.
+// It handles both uint64 (Go embedded client) and float64 (HTTP/CLI/JS/C clients
+// where JSON numbers are deserialized as float64).
+func toUint64(val any) uint64 {
+	switch v := val.(type) {
+	case uint64:
+		return v
+	case json.Number:
+		n, _ := v.Int64()
+		return uint64(n)
+	case float64:
+		return uint64(v)
+	default:
+		return 0
 	}
-	return 0
 }
