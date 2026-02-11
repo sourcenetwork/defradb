@@ -29,8 +29,8 @@ func ParseSDL(gqlSDL string) (map[string]client.CollectionVersion, error) {
 	// the SDL and correctly link all relations.
 	nodeOpts := options.Node().
 		SetDisableAPI(true).
-		SetDisableP2P(true)
-	nodeOpts.Store.BadgerInMemory = true
+		SetDisableP2P(true).
+		SetBadgerInMemory(true)
 
 	node, err := node.New(
 		ctx,

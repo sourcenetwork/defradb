@@ -20,10 +20,12 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var log = corelog.NewLogger("node")
@@ -55,67 +57,94 @@ type Node struct {
 	peer Peer
 	// api http server instance
 	server *http.Server
-	// config values after applying options
-	config *Config
-	// options the node was created with
-	options []Option
+	// opts is the resolved options
+	opts *options.NodeOptions
 	// the URL the API is served at.
 	APIURL string
 }
 
 // New returns a new node instance configured with the given options.
-func New(ctx context.Context, options ...Option) (*Node, error) {
+func New(ctx context.Context, opts ...options.Lister[options.NodeOptions]) (*Node, error) {
+	nodeOpts := utils.NewOptions(opts...)
 	n := Node{
-		config:  DefaultConfig(),
-		options: options,
-	}
-	for _, opt := range filterOptions[NodeOpt](options) {
-		opt(n.config)
+		opts: nodeOpts,
 	}
 	return &n, nil
 }
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	rootstore, isValueSizeLimited, err := NewStore(ctx, filterOptions[StoreOpt](n.options)...)
+	rootstore, isValueSizeLimited, err := NewStore(ctx, &n.opts.Store)
 	if err != nil {
 		return err
 	}
-	documentACP, err := NewDocumentACP(ctx, filterOptions[DocumentACPOpt](n.options)...)
-	if err != nil {
-		return err
-	}
-
-	nodeACP, err := NewNodeACP(ctx, filterOptions[NodeACPOpt](n.options)...)
+	documentACP, err := NewDocumentACP(ctx, &n.opts.DocumentACP)
 	if err != nil {
 		return err
 	}
 
-	var chunkSize immutable.Option[int]
+	nodeACP, err := NewNodeACP(ctx, &n.opts.NodeACP)
+	if err != nil {
+		return err
+	}
+
+	dbOpts := n.buildDBOptions()
+
 	if isValueSizeLimited {
-		chunkSize = immutable.Some(defaultChunkSize)
-
-		n.options = append(n.options,
+		dbOpts = append(dbOpts,
 			db.WithLensOpts(
 				lensNode.WithBlockstoreChunkSize(defaultChunkSize),
 			),
 		)
-		n.options = append(n.options,
+		dbOpts = append(dbOpts,
 			db.WithBlockStoreChunkSize(defaultChunkSize),
 		)
+		n.opts.DB.ChunkSize = immutable.Some(defaultChunkSize)
 	}
 
-	err = n.startP2P(ctx, rootstore, chunkSize)
+	err = n.startP2P(ctx, rootstore, n.opts.DB.ChunkSize)
 	if err != nil {
 		return err
 	}
 
-	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, filterOptions[db.Option](n.options)...)
+	dbOpts = append(dbOpts, n.buildP2PDBOption()...)
+
+	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, dbOpts...)
 	if err != nil {
 		return err
 	}
 
 	return n.startAPI(ctx)
+}
+
+// buildDBOptions converts NodeOptions into db.Option slice.
+func (n *Node) buildDBOptions() []db.Option {
+	var opts []db.Option
+
+	if n.opts.DB.MaxTxnRetries.HasValue() {
+		opts = append(opts, db.WithMaxRetries(n.opts.DB.MaxTxnRetries.Value()))
+	}
+	if n.opts.DB.Identity.HasValue() {
+		opts = append(opts, db.WithNodeIdentity(n.opts.DB.Identity.Value()))
+	}
+	opts = append(opts, db.WithEnabledSigning(n.opts.DB.EnableSigning))
+	if len(n.opts.DB.SearchableEncryptionKey) > 0 {
+		opts = append(opts, db.WithSearchableEncryptionKey(n.opts.DB.SearchableEncryptionKey))
+	}
+	if len(n.opts.DB.RetryIntervals) > 0 {
+		opts = append(opts, db.WithRetryInterval(n.opts.DB.RetryIntervals))
+	}
+	if n.opts.DB.P2PBlockSyncTimeout > 0 {
+		opts = append(opts, db.WithP2PBlockSyncTimeout(n.opts.DB.P2PBlockSyncTimeout))
+	}
+	if n.opts.DB.LensRuntime != "" {
+		opts = append(opts, db.WithLensRuntime(db.LensRuntimeType(n.opts.DB.LensRuntime)))
+	}
+	if n.opts.DB.ChunkSize.HasValue() {
+		opts = append(opts, db.WithBlockStoreChunkSize(n.opts.DB.ChunkSize.Value()))
+	}
+
+	return opts
 }
 
 // Close stops the node sub-systems.
@@ -136,7 +165,7 @@ func (n *Node) Close(ctx context.Context) error {
 // PurgeAndRestart causes the node to shutdown, purge all data from
 // its datastore, and restart.
 func (n *Node) PurgeAndRestart(ctx context.Context) error {
-	if !n.config.enableDevelopment {
+	if !n.opts.EnableDevelopment {
 		return ErrPurgeWithDevModeDisabled
 	}
 
@@ -158,7 +187,7 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 		return err
 	}
 
-	err = purgeStore(ctx, filterOptions[StoreOpt](n.options)...)
+	err = purgeStore(ctx, &n.opts.Store)
 	if err != nil {
 		return err
 	}

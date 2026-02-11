@@ -15,6 +15,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/cli/config"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
@@ -34,10 +35,10 @@ func MakeServerDumpCmd() *cobra.Command {
 				return errors.New("server-side dump is only supported for the Badger datastore")
 			}
 			badgerPath := cfg.GetString("datastore.badger.path")
-			storeOpts := []node.StoreOpt{
-				node.WithStorePath(badgerPath),
+			storeOpts := &options.NodeStoreOptions{
+				Path: badgerPath,
 			}
-			rootstore, _, err := node.NewStore(ctx, storeOpts...)
+			rootstore, _, err := node.NewStore(ctx, storeOpts)
 			if err != nil {
 				return err
 			}

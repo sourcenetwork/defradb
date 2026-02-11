@@ -17,13 +17,20 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func TestNodeStartJS(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	node, err := New(ctx, WithDisableP2P(true), WithDisableAPI(true), WithBadgerInMemory(true))
+	node, err := New(ctx,
+		options.Node().
+			SetDisableP2P(true).
+			SetDisableAPI(true).
+			SetBadgerInMemory(true),
+	)
 	require.NoError(t, err)
 
 	err = node.Start(ctx)

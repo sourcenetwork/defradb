@@ -115,44 +115,6 @@ type NodeP2POptions struct {
 	PrivateKey []byte
 }
 
-// NodeP2P returns P2P options with default values.
-func NodeP2P() *NodeP2POptions {
-	return &NodeP2POptions{
-		EnablePubSub: false,
-		EnableRelay:  false,
-	}
-}
-
-// SetListenAddresses sets the listen addresses.
-func (o *NodeP2POptions) SetListenAddresses(addresses ...string) *NodeP2POptions {
-	o.ListenAddresses = addresses
-	return o
-}
-
-// SetBootstrapPeers sets the bootstrap peers.
-func (o *NodeP2POptions) SetBootstrapPeers(peers ...string) *NodeP2POptions {
-	o.BootstrapPeers = peers
-	return o
-}
-
-// SetEnablePubSub sets whether PubSub is enabled.
-func (o *NodeP2POptions) SetEnablePubSub(enable bool) *NodeP2POptions {
-	o.EnablePubSub = enable
-	return o
-}
-
-// SetEnableRelay sets whether relay is enabled.
-func (o *NodeP2POptions) SetEnableRelay(enable bool) *NodeP2POptions {
-	o.EnableRelay = enable
-	return o
-}
-
-// SetPrivateKey sets the private key for the P2P node.
-func (o *NodeP2POptions) SetPrivateKey(key []byte) *NodeP2POptions {
-	o.PrivateKey = key
-	return o
-}
-
 // NodeHTTPOptions contains HTTP API server configuration values.
 type NodeHTTPOptions struct {
 	// Address is the address to listen on for HTTP connections.
@@ -163,82 +125,6 @@ type NodeHTTPOptions struct {
 	TLSCertPath string
 	// TLSKeyPath is the path to the TLS private key file.
 	TLSKeyPath string
-}
-
-// NodeHTTP returns HTTP options with default values.
-func NodeHTTP() *NodeHTTPOptions {
-	return &NodeHTTPOptions{}
-}
-
-// SetAddress sets the HTTP server address.
-func (o *NodeHTTPOptions) SetAddress(address string) *NodeHTTPOptions {
-	o.Address = address
-	return o
-}
-
-// SetAllowedOrigins sets the allowed CORS origins.
-func (o *NodeHTTPOptions) SetAllowedOrigins(origins ...string) *NodeHTTPOptions {
-	o.AllowedOrigins = origins
-	return o
-}
-
-// SetTLSCertPath sets the path to the TLS certificate file.
-func (o *NodeHTTPOptions) SetTLSCertPath(path string) *NodeHTTPOptions {
-	o.TLSCertPath = path
-	return o
-}
-
-// SetTLSKeyPath sets the path to the TLS private key file.
-func (o *NodeHTTPOptions) SetTLSKeyPath(path string) *NodeHTTPOptions {
-	o.TLSKeyPath = path
-	return o
-}
-
-// Node returns a new NodeOptions instance with default values.
-// By default P2P and API are enabled.
-func Node() *NodeOptions {
-	return &NodeOptions{
-		DisableP2P:        false,
-		DisableAPI:        false,
-		EnableDevelopment: false,
-		Store:             *NodeStore(),
-		DocumentACP:       *NodeDocumentACP(),
-		NodeACP:           *NodeACP(),
-		DB:                *NodeDB(),
-		P2P:               *NodeP2P(),
-		HTTP:              *NodeHTTP(),
-	}
-}
-
-// SetDisableP2P sets the disable P2P flag.
-func (o *NodeOptions) SetDisableP2P(disable bool) *NodeOptions {
-	o.DisableP2P = disable
-	return o
-}
-
-// SetDisableAPI sets the disable API flag.
-func (o *NodeOptions) SetDisableAPI(disable bool) *NodeOptions {
-	o.DisableAPI = disable
-	return o
-}
-
-// SetEnableDevelopment sets the enable development mode flag.
-func (o *NodeOptions) SetEnableDevelopment(enable bool) *NodeOptions {
-	o.EnableDevelopment = enable
-	return o
-}
-
-// SetKMS sets the KMS type.
-func (o *NodeOptions) SetKMS(kmsType NodeKMSType) *NodeOptions {
-	o.KMSType = immutable.Some(kmsType)
-	return o
-}
-
-// SetNodeIdentity sets the identity for the node.
-// This is a convenience method that sets the identity on the DB options.
-func (o *NodeOptions) SetNodeIdentity(ident identity.Identity) *NodeOptions {
-	o.DB.Identity = immutable.Some(ident)
-	return o
 }
 
 // NodeStoreOptions contains store configuration values.
@@ -253,46 +139,6 @@ type NodeStoreOptions struct {
 	BadgerEncryptionKey []byte
 	// BadgerInMemory specifies whether to run Badger in-memory.
 	BadgerInMemory bool
-}
-
-// NodeStore returns store options with default values.
-func NodeStore() *NodeStoreOptions {
-	return &NodeStoreOptions{
-		Store:          NodeDefaultStore,
-		Path:           "",
-		BadgerInMemory: false,
-		BadgerFileSize: 1 << 30, // 1GB
-	}
-}
-
-// SetStore sets the store type.
-func (o *NodeStoreOptions) SetStore(store NodeStoreType) *NodeStoreOptions {
-	o.Store = store
-	return o
-}
-
-// SetPath sets the store path.
-func (o *NodeStoreOptions) SetPath(path string) *NodeStoreOptions {
-	o.Path = path
-	return o
-}
-
-// SetBadgerFileSize sets the Badger file size.
-func (o *NodeStoreOptions) SetBadgerFileSize(size int64) *NodeStoreOptions {
-	o.BadgerFileSize = size
-	return o
-}
-
-// SetBadgerEncryptionKey sets the Badger encryption key.
-func (o *NodeStoreOptions) SetBadgerEncryptionKey(key []byte) *NodeStoreOptions {
-	o.BadgerEncryptionKey = key
-	return o
-}
-
-// SetBadgerInMemory sets whether Badger should run in-memory.
-func (o *NodeStoreOptions) SetBadgerInMemory(inMemory bool) *NodeStoreOptions {
-	o.BadgerInMemory = inMemory
-	return o
 }
 
 // NodeDocumentACPOptions contains document ACP configuration values.
@@ -311,74 +157,12 @@ type NodeDocumentACPOptions struct {
 	SourceHubCometRPCAddress string
 }
 
-// NodeDocumentACP returns document ACP options with default values.
-func NodeDocumentACP() *NodeDocumentACPOptions {
-	return &NodeDocumentACPOptions{
-		DocumentACPType: NodeLocalDocumentACPType,
-	}
-}
-
-// SetDocumentACPType sets the ACP type.
-func (o *NodeDocumentACPOptions) SetDocumentACPType(acpType NodeDocumentACPType) *NodeDocumentACPOptions {
-	o.DocumentACPType = acpType
-	return o
-}
-
-// SetPath sets the document ACP system path.
-func (o *NodeDocumentACPOptions) SetPath(path string) *NodeDocumentACPOptions {
-	o.Path = path
-	return o
-}
-
-// SetTxnSigner sets the txn signer for Defra to use.
-func (o *NodeDocumentACPOptions) SetTxnSigner(signer NodeTxSigner) *NodeDocumentACPOptions {
-	o.Signer = immutable.Some(signer)
-	return o
-}
-
-// SetSourceHubChainID sets the chainID of the SourceHub chain.
-func (o *NodeDocumentACPOptions) SetSourceHubChainID(chainID string) *NodeDocumentACPOptions {
-	o.SourceHubChainID = chainID
-	return o
-}
-
-// SetSourceHubGRPCAddress sets the GRPC address of the SourceHub node.
-func (o *NodeDocumentACPOptions) SetSourceHubGRPCAddress(address string) *NodeDocumentACPOptions {
-	o.SourceHubGRPCAddress = address
-	return o
-}
-
-// SetSourceHubCometRPCAddress sets the Comet RPC address of the SourceHub node.
-func (o *NodeDocumentACPOptions) SetSourceHubCometRPCAddress(address string) *NodeDocumentACPOptions {
-	o.SourceHubCometRPCAddress = address
-	return o
-}
-
 // NodeACPOptions contains node ACP configuration values.
 type NodeACPOptions struct {
 	// IsEnabled specifies whether node ACP is enabled.
 	IsEnabled bool
 	// Path is the filesystem path for the node ACP system.
 	Path string
-}
-
-// NodeACP returns node ACP options with default values.
-func NodeACP() *NodeACPOptions {
-	return &NodeACPOptions{
-		IsEnabled: false,
-	}
-}
-
-// SetEnabled sets whether node ACP is enabled.
-func (o *NodeACPOptions) SetEnabled(enabled bool) *NodeACPOptions {
-	o.IsEnabled = enabled
-	return o
-}
-
-// SetPath sets the node ACP system path.
-func (o *NodeACPOptions) SetPath(path string) *NodeACPOptions {
-	o.Path = path
-	return o
 }
 
 // NodeDBOptions contains database configuration values.
@@ -403,79 +187,406 @@ type NodeDBOptions struct {
 	ChunkSize immutable.Option[int]
 }
 
-// NodeDB returns database options with default values.
-func NodeDB() *NodeDBOptions {
-	return &NodeDBOptions{
-		MaxTxnRetries: immutable.Some(5),
-		EnableSigning: true,
-		RetryIntervals: []time.Duration{
-			// exponential backoff retry intervals
-			time.Second * 30,
-			time.Minute,
-			time.Minute * 2,
-			time.Minute * 4,
-			time.Minute * 8,
-			time.Minute * 16,
-			time.Minute * 32,
+// DefaultNodeOptions returns default NodeOptions values.
+func DefaultNodeOptions() NodeOptions {
+	return NodeOptions{
+		DisableP2P:        false,
+		DisableAPI:        false,
+		EnableDevelopment: false,
+		Store: NodeStoreOptions{
+			Store:          NodeDefaultStore,
+			BadgerInMemory: false,
+			BadgerFileSize: 1 << 30, // 1GB
 		},
-		P2PBlockSyncTimeout: time.Second * 5,
-		LensRuntime:         NodeDefaultLensRuntime,
-		LensPoolSize:        0, // 0 means use default
+		DocumentACP: NodeDocumentACPOptions{
+			DocumentACPType: NodeLocalDocumentACPType,
+		},
+		NodeACP: NodeACPOptions{
+			IsEnabled: false,
+		},
+		DB: NodeDBOptions{
+			MaxTxnRetries: immutable.Some(5),
+			EnableSigning: true,
+			RetryIntervals: []time.Duration{
+				time.Second * 30,
+				time.Minute,
+				time.Minute * 2,
+				time.Minute * 4,
+				time.Minute * 8,
+				time.Minute * 16,
+				time.Minute * 32,
+			},
+			P2PBlockSyncTimeout: time.Second * 5,
+			LensRuntime:         NodeDefaultLensRuntime,
+		},
+		P2P:  NodeP2POptions{},
+		HTTP: NodeHTTPOptions{},
 	}
 }
 
-// SetMaxTxnRetries sets the maximum number of retries per transaction.
-func (o *NodeDBOptions) SetMaxTxnRetries(num int) *NodeDBOptions {
-	o.MaxTxnRetries = immutable.Some(num)
-	return o
+// NodeOptionsBuilder is a builder for NodeOptions.
+type NodeOptionsBuilder struct {
+	enumerableBuilder[NodeOptions]
 }
 
-// SetIdentity sets the identity for the node.
-func (o *NodeDBOptions) SetIdentity(ident identity.Identity) *NodeDBOptions {
-	o.Identity = immutable.Some(ident)
-	return o
+// Node creates a new NodeOptionsBuilder instance with default values.
+func Node() *NodeOptionsBuilder {
+	b := &NodeOptionsBuilder{}
+	b.append(func(opts *NodeOptions) {
+		defaults := DefaultNodeOptions()
+		*opts = defaults
+	})
+	return b
+}
+
+// SetDisableP2P sets the disable P2P flag.
+func (b *NodeOptionsBuilder) SetDisableP2P(disable bool) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DisableP2P = disable
+	})
+	return b
+}
+
+// SetDisableAPI sets the disable API flag.
+func (b *NodeOptionsBuilder) SetDisableAPI(disable bool) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DisableAPI = disable
+	})
+	return b
+}
+
+// SetEnableDevelopment sets the enable development mode flag.
+func (b *NodeOptionsBuilder) SetEnableDevelopment(enable bool) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.EnableDevelopment = enable
+	})
+	return b
+}
+
+// SetKMS sets the KMS type.
+func (b *NodeOptionsBuilder) SetKMS(kmsType NodeKMSType) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.KMSType = immutable.Some(kmsType)
+	})
+	return b
+}
+
+// SetNodeIdentity sets the identity for the node.
+func (b *NodeOptionsBuilder) SetNodeIdentity(ident identity.Identity) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DB.Identity = immutable.Some(ident)
+	})
+	return b
+}
+
+// --- Store setters ---
+
+// SetStoreType sets the store type.
+func (b *NodeOptionsBuilder) SetStoreType(store NodeStoreType) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.Store.Store = store
+	})
+	return b
+}
+
+// SetStorePath sets the store path.
+func (b *NodeOptionsBuilder) SetStorePath(path string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.Store.Path = path
+	})
+	return b
+}
+
+// SetBadgerFileSize sets the Badger file size.
+func (b *NodeOptionsBuilder) SetBadgerFileSize(size int64) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.Store.BadgerFileSize = size
+	})
+	return b
+}
+
+// SetBadgerEncryptionKey sets the Badger encryption key.
+func (b *NodeOptionsBuilder) SetBadgerEncryptionKey(key []byte) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.Store.BadgerEncryptionKey = key
+	})
+	return b
+}
+
+// SetBadgerInMemory sets whether Badger should run in-memory.
+func (b *NodeOptionsBuilder) SetBadgerInMemory(inMemory bool) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.Store.BadgerInMemory = inMemory
+	})
+	return b
+}
+
+// --- DocumentACP setters ---
+
+// SetDocumentACPType sets the document ACP type.
+func (b *NodeOptionsBuilder) SetDocumentACPType(acpType NodeDocumentACPType) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DocumentACP.DocumentACPType = acpType
+	})
+	return b
+}
+
+// SetDocumentACPPath sets the document ACP system path.
+func (b *NodeOptionsBuilder) SetDocumentACPPath(path string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DocumentACP.Path = path
+	})
+	return b
+}
+
+// SetTxnSigner sets the txn signer for Defra to use.
+func (b *NodeOptionsBuilder) SetTxnSigner(signer NodeTxSigner) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DocumentACP.Signer = immutable.Some(signer)
+	})
+	return b
+}
+
+// SetSourceHubChainID sets the chainID of the SourceHub chain.
+func (b *NodeOptionsBuilder) SetSourceHubChainID(chainID string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DocumentACP.SourceHubChainID = chainID
+	})
+	return b
+}
+
+// SetSourceHubGRPCAddress sets the GRPC address of the SourceHub node.
+func (b *NodeOptionsBuilder) SetSourceHubGRPCAddress(address string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DocumentACP.SourceHubGRPCAddress = address
+	})
+	return b
+}
+
+// SetSourceHubCometRPCAddress sets the Comet RPC address of the SourceHub node.
+func (b *NodeOptionsBuilder) SetSourceHubCometRPCAddress(address string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DocumentACP.SourceHubCometRPCAddress = address
+	})
+	return b
+}
+
+// --- NodeACP setters ---
+
+// SetNodeACPEnabled sets whether node ACP is enabled.
+func (b *NodeOptionsBuilder) SetNodeACPEnabled(enabled bool) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.NodeACP.IsEnabled = enabled
+	})
+	return b
+}
+
+// SetNodeACPPath sets the node ACP system path.
+func (b *NodeOptionsBuilder) SetNodeACPPath(path string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.NodeACP.Path = path
+	})
+	return b
+}
+
+// --- DB setters ---
+
+// SetMaxTxnRetries sets the maximum number of retries per transaction.
+func (b *NodeOptionsBuilder) SetMaxTxnRetries(num int) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DB.MaxTxnRetries = immutable.Some(num)
+	})
+	return b
 }
 
 // SetEnableSigning sets whether block signing is enabled.
-func (o *NodeDBOptions) SetEnableSigning(enable bool) *NodeDBOptions {
-	o.EnableSigning = enable
-	return o
+func (b *NodeOptionsBuilder) SetEnableSigning(enable bool) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DB.EnableSigning = enable
+	})
+	return b
 }
 
 // SetSearchableEncryptionKey sets the key used for searchable encryption.
-func (o *NodeDBOptions) SetSearchableEncryptionKey(key []byte) *NodeDBOptions {
-	o.SearchableEncryptionKey = key
-	return o
+func (b *NodeOptionsBuilder) SetSearchableEncryptionKey(key []byte) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DB.SearchableEncryptionKey = key
+	})
+	return b
 }
 
 // SetRetryIntervals sets the intervals between transaction retries.
-func (o *NodeDBOptions) SetRetryIntervals(intervals []time.Duration) *NodeDBOptions {
-	if len(intervals) > 0 {
-		o.RetryIntervals = intervals
-	}
-	return o
+func (b *NodeOptionsBuilder) SetRetryIntervals(intervals []time.Duration) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		if len(intervals) > 0 {
+			opts.DB.RetryIntervals = intervals
+		}
+	})
+	return b
 }
 
 // SetP2PBlockSyncTimeout sets the timeout duration for syncing block links.
-func (o *NodeDBOptions) SetP2PBlockSyncTimeout(timeout time.Duration) *NodeDBOptions {
-	o.P2PBlockSyncTimeout = timeout
-	return o
+func (b *NodeOptionsBuilder) SetP2PBlockSyncTimeout(timeout time.Duration) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DB.P2PBlockSyncTimeout = timeout
+	})
+	return b
 }
 
 // SetLensRuntime sets the lens runtime type.
-func (o *NodeDBOptions) SetLensRuntime(runtime NodeLensRuntimeType) *NodeDBOptions {
-	o.LensRuntime = runtime
-	return o
+func (b *NodeOptionsBuilder) SetLensRuntime(runtime NodeLensRuntimeType) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DB.LensRuntime = runtime
+	})
+	return b
 }
 
 // SetLensPoolSize sets the pool size for the lens runtime.
-func (o *NodeDBOptions) SetLensPoolSize(size int) *NodeDBOptions {
-	o.LensPoolSize = size
-	return o
+func (b *NodeOptionsBuilder) SetLensPoolSize(size int) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DB.LensPoolSize = size
+	})
+	return b
 }
 
 // SetChunkSize sets the chunk size for the blockstore.
-func (o *NodeDBOptions) SetChunkSize(size int) *NodeDBOptions {
-	o.ChunkSize = immutable.Some(size)
-	return o
+func (b *NodeOptionsBuilder) SetChunkSize(size int) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DB.ChunkSize = immutable.Some(size)
+	})
+	return b
+}
+
+// --- P2P setters ---
+
+// SetListenAddresses sets the listen addresses.
+func (b *NodeOptionsBuilder) SetListenAddresses(addresses ...string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.P2P.ListenAddresses = addresses
+	})
+	return b
+}
+
+// SetBootstrapPeers sets the bootstrap peers.
+func (b *NodeOptionsBuilder) SetBootstrapPeers(peers ...string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.P2P.BootstrapPeers = peers
+	})
+	return b
+}
+
+// SetEnablePubSub sets whether PubSub is enabled.
+func (b *NodeOptionsBuilder) SetEnablePubSub(enable bool) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.P2P.EnablePubSub = enable
+	})
+	return b
+}
+
+// SetEnableRelay sets whether relay is enabled.
+func (b *NodeOptionsBuilder) SetEnableRelay(enable bool) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.P2P.EnableRelay = enable
+	})
+	return b
+}
+
+// SetEnableClearBackoffOnRetry sets whether to clear backoff on retry.
+func (b *NodeOptionsBuilder) SetEnableClearBackoffOnRetry(enable bool) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.P2P.EnableClearBackoffOnRetry = enable
+	})
+	return b
+}
+
+// SetP2PPrivateKey sets the private key for the P2P node.
+func (b *NodeOptionsBuilder) SetP2PPrivateKey(key []byte) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.P2P.PrivateKey = key
+	})
+	return b
+}
+
+// --- HTTP setters ---
+
+// SetHTTPAddress sets the HTTP server address.
+func (b *NodeOptionsBuilder) SetHTTPAddress(address string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.HTTP.Address = address
+	})
+	return b
+}
+
+// SetAllowedOrigins sets the allowed CORS origins.
+func (b *NodeOptionsBuilder) SetAllowedOrigins(origins ...string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.HTTP.AllowedOrigins = origins
+	})
+	return b
+}
+
+// SetTLSCertPath sets the path to the TLS certificate file.
+func (b *NodeOptionsBuilder) SetTLSCertPath(path string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.HTTP.TLSCertPath = path
+	})
+	return b
+}
+
+// SetTLSKeyPath sets the path to the TLS private key file.
+func (b *NodeOptionsBuilder) SetTLSKeyPath(path string) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.HTTP.TLSKeyPath = path
+	})
+	return b
+}
+
+// --- Bulk setters for sub-option structs ---
+
+// SetP2POptions sets the P2P options from a plain data struct.
+func (b *NodeOptionsBuilder) SetP2POptions(p2pOpts NodeP2POptions) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.P2P = p2pOpts
+	})
+	return b
+}
+
+// SetStoreOptions sets the store options from a plain data struct.
+func (b *NodeOptionsBuilder) SetStoreOptions(storeOpts NodeStoreOptions) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.Store = storeOpts
+	})
+	return b
+}
+
+// SetDocumentACPOptions sets the document ACP options from a plain data struct.
+func (b *NodeOptionsBuilder) SetDocumentACPOptions(dacOpts NodeDocumentACPOptions) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DocumentACP = dacOpts
+	})
+	return b
+}
+
+// SetNodeACPOptions sets the node ACP options from a plain data struct.
+func (b *NodeOptionsBuilder) SetNodeACPOptions(nacOpts NodeACPOptions) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.NodeACP = nacOpts
+	})
+	return b
+}
+
+// SetDBOptions sets the DB options from a plain data struct.
+func (b *NodeOptionsBuilder) SetDBOptions(dbOpts NodeDBOptions) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.DB = dbOpts
+	})
+	return b
+}
+
+// SetHTTPOptions sets the HTTP options from a plain data struct.
+func (b *NodeOptionsBuilder) SetHTTPOptions(httpOpts NodeHTTPOptions) *NodeOptionsBuilder {
+	b.append(func(opts *NodeOptions) {
+		opts.HTTP = httpOpts
+	})
+	return b
 }

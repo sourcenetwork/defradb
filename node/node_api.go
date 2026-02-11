@@ -20,14 +20,29 @@ import (
 )
 
 func (n *Node) startAPI(ctx context.Context) error {
-	if n.config.disableAPI {
+	if n.opts.DisableAPI {
 		return nil
 	}
 	handler, err := http.NewHandler(n.DB)
 	if err != nil {
 		return err
 	}
-	n.server, err = http.NewServer(handler, filterOptions[http.ServerOpt](n.options)...)
+
+	var serverOpts []http.ServerOpt
+	if n.opts.HTTP.Address != "" {
+		serverOpts = append(serverOpts, http.WithAddress(n.opts.HTTP.Address))
+	}
+	if len(n.opts.HTTP.AllowedOrigins) > 0 {
+		serverOpts = append(serverOpts, http.WithAllowedOrigins(n.opts.HTTP.AllowedOrigins...))
+	}
+	if n.opts.HTTP.TLSCertPath != "" {
+		serverOpts = append(serverOpts, http.WithTLSCertPath(n.opts.HTTP.TLSCertPath))
+	}
+	if n.opts.HTTP.TLSKeyPath != "" {
+		serverOpts = append(serverOpts, http.WithTLSKeyPath(n.opts.HTTP.TLSKeyPath))
+	}
+
+	n.server, err = http.NewServer(handler, serverOpts...)
 	if err != nil {
 		return err
 	}
