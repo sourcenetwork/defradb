@@ -22,6 +22,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -31,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // getAllIndexDescriptions returns all the index descriptions in the database.
@@ -164,11 +166,14 @@ func (c *collection) deleteIndexedDocWithID(
 func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexCreateRequest,
+	opts ...options.Lister[options.CollectionCreateIndexOptions],
 ) (client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeIndexCreatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexCreatePerm); err != nil {
 		return client.IndexDescription{}, err
 	}
 
@@ -353,11 +358,17 @@ func (c *collection) indexExistingDocs(
 // The index will be removed from the system store.
 //
 // All index artifacts for existing documents related the index will be removed.
-func (c *collection) DropIndex(ctx context.Context, indexName string) error {
+func (c *collection) DropIndex(
+	ctx context.Context,
+	indexName string,
+	opts ...options.Lister[options.CollectionDropIndexOptions],
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeIndexDropPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexDropPerm); err != nil {
 		return err
 	}
 
@@ -410,8 +421,13 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 }
 
 // GetIndexes returns all indexes for the collection.
-func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeIndexListPerm); err != nil {
+func (c *collection) GetIndexes(
+	ctx context.Context,
+	opts ...options.Lister[options.CollectionGetIndexesOptions],
+) ([]client.IndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
 	}
 

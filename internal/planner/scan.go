@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -310,7 +311,11 @@ func (p *Planner) Scan(
 		docMapper: docMapper{mapperSelect.DocumentMapping},
 	}
 
-	col, err := p.db.GetCollectionByName(p.ctx, mapperSelect.CollectionName)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		mapperSelect.CollectionName,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}

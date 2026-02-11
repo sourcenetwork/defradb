@@ -18,58 +18,89 @@ import (
 	"github.com/ipfs/go-cid"
 
 	"github.com/sourcenetwork/corekv/blockstore"
+
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 // P2P is a peer connected database implementation.
 type P2P interface {
 	// PeerInfo returns the p2p host list of addresses.
-	PeerInfo(ctx context.Context) ([]string, error)
+	PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error)
 
 	// ActivePeers returns the addresses of peers that are currently connected to.
 	//
 	// Addresses are returned in the multiaddr format (e.g. /ip4/127.0.0.1/tcp/4001/p2p/<PeerID>).
-	ActivePeers(ctx context.Context) ([]string, error)
+	ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error)
 
 	// Connect tries to connect to the peer with the given [PeerInfo].
-	Connect(ctx context.Context, addresses []string) error
+	Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error
 
 	// CreateReplicator adds a replicator to the persisted list or adds
 	// schemas if the replicator already exists.
-	CreateReplicator(ctx context.Context, addresses []string, collectionNames ...string) error
+	CreateReplicator(
+		ctx context.Context,
+		addresses []string,
+		opts ...options.Lister[options.CreateReplicatorOptions],
+	) error
+
 	// DeleteReplicator deletes a replicator from the persisted list
 	// or specific schemas if they are specified.
-	DeleteReplicator(ctx context.Context, id string, collectionNames ...string) error
+	DeleteReplicator(
+		ctx context.Context,
+		id string,
+		opts ...options.Lister[options.DeleteReplicatorOptions],
+	) error
+
 	// ListReplicators returns the full list of replicators with their
 	// subscribed schemas.
-	ListReplicators(ctx context.Context) ([]Replicator, error)
+	ListReplicators(ctx context.Context, opts ...options.Lister[options.ListReplicatorsOptions]) ([]Replicator, error)
 
 	// CreateP2PCollections creates the given collections to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// collection names are invalid.
-	CreateP2PCollections(ctx context.Context, collectionNames ...string) error
+	CreateP2PCollections(
+		ctx context.Context,
+		collectionNames []string,
+		opts ...options.Lister[options.CreateP2PCollectionsOptions],
+	) error
 
 	// DeleteP2PCollections deletes the given collections from the P2P system and
 	// unsubscribes from their topics. It will error if the provided
 	// collection names are invalid.
-	DeleteP2PCollections(ctx context.Context, collectionNames ...string) error
+	DeleteP2PCollections(
+		ctx context.Context,
+		collectionNames []string,
+		opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+	) error
 
 	// ListP2PCollections returns the list of persisted collection names that
 	// the P2P system subscribes to.
-	ListP2PCollections(ctx context.Context) ([]string, error)
+	ListP2PCollections(
+		ctx context.Context,
+		opts ...options.Lister[options.ListP2PCollectionsOptions],
+	) ([]string, error)
 
 	// CreateP2PDocuments creates the given docIDs to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// docIDs are invalid.
-	CreateP2PDocuments(ctx context.Context, docIDs ...string) error
+	CreateP2PDocuments(
+		ctx context.Context,
+		docIDs []string,
+		opts ...options.Lister[options.CreateP2PDocumentsOptions],
+	) error
 
 	// DeleteP2PDocuments removes the given docIDs from the P2P system and
 	// unsubscribes from their topics. It will error if the provided
 	// docIDs are invalid.
-	DeleteP2PDocuments(ctx context.Context, docIDs ...string) error
+	DeleteP2PDocuments(
+		ctx context.Context,
+		docIDs []string,
+		opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+	) error
 
 	// ListP2PDocuments returns the list of persisted docIDs that
 	// the P2P system subscribes to.
-	ListP2PDocuments(ctx context.Context) ([]string, error)
+	ListP2PDocuments(ctx context.Context, opts ...options.Lister[options.ListP2PDocumentsOptions]) ([]string, error)
 
 	// SyncDocuments requests the latest versions of specified documents from the network
 	// and synchronizes their DAGs locally. It doesn't automatically subscribe

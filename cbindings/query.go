@@ -18,11 +18,14 @@ import "C"
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 
 	"github.com/google/uuid"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 // We cannot return a channel to/from C, so instead we have a map of subscription IDs to
@@ -104,14 +107,29 @@ func ExecuteQuery(
 	variables *C.char,
 ) C.Result {
 	ctx := context.Background()
-	opts, err := buildRequestOptions(C.GoString(operationName), C.GoString(variables))
+
+	opt := options.ExecRequest()
+	opName := C.GoString(operationName)
+	if opName != "" {
+		opt.SetOperationName(opName)
+	}
+	varsStr := C.GoString(variables)
+	if varsStr != "" {
+		var vars map[string]any
+		if err := json.Unmarshal([]byte(varsStr), &vars); err != nil {
+			return returnC(returnGoC(1, err.Error(), ""))
+		}
+		opt.SetVariables(vars)
+	}
+
+	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ctx, err = contextWithIdentity(ctx, identityPtr)
-	if err != nil {
-		return returnC(returnGoC(1, err.Error(), ""))
+	ident := acpIdentity.FromContext(ctx)
+	if ident.HasValue() {
+		opt.SetIdentity(ident.Value())
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -121,7 +139,7 @@ func ExecuteQuery(
 
 	ctx, cancelFunc := context.WithCancel(ctx)
 
-	res := store.ExecRequest(ctx, C.GoString(query), opts...)
+	res := store.ExecRequest(ctx, C.GoString(query), opt)
 	sub := &Subscription{
 		ctxCancel:  cancelFunc,
 		resultChan: res.Subscription,

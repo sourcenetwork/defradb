@@ -15,7 +15,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeCollectionGetCommand(ctx context.Context) *cobra.Command {
@@ -31,11 +33,19 @@ func MakeCollectionGetCommand(ctx context.Context) *cobra.Command {
 				return cmd.Usage()
 			}
 
+			ctx := cmd.Context()
+
 			docID, err := client.NewDocIDFromString(args[0])
 			if err != nil {
 				return err
 			}
-			doc, err := col.Get(cmd.Context(), docID, showDeleted)
+
+			getOpt := options.WithIdentity(
+				options.CollectionGet().SetShowDeleted(showDeleted),
+				identity.FromContext(ctx),
+			)
+
+			doc, err := col.Get(ctx, docID, getOpt)
 			if err != nil {
 				return err
 			}

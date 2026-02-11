@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeP2PReplicatorDeleteCommand(ctx context.Context) *cobra.Command {
@@ -26,7 +29,11 @@ A replicator synchronizes one or all collection(s) from this instance to another
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.DeleteReplicator(cmd.Context(), args[0], collections...)
+			opt := options.WithIdentity(
+				options.DeleteReplicator().SetCollectionNames(collections),
+				identity.FromContext(cmd.Context()),
+			)
+			return cliClient.DeleteReplicator(cmd.Context(), args[0], opt)
 		},
 	}
 

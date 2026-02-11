@@ -13,12 +13,14 @@ package db
 import (
 	"context"
 
+	"github.com/sourcenetwork/immutable"
+
 	"github.com/sourcenetwork/defradb/acp/dac"
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
-	"github.com/sourcenetwork/immutable"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (db *DB) DocumentACP() immutable.Option[dac.DocumentACP] {
@@ -51,11 +53,14 @@ func (db *DB) PurgeDACState(ctx context.Context) error {
 func (db *DB) AddDACPolicy(
 	ctx context.Context,
 	policy string,
+	opts ...options.Lister[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeDACPolicyAddPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACPolicyAddPerm); err != nil {
 		return client.AddPolicyResult{}, err
 	}
 
@@ -65,7 +70,7 @@ func (db *DB) AddDACPolicy(
 
 	policyID, err := db.documentACP.Value().AddPolicy(
 		ctx,
-		identity.FromContext(ctx).Value(),
+		opt.Identity.Value(),
 		policy,
 	)
 	if err != nil {
@@ -81,11 +86,14 @@ func (db *DB) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeDACRelationAddPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACRelationAddPerm); err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
 
@@ -93,7 +101,8 @@ func (db *DB) AddDACActorRelationship(
 		return client.AddActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
-	collection, err := db.GetCollectionByName(ctx, collectionName)
+	colOpt := options.WithIdentity(options.GetCollectionByName(), opt.Identity)
+	collection, err := db.GetCollectionByName(ctx, collectionName, colOpt)
 	if err != nil {
 		return client.AddActorRelationshipResult{}, err
 	}
@@ -109,7 +118,7 @@ func (db *DB) AddDACActorRelationship(
 		resourceName,
 		docID,
 		relation,
-		identity.FromContext(ctx).Value(),
+		opt.Identity.Value(),
 		targetActor,
 	)
 
@@ -133,11 +142,14 @@ func (db *DB) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeDACRelationDeletePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDACRelationDeletePerm); err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
 
@@ -145,7 +157,8 @@ func (db *DB) DeleteDACActorRelationship(
 		return client.DeleteActorRelationshipResult{}, client.ErrACPOperationButACPNotAvailable
 	}
 
-	collection, err := db.GetCollectionByName(ctx, collectionName)
+	colOpt := options.WithIdentity(options.GetCollectionByName(), opt.Identity)
+	collection, err := db.GetCollectionByName(ctx, collectionName, colOpt)
 	if err != nil {
 		return client.DeleteActorRelationshipResult{}, err
 	}
@@ -161,7 +174,7 @@ func (db *DB) DeleteDACActorRelationship(
 		resourceName,
 		docID,
 		relation,
-		identity.FromContext(ctx).Value(),
+		opt.Identity.Value(),
 		targetActor,
 	)
 

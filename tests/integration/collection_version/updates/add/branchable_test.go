@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -40,9 +41,7 @@ func TestBranchableCollection_AddNewField_ShouldUpdateCollectionDefinition(t *te
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("User"),
-				},
+				FilterOptions: options.GetCollections().SetCollectionName("User"),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "User",

@@ -23,7 +23,9 @@ import (
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 //export LensSet
@@ -74,7 +76,8 @@ func LensAdd(nodePtr C.uintptr_t, identityPtr C.uintptr_t, cfg *C.char) C.Result
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	lensID, err := store.AddLens(ctx, lensCfg)
+	addOpt := options.WithIdentity(options.AddLens(), acpIdentity.FromContext(ctx))
+	lensID, err := store.AddLens(ctx, lensCfg, addOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -94,7 +97,8 @@ func LensList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	lenses, err := store.ListLenses(ctx)
+	listOpt := options.WithIdentity(options.ListLenses(), acpIdentity.FromContext(ctx))
+	lenses, err := store.ListLenses(ctx, listOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

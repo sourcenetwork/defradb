@@ -15,6 +15,9 @@ import (
 	"net/http"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 type acpHandler struct{}
@@ -28,9 +31,11 @@ func (h *acpHandler) AddDACPolicy(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	opt := options.WithIdentity(options.AddDACPolicy(), identity.FromContext(req.Context()))
 	addPolicyResult, err := db.AddDACPolicy(
 		req.Context(),
 		string(policyBytes),
+		opt,
 	)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -50,12 +55,14 @@ func (h *acpHandler) AddDACActorRelationship(rw http.ResponseWriter, req *http.R
 		return
 	}
 
+	opt := options.WithIdentity(options.AddDACActorRelationship(), identity.FromContext(req.Context()))
 	addDocActorRelResult, err := db.AddDACActorRelationship(
 		req.Context(),
 		message.CollectionName,
 		message.DocID,
 		message.Relation,
 		message.TargetActor,
+		opt,
 	)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -75,12 +82,14 @@ func (h *acpHandler) DeleteDACActorRelationship(rw http.ResponseWriter, req *htt
 		return
 	}
 
+	opt := options.WithIdentity(options.DeleteDACActorRelationship(), identity.FromContext(req.Context()))
 	deleteDocActorRelResult, err := db.DeleteDACActorRelationship(
 		req.Context(),
 		message.CollectionName,
 		message.DocID,
 		message.Relation,
 		message.TargetActor,
+		opt,
 	)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -100,10 +109,12 @@ func (h *acpHandler) AddNACActorRelationship(rw http.ResponseWriter, req *http.R
 		return
 	}
 
+	opt := options.WithIdentity(options.AddNACActorRelationship(), identity.FromContext(req.Context()))
 	addActorRelationshipResult, err := db.AddNACActorRelationship(
 		req.Context(),
 		message.Relation,
 		message.TargetActor,
+		opt,
 	)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -123,10 +134,12 @@ func (h *acpHandler) DeleteNACActorRelationship(rw http.ResponseWriter, req *htt
 		return
 	}
 
+	opt := options.WithIdentity(options.DeleteNACActorRelationship(), identity.FromContext(req.Context()))
 	deleteActorRelationshipResult, err := db.DeleteNACActorRelationship(
 		req.Context(),
 		message.Relation,
 		message.TargetActor,
+		opt,
 	)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
@@ -139,7 +152,8 @@ func (h *acpHandler) DeleteNACActorRelationship(rw http.ResponseWriter, req *htt
 func (h *acpHandler) ReEnableNAC(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	err := db.ReEnableNAC(req.Context())
+	opt := options.WithIdentity(options.ReEnableNAC(), identity.FromContext(req.Context()))
+	err := db.ReEnableNAC(req.Context(), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -151,7 +165,8 @@ func (h *acpHandler) ReEnableNAC(rw http.ResponseWriter, req *http.Request) {
 func (h *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	err := db.DisableNAC(req.Context())
+	opt := options.WithIdentity(options.DisableNAC(), identity.FromContext(req.Context()))
+	err := db.DisableNAC(req.Context(), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -163,7 +178,8 @@ func (h *acpHandler) DisableNAC(rw http.ResponseWriter, req *http.Request) {
 func (h *acpHandler) GetNACStatus(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	statusNACResult, err := db.GetNACStatus(req.Context())
+	opt := options.WithIdentity(options.GetNACStatus(), identity.FromContext(req.Context()))
+	statusNACResult, err := db.GetNACStatus(req.Context(), opt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

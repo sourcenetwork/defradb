@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
@@ -59,7 +60,11 @@ type Store interface {
 	// validation fails.
 	//
 	// Note: A policy can not be added without the creatorID (identity).
-	AddDACPolicy(ctx context.Context, policy string) (AddPolicyResult, error)
+	AddDACPolicy(
+		ctx context.Context,
+		policy string,
+		opts ...options.Lister[options.AddDACPolicyOptions],
+	) (AddPolicyResult, error)
 
 	// AddDACActorRelationship creates a relationship between document and the target actor.
 	//
@@ -75,6 +80,7 @@ type Store interface {
 		docID string,
 		relation string,
 		targetActor string,
+		opts ...options.Lister[options.AddDACActorRelationshipOptions],
 	) (AddActorRelationshipResult, error)
 
 	// DeleteDACActorRelationship deletes a relationship between document and the target actor.
@@ -93,6 +99,7 @@ type Store interface {
 		docID string,
 		relation string,
 		targetActor string,
+		opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 	) (DeleteActorRelationshipResult, error)
 
 	// AddNACActorRelationship creates a relationship to grant node access to the target actor.
@@ -107,6 +114,7 @@ type Store interface {
 		ctx context.Context,
 		relation string,
 		targetActor string,
+		opts ...options.Lister[options.AddNACActorRelationshipOptions],
 	) (AddActorRelationshipResult, error)
 
 	// DeleteNACActorRelationship deletes a relationship to revoke node access from target actor.
@@ -123,6 +131,7 @@ type Store interface {
 		ctx context.Context,
 		relation string,
 		targetActor string,
+		opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
 	) (DeleteActorRelationshipResult, error)
 
 	// ReEnableNAC will re-enable node acp that was temporarily disabled (and configured). This will
@@ -135,7 +144,7 @@ type Store interface {
 	//
 	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 	// authorized to perform this operation.
-	ReEnableNAC(ctx context.Context) error
+	ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error
 
 	// DisableNAC will disable node acp for the users temporarily. This will keep the current node acp
 	// state saved so that if it is re-enabled in the future, then we can recover all the relationships formed.
@@ -146,25 +155,34 @@ type Store interface {
 	//
 	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 	// authorized to perform this operation.
-	DisableNAC(ctx context.Context) error
+	DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error
 
 	// GetNACStatus returns the node acp status that tells us if node access was ever configured,
 	// or if node acp is currently enabled or temporarily disabled.
-	GetNACStatus(ctx context.Context) (NACStatusResult, error)
+	GetNACStatus(ctx context.Context, opts ...options.Lister[options.GetNACStatusOptions]) (NACStatusResult, error)
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
 
 	// VerifySignature verifies the signatures of a block using a public key.
 	// Returns an error if any signature verification fails.
-	VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error
+	VerifySignature(
+		ctx context.Context,
+		blockCid string,
+		pubKey crypto.PublicKey,
+		opts ...options.Lister[options.VerifySignatureOptions],
+	) error
 
 	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
 	// creating the necessary collections, request types, etc.
 	//
 	// All schema types provided must not exist prior to calling this, and they may not reference existing
 	// types previously defined.
-	AddSchema(ctx context.Context, sdl string) ([]CollectionVersion, error)
+	AddSchema(
+		ctx context.Context,
+		sdl string,
+		opts ...options.Lister[options.AddSchemaOptions],
+	) ([]CollectionVersion, error)
 
 	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
 	// present in the database.
@@ -186,7 +204,12 @@ type Store interface {
 	//
 	// A lens configuration may also be provided, and will become the migration to any new CollectionVersions created
 	// by the patch.
-	PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens]) error
+	PatchCollection(
+		ctx context.Context,
+		patch string,
+		migration immutable.Option[model.Lens],
+		opts ...options.Lister[options.PatchCollectionOptions],
+	) error
 
 	// SetActiveCollectionVersion activates all collection versions with the given VersionID, and deactivates all
 	// those share the same CollectionID as the activated CollectionVersion.
@@ -195,7 +218,11 @@ type Store interface {
 	// provided.  This includes GQL queries and Collection operations.
 	//
 	// It will return an error if the provided version ID does not exist.
-	SetActiveCollectionVersion(ctx context.Context, versionID string) error
+	SetActiveCollectionVersion(
+		ctx context.Context,
+		versionID string,
+		opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+	) error
 
 	// AddView creates a new Defra View.
 	//
@@ -235,7 +262,7 @@ type Store interface {
 		ctx context.Context,
 		gqlQuery string,
 		sdl string,
-		transformCID immutable.Option[string],
+		opts ...options.Lister[options.AddViewOptions],
 	) ([]CollectionVersion, error)
 
 	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set, all views
@@ -244,7 +271,7 @@ type Store interface {
 	// The cached result is dependent on the ACP settings of the source data and the permissions of the user making
 	// the call.  At the moment only one cache can be active at a time, so please pay attention to access rights
 	// when making this call.
-	RefreshViews(ctx context.Context, options CollectionFetchOptions) error
+	RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error
 
 	// SetMigration sets the migration for all collections using the given source-destination collection version IDs.
 	//
@@ -265,10 +292,10 @@ type Store interface {
 	//
 	// The lens store is content-addressed, so identical lens configurations
 	// will return the same CID without duplicating storage.
-	AddLens(ctx context.Context, lens model.Lens) (string, error)
+	AddLens(ctx context.Context, lens model.Lens, opts ...options.Lister[options.AddLensOptions]) (string, error)
 
 	// ListLenses returns all stored lenses mapped by their CID.
-	ListLenses(ctx context.Context) (map[string]model.Lens, error)
+	ListLenses(ctx context.Context, opts ...options.Lister[options.ListLensesOptions]) (map[string]model.Lens, error)
 
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
@@ -276,7 +303,11 @@ type Store interface {
 	//
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
 	// made via the returned [Collection] will respect that transaction.
-	GetCollectionByName(ctx context.Context, name CollectionName) (Collection, error)
+	GetCollectionByName(
+		ctx context.Context,
+		name CollectionName,
+		opts ...options.Lister[options.GetCollectionByNameOptions],
+	) (Collection, error)
 
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
@@ -286,23 +317,27 @@ type Store interface {
 	//
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
 	// made via the returned [Collection]s will respect that transaction.
-	GetCollections(ctx context.Context, options CollectionFetchOptions) ([]Collection, error)
+	GetCollections(ctx context.Context, opts ...options.Lister[options.GetCollectionsOptions]) ([]Collection, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
-	GetAllIndexes(ctx context.Context) (map[CollectionName][]IndexDescription, error)
+	GetAllIndexes(
+		ctx context.Context,
+		opts ...options.Lister[options.GetAllIndexesOptions],
+	) (map[CollectionName][]IndexDescription, error)
 
 	// ListAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].
 	ListAllEncryptedIndexes(context.Context) (map[CollectionName][]EncryptedIndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
-	ExecRequest(ctx context.Context, request string, opts ...RequestOption) *RequestResult
+	ExecRequest(ctx context.Context, request string, opts ...options.Lister[options.ExecRequestOptions]) *RequestResult
 
 	// BasicImport imports a json dataset.
 	// filepath must be accessible to the node.
 	BasicImport(ctx context.Context, filepath string) error
 
 	// BasicExport exports the current data or subset of data to file in json format.
-	BasicExport(ctx context.Context, config *BackupConfig) error
+	// The filepath parameter is required and specifies where to write the export file.
+	BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error
 
 	// P2P holds the methods that are related to P2P operations.
 	// Calling them when no networking stack has been configured should return an error.
@@ -340,23 +375,6 @@ type GQLOptions struct {
 	OperationName string `json:"operationName"`
 	// Variables is a map of names to varible values.
 	Variables map[string]any `json:"variables"`
-}
-
-// RequestOption sets an optional request setting.
-type RequestOption func(*GQLOptions)
-
-// WithOperationName sets the operation name for a GQL request.
-func WithOperationName(operationName string) RequestOption {
-	return func(o *GQLOptions) {
-		o.OperationName = operationName
-	}
-}
-
-// WithVariables sets the variables for a GQL request.
-func WithVariables(variables map[string]any) RequestOption {
-	return func(o *GQLOptions) {
-		o.Variables = variables
-	}
 }
 
 // GQLResult represents the immediate results of a GQL request.
@@ -425,34 +443,4 @@ type RequestResult struct {
 	// Subscription is an optional channel which returns results
 	// from a subscription request.
 	Subscription <-chan GQLResult
-}
-
-// CollectionFetchOptions represents a set of options used for fetching collections.
-type CollectionFetchOptions struct {
-	// If provided, only collections with this version id will be returned.
-	VersionID immutable.Option[string]
-
-	// If provided, only collections with this CollectionID will be returned.
-	CollectionID immutable.Option[string]
-
-	// If provided, only collections with this CollectionSetID will be returned.
-	CollectionSetID immutable.Option[string]
-
-	// If provided, only collections with this name will be returned.
-	Name immutable.Option[string]
-
-	// If IncludeInactive is true, then inactive collections will also be returned.
-	IncludeInactive immutable.Option[bool]
-}
-
-// SchemaFetchOptions represents a set of options used for fetching schemas.
-type SchemaFetchOptions struct {
-	// If provided, only schemas of this root will be returned.
-	Root immutable.Option[string]
-
-	// If provided, only schemas with this name will be returned.
-	Name immutable.Option[string]
-
-	// If provided, only the schema with this id will be returned.
-	ID immutable.Option[string]
 }

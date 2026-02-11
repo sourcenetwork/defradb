@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"reflect"
 	"sync"
 	"syscall/js"
 
@@ -123,7 +124,22 @@ func contextIdentityArg(value js.Value) (immutable.Option[acpIdentity.Identity],
 	if err != nil {
 		return immutable.None[acpIdentity.Identity](), err
 	}
-	return immutable.Some[acpIdentity.Identity](identity), nil
+	return immutable.Some(identity), nil
+}
+
+// setOptIdentity extracts identity from args at the given index and sets it on the option builder.
+// We use reflection to call SetIdentity if the builder has it, ignoring the return value.
+func setOptIdentity[B any](opt B, args []js.Value, argIndex int) {
+	if len(args) > argIndex {
+		if ident, err := contextIdentityArg(args[argIndex]); err == nil && ident.HasValue() {
+			// Use reflect to call SetIdentity regardless of return type.
+			v := reflect.ValueOf(opt)
+			m := v.MethodByName("SetIdentity")
+			if m.IsValid() {
+				m.Call([]reflect.Value{reflect.ValueOf(ident.Value())})
+			}
+		}
+	}
 }
 
 // initKeypairAndGetIdentity initializes the keypair and gets an identity.

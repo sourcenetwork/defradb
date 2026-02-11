@@ -18,24 +18,26 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // We don't want to have to hold large volumes of IDs in memory, so we chunk
 // our deletes.
 const hardDeleteChunkSize int = 10000
 
-func (c *collection) Truncate(
-	ctx context.Context,
-) error {
+func (c *collection) Truncate(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeCollectionTruncatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionTruncatePerm); err != nil {
 		return err
 	}
 

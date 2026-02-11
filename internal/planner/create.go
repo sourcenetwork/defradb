@@ -12,6 +12,7 @@ package planner
 
 import (
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -45,7 +46,7 @@ type createNode struct {
 
 	execInfo createExecInfo
 
-	createOptions []client.DocCreateOption
+	createOptions []options.Lister[options.CollectionCreateOptions]
 }
 
 type createExecInfo struct {
@@ -161,20 +162,26 @@ func (p *Planner) CreateDocs(parsed *mapper.Mutation) (planNode, error) {
 		return nil, err
 	}
 
-	// create a mutation createNode.
 	create := &createNode{
 		p:         p,
 		input:     parsed.CreateInput,
 		results:   results,
 		docMapper: docMapper{parsed.DocumentMapping},
-		createOptions: []client.DocCreateOption{
-			client.CreateDocEncrypted(parsed.Encrypt),
-			client.CreateDocWithEncryptedFields(parsed.EncryptFields),
+		createOptions: []options.Lister[options.CollectionCreateOptions]{
+			options.WithIdentity(
+				options.CollectionCreate().
+					SetEncryptDoc(parsed.Encrypt).
+					SetEncryptedFields(parsed.EncryptFields),
+				p.identity,
+			),
 		},
 	}
 
-	// get collection
-	col, err := p.db.GetCollectionByName(p.ctx, parsed.Name)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		parsed.Name,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}

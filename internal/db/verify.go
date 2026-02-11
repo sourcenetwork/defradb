@@ -18,18 +18,26 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/bsadapter"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // VerifySignature verifies the signatures of a block using a public key.
 // Returns an error if any signature verification fails.
-func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeSignatureVerifyPerm); err != nil {
+func (db *DB) VerifySignature(
+	ctx context.Context,
+	blockCid string,
+	pubKey crypto.PublicKey,
+	opts ...options.Lister[options.VerifySignatureOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeSignatureVerifyPerm); err != nil {
 		return err
 	}
 
@@ -59,14 +67,14 @@ func (db *DB) VerifySignature(ctx context.Context, blockCid string, pubKey crypt
 
 	if db.documentACP.HasValue() {
 		docID := string(block.Delta.GetDocID())
-		collection, err := NewCollectionRetriever(db).RetrieveCollectionFromDocID(ctx, docID)
+		collection, err := NewCollectionRetriever(db).WithIdentity(opt.Identity).RetrieveCollectionFromDocID(ctx, docID)
 		if err != nil {
 			return err
 		}
 
 		hasPerm, err := acpDB.CheckAccessOfDocOnCollectionWithACP(
 			ctx,
-			identity.FromContext(ctx),
+			opt.Identity,
 			db.nodeACP,
 			db.documentACP.Value(),
 			collection,

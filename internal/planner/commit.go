@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -335,10 +336,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 
 	cols, err := n.planner.db.GetCollections(
 		n.planner.ctx,
-		client.CollectionFetchOptions{
-			IncludeInactive: immutable.Some(true),
-			VersionID:       immutable.Some(collectionVersionId),
-		},
+		options.GetCollections().SetIncludeInactive(true).SetVersionID(collectionVersionId),
 	)
 	if err != nil {
 		return core.Doc{}, err

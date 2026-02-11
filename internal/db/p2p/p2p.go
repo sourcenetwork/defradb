@@ -32,6 +32,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
@@ -73,7 +74,10 @@ type DB interface {
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
 	// GetCollections returns all collections and their descriptions matching the given options
 	// that currently exist within this [Store].
-	GetCollections(ctx context.Context, options client.CollectionFetchOptions) ([]client.Collection, error)
+	GetCollections(
+		ctx context.Context,
+		opts ...options.Lister[options.GetCollectionsOptions],
+	) ([]client.Collection, error)
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error
 	// Events returns the event bus for the database.
@@ -345,9 +349,7 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 
 	cols, err := p.db.GetCollections(
 		ctx,
-		client.CollectionFetchOptions{
-			VersionID: immutable.Some(block.Delta.GetCollectionVersionID()),
-		},
+		options.GetCollections().SetVersionID(block.Delta.GetCollectionVersionID()),
 	)
 	if err != nil {
 		log.ErrorE("Failed to get collections", err)
@@ -433,9 +435,7 @@ func (p *P2P) trySelfHasAccess(ctx context.Context, block *coreblock.Block, coll
 
 	cols, err := p.db.GetCollections(
 		ctx,
-		client.CollectionFetchOptions{
-			CollectionID: immutable.Some(collectionID),
-		},
+		options.GetCollections().SetCollectionID(collectionID),
 	)
 	if err != nil {
 		return false, err

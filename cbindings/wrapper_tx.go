@@ -31,6 +31,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 )
@@ -69,8 +70,12 @@ func (txn *Transaction) PrintDump(ctx context.Context) error {
 	return txn.CWrapper.PrintDump(ctx)
 }
 
-func (txn *Transaction) AddDACPolicy(ctx context.Context, policy string) (client.AddPolicyResult, error) {
-	return txn.CWrapper.AddDACPolicy(ctx, policy)
+func (txn *Transaction) AddDACPolicy(
+	ctx context.Context,
+	policy string,
+	opts ...options.Lister[options.AddDACPolicyOptions],
+) (client.AddPolicyResult, error) {
+	return txn.CWrapper.AddDACPolicy(ctx, policy, opts...)
 }
 
 func (txn *Transaction) AddDACActorRelationship(
@@ -79,8 +84,9 @@ func (txn *Transaction) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
-	return txn.CWrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	return txn.CWrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (txn *Transaction) DeleteDACActorRelationship(
@@ -89,83 +95,107 @@ func (txn *Transaction) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
-	return txn.CWrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	return txn.CWrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
 
 func (txn *Transaction) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
 	return txn.CWrapper.GetNodeIdentity(ctx)
 }
 
-func (txn *Transaction) VerifySignature(ctx context.Context, blockCid string, pubKey crypto.PublicKey) error {
-	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey)
+func (txn *Transaction) VerifySignature(
+	ctx context.Context,
+	blockCid string,
+	pubKey crypto.PublicKey,
+	opts ...options.Lister[options.VerifySignatureOptions],
+) error {
+	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
 
-func (txn *Transaction) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
-	return txn.CWrapper.AddSchema(ctx, sdl)
+func (txn *Transaction) AddSchema(
+	ctx context.Context,
+	sdl string,
+	opts ...options.Lister[options.AddSchemaOptions],
+) ([]client.CollectionVersion, error) {
+	return txn.CWrapper.AddSchema(ctx, sdl, opts...)
 }
 
 func (txn *Transaction) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
+	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
-	return txn.CWrapper.PatchCollection(ctx, patch, migration)
+	return txn.CWrapper.PatchCollection(ctx, patch, migration, opts...)
 }
 
-func (txn *Transaction) SetActiveCollectionVersion(ctx context.Context, version string) error {
-	return txn.CWrapper.SetActiveCollectionVersion(ctx, version)
+func (txn *Transaction) SetActiveCollectionVersion(
+	ctx context.Context,
+	version string,
+	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+) error {
+	return txn.CWrapper.SetActiveCollectionVersion(ctx, version, opts...)
 }
 
 func (txn *Transaction) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, transformCID)
+	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
-func (txn *Transaction) RefreshViews(ctx context.Context, options client.CollectionFetchOptions) error {
-	return txn.CWrapper.RefreshViews(ctx, options)
+func (txn *Transaction) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+	return txn.CWrapper.RefreshViews(ctx, opts...)
 }
 
 func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	return txn.CWrapper.SetMigration(ctx, config)
 }
 
-func (txn *Transaction) AddLens(ctx context.Context, lens model.Lens) (string, error) {
-	return txn.CWrapper.AddLens(ctx, lens)
+func (txn *Transaction) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Lister[options.AddLensOptions],
+) (string, error) {
+	return txn.CWrapper.AddLens(ctx, lens, opts...)
 }
 
-func (txn *Transaction) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
-	return txn.CWrapper.ListLenses(ctx)
+func (txn *Transaction) ListLenses(
+	ctx context.Context,
+	opts ...options.Lister[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
+	return txn.CWrapper.ListLenses(ctx, opts...)
 }
 
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
+	opts ...options.Lister[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
-	return txn.CWrapper.GetCollectionByName(ctx, name)
+	return txn.CWrapper.GetCollectionByName(ctx, name, opts...)
 }
 
 func (txn *Transaction) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	return txn.CWrapper.GetCollections(ctx, options)
+	return txn.CWrapper.GetCollections(ctx, opts...)
 }
 
 func (txn *Transaction) GetAllIndexes(
 	ctx context.Context,
+	opts ...options.Lister[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	return txn.CWrapper.GetAllIndexes(ctx)
+	return txn.CWrapper.GetAllIndexes(ctx, opts...)
 }
 
 func (txn *Transaction) ExecRequest(
 	ctx context.Context,
 	request string,
-	opts ...client.RequestOption,
+	opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
 	return txn.CWrapper.ExecRequest(ctx, request, opts...)
 }
@@ -174,8 +204,12 @@ func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error 
 	return txn.CWrapper.BasicImport(ctx, filepath)
 }
 
-func (txn *Transaction) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	return txn.CWrapper.BasicExport(ctx, config)
+func (txn *Transaction) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Lister[options.BasicExportOptions],
+) error {
+	return txn.CWrapper.BasicExport(ctx, filepath, opts...)
 }
 
 func (txn *Transaction) Blockstore() datastore.Blockstore {

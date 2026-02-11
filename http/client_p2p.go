@@ -17,7 +17,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.P2P = (*Client)(nil)
@@ -38,7 +41,10 @@ type DeleteReplicatorParams struct {
 	Collections []string
 }
 
-func (c *Client) PeerInfo(ctx context.Context) ([]string, error) {
+func (c *Client) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "info")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -52,7 +58,13 @@ func (c *Client) PeerInfo(ctx context.Context) ([]string, error) {
 	return res, nil
 }
 
-func (c *Client) ActivePeers(ctx context.Context) ([]string, error) {
+func (c *Client) ActivePeers(
+	ctx context.Context,
+	opts ...options.Lister[options.ActivePeersOptions],
+) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "active-peers")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -66,7 +78,14 @@ func (c *Client) ActivePeers(ctx context.Context) ([]string, error) {
 	return res, nil
 }
 
-func (c *Client) Connect(ctx context.Context, addresses []string) error {
+func (c *Client) Connect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Lister[options.ConnectOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "connect")
 
 	body, err := json.Marshal(addresses)
@@ -81,12 +100,19 @@ func (c *Client) Connect(ctx context.Context, addresses []string) error {
 	return err
 }
 
-func (c *Client) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (c *Client) CreateReplicator(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Lister[options.CreateReplicatorOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(CreateReplicatorParams{
 		Addresses:   addresses,
-		Collections: collections,
+		Collections: opt.CollectionNames,
 	})
 	if err != nil {
 		return err
@@ -99,12 +125,19 @@ func (c *Client) CreateReplicator(ctx context.Context, addresses []string, colle
 	return err
 }
 
-func (c *Client) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
+func (c *Client) DeleteReplicator(
+	ctx context.Context,
+	id string,
+	opts ...options.Lister[options.DeleteReplicatorOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
 	body, err := json.Marshal(DeleteReplicatorParams{
 		ID:          id,
-		Collections: collections,
+		Collections: opt.CollectionNames,
 	})
 	if err != nil {
 		return err
@@ -117,7 +150,13 @@ func (c *Client) DeleteReplicator(ctx context.Context, id string, collections ..
 	return err
 }
 
-func (c *Client) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (c *Client) ListReplicators(
+	ctx context.Context,
+	opts ...options.Lister[options.ListReplicatorsOptions],
+) ([]client.Replicator, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -131,7 +170,14 @@ func (c *Client) ListReplicators(ctx context.Context) ([]client.Replicator, erro
 	return reps, nil
 }
 
-func (c *Client) CreateP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (c *Client) CreateP2PCollections(
+	ctx context.Context,
+	collectionIDs []string,
+	opts ...options.Lister[options.CreateP2PCollectionsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	body, err := json.Marshal(collectionIDs)
@@ -146,7 +192,14 @@ func (c *Client) CreateP2PCollections(ctx context.Context, collectionIDs ...stri
 	return err
 }
 
-func (c *Client) DeleteP2PCollections(ctx context.Context, collectionIDs ...string) error {
+func (c *Client) DeleteP2PCollections(
+	ctx context.Context,
+	collectionIDs []string,
+	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	body, err := json.Marshal(collectionIDs)
@@ -161,7 +214,13 @@ func (c *Client) DeleteP2PCollections(ctx context.Context, collectionIDs ...stri
 	return err
 }
 
-func (c *Client) ListP2PCollections(ctx context.Context) ([]string, error) {
+func (c *Client) ListP2PCollections(
+	ctx context.Context,
+	opts ...options.Lister[options.ListP2PCollectionsOptions],
+) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
@@ -175,10 +234,17 @@ func (c *Client) ListP2PCollections(ctx context.Context) ([]string, error) {
 	return cols, nil
 }
 
-func (c *Client) CreateP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+func (c *Client) CreateP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...options.Lister[options.CreateP2PDocumentsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
-	body, err := json.Marshal(collectionIDs)
+	body, err := json.Marshal(docIDs)
 	if err != nil {
 		return err
 	}
@@ -190,10 +256,17 @@ func (c *Client) CreateP2PDocuments(ctx context.Context, collectionIDs ...string
 	return err
 }
 
-func (c *Client) DeleteP2PDocuments(ctx context.Context, collectionIDs ...string) error {
+func (c *Client) DeleteP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
-	body, err := json.Marshal(collectionIDs)
+	body, err := json.Marshal(docIDs)
 	if err != nil {
 		return err
 	}
@@ -205,7 +278,13 @@ func (c *Client) DeleteP2PDocuments(ctx context.Context, collectionIDs ...string
 	return err
 }
 
-func (c *Client) ListP2PDocuments(ctx context.Context) ([]string, error) {
+func (c *Client) ListP2PDocuments(
+	ctx context.Context,
+	opts ...options.Lister[options.ListP2PDocumentsOptions],
+) ([]string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)

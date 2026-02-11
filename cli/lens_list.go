@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeLensListCommand(ctx context.Context) *cobra.Command {
@@ -27,7 +30,8 @@ Returns a map of lens CIDs to their configurations.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			lenses, err := cliClient.ListLenses(cmd.Context())
+			opt := options.WithIdentity(options.ListLenses(), identity.FromContext(cmd.Context()))
+			lenses, err := cliClient.ListLenses(cmd.Context(), opt)
 			if err != nil {
 				return err
 			}

@@ -19,6 +19,7 @@ import (
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -83,21 +84,21 @@ func connectPeers(
 
 	// Inject source/target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
 	// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
-	ctxWithSourceNodeIdentity := getContextWithIdentity(
-		s.Ctx,
-		s,
-		NodeIdentity(cfg.SourceNodeID),
-		cfg.SourceNodeID,
-	)
-	ctxWithTargetNodeIdentity := getContextWithIdentity(
-		s.Ctx,
-		s,
-		NodeIdentity(cfg.TargetNodeID),
-		cfg.TargetNodeID,
-	)
-	sourceAddresses, err := sourceNode.PeerInfo(ctxWithSourceNodeIdentity)
+	sourceOpts := options.PeerInfo()
+	sourceIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(cfg.SourceNodeID), cfg.SourceNodeID)
+	if sourceIdent.HasValue() {
+		sourceOpts.SetIdentity(sourceIdent.Value())
+	}
+
+	targetOpts := options.PeerInfo()
+	targetIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(cfg.TargetNodeID), cfg.TargetNodeID)
+	if targetIdent.HasValue() {
+		targetOpts.SetIdentity(targetIdent.Value())
+	}
+
+	sourceAddresses, err := sourceNode.PeerInfo(s.Ctx, sourceOpts)
 	require.NoError(s.T, err)
-	targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
+	targetAddresses, err := targetNode.PeerInfo(s.Ctx, targetOpts)
 	require.NoError(s.T, err)
 
 	log.InfoContext(s.Ctx, "Connect peers",
@@ -105,8 +106,10 @@ func connectPeers(
 		corelog.Any("Target", targetAddresses),
 	)
 
-	ctxWithSourceNodeUserIdentity := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = connectWithRetry(ctxWithSourceNodeUserIdentity, sourceNode, targetAddresses)
+	opt := options.WithIdentity(options.Connect(),
+		getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
+
+	err = connectWithRetry(s.Ctx, sourceNode, targetAddresses, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -127,27 +130,26 @@ func reconnectPeers(s *state.State) {
 		sourceNodeID := nodeIDs[sourceIndex]
 		// Inject every source node's identity into the context while refreshing so the [Connect] & [PeerInfo]
 		// call doesn't fail due to lack of authorization(s) if NAC is enabled.
-		ctxWithSourceNodeIdentity := getContextWithIdentity(
-			s.Ctx,
-			s,
-			NodeIdentity(sourceNodeID),
-			sourceNodeID,
-		)
+		nodeIdentity := NodeIdentity(sourceNodeID)
+		sourceOpts := options.PeerInfo()
+		sourceIdent := getIdentityForRequestSpecificToNode(s, nodeIdentity, sourceNodeID)
+		if sourceIdent.HasValue() {
+			sourceOpts.SetIdentity(sourceIdent.Value())
+		}
 
 		for targetIndex := range sourceNode.P2P.Connections {
 			targetNode := nodes[targetIndex]
 			targetNodeID := nodeIDs[targetIndex]
 			// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
 			// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
-			ctxWithTargetNodeIdentity := getContextWithIdentity(
-				s.Ctx,
-				s,
-				NodeIdentity(targetNodeID),
-				targetNodeID,
-			)
-			sourceAddresses, err := sourceNode.PeerInfo(ctxWithSourceNodeIdentity)
+			targetOpts := options.PeerInfo()
+			targetIdent := getIdentityForRequestSpecificToNode(s, NodeIdentity(targetNodeID), targetNodeID)
+			if targetIdent.HasValue() {
+				targetOpts.SetIdentity(targetIdent.Value())
+			}
+			sourceAddresses, err := sourceNode.PeerInfo(s.Ctx, sourceOpts)
 			require.NoError(s.T, err)
-			targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
+			targetAddresses, err := targetNode.PeerInfo(s.Ctx, targetOpts)
 			require.NoError(s.T, err)
 
 			log.InfoContext(s.Ctx, "Connect peers",
@@ -155,7 +157,9 @@ func reconnectPeers(s *state.State) {
 				corelog.Any("Target", targetAddresses),
 			)
 
-			err = connectWithRetry(ctxWithSourceNodeIdentity, sourceNode, targetAddresses)
+			opt := options.WithIdentity(options.Connect(),
+				getIdentityForRequestSpecificToNode(s, nodeIdentity, sourceNodeID))
+			err = connectWithRetry(s.Ctx, sourceNode, targetAddresses, opt)
 			require.NoError(s.T, err)
 		}
 	}
@@ -163,16 +167,18 @@ func reconnectPeers(s *state.State) {
 
 // connectWithRetry attempts to connect to target addresses with retry logic
 // to handle transient connection failures.
-//
-// Note: The input context should have the appropriate identity injected, if the caller
-// forgets to do that, and NAC system is enabled, there will be authorization error(s).
-func connectWithRetry(ctx context.Context, node *state.NodeState, targetAddresses []string) error {
+func connectWithRetry(
+	ctx context.Context,
+	node *state.NodeState,
+	targetAddresses []string,
+	opt options.Lister[options.ConnectOptions],
+) error {
 	const maxRetries = 5
 	const retryDelay = 50 * time.Millisecond
 
 	var lastErr error
 	for attempt := range maxRetries {
-		lastErr = node.Connect(ctx, targetAddresses)
+		lastErr = node.Connect(ctx, targetAddresses, opt)
 		if lastErr == nil {
 			return nil
 		}

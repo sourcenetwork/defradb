@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeCollectionSetActiveCommand(ctx context.Context) *cobra.Command {
@@ -25,7 +28,8 @@ other versions of that collection.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.SetActiveCollectionVersion(cmd.Context(), args[0])
+			opt := options.WithIdentity(options.SetActiveCollectionVersion(), identity.FromContext(cmd.Context()))
+			return cliClient.SetActiveCollectionVersion(cmd.Context(), args[0], opt)
 		},
 	}
 	return cmd

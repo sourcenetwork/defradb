@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -156,7 +157,7 @@ func createDocViaColSave(
 		return nil, err
 	}
 
-	ctx := getContextWithIdentity(db.InitContext(a.s.Ctx, txn), a.s, a.Identity, nodeIndex)
+	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseCreateDocs(ctx, a, collection)
 	if err != nil {
@@ -164,7 +165,7 @@ func createDocViaColSave(
 	}
 	docIDs := make([]client.DocID, len(docs))
 	for i, doc := range docs {
-		err := collection.Save(ctx, doc, makeDocCreateOptions(a)...)
+		err := collection.Save(ctx, doc, makeDocSaveOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
@@ -184,7 +185,7 @@ func createDocViaColCreate(
 		return nil, err
 	}
 
-	ctx := getContextWithIdentity(db.InitContext(a.s.Ctx, txn), a.s, a.Identity, nodeIndex)
+	ctx := db.InitContext(a.s.Ctx, txn)
 
 	docs, err := parseCreateDocs(ctx, a, collection)
 	if err != nil {
@@ -193,13 +194,13 @@ func createDocViaColCreate(
 
 	switch {
 	case len(docs) > 1:
-		err := collection.CreateMany(ctx, docs, makeDocCreateOptions(a)...)
+		err := collection.CreateMany(ctx, docs, makeDocCreateOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
 
 	default:
-		err := collection.Create(ctx, docs[0], makeDocCreateOptions(a)...)
+		err := collection.Create(ctx, docs[0], makeDocCreateOptions(a.s, a, nodeIndex)...)
 		if err != nil {
 			return nil, err
 		}
@@ -253,9 +254,15 @@ func createDocViaGQL(
 		return nil, err
 	}
 
-	ctx := getContextWithIdentity(db.InitContext(a.s.Ctx, txn), a.s, a.Identity, nodeIndex)
+	ctx := db.InitContext(a.s.Ctx, txn)
 
-	result := node.ExecRequest(ctx, req)
+	reqOption := options.ExecRequest()
+	identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeIndex)
+	if identOption.HasValue() {
+		reqOption.SetIdentity(identOption.Value())
+	}
+
+	result := node.ExecRequest(ctx, req, reqOption)
 	if len(result.GQL.Errors) > 0 {
 		return nil, result.GQL.Errors[0]
 	}
@@ -317,9 +324,32 @@ func parseCreateDocs(ctx context.Context, action *CreateDoc, collection client.C
 	}
 }
 
-func makeDocCreateOptions(action *CreateDoc) []client.DocCreateOption {
-	return []client.DocCreateOption{
-		client.CreateDocEncrypted(action.IsDocEncrypted),
-		client.CreateDocWithEncryptedFields(action.EncryptedFields),
+func makeDocSaveOptions(
+	s *state.State,
+	action *CreateDoc,
+	nodeIndex int,
+) []options.Lister[options.CollectionSaveOptions] {
+	opts := options.CollectionSave().
+		SetEncryptDoc(action.IsDocEncrypted).
+		SetEncryptedFields(action.EncryptedFields)
+	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
 	}
+	return []options.Lister[options.CollectionSaveOptions]{opts}
+}
+
+func makeDocCreateOptions(
+	s *state.State,
+	action *CreateDoc,
+	nodeIndex int,
+) []options.Lister[options.CollectionCreateOptions] {
+	opts := options.CollectionCreate().
+		SetEncryptDoc(action.IsDocEncrypted).
+		SetEncryptedFields(action.EncryptedFields)
+	identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeIndex)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
+	}
+	return []options.Lister[options.CollectionCreateOptions]{opts}
 }

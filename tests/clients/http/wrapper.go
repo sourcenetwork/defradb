@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
@@ -62,52 +63,92 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo(ctx context.Context) ([]string, error) {
-	return w.client.PeerInfo(ctx)
+func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+	return w.client.PeerInfo(ctx, opts...)
 }
 
-func (w *Wrapper) ActivePeers(ctx context.Context) ([]string, error) {
-	return w.client.ActivePeers(ctx)
+func (w *Wrapper) ActivePeers(
+	ctx context.Context,
+	opts ...options.Lister[options.ActivePeersOptions],
+) ([]string, error) {
+	return w.client.ActivePeers(ctx, opts...)
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addresses []string) error {
-	return w.client.Connect(ctx, addresses)
+func (w *Wrapper) Connect(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Lister[options.ConnectOptions],
+) error {
+	return w.client.Connect(ctx, addresses, opts...)
 }
 
-func (w *Wrapper) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
-	return w.client.CreateReplicator(ctx, addresses, collections...)
+func (w *Wrapper) CreateReplicator(
+	ctx context.Context,
+	addresses []string,
+	opts ...options.Lister[options.CreateReplicatorOptions],
+) error {
+	return w.client.CreateReplicator(ctx, addresses, opts...)
 }
 
-func (w *Wrapper) DeleteReplicator(ctx context.Context, id string, collections ...string) error {
-	return w.client.DeleteReplicator(ctx, id, collections...)
+func (w *Wrapper) DeleteReplicator(
+	ctx context.Context,
+	id string,
+	opts ...options.Lister[options.DeleteReplicatorOptions],
+) error {
+	return w.client.DeleteReplicator(ctx, id, opts...)
 }
 
-func (w *Wrapper) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
-	return w.client.ListReplicators(ctx)
+func (w *Wrapper) ListReplicators(
+	ctx context.Context,
+	opts ...options.Lister[options.ListReplicatorsOptions],
+) ([]client.Replicator, error) {
+	return w.client.ListReplicators(ctx, opts...)
 }
 
-func (w *Wrapper) CreateP2PCollections(ctx context.Context, collectionIDs ...string) error {
-	return w.client.CreateP2PCollections(ctx, collectionIDs...)
+func (w *Wrapper) CreateP2PCollections(
+	ctx context.Context,
+	collectionIDs []string,
+	opts ...options.Lister[options.CreateP2PCollectionsOptions],
+) error {
+	return w.client.CreateP2PCollections(ctx, collectionIDs, opts...)
 }
 
-func (w *Wrapper) DeleteP2PCollections(ctx context.Context, collectionIDs ...string) error {
-	return w.client.DeleteP2PCollections(ctx, collectionIDs...)
+func (w *Wrapper) DeleteP2PCollections(
+	ctx context.Context,
+	collectionIDs []string,
+	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+) error {
+	return w.client.DeleteP2PCollections(ctx, collectionIDs, opts...)
 }
 
-func (w *Wrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
-	return w.client.ListP2PCollections(ctx)
+func (w *Wrapper) ListP2PCollections(
+	ctx context.Context,
+	opts ...options.Lister[options.ListP2PCollectionsOptions],
+) ([]string, error) {
+	return w.client.ListP2PCollections(ctx, opts...)
 }
 
-func (w *Wrapper) CreateP2PDocuments(ctx context.Context, collectionIDs ...string) error {
-	return w.client.CreateP2PDocuments(ctx, collectionIDs...)
+func (w *Wrapper) CreateP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...options.Lister[options.CreateP2PDocumentsOptions],
+) error {
+	return w.client.CreateP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (w *Wrapper) DeleteP2PDocuments(ctx context.Context, collectionIDs ...string) error {
-	return w.client.DeleteP2PDocuments(ctx, collectionIDs...)
+func (w *Wrapper) DeleteP2PDocuments(
+	ctx context.Context,
+	docIDs []string,
+	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+) error {
+	return w.client.DeleteP2PDocuments(ctx, docIDs, opts...)
 }
 
-func (w *Wrapper) ListP2PDocuments(ctx context.Context) ([]string, error) {
-	return w.client.ListP2PDocuments(ctx)
+func (w *Wrapper) ListP2PDocuments(
+	ctx context.Context,
+	opts ...options.Lister[options.ListP2PDocumentsOptions],
+) ([]string, error) {
+	return w.client.ListP2PDocuments(ctx, opts...)
 }
 
 func (w *Wrapper) SyncDocuments(
@@ -130,19 +171,28 @@ func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	return w.client.BasicImport(ctx, filepath)
 }
 
-func (w *Wrapper) BasicExport(ctx context.Context, config *client.BackupConfig) error {
-	return w.client.BasicExport(ctx, config)
+func (w *Wrapper) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Lister[options.BasicExportOptions],
+) error {
+	return w.client.BasicExport(ctx, filepath, opts...)
 }
 
-func (w *Wrapper) AddSchema(ctx context.Context, schema string) ([]client.CollectionVersion, error) {
-	return w.client.AddSchema(ctx, schema)
+func (w *Wrapper) AddSchema(
+	ctx context.Context,
+	schema string,
+	opts ...options.Lister[options.AddSchemaOptions],
+) ([]client.CollectionVersion, error) {
+	return w.client.AddSchema(ctx, schema, opts...)
 }
 
 func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
+	opts ...options.Lister[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
-	return w.client.AddDACPolicy(ctx, policy)
+	return w.client.AddDACPolicy(ctx, policy, opts...)
 }
 
 func (w *Wrapper) AddDACActorRelationship(
@@ -151,6 +201,7 @@ func (w *Wrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	return w.client.AddDACActorRelationship(
 		ctx,
@@ -158,6 +209,7 @@ func (w *Wrapper) AddDACActorRelationship(
 		docID,
 		relation,
 		targetActor,
+		opts...,
 	)
 }
 
@@ -167,6 +219,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	return w.client.DeleteDACActorRelationship(
 		ctx,
@@ -174,6 +227,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 		docID,
 		relation,
 		targetActor,
+		opts...,
 	)
 }
 
@@ -181,11 +235,13 @@ func (w *Wrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	return w.client.AddNACActorRelationship(
 		ctx,
 		relation,
 		targetActor,
+		opts...,
 	)
 }
 
@@ -193,76 +249,100 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
+	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	return w.client.DeleteNACActorRelationship(
 		ctx,
 		relation,
 		targetActor,
+		opts...,
 	)
 }
 
-func (w *Wrapper) ReEnableNAC(ctx context.Context) error {
-	return w.client.ReEnableNAC(ctx)
+func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
+	return w.client.ReEnableNAC(ctx, opts...)
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context) error {
-	return w.client.DisableNAC(ctx)
+func (w *Wrapper) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
+	return w.client.DisableNAC(ctx, opts...)
 }
 
-func (w *Wrapper) GetNACStatus(ctx context.Context) (client.NACStatusResult, error) {
-	return w.client.GetNACStatus(ctx)
+func (w *Wrapper) GetNACStatus(
+	ctx context.Context,
+	opts ...options.Lister[options.GetNACStatusOptions],
+) (client.NACStatusResult, error) {
+	return w.client.GetNACStatus(ctx, opts...)
 }
 
 func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
+	opts ...options.Lister[options.PatchCollectionOptions],
 ) error {
-	return w.client.PatchCollection(ctx, patch, migration)
+	return w.client.PatchCollection(ctx, patch, migration, opts...)
 }
 
-func (w *Wrapper) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
-	return w.client.SetActiveCollectionVersion(ctx, collectionVersionID)
+func (w *Wrapper) SetActiveCollectionVersion(
+	ctx context.Context,
+	collectionVersionID string,
+	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+) error {
+	return w.client.SetActiveCollectionVersion(ctx, collectionVersionID, opts...)
 }
 
 func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
-	return w.client.AddView(ctx, query, sdl, transformCID)
+	return w.client.AddView(ctx, query, sdl, opts...)
 }
 
-func (w *Wrapper) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
-	return w.client.RefreshViews(ctx, opts)
+func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+	return w.client.RefreshViews(ctx, opts...)
 }
 
 func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
 	return w.client.SetMigration(ctx, config)
 }
 
-func (w *Wrapper) AddLens(ctx context.Context, lens model.Lens) (string, error) {
-	return w.client.AddLens(ctx, lens)
+func (w *Wrapper) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Lister[options.AddLensOptions],
+) (string, error) {
+	return w.client.AddLens(ctx, lens, opts...)
 }
 
-func (w *Wrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
-	return w.client.ListLenses(ctx)
+func (w *Wrapper) ListLenses(
+	ctx context.Context,
+	opts ...options.Lister[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
+	return w.client.ListLenses(ctx, opts...)
 }
 
-func (w *Wrapper) GetCollectionByName(ctx context.Context, name client.CollectionName) (client.Collection, error) {
-	return w.client.GetCollectionByName(ctx, name)
+func (w *Wrapper) GetCollectionByName(
+	ctx context.Context,
+	name client.CollectionName,
+	opts ...options.Lister[options.GetCollectionByNameOptions],
+) (client.Collection, error) {
+	return w.client.GetCollectionByName(ctx, name, opts...)
 }
 
 func (w *Wrapper) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...options.Lister[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
-	return w.client.GetCollections(ctx, options)
+	return w.client.GetCollections(ctx, opts...)
 }
 
-func (w *Wrapper) GetAllIndexes(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error) {
-	return w.client.GetAllIndexes(ctx)
+func (w *Wrapper) GetAllIndexes(
+	ctx context.Context,
+	opts ...options.Lister[options.GetAllIndexesOptions],
+) (map[client.CollectionName][]client.IndexDescription, error) {
+	return w.client.GetAllIndexes(ctx, opts...)
 }
 
 func (w *Wrapper) ListAllEncryptedIndexes(
@@ -274,7 +354,7 @@ func (w *Wrapper) ListAllEncryptedIndexes(
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...client.RequestOption,
+	opts ...options.Lister[options.ExecRequestOptions],
 ) *client.RequestResult {
 	return w.client.ExecRequest(ctx, query, opts...)
 }
@@ -329,6 +409,11 @@ func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identit
 	return w.client.GetNodeIdentity(ctx)
 }
 
-func (w *Wrapper) VerifySignature(ctx context.Context, cid string, pubKey crypto.PublicKey) error {
-	return w.client.VerifySignature(ctx, cid, pubKey)
+func (w *Wrapper) VerifySignature(
+	ctx context.Context,
+	cid string,
+	pubKey crypto.PublicKey,
+	opts ...options.Lister[options.VerifySignatureOptions],
+) error {
+	return w.client.VerifySignature(ctx, cid, pubKey, opts...)
 }

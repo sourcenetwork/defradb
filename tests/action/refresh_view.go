@@ -13,7 +13,7 @@ package action
 import (
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -27,7 +27,7 @@ type RefreshViews struct {
 	NodeID immutable.Option[int]
 
 	// The set of fetch options for the views.
-	FilterOptions client.CollectionFetchOptions
+	FilterOptions *options.RefreshViewsOptionsBuilder
 
 	// Any error expected from the action. Optional.
 	//
@@ -56,12 +56,7 @@ func refreshViews(s *state.State, node *state.NodeState, expectedError string) b
 		return false
 	}
 	for _, colName := range s.CollectionNames {
-		err := node.RefreshViews(
-			s.Ctx,
-			client.CollectionFetchOptions{
-				Name: immutable.Some(colName),
-			},
-		)
+		err := node.RefreshViews(s.Ctx, options.RefreshViews().SetCollectionName(colName))
 		if assertError(s.T, err, expectedError) {
 			return true
 		}

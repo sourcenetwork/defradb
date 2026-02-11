@@ -17,7 +17,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -976,7 +978,11 @@ func getTopLevelInfo(
 	}
 
 	if rootSelectType == ObjectSelection {
-		collection, err := store.GetCollectionByName(ctx, collectionName)
+		collection, err := store.GetCollectionByName(
+			ctx,
+			collectionName,
+			options.WithIdentity(options.GetCollectionByName(), acpIdentity.FromContext(ctx)),
+		)
 		if err != nil {
 			return nil, client.CollectionVersion{}, err
 		}

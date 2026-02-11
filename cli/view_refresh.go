@@ -15,9 +15,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeViewRefreshCommand(ctx context.Context) *cobra.Command {
@@ -37,23 +35,23 @@ items from that cache.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			options := client.CollectionFetchOptions{}
+			opt := options.RefreshViews()
 			if versionID != "" {
-				options.VersionID = immutable.Some(versionID)
+				opt.SetVersionID(versionID)
 			}
 			if collectionID != "" {
-				options.CollectionID = immutable.Some(collectionID)
+				opt.SetCollectionID(collectionID)
 			}
 			if name != "" {
-				options.Name = immutable.Some(name)
+				opt.SetCollectionName(name)
 			}
 			if getInactive {
-				options.IncludeInactive = immutable.Some(getInactive)
+				opt.SetIncludeInactive(getInactive)
 			}
 
 			return cliClient.RefreshViews(
 				cmd.Context(),
-				options,
+				opt,
 			)
 		},
 	}

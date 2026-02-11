@@ -13,10 +13,9 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -41,11 +40,8 @@ func TestNAC_AdminRelation_CanCollectionGetByName(t *testing.T) {
 
 			// This user, can not perform this gated operation yet.
 			&action.GetCollections{
-				Identity: testUtils.ClientIdentity(2),
-				FilterOptions: client.CollectionFetchOptions{
-					Name:            immutable.Some("Users"),
-					IncludeInactive: immutable.Some(false),
-				},
+				Identity:      testUtils.ClientIdentity(2),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
@@ -59,11 +55,8 @@ func TestNAC_AdminRelation_CanCollectionGetByName(t *testing.T) {
 
 			// This user, can now perform this gated operation.
 			&action.GetCollections{
-				Identity: testUtils.ClientIdentity(2),
-				FilterOptions: client.CollectionFetchOptions{
-					Name:            immutable.Some("Users"),
-					IncludeInactive: immutable.Some(false),
-				},
+				Identity:      testUtils.ClientIdentity(2),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
