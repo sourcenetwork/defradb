@@ -40,8 +40,8 @@ type StatefulMatcher interface {
 type TestState interface {
 	// GetClientType returns the client type of the test.
 	GetClientType() ClientType
-	// GetCurrentNodeID returns the node id that is currently being asserted.
-	GetCurrentNodeID() int
+	// GetCurrentAssertingNodeID returns the node id that is currently being asserted.
+	GetCurrentAssertingNodeID() int
 	// GetIdentity returns the identity for the given node index.
 	GetIdentity(Identity) acpIdentity.Identity
 	// GetDocID returns the document ID for the given collection index and document index.
@@ -314,12 +314,16 @@ type State struct {
 	// test run. After a single test run, the StatefulMatchers are reset.
 	StatefulMatchers []StatefulMatcher
 
+	// CurrentSetupNodeID is used during setup stage to find specific attributes that are unique to a
+	// node, for example finding a specific node's NodeIdentity inorder to bypass NAC.
+	CurrentSetupNodeID int
+
 	// node id that is currently being asserted. This is used by [StatefulMatcher]s to know for which
 	// node they should be asserting. For example, the [UniqueValue] matcher checks that it is
 	// called with a value that it didn't see before, but the value should be the same for different
 	// nodes, e.g. within the same node Cids should be unique, but across different nodes the same block
 	// should have the same Cid.
-	CurrentNodeID int
+	CurrentAssertingNodeID int
 
 	// LenIDs of lenses added to Defra.
 	LensIDs []string
@@ -329,8 +333,8 @@ func (s *State) GetClientType() ClientType {
 	return s.ClientType
 }
 
-func (s *State) GetCurrentNodeID() int {
-	return s.CurrentNodeID
+func (s *State) GetCurrentAssertingNodeID() int {
+	return s.CurrentAssertingNodeID
 }
 
 func (s *State) GetIdentity(ident Identity) acpIdentity.Identity {

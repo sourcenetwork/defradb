@@ -19,14 +19,14 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// ConfigureReplicator configures a directional replicator relationship between
+// CreateReplicator configures a directional replicator relationship between
 // two nodes.
 //
 // All document changes made in the source node will be synced to the target node.
 // New documents created in the target node will not be synced to the source node,
 // however updates in the target node to documents synced from the source node will
 // be synced back to the source node.
-type ConfigureReplicator struct {
+type CreateReplicator struct {
 	// SourceNodeID is the node ID (index) of the node from which data should be replicated.
 	//
 	// Note: The request will use identity (if specified) of the Source Node.
@@ -96,23 +96,27 @@ type ListReplicators struct {
 	ExpectedError string
 }
 
-// configureReplicator configures a replicator relationship between two existing, started, nodes.
+// createReplicator configures a replicator relationship between two existing, started, nodes.
 // It returns a channel that will receive an empty struct upon sync completion of all expected
 // replicator-sync events.
 //
 // Any errors generated whilst configuring the peers or waiting on sync will result in a test failure.
-func configureReplicator(
+func createReplicator(
 	s *state.State,
-	cfg ConfigureReplicator,
+	cfg CreateReplicator,
 ) {
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	targetAddresses, err := targetNode.PeerInfo()
+	// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
+	// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
+	nodeIdentity := NodeIdentity(cfg.TargetNodeID)
+	ctxWithTargetNodeIdentity := getContextWithIdentity(s.Ctx, s, nodeIdentity, cfg.TargetNodeID)
+	targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
 	require.NoError(s.T, err)
 
-	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.SetReplicator(ctx, targetAddresses)
+	ctxWithSourceNodeUserIdentity := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
+	err = sourceNode.CreateReplicator(ctxWithSourceNodeUserIdentity, targetAddresses)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)
@@ -129,7 +133,11 @@ func deleteReplicator(
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
 
-	targetAddresses, err := targetNode.PeerInfo()
+	// Inject target node's identity into the context to bypass NAC for the gated [PeerInfo] operation,
+	// otherwise due to lack of authorization(s) we might not be able to see the peer addresses at all.
+	nodeIdentity := NodeIdentity(cfg.TargetNodeID)
+	ctxWithTargetNodeIdentity := getContextWithIdentity(s.Ctx, s, nodeIdentity, cfg.TargetNodeID)
+	targetAddresses, err := targetNode.PeerInfo(ctxWithTargetNodeIdentity)
 	require.NoError(s.T, err)
 	require.NotZero(s.T, len(targetAddresses))
 
@@ -138,8 +146,8 @@ func deleteReplicator(
 	id, err := maddr.ValueForProtocol(multiaddr.P_P2P)
 	require.NoError(s.T, err)
 
-	ctx := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
-	err = sourceNode.DeleteReplicator(ctx, id)
+	ctxWithSourceNodeUserIdentity := getContextWithIdentity(s.Ctx, s, cfg.Identity, cfg.SourceNodeID)
+	err = sourceNode.DeleteReplicator(ctxWithSourceNodeUserIdentity, id)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)

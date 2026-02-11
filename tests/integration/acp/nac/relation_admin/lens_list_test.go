@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,28 +13,15 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_AdminRelation_CanP2PReplicatorCreate(t *testing.T) {
+func TestNAC_AdminRelation_CanListLenses(t *testing.T) {
 	test := testUtils.TestCase{
-		SupportedClientTypes: immutable.Some(
-			[]state.ClientType{
-				state.HTTPClientType,
-				state.CLIClientType,
-				state.GoClientType,
-				state.CClientType,
-			},
-		),
 		Actions: []any{
-			// Doing this in the beggining is important to start all nodes with NAC enabled.
-			testUtils.RandomNetworkingConfig(),
-			testUtils.RandomNetworkingConfig(),
-			// Starting all nodes with NAC, so only authorized user(s) can perform operations from here on out.
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
 			testUtils.Close{},
 			testUtils.Start{
 				Identity:  testUtils.ClientIdentity(1),
@@ -42,26 +29,22 @@ func TestNAC_AdminRelation_CanP2PReplicatorCreate(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.CreateReplicator{
+			&action.ListLenses{
 				Identity:      testUtils.ClientIdentity(2),
-				SourceNodeID:  1,
-				TargetNodeID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeLensListPerm),
 			},
 
 			// Grant access to user.
 			testUtils.AddNACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
-				TargetIdentity:    testUtils.ClientIdentity(2), // Grant this user "admin" relation
+				TargetIdentity:    testUtils.ClientIdentity(2),
 				Relation:          "admin",
 				ExpectedExistence: false,
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.CreateReplicator{
-				Identity:     testUtils.ClientIdentity(2),
-				SourceNodeID: 1,
-				TargetNodeID: 0,
+			&action.ListLenses{
+				Identity: testUtils.ClientIdentity(2),
 			},
 		},
 	}

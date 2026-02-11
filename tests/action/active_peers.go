@@ -26,6 +26,11 @@ type ActivePeers struct {
 	// NodeID holds the ID (index) of a node to get active peers for.
 	NodeID int
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The expected set of results.
 	//
 	// Respects `replace`, and should typically be provided a string similar to
@@ -47,16 +52,20 @@ var _ Stateful = (*ActivePeers)(nil)
 func (a *ActivePeers) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(immutable.Some(a.NodeID), a.s.Nodes)
 	for index, node := range nodes {
-		actual, err := node.ActivePeers(a.s.Ctx)
+		nodeID := nodeIDs[index]
 
-		if a.ExpectedError != "" {
-			require.Contains(a.s.T, err.Error(), a.ExpectedError)
+		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
+
+		actual, err := node.ActivePeers(ctx)
+
+		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
+		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+
+		if expectedErrorRaised {
 			continue
 		}
 
-		require.NoError(a.s.T, err)
-
-		expected := cloneAndReplacePeerInfos(a.s, nodeIDs[index], a.Expected)
+		expected := cloneAndReplacePeerInfos(a.s, nodeID, a.Expected)
 
 		require.ElementsMatch(a.s.T, expected, actual)
 	}

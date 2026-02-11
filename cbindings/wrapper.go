@@ -38,22 +38,22 @@ extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
-extern Result LensAdd(uintptr_t nodePtr, char* cfg);
-extern Result LensList(uintptr_t nodePtr);
+extern Result LensAdd(uintptr_t nodePtr, uintptr_t identityPtr, char* cfg);
+extern Result LensList(uintptr_t nodePtr, uintptr_t identityPtr);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
 extern Result NodeClose(uintptr_t nodePtr);
-extern Result P2PInfo(uintptr_t nodePtr);
+extern Result P2PInfo(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PActivePeers(uintptr_t nodePtr, uintptr_t identity);
-extern Result P2PgetAllReplicators(uintptr_t nodePtr, uintptr_t identity);
-extern Result P2PsetReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
+extern Result P2PlistReplicators(uintptr_t nodePtr, uintptr_t identity);
+extern Result P2PcreateReplicator(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
 extern Result P2PdeleteReplicator(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
 extern Result P2PcollectionCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionList(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2Pconnect(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
-extern Result P2PdocumentAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
-extern Result P2PdocumentRemove(uintptr_t nodePtr, char* collections, uintptr_t identity);
-extern Result P2PdocumentGetAll(uintptr_t nodePtr, uintptr_t identity);
+extern Result P2PdocumentCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PdocumentDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PdocumentList(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PdocumentSync(uintptr_t nodePtr, char* collection, char* docIDs, char* timeoutStr, uintptr_t identity);
 extern Result P2PcollectionSyncVersions(uintptr_t nodePtr, char* versionIDs, char* timeoutStr, uintptr_t identity);
 extern Result P2PbranchableCollectionSync(uintptr_t nodePtr, char* collectionID, char* timeoutStr, uintptr_t identity);
@@ -110,8 +110,11 @@ func NewCWrapper(node *node.Node) (*CWrapper, error) {
 	}, nil
 }
 
-func (w *CWrapper) PeerInfo() ([]string, error) {
-	res := ConvertAndFreeCResult(C.P2PInfo(C.uintptr_t(w.handle)))
+func (w *CWrapper) PeerInfo(ctx context.Context) ([]string, error) {
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
+
+	res := ConvertAndFreeCResult(C.P2PInfo(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -141,7 +144,7 @@ func (w *CWrapper) ActivePeers(ctx context.Context) ([]string, error) {
 	return peers, nil
 }
 
-func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collections ...string) error {
+func (w *CWrapper) CreateReplicator(ctx context.Context, addresses []string, collections ...string) error {
 	addrStr := C.CString(strings.Join(addresses, ","))
 	colStr := C.CString(strings.Join(collections, ","))
 	cIdentity := identityFromContext(ctx)
@@ -149,7 +152,7 @@ func (w *CWrapper) SetReplicator(ctx context.Context, addresses []string, collec
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PsetReplicator(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PcreateReplicator(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -173,10 +176,10 @@ func (w *CWrapper) DeleteReplicator(ctx context.Context, id string, collections 
 	return nil
 }
 
-func (w *CWrapper) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
+func (w *CWrapper) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
 	cIdentity := identityFromContext(ctx)
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PgetAllReplicators(C.uintptr_t(w.handle), cIdentity))
+	res := ConvertAndFreeCResult(C.P2PlistReplicators(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -232,13 +235,13 @@ func (w *CWrapper) ListP2PCollections(ctx context.Context) ([]string, error) {
 	return collections, nil
 }
 
-func (w *CWrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *CWrapper) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
 	cIdentity := identityFromContext(ctx)
 	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentAdd(C.uintptr_t(w.handle), docStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PdocumentCreate(C.uintptr_t(w.handle), docStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -246,13 +249,13 @@ func (w *CWrapper) AddP2PDocuments(ctx context.Context, docIDs ...string) error 
 	return nil
 }
 
-func (w *CWrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (w *CWrapper) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
 	docStr := C.CString(strings.Join(docIDs, ","))
 	cIdentity := identityFromContext(ctx)
 	defer C.IdentityFree(cIdentity)
 	defer C.free(unsafe.Pointer(docStr))
 
-	res := ConvertAndFreeCResult(C.P2PdocumentRemove(C.uintptr_t(w.handle), docStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PdocumentDelete(C.uintptr_t(w.handle), docStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -260,10 +263,10 @@ func (w *CWrapper) RemoveP2PDocuments(ctx context.Context, docIDs ...string) err
 	return nil
 }
 
-func (w *CWrapper) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
+func (w *CWrapper) ListP2PDocuments(ctx context.Context) ([]string, error) {
 	cIdentity := identityFromContext(ctx)
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PdocumentGetAll(C.uintptr_t(w.handle), cIdentity))
+	res := ConvertAndFreeCResult(C.P2PdocumentList(C.uintptr_t(w.handle), cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)
@@ -707,8 +710,11 @@ func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error)
 	lensStr := C.CString(string(lensConfig))
 	defer C.free(unsafe.Pointer(lensStr))
 
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.LensAdd(callHandle, lensStr))
+	res := ConvertAndFreeCResult(C.LensAdd(callHandle, cIdentity, lensStr))
 
 	if res.Status != 0 {
 		return "", errors.New(res.Error)
@@ -717,8 +723,11 @@ func (w *CWrapper) AddLens(ctx context.Context, lens model.Lens) (string, error)
 }
 
 func (w *CWrapper) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+	cIdentity := identityFromContext(ctx)
+	defer C.IdentityFree(cIdentity)
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.LensList(callHandle))
+	res := ConvertAndFreeCResult(C.LensList(callHandle, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

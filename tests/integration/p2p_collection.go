@@ -122,7 +122,7 @@ func createCollectionSubscription(
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
 	err := node.CreateP2PCollections(ctx, collectionNames...)
 	if err == nil {
-		waitForSubscribeToCollectionEvent(s, action)
+		waitForCreateCollectionSubscriptionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
@@ -157,7 +157,7 @@ func deleteCollectionSubscription(
 	ctx := getContextWithIdentity(s.Ctx, s, action.Identity, action.NodeID)
 	err := node.DeleteP2PCollections(ctx, collectionNames...)
 	if err == nil {
-		waitForUnsubscribeToCollectionEvent(s, action)
+		waitForDeleteCollectionSubscriptionEvent(s, action)
 	}
 
 	expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)

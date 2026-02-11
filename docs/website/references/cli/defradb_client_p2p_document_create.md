@@ -1,30 +1,30 @@
-## defradb client p2p document remove
+## defradb client p2p document create
 
-Remove P2P documents
+Create P2P documents
 
 ### Synopsis
 
-Remove P2P documents from the followed pubsub topics.
-The removed documents will no longer be synchronized between nodes.
+Create P2P documents to the synchronized pubsub topics.
+The documents are synchronized between nodes of a pubsub network.
 
 ```
-defradb client p2p document remove [docIDs] [flags]
+defradb client p2p document create [docIDs] [flags]
 ```
 
 ### Examples
 
 ```
-remove single document:  
-  defradb client p2p document remove bae123
+create single document:  
+  defradb client p2p document create bae123
 
-remove multiple documents:  
-  defradb client p2p document remove bae123,bae456
+create multiple documents:  
+  defradb client p2p document create bae123,bae456
 ```
 
 ### Options
 
 ```
-  -h, --help   help for remove
+  -h, --help   help for create
 ```
 
 ### Options inherited from parent commands

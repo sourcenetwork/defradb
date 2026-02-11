@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -13,14 +13,13 @@ package test_acp_nac
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
-	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
-func TestNAC_GatesP2PReplicatorCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
+func TestNAC_GatesP2PPeerInfo_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -42,10 +41,10 @@ func TestNAC_GatesP2PReplicatorCreate_AuthorizedIdentity_AllowAccess(t *testing.
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.CreateReplicator{
-				Identity:     testUtils.ClientIdentity(1),
-				SourceNodeID: 1,
-				TargetNodeID: 0,
+			&action.PeerInfo{
+				Identity:              testUtils.ClientIdentity(1),
+				NodeID:                1,
+				ExpectedNumberOfPeers: 1,
 			},
 		},
 	}
@@ -53,7 +52,7 @@ func TestNAC_GatesP2PReplicatorCreate_AuthorizedIdentity_AllowAccess(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesP2PReplicatorCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesP2PPeerInfo_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Doing this in the beggining is important to start all nodes with NAC enabled.
@@ -67,11 +66,10 @@ func TestNAC_GatesP2PReplicatorCreate_NoIdentity_NotAuthorizedError(t *testing.T
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.CreateReplicator{
+			&action.PeerInfo{
 				Identity:      testUtils.NoIdentity(),
-				SourceNodeID:  1,
-				TargetNodeID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm),
+				NodeID:        1,
+				ExpectedError: "not authorized to perform operation",
 			},
 		},
 	}
@@ -79,7 +77,7 @@ func TestNAC_GatesP2PReplicatorCreate_NoIdentity_NotAuthorizedError(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesP2PReplicatorCreate_WrongIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesP2PPeerInfo_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Doing this in the beggining is important to start all nodes with NAC enabled.
@@ -93,11 +91,10 @@ func TestNAC_GatesP2PReplicatorCreate_WrongIdentity_NotAuthorizedError(t *testin
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.CreateReplicator{
+			&action.PeerInfo{
 				Identity:      testUtils.ClientIdentity(2),
-				SourceNodeID:  1,
-				TargetNodeID:  0,
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PReplicatorCreatePerm),
+				NodeID:        1,
+				ExpectedError: "not authorized to perform operation",
 			},
 		},
 	}

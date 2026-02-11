@@ -55,7 +55,7 @@ func (matcher *signatureMatcher) Match(actual any) (bool, error) {
 		return false, err
 	}
 
-	ident := matcher.s.GetIdentity(testUtils.NodeIdentity(matcher.s.GetCurrentNodeID()).Value())
+	ident := matcher.s.GetIdentity(testUtils.NodeIdentity(matcher.s.GetCurrentAssertingNodeID()).Value())
 	fullIdent, ok := ident.(acpIdentity.FullIdentity)
 	if !ok {
 		return false, fmt.Errorf("identity does not implement FullIdentity")

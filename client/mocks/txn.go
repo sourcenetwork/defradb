@@ -393,72 +393,6 @@ func (_c *Txn_AddNACActorRelationship_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
-// AddP2PDocuments provides a mock function for the type Txn
-func (_mock *Txn) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
-	var tmpRet mock.Arguments
-	if len(docIDs) > 0 {
-		tmpRet = _mock.Called(ctx, docIDs)
-	} else {
-		tmpRet = _mock.Called(ctx)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddP2PDocuments")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
-		r0 = returnFunc(ctx, docIDs...)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Txn_AddP2PDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddP2PDocuments'
-type Txn_AddP2PDocuments_Call struct {
-	*mock.Call
-}
-
-// AddP2PDocuments is a helper method to define mock.On call
-//   - ctx context.Context
-//   - docIDs ...string
-func (_e *Txn_Expecter) AddP2PDocuments(ctx interface{}, docIDs ...interface{}) *Txn_AddP2PDocuments_Call {
-	return &Txn_AddP2PDocuments_Call{Call: _e.mock.On("AddP2PDocuments",
-		append([]interface{}{ctx}, docIDs...)...)}
-}
-
-func (_c *Txn_AddP2PDocuments_Call) Run(run func(ctx context.Context, docIDs ...string)) *Txn_AddP2PDocuments_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []string
-		var variadicArgs []string
-		if len(args) > 1 {
-			variadicArgs = args[1].([]string)
-		}
-		arg1 = variadicArgs
-		run(
-			arg0,
-			arg1...,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_AddP2PDocuments_Call) Return(err error) *Txn_AddP2PDocuments_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Txn_AddP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs ...string) error) *Txn_AddP2PDocuments_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // AddSchema provides a mock function for the type Txn
 func (_mock *Txn) AddSchema(ctx context.Context, sdl string) ([]client.CollectionVersion, error) {
 	ret := _mock.Called(ctx, sdl)
@@ -888,6 +822,144 @@ func (_c *Txn_CreateP2PCollections_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
+// CreateP2PDocuments provides a mock function for the type Txn
+func (_mock *Txn) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
+	var tmpRet mock.Arguments
+	if len(docIDs) > 0 {
+		tmpRet = _mock.Called(ctx, docIDs)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateP2PDocuments")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
+		r0 = returnFunc(ctx, docIDs...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_CreateP2PDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateP2PDocuments'
+type Txn_CreateP2PDocuments_Call struct {
+	*mock.Call
+}
+
+// CreateP2PDocuments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - docIDs ...string
+func (_e *Txn_Expecter) CreateP2PDocuments(ctx interface{}, docIDs ...interface{}) *Txn_CreateP2PDocuments_Call {
+	return &Txn_CreateP2PDocuments_Call{Call: _e.mock.On("CreateP2PDocuments",
+		append([]interface{}{ctx}, docIDs...)...)}
+}
+
+func (_c *Txn_CreateP2PDocuments_Call) Run(run func(ctx context.Context, docIDs ...string)) *Txn_CreateP2PDocuments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_CreateP2PDocuments_Call) Return(err error) *Txn_CreateP2PDocuments_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_CreateP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs ...string) error) *Txn_CreateP2PDocuments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateReplicator provides a mock function for the type Txn
+func (_mock *Txn) CreateReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
+	var tmpRet mock.Arguments
+	if len(collectionNames) > 0 {
+		tmpRet = _mock.Called(ctx, addresses, collectionNames)
+	} else {
+		tmpRet = _mock.Called(ctx, addresses)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateReplicator")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...string) error); ok {
+		r0 = returnFunc(ctx, addresses, collectionNames...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_CreateReplicator_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateReplicator'
+type Txn_CreateReplicator_Call struct {
+	*mock.Call
+}
+
+// CreateReplicator is a helper method to define mock.On call
+//   - ctx context.Context
+//   - addresses []string
+//   - collectionNames ...string
+func (_e *Txn_Expecter) CreateReplicator(ctx interface{}, addresses interface{}, collectionNames ...interface{}) *Txn_CreateReplicator_Call {
+	return &Txn_CreateReplicator_Call{Call: _e.mock.On("CreateReplicator",
+		append([]interface{}{ctx, addresses}, collectionNames...)...)}
+}
+
+func (_c *Txn_CreateReplicator_Call) Run(run func(ctx context.Context, addresses []string, collectionNames ...string)) *Txn_CreateReplicator_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		if args[1] != nil {
+			arg1 = args[1].([]string)
+		}
+		var arg2 []string
+		var variadicArgs []string
+		if len(args) > 2 {
+			variadicArgs = args[2].([]string)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_CreateReplicator_Call) Return(err error) *Txn_CreateReplicator_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_CreateReplicator_Call) RunAndReturn(run func(ctx context.Context, addresses []string, collectionNames ...string) error) *Txn_CreateReplicator_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteDACActorRelationship provides a mock function for the type Txn
 func (_mock *Txn) DeleteDACActorRelationship(ctx context.Context, collectionName string, docID string, relation string, targetActor string) (client.DeleteActorRelationshipResult, error) {
 	ret := _mock.Called(ctx, collectionName, docID, relation, targetActor)
@@ -1106,6 +1178,72 @@ func (_c *Txn_DeleteP2PCollections_Call) Return(err error) *Txn_DeleteP2PCollect
 }
 
 func (_c *Txn_DeleteP2PCollections_Call) RunAndReturn(run func(ctx context.Context, collectionNames ...string) error) *Txn_DeleteP2PCollections_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteP2PDocuments provides a mock function for the type Txn
+func (_mock *Txn) DeleteP2PDocuments(ctx context.Context, docIDs ...string) error {
+	var tmpRet mock.Arguments
+	if len(docIDs) > 0 {
+		tmpRet = _mock.Called(ctx, docIDs)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteP2PDocuments")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
+		r0 = returnFunc(ctx, docIDs...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Txn_DeleteP2PDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteP2PDocuments'
+type Txn_DeleteP2PDocuments_Call struct {
+	*mock.Call
+}
+
+// DeleteP2PDocuments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - docIDs ...string
+func (_e *Txn_Expecter) DeleteP2PDocuments(ctx interface{}, docIDs ...interface{}) *Txn_DeleteP2PDocuments_Call {
+	return &Txn_DeleteP2PDocuments_Call{Call: _e.mock.On("DeleteP2PDocuments",
+		append([]interface{}{ctx}, docIDs...)...)}
+}
+
+func (_c *Txn_DeleteP2PDocuments_Call) Run(run func(ctx context.Context, docIDs ...string)) *Txn_DeleteP2PDocuments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		var variadicArgs []string
+		if len(args) > 1 {
+			variadicArgs = args[1].([]string)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_DeleteP2PDocuments_Call) Return(err error) *Txn_DeleteP2PDocuments_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Txn_DeleteP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs ...string) error) *Txn_DeleteP2PDocuments_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1398,130 +1536,6 @@ func (_c *Txn_GetAllIndexes_Call) Return(vToIndexDescriptions map[client.Collect
 }
 
 func (_c *Txn_GetAllIndexes_Call) RunAndReturn(run func(ctx context.Context) (map[client.CollectionName][]client.IndexDescription, error)) *Txn_GetAllIndexes_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllP2PDocuments provides a mock function for the type Txn
-func (_mock *Txn) GetAllP2PDocuments(ctx context.Context) ([]string, error) {
-	ret := _mock.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllP2PDocuments")
-	}
-
-	var r0 []string
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
-		return returnFunc(ctx)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
-		r0 = returnFunc(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Txn_GetAllP2PDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllP2PDocuments'
-type Txn_GetAllP2PDocuments_Call struct {
-	*mock.Call
-}
-
-// GetAllP2PDocuments is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Txn_Expecter) GetAllP2PDocuments(ctx interface{}) *Txn_GetAllP2PDocuments_Call {
-	return &Txn_GetAllP2PDocuments_Call{Call: _e.mock.On("GetAllP2PDocuments", ctx)}
-}
-
-func (_c *Txn_GetAllP2PDocuments_Call) Run(run func(ctx context.Context)) *Txn_GetAllP2PDocuments_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_GetAllP2PDocuments_Call) Return(strings []string, err error) *Txn_GetAllP2PDocuments_Call {
-	_c.Call.Return(strings, err)
-	return _c
-}
-
-func (_c *Txn_GetAllP2PDocuments_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_GetAllP2PDocuments_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAllReplicators provides a mock function for the type Txn
-func (_mock *Txn) GetAllReplicators(ctx context.Context) ([]client.Replicator, error) {
-	ret := _mock.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllReplicators")
-	}
-
-	var r0 []client.Replicator
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]client.Replicator, error)); ok {
-		return returnFunc(ctx)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []client.Replicator); ok {
-		r0 = returnFunc(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.Replicator)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Txn_GetAllReplicators_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllReplicators'
-type Txn_GetAllReplicators_Call struct {
-	*mock.Call
-}
-
-// GetAllReplicators is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *Txn_Expecter) GetAllReplicators(ctx interface{}) *Txn_GetAllReplicators_Call {
-	return &Txn_GetAllReplicators_Call{Call: _e.mock.On("GetAllReplicators", ctx)}
-}
-
-func (_c *Txn_GetAllReplicators_Call) Run(run func(ctx context.Context)) *Txn_GetAllReplicators_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_GetAllReplicators_Call) Return(replicators []client.Replicator, err error) *Txn_GetAllReplicators_Call {
-	_c.Call.Return(replicators, err)
-	return _c
-}
-
-func (_c *Txn_GetAllReplicators_Call) RunAndReturn(run func(ctx context.Context) ([]client.Replicator, error)) *Txn_GetAllReplicators_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2012,6 +2026,130 @@ func (_c *Txn_ListP2PCollections_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// ListP2PDocuments provides a mock function for the type Txn
+func (_mock *Txn) ListP2PDocuments(ctx context.Context) ([]string, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListP2PDocuments")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_ListP2PDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListP2PDocuments'
+type Txn_ListP2PDocuments_Call struct {
+	*mock.Call
+}
+
+// ListP2PDocuments is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Txn_Expecter) ListP2PDocuments(ctx interface{}) *Txn_ListP2PDocuments_Call {
+	return &Txn_ListP2PDocuments_Call{Call: _e.mock.On("ListP2PDocuments", ctx)}
+}
+
+func (_c *Txn_ListP2PDocuments_Call) Run(run func(ctx context.Context)) *Txn_ListP2PDocuments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_ListP2PDocuments_Call) Return(strings []string, err error) *Txn_ListP2PDocuments_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *Txn_ListP2PDocuments_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_ListP2PDocuments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListReplicators provides a mock function for the type Txn
+func (_mock *Txn) ListReplicators(ctx context.Context) ([]client.Replicator, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListReplicators")
+	}
+
+	var r0 []client.Replicator
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]client.Replicator, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []client.Replicator); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.Replicator)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_ListReplicators_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListReplicators'
+type Txn_ListReplicators_Call struct {
+	*mock.Call
+}
+
+// ListReplicators is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Txn_Expecter) ListReplicators(ctx interface{}) *Txn_ListReplicators_Call {
+	return &Txn_ListReplicators_Call{Call: _e.mock.On("ListReplicators", ctx)}
+}
+
+func (_c *Txn_ListReplicators_Call) Run(run func(ctx context.Context)) *Txn_ListReplicators_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_ListReplicators_Call) Return(replicators []client.Replicator, err error) *Txn_ListReplicators_Call {
+	_c.Call.Return(replicators, err)
+	return _c
+}
+
+func (_c *Txn_ListReplicators_Call) RunAndReturn(run func(ctx context.Context) ([]client.Replicator, error)) *Txn_ListReplicators_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PatchCollection provides a mock function for the type Txn
 func (_mock *Txn) PatchCollection(ctx context.Context, patch string, migration immutable.Option[model.Lens]) error {
 	ret := _mock.Called(ctx, patch, migration)
@@ -2076,8 +2214,8 @@ func (_c *Txn_PatchCollection_Call) RunAndReturn(run func(ctx context.Context, p
 }
 
 // PeerInfo provides a mock function for the type Txn
-func (_mock *Txn) PeerInfo() ([]string, error) {
-	ret := _mock.Called()
+func (_mock *Txn) PeerInfo(ctx context.Context) ([]string, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PeerInfo")
@@ -2085,18 +2223,18 @@ func (_mock *Txn) PeerInfo() ([]string, error) {
 
 	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() ([]string, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() []string); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2109,13 +2247,20 @@ type Txn_PeerInfo_Call struct {
 }
 
 // PeerInfo is a helper method to define mock.On call
-func (_e *Txn_Expecter) PeerInfo() *Txn_PeerInfo_Call {
-	return &Txn_PeerInfo_Call{Call: _e.mock.On("PeerInfo")}
+//   - ctx context.Context
+func (_e *Txn_Expecter) PeerInfo(ctx interface{}) *Txn_PeerInfo_Call {
+	return &Txn_PeerInfo_Call{Call: _e.mock.On("PeerInfo", ctx)}
 }
 
-func (_c *Txn_PeerInfo_Call) Run(run func()) *Txn_PeerInfo_Call {
+func (_c *Txn_PeerInfo_Call) Run(run func(ctx context.Context)) *Txn_PeerInfo_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -2125,7 +2270,7 @@ func (_c *Txn_PeerInfo_Call) Return(strings []string, err error) *Txn_PeerInfo_C
 	return _c
 }
 
-func (_c *Txn_PeerInfo_Call) RunAndReturn(run func() ([]string, error)) *Txn_PeerInfo_Call {
+func (_c *Txn_PeerInfo_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *Txn_PeerInfo_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2289,72 +2434,6 @@ func (_c *Txn_RefreshViews_Call) RunAndReturn(run func(ctx context.Context, opti
 	return _c
 }
 
-// RemoveP2PDocuments provides a mock function for the type Txn
-func (_mock *Txn) RemoveP2PDocuments(ctx context.Context, docIDs ...string) error {
-	var tmpRet mock.Arguments
-	if len(docIDs) > 0 {
-		tmpRet = _mock.Called(ctx, docIDs)
-	} else {
-		tmpRet = _mock.Called(ctx)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveP2PDocuments")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...string) error); ok {
-		r0 = returnFunc(ctx, docIDs...)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Txn_RemoveP2PDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveP2PDocuments'
-type Txn_RemoveP2PDocuments_Call struct {
-	*mock.Call
-}
-
-// RemoveP2PDocuments is a helper method to define mock.On call
-//   - ctx context.Context
-//   - docIDs ...string
-func (_e *Txn_Expecter) RemoveP2PDocuments(ctx interface{}, docIDs ...interface{}) *Txn_RemoveP2PDocuments_Call {
-	return &Txn_RemoveP2PDocuments_Call{Call: _e.mock.On("RemoveP2PDocuments",
-		append([]interface{}{ctx}, docIDs...)...)}
-}
-
-func (_c *Txn_RemoveP2PDocuments_Call) Run(run func(ctx context.Context, docIDs ...string)) *Txn_RemoveP2PDocuments_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []string
-		var variadicArgs []string
-		if len(args) > 1 {
-			variadicArgs = args[1].([]string)
-		}
-		arg1 = variadicArgs
-		run(
-			arg0,
-			arg1...,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_RemoveP2PDocuments_Call) Return(err error) *Txn_RemoveP2PDocuments_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Txn_RemoveP2PDocuments_Call) RunAndReturn(run func(ctx context.Context, docIDs ...string) error) *Txn_RemoveP2PDocuments_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // SetActiveCollectionVersion provides a mock function for the type Txn
 func (_mock *Txn) SetActiveCollectionVersion(ctx context.Context, versionID string) error {
 	ret := _mock.Called(ctx, versionID)
@@ -2474,78 +2553,6 @@ func (_c *Txn_SetMigration_Call) Return(s string, err error) *Txn_SetMigration_C
 }
 
 func (_c *Txn_SetMigration_Call) RunAndReturn(run func(ctx context.Context, config client.LensConfig) (string, error)) *Txn_SetMigration_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SetReplicator provides a mock function for the type Txn
-func (_mock *Txn) SetReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
-	var tmpRet mock.Arguments
-	if len(collectionNames) > 0 {
-		tmpRet = _mock.Called(ctx, addresses, collectionNames)
-	} else {
-		tmpRet = _mock.Called(ctx, addresses)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetReplicator")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []string, ...string) error); ok {
-		r0 = returnFunc(ctx, addresses, collectionNames...)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Txn_SetReplicator_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetReplicator'
-type Txn_SetReplicator_Call struct {
-	*mock.Call
-}
-
-// SetReplicator is a helper method to define mock.On call
-//   - ctx context.Context
-//   - addresses []string
-//   - collectionNames ...string
-func (_e *Txn_Expecter) SetReplicator(ctx interface{}, addresses interface{}, collectionNames ...interface{}) *Txn_SetReplicator_Call {
-	return &Txn_SetReplicator_Call{Call: _e.mock.On("SetReplicator",
-		append([]interface{}{ctx, addresses}, collectionNames...)...)}
-}
-
-func (_c *Txn_SetReplicator_Call) Run(run func(ctx context.Context, addresses []string, collectionNames ...string)) *Txn_SetReplicator_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []string
-		if args[1] != nil {
-			arg1 = args[1].([]string)
-		}
-		var arg2 []string
-		var variadicArgs []string
-		if len(args) > 2 {
-			variadicArgs = args[2].([]string)
-		}
-		arg2 = variadicArgs
-		run(
-			arg0,
-			arg1,
-			arg2...,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_SetReplicator_Call) Return(err error) *Txn_SetReplicator_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Txn_SetReplicator_Call) RunAndReturn(run func(ctx context.Context, addresses []string, collectionNames ...string) error) *Txn_SetReplicator_Call {
 	_c.Call.Return(run)
 	return _c
 }

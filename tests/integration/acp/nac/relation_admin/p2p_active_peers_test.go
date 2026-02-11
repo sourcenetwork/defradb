@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_AdminRelation_CanP2PDocumentCreate(t *testing.T) {
+func TestNAC_AdminRelation_CanActivePeers(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -41,53 +41,26 @@ func TestNAC_AdminRelation_CanP2PDocumentCreate(t *testing.T) {
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			// Note: Doing setup steps after starting with nac enabled, otherwise the in-memory tests
-			// will lose setup state when the restart happens (i.e. the restart that started nac).
-			&action.AddSchema{
-				Identity: testUtils.ClientIdentity(1),
-				Schema: `
-					type Users {
-						name: String
-					}
-				`,
-			},
-			&action.CreateDoc{
-				Identity: testUtils.ClientIdentity(1),
-				DocMap: map[string]any{
-					"name": "Shahzad Lone",
-				},
-			},
-			testUtils.ConnectPeers{
-				Identity:     testUtils.ClientIdentity(1),
-				SourceNodeID: 1,
-				TargetNodeID: 0,
-			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.CreateDocumentSubscription{
-				Identity: testUtils.ClientIdentity(2),
-				NodeID:   1,
-				DocIDs: []state.ColDocIndex{
-					state.NewColDocIndex(0, 0),
-				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentCreatePerm),
+			&action.ActivePeers{
+				Identity:      testUtils.ClientIdentity(2),
+				NodeID:        1,
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PPeerActivePerm),
 			},
 
 			// Grant access to user.
 			testUtils.AddNACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
-				TargetIdentity:    testUtils.ClientIdentity(2), // Grant this user "admin" relation
+				TargetIdentity:    testUtils.ClientIdentity(2),
 				Relation:          "admin",
 				ExpectedExistence: false,
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.CreateDocumentSubscription{
+			&action.ActivePeers{
 				Identity: testUtils.ClientIdentity(2),
 				NodeID:   1,
-				DocIDs: []state.ColDocIndex{
-					state.NewColDocIndex(0, 0),
-				},
 			},
 		},
 	}
