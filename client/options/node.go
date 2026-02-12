@@ -211,6 +211,36 @@ func (l *nodeSubBuilder[T]) Node() *NodeOptionsBuilder {
 	return l.parent
 }
 
+// Store navigates to a Store sub-builder on the parent.
+func (l *nodeSubBuilder[T]) Store() *NodeStoreOptionsBuilder {
+	return l.parent.Store()
+}
+
+// DB navigates to a DB sub-builder on the parent.
+func (l *nodeSubBuilder[T]) DB() *NodeDBOptionsBuilder {
+	return l.parent.DB()
+}
+
+// P2P navigates to a P2P sub-builder on the parent.
+func (l *nodeSubBuilder[T]) P2P() *NodeP2POptionsBuilder {
+	return l.parent.P2P()
+}
+
+// HTTP navigates to a HTTP sub-builder on the parent.
+func (l *nodeSubBuilder[T]) HTTP() *NodeHTTPOptionsBuilder {
+	return l.parent.HTTP()
+}
+
+// DocumentACP navigates to a DocumentACP sub-builder on the parent.
+func (l *nodeSubBuilder[T]) DocumentACP() *NodeDocumentACPOptionsBuilder {
+	return l.parent.DocumentACP()
+}
+
+// NodeACP navigates to a NodeACP sub-builder on the parent.
+func (l *nodeSubBuilder[T]) NodeACP() *NodeACPOptionsBuilder {
+	return l.parent.NodeACP()
+}
+
 // NodeOptionsBuilder is a builder for NodeOptions.
 type NodeOptionsBuilder struct {
 	enumerableBuilder[NodeOptions]
@@ -300,31 +330,6 @@ func NodeStore() *NodeStoreOptionsBuilder {
 	return &NodeStoreOptionsBuilder{}
 }
 
-// DB navigates to a DB sub-builder on the parent.
-func (sb *NodeStoreOptionsBuilder) DB() *NodeDBOptionsBuilder {
-	return sb.parent.DB()
-}
-
-// P2P navigates to a P2P sub-builder on the parent.
-func (sb *NodeStoreOptionsBuilder) P2P() *NodeP2POptionsBuilder {
-	return sb.parent.P2P()
-}
-
-// HTTP navigates to an HTTP sub-builder on the parent.
-func (sb *NodeStoreOptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
-	return sb.parent.HTTP()
-}
-
-// DocumentACP navigates to a DocumentACP sub-builder on the parent.
-func (sb *NodeStoreOptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
-	return sb.parent.DocumentACP()
-}
-
-// NodeACP navigates to a NodeACP sub-builder on the parent.
-func (sb *NodeStoreOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
-	return sb.parent.NodeACP()
-}
-
 // SetType sets the store type.
 func (sb *NodeStoreOptionsBuilder) SetType(store NodeStoreType) *NodeStoreOptionsBuilder {
 	sb.append(func(opts *NodeStoreOptions) { opts.Store = store })
@@ -365,31 +370,6 @@ func (sb *NodeStoreOptionsBuilder) SetAll(storeOpts NodeStoreOptions) *NodeStore
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeDBOptionsBuilder struct {
 	nodeSubBuilder[NodeDBOptions]
-}
-
-// Store navigates to a Store sub-builder on the parent.
-func (sb *NodeDBOptionsBuilder) Store() *NodeStoreOptionsBuilder {
-	return sb.parent.Store()
-}
-
-// P2P navigates to a P2P sub-builder on the parent.
-func (sb *NodeDBOptionsBuilder) P2P() *NodeP2POptionsBuilder {
-	return sb.parent.P2P()
-}
-
-// HTTP navigates to an HTTP sub-builder on the parent.
-func (sb *NodeDBOptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
-	return sb.parent.HTTP()
-}
-
-// DocumentACP navigates to a DocumentACP sub-builder on the parent.
-func (sb *NodeDBOptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
-	return sb.parent.DocumentACP()
-}
-
-// NodeACP navigates to a NodeACP sub-builder on the parent.
-func (sb *NodeDBOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
-	return sb.parent.NodeACP()
 }
 
 // SetMaxTxnRetries sets the maximum number of retries per transaction.
@@ -462,31 +442,6 @@ type NodeP2POptionsBuilder struct {
 	nodeSubBuilder[NodeP2POptions]
 }
 
-// Store navigates to a Store sub-builder on the parent.
-func (sb *NodeP2POptionsBuilder) Store() *NodeStoreOptionsBuilder {
-	return sb.parent.Store()
-}
-
-// DB navigates to a DB sub-builder on the parent.
-func (sb *NodeP2POptionsBuilder) DB() *NodeDBOptionsBuilder {
-	return sb.parent.DB()
-}
-
-// HTTP navigates to an HTTP sub-builder on the parent.
-func (sb *NodeP2POptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
-	return sb.parent.HTTP()
-}
-
-// DocumentACP navigates to a DocumentACP sub-builder on the parent.
-func (sb *NodeP2POptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
-	return sb.parent.DocumentACP()
-}
-
-// NodeACP navigates to a NodeACP sub-builder on the parent.
-func (sb *NodeP2POptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
-	return sb.parent.NodeACP()
-}
-
 // SetListenAddresses sets the listen addresses.
 func (sb *NodeP2POptionsBuilder) SetListenAddresses(addresses ...string) *NodeP2POptionsBuilder {
 	sb.append(func(opts *NodeP2POptions) { opts.ListenAddresses = addresses })
@@ -535,31 +490,6 @@ type NodeHTTPOptionsBuilder struct {
 	nodeSubBuilder[NodeHTTPOptions]
 }
 
-// Store navigates to a Store sub-builder on the parent.
-func (sb *NodeHTTPOptionsBuilder) Store() *NodeStoreOptionsBuilder {
-	return sb.parent.Store()
-}
-
-// DB navigates to a DB sub-builder on the parent.
-func (sb *NodeHTTPOptionsBuilder) DB() *NodeDBOptionsBuilder {
-	return sb.parent.DB()
-}
-
-// P2P navigates to a P2P sub-builder on the parent.
-func (sb *NodeHTTPOptionsBuilder) P2P() *NodeP2POptionsBuilder {
-	return sb.parent.P2P()
-}
-
-// DocumentACP navigates to a DocumentACP sub-builder on the parent.
-func (sb *NodeHTTPOptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
-	return sb.parent.DocumentACP()
-}
-
-// NodeACP navigates to a NodeACP sub-builder on the parent.
-func (sb *NodeHTTPOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
-	return sb.parent.NodeACP()
-}
-
 // SetAddress sets the HTTP server address.
 func (sb *NodeHTTPOptionsBuilder) SetAddress(address string) *NodeHTTPOptionsBuilder {
 	sb.append(func(opts *NodeHTTPOptions) { opts.Address = address })
@@ -594,31 +524,6 @@ func (sb *NodeHTTPOptionsBuilder) SetAll(httpOpts NodeHTTPOptions) *NodeHTTPOpti
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeDocumentACPOptionsBuilder struct {
 	nodeSubBuilder[NodeDocumentACPOptions]
-}
-
-// Store navigates to a Store sub-builder on the parent.
-func (sb *NodeDocumentACPOptionsBuilder) Store() *NodeStoreOptionsBuilder {
-	return sb.parent.Store()
-}
-
-// DB navigates to a DB sub-builder on the parent.
-func (sb *NodeDocumentACPOptionsBuilder) DB() *NodeDBOptionsBuilder {
-	return sb.parent.DB()
-}
-
-// P2P navigates to a P2P sub-builder on the parent.
-func (sb *NodeDocumentACPOptionsBuilder) P2P() *NodeP2POptionsBuilder {
-	return sb.parent.P2P()
-}
-
-// HTTP navigates to an HTTP sub-builder on the parent.
-func (sb *NodeDocumentACPOptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
-	return sb.parent.HTTP()
-}
-
-// NodeACP navigates to a NodeACP sub-builder on the parent.
-func (sb *NodeDocumentACPOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
-	return sb.parent.NodeACP()
 }
 
 // SetType sets the document ACP type.
@@ -669,31 +574,6 @@ type NodeACPOptionsBuilder struct {
 	nodeSubBuilder[NodeACPOptions]
 }
 
-
-// Store navigates to a Store sub-builder on the parent.
-func (sb *NodeACPOptionsBuilder) Store() *NodeStoreOptionsBuilder {
-	return sb.parent.Store()
-}
-
-// DB navigates to a DB sub-builder on the parent.
-func (sb *NodeACPOptionsBuilder) DB() *NodeDBOptionsBuilder {
-	return sb.parent.DB()
-}
-
-// P2P navigates to a P2P sub-builder on the parent.
-func (sb *NodeACPOptionsBuilder) P2P() *NodeP2POptionsBuilder {
-	return sb.parent.P2P()
-}
-
-// HTTP navigates to an HTTP sub-builder on the parent.
-func (sb *NodeACPOptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
-	return sb.parent.HTTP()
-}
-
-// DocumentACP navigates to a DocumentACP sub-builder on the parent.
-func (sb *NodeACPOptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
-	return sb.parent.DocumentACP()
-}
 
 // SetEnabled sets whether node ACP is enabled.
 func (sb *NodeACPOptionsBuilder) SetEnabled(enabled bool) *NodeACPOptionsBuilder {
