@@ -187,17 +187,16 @@ type NodeDBOptions struct {
 	ChunkSize immutable.Option[int]
 }
 
-// nodeBuilderLink provides parent linkage, push logic, and Node() navigation
-// for sub-builders. Embed in sub-builders alongside nothing else — it already
-// embeds enumerableBuilder[T].
-type nodeBuilderLink[T any] struct {
+// nodeSubBuilder is the generic base for all node option sub-builders.
+// It provides parent forwarding, Node() navigation, and embeds enumerableBuilder[T].
+type nodeSubBuilder[T any] struct {
 	enumerableBuilder[T]
 	parent  *NodeOptionsBuilder // nil when standalone
 	project func(*NodeOptions) *T
 }
 
 // append records the option locally and, when linked to a parent, forwards it.
-func (l *nodeBuilderLink[T]) append(fn func(*T)) {
+func (l *nodeSubBuilder[T]) append(fn func(*T)) {
 	l.enumerableBuilder.append(fn)
 	if l.parent != nil {
 		l.parent.append(func(o *NodeOptions) {
@@ -207,7 +206,7 @@ func (l *nodeBuilderLink[T]) append(fn func(*T)) {
 }
 
 // Node returns the parent builder.
-func (l *nodeBuilderLink[T]) Node() *NodeOptionsBuilder {
+func (l *nodeSubBuilder[T]) Node() *NodeOptionsBuilder {
 	return l.parent
 }
 
@@ -255,37 +254,37 @@ func (b *NodeOptionsBuilder) SetKMS(kmsType NodeKMSType) *NodeOptionsBuilder {
 
 // Store returns a linked NodeStoreOptionsBuilder for scoped chaining.
 func (b *NodeOptionsBuilder) Store() *NodeStoreOptionsBuilder {
-	return &NodeStoreOptionsBuilder{nodeBuilderLink[NodeStoreOptions]{parent: b,
+	return &NodeStoreOptionsBuilder{nodeSubBuilder[NodeStoreOptions]{parent: b,
 		project: func(o *NodeOptions) *NodeStoreOptions { return &o.Store }}}
 }
 
 // DB returns a linked NodeDBOptionsBuilder for scoped chaining.
 func (b *NodeOptionsBuilder) DB() *NodeDBOptionsBuilder {
-	return &NodeDBOptionsBuilder{nodeBuilderLink[NodeDBOptions]{parent: b,
+	return &NodeDBOptionsBuilder{nodeSubBuilder[NodeDBOptions]{parent: b,
 		project: func(o *NodeOptions) *NodeDBOptions { return &o.DB }}}
 }
 
 // P2P returns a linked NodeP2POptionsBuilder for scoped chaining.
 func (b *NodeOptionsBuilder) P2P() *NodeP2POptionsBuilder {
-	return &NodeP2POptionsBuilder{nodeBuilderLink[NodeP2POptions]{parent: b,
+	return &NodeP2POptionsBuilder{nodeSubBuilder[NodeP2POptions]{parent: b,
 		project: func(o *NodeOptions) *NodeP2POptions { return &o.P2P }}}
 }
 
 // HTTP returns a linked NodeHTTPOptionsBuilder for scoped chaining.
 func (b *NodeOptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
-	return &NodeHTTPOptionsBuilder{nodeBuilderLink[NodeHTTPOptions]{parent: b,
+	return &NodeHTTPOptionsBuilder{nodeSubBuilder[NodeHTTPOptions]{parent: b,
 		project: func(o *NodeOptions) *NodeHTTPOptions { return &o.HTTP }}}
 }
 
 // DocumentACP returns a linked NodeDocumentACPOptionsBuilder for scoped chaining.
 func (b *NodeOptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
-	return &NodeDocumentACPOptionsBuilder{nodeBuilderLink[NodeDocumentACPOptions]{parent: b,
+	return &NodeDocumentACPOptionsBuilder{nodeSubBuilder[NodeDocumentACPOptions]{parent: b,
 		project: func(o *NodeOptions) *NodeDocumentACPOptions { return &o.DocumentACP }}}
 }
 
 // NodeACP returns a linked NodeACPOptionsBuilder for scoped chaining.
 func (b *NodeOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
-	return &NodeACPOptionsBuilder{nodeBuilderLink[NodeACPOptions]{parent: b,
+	return &NodeACPOptionsBuilder{nodeSubBuilder[NodeACPOptions]{parent: b,
 		project: func(o *NodeOptions) *NodeACPOptions { return &o.NodeACP }}}
 }
 
@@ -364,7 +363,7 @@ func (b *NodeOptionsBuilder) WithNodeACP(sb *NodeACPOptionsBuilder) *NodeOptions
 // NodeStoreOptionsBuilder is a builder for NodeStoreOptions.
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeStoreOptionsBuilder struct {
-	nodeBuilderLink[NodeStoreOptions]
+	nodeSubBuilder[NodeStoreOptions]
 }
 
 // NodeStore creates a standalone NodeStoreOptionsBuilder.
@@ -436,7 +435,7 @@ func (sb *NodeStoreOptionsBuilder) SetAll(storeOpts NodeStoreOptions) *NodeStore
 // NodeDBOptionsBuilder is a builder for NodeDBOptions.
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeDBOptionsBuilder struct {
-	nodeBuilderLink[NodeDBOptions]
+	nodeSubBuilder[NodeDBOptions]
 }
 
 // NodeDB creates a standalone NodeDBOptionsBuilder.
@@ -536,7 +535,7 @@ func (sb *NodeDBOptionsBuilder) SetAll(dbOpts NodeDBOptions) *NodeDBOptionsBuild
 // NodeP2POptionsBuilder is a builder for NodeP2POptions.
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeP2POptionsBuilder struct {
-	nodeBuilderLink[NodeP2POptions]
+	nodeSubBuilder[NodeP2POptions]
 }
 
 // NodeP2P creates a standalone NodeP2POptionsBuilder.
@@ -614,7 +613,7 @@ func (sb *NodeP2POptionsBuilder) SetAll(p2pOpts NodeP2POptions) *NodeP2POptionsB
 // NodeHTTPOptionsBuilder is a builder for NodeHTTPOptions.
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeHTTPOptionsBuilder struct {
-	nodeBuilderLink[NodeHTTPOptions]
+	nodeSubBuilder[NodeHTTPOptions]
 }
 
 // NodeHTTP creates a standalone NodeHTTPOptionsBuilder.
@@ -680,7 +679,7 @@ func (sb *NodeHTTPOptionsBuilder) SetAll(httpOpts NodeHTTPOptions) *NodeHTTPOpti
 // NodeDocumentACPOptionsBuilder is a builder for NodeDocumentACPOptions.
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeDocumentACPOptionsBuilder struct {
-	nodeBuilderLink[NodeDocumentACPOptions]
+	nodeSubBuilder[NodeDocumentACPOptions]
 }
 
 // NodeDocumentACP creates a standalone NodeDocumentACPOptionsBuilder.
@@ -758,7 +757,7 @@ func (sb *NodeDocumentACPOptionsBuilder) SetAll(dacOpts NodeDocumentACPOptions) 
 // NodeACPOptionsBuilder is a builder for NodeACPOptions.
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeACPOptionsBuilder struct {
-	nodeBuilderLink[NodeACPOptions]
+	nodeSubBuilder[NodeACPOptions]
 }
 
 // NodeACPOpts creates a standalone NodeACPOptionsBuilder.
