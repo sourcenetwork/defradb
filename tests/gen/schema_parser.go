@@ -30,7 +30,8 @@ func ParseSDL(gqlSDL string) (map[string]client.CollectionVersion, error) {
 	nodeOpts := options.Node().
 		SetDisableAPI(true).
 		SetDisableP2P(true).
-		SetBadgerInMemory(true)
+		Store().SetBadgerInMemory(true).
+		Node()
 
 	node, err := node.New(
 		ctx,

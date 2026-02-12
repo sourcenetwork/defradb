@@ -22,12 +22,12 @@ import (
 )
 
 func TestSetBadgerInMemory(t *testing.T) {
-	opts := utils.NewOptions(options.Node().SetBadgerInMemory(true))
+	opts := utils.NewOptions(options.Node().Store().SetBadgerInMemory(true).Node())
 	assert.Equal(t, true, opts.Store.BadgerInMemory)
 }
 
 func TestSetBadgerFileSize(t *testing.T) {
-	opts := utils.NewOptions(options.Node().SetBadgerFileSize(int64(5 << 30)))
+	opts := utils.NewOptions(options.Node().Store().SetBadgerFileSize(int64(5 << 30)).Node())
 	assert.Equal(t, int64(5<<30), opts.Store.BadgerFileSize)
 }
 
@@ -36,6 +36,6 @@ func TestSetBadgerEncryptionKey(t *testing.T) {
 	_, err := rand.Read(encryptionKey)
 	require.NoError(t, err)
 
-	opts := utils.NewOptions(options.Node().SetBadgerEncryptionKey(encryptionKey))
+	opts := utils.NewOptions(options.Node().Store().SetBadgerEncryptionKey(encryptionKey).Node())
 	assert.Equal(t, encryptionKey, opts.Store.BadgerEncryptionKey)
 }

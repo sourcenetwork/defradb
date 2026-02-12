@@ -38,20 +38,18 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 
 	ctx := context.Background()
 
-	opts := options.Node().
-		SetLensRuntime(options.NodeWASMLensRuntime).
-		SetDocumentACPPath("").
-		SetNodeACPPath("")
+	opts := options.Node()
+	opts.DB().SetLensRuntime(options.NodeWASMLensRuntime)
 
 	if gocOptions.DbPath != "" {
-		opts.SetStorePath(gocOptions.DbPath)
+		opts.Store().SetPath(gocOptions.DbPath)
 	}
 	if len(listeningAddresses) > 0 {
-		opts.SetListenAddresses(listeningAddresses...)
+		opts.P2P().SetListenAddresses(listeningAddresses...)
 	}
 	maxTxnRetries := gocOptions.MaxTransactionRetries
 	if maxTxnRetries > 0 {
-		opts.SetMaxTxnRetries(maxTxnRetries)
+		opts.DB().SetMaxTxnRetries(maxTxnRetries)
 	}
 	disableP2PFlag := gocOptions.DisableP2P != 0
 	if disableP2PFlag {
@@ -62,17 +60,17 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 		opts.SetDisableAPI(true)
 	}
 	if inMemoryFlag {
-		opts.SetBadgerInMemory(true)
+		opts.Store().SetBadgerInMemory(true)
 	}
 	peers := splitCommaSeparatedString(gocOptions.Peers)
 	if len(peers) > 0 {
-		opts.SetBootstrapPeers(peers...)
+		opts.P2P().SetBootstrapPeers(peers...)
 	}
 	if gocOptions.Identity != nil {
-		opts.SetNodeIdentity(gocOptions.Identity)
+		opts.DB().SetNodeIdentity(gocOptions.Identity)
 	}
 	if gocOptions.EnableNodeACP != 0 {
-		opts.SetNodeACPEnabled(true)
+		opts.NodeACP().SetEnabled(true)
 	}
 
 	// Configure the replicator retry times. Go from string slice -> time.Duration slice
@@ -89,7 +87,7 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 		replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(n)*time.Second)
 	}
 	if len(replicatorRetryIntervals) > 0 {
-		opts.SetRetryIntervals(replicatorRetryIntervals)
+		opts.DB().SetRetryIntervals(replicatorRetryIntervals)
 	}
 
 	n, err := node.New(ctx, opts)

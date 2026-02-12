@@ -20,11 +20,11 @@ import (
 )
 
 func TestSetStoreType(t *testing.T) {
-	opts := utils.NewOptions(options.Node().SetStoreType(options.NodeMemoryStore))
+	opts := utils.NewOptions(options.Node().Store().SetType(options.NodeMemoryStore).Node())
 	assert.Equal(t, options.NodeMemoryStore, opts.Store.Store)
 }
 
 func TestSetStorePath(t *testing.T) {
-	opts := utils.NewOptions(options.Node().SetStorePath("test"))
+	opts := utils.NewOptions(options.Node().Store().SetPath("test").Node())
 	assert.Equal(t, "test", opts.Store.Path)
 }

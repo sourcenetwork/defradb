@@ -74,25 +74,30 @@ func init() {
 }
 
 func defaultNodeOpts() *options.NodeOptionsBuilder {
-	return options.Node().
-		SetLensPoolSize(lensPoolSize).
-		SetLensRuntime(lensType).
+	opt := options.Node().
 		// The test framework sets this up elsewhere when required so that it may be wrapped
 		// into a [client.TxnStore].
 		SetDisableAPI(true).
 		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
 		// to keep the tests as lightweight as possible.
-		SetDisableP2P(true).
+		SetDisableP2P(true)
+
+	opt.DB().
+		SetLensPoolSize(lensPoolSize).
+		SetLensRuntime(lensType).
 		// The default is 5 and that is never going to be needed in a testing scenario where all the
 		// nodes are on the same machine with no network latency.
 		SetP2PBlockSyncTimeout(1 * time.Second)
+
+	return opt
 }
 
 func NewBadgerMemoryDB(ctx context.Context) (node.DB, error) {
 	opts := options.Node().
 		SetDisableP2P(true).
 		SetDisableAPI(true).
-		SetBadgerInMemory(true)
+		Store().SetBadgerInMemory(true).
+		Node()
 
 	n, err := node.New(ctx, opts)
 	if err != nil {
@@ -111,7 +116,8 @@ func NewBadgerFileDB(ctx context.Context, t testing.TB) (node.DB, error) {
 	opts := options.Node().
 		SetDisableP2P(true).
 		SetDisableAPI(true).
-		SetStorePath(path)
+		Store().SetPath(path).
+		Node()
 
 	n, err := node.New(ctx, opts)
 	if err != nil {

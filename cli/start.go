@@ -87,35 +87,39 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(interval)*time.Second)
 			}
 
-			nodeBuilder := options.Node().
-				SetNodeACPEnabled(enableNAC).
-				SetDisableP2P(cfg.GetBool("net.p2pDisabled")).
-				SetSourceHubChainID(cfg.GetString("acp.document.sourceHub.ChainID")).
-				SetSourceHubGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")).
-				SetSourceHubCometRPCAddress(cfg.GetString("acp.document.sourceHub.CometRPCAddress")).
+			inMem := cfg.GetString("datastore.store") == config.ConfigStoreMemory
+
+			opts := options.Node().
 				SetEnableDevelopment(cfg.GetBool("development")).
-				// store options
-				SetStorePath(cfg.GetString("datastore.badger.path")).
-				SetBadgerInMemory(cfg.GetString("datastore.store") == config.ConfigStoreMemory).
-				// db options
+				SetDisableP2P(cfg.GetBool("net.p2pDisabled"))
+			opts.Store().
+				SetPath(cfg.GetString("datastore.badger.path")).
+				SetBadgerInMemory(inMem)
+			opts.DB().
 				SetMaxTxnRetries(cfg.GetInt("datastore.MaxTxnRetries")).
 				SetRetryIntervals(replicatorRetryIntervals).
-				SetLensRuntime(options.NodeLensRuntimeType(cfg.GetString("lens.runtime"))).
-				// net node options
+				SetLensRuntime(options.NodeLensRuntimeType(cfg.GetString("lens.runtime")))
+			opts.P2P().
 				SetListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...).
 				SetEnablePubSub(cfg.GetBool("net.pubSubEnabled")).
 				SetEnableRelay(cfg.GetBool("net.relayEnabled")).
-				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...).
-				// http server options
-				SetHTTPAddress(cfg.GetString("api.address")).
+				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...)
+			opts.HTTP().
+				SetAddress(cfg.GetString("api.address")).
 				SetAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...).
-				SetTLSCertPath(cfg.GetString("api.pubKeyPath")).
-				SetTLSKeyPath(cfg.GetString("api.privKeyPath"))
+				SetCertPath(cfg.GetString("api.pubKeyPath")).
+				SetKeyPath(cfg.GetString("api.privKeyPath"))
+			opts.DocumentACP().
+				SetChainID(cfg.GetString("acp.document.sourceHub.ChainID")).
+				SetGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")).
+				SetCometRPCAddress(cfg.GetString("acp.document.sourceHub.CometRPCAddress"))
+			opts.NodeACP().
+				SetEnabled(enableNAC)
 
-			if cfg.GetString("datastore.store") != config.ConfigStoreMemory {
+			if !inMem {
 				rootDir := mustGetContextRootDir(cmd)
-				nodeBuilder.SetDocumentACPPath(rootDir)
-				nodeBuilder.SetNodeACPPath(rootDir)
+				opts.DocumentACP().SetPath(rootDir).
+					NodeACP().SetPath(rootDir)
 			}
 
 			if enableNAC && identity == "" {
@@ -124,7 +128,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 
 			documentACPType := cfg.GetString("acp.document.type")
 			if documentACPType != "" {
-				nodeBuilder.SetDocumentACPType(options.NodeDocumentACPType(documentACPType))
+				opts.DocumentACP().SetType(options.NodeDocumentACPType(documentACPType))
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
@@ -136,14 +140,14 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				nodeBuilder.SetP2PPrivateKey(peerKey)
+				opts.P2P().SetPrivateKey(peerKey)
 
 				if !cfg.GetBool("datastore.noencryption") {
 					encKey, err := getOrCreateEncryptionKey(kr)
 					if err != nil {
 						return err
 					}
-					nodeBuilder.SetBadgerEncryptionKey(encKey)
+					opts.Store().SetBadgerEncryptionKey(encKey)
 				}
 
 				if !cfg.GetBool("datastore.nosearchableencryption") {
@@ -151,14 +155,14 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 					if err != nil {
 						return err
 					}
-					nodeBuilder.SetSearchableEncryptionKey(seKey)
+					opts.DB().SetSearchableEncryptionKey(seKey)
 				}
 
 				ident, err := getOrCreateIdentity(kr, cfg)
 				if err != nil {
 					return err
 				}
-				nodeBuilder.SetNodeIdentity(ident)
+				opts.DB().SetNodeIdentity(ident)
 
 				// setup the sourcehub transaction signer
 				sourceHubKeyName := cfg.GetString("acp.document.sourceHub.KeyName")
@@ -167,11 +171,11 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 					if err != nil {
 						return err
 					}
-					nodeBuilder.SetTxnSigner(signer)
+					opts.DocumentACP().SetTxnSigner(signer)
 				}
 			}
 
-			nodeBuilder.SetEnableSigning(!cfg.GetBool("datastore.nosigning"))
+			opts.DB().SetEnableSigning(!cfg.GetBool("datastore.nosigning"))
 
 			isDevMode := cfg.GetBool("development")
 			http.IsDevMode = isDevMode
@@ -183,7 +187,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 					if err != nil {
 						return err
 					}
-					nodeBuilder.SetNodeIdentity(ident)
+					opts.DB().SetNodeIdentity(ident)
 				}
 			}
 
@@ -201,7 +205,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			signalCh := make(chan os.Signal, 1)
 			signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
-			n, err := node.New(cmd.Context(), nodeBuilder)
+			n, err := node.New(cmd.Context(), opts)
 			if err != nil {
 				return err
 			}

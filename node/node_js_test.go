@@ -29,7 +29,8 @@ func TestNodeStartJS(t *testing.T) {
 		options.Node().
 			SetDisableP2P(true).
 			SetDisableAPI(true).
-			SetBadgerInMemory(true),
+			Store().SetBadgerInMemory(true).
+			Node(),
 	)
 	require.NoError(t, err)
 

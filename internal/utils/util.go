@@ -31,6 +31,12 @@ import (
 //	)
 func NewOptions[T any](opts ...clientOptions.Lister[T]) *T {
 	args := new(T)
+	ApplyOptions(args, opts...)
+	return args
+}
+
+// ApplyOptions applies all functional options onto the given target.
+func ApplyOptions[T any](target *T, opts ...clientOptions.Lister[T]) {
 	for _, opt := range opts {
 		if opt == nil || reflect.ValueOf(opt).IsNil() {
 			continue
@@ -45,10 +51,9 @@ func NewOptions[T any](opts ...clientOptions.Lister[T]) *T {
 				break
 			}
 			if setArgs != nil {
-				setArgs(args)
+				setArgs(target)
 			}
 		}
 		opt.Reset()
 	}
-	return args
 }

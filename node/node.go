@@ -12,6 +12,7 @@ package node
 
 import (
 	"context"
+	"time"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
@@ -63,18 +64,56 @@ type Node struct {
 	APIURL string
 }
 
+// DefaultNodeOptions returns default NodeOptions values.
+func DefaultNodeOptions() options.NodeOptions {
+	return options.NodeOptions{
+		DisableP2P:        false,
+		DisableAPI:        false,
+		EnableDevelopment: false,
+		Store: options.NodeStoreOptions{
+			Store:          options.NodeDefaultStore,
+			BadgerInMemory: false,
+			BadgerFileSize: 1 << 30, // 1GB
+		},
+		DocumentACP: options.NodeDocumentACPOptions{
+			DocumentACPType: options.NodeLocalDocumentACPType,
+		},
+		NodeACP: options.NodeACPOptions{
+			IsEnabled: false,
+		},
+		DB: options.NodeDBOptions{
+			MaxTxnRetries: immutable.Some(5),
+			EnableSigning: true,
+			RetryIntervals: []time.Duration{
+				time.Second * 30,
+				time.Minute,
+				time.Minute * 2,
+				time.Minute * 4,
+				time.Minute * 8,
+				time.Minute * 16,
+				time.Minute * 32,
+			},
+			P2PBlockSyncTimeout: time.Second * 5,
+			LensRuntime:         options.NodeDefaultLensRuntime,
+		},
+		P2P:  options.NodeP2POptions{},
+		HTTP: options.NodeHTTPOptions{},
+	}
+}
+
 // New returns a new node instance configured with the given options.
 func New(ctx context.Context, opts ...options.Lister[options.NodeOptions]) (*Node, error) {
-	nodeOpts := utils.NewOptions(opts...)
+	nodeOpts := DefaultNodeOptions()
+	utils.ApplyOptions(&nodeOpts, opts...)
 	n := Node{
-		opts: nodeOpts,
+		opts: &nodeOpts,
 	}
 	return &n, nil
 }
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	rootstore, isValueSizeLimited, err := NewStore(ctx, &n.opts.Store)
+	rootstore, isValueSizeLimited, err := NewStore(ctx, options.NodeStore().SetAll(n.opts.Store))
 	if err != nil {
 		return err
 	}

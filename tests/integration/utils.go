@@ -810,8 +810,8 @@ func setStartingNodes(
 	// If nodes have not been explicitly configured via actions, setup a default one.
 	if !s.IsNetworkEnabled {
 		s.CurrentSetupNodeID = 0
-		nodeBuilder := defaultNodeOpts().
-			SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
+		nodeBuilder := defaultNodeOpts()
+		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
 		st, err := setupNode(
 			s,
 			acpIdentity.None,
@@ -834,10 +834,10 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		s.CurrentSetupNodeID = nodeID
 		p2pOpts := s.Nodes[nodeID].P2POpts
 		withListenAddresses(&p2pOpts, s.Nodes[nodeID].CachedAddresses...)
-		nodeBuilder := defaultNodeOpts().
-			SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID))).
-			SetP2POptions(p2pOpts).
-			SetNodeACPEnabled(action.EnableNAC)
+		nodeBuilder := defaultNodeOpts()
+		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
+		nodeBuilder.WithP2P(options.NodeP2P().SetAll(p2pOpts))
+		nodeBuilder.NodeACP().SetEnabled(action.EnableNAC)
 		node, err := setupNode(
 			s,
 			getIdentityOption(s, action.Identity),
@@ -980,10 +980,11 @@ func configureNode(
 	withPrivateKey(&p2pOpts, privateKey)
 
 	s.CurrentSetupNodeID = len(s.Nodes)
-	nodeBuilder := defaultNodeOpts().
+	nodeBuilder := defaultNodeOpts()
+	nodeBuilder.DB().
 		SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
-		SetP2POptions(p2pOpts).
 		SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
+	nodeBuilder.WithP2P(options.NodeP2P().SetAll(p2pOpts))
 
 	node, err := setupNode(s, acpIdentity.None, testCase, nodeBuilder)
 	require.NoError(s.T, err)

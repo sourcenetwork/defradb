@@ -29,7 +29,8 @@ func TestPurgeAndRestartWithDevModeDisabled(t *testing.T) {
 		options.Node().
 			SetDisableAPI(true).
 			SetDisableP2P(true).
-			SetStorePath(t.TempDir()),
+			Store().SetPath(t.TempDir()).
+			Node(),
 	)
 	require.NoError(t, err)
 
@@ -47,8 +48,9 @@ func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
 		options.Node().
 			SetDisableAPI(true).
 			SetDisableP2P(true).
-			SetStorePath(t.TempDir()).
-			SetEnableDevelopment(true),
+			SetEnableDevelopment(true).
+			Store().SetPath(t.TempDir()).
+			Node(),
 	)
 	require.NoError(t, err)
 

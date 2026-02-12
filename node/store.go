@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // storeConstructors is a map of store types to store constructors.
@@ -51,19 +52,20 @@ func GetDefaultStorePath() string {
 }
 
 // NewStore returns a new store with the given options.
-func NewStore(ctx context.Context, opts *options.NodeStoreOptions) (corekv.TxnStore, bool, error) {
+func NewStore(ctx context.Context, opts ...options.Lister[options.NodeStoreOptions]) (corekv.TxnStore, bool, error) {
+	o := utils.NewOptions(opts...)
 	var isValueSizeLimited bool
-	if opts.BadgerInMemory {
+	if o.BadgerInMemory {
 		isValueSizeLimited = true
 	}
 
-	storeConstructor, ok := storeConstructors[opts.Store]
+	storeConstructor, ok := storeConstructors[o.Store]
 	if ok {
-		store, err := storeConstructor(ctx, opts)
+		store, err := storeConstructor(ctx, o)
 		return store, isValueSizeLimited, err
 	}
 
-	return nil, false, NewErrStoreTypeNotSupported(opts.Store)
+	return nil, false, NewErrStoreTypeNotSupported(o.Store)
 }
 
 func purgeStore(ctx context.Context, opts *options.NodeStoreOptions) error {

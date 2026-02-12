@@ -33,17 +33,18 @@ func setupNode(
 	if nodeBuilder == nil {
 		nodeBuilder = defaultNodeOpts()
 	}
-	nodeBuilder.SetEnableSigning(testCase.EnableSigning)
-	nodeBuilder.SetLensRuntime(options.NodeJSLensRuntime)
+	nodeBuilder.DB().
+		SetEnableSigning(testCase.EnableSigning).
+		SetLensRuntime(options.NodeJSLensRuntime)
 	// Note: Since we are hard-coding to run with badger in-mem only, we have a function that
 	// handles some edge-cases by skipping js client testing when a db type is something else.
 	// If this hard-coding is changed in future, don't forget to tweak the following func:
 	// [skipJSClientIfUnsupportedDBType]
-	nodeBuilder.SetBadgerInMemory(true)
+	nodeBuilder.Store().SetBadgerInMemory(true)
 
 	switch documentACPType {
 	case state.LocalDocumentACPType:
-		nodeBuilder.SetDocumentACPType(options.NodeLocalDocumentACPType)
+		nodeBuilder.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
 	case state.SourceHubDocumentACPType:
 		if s.DocumentACPOptions == nil {
@@ -51,8 +52,8 @@ func setupNode(
 			s.DocumentACPOptions, err = setupSourceHub(s)
 			require.NoError(s.T, err)
 		}
-		nodeBuilder.SetDocumentACPType(options.NodeSourceHubDocumentACPType)
-		nodeBuilder.SetDocumentACPOptions(*s.DocumentACPOptions)
+		nodeBuilder.DocumentACP().SetType(options.NodeSourceHubDocumentACPType)
+		nodeBuilder.WithDocumentACP(options.NodeDocumentACP().SetAll(*s.DocumentACPOptions))
 
 	default:
 		// no-op, use the `node` package default

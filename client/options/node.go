@@ -187,41 +187,28 @@ type NodeDBOptions struct {
 	ChunkSize immutable.Option[int]
 }
 
-// DefaultNodeOptions returns default NodeOptions values.
-func DefaultNodeOptions() NodeOptions {
-	return NodeOptions{
-		DisableP2P:        false,
-		DisableAPI:        false,
-		EnableDevelopment: false,
-		Store: NodeStoreOptions{
-			Store:          NodeDefaultStore,
-			BadgerInMemory: false,
-			BadgerFileSize: 1 << 30, // 1GB
-		},
-		DocumentACP: NodeDocumentACPOptions{
-			DocumentACPType: NodeLocalDocumentACPType,
-		},
-		NodeACP: NodeACPOptions{
-			IsEnabled: false,
-		},
-		DB: NodeDBOptions{
-			MaxTxnRetries: immutable.Some(5),
-			EnableSigning: true,
-			RetryIntervals: []time.Duration{
-				time.Second * 30,
-				time.Minute,
-				time.Minute * 2,
-				time.Minute * 4,
-				time.Minute * 8,
-				time.Minute * 16,
-				time.Minute * 32,
-			},
-			P2PBlockSyncTimeout: time.Second * 5,
-			LensRuntime:         NodeDefaultLensRuntime,
-		},
-		P2P:  NodeP2POptions{},
-		HTTP: NodeHTTPOptions{},
+// nodeBuilderLink provides parent linkage, push logic, and Node() navigation
+// for sub-builders. Embed in sub-builders alongside nothing else — it already
+// embeds enumerableBuilder[T].
+type nodeBuilderLink[T any] struct {
+	enumerableBuilder[T]
+	parent  *NodeOptionsBuilder // nil when standalone
+	project func(*NodeOptions) *T
+}
+
+// append records the option locally and, when linked to a parent, forwards it.
+func (l *nodeBuilderLink[T]) append(fn func(*T)) {
+	l.enumerableBuilder.append(fn)
+	if l.parent != nil {
+		l.parent.append(func(o *NodeOptions) {
+			fn(l.project(o))
+		})
 	}
+}
+
+// Node returns the parent builder.
+func (l *nodeBuilderLink[T]) Node() *NodeOptionsBuilder {
+	return l.parent
 }
 
 // NodeOptionsBuilder is a builder for NodeOptions.
@@ -229,14 +216,9 @@ type NodeOptionsBuilder struct {
 	enumerableBuilder[NodeOptions]
 }
 
-// Node creates a new NodeOptionsBuilder instance with default values.
+// Node creates a new NodeOptionsBuilder instance.
 func Node() *NodeOptionsBuilder {
-	b := &NodeOptionsBuilder{}
-	b.append(func(opts *NodeOptions) {
-		defaults := DefaultNodeOptions()
-		*opts = defaults
-	})
-	return b
+	return &NodeOptionsBuilder{}
 }
 
 // SetDisableP2P sets the disable P2P flag.
@@ -271,322 +253,558 @@ func (b *NodeOptionsBuilder) SetKMS(kmsType NodeKMSType) *NodeOptionsBuilder {
 	return b
 }
 
-// SetNodeIdentity sets the identity for the node.
-func (b *NodeOptionsBuilder) SetNodeIdentity(ident identity.Identity) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DB.Identity = immutable.Some(ident)
-	})
-	return b
+// Store returns a linked NodeStoreOptionsBuilder for scoped chaining.
+func (b *NodeOptionsBuilder) Store() *NodeStoreOptionsBuilder {
+	return &NodeStoreOptionsBuilder{nodeBuilderLink[NodeStoreOptions]{parent: b,
+		project: func(o *NodeOptions) *NodeStoreOptions { return &o.Store }}}
 }
 
-// --- Store setters ---
-
-// SetStoreType sets the store type.
-func (b *NodeOptionsBuilder) SetStoreType(store NodeStoreType) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.Store.Store = store
-	})
-	return b
+// DB returns a linked NodeDBOptionsBuilder for scoped chaining.
+func (b *NodeOptionsBuilder) DB() *NodeDBOptionsBuilder {
+	return &NodeDBOptionsBuilder{nodeBuilderLink[NodeDBOptions]{parent: b,
+		project: func(o *NodeOptions) *NodeDBOptions { return &o.DB }}}
 }
 
-// SetStorePath sets the store path.
-func (b *NodeOptionsBuilder) SetStorePath(path string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.Store.Path = path
-	})
-	return b
+// P2P returns a linked NodeP2POptionsBuilder for scoped chaining.
+func (b *NodeOptionsBuilder) P2P() *NodeP2POptionsBuilder {
+	return &NodeP2POptionsBuilder{nodeBuilderLink[NodeP2POptions]{parent: b,
+		project: func(o *NodeOptions) *NodeP2POptions { return &o.P2P }}}
 }
 
-// SetBadgerFileSize sets the Badger file size.
-func (b *NodeOptionsBuilder) SetBadgerFileSize(size int64) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.Store.BadgerFileSize = size
-	})
-	return b
+// HTTP returns a linked NodeHTTPOptionsBuilder for scoped chaining.
+func (b *NodeOptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
+	return &NodeHTTPOptionsBuilder{nodeBuilderLink[NodeHTTPOptions]{parent: b,
+		project: func(o *NodeOptions) *NodeHTTPOptions { return &o.HTTP }}}
 }
 
-// SetBadgerEncryptionKey sets the Badger encryption key.
-func (b *NodeOptionsBuilder) SetBadgerEncryptionKey(key []byte) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.Store.BadgerEncryptionKey = key
-	})
-	return b
+// DocumentACP returns a linked NodeDocumentACPOptionsBuilder for scoped chaining.
+func (b *NodeOptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
+	return &NodeDocumentACPOptionsBuilder{nodeBuilderLink[NodeDocumentACPOptions]{parent: b,
+		project: func(o *NodeOptions) *NodeDocumentACPOptions { return &o.DocumentACP }}}
 }
 
-// SetBadgerInMemory sets whether Badger should run in-memory.
-func (b *NodeOptionsBuilder) SetBadgerInMemory(inMemory bool) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.Store.BadgerInMemory = inMemory
-	})
-	return b
+// NodeACP returns a linked NodeACPOptionsBuilder for scoped chaining.
+func (b *NodeOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
+	return &NodeACPOptionsBuilder{nodeBuilderLink[NodeACPOptions]{parent: b,
+		project: func(o *NodeOptions) *NodeACPOptions { return &o.NodeACP }}}
 }
 
-// --- DocumentACP setters ---
-
-// SetDocumentACPType sets the document ACP type.
-func (b *NodeOptionsBuilder) SetDocumentACPType(acpType NodeDocumentACPType) *NodeOptionsBuilder {
+// WithStore composes a standalone NodeStoreOptionsBuilder into this builder.
+func (b *NodeOptionsBuilder) WithStore(sb *NodeStoreOptionsBuilder) *NodeOptionsBuilder {
+	subOpts := make([]func(*NodeStoreOptions), len(sb.opts))
+	copy(subOpts, sb.opts)
 	b.append(func(opts *NodeOptions) {
-		opts.DocumentACP.DocumentACPType = acpType
-	})
-	return b
-}
-
-// SetDocumentACPPath sets the document ACP system path.
-func (b *NodeOptionsBuilder) SetDocumentACPPath(path string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DocumentACP.Path = path
-	})
-	return b
-}
-
-// SetTxnSigner sets the txn signer for Defra to use.
-func (b *NodeOptionsBuilder) SetTxnSigner(signer NodeTxSigner) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DocumentACP.Signer = immutable.Some(signer)
-	})
-	return b
-}
-
-// SetSourceHubChainID sets the chainID of the SourceHub chain.
-func (b *NodeOptionsBuilder) SetSourceHubChainID(chainID string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DocumentACP.SourceHubChainID = chainID
-	})
-	return b
-}
-
-// SetSourceHubGRPCAddress sets the GRPC address of the SourceHub node.
-func (b *NodeOptionsBuilder) SetSourceHubGRPCAddress(address string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DocumentACP.SourceHubGRPCAddress = address
-	})
-	return b
-}
-
-// SetSourceHubCometRPCAddress sets the Comet RPC address of the SourceHub node.
-func (b *NodeOptionsBuilder) SetSourceHubCometRPCAddress(address string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DocumentACP.SourceHubCometRPCAddress = address
-	})
-	return b
-}
-
-// --- NodeACP setters ---
-
-// SetNodeACPEnabled sets whether node ACP is enabled.
-func (b *NodeOptionsBuilder) SetNodeACPEnabled(enabled bool) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.NodeACP.IsEnabled = enabled
-	})
-	return b
-}
-
-// SetNodeACPPath sets the node ACP system path.
-func (b *NodeOptionsBuilder) SetNodeACPPath(path string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.NodeACP.Path = path
-	})
-	return b
-}
-
-// --- DB setters ---
-
-// SetMaxTxnRetries sets the maximum number of retries per transaction.
-func (b *NodeOptionsBuilder) SetMaxTxnRetries(num int) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DB.MaxTxnRetries = immutable.Some(num)
-	})
-	return b
-}
-
-// SetEnableSigning sets whether block signing is enabled.
-func (b *NodeOptionsBuilder) SetEnableSigning(enable bool) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DB.EnableSigning = enable
-	})
-	return b
-}
-
-// SetSearchableEncryptionKey sets the key used for searchable encryption.
-func (b *NodeOptionsBuilder) SetSearchableEncryptionKey(key []byte) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DB.SearchableEncryptionKey = key
-	})
-	return b
-}
-
-// SetRetryIntervals sets the intervals between transaction retries.
-func (b *NodeOptionsBuilder) SetRetryIntervals(intervals []time.Duration) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		if len(intervals) > 0 {
-			opts.DB.RetryIntervals = intervals
+		for _, fn := range subOpts {
+			fn(&opts.Store)
 		}
 	})
 	return b
 }
 
-// SetP2PBlockSyncTimeout sets the timeout duration for syncing block links.
-func (b *NodeOptionsBuilder) SetP2PBlockSyncTimeout(timeout time.Duration) *NodeOptionsBuilder {
+// WithDB composes a standalone NodeDBOptionsBuilder into this builder.
+func (b *NodeOptionsBuilder) WithDB(sb *NodeDBOptionsBuilder) *NodeOptionsBuilder {
+	subOpts := make([]func(*NodeDBOptions), len(sb.opts))
+	copy(subOpts, sb.opts)
 	b.append(func(opts *NodeOptions) {
-		opts.DB.P2PBlockSyncTimeout = timeout
+		for _, fn := range subOpts {
+			fn(&opts.DB)
+		}
 	})
 	return b
+}
+
+// WithP2P composes a standalone NodeP2POptionsBuilder into this builder.
+func (b *NodeOptionsBuilder) WithP2P(sb *NodeP2POptionsBuilder) *NodeOptionsBuilder {
+	subOpts := make([]func(*NodeP2POptions), len(sb.opts))
+	copy(subOpts, sb.opts)
+	b.append(func(opts *NodeOptions) {
+		for _, fn := range subOpts {
+			fn(&opts.P2P)
+		}
+	})
+	return b
+}
+
+// WithHTTP composes a standalone NodeHTTPOptionsBuilder into this builder.
+func (b *NodeOptionsBuilder) WithHTTP(sb *NodeHTTPOptionsBuilder) *NodeOptionsBuilder {
+	subOpts := make([]func(*NodeHTTPOptions), len(sb.opts))
+	copy(subOpts, sb.opts)
+	b.append(func(opts *NodeOptions) {
+		for _, fn := range subOpts {
+			fn(&opts.HTTP)
+		}
+	})
+	return b
+}
+
+// WithDocumentACP composes a standalone NodeDocumentACPOptionsBuilder into this builder.
+func (b *NodeOptionsBuilder) WithDocumentACP(sb *NodeDocumentACPOptionsBuilder) *NodeOptionsBuilder {
+	subOpts := make([]func(*NodeDocumentACPOptions), len(sb.opts))
+	copy(subOpts, sb.opts)
+	b.append(func(opts *NodeOptions) {
+		for _, fn := range subOpts {
+			fn(&opts.DocumentACP)
+		}
+	})
+	return b
+}
+
+// WithNodeACP composes a standalone NodeACPOptionsBuilder into this builder.
+func (b *NodeOptionsBuilder) WithNodeACP(sb *NodeACPOptionsBuilder) *NodeOptionsBuilder {
+	subOpts := make([]func(*NodeACPOptions), len(sb.opts))
+	copy(subOpts, sb.opts)
+	b.append(func(opts *NodeOptions) {
+		for _, fn := range subOpts {
+			fn(&opts.NodeACP)
+		}
+	})
+	return b
+}
+
+// NodeStoreOptionsBuilder is a builder for NodeStoreOptions.
+// It can be used standalone or as part of a NodeOptionsBuilder chain.
+type NodeStoreOptionsBuilder struct {
+	nodeBuilderLink[NodeStoreOptions]
+}
+
+// NodeStore creates a standalone NodeStoreOptionsBuilder.
+func NodeStore() *NodeStoreOptionsBuilder {
+	return &NodeStoreOptionsBuilder{}
+}
+
+// DB navigates to a DB sub-builder on the parent.
+func (sb *NodeStoreOptionsBuilder) DB() *NodeDBOptionsBuilder {
+	return sb.parent.DB()
+}
+
+// P2P navigates to a P2P sub-builder on the parent.
+func (sb *NodeStoreOptionsBuilder) P2P() *NodeP2POptionsBuilder {
+	return sb.parent.P2P()
+}
+
+// HTTP navigates to an HTTP sub-builder on the parent.
+func (sb *NodeStoreOptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
+	return sb.parent.HTTP()
+}
+
+// DocumentACP navigates to a DocumentACP sub-builder on the parent.
+func (sb *NodeStoreOptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
+	return sb.parent.DocumentACP()
+}
+
+// NodeACP navigates to a NodeACP sub-builder on the parent.
+func (sb *NodeStoreOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
+	return sb.parent.NodeACP()
+}
+
+// SetType sets the store type.
+func (sb *NodeStoreOptionsBuilder) SetType(store NodeStoreType) *NodeStoreOptionsBuilder {
+	sb.append(func(opts *NodeStoreOptions) { opts.Store = store })
+	return sb
+}
+
+// SetPath sets the store path.
+func (sb *NodeStoreOptionsBuilder) SetPath(path string) *NodeStoreOptionsBuilder {
+	sb.append(func(opts *NodeStoreOptions) { opts.Path = path })
+	return sb
+}
+
+// SetBadgerFileSize sets the Badger file size.
+func (sb *NodeStoreOptionsBuilder) SetBadgerFileSize(size int64) *NodeStoreOptionsBuilder {
+	sb.append(func(opts *NodeStoreOptions) { opts.BadgerFileSize = size })
+	return sb
+}
+
+// SetBadgerEncryptionKey sets the Badger encryption key.
+func (sb *NodeStoreOptionsBuilder) SetBadgerEncryptionKey(key []byte) *NodeStoreOptionsBuilder {
+	sb.append(func(opts *NodeStoreOptions) { opts.BadgerEncryptionKey = key })
+	return sb
+}
+
+// SetBadgerInMemory sets whether Badger should run in-memory.
+func (sb *NodeStoreOptionsBuilder) SetBadgerInMemory(inMemory bool) *NodeStoreOptionsBuilder {
+	sb.append(func(opts *NodeStoreOptions) { opts.BadgerInMemory = inMemory })
+	return sb
+}
+
+// SetAll sets all store options from a plain data struct.
+func (sb *NodeStoreOptionsBuilder) SetAll(storeOpts NodeStoreOptions) *NodeStoreOptionsBuilder {
+	sb.append(func(opts *NodeStoreOptions) { *opts = storeOpts })
+	return sb
+}
+
+// NodeDBOptionsBuilder is a builder for NodeDBOptions.
+// It can be used standalone or as part of a NodeOptionsBuilder chain.
+type NodeDBOptionsBuilder struct {
+	nodeBuilderLink[NodeDBOptions]
+}
+
+// NodeDB creates a standalone NodeDBOptionsBuilder.
+func NodeDB() *NodeDBOptionsBuilder {
+	return &NodeDBOptionsBuilder{}
+}
+
+// Store navigates to a Store sub-builder on the parent.
+func (sb *NodeDBOptionsBuilder) Store() *NodeStoreOptionsBuilder {
+	return sb.parent.Store()
+}
+
+// P2P navigates to a P2P sub-builder on the parent.
+func (sb *NodeDBOptionsBuilder) P2P() *NodeP2POptionsBuilder {
+	return sb.parent.P2P()
+}
+
+// HTTP navigates to an HTTP sub-builder on the parent.
+func (sb *NodeDBOptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
+	return sb.parent.HTTP()
+}
+
+// DocumentACP navigates to a DocumentACP sub-builder on the parent.
+func (sb *NodeDBOptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
+	return sb.parent.DocumentACP()
+}
+
+// NodeACP navigates to a NodeACP sub-builder on the parent.
+func (sb *NodeDBOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
+	return sb.parent.NodeACP()
+}
+
+// SetMaxTxnRetries sets the maximum number of retries per transaction.
+func (sb *NodeDBOptionsBuilder) SetMaxTxnRetries(num int) *NodeDBOptionsBuilder {
+	sb.append(func(opts *NodeDBOptions) { opts.MaxTxnRetries = immutable.Some(num) })
+	return sb
+}
+
+// SetNodeIdentity sets the identity for the node.
+func (sb *NodeDBOptionsBuilder) SetNodeIdentity(ident identity.Identity) *NodeDBOptionsBuilder {
+	sb.append(func(opts *NodeDBOptions) { opts.Identity = immutable.Some(ident) })
+	return sb
+}
+
+// SetEnableSigning sets whether block signing is enabled.
+func (sb *NodeDBOptionsBuilder) SetEnableSigning(enable bool) *NodeDBOptionsBuilder {
+	sb.append(func(opts *NodeDBOptions) { opts.EnableSigning = enable })
+	return sb
+}
+
+// SetSearchableEncryptionKey sets the key used for searchable encryption.
+func (sb *NodeDBOptionsBuilder) SetSearchableEncryptionKey(key []byte) *NodeDBOptionsBuilder {
+	sb.append(func(opts *NodeDBOptions) { opts.SearchableEncryptionKey = key })
+	return sb
+}
+
+// SetRetryIntervals sets the intervals between transaction retries.
+func (sb *NodeDBOptionsBuilder) SetRetryIntervals(intervals []time.Duration) *NodeDBOptionsBuilder {
+	sb.append(func(opts *NodeDBOptions) {
+		if len(intervals) > 0 {
+			opts.RetryIntervals = intervals
+		}
+	})
+	return sb
+}
+
+// SetP2PBlockSyncTimeout sets the timeout duration for syncing block links.
+func (sb *NodeDBOptionsBuilder) SetP2PBlockSyncTimeout(timeout time.Duration) *NodeDBOptionsBuilder {
+	sb.append(func(opts *NodeDBOptions) { opts.P2PBlockSyncTimeout = timeout })
+	return sb
 }
 
 // SetLensRuntime sets the lens runtime type.
-func (b *NodeOptionsBuilder) SetLensRuntime(runtime NodeLensRuntimeType) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DB.LensRuntime = runtime
-	})
-	return b
+func (sb *NodeDBOptionsBuilder) SetLensRuntime(runtime NodeLensRuntimeType) *NodeDBOptionsBuilder {
+	sb.append(func(opts *NodeDBOptions) { opts.LensRuntime = runtime })
+	return sb
 }
 
 // SetLensPoolSize sets the pool size for the lens runtime.
-func (b *NodeOptionsBuilder) SetLensPoolSize(size int) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DB.LensPoolSize = size
-	})
-	return b
+func (sb *NodeDBOptionsBuilder) SetLensPoolSize(size int) *NodeDBOptionsBuilder {
+	sb.append(func(opts *NodeDBOptions) { opts.LensPoolSize = size })
+	return sb
 }
 
 // SetChunkSize sets the chunk size for the blockstore.
-func (b *NodeOptionsBuilder) SetChunkSize(size int) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DB.ChunkSize = immutable.Some(size)
-	})
-	return b
+func (sb *NodeDBOptionsBuilder) SetChunkSize(size int) *NodeDBOptionsBuilder {
+	sb.append(func(opts *NodeDBOptions) { opts.ChunkSize = immutable.Some(size) })
+	return sb
 }
 
-// --- P2P setters ---
+// SetAll sets all DB options from a plain data struct.
+func (sb *NodeDBOptionsBuilder) SetAll(dbOpts NodeDBOptions) *NodeDBOptionsBuilder {
+	sb.append(func(opts *NodeDBOptions) { *opts = dbOpts })
+	return sb
+}
+
+// NodeP2POptionsBuilder is a builder for NodeP2POptions.
+// It can be used standalone or as part of a NodeOptionsBuilder chain.
+type NodeP2POptionsBuilder struct {
+	nodeBuilderLink[NodeP2POptions]
+}
+
+// NodeP2P creates a standalone NodeP2POptionsBuilder.
+func NodeP2P() *NodeP2POptionsBuilder {
+	return &NodeP2POptionsBuilder{}
+}
+
+// Store navigates to a Store sub-builder on the parent.
+func (sb *NodeP2POptionsBuilder) Store() *NodeStoreOptionsBuilder {
+	return sb.parent.Store()
+}
+
+// DB navigates to a DB sub-builder on the parent.
+func (sb *NodeP2POptionsBuilder) DB() *NodeDBOptionsBuilder {
+	return sb.parent.DB()
+}
+
+// HTTP navigates to an HTTP sub-builder on the parent.
+func (sb *NodeP2POptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
+	return sb.parent.HTTP()
+}
+
+// DocumentACP navigates to a DocumentACP sub-builder on the parent.
+func (sb *NodeP2POptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
+	return sb.parent.DocumentACP()
+}
+
+// NodeACP navigates to a NodeACP sub-builder on the parent.
+func (sb *NodeP2POptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
+	return sb.parent.NodeACP()
+}
 
 // SetListenAddresses sets the listen addresses.
-func (b *NodeOptionsBuilder) SetListenAddresses(addresses ...string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.P2P.ListenAddresses = addresses
-	})
-	return b
+func (sb *NodeP2POptionsBuilder) SetListenAddresses(addresses ...string) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.ListenAddresses = addresses })
+	return sb
 }
 
 // SetBootstrapPeers sets the bootstrap peers.
-func (b *NodeOptionsBuilder) SetBootstrapPeers(peers ...string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.P2P.BootstrapPeers = peers
-	})
-	return b
+func (sb *NodeP2POptionsBuilder) SetBootstrapPeers(peers ...string) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.BootstrapPeers = peers })
+	return sb
 }
 
 // SetEnablePubSub sets whether PubSub is enabled.
-func (b *NodeOptionsBuilder) SetEnablePubSub(enable bool) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.P2P.EnablePubSub = enable
-	})
-	return b
+func (sb *NodeP2POptionsBuilder) SetEnablePubSub(enable bool) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.EnablePubSub = enable })
+	return sb
 }
 
 // SetEnableRelay sets whether relay is enabled.
-func (b *NodeOptionsBuilder) SetEnableRelay(enable bool) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.P2P.EnableRelay = enable
-	})
-	return b
+func (sb *NodeP2POptionsBuilder) SetEnableRelay(enable bool) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.EnableRelay = enable })
+	return sb
 }
 
 // SetEnableClearBackoffOnRetry sets whether to clear backoff on retry.
-func (b *NodeOptionsBuilder) SetEnableClearBackoffOnRetry(enable bool) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.P2P.EnableClearBackoffOnRetry = enable
-	})
-	return b
+func (sb *NodeP2POptionsBuilder) SetEnableClearBackoffOnRetry(enable bool) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.EnableClearBackoffOnRetry = enable })
+	return sb
 }
 
-// SetP2PPrivateKey sets the private key for the P2P node.
-func (b *NodeOptionsBuilder) SetP2PPrivateKey(key []byte) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.P2P.PrivateKey = key
-	})
-	return b
+// SetPrivateKey sets the private key for the P2P node.
+func (sb *NodeP2POptionsBuilder) SetPrivateKey(key []byte) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { opts.PrivateKey = key })
+	return sb
 }
 
-// --- HTTP setters ---
+// SetAll sets all P2P options from a plain data struct.
+func (sb *NodeP2POptionsBuilder) SetAll(p2pOpts NodeP2POptions) *NodeP2POptionsBuilder {
+	sb.append(func(opts *NodeP2POptions) { *opts = p2pOpts })
+	return sb
+}
 
-// SetHTTPAddress sets the HTTP server address.
-func (b *NodeOptionsBuilder) SetHTTPAddress(address string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.HTTP.Address = address
-	})
-	return b
+// NodeHTTPOptionsBuilder is a builder for NodeHTTPOptions.
+// It can be used standalone or as part of a NodeOptionsBuilder chain.
+type NodeHTTPOptionsBuilder struct {
+	nodeBuilderLink[NodeHTTPOptions]
+}
+
+// NodeHTTP creates a standalone NodeHTTPOptionsBuilder.
+func NodeHTTP() *NodeHTTPOptionsBuilder {
+	return &NodeHTTPOptionsBuilder{}
+}
+
+// Store navigates to a Store sub-builder on the parent.
+func (sb *NodeHTTPOptionsBuilder) Store() *NodeStoreOptionsBuilder {
+	return sb.parent.Store()
+}
+
+// DB navigates to a DB sub-builder on the parent.
+func (sb *NodeHTTPOptionsBuilder) DB() *NodeDBOptionsBuilder {
+	return sb.parent.DB()
+}
+
+// P2P navigates to a P2P sub-builder on the parent.
+func (sb *NodeHTTPOptionsBuilder) P2P() *NodeP2POptionsBuilder {
+	return sb.parent.P2P()
+}
+
+// DocumentACP navigates to a DocumentACP sub-builder on the parent.
+func (sb *NodeHTTPOptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
+	return sb.parent.DocumentACP()
+}
+
+// NodeACP navigates to a NodeACP sub-builder on the parent.
+func (sb *NodeHTTPOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
+	return sb.parent.NodeACP()
+}
+
+// SetAddress sets the HTTP server address.
+func (sb *NodeHTTPOptionsBuilder) SetAddress(address string) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.Address = address })
+	return sb
 }
 
 // SetAllowedOrigins sets the allowed CORS origins.
-func (b *NodeOptionsBuilder) SetAllowedOrigins(origins ...string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.HTTP.AllowedOrigins = origins
-	})
-	return b
+func (sb *NodeHTTPOptionsBuilder) SetAllowedOrigins(origins ...string) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.AllowedOrigins = origins })
+	return sb
 }
 
-// SetTLSCertPath sets the path to the TLS certificate file.
-func (b *NodeOptionsBuilder) SetTLSCertPath(path string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.HTTP.TLSCertPath = path
-	})
-	return b
+// SetCertPath sets the path to the TLS certificate file.
+func (sb *NodeHTTPOptionsBuilder) SetCertPath(path string) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TLSCertPath = path })
+	return sb
 }
 
-// SetTLSKeyPath sets the path to the TLS private key file.
-func (b *NodeOptionsBuilder) SetTLSKeyPath(path string) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.HTTP.TLSKeyPath = path
-	})
-	return b
+// SetKeyPath sets the path to the TLS private key file.
+func (sb *NodeHTTPOptionsBuilder) SetKeyPath(path string) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.TLSKeyPath = path })
+	return sb
 }
 
-// --- Bulk setters for sub-option structs ---
-
-// SetP2POptions sets the P2P options from a plain data struct.
-func (b *NodeOptionsBuilder) SetP2POptions(p2pOpts NodeP2POptions) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.P2P = p2pOpts
-	})
-	return b
+// SetAll sets all HTTP options from a plain data struct.
+func (sb *NodeHTTPOptionsBuilder) SetAll(httpOpts NodeHTTPOptions) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { *opts = httpOpts })
+	return sb
 }
 
-// SetStoreOptions sets the store options from a plain data struct.
-func (b *NodeOptionsBuilder) SetStoreOptions(storeOpts NodeStoreOptions) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.Store = storeOpts
-	})
-	return b
+// NodeDocumentACPOptionsBuilder is a builder for NodeDocumentACPOptions.
+// It can be used standalone or as part of a NodeOptionsBuilder chain.
+type NodeDocumentACPOptionsBuilder struct {
+	nodeBuilderLink[NodeDocumentACPOptions]
 }
 
-// SetDocumentACPOptions sets the document ACP options from a plain data struct.
-func (b *NodeOptionsBuilder) SetDocumentACPOptions(dacOpts NodeDocumentACPOptions) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DocumentACP = dacOpts
-	})
-	return b
+// NodeDocumentACP creates a standalone NodeDocumentACPOptionsBuilder.
+func NodeDocumentACP() *NodeDocumentACPOptionsBuilder {
+	return &NodeDocumentACPOptionsBuilder{}
 }
 
-// SetNodeACPOptions sets the node ACP options from a plain data struct.
-func (b *NodeOptionsBuilder) SetNodeACPOptions(nacOpts NodeACPOptions) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.NodeACP = nacOpts
-	})
-	return b
+// Store navigates to a Store sub-builder on the parent.
+func (sb *NodeDocumentACPOptionsBuilder) Store() *NodeStoreOptionsBuilder {
+	return sb.parent.Store()
 }
 
-// SetDBOptions sets the DB options from a plain data struct.
-func (b *NodeOptionsBuilder) SetDBOptions(dbOpts NodeDBOptions) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.DB = dbOpts
-	})
-	return b
+// DB navigates to a DB sub-builder on the parent.
+func (sb *NodeDocumentACPOptionsBuilder) DB() *NodeDBOptionsBuilder {
+	return sb.parent.DB()
 }
 
-// SetHTTPOptions sets the HTTP options from a plain data struct.
-func (b *NodeOptionsBuilder) SetHTTPOptions(httpOpts NodeHTTPOptions) *NodeOptionsBuilder {
-	b.append(func(opts *NodeOptions) {
-		opts.HTTP = httpOpts
-	})
-	return b
+// P2P navigates to a P2P sub-builder on the parent.
+func (sb *NodeDocumentACPOptionsBuilder) P2P() *NodeP2POptionsBuilder {
+	return sb.parent.P2P()
+}
+
+// HTTP navigates to an HTTP sub-builder on the parent.
+func (sb *NodeDocumentACPOptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
+	return sb.parent.HTTP()
+}
+
+// NodeACP navigates to a NodeACP sub-builder on the parent.
+func (sb *NodeDocumentACPOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
+	return sb.parent.NodeACP()
+}
+
+// SetType sets the document ACP type.
+func (sb *NodeDocumentACPOptionsBuilder) SetType(acpType NodeDocumentACPType) *NodeDocumentACPOptionsBuilder {
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.DocumentACPType = acpType })
+	return sb
+}
+
+// SetPath sets the document ACP system path.
+func (sb *NodeDocumentACPOptionsBuilder) SetPath(path string) *NodeDocumentACPOptionsBuilder {
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.Path = path })
+	return sb
+}
+
+// SetTxnSigner sets the txn signer for Defra to use.
+func (sb *NodeDocumentACPOptionsBuilder) SetTxnSigner(signer NodeTxSigner) *NodeDocumentACPOptionsBuilder {
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.Signer = immutable.Some(signer) })
+	return sb
+}
+
+// SetChainID sets the chainID of the SourceHub chain.
+func (sb *NodeDocumentACPOptionsBuilder) SetChainID(chainID string) *NodeDocumentACPOptionsBuilder {
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.SourceHubChainID = chainID })
+	return sb
+}
+
+// SetGRPCAddress sets the GRPC address of the SourceHub node.
+func (sb *NodeDocumentACPOptionsBuilder) SetGRPCAddress(address string) *NodeDocumentACPOptionsBuilder {
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.SourceHubGRPCAddress = address })
+	return sb
+}
+
+// SetCometRPCAddress sets the Comet RPC address of the SourceHub node.
+func (sb *NodeDocumentACPOptionsBuilder) SetCometRPCAddress(address string) *NodeDocumentACPOptionsBuilder {
+	sb.append(func(opts *NodeDocumentACPOptions) { opts.SourceHubCometRPCAddress = address })
+	return sb
+}
+
+// SetAll sets all document ACP options from a plain data struct.
+func (sb *NodeDocumentACPOptionsBuilder) SetAll(dacOpts NodeDocumentACPOptions) *NodeDocumentACPOptionsBuilder {
+	sb.append(func(opts *NodeDocumentACPOptions) { *opts = dacOpts })
+	return sb
+}
+
+// NodeACPOptionsBuilder is a builder for NodeACPOptions.
+// It can be used standalone or as part of a NodeOptionsBuilder chain.
+type NodeACPOptionsBuilder struct {
+	nodeBuilderLink[NodeACPOptions]
+}
+
+// NodeACPOpts creates a standalone NodeACPOptionsBuilder.
+func NodeACPOpts() *NodeACPOptionsBuilder {
+	return &NodeACPOptionsBuilder{}
+}
+
+// Store navigates to a Store sub-builder on the parent.
+func (sb *NodeACPOptionsBuilder) Store() *NodeStoreOptionsBuilder {
+	return sb.parent.Store()
+}
+
+// DB navigates to a DB sub-builder on the parent.
+func (sb *NodeACPOptionsBuilder) DB() *NodeDBOptionsBuilder {
+	return sb.parent.DB()
+}
+
+// P2P navigates to a P2P sub-builder on the parent.
+func (sb *NodeACPOptionsBuilder) P2P() *NodeP2POptionsBuilder {
+	return sb.parent.P2P()
+}
+
+// HTTP navigates to an HTTP sub-builder on the parent.
+func (sb *NodeACPOptionsBuilder) HTTP() *NodeHTTPOptionsBuilder {
+	return sb.parent.HTTP()
+}
+
+// DocumentACP navigates to a DocumentACP sub-builder on the parent.
+func (sb *NodeACPOptionsBuilder) DocumentACP() *NodeDocumentACPOptionsBuilder {
+	return sb.parent.DocumentACP()
+}
+
+// SetEnabled sets whether node ACP is enabled.
+func (sb *NodeACPOptionsBuilder) SetEnabled(enabled bool) *NodeACPOptionsBuilder {
+	sb.append(func(opts *NodeACPOptions) { opts.IsEnabled = enabled })
+	return sb
+}
+
+// SetPath sets the node ACP system path.
+func (sb *NodeACPOptionsBuilder) SetPath(path string) *NodeACPOptionsBuilder {
+	sb.append(func(opts *NodeACPOptions) { opts.Path = path })
+	return sb
+}
+
+// SetAll sets all node ACP options from a plain data struct.
+func (sb *NodeACPOptionsBuilder) SetAll(nacOpts NodeACPOptions) *NodeACPOptionsBuilder {
+	sb.append(func(opts *NodeACPOptions) { *opts = nacOpts })
+	return sb
 }

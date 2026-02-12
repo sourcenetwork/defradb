@@ -58,14 +58,14 @@ func setupNode(
 	if nodeBuilder == nil {
 		nodeBuilder = defaultNodeOpts()
 	}
-	nodeBuilder.SetEnableSigning(testCase.EnableSigning)
+	nodeBuilder.DB().SetEnableSigning(testCase.EnableSigning)
 
 	if s.EnableSearchableEncryption {
 		seKey, err := crypto.GenerateAES256()
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate searchable encryption key: %w", err)
 		}
-		nodeBuilder.SetSearchableEncryptionKey(seKey)
+		nodeBuilder.DB().SetSearchableEncryptionKey(seKey)
 	}
 
 	err := createBadgerEncryptionKey()
@@ -73,19 +73,19 @@ func setupNode(
 		return nil, err
 	}
 	if badgerEncryption && encryptionKey != nil {
-		nodeBuilder.SetBadgerEncryptionKey(encryptionKey)
+		nodeBuilder.Store().SetBadgerEncryptionKey(encryptionKey)
 	}
 
 	switch s.DocumentACPType {
 	case state.LocalDocumentACPType:
-		nodeBuilder.SetDocumentACPType(options.NodeLocalDocumentACPType)
+		nodeBuilder.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
 	case state.SourceHubDocumentACPType:
 		if s.DocumentACPOptions == nil {
 			s.DocumentACPOptions, err = setupSourceHub(s, testCase)
 			require.NoError(s.T, err)
 		}
-		nodeBuilder.SetDocumentACPOptions(*s.DocumentACPOptions)
+		nodeBuilder.WithDocumentACP(options.NodeDocumentACP().SetAll(*s.DocumentACPOptions))
 
 	default:
 		// no-op, use the `node` package default
@@ -103,24 +103,23 @@ func setupNode(
 			// default test case
 			path = s.T.TempDir()
 		}
-		nodeBuilder.SetStorePath(path)
-		nodeBuilder.SetDocumentACPPath(path)
-		nodeBuilder.SetNodeACPPath(path)
+		nodeBuilder.Store().SetPath(path).
+			DocumentACP().SetPath(path).
+			NodeACP().SetPath(path)
 	}
 
 	switch s.DbType {
 	case BadgerFileType:
-		nodeBuilder.SetStoreType(options.NodeBadgerStore)
+		nodeBuilder.Store().SetType(options.NodeBadgerStore)
 
 	case BadgerIMType:
-		nodeBuilder.SetStoreType(options.NodeBadgerStore)
-		nodeBuilder.SetBadgerInMemory(true)
+		nodeBuilder.Store().SetType(options.NodeBadgerStore).SetBadgerInMemory(true)
 
 	case DefraIMType:
-		nodeBuilder.SetStoreType(options.NodeMemoryStore)
+		nodeBuilder.Store().SetType(options.NodeMemoryStore)
 
 	case LevelStoreType:
-		nodeBuilder.SetStoreType(options.NodeStoreType("level"))
+		nodeBuilder.Store().SetType(options.NodeStoreType("level"))
 
 	default:
 		return nil, fmt.Errorf("invalid database type: %v", s.DbType)
