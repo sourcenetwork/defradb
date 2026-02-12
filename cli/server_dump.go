@@ -13,7 +13,6 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/cli/config"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
@@ -47,7 +46,6 @@ func MakeServerDumpCmd() *cobra.Command {
 				ctx,
 				rootstore,
 				nacInfo,
-				dac.NoDocumentACP,
 			)
 			if err != nil {
 				return errors.Wrap("failed to initialize database", err)

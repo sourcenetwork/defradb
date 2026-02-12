@@ -22,7 +22,6 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/internal/datastore"
-	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
@@ -56,13 +55,5 @@ func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSiz
 		return err
 	}
 	n.peer = peer
-	return nil
-}
-
-// buildP2PDBOption returns the db.Option for P2P if the peer is set.
-func (n *Node) buildP2PDBOption() []db.Option {
-	if n.peer != nil {
-		return []db.Option{db.WithP2P(n.peer)}
-	}
 	return nil
 }

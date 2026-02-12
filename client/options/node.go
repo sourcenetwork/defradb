@@ -125,6 +125,12 @@ type NodeHTTPOptions struct {
 	TLSCertPath string
 	// TLSKeyPath is the path to the TLS private key file.
 	TLSKeyPath string
+	// ReadTimeout is the read timeout for connections.
+	ReadTimeout time.Duration
+	// WriteTimeout is the write timeout for connections.
+	WriteTimeout time.Duration
+	// IdleTimeout is the idle timeout for connections.
+	IdleTimeout time.Duration
 }
 
 // NodeStoreOptions contains store configuration values.
@@ -490,6 +496,11 @@ type NodeHTTPOptionsBuilder struct {
 	nodeSubBuilder[NodeHTTPOptions]
 }
 
+// NodeHTTP creates a standalone NodeHTTPOptionsBuilder.
+func NodeHTTP() *NodeHTTPOptionsBuilder {
+	return &NodeHTTPOptionsBuilder{}
+}
+
 // SetAddress sets the HTTP server address.
 func (sb *NodeHTTPOptionsBuilder) SetAddress(address string) *NodeHTTPOptionsBuilder {
 	sb.append(func(opts *NodeHTTPOptions) { opts.Address = address })
@@ -511,6 +522,24 @@ func (sb *NodeHTTPOptionsBuilder) SetCertPath(path string) *NodeHTTPOptionsBuild
 // SetKeyPath sets the path to the TLS private key file.
 func (sb *NodeHTTPOptionsBuilder) SetKeyPath(path string) *NodeHTTPOptionsBuilder {
 	sb.append(func(opts *NodeHTTPOptions) { opts.TLSKeyPath = path })
+	return sb
+}
+
+// SetReadTimeout sets the server read timeout.
+func (sb *NodeHTTPOptionsBuilder) SetReadTimeout(timeout time.Duration) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.ReadTimeout = timeout })
+	return sb
+}
+
+// SetWriteTimeout sets the server write timeout.
+func (sb *NodeHTTPOptionsBuilder) SetWriteTimeout(timeout time.Duration) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.WriteTimeout = timeout })
+	return sb
+}
+
+// SetIdleTimeout sets the server idle timeout.
+func (sb *NodeHTTPOptionsBuilder) SetIdleTimeout(timeout time.Duration) *NodeHTTPOptionsBuilder {
+	sb.append(func(opts *NodeHTTPOptions) { opts.IdleTimeout = timeout })
 	return sb
 }
 

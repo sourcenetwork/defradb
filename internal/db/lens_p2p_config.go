@@ -12,9 +12,12 @@
 
 package db
 
-import lensNode "github.com/sourcenetwork/lens/host-go/node"
+import (
+	lensNode "github.com/sourcenetwork/lens/host-go/node"
 
-func appendLensP2POpt(lensOptions []lensNode.Option, opts *dbOptions) []lensNode.Option {
-	// Nil-op, js-lens does not support p2p
-	return append(lensOptions, lensNode.WithP2P(opts.p2p.Value()))
+	"github.com/sourcenetwork/defradb/client"
+)
+
+func appendLensP2POpt(lensOptions []lensNode.Option, p2p client.Host) []lensNode.Option {
+	return append(lensOptions, lensNode.WithP2P(p2p))
 }

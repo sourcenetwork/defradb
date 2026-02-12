@@ -15,6 +15,7 @@ import (
 	"fmt"
 	gohttp "net/http"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/http"
 )
@@ -28,21 +29,7 @@ func (n *Node) startAPI(ctx context.Context) error {
 		return err
 	}
 
-	var serverOpts []http.ServerOpt
-	if n.opts.HTTP.Address != "" {
-		serverOpts = append(serverOpts, http.WithAddress(n.opts.HTTP.Address))
-	}
-	if len(n.opts.HTTP.AllowedOrigins) > 0 {
-		serverOpts = append(serverOpts, http.WithAllowedOrigins(n.opts.HTTP.AllowedOrigins...))
-	}
-	if n.opts.HTTP.TLSCertPath != "" {
-		serverOpts = append(serverOpts, http.WithTLSCertPath(n.opts.HTTP.TLSCertPath))
-	}
-	if n.opts.HTTP.TLSKeyPath != "" {
-		serverOpts = append(serverOpts, http.WithTLSKeyPath(n.opts.HTTP.TLSKeyPath))
-	}
-
-	n.server, err = http.NewServer(handler, serverOpts...)
+	n.server, err = http.NewServer(handler, options.NodeHTTP().SetAll(n.opts.HTTP))
 	if err != nil {
 		return err
 	}

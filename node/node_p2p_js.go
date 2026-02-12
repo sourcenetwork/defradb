@@ -15,8 +15,6 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/internal/db"
 )
 
 func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSize immutable.Option[int]) error {
@@ -24,9 +22,4 @@ func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSiz
 		return nil
 	}
 	return ErrP2PNotSupported
-}
-
-// buildP2PDBOption returns the db.Option for P2P (no-op on JS).
-func (n *Node) buildP2PDBOption() []db.Option {
-	return nil
 }

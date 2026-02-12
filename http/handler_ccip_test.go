@@ -28,8 +28,6 @@ import (
 
 	"github.com/sourcenetwork/corekv/badger"
 
-	"github.com/sourcenetwork/defradb/acp/dac"
-
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
@@ -202,7 +200,7 @@ func setupDatabase(t *testing.T) DB {
 	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
 	require.NoError(t, err)
 
-	cdb, err := db.NewDB(ctx, store, adminInfo, dac.NoDocumentACP)
+	cdb, err := db.NewDB(ctx, store, adminInfo)
 	require.NoError(t, err)
 
 	_, err = cdb.AddSchema(ctx, `type User {

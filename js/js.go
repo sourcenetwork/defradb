@@ -44,10 +44,10 @@ func open(this js.Value, args []js.Value) (js.Value, error) {
 	}
 	opts := options.Node().
 		SetDisableP2P(true).
-		SetDisableAPI(true).
-		Store().SetType(options.NodeStoreType("level")).
-		DB().SetNodeIdentity(ident).
-		Node()
+		SetDisableAPI(true)
+	opts.Store().SetType(options.NodeStoreType("level"))
+	opts.DB().SetNodeIdentity(ident)
+
 	if acpType == "sourcehub" {
 		opts.DocumentACP().SetType(options.NodeSourceHubDocumentACPType)
 	}

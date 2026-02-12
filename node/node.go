@@ -17,7 +17,6 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
-	lensNode "github.com/sourcenetwork/lens/host-go/node"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
@@ -26,6 +25,7 @@ import (
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	intOpts "github.com/sourcenetwork/defradb/internal/options"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
@@ -127,17 +127,7 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	dbOpts := n.buildDBOptions()
-
 	if isValueSizeLimited {
-		dbOpts = append(dbOpts,
-			db.WithLensOpts(
-				lensNode.WithBlockstoreChunkSize(defaultChunkSize),
-			),
-		)
-		dbOpts = append(dbOpts,
-			db.WithBlockStoreChunkSize(defaultChunkSize),
-		)
 		n.opts.DB.ChunkSize = immutable.Some(defaultChunkSize)
 	}
 
@@ -146,44 +136,20 @@ func (n *Node) Start(ctx context.Context) error {
 		return err
 	}
 
-	dbOpts = append(dbOpts, n.buildP2PDBOption()...)
+	dbBuilder := intOpts.DB().SetNodeDBOptions(n.opts.DB)
+	if documentACP.HasValue() {
+		dbBuilder.SetDocumentACP(documentACP.Value())
+	}
+	if n.peer != nil {
+		dbBuilder.SetP2P(n.peer)
+	}
 
-	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, dbOpts...)
+	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, dbBuilder)
 	if err != nil {
 		return err
 	}
 
 	return n.startAPI(ctx)
-}
-
-// buildDBOptions converts NodeOptions into db.Option slice.
-func (n *Node) buildDBOptions() []db.Option {
-	var opts []db.Option
-
-	if n.opts.DB.MaxTxnRetries.HasValue() {
-		opts = append(opts, db.WithMaxRetries(n.opts.DB.MaxTxnRetries.Value()))
-	}
-	if n.opts.DB.Identity.HasValue() {
-		opts = append(opts, db.WithNodeIdentity(n.opts.DB.Identity.Value()))
-	}
-	opts = append(opts, db.WithEnabledSigning(n.opts.DB.EnableSigning))
-	if len(n.opts.DB.SearchableEncryptionKey) > 0 {
-		opts = append(opts, db.WithSearchableEncryptionKey(n.opts.DB.SearchableEncryptionKey))
-	}
-	if len(n.opts.DB.RetryIntervals) > 0 {
-		opts = append(opts, db.WithRetryInterval(n.opts.DB.RetryIntervals))
-	}
-	if n.opts.DB.P2PBlockSyncTimeout > 0 {
-		opts = append(opts, db.WithP2PBlockSyncTimeout(n.opts.DB.P2PBlockSyncTimeout))
-	}
-	if n.opts.DB.LensRuntime != "" {
-		opts = append(opts, db.WithLensRuntime(db.LensRuntimeType(n.opts.DB.LensRuntime)))
-	}
-	if n.opts.DB.ChunkSize.HasValue() {
-		opts = append(opts, db.WithBlockStoreChunkSize(n.opts.DB.ChunkSize.Value()))
-	}
-
-	return opts
 }
 
 // Close stops the node sub-systems.
