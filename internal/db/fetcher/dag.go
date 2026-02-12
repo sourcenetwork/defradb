@@ -41,10 +41,14 @@ func (hf *HeadFetcher) Start(
 	txn := datastore.CtxMustGetTxn(ctx)
 
 	if len(hf.kvIters) > 0 {
+		var firstErr error
 		for _, iter := range hf.kvIters {
-			if err := iter.Close(); err != nil {
-				return err
+			if err := iter.Close(); err != nil && firstErr == nil {
+				firstErr = err
 			}
+		}
+		if firstErr != nil {
+			return firstErr
 		}
 	}
 
