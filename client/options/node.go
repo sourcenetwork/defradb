@@ -187,8 +187,9 @@ type NodeDBOptions struct {
 	ChunkSize immutable.Option[int]
 }
 
-// nodeSubBuilder is the generic base for all node option sub-builders.
-// It provides parent forwarding, Node() navigation, and embeds enumerableBuilder[T].
+// nodeSubBuilder provides parent linkage, forwarding, and Node() navigation
+// for sub-builders. Embed in sub-builders alongside nothing else — it already
+// embeds enumerableBuilder[T].
 type nodeSubBuilder[T any] struct {
 	enumerableBuilder[T]
 	parent  *NodeOptionsBuilder // nil when standalone
@@ -288,78 +289,6 @@ func (b *NodeOptionsBuilder) NodeACP() *NodeACPOptionsBuilder {
 		project: func(o *NodeOptions) *NodeACPOptions { return &o.NodeACP }}}
 }
 
-// WithStore composes a standalone NodeStoreOptionsBuilder into this builder.
-func (b *NodeOptionsBuilder) WithStore(sb *NodeStoreOptionsBuilder) *NodeOptionsBuilder {
-	subOpts := make([]func(*NodeStoreOptions), len(sb.opts))
-	copy(subOpts, sb.opts)
-	b.append(func(opts *NodeOptions) {
-		for _, fn := range subOpts {
-			fn(&opts.Store)
-		}
-	})
-	return b
-}
-
-// WithDB composes a standalone NodeDBOptionsBuilder into this builder.
-func (b *NodeOptionsBuilder) WithDB(sb *NodeDBOptionsBuilder) *NodeOptionsBuilder {
-	subOpts := make([]func(*NodeDBOptions), len(sb.opts))
-	copy(subOpts, sb.opts)
-	b.append(func(opts *NodeOptions) {
-		for _, fn := range subOpts {
-			fn(&opts.DB)
-		}
-	})
-	return b
-}
-
-// WithP2P composes a standalone NodeP2POptionsBuilder into this builder.
-func (b *NodeOptionsBuilder) WithP2P(sb *NodeP2POptionsBuilder) *NodeOptionsBuilder {
-	subOpts := make([]func(*NodeP2POptions), len(sb.opts))
-	copy(subOpts, sb.opts)
-	b.append(func(opts *NodeOptions) {
-		for _, fn := range subOpts {
-			fn(&opts.P2P)
-		}
-	})
-	return b
-}
-
-// WithHTTP composes a standalone NodeHTTPOptionsBuilder into this builder.
-func (b *NodeOptionsBuilder) WithHTTP(sb *NodeHTTPOptionsBuilder) *NodeOptionsBuilder {
-	subOpts := make([]func(*NodeHTTPOptions), len(sb.opts))
-	copy(subOpts, sb.opts)
-	b.append(func(opts *NodeOptions) {
-		for _, fn := range subOpts {
-			fn(&opts.HTTP)
-		}
-	})
-	return b
-}
-
-// WithDocumentACP composes a standalone NodeDocumentACPOptionsBuilder into this builder.
-func (b *NodeOptionsBuilder) WithDocumentACP(sb *NodeDocumentACPOptionsBuilder) *NodeOptionsBuilder {
-	subOpts := make([]func(*NodeDocumentACPOptions), len(sb.opts))
-	copy(subOpts, sb.opts)
-	b.append(func(opts *NodeOptions) {
-		for _, fn := range subOpts {
-			fn(&opts.DocumentACP)
-		}
-	})
-	return b
-}
-
-// WithNodeACP composes a standalone NodeACPOptionsBuilder into this builder.
-func (b *NodeOptionsBuilder) WithNodeACP(sb *NodeACPOptionsBuilder) *NodeOptionsBuilder {
-	subOpts := make([]func(*NodeACPOptions), len(sb.opts))
-	copy(subOpts, sb.opts)
-	b.append(func(opts *NodeOptions) {
-		for _, fn := range subOpts {
-			fn(&opts.NodeACP)
-		}
-	})
-	return b
-}
-
 // NodeStoreOptionsBuilder is a builder for NodeStoreOptions.
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeStoreOptionsBuilder struct {
@@ -436,11 +365,6 @@ func (sb *NodeStoreOptionsBuilder) SetAll(storeOpts NodeStoreOptions) *NodeStore
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeDBOptionsBuilder struct {
 	nodeSubBuilder[NodeDBOptions]
-}
-
-// NodeDB creates a standalone NodeDBOptionsBuilder.
-func NodeDB() *NodeDBOptionsBuilder {
-	return &NodeDBOptionsBuilder{}
 }
 
 // Store navigates to a Store sub-builder on the parent.
@@ -538,11 +462,6 @@ type NodeP2POptionsBuilder struct {
 	nodeSubBuilder[NodeP2POptions]
 }
 
-// NodeP2P creates a standalone NodeP2POptionsBuilder.
-func NodeP2P() *NodeP2POptionsBuilder {
-	return &NodeP2POptionsBuilder{}
-}
-
 // Store navigates to a Store sub-builder on the parent.
 func (sb *NodeP2POptionsBuilder) Store() *NodeStoreOptionsBuilder {
 	return sb.parent.Store()
@@ -616,11 +535,6 @@ type NodeHTTPOptionsBuilder struct {
 	nodeSubBuilder[NodeHTTPOptions]
 }
 
-// NodeHTTP creates a standalone NodeHTTPOptionsBuilder.
-func NodeHTTP() *NodeHTTPOptionsBuilder {
-	return &NodeHTTPOptionsBuilder{}
-}
-
 // Store navigates to a Store sub-builder on the parent.
 func (sb *NodeHTTPOptionsBuilder) Store() *NodeStoreOptionsBuilder {
 	return sb.parent.Store()
@@ -680,11 +594,6 @@ func (sb *NodeHTTPOptionsBuilder) SetAll(httpOpts NodeHTTPOptions) *NodeHTTPOpti
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeDocumentACPOptionsBuilder struct {
 	nodeSubBuilder[NodeDocumentACPOptions]
-}
-
-// NodeDocumentACP creates a standalone NodeDocumentACPOptionsBuilder.
-func NodeDocumentACP() *NodeDocumentACPOptionsBuilder {
-	return &NodeDocumentACPOptionsBuilder{}
 }
 
 // Store navigates to a Store sub-builder on the parent.
@@ -760,10 +669,6 @@ type NodeACPOptionsBuilder struct {
 	nodeSubBuilder[NodeACPOptions]
 }
 
-// NodeACPOpts creates a standalone NodeACPOptionsBuilder.
-func NodeACPOpts() *NodeACPOptionsBuilder {
-	return &NodeACPOptionsBuilder{}
-}
 
 // Store navigates to a Store sub-builder on the parent.
 func (sb *NodeACPOptionsBuilder) Store() *NodeStoreOptionsBuilder {

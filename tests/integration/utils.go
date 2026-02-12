@@ -836,7 +836,7 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		withListenAddresses(&p2pOpts, s.Nodes[nodeID].CachedAddresses...)
 		nodeBuilder := defaultNodeOpts()
 		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-		nodeBuilder.WithP2P(options.NodeP2P().SetAll(p2pOpts))
+		nodeBuilder.P2P().SetAll(p2pOpts)
 		nodeBuilder.NodeACP().SetEnabled(action.EnableNAC)
 		node, err := setupNode(
 			s,
@@ -984,7 +984,7 @@ func configureNode(
 	nodeBuilder.DB().
 		SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
 		SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-	nodeBuilder.WithP2P(options.NodeP2P().SetAll(p2pOpts))
+	nodeBuilder.P2P().SetAll(p2pOpts)
 
 	node, err := setupNode(s, acpIdentity.None, testCase, nodeBuilder)
 	require.NoError(s.T, err)

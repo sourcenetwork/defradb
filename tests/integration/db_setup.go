@@ -53,19 +53,19 @@ func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
-	nodeBuilder *options.NodeOptionsBuilder,
+	opts *options.NodeOptionsBuilder,
 ) (*state.NodeState, error) {
-	if nodeBuilder == nil {
-		nodeBuilder = defaultNodeOpts()
+	if opts == nil {
+		opts = defaultNodeOpts()
 	}
-	nodeBuilder.DB().SetEnableSigning(testCase.EnableSigning)
+	opts.DB().SetEnableSigning(testCase.EnableSigning)
 
 	if s.EnableSearchableEncryption {
 		seKey, err := crypto.GenerateAES256()
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate searchable encryption key: %w", err)
 		}
-		nodeBuilder.DB().SetSearchableEncryptionKey(seKey)
+		opts.DB().SetSearchableEncryptionKey(seKey)
 	}
 
 	err := createBadgerEncryptionKey()
@@ -73,19 +73,19 @@ func setupNode(
 		return nil, err
 	}
 	if badgerEncryption && encryptionKey != nil {
-		nodeBuilder.Store().SetBadgerEncryptionKey(encryptionKey)
+		opts.Store().SetBadgerEncryptionKey(encryptionKey)
 	}
 
 	switch s.DocumentACPType {
 	case state.LocalDocumentACPType:
-		nodeBuilder.DocumentACP().SetType(options.NodeLocalDocumentACPType)
+		opts.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
 	case state.SourceHubDocumentACPType:
 		if s.DocumentACPOptions == nil {
 			s.DocumentACPOptions, err = setupSourceHub(s, testCase)
 			require.NoError(s.T, err)
 		}
-		nodeBuilder.WithDocumentACP(options.NodeDocumentACP().SetAll(*s.DocumentACPOptions))
+		opts.DocumentACP().SetAll(*s.DocumentACPOptions)
 
 	default:
 		// no-op, use the `node` package default
@@ -103,37 +103,37 @@ func setupNode(
 			// default test case
 			path = s.T.TempDir()
 		}
-		nodeBuilder.Store().SetPath(path).
+		opts.Store().SetPath(path).
 			DocumentACP().SetPath(path).
 			NodeACP().SetPath(path)
 	}
 
 	switch s.DbType {
 	case BadgerFileType:
-		nodeBuilder.Store().SetType(options.NodeBadgerStore)
+		opts.Store().SetType(options.NodeBadgerStore)
 
 	case BadgerIMType:
-		nodeBuilder.Store().SetType(options.NodeBadgerStore).SetBadgerInMemory(true)
+		opts.Store().SetType(options.NodeBadgerStore).SetBadgerInMemory(true)
 
 	case DefraIMType:
-		nodeBuilder.Store().SetType(options.NodeMemoryStore)
+		opts.Store().SetType(options.NodeMemoryStore)
 
 	case LevelStoreType:
-		nodeBuilder.Store().SetType(options.NodeStoreType("level"))
+		opts.Store().SetType(options.NodeStoreType("level"))
 
 	default:
 		return nil, fmt.Errorf("invalid database type: %v", s.DbType)
 	}
 
 	if s.KMS == PubSubKMSType {
-		nodeBuilder.SetKMS(options.NodeKMSType(kms.PubSubServiceType))
+		opts.SetKMS(options.NodeKMSType(kms.PubSubServiceType))
 	}
 
 	if s.IsNetworkEnabled {
-		nodeBuilder.SetDisableP2P(false)
+		opts.SetDisableP2P(false)
 	}
 
-	nodeObj, err := node.New(s.Ctx, nodeBuilder)
+	nodeObj, err := node.New(s.Ctx, opts)
 	if err != nil {
 		return nil, err
 	}

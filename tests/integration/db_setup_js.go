@@ -28,23 +28,23 @@ func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
-	nodeBuilder *options.NodeOptionsBuilder,
+	opts *options.NodeOptionsBuilder,
 ) (*state.NodeState, error) {
-	if nodeBuilder == nil {
-		nodeBuilder = defaultNodeOpts()
+	if opts == nil {
+		opts = defaultNodeOpts()
 	}
-	nodeBuilder.DB().
+	opts.DB().
 		SetEnableSigning(testCase.EnableSigning).
 		SetLensRuntime(options.NodeJSLensRuntime)
 	// Note: Since we are hard-coding to run with badger in-mem only, we have a function that
 	// handles some edge-cases by skipping js client testing when a db type is something else.
 	// If this hard-coding is changed in future, don't forget to tweak the following func:
 	// [skipJSClientIfUnsupportedDBType]
-	nodeBuilder.Store().SetBadgerInMemory(true)
+	opts.Store().SetBadgerInMemory(true)
 
 	switch documentACPType {
 	case state.LocalDocumentACPType:
-		nodeBuilder.DocumentACP().SetType(options.NodeLocalDocumentACPType)
+		opts.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
 	case state.SourceHubDocumentACPType:
 		if s.DocumentACPOptions == nil {
@@ -52,14 +52,15 @@ func setupNode(
 			s.DocumentACPOptions, err = setupSourceHub(s)
 			require.NoError(s.T, err)
 		}
-		nodeBuilder.DocumentACP().SetType(options.NodeSourceHubDocumentACPType)
-		nodeBuilder.WithDocumentACP(options.NodeDocumentACP().SetAll(*s.DocumentACPOptions))
+		opts.DocumentACP().
+			SetType(options.NodeSourceHubDocumentACPType).
+			SetAll(*s.DocumentACPOptions)
 
 	default:
 		// no-op, use the `node` package default
 	}
 
-	nodeObj, err := node.New(s.Ctx, nodeBuilder)
+	nodeObj, err := node.New(s.Ctx, opts)
 	if err != nil {
 		return nil, err
 	}
