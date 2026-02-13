@@ -989,6 +989,7 @@ func configureNode(
 	node, err := setupNode(s, acpIdentity.None, testCase, opts)
 	require.NoError(s.T, err)
 
+	node.P2POpts = p2pOpts
 	s.Nodes = append(s.Nodes, node)
 }
 
