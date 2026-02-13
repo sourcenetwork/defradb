@@ -51,16 +51,20 @@ func (a *RefreshViews) Execute() {
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 
-		opts := a.FilterOptions
-		if opts == nil {
-			opts = options.RefreshViews()
-		}
+		identOpts := options.RefreshViews()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
-			opts.SetIdentity(identOption.Value())
+			identOpts.SetIdentity(identOption.Value())
 		}
 
-		err := node.RefreshViews(a.s.Ctx, opts)
+		var allOpts []options.Lister[options.RefreshViewsOptions]
+		if a.FilterOptions != nil {
+			a.FilterOptions.Reset()
+			allOpts = append(allOpts, a.FilterOptions)
+		}
+		allOpts = append(allOpts, identOpts)
+
+		err := node.RefreshViews(a.s.Ctx, allOpts...)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
