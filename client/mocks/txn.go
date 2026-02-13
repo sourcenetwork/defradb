@@ -2984,16 +2984,22 @@ func (_c *Txn_StartTS_Call) RunAndReturn(run func() time.Time) *Txn_StartTS_Call
 }
 
 // SyncBranchableCollection provides a mock function for the type Txn
-func (_mock *Txn) SyncBranchableCollection(ctx context.Context, collectionID string) error {
-	ret := _mock.Called(ctx, collectionID)
+func (_mock *Txn) SyncBranchableCollection(ctx context.Context, collectionID string, opts ...options.Lister[options.SyncBranchableCollectionOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, collectionID, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, collectionID)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for SyncBranchableCollection")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, collectionID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.SyncBranchableCollectionOptions]) error); ok {
+		r0 = returnFunc(ctx, collectionID, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -3008,11 +3014,13 @@ type Txn_SyncBranchableCollection_Call struct {
 // SyncBranchableCollection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - collectionID string
-func (_e *Txn_Expecter) SyncBranchableCollection(ctx interface{}, collectionID interface{}) *Txn_SyncBranchableCollection_Call {
-	return &Txn_SyncBranchableCollection_Call{Call: _e.mock.On("SyncBranchableCollection", ctx, collectionID)}
+//   - opts ...options.Lister[options.SyncBranchableCollectionOptions]
+func (_e *Txn_Expecter) SyncBranchableCollection(ctx interface{}, collectionID interface{}, opts ...interface{}) *Txn_SyncBranchableCollection_Call {
+	return &Txn_SyncBranchableCollection_Call{Call: _e.mock.On("SyncBranchableCollection",
+		append([]interface{}{ctx, collectionID}, opts...)...)}
 }
 
-func (_c *Txn_SyncBranchableCollection_Call) Run(run func(ctx context.Context, collectionID string)) *Txn_SyncBranchableCollection_Call {
+func (_c *Txn_SyncBranchableCollection_Call) Run(run func(ctx context.Context, collectionID string, opts ...options.Lister[options.SyncBranchableCollectionOptions])) *Txn_SyncBranchableCollection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3022,9 +3030,16 @@ func (_c *Txn_SyncBranchableCollection_Call) Run(run func(ctx context.Context, c
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 []options.Lister[options.SyncBranchableCollectionOptions]
+		var variadicArgs []options.Lister[options.SyncBranchableCollectionOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Lister[options.SyncBranchableCollectionOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -3035,7 +3050,7 @@ func (_c *Txn_SyncBranchableCollection_Call) Return(err error) *Txn_SyncBranchab
 	return _c
 }
 
-func (_c *Txn_SyncBranchableCollection_Call) RunAndReturn(run func(ctx context.Context, collectionID string) error) *Txn_SyncBranchableCollection_Call {
+func (_c *Txn_SyncBranchableCollection_Call) RunAndReturn(run func(ctx context.Context, collectionID string, opts ...options.Lister[options.SyncBranchableCollectionOptions]) error) *Txn_SyncBranchableCollection_Call {
 	_c.Call.Return(run)
 	return _c
 }

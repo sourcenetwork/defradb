@@ -376,7 +376,12 @@ func (w *CWrapper) SyncCollectionVersions(
 	return nil
 }
 
-func (w *CWrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+func (w *CWrapper) SyncBranchableCollection(
+	ctx context.Context,
+	collectionID string,
+	opts ...options.Lister[options.SyncBranchableCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
 	cCollectionID := C.CString(collectionID)
 	defer C.free(unsafe.Pointer(cCollectionID))
 
@@ -388,8 +393,11 @@ func (w *CWrapper) SyncBranchableCollection(ctx context.Context, collectionID st
 	cTimerStr := C.CString(timerStr)
 	defer C.free(unsafe.Pointer(cTimerStr))
 
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	res := ConvertAndFreeCResult(
-		C.P2PbranchableCollectionSync(C.uintptr_t(w.handle), cCollectionID, cTimerStr, C.uintptr_t(0)))
+		C.P2PbranchableCollectionSync(C.uintptr_t(w.handle), cCollectionID, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

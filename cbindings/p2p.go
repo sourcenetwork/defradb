@@ -364,7 +364,8 @@ func P2PbranchableCollectionSync(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.SyncBranchableCollection(ctx, C.GoString(collectionID))
+	opts := options.WithIdentity(options.SyncBranchableCollection(), acpIdentity.FromContext(ctx))
+	err = node.DB.SyncBranchableCollection(ctx, C.GoString(collectionID), opts)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

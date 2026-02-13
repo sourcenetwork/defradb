@@ -14,6 +14,10 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/tests/state"
+	"github.com/sourcenetwork/immutable"
 )
 
 // SyncBranchableCollection is an action that syncs a branchable collection's DAG
@@ -26,6 +30,11 @@ type SyncBranchableCollection struct {
 	// The collection will be synced to the other nodes that are connected
 	// and subscribed to the collection's pubsub topics.
 	NodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// CollectionID is the index of the collection to sync.
 	CollectionID int
@@ -54,8 +63,14 @@ func (a *SyncBranchableCollection) Execute() {
 		return
 	}
 
+	opts := options.SyncBranchableCollection()
+	identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, a.NodeID)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
+	}
+
 	collection := nodeState.Collections[a.CollectionID]
-	err := nodeState.SyncBranchableCollection(ctx, collection.CollectionID())
+	err := nodeState.SyncBranchableCollection(ctx, collection.CollectionID(), opts)
 
 	expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
