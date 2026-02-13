@@ -217,6 +217,7 @@ func (c *Client) AddView(
 	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("view")
 

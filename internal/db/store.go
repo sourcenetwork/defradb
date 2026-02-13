@@ -346,6 +346,12 @@ func (db *DB) AddView(
 
 	opt := utils.NewOptions(opts...)
 
+	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeViewAddPerm); err != nil {
+		return nil, err
+	}
+
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return nil, err

@@ -347,6 +347,7 @@ func (w *Wrapper) AddView(
 	opts ...options.Lister[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 
 	transformCIDVal, err := goji.MarshalJS(opt.TransformCID)
 	if err != nil {

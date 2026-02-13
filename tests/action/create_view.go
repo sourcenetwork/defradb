@@ -30,6 +30,11 @@ type CreateView struct {
 	// If a value is not provided the view will be created on all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The query that this View is to be based off of. Required.
 	Query string
 
@@ -93,9 +98,16 @@ func (a *CreateView) Execute() {
 
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for i, node := range nodes {
+		nodeID := nodeIDs[i]
+
 		opts := options.AddView()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
 		if a.TransformCID.HasValue() {
-			transformCID := replace(a.s, nodeIDs[i], a.TransformCID.Value())
+			transformCID := replace(a.s, nodeID, a.TransformCID.Value())
 			opts.SetTransformCID(transformCID)
 		}
 		results, err := node.AddView(a.s.Ctx, a.Query, sdl, opts)

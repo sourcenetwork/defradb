@@ -94,6 +94,7 @@ func (c *Client) addView(this js.Value, args []js.Value) (js.Value, error) {
 		return js.Undefined(), err
 	}
 	opts := options.AddView()
+	setOptIdentity(opts, args, 3)
 	if transformCID.HasValue() {
 		opts.SetTransformCID(transformCID.Value())
 	}

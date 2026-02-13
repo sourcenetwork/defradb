@@ -16,6 +16,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
@@ -42,12 +43,12 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 			if err != nil {
 				return err
 			}
-			var opts []options.Lister[options.AddViewOptions]
+			opt := options.WithIdentity(options.AddView(), identity.FromContext(cmd.Context()))
 			if lensCID != "" {
-				opts = append(opts, options.AddView().SetTransformCID(lensCID))
+				opt.SetTransformCID(lensCID)
 			}
 
-			defs, err := cliClient.AddView(cmd.Context(), query, sdl, opts...)
+			defs, err := cliClient.AddView(cmd.Context(), query, sdl, opt)
 			if err != nil {
 				return err
 			}
