@@ -372,7 +372,11 @@ func (c *Client) SyncCollectionVersions(
 	return err
 }
 
-func (c *Client) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+func (c *Client) SyncBranchableCollection(
+	ctx context.Context,
+	collectionID string,
+	opts ...options.Lister[options.SyncBranchableCollectionOptions],
+) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections", "sync-branchable")
 
 	req := map[string]any{
@@ -394,6 +398,8 @@ func (c *Client) SyncBranchableCollection(ctx context.Context, collectionID stri
 	// This is necessary because the node handling this request will usually wait whole timeout
 	// duration as it might receive responses from multiple peers.
 	httpCtx := context.Background()
+	opt := utils.NewOptions(opts...)
+	httpCtx = identity.WithContext(httpCtx, opt.GetIdentity())
 	if hasDeadline {
 		var cancel context.CancelFunc
 		httpCtx, cancel = context.WithTimeout(httpCtx, time.Until(deadline)+500*time.Millisecond)

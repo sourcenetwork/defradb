@@ -154,7 +154,7 @@ func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs []strin
 	panic("not implemented")
 }
 
-func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string, opts ...options.Lister[options.SyncBranchableCollectionOptions]) error {
 	panic("not implemented")
 }
 

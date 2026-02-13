@@ -382,9 +382,19 @@ func (db *DB) SyncCollectionVersions(
 // context.WithTimeout can be used to set a timeout for the operation.
 //
 // WARNING: This function does not respect transactions.
-func (db *DB) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+func (db *DB) SyncBranchableCollection(
+	ctx context.Context,
+	collectionID string,
+	opts ...options.Lister[options.SyncBranchableCollectionOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PSyncBranchableCollectionPerm); err != nil {
+		return err
+	}
+
 	if db.p2p == nil {
 		return ErrNoP2P
 	}
-	return db.p2p.SyncBranchableCollection(ctx, collectionID)
+	return db.p2p.SyncBranchableCollection(ctx, collectionID, opt)
 }

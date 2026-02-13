@@ -328,7 +328,8 @@ func (h *p2pHandler) SyncBranchableCollection(rw http.ResponseWriter, req *http.
 		defer cancel()
 	}
 
-	err := db.SyncBranchableCollection(ctx, reqBody.CollectionID)
+	opts := options.WithIdentity(options.SyncBranchableCollection(), identity.FromContext(ctx))
+	err := db.SyncBranchableCollection(ctx, reqBody.CollectionID, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return

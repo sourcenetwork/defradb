@@ -428,7 +428,11 @@ func (txn *Txn) SyncCollectionVersions(
 	return txn.db.SyncCollectionVersions(ctx, versionIDs, opts...)
 }
 
-func (txn *Txn) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+func (txn *Txn) SyncBranchableCollection(
+	ctx context.Context,
+	collectionID string,
+	opts ...options.Lister[options.SyncBranchableCollectionOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.SyncBranchableCollection(ctx, collectionID)
+	return txn.db.SyncBranchableCollection(ctx, collectionID, opts...)
 }
