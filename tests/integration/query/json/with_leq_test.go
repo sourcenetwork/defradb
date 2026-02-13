@@ -15,7 +15,6 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQueryJSON_WithLesserEqualFilterWithEqualValue_ShouldFilter(t *testing.T) {
@@ -234,8 +233,6 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedLesserValue_ShouldFilter(t *te
 
 func TestQueryJSON_WithLesserEqualFilterWithNestedNullValue_ShouldFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -287,8 +284,6 @@ func TestQueryJSON_WithLesserEqualFilterWithNestedNullValue_ShouldFilter(t *test
 
 func TestQueryJSON_WithLesserEqualFilterWithBoolValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `
@@ -326,8 +321,6 @@ func TestQueryJSON_WithLesserEqualFilterWithBoolValue_ReturnsError(t *testing.T)
 
 func TestQueryJSON_WithLesserEqualFilterWithStringValue_ReturnsError(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `

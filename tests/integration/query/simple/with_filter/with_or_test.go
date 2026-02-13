@@ -15,13 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.CreateDoc{
 				Doc: `{
@@ -76,8 +73,6 @@ func TestQuerySimpleWithIntEqualToXOrYFilter(t *testing.T) {
 
 func TestQuerySimple_WithInlineIntArray_EqualToXOrYFilter_Succeeds(t *testing.T) {
 	test := testUtils.TestCase{
-		// TODO: https://github.com/sourcenetwork/defradb/issues/4353
-		MultiplierExcludes: []string{multiplier.SecondaryIndex},
 		Actions: []any{
 			&action.AddSchema{
 				Schema: `type Users {
