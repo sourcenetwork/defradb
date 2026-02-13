@@ -834,15 +834,15 @@ func startNodes(s *state.State, testCase TestCase, action Start) {
 		s.CurrentSetupNodeID = nodeID
 		p2pOpts := s.Nodes[nodeID].P2POpts
 		withListenAddresses(&p2pOpts, s.Nodes[nodeID].CachedAddresses...)
-		nodeBuilder := defaultNodeOpts()
-		nodeBuilder.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-		nodeBuilder.P2P().SetAll(p2pOpts)
-		nodeBuilder.NodeACP().SetEnabled(action.EnableNAC)
+		opts := defaultNodeOpts()
+		opts.DB().SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
+		opts.P2P().SetAll(p2pOpts)
+		opts.NodeACP().SetEnabled(action.EnableNAC)
 		node, err := setupNode(
 			s,
 			getIdentityOption(s, action.Identity),
 			testCase,
-			nodeBuilder,
+			opts,
 		)
 		databaseDir = originalPath
 
@@ -980,13 +980,13 @@ func configureNode(
 	withPrivateKey(&p2pOpts, privateKey)
 
 	s.CurrentSetupNodeID = len(s.Nodes)
-	nodeBuilder := defaultNodeOpts()
-	nodeBuilder.DB().
+	opts := defaultNodeOpts()
+	opts.DB().
 		SetRetryIntervals([]time.Duration{time.Millisecond * 1}).
 		SetNodeIdentity(state.GetIdentity(s, NodeIdentity(s.CurrentSetupNodeID)))
-	nodeBuilder.P2P().SetAll(p2pOpts)
+	opts.P2P().SetAll(p2pOpts)
 
-	node, err := setupNode(s, acpIdentity.None, testCase, nodeBuilder)
+	node, err := setupNode(s, acpIdentity.None, testCase, opts)
 	require.NoError(s.T, err)
 
 	s.Nodes = append(s.Nodes, node)
