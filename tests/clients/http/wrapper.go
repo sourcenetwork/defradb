@@ -167,8 +167,11 @@ func (w *Wrapper) SyncCollectionVersions(
 	return w.client.SyncCollectionVersions(ctx, versionIDs, opts...)
 }
 
-func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
-	return w.client.SyncBranchableCollection(ctx, collectionID)
+func (w *Wrapper) SyncBranchableCollection(
+	ctx context.Context,
+	collectionID string,
+	opts ...options.Lister[options.SyncBranchableCollectionOptions]) error {
+	return w.client.SyncBranchableCollection(ctx, collectionID, opts...)
 }
 
 func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {

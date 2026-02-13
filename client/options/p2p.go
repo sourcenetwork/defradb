@@ -360,6 +360,37 @@ func (b *SyncCollectionVersionsOptionsBuilder) SetIdentity(id identity.Identity)
 	return b
 }
 
+// SyncBranchableCollectionOptions contains options for SyncBranchableCollection operation.
+type SyncBranchableCollectionOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *SyncBranchableCollectionOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// SyncBranchableCollectionOptionsBuilder is a builder for SyncBranchableCollectionOptions.
+type SyncBranchableCollectionOptionsBuilder struct {
+	enumerableBuilder[SyncBranchableCollectionOptions]
+}
+
+// SyncBranchableCollection creates a new SyncBranchableCollectionOptionsBuilder instance.
+func SyncBranchableCollection() *SyncBranchableCollectionOptionsBuilder {
+	return &SyncBranchableCollectionOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *SyncBranchableCollectionOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *SyncBranchableCollectionOptionsBuilder {
+	b.append(func(opts *SyncBranchableCollectionOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}
+
 // DeleteP2PDocumentsOptions contains options for RemoveP2PDocuments operation.
 type DeleteP2PDocumentsOptions struct {
 	// Identity is the identity of the actor performing the operation.

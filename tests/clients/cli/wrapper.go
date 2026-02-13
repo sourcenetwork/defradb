@@ -321,13 +321,20 @@ func (w *Wrapper) SyncCollectionVersions(
 	return err
 }
 
-func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string) error {
+func (w *Wrapper) SyncBranchableCollection(
+	ctx context.Context,
+	collectionID string,
+	opts ...options.Lister[options.SyncBranchableCollectionOptions],
+) error {
 	args := []string{"client", "p2p", "collection", "sync-branchable", collectionID}
 
 	deadline, hasDeadline := ctx.Deadline()
 	if hasDeadline {
 		args = append(args, "--timeout", time.Until(deadline).String())
 	}
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := w.cmd.execute(ctx, args)
 	return err

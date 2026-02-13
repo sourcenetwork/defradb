@@ -110,6 +110,7 @@ const (
 	NodeP2PDocumentDeletePerm
 	NodeP2PDocumentListPerm
 	NodeP2PSyncCollectionVersionsPerm
+	NodeP2PSyncBranchableCollectionPerm
 	NodeSignatureVerifyPerm
 	NodeLensCreatePerm
 	NodeLensListPerm
@@ -157,6 +158,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"p2p-document-delete",
 	"p2p-document-list",
 	"p2p-sync-collection-versions",
+	"p2p-sync-branchable-collection",
 	"signature-verify",
 	"lens-create",
 	"lens-list",
@@ -250,6 +252,8 @@ resources:
   - name: p2p-document-list
     expr: admin
   - name: p2p-sync-collection-versions
+    expr: admin
+  - name: p2p-sync-branchable-collection
     expr: admin
 
   - name: signature-verify

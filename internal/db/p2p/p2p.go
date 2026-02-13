@@ -347,10 +347,17 @@ func (p *P2P) hasAccess(ctx context.Context, pid string, c cid.Cid) bool {
 		return true
 	}
 
-	cols, err := p.db.GetCollections(
-		ctx,
-		options.GetCollections().SetVersionID(block.Delta.GetCollectionVersionID()),
-	)
+	ident, err := p.db.GetNodeIdentity(p.ctx)
+	if err != nil {
+		log.ErrorE("Failed to get node identity", err)
+		return false
+	}
+	getColOpts := options.GetCollections().SetCollectionID(block.Delta.GetCollectionVersionID())
+	if ident.HasValue() {
+		getColOpts = getColOpts.SetIdentity(identity.FromDID(ident.Value().DID))
+	}
+
+	cols, err := p.db.GetCollections(ctx, getColOpts)
 	if err != nil {
 		log.ErrorE("Failed to get collections", err)
 		return false
