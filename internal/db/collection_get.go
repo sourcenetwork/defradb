@@ -29,7 +29,7 @@ import (
 func (c *collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionGetOptions],
+	opts ...options.Enumerable[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

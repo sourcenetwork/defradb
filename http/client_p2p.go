@@ -41,7 +41,7 @@ type DeleteReplicatorParams struct {
 	Collections []string
 }
 
-func (c *Client) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+func (c *Client) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
@@ -60,7 +60,7 @@ func (c *Client) PeerInfo(ctx context.Context, opts ...options.Lister[options.Pe
 
 func (c *Client) ActivePeers(
 	ctx context.Context,
-	opts ...options.Lister[options.ActivePeersOptions],
+	opts ...options.Enumerable[options.ActivePeersOptions],
 ) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -81,7 +81,7 @@ func (c *Client) ActivePeers(
 func (c *Client) Connect(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Lister[options.ConnectOptions],
+	opts ...options.Enumerable[options.ConnectOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -103,7 +103,7 @@ func (c *Client) Connect(
 func (c *Client) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Lister[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.CreateReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -128,7 +128,7 @@ func (c *Client) CreateReplicator(
 func (c *Client) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	opts ...options.Lister[options.DeleteReplicatorOptions],
+	opts ...options.Enumerable[options.DeleteReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -152,7 +152,7 @@ func (c *Client) DeleteReplicator(
 
 func (c *Client) ListReplicators(
 	ctx context.Context,
-	opts ...options.Lister[options.ListReplicatorsOptions],
+	opts ...options.Enumerable[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -173,7 +173,7 @@ func (c *Client) ListReplicators(
 func (c *Client) CreateP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...options.Lister[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -195,7 +195,7 @@ func (c *Client) CreateP2PCollections(
 func (c *Client) DeleteP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+	opts ...options.Enumerable[options.DeleteP2PCollectionsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -216,7 +216,7 @@ func (c *Client) DeleteP2PCollections(
 
 func (c *Client) ListP2PCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PCollectionsOptions],
+	opts ...options.Enumerable[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -237,7 +237,7 @@ func (c *Client) ListP2PCollections(
 func (c *Client) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -259,7 +259,7 @@ func (c *Client) CreateP2PDocuments(
 func (c *Client) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+	opts ...options.Enumerable[options.DeleteP2PDocumentsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -280,7 +280,7 @@ func (c *Client) DeleteP2PDocuments(
 
 func (c *Client) ListP2PDocuments(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PDocumentsOptions],
+	opts ...options.Enumerable[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -343,7 +343,7 @@ func (c *Client) SyncDocuments(
 func (c *Client) SyncCollectionVersions(
 	ctx context.Context,
 	versionIDs []string,
-	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+	opts ...options.Enumerable[options.SyncCollectionVersionsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())

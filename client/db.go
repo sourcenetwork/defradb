@@ -63,7 +63,7 @@ type Store interface {
 	AddDACPolicy(
 		ctx context.Context,
 		policy string,
-		opts ...options.Lister[options.AddDACPolicyOptions],
+		opts ...options.Enumerable[options.AddDACPolicyOptions],
 	) (AddPolicyResult, error)
 
 	// AddDACActorRelationship creates a relationship between document and the target actor.
@@ -80,7 +80,7 @@ type Store interface {
 		docID string,
 		relation string,
 		targetActor string,
-		opts ...options.Lister[options.AddDACActorRelationshipOptions],
+		opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 	) (AddActorRelationshipResult, error)
 
 	// DeleteDACActorRelationship deletes a relationship between document and the target actor.
@@ -99,7 +99,7 @@ type Store interface {
 		docID string,
 		relation string,
 		targetActor string,
-		opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
+		opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 	) (DeleteActorRelationshipResult, error)
 
 	// AddNACActorRelationship creates a relationship to grant node access to the target actor.
@@ -114,7 +114,7 @@ type Store interface {
 		ctx context.Context,
 		relation string,
 		targetActor string,
-		opts ...options.Lister[options.AddNACActorRelationshipOptions],
+		opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 	) (AddActorRelationshipResult, error)
 
 	// DeleteNACActorRelationship deletes a relationship to revoke node access from target actor.
@@ -131,7 +131,7 @@ type Store interface {
 		ctx context.Context,
 		relation string,
 		targetActor string,
-		opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
+		opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 	) (DeleteActorRelationshipResult, error)
 
 	// ReEnableNAC will re-enable node acp that was temporarily disabled (and configured). This will
@@ -144,7 +144,7 @@ type Store interface {
 	//
 	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 	// authorized to perform this operation.
-	ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error
+	ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error
 
 	// DisableNAC will disable node acp for the users temporarily. This will keep the current node acp
 	// state saved so that if it is re-enabled in the future, then we can recover all the relationships formed.
@@ -155,11 +155,11 @@ type Store interface {
 	//
 	// Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 	// authorized to perform this operation.
-	DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error
+	DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error
 
 	// GetNACStatus returns the node acp status that tells us if node access was ever configured,
 	// or if node acp is currently enabled or temporarily disabled.
-	GetNACStatus(ctx context.Context, opts ...options.Lister[options.GetNACStatusOptions]) (NACStatusResult, error)
+	GetNACStatus(ctx context.Context, opts ...options.Enumerable[options.GetNACStatusOptions]) (NACStatusResult, error)
 
 	// GetNodeIdentity returns the identity of the node.
 	GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error)
@@ -170,7 +170,7 @@ type Store interface {
 		ctx context.Context,
 		blockCid string,
 		pubKey crypto.PublicKey,
-		opts ...options.Lister[options.VerifySignatureOptions],
+		opts ...options.Enumerable[options.VerifySignatureOptions],
 	) error
 
 	// AddSchema takes the provided GQL schema in SDL format, and applies it to the [Store],
@@ -181,7 +181,7 @@ type Store interface {
 	AddSchema(
 		ctx context.Context,
 		sdl string,
-		opts ...options.Lister[options.AddSchemaOptions],
+		opts ...options.Enumerable[options.AddSchemaOptions],
 	) ([]CollectionVersion, error)
 
 	// PatchCollection takes the given JSON patch string and applies it to the set of CollectionVersions
@@ -208,7 +208,7 @@ type Store interface {
 		ctx context.Context,
 		patch string,
 		migration immutable.Option[model.Lens],
-		opts ...options.Lister[options.PatchCollectionOptions],
+		opts ...options.Enumerable[options.PatchCollectionOptions],
 	) error
 
 	// SetActiveCollectionVersion activates all collection versions with the given VersionID, and deactivates all
@@ -221,7 +221,7 @@ type Store interface {
 	SetActiveCollectionVersion(
 		ctx context.Context,
 		versionID string,
-		opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+		opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 	) error
 
 	// AddView creates a new Defra View.
@@ -262,7 +262,7 @@ type Store interface {
 		ctx context.Context,
 		gqlQuery string,
 		sdl string,
-		opts ...options.Lister[options.AddViewOptions],
+		opts ...options.Enumerable[options.AddViewOptions],
 	) ([]CollectionVersion, error)
 
 	// RefreshViews refreshes the caches of all views matching the given options.  If no options are set, all views
@@ -271,7 +271,7 @@ type Store interface {
 	// The cached result is dependent on the ACP settings of the source data and the permissions of the user making
 	// the call.  At the moment only one cache can be active at a time, so please pay attention to access rights
 	// when making this call.
-	RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error
+	RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error
 
 	// SetMigration sets the migration for all collections using the given source-destination collection version IDs.
 	//
@@ -292,10 +292,10 @@ type Store interface {
 	//
 	// The lens store is content-addressed, so identical lens configurations
 	// will return the same CID without duplicating storage.
-	AddLens(ctx context.Context, lens model.Lens, opts ...options.Lister[options.AddLensOptions]) (string, error)
+	AddLens(ctx context.Context, lens model.Lens, opts ...options.Enumerable[options.AddLensOptions]) (string, error)
 
 	// ListLenses returns all stored lenses mapped by their CID.
-	ListLenses(ctx context.Context, opts ...options.Lister[options.ListLensesOptions]) (map[string]model.Lens, error)
+	ListLenses(ctx context.Context, opts ...options.Enumerable[options.ListLensesOptions]) (map[string]model.Lens, error)
 
 	// GetCollectionByName attempts to retrieve a collection matching the given name.
 	//
@@ -306,7 +306,7 @@ type Store interface {
 	GetCollectionByName(
 		ctx context.Context,
 		name CollectionName,
-		opts ...options.Lister[options.GetCollectionByNameOptions],
+		opts ...options.Enumerable[options.GetCollectionByNameOptions],
 	) (Collection, error)
 
 	// GetCollections returns all collections and their descriptions matching the given options
@@ -317,19 +317,19 @@ type Store interface {
 	//
 	// If a transaction was explicitly provided to this [Store] via [DB].[WithTxn], any function calls
 	// made via the returned [Collection]s will respect that transaction.
-	GetCollections(ctx context.Context, opts ...options.Lister[options.GetCollectionsOptions]) ([]Collection, error)
+	GetCollections(ctx context.Context, opts ...options.Enumerable[options.GetCollectionsOptions]) ([]Collection, error)
 
 	// GetAllIndexes returns all the indexes that currently exist within this [Store].
 	GetAllIndexes(
 		ctx context.Context,
-		opts ...options.Lister[options.GetAllIndexesOptions],
+		opts ...options.Enumerable[options.GetAllIndexesOptions],
 	) (map[CollectionName][]IndexDescription, error)
 
 	// ListAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].
 	ListAllEncryptedIndexes(context.Context) (map[CollectionName][]EncryptedIndexDescription, error)
 
 	// ExecRequest executes the given GQL request against the [Store].
-	ExecRequest(ctx context.Context, request string, opts ...options.Lister[options.ExecRequestOptions]) *RequestResult
+	ExecRequest(ctx context.Context, request string, opts ...options.Enumerable[options.ExecRequestOptions]) *RequestResult
 
 	// BasicImport imports a json dataset.
 	// filepath must be accessible to the node.
@@ -337,7 +337,7 @@ type Store interface {
 
 	// BasicExport exports the current data or subset of data to file in json format.
 	// The filepath parameter is required and specifies where to write the export file.
-	BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error
+	BasicExport(ctx context.Context, filepath string, opts ...options.Enumerable[options.BasicExportOptions]) error
 
 	// P2P holds the methods that are related to P2P operations.
 	// Calling them when no networking stack has been configured should return an error.

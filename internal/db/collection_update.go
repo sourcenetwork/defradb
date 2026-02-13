@@ -33,7 +33,7 @@ func (c *collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
-	opts ...options.Lister[options.CollectionUpdateWithFilterOptions],
+	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

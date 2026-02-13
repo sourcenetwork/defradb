@@ -30,6 +30,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -123,7 +124,7 @@ func NewDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
 	nodeACP acpDB.NACInfo,
-	opts ...intOpts.Enumerable[intOpts.DBOptions],
+	opts ...options.Enumerable[intOpts.DBOptions],
 ) (*DB, error) {
 	return newDB(ctx, rootstore, nodeACP, opts...)
 }
@@ -132,7 +133,7 @@ func newDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
 	nodeACP acpDB.NACInfo,
-	opts ...intOpts.Enumerable[intOpts.DBOptions],
+	opts ...options.Enumerable[intOpts.DBOptions],
 ) (*DB, error) {
 	cfg := defaultDBConfig()
 	utils.ApplyOptions(&cfg, opts...)

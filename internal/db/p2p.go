@@ -32,7 +32,7 @@ func (db *DB) sendUpdate(evt event.Update) {
 }
 
 // PeerInfo returns the p2p host id and listening addresses.
-func (db *DB) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+func (db *DB) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PPeerInfo); err != nil {
@@ -46,7 +46,7 @@ func (db *DB) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerI
 }
 
 // Connect tries to connect to the peer with the given [PeerInfo].
-func (db *DB) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
+func (db *DB) Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error {
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PPeerConnectPerm); err != nil {
@@ -61,7 +61,7 @@ func (db *DB) Connect(ctx context.Context, addresses []string, opts ...options.L
 func (db *DB) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Lister[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.CreateReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 
@@ -93,7 +93,7 @@ func (db *DB) CreateReplicator(
 func (db *DB) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	opts ...options.Lister[options.DeleteReplicatorOptions],
+	opts ...options.Enumerable[options.DeleteReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 
@@ -124,7 +124,7 @@ func (db *DB) DeleteReplicator(
 // subscribed schemas.
 func (db *DB) ListReplicators(
 	ctx context.Context,
-	opts ...options.Lister[options.ListReplicatorsOptions],
+	opts ...options.Enumerable[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	opt := utils.NewOptions(opts...)
 
@@ -143,7 +143,7 @@ func (db *DB) ListReplicators(
 	return db.p2p.ListReplicators(ctx)
 }
 
-func (db *DB) ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error) {
+func (db *DB) ActivePeers(ctx context.Context, opts ...options.Enumerable[options.ActivePeersOptions]) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PPeerActivePerm); err != nil {
@@ -163,7 +163,7 @@ func (db *DB) ActivePeers(ctx context.Context, opts ...options.Lister[options.Ac
 func (db *DB) CreateP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...options.Lister[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 
@@ -194,7 +194,7 @@ func (db *DB) CreateP2PCollections(
 func (db *DB) DeleteP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+	opts ...options.Enumerable[options.DeleteP2PCollectionsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 
@@ -223,7 +223,7 @@ func (db *DB) DeleteP2PCollections(
 // the P2P system subscribes to.
 func (db *DB) ListP2PCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PCollectionsOptions],
+	opts ...options.Enumerable[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 
@@ -249,7 +249,7 @@ func (db *DB) ListP2PCollections(
 func (db *DB) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 
@@ -280,7 +280,7 @@ func (db *DB) CreateP2PDocuments(
 func (db *DB) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+	opts ...options.Enumerable[options.DeleteP2PDocumentsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 
@@ -309,7 +309,7 @@ func (db *DB) DeleteP2PDocuments(
 // the P2P system subscribes to.
 func (db *DB) ListP2PDocuments(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PDocumentsOptions],
+	opts ...options.Enumerable[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 
@@ -349,7 +349,7 @@ func (db *DB) SyncDocuments(ctx context.Context, collectionName string, docIDs [
 func (db *DB) SyncCollectionVersions(
 	ctx context.Context,
 	versionIDs []string,
-	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+	opts ...options.Enumerable[options.SyncCollectionVersionsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 

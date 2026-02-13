@@ -38,12 +38,12 @@ type Collection interface {
 	// Create a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(ctx context.Context, doc *Document, opts ...options.Lister[options.CollectionCreateOptions]) error
+	Create(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionCreateOptions]) error
 
 	// CreateMany new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	CreateMany(ctx context.Context, docs []*Document, opts ...options.Lister[options.CollectionCreateOptions]) error
+	CreateMany(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.CollectionCreateOptions]) error
 
 	// Update an existing document with the new values.
 	//
@@ -51,13 +51,13 @@ type Collection interface {
 	// Any field that is nil/empty that hasn't called Clear will be ignored.
 	//
 	// Will return a ErrDocumentNotFound error if the given document is not found.
-	Update(ctx context.Context, docs *Document, opts ...options.Lister[options.CollectionUpdateOptions]) error
+	Update(ctx context.Context, docs *Document, opts ...options.Enumerable[options.CollectionUpdateOptions]) error
 
 	// Save the given document in the database.
 	//
 	// If a document exists with the given DocID it will update it. Otherwise a new document
 	// will be created.
-	Save(ctx context.Context, doc *Document, opts ...options.Lister[options.CollectionSaveOptions]) error
+	Save(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionSaveOptions]) error
 
 	// Delete will attempt to delete a document by DocID.
 	//
@@ -65,12 +65,12 @@ type Collection interface {
 	// if it cannot. If the document doesn't exist, then it will return false and a ErrDocumentNotFound error.
 	// This operation will hard-delete all state relating to the given DocID.
 	// This includes data, block, and head storage.
-	Delete(ctx context.Context, docID DocID, opts ...options.Lister[options.CollectionDeleteOptions]) (bool, error)
+	Delete(ctx context.Context, docID DocID, opts ...options.Enumerable[options.CollectionDeleteOptions]) (bool, error)
 
 	// Exists checks if a given document exists with supplied DocID.
 	//
 	// Will return true if a matching document exists, otherwise will return false.
-	Exists(ctx context.Context, docID DocID, opts ...options.Lister[options.CollectionExistsOptions]) (bool, error)
+	Exists(ctx context.Context, docID DocID, opts ...options.Enumerable[options.CollectionExistsOptions]) (bool, error)
 
 	// UpdateWithFilter updates using a filter to target documents for update.
 	//
@@ -80,7 +80,7 @@ type Collection interface {
 		ctx context.Context,
 		filter any,
 		updater string,
-		opts ...options.Lister[options.CollectionUpdateWithFilterOptions],
+		opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 	) (*UpdateResult, error)
 
 	// DeleteWithFilter deletes documents matching the given filter.
@@ -90,7 +90,7 @@ type Collection interface {
 	DeleteWithFilter(
 		ctx context.Context,
 		filter any,
-		opts ...options.Lister[options.CollectionDeleteWithFilterOptions],
+		opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 	) (*DeleteResult, error)
 
 	// Get returns the document with the given DocID.
@@ -99,13 +99,13 @@ type Collection interface {
 	Get(
 		ctx context.Context,
 		docID DocID,
-		opts ...options.Lister[options.CollectionGetOptions],
+		opts ...options.Enumerable[options.CollectionGetOptions],
 	) (*Document, error)
 
 	// GetAllDocIDs returns all the document IDs that exist in the collection.
 	GetAllDocIDs(
 		ctx context.Context,
-		opts ...options.Lister[options.CollectionGetAllDocIDsOptions],
+		opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
 	) (<-chan DocIDResult, error)
 
 	// CreateIndex creates a new index on the collection.
@@ -117,16 +117,16 @@ type Collection interface {
 	CreateIndex(
 		context.Context,
 		IndexCreateRequest,
-		...options.Lister[options.CollectionCreateIndexOptions],
+		...options.Enumerable[options.CollectionCreateIndexOptions],
 	) (IndexDescription, error)
 
 	// DropIndex drops an index from the collection.
-	DropIndex(ctx context.Context, indexName string, opts ...options.Lister[options.CollectionDropIndexOptions]) error
+	DropIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDropIndexOptions]) error
 
 	// GetIndexes returns all the indexes that exist on the collection.
 	GetIndexes(
 		ctx context.Context,
-		opts ...options.Lister[options.CollectionGetIndexesOptions],
+		opts ...options.Enumerable[options.CollectionGetIndexesOptions],
 	) ([]IndexDescription, error)
 
 	// CreateEncryptedIndex creates a new encrypted index on the collection.
@@ -145,7 +145,7 @@ type Collection interface {
 	//
 	// This call will lock the collection, and no other read or write document operations on this collection
 	// will progress whilst this is executing.
-	Truncate(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error
+	Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error
 }
 
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.

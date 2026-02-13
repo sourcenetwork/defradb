@@ -65,7 +65,7 @@ func parseCollectionOptionsToGetCollectionsOptions(
 func getCollection(
 	store client.Store,
 	ctx context.Context,
-	builder options.Lister[options.GetCollectionsOptions],
+	builder options.Enumerable[options.GetCollectionsOptions],
 ) (client.Collection, error) {
 	cols, err := store.GetCollections(ctx, builder)
 	if err != nil {

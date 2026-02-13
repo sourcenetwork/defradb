@@ -75,7 +75,7 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
 	createOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
@@ -130,7 +130,7 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Lister[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
 	createOpts := utils.NewOptions(opts...)
 	isEncrypted := 0
@@ -194,7 +194,7 @@ func (c *Collection) CreateMany(
 func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionUpdateOptions],
+	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
 	docID := C.CString(doc.ID().String())
 	filter := C.CString("")
@@ -240,7 +240,7 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionSaveOptions],
+	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
 	saveOpt := utils.NewOptions(opts...)
 	getOpts := options.CollectionGet().SetShowDeleted(true)
@@ -264,7 +264,7 @@ func (c *Collection) Save(
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionDeleteOptions],
+	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
 	docIDStr := C.CString(docID.String())
 	filter := C.CString("")
@@ -303,7 +303,7 @@ func (c *Collection) Delete(
 func (c *Collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionExistsOptions],
+	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
 	docIDStr := C.CString(docID.String())
 	cShowDeleted := C.int(0)
@@ -342,7 +342,7 @@ func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
-	opts ...options.Lister[options.CollectionUpdateWithFilterOptions],
+	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
@@ -393,7 +393,7 @@ func (c *Collection) UpdateWithFilter(
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
-	opts ...options.Lister[options.CollectionDeleteWithFilterOptions],
+	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
@@ -442,7 +442,7 @@ func (c *Collection) DeleteWithFilter(
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionGetOptions],
+	opts ...options.Enumerable[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	opt := utils.NewOptions(opts...)
 	var cShowDeleted C.int = 0
@@ -494,7 +494,7 @@ func (c *Collection) Get(
 
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
-	opts ...options.Lister[options.CollectionGetAllDocIDsOptions],
+	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
 ) (<-chan client.DocIDResult, error) {
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
@@ -553,7 +553,7 @@ func (c *Collection) GetAllDocIDs(
 func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
-	opts ...options.Lister[options.CollectionCreateIndexOptions],
+	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
 ) (client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
@@ -612,7 +612,7 @@ func (c *Collection) CreateIndex(
 func (c *Collection) DropIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Lister[options.CollectionDropIndexOptions],
+	opts ...options.Enumerable[options.CollectionDropIndexOptions],
 ) error {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString(indexName)
@@ -647,7 +647,7 @@ func (c *Collection) DropIndex(
 
 func (c *Collection) GetIndexes(
 	ctx context.Context,
-	opts ...options.Lister[options.CollectionGetIndexesOptions],
+	opts ...options.Enumerable[options.CollectionGetIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString("")
@@ -741,7 +741,7 @@ func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Encrypt
 	return retRes, nil
 }
 
-func (c *Collection) Truncate(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error {
+func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString("")
 	cVersion := C.CString("")

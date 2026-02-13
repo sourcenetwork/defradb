@@ -31,7 +31,7 @@ import (
 func (c *collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
-	opts ...options.Lister[options.CollectionDeleteWithFilterOptions],
+	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

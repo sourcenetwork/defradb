@@ -66,7 +66,7 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
 	args := makeDocCreateArgs(c, opts...)
 
@@ -87,7 +87,7 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Lister[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
 	args := makeDocCreateArgs(c, opts...)
 
@@ -113,7 +113,7 @@ func (c *Collection) CreateMany(
 
 func makeDocCreateArgs(
 	c *Collection,
-	opts ...options.Lister[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) []string {
 	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Version().Name)
@@ -133,7 +133,7 @@ func makeDocCreateArgs(
 func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionUpdateOptions],
+	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
 	document, err := doc.ToJSONPatch()
 	if err != nil {
@@ -159,7 +159,7 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionSaveOptions],
+	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
 	getOpts := options.CollectionGet()
 	opt := utils.NewOptions(opts...)
@@ -191,7 +191,7 @@ func (c *Collection) Save(
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionDeleteOptions],
+	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
 	args := []string{"client", "collection", "delete"}
 	args = append(args, "--name", c.Version().Name)
@@ -210,7 +210,7 @@ func (c *Collection) Delete(
 func (c *Collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionExistsOptions],
+	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
 	getOpts := options.CollectionGet()
 	opt := utils.NewOptions(opts...)
@@ -229,7 +229,7 @@ func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
-	opts ...options.Lister[options.CollectionUpdateWithFilterOptions],
+	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
 	args := []string{"client", "collection", "update"}
 	args = append(args, "--name", c.Version().Name)
@@ -259,7 +259,7 @@ func (c *Collection) UpdateWithFilter(
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
-	opts ...options.Lister[options.CollectionDeleteWithFilterOptions],
+	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
 	args := []string{"client", "collection", "delete"}
 	args = append(args, "--name", c.Version().Name)
@@ -288,7 +288,7 @@ func (c *Collection) DeleteWithFilter(
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionGetOptions],
+	opts ...options.Enumerable[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	opt := utils.NewOptions(opts...)
 
@@ -319,7 +319,7 @@ func (c *Collection) Get(
 
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
-	opts ...options.Lister[options.CollectionGetAllDocIDsOptions],
+	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
 ) (<-chan client.DocIDResult, error) {
 	args := []string{"client", "collection", "docIDs"}
 	args = append(args, "--name", c.Version().Name)
@@ -362,7 +362,7 @@ func (c *Collection) GetAllDocIDs(
 func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
-	opts ...options.Lister[options.CollectionCreateIndexOptions],
+	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
 ) (index client.IndexDescription, err error) {
 	args := []string{"client", "index", "create"}
 	args = append(args, "--collection", c.Version().Name)
@@ -409,7 +409,7 @@ func (c *Collection) CreateIndex(
 func (c *Collection) DropIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Lister[options.CollectionDropIndexOptions],
+	opts ...options.Enumerable[options.CollectionDropIndexOptions],
 ) error {
 	args := []string{"client", "index", "drop"}
 	args = append(args, "--collection", c.Version().Name)
@@ -424,7 +424,7 @@ func (c *Collection) DropIndex(
 
 func (c *Collection) GetIndexes(
 	ctx context.Context,
-	opts ...options.Lister[options.CollectionGetIndexesOptions],
+	opts ...options.Enumerable[options.CollectionGetIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 	args = append(args, "--collection", c.Version().Name)
@@ -489,7 +489,7 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 	return err
 }
 
-func (c *Collection) Truncate(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error {
+func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error {
 	args := []string{"client", "collection", "truncate"}
 	args = append(args, "--name", c.Version().Name)
 

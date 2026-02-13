@@ -73,7 +73,7 @@ func (txn *Transaction) PrintDump(ctx context.Context) error {
 func (txn *Transaction) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...options.Lister[options.AddDACPolicyOptions],
+	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	return txn.CWrapper.AddDACPolicy(ctx, policy, opts...)
 }
@@ -84,7 +84,7 @@ func (txn *Transaction) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	return txn.CWrapper.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
@@ -95,7 +95,7 @@ func (txn *Transaction) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	return txn.CWrapper.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
 }
@@ -108,7 +108,7 @@ func (txn *Transaction) VerifySignature(
 	ctx context.Context,
 	blockCid string,
 	pubKey crypto.PublicKey,
-	opts ...options.Lister[options.VerifySignatureOptions],
+	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
 	return txn.CWrapper.VerifySignature(ctx, blockCid, pubKey, opts...)
 }
@@ -116,7 +116,7 @@ func (txn *Transaction) VerifySignature(
 func (txn *Transaction) AddSchema(
 	ctx context.Context,
 	sdl string,
-	opts ...options.Lister[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	return txn.CWrapper.AddSchema(ctx, sdl, opts...)
 }
@@ -125,7 +125,7 @@ func (txn *Transaction) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...options.Lister[options.PatchCollectionOptions],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	return txn.CWrapper.PatchCollection(ctx, patch, migration, opts...)
 }
@@ -133,7 +133,7 @@ func (txn *Transaction) PatchCollection(
 func (txn *Transaction) SetActiveCollectionVersion(
 	ctx context.Context,
 	version string,
-	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
 	return txn.CWrapper.SetActiveCollectionVersion(ctx, version, opts...)
 }
@@ -142,12 +142,12 @@ func (txn *Transaction) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	opts ...options.Lister[options.AddViewOptions],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
-func (txn *Transaction) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+func (txn *Transaction) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	return txn.CWrapper.RefreshViews(ctx, opts...)
 }
 
@@ -158,14 +158,14 @@ func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConf
 func (txn *Transaction) AddLens(
 	ctx context.Context,
 	lens model.Lens,
-	opts ...options.Lister[options.AddLensOptions],
+	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
 	return txn.CWrapper.AddLens(ctx, lens, opts...)
 }
 
 func (txn *Transaction) ListLenses(
 	ctx context.Context,
-	opts ...options.Lister[options.ListLensesOptions],
+	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
 	return txn.CWrapper.ListLenses(ctx, opts...)
 }
@@ -173,21 +173,21 @@ func (txn *Transaction) ListLenses(
 func (txn *Transaction) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...options.Lister[options.GetCollectionByNameOptions],
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	return txn.CWrapper.GetCollectionByName(ctx, name, opts...)
 }
 
 func (txn *Transaction) GetCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.GetCollectionsOptions],
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	return txn.CWrapper.GetCollections(ctx, opts...)
 }
 
 func (txn *Transaction) GetAllIndexes(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	return txn.CWrapper.GetAllIndexes(ctx, opts...)
 }
@@ -195,7 +195,7 @@ func (txn *Transaction) GetAllIndexes(
 func (txn *Transaction) ExecRequest(
 	ctx context.Context,
 	request string,
-	opts ...options.Lister[options.ExecRequestOptions],
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	return txn.CWrapper.ExecRequest(ctx, request, opts...)
 }
@@ -207,7 +207,7 @@ func (txn *Transaction) BasicImport(ctx context.Context, filepath string) error 
 func (txn *Transaction) BasicExport(
 	ctx context.Context,
 	filepath string,
-	opts ...options.Lister[options.BasicExportOptions],
+	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
 	return txn.CWrapper.BasicExport(ctx, filepath, opts...)
 }

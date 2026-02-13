@@ -53,7 +53,7 @@ func (db *DB) PurgeDACState(ctx context.Context) error {
 func (db *DB) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...options.Lister[options.AddDACPolicyOptions],
+	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -86,7 +86,7 @@ func (db *DB) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -142,7 +142,7 @@ func (db *DB) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

@@ -57,7 +57,7 @@ func (a *RefreshViews) Execute() {
 			identOpts.SetIdentity(identOption.Value())
 		}
 
-		var allOpts []options.Lister[options.RefreshViewsOptions]
+		var allOpts []options.Enumerable[options.RefreshViewsOptions]
 		if a.FilterOptions != nil {
 			a.FilterOptions.Reset()
 			allOpts = append(allOpts, a.FilterOptions)

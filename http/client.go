@@ -110,7 +110,7 @@ func (c *Client) BasicImport(ctx context.Context, filepath string) error {
 func (c *Client) BasicExport(
 	ctx context.Context,
 	filepath string,
-	opts ...options.Lister[options.BasicExportOptions],
+	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 
@@ -138,7 +138,7 @@ func (c *Client) BasicExport(
 func (c *Client) AddSchema(
 	ctx context.Context,
 	schema string,
-	opts ...options.Lister[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -165,7 +165,7 @@ func (c *Client) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...options.Lister[options.PatchCollectionOptions],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -188,7 +188,7 @@ func (c *Client) PatchCollection(
 func (c *Client) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
-	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -214,7 +214,7 @@ func (c *Client) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	opts ...options.Lister[options.AddViewOptions],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -239,7 +239,7 @@ func (c *Client) AddView(
 	return descriptions, nil
 }
 
-func (c *Client) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+func (c *Client) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	methodURL := c.http.apiURL.JoinPath("view", "refresh")
 	params := url.Values{}
 	opt := utils.NewOptions(opts...)
@@ -291,7 +291,7 @@ func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (st
 func (c *Client) AddLens(
 	ctx context.Context,
 	lens model.Lens,
-	opts ...options.Lister[options.AddLensOptions],
+	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -318,7 +318,7 @@ func (c *Client) AddLens(
 
 func (c *Client) ListLenses(
 	ctx context.Context,
-	opts ...options.Lister[options.ListLensesOptions],
+	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -341,7 +341,7 @@ func (c *Client) ListLenses(
 func (c *Client) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...options.Lister[options.GetCollectionByNameOptions],
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -362,7 +362,7 @@ func (c *Client) GetCollectionByName(
 
 func (c *Client) GetCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.GetCollectionsOptions],
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -400,7 +400,7 @@ func (c *Client) GetCollections(
 
 func (c *Client) GetAllIndexes(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -437,7 +437,7 @@ func (c *Client) ListAllEncryptedIndexes(
 func (c *Client) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...options.Lister[options.ExecRequestOptions],
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -584,7 +584,7 @@ func (c *Client) VerifySignature(
 	ctx context.Context,
 	cid string,
 	pubKey crypto.PublicKey,
-	opts ...options.Lister[options.VerifySignatureOptions],
+	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())

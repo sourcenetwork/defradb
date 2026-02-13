@@ -68,7 +68,7 @@ func (db *DB) PurgeNACState(ctx context.Context) error {
 //
 // Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 // authorized to perform this operation.
-func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
+func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -101,7 +101,7 @@ func (db *DB) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.Re
 //
 // Returns an [client.ErrNotAuthorizedToPerformOperation] error if the requesting identity is not
 // authorized to perform this operation.
-func (db *DB) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
+func (db *DB) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -126,7 +126,7 @@ func (db *DB) DisableNAC(ctx context.Context, opts ...options.Lister[options.Dis
 
 func (db *DB) GetNACStatus(
 	ctx context.Context,
-	opts ...options.Lister[options.GetNACStatusOptions],
+	opts ...options.Enumerable[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -146,7 +146,7 @@ func (db *DB) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -166,7 +166,7 @@ func (db *DB) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

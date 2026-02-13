@@ -102,7 +102,7 @@ func DefaultNodeOptions() options.NodeOptions {
 }
 
 // New returns a new node instance configured with the given options.
-func New(ctx context.Context, opts ...options.Lister[options.NodeOptions]) (*Node, error) {
+func New(ctx context.Context, opts ...options.Enumerable[options.NodeOptions]) (*Node, error) {
 	nodeOpts := DefaultNodeOptions()
 	utils.ApplyOptions(&nodeOpts, opts...)
 	n := Node{

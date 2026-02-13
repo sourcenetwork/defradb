@@ -22,7 +22,7 @@ import (
 func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...options.Lister[options.AddDACPolicyOptions],
+	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	args := []string{"client", "acp", "document", "policy", "add"}
 	args = append(args, policy)
@@ -49,7 +49,7 @@ func (w *Wrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "document", "relationship", "add",
@@ -81,7 +81,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "document", "relationship", "delete",
@@ -109,7 +109,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 
 func (w *Wrapper) GetNACStatus(
 	ctx context.Context,
-	opts ...options.Lister[options.GetNACStatusOptions],
+	opts ...options.Enumerable[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	args := []string{"client", "acp", "node", "status"}
 
@@ -131,7 +131,7 @@ func (w *Wrapper) GetNACStatus(
 
 func (w *Wrapper) ReEnableNAC(
 	ctx context.Context,
-	opts ...options.Lister[options.ReEnableNACOptions],
+	opts ...options.Enumerable[options.ReEnableNACOptions],
 ) error {
 	args := []string{"client", "acp", "node", "re-enable"}
 
@@ -146,7 +146,7 @@ func (w *Wrapper) ReEnableNAC(
 
 func (w *Wrapper) DisableNAC(
 	ctx context.Context,
-	opts ...options.Lister[options.DisableNACOptions],
+	opts ...options.Enumerable[options.DisableNACOptions],
 ) error {
 	args := []string{"client", "acp", "node", "disable"}
 
@@ -163,7 +163,7 @@ func (w *Wrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "node", "relationship", "add",
@@ -191,7 +191,7 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	args := []string{
 		"client", "acp", "node", "relationship", "delete",

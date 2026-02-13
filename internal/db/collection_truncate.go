@@ -31,7 +31,7 @@ import (
 // our deletes.
 const hardDeleteChunkSize int = 10000
 
-func (c *collection) Truncate(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error {
+func (c *collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

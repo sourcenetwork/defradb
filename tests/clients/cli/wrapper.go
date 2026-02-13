@@ -70,7 +70,7 @@ func NewWrapper(node *node.Node, sourceHubAddress string) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
 	args := []string{"client", "p2p", "info"}
 
 	opt := utils.NewOptions(opts...)
@@ -89,7 +89,7 @@ func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.P
 
 func (w *Wrapper) ActivePeers(
 	ctx context.Context,
-	opts ...options.Lister[options.ActivePeersOptions],
+	opts ...options.Enumerable[options.ActivePeersOptions],
 ) ([]string, error) {
 	args := []string{"client", "p2p", "active-peers"}
 
@@ -110,7 +110,7 @@ func (w *Wrapper) ActivePeers(
 func (w *Wrapper) Connect(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Lister[options.ConnectOptions],
+	opts ...options.Enumerable[options.ConnectOptions],
 ) error {
 	args := []string{"client", "p2p", "connect"}
 
@@ -126,7 +126,7 @@ func (w *Wrapper) Connect(
 func (w *Wrapper) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Lister[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.CreateReplicatorOptions],
 ) error {
 	args := []string{"client", "p2p", "replicator", "create"}
 
@@ -145,7 +145,7 @@ func (w *Wrapper) CreateReplicator(
 func (w *Wrapper) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	opts ...options.Lister[options.DeleteReplicatorOptions],
+	opts ...options.Enumerable[options.DeleteReplicatorOptions],
 ) error {
 	args := []string{"client", "p2p", "replicator", "delete"}
 
@@ -163,7 +163,7 @@ func (w *Wrapper) DeleteReplicator(
 
 func (w *Wrapper) ListReplicators(
 	ctx context.Context,
-	opts ...options.Lister[options.ListReplicatorsOptions],
+	opts ...options.Enumerable[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	args := []string{"client", "p2p", "replicator", "list"}
 
@@ -184,7 +184,7 @@ func (w *Wrapper) ListReplicators(
 func (w *Wrapper) CreateP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...options.Lister[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
 ) error {
 	args := []string{"client", "p2p", "collection", "create"}
 	args = append(args, strings.Join(collectionIDs, ","))
@@ -199,7 +199,7 @@ func (w *Wrapper) CreateP2PCollections(
 func (w *Wrapper) DeleteP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+	opts ...options.Enumerable[options.DeleteP2PCollectionsOptions],
 ) error {
 	args := []string{"client", "p2p", "collection", "delete"}
 	args = append(args, strings.Join(collectionIDs, ","))
@@ -213,7 +213,7 @@ func (w *Wrapper) DeleteP2PCollections(
 
 func (w *Wrapper) ListP2PCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PCollectionsOptions],
+	opts ...options.Enumerable[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	args := []string{"client", "p2p", "collection", "list"}
 
@@ -234,7 +234,7 @@ func (w *Wrapper) ListP2PCollections(
 func (w *Wrapper) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
 ) error {
 	args := []string{"client", "p2p", "document", "create"}
 	args = append(args, strings.Join(docIDs, ","))
@@ -249,7 +249,7 @@ func (w *Wrapper) CreateP2PDocuments(
 func (w *Wrapper) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+	opts ...options.Enumerable[options.DeleteP2PDocumentsOptions],
 ) error {
 	args := []string{"client", "p2p", "document", "delete"}
 	args = append(args, strings.Join(docIDs, ","))
@@ -263,7 +263,7 @@ func (w *Wrapper) DeleteP2PDocuments(
 
 func (w *Wrapper) ListP2PDocuments(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PDocumentsOptions],
+	opts ...options.Enumerable[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
 	args := []string{"client", "p2p", "document", "list"}
 
@@ -303,7 +303,7 @@ func (w *Wrapper) SyncDocuments(
 func (w *Wrapper) SyncCollectionVersions(
 	ctx context.Context,
 	versionIDs []string,
-	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+	opts ...options.Enumerable[options.SyncCollectionVersionsOptions],
 ) error {
 	args := []string{"client", "p2p", "collection", "sync-versions"}
 
@@ -351,7 +351,7 @@ func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 func (w *Wrapper) BasicExport(
 	ctx context.Context,
 	filepath string,
-	opts ...options.Lister[options.BasicExportOptions],
+	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
 	args := []string{"client", "backup", "export"}
 
@@ -374,7 +374,7 @@ func (w *Wrapper) BasicExport(
 func (w *Wrapper) AddSchema(
 	ctx context.Context,
 	schema string,
-	opts ...options.Lister[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	args := []string{"client", "schema", "add"}
 	args = append(args, schema)
@@ -397,7 +397,7 @@ func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...options.Lister[options.PatchCollectionOptions],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	args := []string{"client", "collection", "patch"}
 	args = append(args, patch)
@@ -420,7 +420,7 @@ func (w *Wrapper) PatchCollection(
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
-	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
 	args := []string{"client", "collection", "set-active"}
 	args = append(args, collectionVersionID)
@@ -436,7 +436,7 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	opts ...options.Lister[options.AddViewOptions],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
 
@@ -461,7 +461,7 @@ func (w *Wrapper) AddView(
 	return defs, nil
 }
 
-func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	args := []string{"client", "view", "refresh"}
 	opt := utils.NewOptions(opts...)
 	if opt.CollectionName.HasValue() {
@@ -509,7 +509,7 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 func (w *Wrapper) AddLens(
 	ctx context.Context,
 	lens model.Lens,
-	opts ...options.Lister[options.AddLensOptions],
+	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
 	args := []string{"client", "lens", "add"}
 
@@ -536,7 +536,7 @@ func (w *Wrapper) AddLens(
 
 func (w *Wrapper) ListLenses(
 	ctx context.Context,
-	opts ...options.Lister[options.ListLensesOptions],
+	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
 	args := []string{"client", "lens", "list"}
 
@@ -558,7 +558,7 @@ func (w *Wrapper) ListLenses(
 func (w *Wrapper) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...options.Lister[options.GetCollectionByNameOptions],
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	cols, err := w.GetCollections(ctx, options.GetCollections().SetCollectionName(name))
 	if err != nil {
@@ -571,7 +571,7 @@ func (w *Wrapper) GetCollectionByName(
 
 func (w *Wrapper) GetCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.GetCollectionsOptions],
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	args := []string{"client", "collection", "describe"}
 	opt := utils.NewOptions(opts...)
@@ -606,7 +606,7 @@ func (w *Wrapper) GetCollections(
 
 func (w *Wrapper) GetAllIndexes(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	args := []string{"client", "index", "list"}
 
@@ -640,7 +640,7 @@ func (w *Wrapper) ListAllEncryptedIndexes(
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...options.Lister[options.ExecRequestOptions],
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	args := []string{"client", "query"}
 	args = append(args, query)
@@ -800,7 +800,7 @@ func (w *Wrapper) VerifySignature(
 	ctx context.Context,
 	cid string,
 	pubKey crypto.PublicKey,
-	opts ...options.Lister[options.VerifySignatureOptions],
+	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
 	args := []string{"client", "block", "verify-signature"}
 

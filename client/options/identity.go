@@ -19,7 +19,7 @@ import (
 // BuilderWithIdentity is an interface for option builders that can set identity.
 // T is the options type, B is the builder type (for fluent API support).
 type BuilderWithIdentity[T any, B any] interface {
-	Lister[T]
+	Enumerable[T]
 	// SetIdentity sets the identity for this option and returns the builder for chaining.
 	SetIdentity(id identity.Identity) B
 }

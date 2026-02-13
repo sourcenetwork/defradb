@@ -121,7 +121,7 @@ func (txn *Txn) PrintDump(ctx context.Context) error {
 func (txn *Txn) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...options.Lister[options.AddDACPolicyOptions],
+	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddDACPolicy(ctx, policy, opts...)
@@ -133,7 +133,7 @@ func (txn *Txn) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
@@ -145,7 +145,7 @@ func (txn *Txn) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opts...)
@@ -155,7 +155,7 @@ func (txn *Txn) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddNACActorRelationship(ctx, relation, targetActor, opts...)
@@ -165,25 +165,25 @@ func (txn *Txn) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.DeleteNACActorRelationship(ctx, relation, targetActor, opts...)
 }
 
-func (txn *Txn) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
+func (txn *Txn) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ReEnableNAC(ctx, opts...)
 }
 
-func (txn *Txn) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
+func (txn *Txn) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.DisableNAC(ctx, opts...)
 }
 
 func (txn *Txn) GetNACStatus(
 	ctx context.Context,
-	opts ...options.Lister[options.GetNACStatusOptions],
+	opts ...options.Enumerable[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetNACStatus(ctx, opts...)
@@ -198,7 +198,7 @@ func (txn *Txn) VerifySignature(
 	ctx context.Context,
 	blockCid string,
 	pubKey crypto.PublicKey,
-	opts ...options.Lister[options.VerifySignatureOptions],
+	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.VerifySignature(ctx, blockCid, pubKey, opts...)
@@ -207,7 +207,7 @@ func (txn *Txn) VerifySignature(
 func (txn *Txn) AddSchema(
 	ctx context.Context,
 	sdl string,
-	opts ...options.Lister[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddSchema(ctx, sdl, opts...)
@@ -217,7 +217,7 @@ func (txn *Txn) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...options.Lister[options.PatchCollectionOptions],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.PatchCollection(ctx, patch, migration, opts...)
@@ -226,7 +226,7 @@ func (txn *Txn) PatchCollection(
 func (txn *Txn) SetActiveCollectionVersion(
 	ctx context.Context,
 	version string,
-	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.SetActiveCollectionVersion(ctx, version, opts...)
@@ -236,13 +236,13 @@ func (txn *Txn) AddView(
 	ctx context.Context,
 	gqlQuery string,
 	sdl string,
-	opts ...options.Lister[options.AddViewOptions],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
-func (txn *Txn) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+func (txn *Txn) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.RefreshViews(ctx, opts...)
 }
@@ -255,7 +255,7 @@ func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) (str
 func (txn *Txn) AddLens(
 	ctx context.Context,
 	lens model.Lens,
-	opts ...options.Lister[options.AddLensOptions],
+	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.AddLens(ctx, lens, opts...)
@@ -263,7 +263,7 @@ func (txn *Txn) AddLens(
 
 func (txn *Txn) ListLenses(
 	ctx context.Context,
-	opts ...options.Lister[options.ListLensesOptions],
+	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ListLenses(ctx)
@@ -272,7 +272,7 @@ func (txn *Txn) ListLenses(
 func (txn *Txn) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...options.Lister[options.GetCollectionByNameOptions],
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetCollectionByName(ctx, name, opts...)
@@ -280,7 +280,7 @@ func (txn *Txn) GetCollectionByName(
 
 func (txn *Txn) GetCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.GetCollectionsOptions],
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetCollections(ctx, opts...)
@@ -288,7 +288,7 @@ func (txn *Txn) GetCollections(
 
 func (txn *Txn) GetAllIndexes(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.GetAllIndexes(ctx, opts...)
@@ -304,7 +304,7 @@ func (txn *Txn) ListAllEncryptedIndexes(
 func (txn *Txn) ExecRequest(
 	ctx context.Context,
 	request string,
-	opts ...options.Lister[options.ExecRequestOptions],
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ExecRequest(ctx, request, opts...)
@@ -318,28 +318,28 @@ func (txn *Txn) BasicImport(ctx context.Context, filepath string) error {
 func (txn *Txn) BasicExport(
 	ctx context.Context,
 	filepath string,
-	opts ...options.Lister[options.BasicExportOptions],
+	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.BasicExport(ctx, filepath, opts...)
 }
 
-func (txn *Txn) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+func (txn *Txn) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
 	return txn.db.PeerInfo(ctx, opts...)
 }
 
-func (txn *Txn) ActivePeers(ctx context.Context, opts ...options.Lister[options.ActivePeersOptions]) ([]string, error) {
+func (txn *Txn) ActivePeers(ctx context.Context, opts ...options.Enumerable[options.ActivePeersOptions]) ([]string, error) {
 	return txn.db.ActivePeers(ctx, opts...)
 }
 
-func (txn *Txn) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
+func (txn *Txn) Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error {
 	return txn.db.Connect(ctx, addresses, opts...)
 }
 
 func (txn *Txn) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Lister[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.CreateReplicatorOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.CreateReplicator(ctx, addresses, opts...)
@@ -348,7 +348,7 @@ func (txn *Txn) CreateReplicator(
 func (txn *Txn) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	opts ...options.Lister[options.DeleteReplicatorOptions],
+	opts ...options.Enumerable[options.DeleteReplicatorOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.DeleteReplicator(ctx, id, opts...)
@@ -356,7 +356,7 @@ func (txn *Txn) DeleteReplicator(
 
 func (txn *Txn) ListReplicators(
 	ctx context.Context,
-	opts ...options.Lister[options.ListReplicatorsOptions],
+	opts ...options.Enumerable[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ListReplicators(ctx, opts...)
@@ -365,7 +365,7 @@ func (txn *Txn) ListReplicators(
 func (txn *Txn) CreateP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...options.Lister[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.CreateP2PCollections(ctx, collectionNames, opts...)
@@ -374,7 +374,7 @@ func (txn *Txn) CreateP2PCollections(
 func (txn *Txn) DeleteP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+	opts ...options.Enumerable[options.DeleteP2PCollectionsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.DeleteP2PCollections(ctx, collectionNames, opts...)
@@ -382,7 +382,7 @@ func (txn *Txn) DeleteP2PCollections(
 
 func (txn *Txn) ListP2PCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PCollectionsOptions],
+	opts ...options.Enumerable[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ListP2PCollections(ctx, opts...)
@@ -391,7 +391,7 @@ func (txn *Txn) ListP2PCollections(
 func (txn *Txn) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.CreateP2PDocuments(ctx, docIDs, opts...)
@@ -400,7 +400,7 @@ func (txn *Txn) CreateP2PDocuments(
 func (txn *Txn) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+	opts ...options.Enumerable[options.DeleteP2PDocumentsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.DeleteP2PDocuments(ctx, docIDs, opts...)
@@ -408,7 +408,7 @@ func (txn *Txn) DeleteP2PDocuments(
 
 func (txn *Txn) ListP2PDocuments(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PDocumentsOptions],
+	opts ...options.Enumerable[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
 	ctx = InitContext(ctx, txn)
 	return txn.db.ListP2PDocuments(ctx, opts...)
@@ -422,7 +422,7 @@ func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs
 func (txn *Txn) SyncCollectionVersions(
 	ctx context.Context,
 	versionIDs []string,
-	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+	opts ...options.Enumerable[options.SyncCollectionVersionsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.SyncCollectionVersions(ctx, versionIDs, opts...)

@@ -36,7 +36,7 @@ var log = corelog.NewLogger("se")
 // DB defines the database operations needed by the SE coordinator
 type DB interface {
 	MaxTxnRetries() int
-	GetCollections(context.Context, ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error)
+	GetCollections(context.Context, ...options.Enumerable[options.GetCollectionsOptions]) ([]client.Collection, error)
 	Events() event.Bus
 	Multistore() *datastore.Multistore
 }

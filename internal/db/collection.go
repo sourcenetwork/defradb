@@ -209,7 +209,7 @@ func (db *DB) getCollections(
 // it hits every key and will cause Tx conflicts for concurrent Txs
 func (c *collection) GetAllDocIDs(
 	ctx context.Context,
-	opts ...options.Lister[options.CollectionGetAllDocIDsOptions],
+	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
 ) (<-chan client.DocIDResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -337,7 +337,7 @@ func (c *collection) CollectionID() string {
 func (c *collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -369,7 +369,7 @@ func (c *collection) Create(
 func (c *collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Lister[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -499,7 +499,7 @@ func setContextDocEncryption(
 func (c *collection) Update(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionUpdateOptions],
+	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -581,7 +581,7 @@ func (c *collection) update(
 func (c *collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionSaveOptions],
+	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -829,7 +829,7 @@ func (c *collection) save(
 func (c *collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionDeleteOptions],
+	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -869,7 +869,7 @@ func (c *collection) Delete(
 func (c *collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionExistsOptions],
+	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

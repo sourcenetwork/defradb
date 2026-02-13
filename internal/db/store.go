@@ -27,7 +27,7 @@ import (
 // ExecRequest executes a request against the database.
 func (db *DB) ExecRequest(
 	ctx context.Context,
-	request string, opts ...options.Lister[options.ExecRequestOptions],
+	request string, opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -68,7 +68,7 @@ func (db *DB) ExecRequest(
 func (db *DB) GetCollectionByName(
 	ctx context.Context,
 	name string,
-	opts ...options.Lister[options.GetCollectionByNameOptions],
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -91,7 +91,7 @@ func (db *DB) GetCollectionByName(
 // GetCollections gets all the currently defined collections.
 func (db *DB) GetCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.GetCollectionsOptions],
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -114,7 +114,7 @@ func (db *DB) GetCollections(
 // GetAllIndexes gets all the indexes in the database.
 func (db *DB) GetAllIndexes(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -158,7 +158,7 @@ func (db *DB) ListAllEncryptedIndexes(
 func (db *DB) AddSchema(
 	ctx context.Context,
 	schemaString string,
-	opts ...options.Lister[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -202,7 +202,7 @@ func (db *DB) PatchCollection(
 	ctx context.Context,
 	patchString string,
 	migration immutable.Option[model.Lens],
-	opts ...options.Lister[options.PatchCollectionOptions],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -230,7 +230,7 @@ func (db *DB) PatchCollection(
 func (db *DB) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
-	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -281,7 +281,7 @@ func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) (string, 
 func (db *DB) AddLens(
 	ctx context.Context,
 	lens model.Lens,
-	opts ...options.Lister[options.AddLensOptions],
+	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -314,7 +314,7 @@ func (db *DB) AddLens(
 
 func (db *DB) ListLenses(
 	ctx context.Context,
-	opts ...options.Lister[options.ListLensesOptions],
+	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -339,7 +339,7 @@ func (db *DB) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	opts ...options.Lister[options.AddViewOptions],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -371,7 +371,7 @@ func (db *DB) AddView(
 	return defs, nil
 }
 
-func (db *DB) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -426,7 +426,7 @@ func (db *DB) BasicImport(ctx context.Context, filepath string) error {
 func (db *DB) BasicExport(
 	ctx context.Context,
 	filepath string,
-	opts ...options.Lister[options.BasicExportOptions],
+	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()

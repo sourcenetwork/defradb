@@ -88,7 +88,7 @@ func (_c *DB_Events_Call) RunAndReturn(run func() event.Bus) *DB_Events_Call {
 }
 
 // GetCollections provides a mock function for the type DB
-func (_mock *DB) GetCollections(context1 context.Context, vs ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error) {
+func (_mock *DB) GetCollections(context1 context.Context, vs ...options.Enumerable[options.GetCollectionsOptions]) ([]client.Collection, error) {
 	var tmpRet mock.Arguments
 	if len(vs) > 0 {
 		tmpRet = _mock.Called(context1, vs)
@@ -103,17 +103,17 @@ func (_mock *DB) GetCollections(context1 context.Context, vs ...options.Lister[o
 
 	var r0 []client.Collection
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.GetCollectionsOptions]) ([]client.Collection, error)); ok {
 		return returnFunc(context1, vs...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Lister[options.GetCollectionsOptions]) []client.Collection); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.GetCollectionsOptions]) []client.Collection); ok {
 		r0 = returnFunc(context1, vs...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.Collection)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Lister[options.GetCollectionsOptions]) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.GetCollectionsOptions]) error); ok {
 		r1 = returnFunc(context1, vs...)
 	} else {
 		r1 = ret.Error(1)
@@ -134,16 +134,16 @@ func (_e *DB_Expecter) GetCollections(context1 interface{}, vs ...interface{}) *
 		append([]interface{}{context1}, vs...)...)}
 }
 
-func (_c *DB_GetCollections_Call) Run(run func(context1 context.Context, vs ...options.Lister[options.GetCollectionsOptions])) *DB_GetCollections_Call {
+func (_c *DB_GetCollections_Call) Run(run func(context1 context.Context, vs ...options.Enumerable[options.GetCollectionsOptions])) *DB_GetCollections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 []options.Lister[options.GetCollectionsOptions]
-		var variadicArgs []options.Lister[options.GetCollectionsOptions]
+		var arg1 []options.Enumerable[options.GetCollectionsOptions]
+		var variadicArgs []options.Enumerable[options.GetCollectionsOptions]
 		if len(args) > 1 {
-			variadicArgs = args[1].([]options.Lister[options.GetCollectionsOptions])
+			variadicArgs = args[1].([]options.Enumerable[options.GetCollectionsOptions])
 		}
 		arg1 = variadicArgs
 		run(
@@ -159,7 +159,7 @@ func (_c *DB_GetCollections_Call) Return(collections []client.Collection, err er
 	return _c
 }
 
-func (_c *DB_GetCollections_Call) RunAndReturn(run func(context1 context.Context, vs ...options.Lister[options.GetCollectionsOptions]) ([]client.Collection, error)) *DB_GetCollections_Call {
+func (_c *DB_GetCollections_Call) RunAndReturn(run func(context1 context.Context, vs ...options.Enumerable[options.GetCollectionsOptions]) ([]client.Collection, error)) *DB_GetCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }

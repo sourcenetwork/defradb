@@ -50,7 +50,7 @@ type Server struct {
 }
 
 // NewServer instantiates a new server with the given http.Handler.
-func NewServer(handler http.Handler, opts ...options.Lister[options.NodeHTTPOptions]) (*Server, error) {
+func NewServer(handler http.Handler, opts ...options.Enumerable[options.NodeHTTPOptions]) (*Server, error) {
 	cfg := options.NodeHTTPOptions{
 		Address: defaultHTTPAddress,
 	}

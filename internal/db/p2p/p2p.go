@@ -76,7 +76,7 @@ type DB interface {
 	// that currently exist within this [Store].
 	GetCollections(
 		ctx context.Context,
-		opts ...options.Lister[options.GetCollectionsOptions],
+		opts ...options.Enumerable[options.GetCollectionsOptions],
 	) ([]client.Collection, error)
 	// Merge initiates a merge of the DAG and caches the resulting values into the datastore.
 	Merge(ctx context.Context, evt event.Merge) error

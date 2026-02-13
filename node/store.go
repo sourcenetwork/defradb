@@ -52,7 +52,7 @@ func GetDefaultStorePath() string {
 }
 
 // NewStore returns a new store with the given options.
-func NewStore(ctx context.Context, opts ...options.Lister[options.NodeStoreOptions]) (corekv.TxnStore, bool, error) {
+func NewStore(ctx context.Context, opts ...options.Enumerable[options.NodeStoreOptions]) (corekv.TxnStore, bool, error) {
 	o := utils.NewOptions(opts...)
 	var isValueSizeLimited bool
 	if o.BadgerInMemory {

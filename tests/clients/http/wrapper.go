@@ -63,13 +63,13 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
 	return w.client.PeerInfo(ctx, opts...)
 }
 
 func (w *Wrapper) ActivePeers(
 	ctx context.Context,
-	opts ...options.Lister[options.ActivePeersOptions],
+	opts ...options.Enumerable[options.ActivePeersOptions],
 ) ([]string, error) {
 	return w.client.ActivePeers(ctx, opts...)
 }
@@ -77,7 +77,7 @@ func (w *Wrapper) ActivePeers(
 func (w *Wrapper) Connect(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Lister[options.ConnectOptions],
+	opts ...options.Enumerable[options.ConnectOptions],
 ) error {
 	return w.client.Connect(ctx, addresses, opts...)
 }
@@ -85,7 +85,7 @@ func (w *Wrapper) Connect(
 func (w *Wrapper) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Lister[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.CreateReplicatorOptions],
 ) error {
 	return w.client.CreateReplicator(ctx, addresses, opts...)
 }
@@ -93,14 +93,14 @@ func (w *Wrapper) CreateReplicator(
 func (w *Wrapper) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	opts ...options.Lister[options.DeleteReplicatorOptions],
+	opts ...options.Enumerable[options.DeleteReplicatorOptions],
 ) error {
 	return w.client.DeleteReplicator(ctx, id, opts...)
 }
 
 func (w *Wrapper) ListReplicators(
 	ctx context.Context,
-	opts ...options.Lister[options.ListReplicatorsOptions],
+	opts ...options.Enumerable[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	return w.client.ListReplicators(ctx, opts...)
 }
@@ -108,7 +108,7 @@ func (w *Wrapper) ListReplicators(
 func (w *Wrapper) CreateP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...options.Lister[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
 ) error {
 	return w.client.CreateP2PCollections(ctx, collectionIDs, opts...)
 }
@@ -116,14 +116,14 @@ func (w *Wrapper) CreateP2PCollections(
 func (w *Wrapper) DeleteP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+	opts ...options.Enumerable[options.DeleteP2PCollectionsOptions],
 ) error {
 	return w.client.DeleteP2PCollections(ctx, collectionIDs, opts...)
 }
 
 func (w *Wrapper) ListP2PCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PCollectionsOptions],
+	opts ...options.Enumerable[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	return w.client.ListP2PCollections(ctx, opts...)
 }
@@ -131,7 +131,7 @@ func (w *Wrapper) ListP2PCollections(
 func (w *Wrapper) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
 ) error {
 	return w.client.CreateP2PDocuments(ctx, docIDs, opts...)
 }
@@ -139,14 +139,14 @@ func (w *Wrapper) CreateP2PDocuments(
 func (w *Wrapper) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+	opts ...options.Enumerable[options.DeleteP2PDocumentsOptions],
 ) error {
 	return w.client.DeleteP2PDocuments(ctx, docIDs, opts...)
 }
 
 func (w *Wrapper) ListP2PDocuments(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PDocumentsOptions],
+	opts ...options.Enumerable[options.ListP2PDocumentsOptions],
 ) ([]string, error) {
 	return w.client.ListP2PDocuments(ctx, opts...)
 }
@@ -162,7 +162,7 @@ func (w *Wrapper) SyncDocuments(
 func (w *Wrapper) SyncCollectionVersions(
 	ctx context.Context,
 	versionIDs []string,
-	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+	opts ...options.Enumerable[options.SyncCollectionVersionsOptions],
 ) error {
 	return w.client.SyncCollectionVersions(ctx, versionIDs, opts...)
 }
@@ -181,7 +181,7 @@ func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 func (w *Wrapper) BasicExport(
 	ctx context.Context,
 	filepath string,
-	opts ...options.Lister[options.BasicExportOptions],
+	opts ...options.Enumerable[options.BasicExportOptions],
 ) error {
 	return w.client.BasicExport(ctx, filepath, opts...)
 }
@@ -189,7 +189,7 @@ func (w *Wrapper) BasicExport(
 func (w *Wrapper) AddSchema(
 	ctx context.Context,
 	schema string,
-	opts ...options.Lister[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	return w.client.AddSchema(ctx, schema, opts...)
 }
@@ -197,7 +197,7 @@ func (w *Wrapper) AddSchema(
 func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...options.Lister[options.AddDACPolicyOptions],
+	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	return w.client.AddDACPolicy(ctx, policy, opts...)
 }
@@ -208,7 +208,7 @@ func (w *Wrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	return w.client.AddDACActorRelationship(
 		ctx,
@@ -226,7 +226,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	return w.client.DeleteDACActorRelationship(
 		ctx,
@@ -242,7 +242,7 @@ func (w *Wrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	return w.client.AddNACActorRelationship(
 		ctx,
@@ -256,7 +256,7 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	return w.client.DeleteNACActorRelationship(
 		ctx,
@@ -266,17 +266,17 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	)
 }
 
-func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
+func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
 	return w.client.ReEnableNAC(ctx, opts...)
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
+func (w *Wrapper) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
 	return w.client.DisableNAC(ctx, opts...)
 }
 
 func (w *Wrapper) GetNACStatus(
 	ctx context.Context,
-	opts ...options.Lister[options.GetNACStatusOptions],
+	opts ...options.Enumerable[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	return w.client.GetNACStatus(ctx, opts...)
 }
@@ -285,7 +285,7 @@ func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...options.Lister[options.PatchCollectionOptions],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	return w.client.PatchCollection(ctx, patch, migration, opts...)
 }
@@ -293,7 +293,7 @@ func (w *Wrapper) PatchCollection(
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
-	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
 	return w.client.SetActiveCollectionVersion(ctx, collectionVersionID, opts...)
 }
@@ -302,12 +302,12 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	opts ...options.Lister[options.AddViewOptions],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	return w.client.AddView(ctx, query, sdl, opts...)
 }
 
-func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	return w.client.RefreshViews(ctx, opts...)
 }
 
@@ -318,14 +318,14 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 func (w *Wrapper) AddLens(
 	ctx context.Context,
 	lens model.Lens,
-	opts ...options.Lister[options.AddLensOptions],
+	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
 	return w.client.AddLens(ctx, lens, opts...)
 }
 
 func (w *Wrapper) ListLenses(
 	ctx context.Context,
-	opts ...options.Lister[options.ListLensesOptions],
+	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
 	return w.client.ListLenses(ctx, opts...)
 }
@@ -333,21 +333,21 @@ func (w *Wrapper) ListLenses(
 func (w *Wrapper) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...options.Lister[options.GetCollectionByNameOptions],
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	return w.client.GetCollectionByName(ctx, name, opts...)
 }
 
 func (w *Wrapper) GetCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.GetCollectionsOptions],
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	return w.client.GetCollections(ctx, opts...)
 }
 
 func (w *Wrapper) GetAllIndexes(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	return w.client.GetAllIndexes(ctx, opts...)
 }
@@ -361,7 +361,7 @@ func (w *Wrapper) ListAllEncryptedIndexes(
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...options.Lister[options.ExecRequestOptions],
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	return w.client.ExecRequest(ctx, query, opts...)
 }
@@ -420,7 +420,7 @@ func (w *Wrapper) VerifySignature(
 	ctx context.Context,
 	cid string,
 	pubKey crypto.PublicKey,
-	opts ...options.Lister[options.VerifySignatureOptions],
+	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
 	return w.client.VerifySignature(ctx, cid, pubKey, opts...)
 }

@@ -328,7 +328,7 @@ func makeDocSaveOptions(
 	s *state.State,
 	action *CreateDoc,
 	nodeIndex int,
-) []options.Lister[options.CollectionSaveOptions] {
+) []options.Enumerable[options.CollectionSaveOptions] {
 	opts := options.CollectionSave().
 		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
@@ -336,14 +336,14 @@ func makeDocSaveOptions(
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
-	return []options.Lister[options.CollectionSaveOptions]{opts}
+	return []options.Enumerable[options.CollectionSaveOptions]{opts}
 }
 
 func makeDocCreateOptions(
 	s *state.State,
 	action *CreateDoc,
 	nodeIndex int,
-) []options.Lister[options.CollectionCreateOptions] {
+) []options.Enumerable[options.CollectionCreateOptions] {
 	opts := options.CollectionCreate().
 		SetEncryptDoc(action.IsDocEncrypted).
 		SetEncryptedFields(action.EncryptedFields)
@@ -351,5 +351,5 @@ func makeDocCreateOptions(
 	if identOption.HasValue() {
 		opts.SetIdentity(identOption.Value())
 	}
-	return []options.Lister[options.CollectionCreateOptions]{opts}
+	return []options.Enumerable[options.CollectionCreateOptions]{opts}
 }

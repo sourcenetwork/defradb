@@ -33,7 +33,7 @@ func (db *DB) VerifySignature(
 	ctx context.Context,
 	blockCid string,
 	pubKey crypto.PublicKey,
-	opts ...options.Lister[options.VerifySignatureOptions],
+	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 

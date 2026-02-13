@@ -26,7 +26,7 @@ import (
 func (c *Client) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...options.Lister[options.AddDACPolicyOptions],
+	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -65,7 +65,7 @@ func (c *Client) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -117,7 +117,7 @@ func (c *Client) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -165,7 +165,7 @@ func (c *Client) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -211,7 +211,7 @@ func (c *Client) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -248,7 +248,7 @@ func (c *Client) DeleteNACActorRelationship(
 	return deleteDocActorRelResult, nil
 }
 
-func (c *Client) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
+func (c *Client) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
@@ -267,7 +267,7 @@ func (c *Client) ReEnableNAC(ctx context.Context, opts ...options.Lister[options
 	return nil
 }
 
-func (c *Client) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
+func (c *Client) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
@@ -288,7 +288,7 @@ func (c *Client) DisableNAC(ctx context.Context, opts ...options.Lister[options.
 
 func (c *Client) GetNACStatus(
 	ctx context.Context,
-	opts ...options.Lister[options.GetNACStatusOptions],
+	opts ...options.Enumerable[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())

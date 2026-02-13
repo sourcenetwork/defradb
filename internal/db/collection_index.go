@@ -166,7 +166,7 @@ func (c *collection) deleteIndexedDocWithID(
 func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexCreateRequest,
-	opts ...options.Lister[options.CollectionCreateIndexOptions],
+	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
 ) (client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -361,7 +361,7 @@ func (c *collection) indexExistingDocs(
 func (c *collection) DropIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Lister[options.CollectionDropIndexOptions],
+	opts ...options.Enumerable[options.CollectionDropIndexOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -423,7 +423,7 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 // GetIndexes returns all indexes for the collection.
 func (c *collection) GetIndexes(
 	ctx context.Context,
-	opts ...options.Lister[options.CollectionGetIndexesOptions],
+	opts ...options.Enumerable[options.CollectionGetIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 

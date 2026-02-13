@@ -10,14 +10,6 @@
 
 package options
 
-import (
-	"github.com/sourcenetwork/immutable/enumerable"
-)
-
-// Enumerable is a type alias for enumerable.Enumerable.
-// Option builders implement this interface via Next(), Value(), and Reset() methods.
-type Enumerable[T any] = enumerable.Enumerable[func(*T)]
-
 // enumerableBuilder provides a reusable implementation of enumerable.Enumerable
 // for option builders. Builders embed this struct to gain enumerable capabilities.
 type enumerableBuilder[T any] struct {
