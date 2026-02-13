@@ -170,7 +170,7 @@ func (w *Wrapper) SyncCollectionVersions(
 func (w *Wrapper) SyncBranchableCollection(
 	ctx context.Context,
 	collectionID string,
-	opts ...options.Lister[options.SyncBranchableCollectionOptions]) error {
+	opts ...options.Enumerable[options.SyncBranchableCollectionOptions]) error {
 	return w.client.SyncBranchableCollection(ctx, collectionID, opts...)
 }
 

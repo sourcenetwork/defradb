@@ -324,7 +324,7 @@ func (w *Wrapper) SyncCollectionVersions(
 func (w *Wrapper) SyncBranchableCollection(
 	ctx context.Context,
 	collectionID string,
-	opts ...options.Lister[options.SyncBranchableCollectionOptions],
+	opts ...options.Enumerable[options.SyncBranchableCollectionOptions],
 ) error {
 	args := []string{"client", "p2p", "collection", "sync-branchable", collectionID}
 

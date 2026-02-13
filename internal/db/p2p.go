@@ -46,7 +46,9 @@ func (db *DB) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.P
 }
 
 // Connect tries to connect to the peer with the given [PeerInfo].
-func (db *DB) Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error {
+func (db *DB) Connect(
+	ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions],
+) error {
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PPeerConnectPerm); err != nil {
@@ -143,7 +145,9 @@ func (db *DB) ListReplicators(
 	return db.p2p.ListReplicators(ctx)
 }
 
-func (db *DB) ActivePeers(ctx context.Context, opts ...options.Enumerable[options.ActivePeersOptions]) ([]string, error) {
+func (db *DB) ActivePeers(
+	ctx context.Context, opts ...options.Enumerable[options.ActivePeersOptions],
+) ([]string, error) {
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PPeerActivePerm); err != nil {
@@ -385,7 +389,7 @@ func (db *DB) SyncCollectionVersions(
 func (db *DB) SyncBranchableCollection(
 	ctx context.Context,
 	collectionID string,
-	opts ...options.Lister[options.SyncBranchableCollectionOptions],
+	opts ...options.Enumerable[options.SyncBranchableCollectionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 

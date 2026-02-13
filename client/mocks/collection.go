@@ -114,7 +114,7 @@ type Collection_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - doc *client.Document
-//   - opts ...options.Lister[options.CollectionCreateOptions]
+//   - opts ...options.Enumerable[options.CollectionCreateOptions]
 func (_e *Collection_Expecter) Create(ctx interface{}, doc interface{}, opts ...interface{}) *Collection_Create_Call {
 	return &Collection_Create_Call{Call: _e.mock.On("Create",
 		append([]interface{}{ctx, doc}, opts...)...)}
@@ -261,7 +261,7 @@ type Collection_CreateIndex_Call struct {
 // CreateIndex is a helper method to define mock.On call
 //   - context1 context.Context
 //   - indexCreateRequest client.IndexCreateRequest
-//   - vs ...options.Lister[options.CollectionCreateIndexOptions]
+//   - vs ...options.Enumerable[options.CollectionCreateIndexOptions]
 func (_e *Collection_Expecter) CreateIndex(context1 interface{}, indexCreateRequest interface{}, vs ...interface{}) *Collection_CreateIndex_Call {
 	return &Collection_CreateIndex_Call{Call: _e.mock.On("CreateIndex",
 		append([]interface{}{context1, indexCreateRequest}, vs...)...)}
@@ -333,7 +333,7 @@ type Collection_CreateMany_Call struct {
 // CreateMany is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docs []*client.Document
-//   - opts ...options.Lister[options.CollectionCreateOptions]
+//   - opts ...options.Enumerable[options.CollectionCreateOptions]
 func (_e *Collection_Expecter) CreateMany(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_CreateMany_Call {
 	return &Collection_CreateMany_Call{Call: _e.mock.On("CreateMany",
 		append([]interface{}{ctx, docs}, opts...)...)}
@@ -414,7 +414,7 @@ type Collection_Delete_Call struct {
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docID client.DocID
-//   - opts ...options.Lister[options.CollectionDeleteOptions]
+//   - opts ...options.Enumerable[options.CollectionDeleteOptions]
 func (_e *Collection_Expecter) Delete(ctx interface{}, docID interface{}, opts ...interface{}) *Collection_Delete_Call {
 	return &Collection_Delete_Call{Call: _e.mock.On("Delete",
 		append([]interface{}{ctx, docID}, opts...)...)}
@@ -554,7 +554,7 @@ type Collection_DeleteWithFilter_Call struct {
 // DeleteWithFilter is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filter any
-//   - opts ...options.Lister[options.CollectionDeleteWithFilterOptions]
+//   - opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions]
 func (_e *Collection_Expecter) DeleteWithFilter(ctx interface{}, filter interface{}, opts ...interface{}) *Collection_DeleteWithFilter_Call {
 	return &Collection_DeleteWithFilter_Call{Call: _e.mock.On("DeleteWithFilter",
 		append([]interface{}{ctx, filter}, opts...)...)}
@@ -626,7 +626,7 @@ type Collection_DropIndex_Call struct {
 // DropIndex is a helper method to define mock.On call
 //   - ctx context.Context
 //   - indexName string
-//   - opts ...options.Lister[options.CollectionDropIndexOptions]
+//   - opts ...options.Enumerable[options.CollectionDropIndexOptions]
 func (_e *Collection_Expecter) DropIndex(ctx interface{}, indexName interface{}, opts ...interface{}) *Collection_DropIndex_Call {
 	return &Collection_DropIndex_Call{Call: _e.mock.On("DropIndex",
 		append([]interface{}{ctx, indexName}, opts...)...)}
@@ -707,7 +707,7 @@ type Collection_Exists_Call struct {
 // Exists is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docID client.DocID
-//   - opts ...options.Lister[options.CollectionExistsOptions]
+//   - opts ...options.Enumerable[options.CollectionExistsOptions]
 func (_e *Collection_Expecter) Exists(ctx interface{}, docID interface{}, opts ...interface{}) *Collection_Exists_Call {
 	return &Collection_Exists_Call{Call: _e.mock.On("Exists",
 		append([]interface{}{ctx, docID}, opts...)...)}
@@ -790,7 +790,7 @@ type Collection_Get_Call struct {
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docID client.DocID
-//   - opts ...options.Lister[options.CollectionGetOptions]
+//   - opts ...options.Enumerable[options.CollectionGetOptions]
 func (_e *Collection_Expecter) Get(ctx interface{}, docID interface{}, opts ...interface{}) *Collection_Get_Call {
 	return &Collection_Get_Call{Call: _e.mock.On("Get",
 		append([]interface{}{ctx, docID}, opts...)...)}
@@ -872,7 +872,7 @@ type Collection_GetAllDocIDs_Call struct {
 
 // GetAllDocIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.CollectionGetAllDocIDsOptions]
+//   - opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions]
 func (_e *Collection_Expecter) GetAllDocIDs(ctx interface{}, opts ...interface{}) *Collection_GetAllDocIDs_Call {
 	return &Collection_GetAllDocIDs_Call{Call: _e.mock.On("GetAllDocIDs",
 		append([]interface{}{ctx}, opts...)...)}
@@ -949,7 +949,7 @@ type Collection_GetIndexes_Call struct {
 
 // GetIndexes is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.CollectionGetIndexesOptions]
+//   - opts ...options.Enumerable[options.CollectionGetIndexesOptions]
 func (_e *Collection_Expecter) GetIndexes(ctx interface{}, opts ...interface{}) *Collection_GetIndexes_Call {
 	return &Collection_GetIndexes_Call{Call: _e.mock.On("GetIndexes",
 		append([]interface{}{ctx}, opts...)...)}
@@ -1122,7 +1122,7 @@ type Collection_Save_Call struct {
 // Save is a helper method to define mock.On call
 //   - ctx context.Context
 //   - doc *client.Document
-//   - opts ...options.Lister[options.CollectionSaveOptions]
+//   - opts ...options.Enumerable[options.CollectionSaveOptions]
 func (_e *Collection_Expecter) Save(ctx interface{}, doc interface{}, opts ...interface{}) *Collection_Save_Call {
 	return &Collection_Save_Call{Call: _e.mock.On("Save",
 		append([]interface{}{ctx, doc}, opts...)...)}
@@ -1193,7 +1193,7 @@ type Collection_Truncate_Call struct {
 
 // Truncate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.CollectionTruncateOptions]
+//   - opts ...options.Enumerable[options.CollectionTruncateOptions]
 func (_e *Collection_Expecter) Truncate(ctx interface{}, opts ...interface{}) *Collection_Truncate_Call {
 	return &Collection_Truncate_Call{Call: _e.mock.On("Truncate",
 		append([]interface{}{ctx}, opts...)...)}
@@ -1260,7 +1260,7 @@ type Collection_Update_Call struct {
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docs *client.Document
-//   - opts ...options.Lister[options.CollectionUpdateOptions]
+//   - opts ...options.Enumerable[options.CollectionUpdateOptions]
 func (_e *Collection_Expecter) Update(ctx interface{}, docs interface{}, opts ...interface{}) *Collection_Update_Call {
 	return &Collection_Update_Call{Call: _e.mock.On("Update",
 		append([]interface{}{ctx, docs}, opts...)...)}
@@ -1344,7 +1344,7 @@ type Collection_UpdateWithFilter_Call struct {
 //   - ctx context.Context
 //   - filter any
 //   - updater string
-//   - opts ...options.Lister[options.CollectionUpdateWithFilterOptions]
+//   - opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions]
 func (_e *Collection_Expecter) UpdateWithFilter(ctx interface{}, filter interface{}, updater interface{}, opts ...interface{}) *Collection_UpdateWithFilter_Call {
 	return &Collection_UpdateWithFilter_Call{Call: _e.mock.On("UpdateWithFilter",
 		append([]interface{}{ctx, filter, updater}, opts...)...)}

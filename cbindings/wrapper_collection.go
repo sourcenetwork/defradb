@@ -741,7 +741,9 @@ func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Encrypt
 	return retRes, nil
 }
 
-func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error {
+func (c *Collection) Truncate(
+	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
+) error {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString("")
 	cVersion := C.CString("")

@@ -328,11 +328,15 @@ func (txn *Txn) PeerInfo(ctx context.Context, opts ...options.Enumerable[options
 	return txn.db.PeerInfo(ctx, opts...)
 }
 
-func (txn *Txn) ActivePeers(ctx context.Context, opts ...options.Enumerable[options.ActivePeersOptions]) ([]string, error) {
+func (txn *Txn) ActivePeers(
+	ctx context.Context, opts ...options.Enumerable[options.ActivePeersOptions],
+) ([]string, error) {
 	return txn.db.ActivePeers(ctx, opts...)
 }
 
-func (txn *Txn) Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error {
+func (txn *Txn) Connect(
+	ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions],
+) error {
 	return txn.db.Connect(ctx, addresses, opts...)
 }
 
@@ -431,7 +435,7 @@ func (txn *Txn) SyncCollectionVersions(
 func (txn *Txn) SyncBranchableCollection(
 	ctx context.Context,
 	collectionID string,
-	opts ...options.Lister[options.SyncBranchableCollectionOptions],
+	opts ...options.Enumerable[options.SyncBranchableCollectionOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
 	return txn.db.SyncBranchableCollection(ctx, collectionID, opts...)

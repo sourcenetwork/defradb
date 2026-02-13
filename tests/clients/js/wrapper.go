@@ -69,13 +69,13 @@ func NewWrapper(node *node.Node) (*Wrapper, error) {
 	}, nil
 }
 
-func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Lister[options.PeerInfoOptions]) ([]string, error) {
+func (w *Wrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
 	return nil, nil
 }
 
 func (w *Wrapper) ActivePeers(
 	ctx context.Context,
-	opts ...options.Lister[options.ActivePeersOptions],
+	opts ...options.Enumerable[options.ActivePeersOptions],
 ) ([]string, error) {
 	panic("not implemented")
 }
@@ -83,7 +83,7 @@ func (w *Wrapper) ActivePeers(
 func (w *Wrapper) CreateReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Lister[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.CreateReplicatorOptions],
 ) error {
 	panic("not implemented")
 }
@@ -91,14 +91,14 @@ func (w *Wrapper) CreateReplicator(
 func (w *Wrapper) DeleteReplicator(
 	ctx context.Context,
 	id string,
-	opts ...options.Lister[options.DeleteReplicatorOptions],
+	opts ...options.Enumerable[options.DeleteReplicatorOptions],
 ) error {
 	panic("not implemented")
 }
 
 func (w *Wrapper) ListReplicators(
 	ctx context.Context,
-	opts ...options.Lister[options.ListReplicatorsOptions],
+	opts ...options.Enumerable[options.ListReplicatorsOptions],
 ) ([]client.Replicator, error) {
 	panic("not implemented")
 }
@@ -106,7 +106,7 @@ func (w *Wrapper) ListReplicators(
 func (w *Wrapper) CreateP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...options.Lister[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
 ) error {
 	panic("not implemented")
 }
@@ -114,14 +114,14 @@ func (w *Wrapper) CreateP2PCollections(
 func (w *Wrapper) DeleteP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...options.Lister[options.DeleteP2PCollectionsOptions],
+	opts ...options.Enumerable[options.DeleteP2PCollectionsOptions],
 ) error {
 	panic("not implemented")
 }
 
 func (w *Wrapper) ListP2PCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.ListP2PCollectionsOptions],
+	opts ...options.Enumerable[options.ListP2PCollectionsOptions],
 ) ([]string, error) {
 	panic("not implemented")
 }
@@ -129,7 +129,7 @@ func (w *Wrapper) ListP2PCollections(
 func (w *Wrapper) CreateP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
 ) error {
 	panic("not implemented")
 }
@@ -137,12 +137,12 @@ func (w *Wrapper) CreateP2PDocuments(
 func (w *Wrapper) DeleteP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Lister[options.DeleteP2PDocumentsOptions],
+	opts ...options.Enumerable[options.DeleteP2PDocumentsOptions],
 ) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) ListP2PDocuments(ctx context.Context, opts ...options.Lister[options.ListP2PDocumentsOptions]) ([]string, error) {
+func (w *Wrapper) ListP2PDocuments(ctx context.Context, opts ...options.Enumerable[options.ListP2PDocumentsOptions]) ([]string, error) {
 	panic("not implemented")
 }
 
@@ -150,11 +150,11 @@ func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docI
 	panic("not implemented")
 }
 
-func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Lister[options.SyncCollectionVersionsOptions]) error {
+func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Enumerable[options.SyncCollectionVersionsOptions]) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string, opts ...options.Lister[options.SyncBranchableCollectionOptions]) error {
+func (w *Wrapper) SyncBranchableCollection(ctx context.Context, collectionID string, opts ...options.Enumerable[options.SyncBranchableCollectionOptions]) error {
 	panic("not implemented")
 }
 
@@ -162,14 +162,14 @@ func (w *Wrapper) BasicImport(ctx context.Context, filepath string) error {
 	panic("not implemented")
 }
 
-func (w *Wrapper) BasicExport(ctx context.Context, filepath string, opts ...options.Lister[options.BasicExportOptions]) error {
+func (w *Wrapper) BasicExport(ctx context.Context, filepath string, opts ...options.Enumerable[options.BasicExportOptions]) error {
 	panic("not implemented")
 }
 
 func (w *Wrapper) AddSchema(
 	ctx context.Context,
 	schema string,
-	opts ...options.Lister[options.AddSchemaOptions],
+	opts ...options.Enumerable[options.AddSchemaOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -187,7 +187,7 @@ func (w *Wrapper) AddSchema(
 func (w *Wrapper) AddDACPolicy(
 	ctx context.Context,
 	policy string,
-	opts ...options.Lister[options.AddDACPolicyOptions],
+	opts ...options.Enumerable[options.AddDACPolicyOptions],
 ) (client.AddPolicyResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -208,7 +208,7 @@ func (w *Wrapper) AddDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddDACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -229,7 +229,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 	docID string,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteDACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -246,7 +246,7 @@ func (w *Wrapper) DeleteDACActorRelationship(
 
 func (w *Wrapper) GetNACStatus(
 	ctx context.Context,
-	opts ...options.Lister[options.GetNACStatusOptions],
+	opts ...options.Enumerable[options.GetNACStatusOptions],
 ) (client.NACStatusResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -261,14 +261,14 @@ func (w *Wrapper) GetNACStatus(
 	return out, nil
 }
 
-func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...options.Lister[options.ReEnableNACOptions]) error {
+func (w *Wrapper) ReEnableNAC(ctx context.Context, opts ...options.Enumerable[options.ReEnableNACOptions]) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	_, err := execute(ctx, w.value, "reEnableNAC")
 	return err
 }
 
-func (w *Wrapper) DisableNAC(ctx context.Context, opts ...options.Lister[options.DisableNACOptions]) error {
+func (w *Wrapper) DisableNAC(ctx context.Context, opts ...options.Enumerable[options.DisableNACOptions]) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	_, err := execute(ctx, w.value, "disableNAC")
@@ -279,7 +279,7 @@ func (w *Wrapper) AddNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.AddNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.AddNACActorRelationshipOptions],
 ) (client.AddActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -298,7 +298,7 @@ func (w *Wrapper) DeleteNACActorRelationship(
 	ctx context.Context,
 	relation string,
 	targetActor string,
-	opts ...options.Lister[options.DeleteNACActorRelationshipOptions],
+	opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions],
 ) (client.DeleteActorRelationshipResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -317,7 +317,7 @@ func (w *Wrapper) PatchCollection(
 	ctx context.Context,
 	patch string,
 	migration immutable.Option[model.Lens],
-	opts ...options.Lister[options.PatchCollectionOptions],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	migrationVal, err := goji.MarshalJS(migration)
 	if err != nil {
@@ -332,7 +332,7 @@ func (w *Wrapper) PatchCollection(
 func (w *Wrapper) SetActiveCollectionVersion(
 	ctx context.Context,
 	collectionVersionID string,
-	opts ...options.Lister[options.SetActiveCollectionVersionOptions],
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -344,7 +344,7 @@ func (w *Wrapper) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	opts ...options.Lister[options.AddViewOptions],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -364,7 +364,7 @@ func (w *Wrapper) AddView(
 	return out, nil
 }
 
-func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Lister[options.RefreshViewsOptions]) error {
+func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	var optsVal sysjs.Value
 	var err error
 	opt := utils.NewOptions(opts...)
@@ -396,7 +396,7 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 func (w *Wrapper) AddLens(
 	ctx context.Context,
 	lens model.Lens,
-	opts ...options.Lister[options.AddLensOptions],
+	opts ...options.Enumerable[options.AddLensOptions],
 ) (string, error) {
 	opt := utils.NewOptions(opts...)
 	if opt != nil {
@@ -415,7 +415,7 @@ func (w *Wrapper) AddLens(
 
 func (w *Wrapper) ListLenses(
 	ctx context.Context,
-	opts ...options.Lister[options.ListLensesOptions],
+	opts ...options.Enumerable[options.ListLensesOptions],
 ) (map[string]model.Lens, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -433,7 +433,7 @@ func (w *Wrapper) ListLenses(
 func (w *Wrapper) GetCollectionByName(
 	ctx context.Context,
 	name client.CollectionName,
-	opts ...options.Lister[options.GetCollectionByNameOptions],
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
 ) (client.Collection, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -448,7 +448,7 @@ func (w *Wrapper) GetCollectionByName(
 
 func (w *Wrapper) GetCollections(
 	ctx context.Context,
-	opts ...options.Lister[options.GetCollectionsOptions],
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	var optsVal sysjs.Value
 	var err error
@@ -477,7 +477,7 @@ func (w *Wrapper) GetCollections(
 
 func (w *Wrapper) GetAllIndexes(
 	ctx context.Context,
-	opts ...options.Lister[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -495,7 +495,7 @@ func (w *Wrapper) GetAllIndexes(
 func (w *Wrapper) ExecRequest(
 	ctx context.Context,
 	query string,
-	opts ...options.Lister[options.ExecRequestOptions],
+	opts ...options.Enumerable[options.ExecRequestOptions],
 ) *client.RequestResult {
 	var optsVal sysjs.Value
 	opt := utils.NewOptions(opts...)
@@ -591,7 +591,7 @@ func (w *Wrapper) PrintDump(ctx context.Context) error {
 	return w.node.DB.PrintDump(ctx)
 }
 
-func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...options.Lister[options.ConnectOptions]) error {
+func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...options.Enumerable[options.ConnectOptions]) error {
 	return w.node.DB.Connect(ctx, addresses, opts...)
 }
 
@@ -611,7 +611,7 @@ func (w *Wrapper) VerifySignature(
 	ctx context.Context,
 	blockCid string,
 	pubKey crypto.PublicKey,
-	opts ...options.Lister[options.VerifySignatureOptions],
+	opts ...options.Enumerable[options.VerifySignatureOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)

@@ -493,7 +493,9 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 	return err
 }
 
-func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error {
+func (c *Collection) Truncate(
+	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
+) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 

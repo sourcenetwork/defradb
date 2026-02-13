@@ -85,7 +85,7 @@ type Txn_ActivePeers_Call struct {
 
 // ActivePeers is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.ActivePeersOptions]
+//   - opts ...options.Enumerable[options.ActivePeersOptions]
 func (_e *Txn_Expecter) ActivePeers(ctx interface{}, opts ...interface{}) *Txn_ActivePeers_Call {
 	return &Txn_ActivePeers_Call{Call: _e.mock.On("ActivePeers",
 		append([]interface{}{ctx}, opts...)...)}
@@ -164,7 +164,7 @@ type Txn_AddDACActorRelationship_Call struct {
 //   - docID string
 //   - relation string
 //   - targetActor string
-//   - opts ...options.Lister[options.AddDACActorRelationshipOptions]
+//   - opts ...options.Enumerable[options.AddDACActorRelationshipOptions]
 func (_e *Txn_Expecter) AddDACActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}, opts ...interface{}) *Txn_AddDACActorRelationship_Call {
 	return &Txn_AddDACActorRelationship_Call{Call: _e.mock.On("AddDACActorRelationship",
 		append([]interface{}{ctx, collectionName, docID, relation, targetActor}, opts...)...)}
@@ -260,7 +260,7 @@ type Txn_AddDACPolicy_Call struct {
 // AddDACPolicy is a helper method to define mock.On call
 //   - ctx context.Context
 //   - policy string
-//   - opts ...options.Lister[options.AddDACPolicyOptions]
+//   - opts ...options.Enumerable[options.AddDACPolicyOptions]
 func (_e *Txn_Expecter) AddDACPolicy(ctx interface{}, policy interface{}, opts ...interface{}) *Txn_AddDACPolicy_Call {
 	return &Txn_AddDACPolicy_Call{Call: _e.mock.On("AddDACPolicy",
 		append([]interface{}{ctx, policy}, opts...)...)}
@@ -341,7 +341,7 @@ type Txn_AddLens_Call struct {
 // AddLens is a helper method to define mock.On call
 //   - ctx context.Context
 //   - lens model.Lens
-//   - opts ...options.Lister[options.AddLensOptions]
+//   - opts ...options.Enumerable[options.AddLensOptions]
 func (_e *Txn_Expecter) AddLens(ctx interface{}, lens interface{}, opts ...interface{}) *Txn_AddLens_Call {
 	return &Txn_AddLens_Call{Call: _e.mock.On("AddLens",
 		append([]interface{}{ctx, lens}, opts...)...)}
@@ -423,7 +423,7 @@ type Txn_AddNACActorRelationship_Call struct {
 //   - ctx context.Context
 //   - relation string
 //   - targetActor string
-//   - opts ...options.Lister[options.AddNACActorRelationshipOptions]
+//   - opts ...options.Enumerable[options.AddNACActorRelationshipOptions]
 func (_e *Txn_Expecter) AddNACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}, opts ...interface{}) *Txn_AddNACActorRelationship_Call {
 	return &Txn_AddNACActorRelationship_Call{Call: _e.mock.On("AddNACActorRelationship",
 		append([]interface{}{ctx, relation, targetActor}, opts...)...)}
@@ -511,7 +511,7 @@ type Txn_AddSchema_Call struct {
 // AddSchema is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sdl string
-//   - opts ...options.Lister[options.AddSchemaOptions]
+//   - opts ...options.Enumerable[options.AddSchemaOptions]
 func (_e *Txn_Expecter) AddSchema(ctx interface{}, sdl interface{}, opts ...interface{}) *Txn_AddSchema_Call {
 	return &Txn_AddSchema_Call{Call: _e.mock.On("AddSchema",
 		append([]interface{}{ctx, sdl}, opts...)...)}
@@ -595,7 +595,7 @@ type Txn_AddView_Call struct {
 //   - ctx context.Context
 //   - gqlQuery string
 //   - sdl string
-//   - opts ...options.Lister[options.AddViewOptions]
+//   - opts ...options.Enumerable[options.AddViewOptions]
 func (_e *Txn_Expecter) AddView(ctx interface{}, gqlQuery interface{}, sdl interface{}, opts ...interface{}) *Txn_AddView_Call {
 	return &Txn_AddView_Call{Call: _e.mock.On("AddView",
 		append([]interface{}{ctx, gqlQuery, sdl}, opts...)...)}
@@ -672,7 +672,7 @@ type Txn_BasicExport_Call struct {
 // BasicExport is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filepath string
-//   - opts ...options.Lister[options.BasicExportOptions]
+//   - opts ...options.Enumerable[options.BasicExportOptions]
 func (_e *Txn_Expecter) BasicExport(ctx interface{}, filepath interface{}, opts ...interface{}) *Txn_BasicExport_Call {
 	return &Txn_BasicExport_Call{Call: _e.mock.On("BasicExport",
 		append([]interface{}{ctx, filepath}, opts...)...)}
@@ -845,7 +845,7 @@ type Txn_Connect_Call struct {
 // Connect is a helper method to define mock.On call
 //   - ctx context.Context
 //   - addresses []string
-//   - opts ...options.Lister[options.ConnectOptions]
+//   - opts ...options.Enumerable[options.ConnectOptions]
 func (_e *Txn_Expecter) Connect(ctx interface{}, addresses interface{}, opts ...interface{}) *Txn_Connect_Call {
 	return &Txn_Connect_Call{Call: _e.mock.On("Connect",
 		append([]interface{}{ctx, addresses}, opts...)...)}
@@ -917,7 +917,7 @@ type Txn_CreateP2PCollections_Call struct {
 // CreateP2PCollections is a helper method to define mock.On call
 //   - ctx context.Context
 //   - collectionNames []string
-//   - opts ...options.Lister[options.CreateP2PCollectionsOptions]
+//   - opts ...options.Enumerable[options.CreateP2PCollectionsOptions]
 func (_e *Txn_Expecter) CreateP2PCollections(ctx interface{}, collectionNames interface{}, opts ...interface{}) *Txn_CreateP2PCollections_Call {
 	return &Txn_CreateP2PCollections_Call{Call: _e.mock.On("CreateP2PCollections",
 		append([]interface{}{ctx, collectionNames}, opts...)...)}
@@ -989,7 +989,7 @@ type Txn_CreateP2PDocuments_Call struct {
 // CreateP2PDocuments is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docIDs []string
-//   - opts ...options.Lister[options.CreateP2PDocumentsOptions]
+//   - opts ...options.Enumerable[options.CreateP2PDocumentsOptions]
 func (_e *Txn_Expecter) CreateP2PDocuments(ctx interface{}, docIDs interface{}, opts ...interface{}) *Txn_CreateP2PDocuments_Call {
 	return &Txn_CreateP2PDocuments_Call{Call: _e.mock.On("CreateP2PDocuments",
 		append([]interface{}{ctx, docIDs}, opts...)...)}
@@ -1061,7 +1061,7 @@ type Txn_CreateReplicator_Call struct {
 // CreateReplicator is a helper method to define mock.On call
 //   - ctx context.Context
 //   - addresses []string
-//   - opts ...options.Lister[options.CreateReplicatorOptions]
+//   - opts ...options.Enumerable[options.CreateReplicatorOptions]
 func (_e *Txn_Expecter) CreateReplicator(ctx interface{}, addresses interface{}, opts ...interface{}) *Txn_CreateReplicator_Call {
 	return &Txn_CreateReplicator_Call{Call: _e.mock.On("CreateReplicator",
 		append([]interface{}{ctx, addresses}, opts...)...)}
@@ -1145,7 +1145,7 @@ type Txn_DeleteDACActorRelationship_Call struct {
 //   - docID string
 //   - relation string
 //   - targetActor string
-//   - opts ...options.Lister[options.DeleteDACActorRelationshipOptions]
+//   - opts ...options.Enumerable[options.DeleteDACActorRelationshipOptions]
 func (_e *Txn_Expecter) DeleteDACActorRelationship(ctx interface{}, collectionName interface{}, docID interface{}, relation interface{}, targetActor interface{}, opts ...interface{}) *Txn_DeleteDACActorRelationship_Call {
 	return &Txn_DeleteDACActorRelationship_Call{Call: _e.mock.On("DeleteDACActorRelationship",
 		append([]interface{}{ctx, collectionName, docID, relation, targetActor}, opts...)...)}
@@ -1242,7 +1242,7 @@ type Txn_DeleteNACActorRelationship_Call struct {
 //   - ctx context.Context
 //   - relation string
 //   - targetActor string
-//   - opts ...options.Lister[options.DeleteNACActorRelationshipOptions]
+//   - opts ...options.Enumerable[options.DeleteNACActorRelationshipOptions]
 func (_e *Txn_Expecter) DeleteNACActorRelationship(ctx interface{}, relation interface{}, targetActor interface{}, opts ...interface{}) *Txn_DeleteNACActorRelationship_Call {
 	return &Txn_DeleteNACActorRelationship_Call{Call: _e.mock.On("DeleteNACActorRelationship",
 		append([]interface{}{ctx, relation, targetActor}, opts...)...)}
@@ -1319,7 +1319,7 @@ type Txn_DeleteP2PCollections_Call struct {
 // DeleteP2PCollections is a helper method to define mock.On call
 //   - ctx context.Context
 //   - collectionNames []string
-//   - opts ...options.Lister[options.DeleteP2PCollectionsOptions]
+//   - opts ...options.Enumerable[options.DeleteP2PCollectionsOptions]
 func (_e *Txn_Expecter) DeleteP2PCollections(ctx interface{}, collectionNames interface{}, opts ...interface{}) *Txn_DeleteP2PCollections_Call {
 	return &Txn_DeleteP2PCollections_Call{Call: _e.mock.On("DeleteP2PCollections",
 		append([]interface{}{ctx, collectionNames}, opts...)...)}
@@ -1391,7 +1391,7 @@ type Txn_DeleteP2PDocuments_Call struct {
 // DeleteP2PDocuments is a helper method to define mock.On call
 //   - ctx context.Context
 //   - docIDs []string
-//   - opts ...options.Lister[options.DeleteP2PDocumentsOptions]
+//   - opts ...options.Enumerable[options.DeleteP2PDocumentsOptions]
 func (_e *Txn_Expecter) DeleteP2PDocuments(ctx interface{}, docIDs interface{}, opts ...interface{}) *Txn_DeleteP2PDocuments_Call {
 	return &Txn_DeleteP2PDocuments_Call{Call: _e.mock.On("DeleteP2PDocuments",
 		append([]interface{}{ctx, docIDs}, opts...)...)}
@@ -1463,7 +1463,7 @@ type Txn_DeleteReplicator_Call struct {
 // DeleteReplicator is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - opts ...options.Lister[options.DeleteReplicatorOptions]
+//   - opts ...options.Enumerable[options.DeleteReplicatorOptions]
 func (_e *Txn_Expecter) DeleteReplicator(ctx interface{}, id interface{}, opts ...interface{}) *Txn_DeleteReplicator_Call {
 	return &Txn_DeleteReplicator_Call{Call: _e.mock.On("DeleteReplicator",
 		append([]interface{}{ctx, id}, opts...)...)}
@@ -1534,7 +1534,7 @@ type Txn_DisableNAC_Call struct {
 
 // DisableNAC is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.DisableNACOptions]
+//   - opts ...options.Enumerable[options.DisableNACOptions]
 func (_e *Txn_Expecter) DisableNAC(ctx interface{}, opts ...interface{}) *Txn_DisableNAC_Call {
 	return &Txn_DisableNAC_Call{Call: _e.mock.On("DisableNAC",
 		append([]interface{}{ctx}, opts...)...)}
@@ -1636,7 +1636,7 @@ type Txn_ExecRequest_Call struct {
 // ExecRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - request string
-//   - opts ...options.Lister[options.ExecRequestOptions]
+//   - opts ...options.Enumerable[options.ExecRequestOptions]
 func (_e *Txn_Expecter) ExecRequest(ctx interface{}, request interface{}, opts ...interface{}) *Txn_ExecRequest_Call {
 	return &Txn_ExecRequest_Call{Call: _e.mock.On("ExecRequest",
 		append([]interface{}{ctx, request}, opts...)...)}
@@ -1718,7 +1718,7 @@ type Txn_GetAllIndexes_Call struct {
 
 // GetAllIndexes is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.GetAllIndexesOptions]
+//   - opts ...options.Enumerable[options.GetAllIndexesOptions]
 func (_e *Txn_Expecter) GetAllIndexes(ctx interface{}, opts ...interface{}) *Txn_GetAllIndexes_Call {
 	return &Txn_GetAllIndexes_Call{Call: _e.mock.On("GetAllIndexes",
 		append([]interface{}{ctx}, opts...)...)}
@@ -1796,7 +1796,7 @@ type Txn_GetCollectionByName_Call struct {
 // GetCollectionByName is a helper method to define mock.On call
 //   - ctx context.Context
 //   - name client.CollectionName
-//   - opts ...options.Lister[options.GetCollectionByNameOptions]
+//   - opts ...options.Enumerable[options.GetCollectionByNameOptions]
 func (_e *Txn_Expecter) GetCollectionByName(ctx interface{}, name interface{}, opts ...interface{}) *Txn_GetCollectionByName_Call {
 	return &Txn_GetCollectionByName_Call{Call: _e.mock.On("GetCollectionByName",
 		append([]interface{}{ctx, name}, opts...)...)}
@@ -1878,7 +1878,7 @@ type Txn_GetCollections_Call struct {
 
 // GetCollections is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.GetCollectionsOptions]
+//   - opts ...options.Enumerable[options.GetCollectionsOptions]
 func (_e *Txn_Expecter) GetCollections(ctx interface{}, opts ...interface{}) *Txn_GetCollections_Call {
 	return &Txn_GetCollections_Call{Call: _e.mock.On("GetCollections",
 		append([]interface{}{ctx}, opts...)...)}
@@ -1953,7 +1953,7 @@ type Txn_GetNACStatus_Call struct {
 
 // GetNACStatus is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.GetNACStatusOptions]
+//   - opts ...options.Enumerable[options.GetNACStatusOptions]
 func (_e *Txn_Expecter) GetNACStatus(ctx interface{}, opts ...interface{}) *Txn_GetNACStatus_Call {
 	return &Txn_GetNACStatus_Call{Call: _e.mock.On("GetNACStatus",
 		append([]interface{}{ctx}, opts...)...)}
@@ -2196,7 +2196,7 @@ type Txn_ListLenses_Call struct {
 
 // ListLenses is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.ListLensesOptions]
+//   - opts ...options.Enumerable[options.ListLensesOptions]
 func (_e *Txn_Expecter) ListLenses(ctx interface{}, opts ...interface{}) *Txn_ListLenses_Call {
 	return &Txn_ListLenses_Call{Call: _e.mock.On("ListLenses",
 		append([]interface{}{ctx}, opts...)...)}
@@ -2273,7 +2273,7 @@ type Txn_ListP2PCollections_Call struct {
 
 // ListP2PCollections is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.ListP2PCollectionsOptions]
+//   - opts ...options.Enumerable[options.ListP2PCollectionsOptions]
 func (_e *Txn_Expecter) ListP2PCollections(ctx interface{}, opts ...interface{}) *Txn_ListP2PCollections_Call {
 	return &Txn_ListP2PCollections_Call{Call: _e.mock.On("ListP2PCollections",
 		append([]interface{}{ctx}, opts...)...)}
@@ -2350,7 +2350,7 @@ type Txn_ListP2PDocuments_Call struct {
 
 // ListP2PDocuments is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.ListP2PDocumentsOptions]
+//   - opts ...options.Enumerable[options.ListP2PDocumentsOptions]
 func (_e *Txn_Expecter) ListP2PDocuments(ctx interface{}, opts ...interface{}) *Txn_ListP2PDocuments_Call {
 	return &Txn_ListP2PDocuments_Call{Call: _e.mock.On("ListP2PDocuments",
 		append([]interface{}{ctx}, opts...)...)}
@@ -2427,7 +2427,7 @@ type Txn_ListReplicators_Call struct {
 
 // ListReplicators is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.ListReplicatorsOptions]
+//   - opts ...options.Enumerable[options.ListReplicatorsOptions]
 func (_e *Txn_Expecter) ListReplicators(ctx interface{}, opts ...interface{}) *Txn_ListReplicators_Call {
 	return &Txn_ListReplicators_Call{Call: _e.mock.On("ListReplicators",
 		append([]interface{}{ctx}, opts...)...)}
@@ -2495,7 +2495,7 @@ type Txn_PatchCollection_Call struct {
 //   - ctx context.Context
 //   - patch string
 //   - migration immutable.Option[model.Lens]
-//   - opts ...options.Lister[options.PatchCollectionOptions]
+//   - opts ...options.Enumerable[options.PatchCollectionOptions]
 func (_e *Txn_Expecter) PatchCollection(ctx interface{}, patch interface{}, migration interface{}, opts ...interface{}) *Txn_PatchCollection_Call {
 	return &Txn_PatchCollection_Call{Call: _e.mock.On("PatchCollection",
 		append([]interface{}{ctx, patch, migration}, opts...)...)}
@@ -2582,7 +2582,7 @@ type Txn_PeerInfo_Call struct {
 
 // PeerInfo is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.PeerInfoOptions]
+//   - opts ...options.Enumerable[options.PeerInfoOptions]
 func (_e *Txn_Expecter) PeerInfo(ctx interface{}, opts ...interface{}) *Txn_PeerInfo_Call {
 	return &Txn_PeerInfo_Call{Call: _e.mock.On("PeerInfo",
 		append([]interface{}{ctx}, opts...)...)}
@@ -2699,7 +2699,7 @@ type Txn_ReEnableNAC_Call struct {
 
 // ReEnableNAC is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.ReEnableNACOptions]
+//   - opts ...options.Enumerable[options.ReEnableNACOptions]
 func (_e *Txn_Expecter) ReEnableNAC(ctx interface{}, opts ...interface{}) *Txn_ReEnableNAC_Call {
 	return &Txn_ReEnableNAC_Call{Call: _e.mock.On("ReEnableNAC",
 		append([]interface{}{ctx}, opts...)...)}
@@ -2765,7 +2765,7 @@ type Txn_RefreshViews_Call struct {
 
 // RefreshViews is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts ...options.Lister[options.RefreshViewsOptions]
+//   - opts ...options.Enumerable[options.RefreshViewsOptions]
 func (_e *Txn_Expecter) RefreshViews(ctx interface{}, opts ...interface{}) *Txn_RefreshViews_Call {
 	return &Txn_RefreshViews_Call{Call: _e.mock.On("RefreshViews",
 		append([]interface{}{ctx}, opts...)...)}
@@ -2832,7 +2832,7 @@ type Txn_SetActiveCollectionVersion_Call struct {
 // SetActiveCollectionVersion is a helper method to define mock.On call
 //   - ctx context.Context
 //   - versionID string
-//   - opts ...options.Lister[options.SetActiveCollectionVersionOptions]
+//   - opts ...options.Enumerable[options.SetActiveCollectionVersionOptions]
 func (_e *Txn_Expecter) SetActiveCollectionVersion(ctx interface{}, versionID interface{}, opts ...interface{}) *Txn_SetActiveCollectionVersion_Call {
 	return &Txn_SetActiveCollectionVersion_Call{Call: _e.mock.On("SetActiveCollectionVersion",
 		append([]interface{}{ctx, versionID}, opts...)...)}
@@ -2984,7 +2984,7 @@ func (_c *Txn_StartTS_Call) RunAndReturn(run func() time.Time) *Txn_StartTS_Call
 }
 
 // SyncBranchableCollection provides a mock function for the type Txn
-func (_mock *Txn) SyncBranchableCollection(ctx context.Context, collectionID string, opts ...options.Lister[options.SyncBranchableCollectionOptions]) error {
+func (_mock *Txn) SyncBranchableCollection(ctx context.Context, collectionID string, opts ...options.Enumerable[options.SyncBranchableCollectionOptions]) error {
 	var tmpRet mock.Arguments
 	if len(opts) > 0 {
 		tmpRet = _mock.Called(ctx, collectionID, opts)
@@ -2998,7 +2998,7 @@ func (_mock *Txn) SyncBranchableCollection(ctx context.Context, collectionID str
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Lister[options.SyncBranchableCollectionOptions]) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.SyncBranchableCollectionOptions]) error); ok {
 		r0 = returnFunc(ctx, collectionID, opts...)
 	} else {
 		r0 = ret.Error(0)
@@ -3014,13 +3014,13 @@ type Txn_SyncBranchableCollection_Call struct {
 // SyncBranchableCollection is a helper method to define mock.On call
 //   - ctx context.Context
 //   - collectionID string
-//   - opts ...options.Lister[options.SyncBranchableCollectionOptions]
+//   - opts ...options.Enumerable[options.SyncBranchableCollectionOptions]
 func (_e *Txn_Expecter) SyncBranchableCollection(ctx interface{}, collectionID interface{}, opts ...interface{}) *Txn_SyncBranchableCollection_Call {
 	return &Txn_SyncBranchableCollection_Call{Call: _e.mock.On("SyncBranchableCollection",
 		append([]interface{}{ctx, collectionID}, opts...)...)}
 }
 
-func (_c *Txn_SyncBranchableCollection_Call) Run(run func(ctx context.Context, collectionID string, opts ...options.Lister[options.SyncBranchableCollectionOptions])) *Txn_SyncBranchableCollection_Call {
+func (_c *Txn_SyncBranchableCollection_Call) Run(run func(ctx context.Context, collectionID string, opts ...options.Enumerable[options.SyncBranchableCollectionOptions])) *Txn_SyncBranchableCollection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3030,10 +3030,10 @@ func (_c *Txn_SyncBranchableCollection_Call) Run(run func(ctx context.Context, c
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 []options.Lister[options.SyncBranchableCollectionOptions]
-		var variadicArgs []options.Lister[options.SyncBranchableCollectionOptions]
+		var arg2 []options.Enumerable[options.SyncBranchableCollectionOptions]
+		var variadicArgs []options.Enumerable[options.SyncBranchableCollectionOptions]
 		if len(args) > 2 {
-			variadicArgs = args[2].([]options.Lister[options.SyncBranchableCollectionOptions])
+			variadicArgs = args[2].([]options.Enumerable[options.SyncBranchableCollectionOptions])
 		}
 		arg2 = variadicArgs
 		run(
@@ -3050,7 +3050,7 @@ func (_c *Txn_SyncBranchableCollection_Call) Return(err error) *Txn_SyncBranchab
 	return _c
 }
 
-func (_c *Txn_SyncBranchableCollection_Call) RunAndReturn(run func(ctx context.Context, collectionID string, opts ...options.Lister[options.SyncBranchableCollectionOptions]) error) *Txn_SyncBranchableCollection_Call {
+func (_c *Txn_SyncBranchableCollection_Call) RunAndReturn(run func(ctx context.Context, collectionID string, opts ...options.Enumerable[options.SyncBranchableCollectionOptions]) error) *Txn_SyncBranchableCollection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3086,7 +3086,7 @@ type Txn_SyncCollectionVersions_Call struct {
 // SyncCollectionVersions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - versionIDs []string
-//   - opts ...options.Lister[options.SyncCollectionVersionsOptions]
+//   - opts ...options.Enumerable[options.SyncCollectionVersionsOptions]
 func (_e *Txn_Expecter) SyncCollectionVersions(ctx interface{}, versionIDs interface{}, opts ...interface{}) *Txn_SyncCollectionVersions_Call {
 	return &Txn_SyncCollectionVersions_Call{Call: _e.mock.On("SyncCollectionVersions",
 		append([]interface{}{ctx, versionIDs}, opts...)...)}
@@ -3222,7 +3222,7 @@ type Txn_VerifySignature_Call struct {
 //   - ctx context.Context
 //   - blockCid string
 //   - pubKey crypto.PublicKey
-//   - opts ...options.Lister[options.VerifySignatureOptions]
+//   - opts ...options.Enumerable[options.VerifySignatureOptions]
 func (_e *Txn_Expecter) VerifySignature(ctx interface{}, blockCid interface{}, pubKey interface{}, opts ...interface{}) *Txn_VerifySignature_Call {
 	return &Txn_VerifySignature_Call{Call: _e.mock.On("VerifySignature",
 		append([]interface{}{ctx, blockCid, pubKey}, opts...)...)}

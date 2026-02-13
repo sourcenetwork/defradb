@@ -147,7 +147,9 @@ func (txn *Transaction) AddView(
 	return txn.CWrapper.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
-func (txn *Transaction) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
+func (txn *Transaction) RefreshViews(
+	ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions],
+) error {
 	return txn.CWrapper.RefreshViews(ctx, opts...)
 }
 

@@ -375,7 +375,7 @@ func (c *Client) SyncCollectionVersions(
 func (c *Client) SyncBranchableCollection(
 	ctx context.Context,
 	collectionID string,
-	opts ...options.Lister[options.SyncBranchableCollectionOptions],
+	opts ...options.Enumerable[options.SyncBranchableCollectionOptions],
 ) error {
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections", "sync-branchable")
 

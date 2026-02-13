@@ -127,7 +127,7 @@ type createOptionsInput struct {
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
-func getCreateOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]options.Lister[options.CollectionCreateOptions], error) {
+func getCreateOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]options.Enumerable[options.CollectionCreateOptions], error) {
 	var input createOptionsInput
 	if err := structArg(args, argIndex, "options", &input); err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func getCreateOptionsFromArg(args []js.Value, argIndex int, ctxArgIndex int) ([]
 		opt.SetEncryptedFields(input.EncryptedFields)
 	}
 	setOptIdentity(opt, args, ctxArgIndex)
-	return []options.Lister[options.CollectionCreateOptions]{opt}, nil
+	return []options.Enumerable[options.CollectionCreateOptions]{opt}, nil
 }
 
 func (c *clientCollection) update(this js.Value, args []js.Value) (js.Value, error) {

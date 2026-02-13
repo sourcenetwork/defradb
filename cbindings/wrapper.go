@@ -112,7 +112,9 @@ func NewCWrapper(node *node.Node) (*CWrapper, error) {
 	}, nil
 }
 
-func (w *CWrapper) PeerInfo(ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions]) ([]string, error) {
+func (w *CWrapper) PeerInfo(
+	ctx context.Context, opts ...options.Enumerable[options.PeerInfoOptions],
+) ([]string, error) {
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.IdentityFree(cIdentity)
 
@@ -379,7 +381,7 @@ func (w *CWrapper) SyncCollectionVersions(
 func (w *CWrapper) SyncBranchableCollection(
 	ctx context.Context,
 	collectionID string,
-	opts ...options.Lister[options.SyncBranchableCollectionOptions],
+	opts ...options.Enumerable[options.SyncBranchableCollectionOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	cCollectionID := C.CString(collectionID)

@@ -128,7 +128,7 @@ type DB_GetCollections_Call struct {
 
 // GetCollections is a helper method to define mock.On call
 //   - context1 context.Context
-//   - vs ...options.Lister[options.GetCollectionsOptions]
+//   - vs ...options.Enumerable[options.GetCollectionsOptions]
 func (_e *DB_Expecter) GetCollections(context1 interface{}, vs ...interface{}) *DB_GetCollections_Call {
 	return &DB_GetCollections_Call{Call: _e.mock.On("GetCollections",
 		append([]interface{}{context1}, vs...)...)}

@@ -72,7 +72,7 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -94,7 +94,7 @@ type createOptionsJS struct {
 	EncryptedFields []string `json:"encryptedFields"`
 }
 
-func makeDocCreateOptions(opts []options.Lister[options.CollectionCreateOptions]) js.Value {
+func makeDocCreateOptions(opts []options.Enumerable[options.CollectionCreateOptions]) js.Value {
 	jsOpts := createOptionsJS{}
 	createOpts := utils.NewOptions(opts...)
 	jsOpts.EncryptDoc = createOpts.EncryptDoc
@@ -110,7 +110,7 @@ func makeDocCreateOptions(opts []options.Lister[options.CollectionCreateOptions]
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...options.Lister[options.CollectionCreateOptions],
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -131,7 +131,7 @@ func (c *Collection) CreateMany(
 func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionUpdateOptions],
+	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -151,7 +151,7 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...options.Lister[options.CollectionSaveOptions],
+	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
 	saveOpts := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, saveOpts)
@@ -171,7 +171,7 @@ func (c *Collection) Save(
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionDeleteOptions],
+	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -185,7 +185,7 @@ func (c *Collection) Delete(
 func (c *Collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionExistsOptions],
+	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -200,7 +200,7 @@ func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
-	opts ...options.Lister[options.CollectionUpdateWithFilterOptions],
+	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -218,7 +218,7 @@ func (c *Collection) UpdateWithFilter(
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
-	opts ...options.Lister[options.CollectionDeleteWithFilterOptions],
+	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -236,7 +236,7 @@ func (c *Collection) DeleteWithFilter(
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	opts ...options.Lister[options.CollectionGetOptions],
+	opts ...options.Enumerable[options.CollectionGetOptions],
 ) (*client.Document, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -264,7 +264,7 @@ func (c *Collection) Get(
 
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
-	opts ...options.Lister[options.CollectionGetAllDocIDsOptions],
+	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
 ) (<-chan client.DocIDResult, error) {
 	panic("not implemented")
 }
@@ -272,7 +272,7 @@ func (c *Collection) GetAllDocIDs(
 func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
-	opts ...options.Lister[options.CollectionCreateIndexOptions],
+	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
 ) (client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
@@ -291,14 +291,14 @@ func (c *Collection) CreateIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) DropIndex(ctx context.Context, indexName string, opts ...options.Lister[options.CollectionDropIndexOptions]) error {
+func (c *Collection) DropIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDropIndexOptions]) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	_, err := execute(ctx, c.client, "dropIndex", indexName)
 	return err
 }
 
-func (c *Collection) GetIndexes(ctx context.Context, opts ...options.Lister[options.CollectionGetIndexesOptions]) ([]client.IndexDescription, error) {
+func (c *Collection) GetIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionGetIndexesOptions]) ([]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	res, err := execute(ctx, c.client, "getIndexes")
@@ -348,7 +348,7 @@ func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string)
 	return err
 }
 
-func (c *Collection) Truncate(ctx context.Context, opts ...options.Lister[options.CollectionTruncateOptions]) error {
+func (c *Collection) Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
 	_, err := execute(ctx, c.client, "truncate")

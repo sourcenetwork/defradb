@@ -162,7 +162,9 @@ func (txn *Transaction) AddView(
 	return txn.Client.AddView(ctx, gqlQuery, sdl, opts...)
 }
 
-func (txn *Transaction) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
+func (txn *Transaction) RefreshViews(
+	ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions],
+) error {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
 	return txn.Client.RefreshViews(ctx, opts...)
 }

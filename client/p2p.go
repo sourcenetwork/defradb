@@ -126,7 +126,7 @@ type P2P interface {
 	SyncBranchableCollection(
 		ctx context.Context,
 		collectionID string,
-		opts ...options.Lister[options.SyncBranchableCollectionOptions],
+		opts ...options.Enumerable[options.SyncBranchableCollectionOptions],
 	) error
 }
 
