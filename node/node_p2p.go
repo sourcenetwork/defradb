@@ -36,9 +36,7 @@ func (n *Node) startP2P(ctx context.Context, store corekv.ReaderWriter, chunkSiz
 	if len(n.opts.P2P.BootstrapPeers) > 0 {
 		p2pOpts = append(p2pOpts, p2p.WithBootstrapPeers(n.opts.P2P.BootstrapPeers...))
 	}
-	if n.opts.P2P.EnablePubSub {
-		p2pOpts = append(p2pOpts, p2p.WithEnablePubSub(true))
-	}
+	p2pOpts = append(p2pOpts, p2p.WithEnablePubSub(n.opts.P2P.EnablePubSub))
 	if n.opts.P2P.EnableRelay {
 		p2pOpts = append(p2pOpts, p2p.WithEnableRelay(true))
 	}
