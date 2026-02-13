@@ -392,6 +392,11 @@ type NodeDBOptionsBuilder struct {
 	nodeSubBuilder[NodeDBOptions]
 }
 
+// NodeDB creates a standalone NodeDBOptionsBuilder.
+func NodeDB() *NodeDBOptionsBuilder {
+	return &NodeDBOptionsBuilder{}
+}
+
 // SetMaxTxnRetries sets the maximum number of retries per transaction.
 func (sb *NodeDBOptionsBuilder) SetMaxTxnRetries(num int) *NodeDBOptionsBuilder {
 	sb.append(func(opts *NodeDBOptions) { opts.MaxTxnRetries = immutable.Some(num) })
@@ -460,6 +465,11 @@ func (sb *NodeDBOptionsBuilder) SetAll(dbOpts NodeDBOptions) *NodeDBOptionsBuild
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeP2POptionsBuilder struct {
 	nodeSubBuilder[NodeP2POptions]
+}
+
+// NodeP2P creates a standalone NodeP2POptionsBuilder.
+func NodeP2P() *NodeP2POptionsBuilder {
+	return &NodeP2POptionsBuilder{}
 }
 
 // SetListenAddresses sets the listen addresses.
@@ -569,6 +579,11 @@ type NodeDocumentACPOptionsBuilder struct {
 	nodeSubBuilder[NodeDocumentACPOptions]
 }
 
+// NodeDocumentACP creates a standalone NodeDocumentACPOptionsBuilder.
+func NodeDocumentACP() *NodeDocumentACPOptionsBuilder {
+	return &NodeDocumentACPOptionsBuilder{}
+}
+
 // SetType sets the document ACP type.
 func (sb *NodeDocumentACPOptionsBuilder) SetType(acpType NodeDocumentACPType) *NodeDocumentACPOptionsBuilder {
 	sb.append(func(opts *NodeDocumentACPOptions) { opts.DocumentACPType = acpType })
@@ -615,6 +630,11 @@ func (sb *NodeDocumentACPOptionsBuilder) SetAll(dacOpts NodeDocumentACPOptions) 
 // It can be used standalone or as part of a NodeOptionsBuilder chain.
 type NodeACPOptionsBuilder struct {
 	nodeSubBuilder[NodeACPOptions]
+}
+
+// NodeACP creates a standalone NodeACPOptionsBuilder.
+func NodeACP() *NodeACPOptionsBuilder {
+	return &NodeACPOptionsBuilder{}
 }
 
 // SetEnabled sets whether node ACP is enabled.
