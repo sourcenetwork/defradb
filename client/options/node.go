@@ -177,7 +177,7 @@ type NodeDBOptions struct {
 	MaxTxnRetries immutable.Option[int]
 	// Identity is the identity to use for the node.
 	Identity immutable.Option[identity.Identity]
-	// EnableSigning enables block signing. Defaults to true.
+	// EnableSigning enables block signing.
 	EnableSigning bool
 	// SearchableEncryptionKey is the key used for searchable encryption.
 	SearchableEncryptionKey []byte

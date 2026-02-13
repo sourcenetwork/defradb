@@ -21,9 +21,9 @@ import (
 func RandomNetworkingConfig() ConfigureNode {
 	return func() options.NodeP2POptions {
 		return options.NodeP2POptions{
-			ListenAddresses:          []string{"/ip4/" + getIPString() + "/tcp/0"},
-			EnablePubSub:             true,
-			EnableRelay:              true,
+			ListenAddresses:           []string{"/ip4/" + getIPString() + "/tcp/0"},
+			EnablePubSub:              true,
+			EnableRelay:               true,
 			EnableClearBackoffOnRetry: true,
 		}
 	}
