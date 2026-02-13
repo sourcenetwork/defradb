@@ -60,7 +60,7 @@ func TestGroupByFieldForTheManySideInSchema(t *testing.T) {
 
 							// Internal fields.
 							map[string]any{"name": "_deleted"},
-							map[string]any{"name": "_group"},
+							map[string]any{"name": "GROUP"},
 							map[string]any{"name": "_docID"},
 							map[string]any{"name": "_version"},
 
@@ -120,7 +120,7 @@ func TestGroupByFieldForTheSingleSideInSchema(t *testing.T) {
 
 							// Internal fields.
 							map[string]any{"name": "_deleted"},
-							map[string]any{"name": "_group"},
+							map[string]any{"name": "GROUP"},
 							map[string]any{"name": "_docID"},
 							map[string]any{"name": "_version"},
 

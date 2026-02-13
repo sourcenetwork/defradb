@@ -30,10 +30,10 @@ func TestQuerySimpleWithoutGroupByWithCountOnGroup(t *testing.T) {
 				Request: `query {
 					Users {
 						Age
-						_count(_group: {})
+						COUNT(GROUP: {})
 					}
 				}`,
-				ExpectedError: "_group may only be referenced when within a groupBy request",
+				ExpectedError: "group may only be referenced when within a groupBy request",
 			},
 		},
 	}
@@ -54,13 +54,13 @@ func TestQuerySimpleWithGroupByNumberWithCountOnInnerNonExistantGroup(t *testing
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_group {
+						GROUP {
 							Name
-							_count(_group: {})
+							COUNT(GROUP: {})
 						}
 					}
 				}`,
-				ExpectedError: "_group may only be referenced when within a groupBy request",
+				ExpectedError: "group may only be referenced when within a groupBy request",
 			},
 		},
 	}
@@ -93,18 +93,18 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCount(t *testin
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_count(_group: {})
+						COUNT(GROUP: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":    int64(32),
-							"_count": 2,
+							"Age":   int64(32),
+							"COUNT": 2,
 						},
 						{
-							"Age":    int64(19),
-							"_count": 1,
+							"Age":   int64(19),
+							"COUNT": 1,
 						},
 					},
 				},
@@ -122,7 +122,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountOnEmptyCol
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_count(_group: {})
+						COUNT(GROUP: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -160,8 +160,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_count(_group: {})
-						_group {
+						COUNT(GROUP: {})
+						GROUP {
 							Name
 						}
 					}
@@ -169,9 +169,9 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":    int64(32),
-							"_count": 2,
-							"_group": []map[string]any{
+							"Age":   int64(32),
+							"COUNT": 2,
+							"GROUP": []map[string]any{
 								{
 									"Name": "Bob",
 								},
@@ -181,9 +181,9 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupAndChildCount(t *testing.T
 							},
 						},
 						{
-							"Age":    int64(19),
-							"_count": 1,
-							"_group": []map[string]any{
+							"Age":   int64(19),
+							"COUNT": 1,
+							"GROUP": []map[string]any{
 								{
 									"Name": "Alice",
 								},
@@ -224,7 +224,7 @@ func TestQuerySimpleWithGroupByNumberWithUndefinedField(t *testing.T) {
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_count
+						COUNT
 					}
 				}`,
 				ExpectedError: "aggregate must be provided with a property to aggregate",
@@ -260,7 +260,7 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndAliasesChildCount(t 
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						Count: _count(_group: {})
+						Count: COUNT(GROUP: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -309,8 +309,8 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndDuplicatedAliasedChi
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						Count1: _count(_group: {})
-						Count2: _count(_group: {})
+						Count1: COUNT(GROUP: {})
+						Count2: COUNT(GROUP: {})
 					}
 				}`,
 				Results: map[string]any{

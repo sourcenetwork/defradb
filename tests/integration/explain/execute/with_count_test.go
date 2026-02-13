@@ -33,7 +33,7 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 				Request: `query @explain(type: execute) {
 					Author {
 						name
-						numberOfBooks: _count(books: {})
+						numberOfBooks: COUNT(books: {})
 					}
 				}`,
 

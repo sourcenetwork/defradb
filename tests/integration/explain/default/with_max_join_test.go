@@ -48,7 +48,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing
 					Author {
 						name
 						_docID
-						TotalPages: _max(
+						TotalPages: MAX(
 							books: {field: pages}
 						)
 					}
@@ -124,7 +124,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(
 				Request: `query @explain {
 					Author {
 						name
-						TotalPages: _max(
+						TotalPages: MAX(
 							articles: {
 								field: pages,
 								filter: {
@@ -215,7 +215,7 @@ func TestDefaultExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succ
 				Request: `query @explain {
 					Author {
 						name
-						TotalPages: _max(
+						TotalPages: MAX(
 							books: {field: pages},
 							articles: {field: pages}
 						)

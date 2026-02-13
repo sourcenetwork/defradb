@@ -26,7 +26,7 @@ func TestQuerySimple_WithMinOnUndefinedObject_ReturnsError(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_min
+					MIN
 				}`,
 				ExpectedError: "aggregate must be provided with a property to aggregate",
 			},
@@ -41,7 +41,7 @@ func TestQuerySimple_WithMinOnUndefinedField_ReturnsError(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_min(Users: {})
+					MIN(Users: {})
 				}`,
 				ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
 			},
@@ -56,10 +56,10 @@ func TestQuerySimple_WithMinOnEmptyCollection_Succeeds(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_min(Users: {field: Age})
+					MIN(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_min": nil,
+					"MIN": nil,
 				},
 			},
 		},
@@ -85,10 +85,10 @@ func TestQuerySimple_WithMin_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_min(Users: {field: Age})
+					MIN(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_min": int64(21),
+					"MIN": int64(21),
 				},
 			},
 		},
@@ -119,10 +119,10 @@ func TestQuerySimple_WithMinAndMaxValueInt_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_max(Users: {field: Age})
+					MAX(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_max": int64(math.MaxInt64),
+					"MAX": int64(math.MaxInt64),
 				},
 			},
 		},
@@ -136,7 +136,7 @@ func TestQuerySimple_WithAliasedMinOnEmptyCollection_Succeeds(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					minimum: _min(Users: {field: Age})
+					minimum: MIN(Users: {field: Age})
 				}`,
 				Results: map[string]any{
 					"minimum": nil,

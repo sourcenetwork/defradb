@@ -51,7 +51,7 @@ func TestDefaultExplainRequestWithAverageOnJoinedField(t *testing.T) {
 				Request: `query @explain {
 					Author {
 						name
-						_avg(books: {field: pages})
+						AVG(books: {field: pages})
 					}
 				}`,
 
@@ -154,7 +154,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 				Request: `query @explain {
 					Author {
 						name
-						_avg(
+						AVG(
 							books: {field: pages},
 							articles: {field: pages, filter: {pages: {_gt: 3}}}
 						)
@@ -336,7 +336,7 @@ func TestDefaultExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *tes
 }
 
 // This test asserts that only a single index join is used (not parallelNode) because the
-// _avg reuses the rendered join as they have matching filters (average adds a ne nil filter).
+// AVG reuses the rendered join as they have matching filters (average adds a ne nil filter).
 func TestDefaultExplainRequestOneToManyWithAverageAndChildNeNilFilterSharesJoinField(t *testing.T) {
 	test := testUtils.TestCase{
 
@@ -348,7 +348,7 @@ func TestDefaultExplainRequestOneToManyWithAverageAndChildNeNilFilterSharesJoinF
 				Request: `query @explain {
 					Author {
 						name
-						_avg(books: {field: rating})
+						AVG(books: {field: rating})
 						books(filter: {rating: {_neq: null}}){
 							name
 						}

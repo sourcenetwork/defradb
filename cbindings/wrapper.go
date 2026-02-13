@@ -347,7 +347,12 @@ func (w *CWrapper) SyncDocuments(
 	return nil
 }
 
-func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+func (w *CWrapper) SyncCollectionVersions(
+	ctx context.Context,
+	versionIDs []string,
+	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
 	versions := C.CString(strings.Join(versionIDs, ","))
 	defer C.free(unsafe.Pointer(versions))
 
@@ -359,8 +364,11 @@ func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs ...str
 	cTimerStr := C.CString(timerStr)
 	defer C.free(unsafe.Pointer(cTimerStr))
 
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	res := ConvertAndFreeCResult(
-		C.P2PcollectionSyncVersions(C.uintptr_t(w.handle), versions, cTimerStr, C.uintptr_t(0)))
+		C.P2PcollectionSyncVersions(C.uintptr_t(w.handle), versions, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

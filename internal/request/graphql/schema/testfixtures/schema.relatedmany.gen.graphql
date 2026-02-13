@@ -39,11 +39,11 @@ input IntListOperatorBlock {
 }
 
 enum AuthorNumericFieldsArg {
-    _sum
-    _avg
-    _min
-    _max
-    _count
+    SUM
+    AVG
+    MIN
+    MAX
+    COUNT
     age
 }
 
@@ -111,7 +111,7 @@ filter: AuthorFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -169,7 +169,7 @@ filter: BookFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -231,7 +231,7 @@ filter: CommitsFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -378,7 +378,7 @@ filter: AuthorFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -436,7 +436,7 @@ filter: BookFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -474,7 +474,7 @@ showDeleted: Boolean): [Book]
     (true average, not an average of averages) will be returned as a single value.
 
     """
-    _avg(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    AVG(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
     """
     
     Returns a set of commits matching any provided criteria. If no arguments are
@@ -506,7 +506,7 @@ filter: CommitsFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -537,7 +537,7 @@ order: [commitsOrderArg]): [Commit]
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    _count(Author: Author__CountSelector, Book: Book__CountSelector): Int
+    COUNT(Author: Author__CountSelector, Book: Book__CountSelector): Int
     """
     
     Returns the maximum of the specified field values within the specified child sets. If
@@ -545,7 +545,7 @@ order: [commitsOrderArg]): [Commit]
     will be returned as a single value.
 
     """
-    _max(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    MAX(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
     """
     
     Returns the minimum of the specified field values within the specified child sets. If
@@ -553,7 +553,7 @@ order: [commitsOrderArg]): [Commit]
     will be returned as a single value.
 
     """
-    _min(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    MIN(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
@@ -561,7 +561,7 @@ order: [commitsOrderArg]): [Commit]
     a single value.
 
     """
-    _sum(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
+    SUM(Author: Author__NumericSelector, Book: Book__NumericSelector): Float
 }
 
 """
@@ -760,7 +760,7 @@ type Commit {
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    _count(field: commitCountFieldArg): Int
+    COUNT(field: commitCountFieldArg): Int
     """
     
     The group field may be used to return a set of records belonging to the group.
@@ -769,7 +769,7 @@ type Commit {
     groupBy.
 
     """
-    _group: [Commit]
+    GROUP: [Commit]
     """
     
     The unique CID of this commit, and the primary means through which to safely identify
@@ -829,7 +829,7 @@ filter: CommitsFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -875,7 +875,7 @@ filter: CommitsFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -917,7 +917,7 @@ type Book {
     (true average, not an average of averages) will be returned as a single value.
 
     """
-    _avg(_group: Book__NumericSelector,     """
+    AVG(GROUP: Book__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -929,7 +929,7 @@ rating: ScalarAggregateNumericBlock): Float
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    _count(_group: Book__CountSelector, _version: Book___version__CountSelector): Int
+    COUNT(GROUP: Book__CountSelector, _version: Book___version__CountSelector): Int
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -950,7 +950,7 @@ rating: ScalarAggregateNumericBlock): Float
     groupBy.
 
     """
-    _group(    """
+    GROUP(    """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -970,7 +970,7 @@ filter: BookFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -1002,7 +1002,7 @@ order: [BookOrderArg]): [Book]
     will be returned as a single value.
 
     """
-    _max(_group: Book__NumericSelector,     """
+    MAX(GROUP: Book__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -1015,14 +1015,14 @@ rating: ScalarAggregateNumericBlock): Float
     will be returned as a single value.
 
     """
-    _min(_group: Book__NumericSelector,     """
+    MIN(GROUP: Book__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
     """
 rating: ScalarAggregateNumericBlock): Float
     "Returns the cosine similarity between the specified field and the provided vector."
-    _similarity: Float
+    SIMILARITY: Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
@@ -1030,7 +1030,7 @@ rating: ScalarAggregateNumericBlock): Float
     a single value.
 
     """
-    _sum(_group: Book__NumericSelector,     """
+    SUM(GROUP: Book__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -1151,7 +1151,7 @@ type Author {
     (true average, not an average of averages) will be returned as a single value.
 
     """
-    _avg(_group: Author__NumericSelector,     """
+    AVG(GROUP: Author__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -1163,7 +1163,7 @@ age: ScalarAggregateNumericBlock, published: Book__NumericSelector): Float
     sets are specified, the combined total of all of them will be returned as a single value.
 
     """
-    _count(_group: Author__CountSelector, _version: Author___version__CountSelector, published: Book__CountSelector): Int
+    COUNT(GROUP: Author__CountSelector, _version: Author___version__CountSelector, published: Book__CountSelector): Int
     """
     
     Indicates as to whether or not this document has been deleted.
@@ -1184,7 +1184,7 @@ age: ScalarAggregateNumericBlock, published: Book__NumericSelector): Float
     groupBy.
 
     """
-    _group(    """
+    GROUP(    """
     
     An optional set of docIDs for this field. Only documents with a docID
     matching a docID in the given set will be returned.  If no documents match,
@@ -1204,7 +1204,7 @@ filter: AuthorFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -1236,7 +1236,7 @@ order: [AuthorOrderArg]): [Author]
     will be returned as a single value.
 
     """
-    _max(_group: Author__NumericSelector,     """
+    MAX(GROUP: Author__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -1249,14 +1249,14 @@ age: ScalarAggregateNumericBlock, published: Book__NumericSelector): Float
     will be returned as a single value.
 
     """
-    _min(_group: Author__NumericSelector,     """
+    MIN(GROUP: Author__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
     """
 age: ScalarAggregateNumericBlock, published: Book__NumericSelector): Float
     "Returns the cosine similarity between the specified field and the provided vector."
-    _similarity: Float
+    SIMILARITY: Float
     """
     
     Returns the total sum of the specified field values within the specified child sets. If
@@ -1264,7 +1264,7 @@ age: ScalarAggregateNumericBlock, published: Book__NumericSelector): Float
     a single value.
 
     """
-    _sum(_group: Author__NumericSelector,     """
+    SUM(GROUP: Author__NumericSelector,     """
     
     The scalar field selection type for aggregate input arguments.
 
@@ -1298,7 +1298,7 @@ filter: BookFilterArg,     """
     An optional set of fields for which to group the contents of this field by.
     If this argument is provided, only fields used to group may be rendered in
     the immediate child selector.  Additional fields may be selected by using
-    the '_group' selector within the immediate child selector. If an empty set
+    the 'GROUP' selector within the immediate child selector. If an empty set
     is provided, the restrictions mentioned still apply, although all results
     will appear within the same group.
 
@@ -1848,16 +1848,16 @@ enum AuthorField {
     name
     published
     verified
-    _group
+    GROUP
 }
 
 enum BookNumericFieldsArg {
-    _min
-    _max
+    MIN
+    MAX
     rating
-    _count
-    _sum
-    _avg
+    COUNT
+    SUM
+    AVG
 }
 
 input Book___version__CountSelector {
@@ -2192,7 +2192,7 @@ input Float64ListOperatorBlock {
 }
 
 enum BookField {
-    _group
+    GROUP
     _version
     _deleted
     _docID
@@ -2675,7 +2675,7 @@ input Float32ListOperatorBlock {
     _none: Float32OperatorBlock
 }
 
-input Book___group__CountSelector {
+input Book__GROUP__CountSelector {
     """
     
     An optional value that caps the number of results to the number provided.
@@ -2847,7 +2847,7 @@ input BookFilterArg {
     rating: Float64OperatorBlock
 }
 
-input Author___group__CountSelector {
+input Author__GROUP__CountSelector {
     """
     
     An optional value that caps the number of results to the number provided.

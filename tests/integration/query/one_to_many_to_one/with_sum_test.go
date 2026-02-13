@@ -91,8 +91,8 @@ func TestQueryWithSumOnInlineAndSumOnOneToManyField(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						ThisMakesNoSenseToSumButHey: _sum(favouritePageNumbers: {})
-						TotalRating: _sum(book: {field: rating})
+						ThisMakesNoSenseToSumButHey: SUM(favouritePageNumbers: {})
+						TotalRating: SUM(book: {field: rating})
 					}
 				}`,
 				Results: map[string]any{

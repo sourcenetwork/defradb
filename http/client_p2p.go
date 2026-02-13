@@ -340,7 +340,14 @@ func (c *Client) SyncDocuments(
 	return err
 }
 
-func (c *Client) SyncCollectionVersions(ctx context.Context, versionIDs ...string) error {
+func (c *Client) SyncCollectionVersions(
+	ctx context.Context,
+	versionIDs []string,
+	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "collections", "sync-versions")
 
 	req := map[string]any{

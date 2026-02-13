@@ -32,14 +32,14 @@ func TestQueryOneToMany_WithCount_NothingToCount(t *testing.T) {
 				Request: `query {
 						Author {
 							name
-							_count(published: {})
+							COUNT(published: {})
 						}
 					}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 0,
+							"name":  "John Grisham",
+							"COUNT": 0,
 						},
 					},
 				},
@@ -97,18 +97,18 @@ func TestQueryOneToMany_WithCount_ShouldMatchAll(t *testing.T) {
 				Request: `query {
 						Author {
 							name
-							_count(published: {})
+							COUNT(published: {})
 						}
 					}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 2,
+							"name":  "John Grisham",
+							"COUNT": 2,
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 1,
+							"name":  "Cornelia Funke",
+							"COUNT": 1,
 						},
 					},
 				},
@@ -167,7 +167,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchAll(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {publishedCount: {_gt: 0}}}) {
 						name
-						publishedCount: _count(published: {})
+						publishedCount: COUNT(published: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -237,7 +237,7 @@ func TestQueryOneToMany_WithCountAliasFilter_ShouldMatchOne(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {publishedCount: {_gt: 1}}}) {
 						name
-						publishedCount: _count(published: {})
+						publishedCount: COUNT(published: {})
 					}
 				}`,
 				Results: map[string]any{

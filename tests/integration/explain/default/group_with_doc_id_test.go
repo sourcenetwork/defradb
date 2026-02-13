@@ -32,7 +32,7 @@ func TestDefaultExplainRequestWithDocIDOnParentGroupBy(t *testing.T) {
 						docID: "bae-6a4c5bc5-b044-5a03-a868-8260af6f2254"
 					) {
 						age
-						_group {
+						GROUP {
 							name
 						}
 					}
@@ -89,7 +89,7 @@ func TestDefaultExplainRequestWithDocIDsAndFilterOnParentGroupBy(t *testing.T) {
 						]
 					) {
 						age
-						_group {
+						GROUP {
 							name
 						}
 					}

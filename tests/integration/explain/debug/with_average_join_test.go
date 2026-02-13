@@ -51,7 +51,7 @@ func TestDebugExplainRequestWithAverageOnJoinedField(t *testing.T) {
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						_avg(books: {field: pages})
+						AVG(books: {field: pages})
 					}
 				}`,
 
@@ -74,7 +74,7 @@ func TestDebugExplainRequestWithAverageOnMultipleJoinedFieldsWithFilter(t *testi
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						_avg(
+						AVG(
 							books: {field: pages},
 							articles: {field: pages, filter: {pages: {_gt: 3}}}
 						)

@@ -29,7 +29,7 @@ func TestDebugExplainRequestWithFilterOnInnerGroupSelection(t *testing.T) {
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [age]) {
 						age
-						_group(filter: {age: {_gt: 63}}) {
+						GROUP(filter: {age: {_gt: 63}}) {
 							name
 						}
 					}
@@ -57,7 +57,7 @@ func TestDebugExplainRequestWithFilterOnParentGroupByAndInnerGroupSelection(t *t
 				filter: {age: {_gt: 62}}
 			) {
 				age
-				_group(filter: {age: {_gt: 63}}) {
+				GROUP(filter: {age: {_gt: 63}}) {
 					name
 				}
 			}

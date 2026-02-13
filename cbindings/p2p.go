@@ -333,7 +333,8 @@ func P2PcollectionSyncVersions(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.SyncCollectionVersions(ctx, versionArgs...)
+	opts := options.WithIdentity(options.SyncCollectionVersions(), acpIdentity.FromContext(ctx))
+	err = node.DB.SyncCollectionVersions(ctx, versionArgs, opts)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

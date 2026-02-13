@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimit_Succeeds(t *testing.
 				Request: `query {
 					Users {
 						name
-						_max(favouriteIntegers: {offset: 1, limit: 2})
+						MAX(favouriteIntegers: {offset: 1, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_max": int64(5),
+							"MAX":  int64(5),
 						},
 					},
 				},

@@ -49,18 +49,18 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMaxWith
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_max(_group: {field: Age, limit: 2})
+						MAX(GROUP: {field: Age, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_max": int64(38),
+							"MAX":  int64(38),
 						},
 						{
 							"Name": "Alice",
-							"_max": int64(-19),
+							"MAX":  int64(-19),
 						},
 					},
 				},

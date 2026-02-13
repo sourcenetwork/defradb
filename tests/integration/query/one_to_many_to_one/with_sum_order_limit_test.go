@@ -29,7 +29,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 				Request: `query {
 					Author {
 						name
-						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
+						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
 						NewestPublishersBook: book(order: {publisher: {yearOpened: DESC}}, limit: 2) {
 							name
 						}
@@ -82,7 +82,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 				Request: `query {
 					Author {
 						name
-						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
+						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
 						NewestPublishersBook: book(order: {publisher: {yearOpened: ASC}}, limit: 2) {
 							name
 						}
@@ -138,8 +138,8 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 				Request: `query {
 					Author {
 						name
-						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
-						s2: _sum(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
+						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
+						s2: SUM(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
@@ -181,7 +181,7 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeD
 				Request: `query {
 					Author {
 						name
-						s1: _sum(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
+						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
 						OldestPublishersBook: book(order: {publisher: {yearOpened: ASC}}, limit: 2) {
 							name
 						}

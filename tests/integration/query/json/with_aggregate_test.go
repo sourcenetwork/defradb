@@ -52,10 +52,10 @@ func TestQueryJSON_WithAggregateFilter_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_count(Users: {filter: {custom: {tree: {_eq: "oak"}}}})
+					COUNT(Users: {filter: {custom: {tree: {_eq: "oak"}}}})
 				}`,
 				Results: map[string]any{
-					"_count": 1,
+					"COUNT": 1,
 				},
 			},
 		},
