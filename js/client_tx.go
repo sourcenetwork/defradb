@@ -164,6 +164,7 @@ func (t *transaction) refreshViews(this js.Value, args []js.Value) (js.Value, er
 		return js.Undefined(), err
 	}
 	opt := collectionFetchOptionsToGetCollectionsOptions(input)
+	setOptIdentity(opt, args, 1)
 	err = t.txn.RefreshViews(ctx, opt)
 	return js.Undefined(), err
 }
