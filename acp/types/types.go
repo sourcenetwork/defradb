@@ -116,6 +116,7 @@ const (
 	NodeLensListPerm
 	NodeViewRefreshPerm
 	NodeViewAddPerm
+	NodeMigrationSetPerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
@@ -164,6 +165,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"lens-list",
 	"view-refresh",
 	"view-add",
+	"migration-set",
 }
 
 const NodeACPObject = "NodeObject"
@@ -266,6 +268,9 @@ resources:
   - name: view-refresh
     expr: admin
   - name: view-add
+    expr: admin
+
+  - name: migration-set
     expr: admin
 
   relations:

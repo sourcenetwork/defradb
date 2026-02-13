@@ -37,7 +37,7 @@ extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t 
 extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
-extern Result LensSet(uintptr_t nodePtr, char* src, char* dst, char* cfg);
+extern Result LensSet(uintptr_t nodePtr, uintptr_t identity, char* src, char* dst, char* cfg);
 extern Result LensAdd(uintptr_t nodePtr, uintptr_t identityPtr, char* cfg);
 extern Result LensList(uintptr_t nodePtr, uintptr_t identityPtr);
 extern NewNodeResult NewNode(NodeInitOptions cOptions);
@@ -748,7 +748,9 @@ func (w *CWrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[
 	return nil
 }
 
-func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+func (w *CWrapper) SetMigration(
+	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
 	src := C.CString(config.SourceCollectionVersionID)
 	dst := C.CString(config.DestinationCollectionVersionID)
 	lensConfig, err := json.Marshal(config.Lens)
@@ -760,8 +762,11 @@ func (w *CWrapper) SetMigration(ctx context.Context, config client.LensConfig) (
 	defer C.free(unsafe.Pointer(dst))
 	defer C.free(unsafe.Pointer(lens))
 
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.LensSet(callHandle, src, dst, lens))
+	res := ConvertAndFreeCResult(C.LensSet(callHandle, cIdentity, src, dst, lens))
 
 	if res.Status != 0 {
 		return "", errors.New(res.Error)

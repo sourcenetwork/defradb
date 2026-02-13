@@ -29,8 +29,12 @@ import (
 )
 
 //export LensSet
-func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Result {
+func LensSet(nodePtr C.uintptr_t, identityPtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 
 	decoder := json.NewDecoder(strings.NewReader(C.GoString(cfg)))
 	decoder.DisallowUnknownFields()
@@ -49,7 +53,8 @@ func LensSet(nodePtr C.uintptr_t, src *C.char, dst *C.char, cfg *C.char) C.Resul
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	lensID, err := store.SetMigration(ctx, migrationCfg)
+	setOpt := options.WithIdentity(options.SetMigration(), acpIdentity.FromContext(ctx))
+	lensID, err := store.SetMigration(ctx, migrationCfg, setOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

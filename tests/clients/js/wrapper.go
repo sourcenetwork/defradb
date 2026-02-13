@@ -381,7 +381,11 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[o
 	return err
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions]) (string, error) {
+	opt := utils.NewOptions(opts...)
+	if opt != nil {
+		ctx = ctxWithOptIdentity(ctx, opt)
+	}
 	configVal, err := goji.MarshalJS(config)
 	if err != nil {
 		return "", err

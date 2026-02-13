@@ -483,7 +483,9 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[o
 	return err
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+func (w *Wrapper) SetMigration(
+	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
 	args := []string{"client", "lens", "set"}
 
 	lenses, err := json.Marshal(config.Lens)
@@ -493,6 +495,9 @@ func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (s
 	args = append(args, config.SourceCollectionVersionID)
 	args = append(args, config.DestinationCollectionVersionID)
 	args = append(args, string(lenses))
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := w.cmd.execute(ctx, args)
 	if err != nil {

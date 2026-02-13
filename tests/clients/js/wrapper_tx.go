@@ -130,9 +130,9 @@ func (txn *Transaction) RefreshViews(ctx context.Context, opts ...options.Enumer
 	return txn.Wrapper.RefreshViews(ctx, opts...)
 }
 
-func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions]) (string, error) {
 	ctx = datastore.CtxSetFromClientTxn(ctx, txn)
-	return txn.Wrapper.SetMigration(ctx, config)
+	return txn.Wrapper.SetMigration(ctx, config, opts...)
 }
 
 func (txn *Transaction) AddLens(

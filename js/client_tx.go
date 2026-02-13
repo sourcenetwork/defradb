@@ -179,7 +179,9 @@ func (t *transaction) setMigration(this js.Value, args []js.Value) (js.Value, er
 	if err != nil {
 		return js.Undefined(), err
 	}
-	lensID, err := t.txn.SetMigration(ctx, config)
+	opt := options.SetMigration()
+	setOptIdentity(opt, args, 1)
+	lensID, err := t.txn.SetMigration(ctx, config, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

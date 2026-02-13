@@ -168,7 +168,9 @@ func (h *storeHandler) SetMigration(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	lensID, err := db.SetMigration(req.Context(), cfg)
+	opts := options.WithIdentity(options.SetMigration(), identity.FromContext(req.Context()))
+
+	lensID, err := db.SetMigration(req.Context(), cfg, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

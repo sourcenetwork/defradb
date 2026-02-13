@@ -286,7 +286,11 @@ type Store interface {
 	// collection version.
 	//
 	// Returns the ID of the Lens transform.
-	SetMigration(ctx context.Context, config LensConfig) (string, error)
+	SetMigration(
+		ctx context.Context,
+		config LensConfig,
+		opts ...options.Enumerable[options.SetMigrationOptions],
+	) (string, error)
 
 	// AddLens stores a lens configuration and returns its CID.
 	//

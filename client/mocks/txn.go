@@ -2874,8 +2874,14 @@ func (_c *Txn_SetActiveCollectionVersion_Call) RunAndReturn(run func(ctx context
 }
 
 // SetMigration provides a mock function for the type Txn
-func (_mock *Txn) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
-	ret := _mock.Called(ctx, config)
+func (_mock *Txn) SetMigration(ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions]) (string, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, config, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, config)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetMigration")
@@ -2883,16 +2889,16 @@ func (_mock *Txn) SetMigration(ctx context.Context, config client.LensConfig) (s
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.LensConfig) (string, error)); ok {
-		return returnFunc(ctx, config)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.LensConfig, ...options.Enumerable[options.SetMigrationOptions]) (string, error)); ok {
+		return returnFunc(ctx, config, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.LensConfig) string); ok {
-		r0 = returnFunc(ctx, config)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.LensConfig, ...options.Enumerable[options.SetMigrationOptions]) string); ok {
+		r0 = returnFunc(ctx, config, opts...)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.LensConfig) error); ok {
-		r1 = returnFunc(ctx, config)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.LensConfig, ...options.Enumerable[options.SetMigrationOptions]) error); ok {
+		r1 = returnFunc(ctx, config, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2907,11 +2913,13 @@ type Txn_SetMigration_Call struct {
 // SetMigration is a helper method to define mock.On call
 //   - ctx context.Context
 //   - config client.LensConfig
-func (_e *Txn_Expecter) SetMigration(ctx interface{}, config interface{}) *Txn_SetMigration_Call {
-	return &Txn_SetMigration_Call{Call: _e.mock.On("SetMigration", ctx, config)}
+//   - opts ...options.Enumerable[options.SetMigrationOptions]
+func (_e *Txn_Expecter) SetMigration(ctx interface{}, config interface{}, opts ...interface{}) *Txn_SetMigration_Call {
+	return &Txn_SetMigration_Call{Call: _e.mock.On("SetMigration",
+		append([]interface{}{ctx, config}, opts...)...)}
 }
 
-func (_c *Txn_SetMigration_Call) Run(run func(ctx context.Context, config client.LensConfig)) *Txn_SetMigration_Call {
+func (_c *Txn_SetMigration_Call) Run(run func(ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions])) *Txn_SetMigration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2921,9 +2929,16 @@ func (_c *Txn_SetMigration_Call) Run(run func(ctx context.Context, config client
 		if args[1] != nil {
 			arg1 = args[1].(client.LensConfig)
 		}
+		var arg2 []options.Enumerable[options.SetMigrationOptions]
+		var variadicArgs []options.Enumerable[options.SetMigrationOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.SetMigrationOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -2934,7 +2949,7 @@ func (_c *Txn_SetMigration_Call) Return(s string, err error) *Txn_SetMigration_C
 	return _c
 }
 
-func (_c *Txn_SetMigration_Call) RunAndReturn(run func(ctx context.Context, config client.LensConfig) (string, error)) *Txn_SetMigration_Call {
+func (_c *Txn_SetMigration_Call) RunAndReturn(run func(ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions]) (string, error)) *Txn_SetMigration_Call {
 	_c.Call.Return(run)
 	return _c
 }

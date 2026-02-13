@@ -1,0 +1,86 @@
+// Copyright 2026 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package test_acp_nac_relation_admin
+
+import (
+	"testing"
+
+	"github.com/sourcenetwork/lens/host-go/config/model"
+
+	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client"
+	testUtils "github.com/sourcenetwork/defradb/tests/integration"
+	"github.com/sourcenetwork/defradb/tests/lenses"
+)
+
+func TestNAC_AdminRelation_CanSetMigration(t *testing.T) {
+	test := testUtils.TestCase{
+		Actions: []any{
+			// Starting with NAC, so only authorized user(s) can perform operations from here on out.
+			testUtils.Close{},
+			testUtils.Start{
+				Identity:  testUtils.ClientIdentity(1),
+				EnableNAC: true,
+			},
+
+			// This user, can not perform this gated operation yet.
+			testUtils.ConfigureMigration{
+				Identity: testUtils.ClientIdentity(2),
+				LensConfig: client.LensConfig{
+					SourceCollectionVersionID:      "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
+					DestinationCollectionVersionID: "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smv",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								Arguments: map[string]any{
+									"dst":   "name",
+									"value": "John",
+								},
+							},
+						},
+					},
+				},
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeMigrationSetPerm),
+			},
+
+			// Grant access to user.
+			testUtils.AddNACActorRelationship{
+				RequestorIdentity: testUtils.ClientIdentity(1),
+				TargetIdentity:    testUtils.ClientIdentity(2),
+				Relation:          "admin",
+				ExpectedExistence: false,
+			},
+
+			// This user, can now perform this gated operation.
+			testUtils.ConfigureMigration{
+				Identity: testUtils.ClientIdentity(2),
+				LensConfig: client.LensConfig{
+					SourceCollectionVersionID:      "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smu",
+					DestinationCollectionVersionID: "bafyreiciz2hrrmt7ritk5gf5fyruw46v2tfhq5dc7qto4wgpzluben2smv",
+					Lens: model.Lens{
+						Lenses: []model.LensModule{
+							{
+								Path: lenses.SetDefaultModulePath,
+								Arguments: map[string]any{
+									"dst":   "name",
+									"value": "John",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}

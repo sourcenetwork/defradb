@@ -137,7 +137,9 @@ func (c *Client) setMigration(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	lensID, err := c.node.DB.SetMigration(ctx, config)
+	opt := options.SetMigration()
+	setOptIdentity(opt, args, 1)
+	lensID, err := c.node.DB.SetMigration(ctx, config, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
