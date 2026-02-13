@@ -347,7 +347,11 @@ func (w *CWrapper) SyncDocuments(
 	return nil
 }
 
-func (w *CWrapper) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Lister[options.SyncCollectionVersionsOptions]) error {
+func (w *CWrapper) SyncCollectionVersions(
+	ctx context.Context,
+	versionIDs []string,
+	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+) error {
 	opt := utils.NewOptions(opts...)
 	versions := C.CString(strings.Join(versionIDs, ","))
 	defer C.free(unsafe.Pointer(versions))

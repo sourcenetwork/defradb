@@ -300,7 +300,11 @@ func (w *Wrapper) SyncDocuments(
 	return err
 }
 
-func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Lister[options.SyncCollectionVersionsOptions]) error {
+func (w *Wrapper) SyncCollectionVersions(
+	ctx context.Context,
+	versionIDs []string,
+	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+) error {
 	args := []string{"client", "p2p", "collection", "sync-versions"}
 
 	deadline, hasDeadline := ctx.Deadline()

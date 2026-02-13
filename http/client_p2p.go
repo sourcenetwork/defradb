@@ -340,7 +340,11 @@ func (c *Client) SyncDocuments(
 	return err
 }
 
-func (c *Client) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Lister[options.SyncCollectionVersionsOptions]) error {
+func (c *Client) SyncCollectionVersions(
+	ctx context.Context,
+	versionIDs []string,
+	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 

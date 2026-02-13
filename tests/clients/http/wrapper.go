@@ -159,7 +159,11 @@ func (w *Wrapper) SyncDocuments(
 	return w.client.SyncDocuments(ctx, collectionName, docIDs)
 }
 
-func (w *Wrapper) SyncCollectionVersions(ctx context.Context, versionIDs []string, opts ...options.Lister[options.SyncCollectionVersionsOptions]) error {
+func (w *Wrapper) SyncCollectionVersions(
+	ctx context.Context,
+	versionIDs []string,
+	opts ...options.Lister[options.SyncCollectionVersionsOptions],
+) error {
 	return w.client.SyncCollectionVersions(ctx, versionIDs, opts...)
 }
 
