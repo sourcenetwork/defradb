@@ -369,13 +369,19 @@ func (db *DB) RefreshViews(ctx context.Context, opts ...options.Lister[options.R
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeViewRefreshPerm); err != nil {
+		return err
+	}
+
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard()
-
-	opt := utils.NewOptions(opts...)
 
 	err = db.refreshViews(ctx, opt)
 	if err != nil {

@@ -122,6 +122,7 @@ func (c *Client) refreshViews(this js.Value, args []js.Value) (js.Value, error) 
 		return js.Undefined(), err
 	}
 	opt := collectionFetchOptionsToGetCollectionsOptions(input)
+	setOptIdentity(opt, args, 1)
 	err = c.node.DB.RefreshViews(ctx, opt)
 	return js.Undefined(), err
 }

@@ -15,6 +15,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
@@ -35,7 +36,7 @@ items from that cache.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			opt := options.RefreshViews()
+			opt := options.WithIdentity(options.RefreshViews(), identity.FromContext(cmd.Context()))
 			if versionID != "" {
 				opt.SetVersionID(versionID)
 			}

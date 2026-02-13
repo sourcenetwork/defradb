@@ -115,7 +115,7 @@ nodeLoop:
 		}
 
 		if !a.DoNotRefreshViews && !expectedErrorRaised {
-			expectedErrorRaised = refreshViews(a.s, node, a.ExpectedError)
+			expectedErrorRaised = refreshViews(a.s, node, identOption, a.ExpectedError)
 			if expectedErrorRaised {
 				continue nodeLoop
 			}

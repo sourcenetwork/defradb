@@ -242,6 +242,7 @@ func (c *Client) RefreshViews(ctx context.Context, opts ...options.Lister[option
 	methodURL := c.http.apiURL.JoinPath("view", "refresh")
 	params := url.Values{}
 	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	if opt.CollectionName.HasValue() {
 		params.Add("name", opt.CollectionName.Value())
 	}

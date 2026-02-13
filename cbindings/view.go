@@ -19,6 +19,7 @@ import "C"
 import (
 	"context"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
@@ -71,7 +72,7 @@ func ViewRefresh(nodePtr C.uintptr_t,
 	collectionID := C.GoString(cOptions.collectionID)
 	versionID := C.GoString(cOptions.version)
 
-	opt := options.RefreshViews()
+	opt := options.WithIdentity(options.RefreshViews(), acpIdentity.FromContext(ctx))
 	if versionID != "" {
 		opt.SetVersionID(versionID)
 	}
