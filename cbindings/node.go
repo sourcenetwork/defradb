@@ -39,7 +39,8 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 	ctx := context.Background()
 
 	opts := options.Node()
-	opts.DB().SetLensRuntime(options.NodeWASMLensRuntime)
+	// Currently the only supported lens runtime is wazero, so use it explicitly
+	opts.DB().SetLensRuntime("wazero")
 
 	if gocOptions.DbPath != "" {
 		opts.Store().SetPath(gocOptions.DbPath)
