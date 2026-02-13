@@ -68,12 +68,20 @@ func (a *RefreshViews) Execute() {
 
 // refreshViews refreshes views for all collection names in state.
 // This is used by the Request action when view type is materialized.
-func refreshViews(s *state.State, node *state.NodeState, expectedError string) bool {
+func refreshViews(s *state.State, node *state.NodeState, nodeID int, expectedError string) bool {
 	if s.ViewType != state.MaterializedViewType {
 		return false
 	}
 	for _, colName := range s.CollectionNames {
-		err := node.RefreshViews(s.Ctx, options.RefreshViews().SetCollectionName(colName))
+		// Inject node's identity into the options so the [RefreshViews] call
+		// doesn't fail due to lack of authorization(s) if NAC is enabled.
+		opts := options.RefreshViews().SetCollectionName(colName)
+		nodeIdentity := NodeIdentity(nodeID)
+		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		err := node.RefreshViews(s.Ctx, opts)
 		if assertError(s.T, err, expectedError) {
 			return true
 		}
