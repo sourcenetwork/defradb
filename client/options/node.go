@@ -603,7 +603,6 @@ type NodeACPOptionsBuilder struct {
 	nodeSubBuilder[NodeACPOptions]
 }
 
-
 // SetEnabled sets whether node ACP is enabled.
 func (sb *NodeACPOptionsBuilder) SetEnabled(enabled bool) *NodeACPOptionsBuilder {
 	sb.append(func(opts *NodeACPOptions) { opts.IsEnabled = enabled })
