@@ -212,38 +212,52 @@ func (l *nodeSubBuilder[T]) append(fn func(*T)) {
 	}
 }
 
+// mustParent panics with a descriptive message if the parent is nil.
+func (l *nodeSubBuilder[T]) mustParent() {
+	if l.parent == nil {
+		panic("nodeSubBuilder: parent is nil; use Node() constructor or a parent sub-builder")
+	}
+}
+
 // Node returns the parent builder.
 func (l *nodeSubBuilder[T]) Node() *NodeOptionsBuilder {
+	l.mustParent()
 	return l.parent
 }
 
 // Store navigates to a Store sub-builder on the parent.
 func (l *nodeSubBuilder[T]) Store() *NodeStoreOptionsBuilder {
+	l.mustParent()
 	return l.parent.Store()
 }
 
 // DB navigates to a DB sub-builder on the parent.
 func (l *nodeSubBuilder[T]) DB() *NodeDBOptionsBuilder {
+	l.mustParent()
 	return l.parent.DB()
 }
 
 // P2P navigates to a P2P sub-builder on the parent.
 func (l *nodeSubBuilder[T]) P2P() *NodeP2POptionsBuilder {
+	l.mustParent()
 	return l.parent.P2P()
 }
 
 // HTTP navigates to a HTTP sub-builder on the parent.
 func (l *nodeSubBuilder[T]) HTTP() *NodeHTTPOptionsBuilder {
+	l.mustParent()
 	return l.parent.HTTP()
 }
 
 // DocumentACP navigates to a DocumentACP sub-builder on the parent.
 func (l *nodeSubBuilder[T]) DocumentACP() *NodeDocumentACPOptionsBuilder {
+	l.mustParent()
 	return l.parent.DocumentACP()
 }
 
 // NodeACP navigates to a NodeACP sub-builder on the parent.
 func (l *nodeSubBuilder[T]) NodeACP() *NodeACPOptionsBuilder {
+	l.mustParent()
 	return l.parent.NodeACP()
 }
 
