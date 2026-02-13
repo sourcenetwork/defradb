@@ -22,8 +22,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sourcenetwork/defradb/client/options"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/go-p2p"
+	"github.com/sourcenetwork/immutable"
 )
 
 //export NewNode
@@ -68,7 +71,8 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 		opts.P2P().SetBootstrapPeers(peers...)
 	}
 	if gocOptions.Identity != nil {
-		opts.DB().SetNodeIdentity(gocOptions.Identity)
+		ctx = acpIdentity.WithContext(ctx, immutable.Some[acpIdentity.Identity](gocOptions.Identity))
+		opts = append(opts, db.WithNodeIdentity(gocOptions.Identity))
 	}
 	if gocOptions.EnableNodeACP != 0 {
 		opts.NodeACP().SetEnabled(true)
