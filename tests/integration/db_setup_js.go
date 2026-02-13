@@ -11,11 +11,12 @@
 package tests
 
 import (
-	"github.com/sourcenetwork/immutable"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/immutable"
+
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -27,38 +28,39 @@ func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
-	opts ...node.Option,
+	opts *options.NodeOptionsBuilder,
 ) (*state.NodeState, error) {
-	opts = append(defaultNodeOpts(), opts...)
-	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
-	opts = append(opts, db.WithLensRuntime(db.JSLensRuntime))
+	if opts == nil {
+		opts = defaultNodeOpts()
+	}
+	opts.DB().
+		SetEnableSigning(testCase.EnableSigning).
+		SetLensRuntime(options.NodeJSLensRuntime)
 	// Note: Since we are hard-coding to run with badger in-mem only, we have a function that
 	// handles some edge-cases by skipping js client testing when a db type is something else.
 	// If this hard-coding is changed in future, don't forget to tweak the following func:
 	// [skipJSClientIfUnsupportedDBType]
-	opts = append(opts, node.WithBadgerInMemory(true))
+	opts.Store().SetBadgerInMemory(true)
 
 	switch documentACPType {
 	case state.LocalDocumentACPType:
-		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
+		opts.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
 	case state.SourceHubDocumentACPType:
-		if len(s.DocumentACPOptions) == 0 {
+		if s.DocumentACPOptions == nil {
 			var err error
 			s.DocumentACPOptions, err = setupSourceHub(s)
 			require.NoError(s.T, err)
 		}
-
-		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
-		for _, opt := range s.DocumentACPOptions {
-			opts = append(opts, opt)
-		}
+		opts.DocumentACP().
+			SetType(options.NodeSourceHubDocumentACPType).
+			SetAll(*s.DocumentACPOptions)
 
 	default:
 		// no-op, use the `node` package default
 	}
 
-	nodeObj, err := node.New(s.Ctx, opts...)
+	nodeObj, err := node.New(s.Ctx, opts)
 	if err != nil {
 		return nil, err
 	}

@@ -12,18 +12,21 @@ package node
 
 import (
 	"context"
+	"time"
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
 	"github.com/sourcenetwork/immutable"
-	lensNode "github.com/sourcenetwork/lens/host-go/node"
 
 	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/db"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	intOpts "github.com/sourcenetwork/defradb/internal/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var log = corelog.NewLogger("node")
@@ -55,62 +58,93 @@ type Node struct {
 	peer Peer
 	// api http server instance
 	server *http.Server
-	// config values after applying options
-	config *Config
-	// options the node was created with
-	options []Option
+	// opts is the resolved options
+	opts *options.NodeOptions
 	// the URL the API is served at.
 	APIURL string
 }
 
-// New returns a new node instance configured with the given options.
-func New(ctx context.Context, options ...Option) (*Node, error) {
-	n := Node{
-		config:  DefaultConfig(),
-		options: options,
+// DefaultNodeOptions returns default NodeOptions values.
+func DefaultNodeOptions() options.NodeOptions {
+	return options.NodeOptions{
+		DisableP2P:        false,
+		DisableAPI:        false,
+		EnableDevelopment: false,
+		Store: options.NodeStoreOptions{
+			Store:          options.NodeDefaultStore,
+			BadgerInMemory: false,
+			BadgerFileSize: 1 << 30, // 1GB
+		},
+		DocumentACP: options.NodeDocumentACPOptions{
+			DocumentACPType: options.NodeLocalDocumentACPType,
+		},
+		NodeACP: options.NodeACPOptions{
+			IsEnabled: false,
+		},
+		DB: options.NodeDBOptions{
+			MaxTxnRetries: immutable.Some(5),
+			EnableSigning: true,
+			RetryIntervals: []time.Duration{
+				time.Second * 30,
+				time.Minute,
+				time.Minute * 2,
+				time.Minute * 4,
+				time.Minute * 8,
+				time.Minute * 16,
+				time.Minute * 32,
+			},
+			P2PBlockSyncTimeout: time.Second * 5,
+			LensRuntime:         options.NodeDefaultLensRuntime,
+		},
+		P2P:  options.NodeP2POptions{},
+		HTTP: options.NodeHTTPOptions{},
 	}
-	for _, opt := range filterOptions[NodeOpt](options) {
-		opt(n.config)
+}
+
+// New returns a new node instance configured with the given options.
+func New(ctx context.Context, opts ...options.Lister[options.NodeOptions]) (*Node, error) {
+	nodeOpts := DefaultNodeOptions()
+	utils.ApplyOptions(&nodeOpts, opts...)
+	n := Node{
+		opts: &nodeOpts,
 	}
 	return &n, nil
 }
 
 // Start starts the node sub-systems.
 func (n *Node) Start(ctx context.Context) error {
-	rootstore, isValueSizeLimited, err := NewStore(ctx, filterOptions[StoreOpt](n.options)...)
+	rootstore, isValueSizeLimited, err := NewStore(ctx, options.NodeStore().SetAll(n.opts.Store))
 	if err != nil {
 		return err
 	}
-	documentACP, err := NewDocumentACP(ctx, filterOptions[DocumentACPOpt](n.options)...)
-	if err != nil {
-		return err
-	}
-
-	nodeACP, err := NewNodeACP(ctx, filterOptions[NodeACPOpt](n.options)...)
+	documentACP, err := NewDocumentACP(ctx, &n.opts.DocumentACP)
 	if err != nil {
 		return err
 	}
 
-	var chunkSize immutable.Option[int]
+	nodeACP, err := NewNodeACP(ctx, &n.opts.NodeACP)
+	if err != nil {
+		return err
+	}
+
 	if isValueSizeLimited {
-		chunkSize = immutable.Some(defaultChunkSize)
-
-		n.options = append(n.options,
-			db.WithLensOpts(
-				lensNode.WithBlockstoreChunkSize(defaultChunkSize),
-			),
-		)
-		n.options = append(n.options,
-			db.WithBlockStoreChunkSize(defaultChunkSize),
-		)
+		n.opts.DB.ChunkSize = immutable.Some(defaultChunkSize)
 	}
 
-	err = n.startP2P(ctx, rootstore, chunkSize)
+	err = n.startP2P(ctx, rootstore, n.opts.DB.ChunkSize)
 	if err != nil {
 		return err
 	}
 
-	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, documentACP, filterOptions[db.Option](n.options)...)
+	dbBuilder := intOpts.DB().SetNodeDBOptions(n.opts.DB)
+	if documentACP.HasValue() {
+		dbBuilder.SetDocumentACP(documentACP.Value())
+	}
+	if n.peer != nil {
+		dbBuilder.SetP2P(n.peer)
+	}
+
+	n.DB, err = db.NewDB(ctx, rootstore, nodeACP, dbBuilder)
 	if err != nil {
 		return err
 	}
@@ -136,7 +170,7 @@ func (n *Node) Close(ctx context.Context) error {
 // PurgeAndRestart causes the node to shutdown, purge all data from
 // its datastore, and restart.
 func (n *Node) PurgeAndRestart(ctx context.Context) error {
-	if !n.config.enableDevelopment {
+	if !n.opts.EnableDevelopment {
 		return ErrPurgeWithDevModeDisabled
 	}
 
@@ -158,7 +192,7 @@ func (n *Node) PurgeAndRestart(ctx context.Context) error {
 		return err
 	}
 
-	err = purgeStore(ctx, filterOptions[StoreOpt](n.options)...)
+	err = purgeStore(ctx, &n.opts.Store)
 	if err != nil {
 		return err
 	}

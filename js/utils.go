@@ -142,6 +142,7 @@ func setOptIdentity[B any](opt B, args []js.Value, argIndex int) {
 	}
 }
 
+
 // initKeypairAndGetIdentity initializes the keypair and gets an identity.
 func initKeypairAndGetIdentity() (identity.Identity, error) {
 	createKeyPairFunc := js.Global().Get("initKeypair")

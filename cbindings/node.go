@@ -41,43 +41,41 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 
 	ctx := context.Background()
 
-	opts := []node.Option{
-		db.WithLensRuntime(db.Wazero),
-	}
+	opts := options.Node()
+	opts.DB().SetLensRuntime(options.NodeWASMLensRuntime)
+
 	if gocOptions.DbPath != "" {
-		opts = append(opts, node.WithStorePath(gocOptions.DbPath))
+		opts.Store().SetPath(gocOptions.DbPath)
 	}
 	if len(listeningAddresses) > 0 {
-		opts = append(opts, p2p.WithListenAddresses(listeningAddresses...))
+		opts.P2P().SetListenAddresses(listeningAddresses...)
 	}
 	maxTxnRetries := gocOptions.MaxTransactionRetries
 	if maxTxnRetries > 0 {
-		opts = append(opts, db.WithMaxRetries(maxTxnRetries))
+		opts.DB().SetMaxTxnRetries(maxTxnRetries)
 	}
 	disableP2PFlag := gocOptions.DisableP2P != 0
 	if disableP2PFlag {
-		opts = append(opts, node.WithDisableP2P(true))
+		opts.SetDisableP2P(true)
 	}
 	disableAPIFlag := gocOptions.DisableAPI != 0
 	if disableAPIFlag {
-		opts = append(opts, node.WithDisableAPI(true))
+		opts.SetDisableAPI(true)
 	}
 	if inMemoryFlag {
-		opts = append(opts, node.WithBadgerInMemory(true))
+		opts.Store().SetBadgerInMemory(true)
 	}
 	peers := splitCommaSeparatedString(gocOptions.Peers)
 	if len(peers) > 0 {
-		opts = append(opts, p2p.WithBootstrapPeers(peers...))
+		opts.P2P().SetBootstrapPeers(peers...)
 	}
 	if gocOptions.Identity != nil {
 		ctx = acpIdentity.WithContext(ctx, immutable.Some[acpIdentity.Identity](gocOptions.Identity))
 		opts = append(opts, db.WithNodeIdentity(gocOptions.Identity))
 	}
 	if gocOptions.EnableNodeACP != 0 {
-		opts = append(opts, node.WithEnableNodeACP(true))
+		opts.NodeACP().SetEnabled(true)
 	}
-	opts = append(opts, node.WithDocumentACPPath(""))
-	opts = append(opts, node.WithNodeACPPath(""))
 
 	// Configure the replicator retry times. Go from string slice -> time.Duration slice
 	replicatorRetryTimes := splitCommaSeparatedString(gocOptions.ReplicatorRetryIntervals)
@@ -93,10 +91,10 @@ func NewNode(cOptions C.NodeInitOptions) C.NewNodeResult {
 		replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(n)*time.Second)
 	}
 	if len(replicatorRetryIntervals) > 0 {
-		opts = append(opts, db.WithRetryInterval(replicatorRetryIntervals))
+		opts.DB().SetRetryIntervals(replicatorRetryIntervals)
 	}
 
-	n, err := node.New(ctx, opts...)
+	n, err := node.New(ctx, opts)
 	if err != nil {
 		return returnNewNodeResultC(1, err.Error(), nil)
 	}

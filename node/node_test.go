@@ -18,18 +18,20 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func TestPurgeAndRestartWithDevModeDisabled(t *testing.T) {
 	ctx := context.Background()
 
-	opts := []Option{
-		WithDisableAPI(true),
-		WithDisableP2P(true),
-		WithStorePath(t.TempDir()),
-	}
-
-	n, err := New(ctx, opts...)
+	n, err := New(ctx,
+		options.Node().
+			SetDisableAPI(true).
+			SetDisableP2P(true).
+			Store().SetPath(t.TempDir()).
+			Node(),
+	)
 	require.NoError(t, err)
 
 	err = n.Start(ctx)
@@ -42,14 +44,14 @@ func TestPurgeAndRestartWithDevModeDisabled(t *testing.T) {
 func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {
 	ctx := context.Background()
 
-	opts := []Option{
-		WithDisableAPI(true),
-		WithDisableP2P(true),
-		WithStorePath(t.TempDir()),
-		WithEnableDevelopment(true),
-	}
-
-	n, err := New(ctx, opts...)
+	n, err := New(ctx,
+		options.Node().
+			SetDisableAPI(true).
+			SetDisableP2P(true).
+			SetEnableDevelopment(true).
+			Store().SetPath(t.TempDir()).
+			Node(),
+	)
 	require.NoError(t, err)
 
 	err = n.Start(ctx)

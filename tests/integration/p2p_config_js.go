@@ -11,24 +11,19 @@
 package tests
 
 import (
-	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func RandomNetworkingConfig() ConfigureNode {
-	return func() []node.Option {
-		return []node.Option{}
+	return func() options.NodeP2POptions {
+		return options.NodeP2POptions{}
 	}
 }
 
-func getP2POptions(_ []node.Option) []node.Option {
-	return []node.Option{}
-
+func withPrivateKey(_ *options.NodeP2POptions, _ []byte) {
+	// JS builds don't support P2P
 }
 
-func withPrivateKey(opts []node.Option, _ []byte) []node.Option {
-	return opts
-}
-
-func withWithListenAddresses(opts []node.Option, _ ...string) []node.Option {
-	return opts
+func withListenAddresses(_ *options.NodeP2POptions, _ ...string) {
+	// JS builds don't support P2P
 }

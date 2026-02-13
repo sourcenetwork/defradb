@@ -13,7 +13,7 @@ package utils
 import (
 	"reflect"
 
-	clientOptions "github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/immutable/enumerable"
 )
 
 // NewOptions merges multiple option builders into a single options struct.
@@ -29,8 +29,14 @@ import (
 //	    options.GetCollections().SetIdentity(id),
 //	    options.GetCollections().SetVersionID(vid),
 //	)
-func NewOptions[T any](opts ...clientOptions.Lister[T]) *T {
+func NewOptions[T any](opts ...enumerable.Enumerable[func(*T)]) *T {
 	args := new(T)
+	ApplyOptions(args, opts...)
+	return args
+}
+
+// ApplyOptions applies all functional options onto the given target.
+func ApplyOptions[T any](target *T, opts ...enumerable.Enumerable[func(*T)]) {
 	for _, opt := range opts {
 		if opt == nil || reflect.ValueOf(opt).IsNil() {
 			continue
@@ -45,10 +51,9 @@ func NewOptions[T any](opts ...clientOptions.Lister[T]) *T {
 				break
 			}
 			if setArgs != nil {
-				setArgs(args)
+				setArgs(target)
 			}
 		}
 		opt.Reset()
 	}
-	return args
 }

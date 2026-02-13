@@ -12,6 +12,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -293,7 +294,8 @@ func waitForSESync(s *state.State, action WaitForSESync) {
 				delete(expectedSyncs, evt.DocID)
 
 			case <-time.After(30 * eventTimeout):
-				require.Fail(s.T, "timeout waiting for SE sync complete event on node %d. Remaining: %v", nodeID, expectedSyncs)
+				require.Fail(s.T, fmt.Sprintf("timeout waiting for SE sync complete event on node %d. Remaining: %v",
+					nodeID, expectedSyncs))
 			}
 		}
 	}

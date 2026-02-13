@@ -37,8 +37,10 @@ import (
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 	"github.com/sourcenetwork/defradb/internal/db/lock"
 	"github.com/sourcenetwork/defradb/internal/db/p2p"
+	intOpts "github.com/sourcenetwork/defradb/internal/options"
 	"github.com/sourcenetwork/defradb/internal/request/graphql"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var (
@@ -76,9 +78,6 @@ type DB struct {
 
 	// The maximum number of retries per transaction.
 	maxTxnRetries immutable.Option[int]
-
-	// The options used to init the database.
-	options []Option
 
 	// The ID of the last transaction created.
 	previousTxnID atomic.Uint64
@@ -124,25 +123,21 @@ func NewDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
 	nodeACP acpDB.NACInfo,
-	documentACP immutable.Option[dac.DocumentACP],
-	options ...Option,
+	opts ...intOpts.Enumerable[intOpts.DBOptions],
 ) (*DB, error) {
-	return newDB(ctx, rootstore, nodeACP, documentACP, options...)
+	return newDB(ctx, rootstore, nodeACP, opts...)
 }
 
 func newDB(
 	ctx context.Context,
 	rootstore corekv.TxnStore,
 	nodeACP acpDB.NACInfo,
-	documentACP immutable.Option[dac.DocumentACP],
-	options ...Option,
+	opts ...intOpts.Enumerable[intOpts.DBOptions],
 ) (*DB, error) {
-	opts := defaultDBOptions()
-	for _, opt := range options {
-		opt(opts)
-	}
+	cfg := defaultDBConfig()
+	utils.ApplyOptions(&cfg, opts...)
 
-	parser, err := graphql.NewParser(len(opts.searchableEncryptionKey) > 0)
+	parser, err := graphql.NewParser(len(cfg.SearchableEncryptionKey) > 0)
 	if err != nil {
 		return nil, err
 	}
@@ -150,56 +145,55 @@ func newDB(
 	ctx, cancel := context.WithCancel(ctx)
 
 	db := &DB{
-		rootstore:           rootstore,
-		blockStoreChunkSize: opts.ChunkSize,
-		nodeACP:             nodeACP,
-		documentACP:         documentACP,
-		parser:              parser,
-		options:             options,
-		events:              event.NewChannelBus(commandBufferSize, eventBufferSize),
-		ctx:                 ctx,
-		ctxCancel:           cancel,
-		docMergeQueue:       newMergeQueue(),
-		colMergeQueue:       newMergeQueue(),
-		retryIntervals:      opts.retryIntervals,
-		p2pBlockSyncTimeout: opts.p2pBlockSyncTimeout,
-		lockSet:             lock.NewLockSet(),
+		rootstore:               rootstore,
+		blockStoreChunkSize:     cfg.ChunkSize,
+		maxTxnRetries:           cfg.MaxTxnRetries,
+		nodeIdentity:            cfg.Identity,
+		signingDisabled:         !cfg.EnableSigning,
+		searchableEncryptionKey: cfg.SearchableEncryptionKey,
+		nodeACP:                 nodeACP,
+		documentACP:             cfg.DocumentACP,
+		parser:                  parser,
+		events:                  event.NewChannelBus(commandBufferSize, eventBufferSize),
+		ctx:                     ctx,
+		ctxCancel:               cancel,
+		docMergeQueue:           newMergeQueue(),
+		colMergeQueue:           newMergeQueue(),
+		retryIntervals:          cfg.RetryIntervals,
+		p2pBlockSyncTimeout:     cfg.P2PBlockSyncTimeout,
+		lockSet:                 lock.NewLockSet(),
 	}
 
-	if opts.maxTxnRetries.HasValue() {
-		db.maxTxnRetries = opts.maxTxnRetries
-	}
-
-	db.nodeIdentity = opts.identity
-	db.signingDisabled = opts.disableSigning
-	db.searchableEncryptionKey = opts.searchableEncryptionKey
-
-	lensRuntime, err := newLensRuntime(opts.LensRuntimeType)
+	lensRuntime, err := newLensRuntime(LensRuntimeType(cfg.LensRuntime))
 	if err != nil {
 		return nil, err
 	}
 
-	// Overwrite a few key Lens options for now, by appending them to the end of the option
-	// slice.
-	opts.LensOptions = append(opts.LensOptions, lensNode.WithRootstore(rootstore))
-	opts.LensOptions = append(opts.LensOptions, lensNode.WithTxnSource(wrapSource(db)))
-	opts.LensOptions = append(opts.LensOptions, lensNode.WithRuntime(lensRuntime))
-
-	if opts.p2p.HasValue() {
-		opts.LensOptions = appendLensP2POpt(opts.LensOptions, opts)
-	} else {
-		// If defra has no P2P enabled, it doesn't make sense to enable it for Lens
-		opts.LensOptions = append(opts.LensOptions, lensNode.WithP2PDisabled(true))
+	lensOpts := []lensNode.Option{
+		lensNode.WithRootstore(rootstore),
+		lensNode.WithTxnSource(wrapSource(db)),
+		lensNode.WithRuntime(lensRuntime),
 	}
 
-	node, err := lensNode.New(ctx, opts.LensOptions...)
+	if cfg.ChunkSize.HasValue() {
+		lensOpts = append(lensOpts, lensNode.WithBlockstoreChunkSize(cfg.ChunkSize.Value()))
+	}
+
+	if cfg.P2P.HasValue() {
+		lensOpts = appendLensP2POpt(lensOpts, cfg.P2P.Value())
+	} else {
+		// If defra has no P2P enabled, it doesn't make sense to enable it for Lens
+		lensOpts = append(lensOpts, lensNode.WithP2PDisabled(true))
+	}
+
+	node, err := lensNode.New(ctx, lensOpts...)
 	if err != nil {
 		return nil, err
 	}
 	db.lensNode = node
 
-	if opts.p2p.HasValue() {
-		p, err := p2p.New(ctx, db, node, opts.p2p.Value(), db.nodeIdentity, NewCollectionRetriever(db))
+	if cfg.P2P.HasValue() {
+		p, err := p2p.New(ctx, db, node, cfg.P2P.Value(), db.nodeIdentity, NewCollectionRetriever(db))
 		if err != nil {
 			return nil, err
 		}
