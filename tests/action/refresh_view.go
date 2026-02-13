@@ -13,6 +13,7 @@ package action
 import (
 	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -68,18 +69,19 @@ func (a *RefreshViews) Execute() {
 
 // refreshViews refreshes views for all collection names in state.
 // This is used by the Request action when view type is materialized.
-func refreshViews(s *state.State, node *state.NodeState, nodeID int, expectedError string) bool {
+func refreshViews(
+	s *state.State,
+	node *state.NodeState,
+	identity immutable.Option[acpIdentity.Identity],
+	expectedError string,
+) bool {
 	if s.ViewType != state.MaterializedViewType {
 		return false
 	}
 	for _, colName := range s.CollectionNames {
-		// Inject node's identity into the options so the [RefreshViews] call
-		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		opts := options.RefreshViews().SetCollectionName(colName)
-		nodeIdentity := NodeIdentity(nodeID)
-		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
-		if identOption.HasValue() {
-			opts.SetIdentity(identOption.Value())
+		if identity.HasValue() {
+			opts.SetIdentity(identity.Value())
 		}
 		err := node.RefreshViews(s.Ctx, opts)
 		if assertError(s.T, err, expectedError) {
