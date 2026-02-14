@@ -35,7 +35,7 @@ extern void IdentityFree(uintptr_t identityPtr);
 extern Result NodeIdentity(uintptr_t nodePtr);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result EncryptedIndexAdd(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
-extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
+extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result LensSet(uintptr_t nodePtr, uintptr_t identity, char* src, char* dst, char* cfg);
 extern Result LensAdd(uintptr_t nodePtr, uintptr_t identityPtr, char* cfg);
@@ -933,12 +933,15 @@ func (w *CWrapper) GetAllIndexes(
 
 func (w *CWrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	colName := C.CString("")
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(colName))
+	defer C.IdentityFree(cIdentity)
 
 	callHandle := getNodeOrTxnHandle(w.handle, ctx)
-	res := ConvertAndFreeCResult(C.EncryptedIndexList(callHandle, colName))
+	res := ConvertAndFreeCResult(C.EncryptedIndexList(callHandle, colName, cIdentity))
 
 	if res.Status != 0 {
 		return nil, errors.New(res.Error)

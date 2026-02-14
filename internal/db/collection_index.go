@@ -492,7 +492,15 @@ func (c *collection) addEncryptedIndex(
 }
 
 // ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
-func (c *collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+func (c *collection) ListEncryptedIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+) ([]client.EncryptedIndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexListPerm); err != nil {
+		return nil, err
+	}
 	return c.Version().EncryptedIndexes, nil
 }
 

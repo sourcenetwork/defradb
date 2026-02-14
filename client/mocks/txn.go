@@ -2094,8 +2094,14 @@ func (_c *Txn_ID_Call) RunAndReturn(run func() uint64) *Txn_ID_Call {
 }
 
 // ListAllEncryptedIndexes provides a mock function for the type Txn
-func (_mock *Txn) ListAllEncryptedIndexes(context1 context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	ret := _mock.Called(context1)
+func (_mock *Txn) ListAllEncryptedIndexes(context1 context.Context, vs ...options.Enumerable[options.ListAllEncryptedIndexesOptions]) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(vs) > 0 {
+		tmpRet = _mock.Called(context1, vs)
+	} else {
+		tmpRet = _mock.Called(context1)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListAllEncryptedIndexes")
@@ -2103,18 +2109,18 @@ func (_mock *Txn) ListAllEncryptedIndexes(context1 context.Context) (map[client.
 
 	var r0 map[client.CollectionName][]client.EncryptedIndexDescription
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error)); ok {
-		return returnFunc(context1)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListAllEncryptedIndexesOptions]) (map[client.CollectionName][]client.EncryptedIndexDescription, error)); ok {
+		return returnFunc(context1, vs...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) map[client.CollectionName][]client.EncryptedIndexDescription); ok {
-		r0 = returnFunc(context1)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListAllEncryptedIndexesOptions]) map[client.CollectionName][]client.EncryptedIndexDescription); ok {
+		r0 = returnFunc(context1, vs...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[client.CollectionName][]client.EncryptedIndexDescription)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(context1)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.ListAllEncryptedIndexesOptions]) error); ok {
+		r1 = returnFunc(context1, vs...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2128,18 +2134,27 @@ type Txn_ListAllEncryptedIndexes_Call struct {
 
 // ListAllEncryptedIndexes is a helper method to define mock.On call
 //   - context1 context.Context
-func (_e *Txn_Expecter) ListAllEncryptedIndexes(context1 interface{}) *Txn_ListAllEncryptedIndexes_Call {
-	return &Txn_ListAllEncryptedIndexes_Call{Call: _e.mock.On("ListAllEncryptedIndexes", context1)}
+//   - vs ...options.Enumerable[options.ListAllEncryptedIndexesOptions]
+func (_e *Txn_Expecter) ListAllEncryptedIndexes(context1 interface{}, vs ...interface{}) *Txn_ListAllEncryptedIndexes_Call {
+	return &Txn_ListAllEncryptedIndexes_Call{Call: _e.mock.On("ListAllEncryptedIndexes",
+		append([]interface{}{context1}, vs...)...)}
 }
 
-func (_c *Txn_ListAllEncryptedIndexes_Call) Run(run func(context1 context.Context)) *Txn_ListAllEncryptedIndexes_Call {
+func (_c *Txn_ListAllEncryptedIndexes_Call) Run(run func(context1 context.Context, vs ...options.Enumerable[options.ListAllEncryptedIndexesOptions])) *Txn_ListAllEncryptedIndexes_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Enumerable[options.ListAllEncryptedIndexesOptions]
+		var variadicArgs []options.Enumerable[options.ListAllEncryptedIndexesOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Enumerable[options.ListAllEncryptedIndexesOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -2150,7 +2165,7 @@ func (_c *Txn_ListAllEncryptedIndexes_Call) Return(vToEncryptedIndexDescriptions
 	return _c
 }
 
-func (_c *Txn_ListAllEncryptedIndexes_Call) RunAndReturn(run func(context1 context.Context) (map[client.CollectionName][]client.EncryptedIndexDescription, error)) *Txn_ListAllEncryptedIndexes_Call {
+func (_c *Txn_ListAllEncryptedIndexes_Call) RunAndReturn(run func(context1 context.Context, vs ...options.Enumerable[options.ListAllEncryptedIndexesOptions]) (map[client.CollectionName][]client.EncryptedIndexDescription, error)) *Txn_ListAllEncryptedIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }

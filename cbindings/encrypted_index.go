@@ -61,8 +61,11 @@ func EncryptedIndexAdd(
 }
 
 //export EncryptedIndexList
-func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
-	ctx := context.Background()
+func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char, identityPtr C.uintptr_t) C.Result {
+	ctx, err := contextWithIdentity(context.Background(), identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -72,18 +75,27 @@ func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
 	switch {
 	// Get the encrypted indices associated with a given collection
 	case colName != "":
-		col, err := store.GetCollectionByName(ctx, colName)
+		getColOpt := options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(ctx))
+		col, err := store.GetCollectionByName(ctx, colName, getColOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		indices, err := col.ListEncryptedIndexes(ctx)
+		opts := options.WithIdentity(
+			options.CollectionListEncryptedIndexes(),
+			iIdentity.FromContext(ctx),
+		)
+		indices, err := col.ListEncryptedIndexes(ctx, opts)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		return returnC(marshalJSONToGoCResult(indices))
 	// Get all of the encrypted indices, because no collection was specified
 	default:
-		indices, err := store.ListAllEncryptedIndexes(ctx)
+		opts := options.WithIdentity(
+			options.ListAllEncryptedIndexes(),
+			iIdentity.FromContext(ctx),
+		)
+		indices, err := store.ListAllEncryptedIndexes(ctx, opts)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}

@@ -336,7 +336,9 @@ func (c *Collection) AddEncryptedIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+func (c *Collection) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
 	res, err := execute(ctx, c.client, "listEncryptedIndexes")
 	if err != nil {
 		return nil, err

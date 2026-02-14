@@ -306,7 +306,8 @@ func (h *storeHandler) GetAllIndexes(rw http.ResponseWriter, req *http.Request) 
 func (h *storeHandler) ListAllEncryptedIndexes(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
 
-	indexes, err := db.ListAllEncryptedIndexes(req.Context())
+	opts := options.WithIdentity(options.ListAllEncryptedIndexes(), identity.FromContext(req.Context()))
+	indexes, err := db.ListAllEncryptedIndexes(req.Context(), opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

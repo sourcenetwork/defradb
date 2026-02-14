@@ -298,9 +298,10 @@ func (txn *Txn) GetAllIndexes(
 
 func (txn *Txn) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.ListAllEncryptedIndexes(ctx)
+	return txn.db.ListAllEncryptedIndexes(ctx, opts...)
 }
 
 func (txn *Txn) ExecRequest(

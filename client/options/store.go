@@ -749,3 +749,29 @@ func (b *SetMigrationOptionsBuilder) SetIdentity(id identity.Identity) *SetMigra
 	})
 	return b
 }
+
+// ListAllEncryptedIndexesOptions contains options for ListAllEncryptedIndexes operation.
+type ListAllEncryptedIndexesOptions struct {
+	Identity immutable.Option[identity.Identity]
+}
+
+func (o *ListAllEncryptedIndexesOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+type ListAllEncryptedIndexesOptionsBuilder struct {
+	enumerableBuilder[ListAllEncryptedIndexesOptions]
+}
+
+func ListAllEncryptedIndexes() *ListAllEncryptedIndexesOptionsBuilder {
+	return &ListAllEncryptedIndexesOptionsBuilder{}
+}
+
+func (b *ListAllEncryptedIndexesOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *ListAllEncryptedIndexesOptionsBuilder {
+	b.append(func(opts *ListAllEncryptedIndexesOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}

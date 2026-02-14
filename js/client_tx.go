@@ -279,7 +279,9 @@ func (t *transaction) listAllEncryptedIndexes(this js.Value, args []js.Value) (j
 	if err != nil {
 		return js.Undefined(), err
 	}
-	indexes, err := t.txn.ListAllEncryptedIndexes(ctx)
+	opt := options.ListAllEncryptedIndexes()
+	setOptIdentity(opt, args, 0)
+	indexes, err := t.txn.ListAllEncryptedIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

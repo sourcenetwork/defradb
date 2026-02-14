@@ -366,6 +366,11 @@ type ListEncryptedIndexes struct {
 	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The collection for which this encrypted indexes should be retrieved.
 	CollectionID int
 
@@ -385,6 +390,11 @@ type ListAllEncryptedIndexes struct {
 	//
 	// If a value is not provided the encrypted indexes will be retrieved from the first nodes.
 	NodeID immutable.Option[int]
+
+	// Identity is the identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// The expected encrypted indexes by collection names to be returned.
 	ExpectedIndexes map[client.CollectionName][]client.EncryptedIndexDescription

@@ -1001,8 +1001,14 @@ func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(ctx context.Context,
 }
 
 // ListEncryptedIndexes provides a mock function for the type Collection
-func (_mock *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
-	ret := _mock.Called(ctx)
+func (_mock *Collection) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListEncryptedIndexes")
@@ -1010,18 +1016,18 @@ func (_mock *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Enc
 
 	var r0 []client.EncryptedIndexDescription
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]client.EncryptedIndexDescription, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error)); ok {
+		return returnFunc(ctx, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []client.EncryptedIndexDescription); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]) []client.EncryptedIndexDescription); ok {
+		r0 = returnFunc(ctx, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]client.EncryptedIndexDescription)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1035,18 +1041,27 @@ type Collection_ListEncryptedIndexes_Call struct {
 
 // ListEncryptedIndexes is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Collection_Expecter) ListEncryptedIndexes(ctx interface{}) *Collection_ListEncryptedIndexes_Call {
-	return &Collection_ListEncryptedIndexes_Call{Call: _e.mock.On("ListEncryptedIndexes", ctx)}
+//   - opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]
+func (_e *Collection_Expecter) ListEncryptedIndexes(ctx interface{}, opts ...interface{}) *Collection_ListEncryptedIndexes_Call {
+	return &Collection_ListEncryptedIndexes_Call{Call: _e.mock.On("ListEncryptedIndexes",
+		append([]interface{}{ctx}, opts...)...)}
 }
 
-func (_c *Collection_ListEncryptedIndexes_Call) Run(run func(ctx context.Context)) *Collection_ListEncryptedIndexes_Call {
+func (_c *Collection_ListEncryptedIndexes_Call) Run(run func(ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions])) *Collection_ListEncryptedIndexes_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 []options.Enumerable[options.CollectionListEncryptedIndexesOptions]
+		var variadicArgs []options.Enumerable[options.CollectionListEncryptedIndexesOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Enumerable[options.CollectionListEncryptedIndexesOptions])
+		}
+		arg1 = variadicArgs
 		run(
 			arg0,
+			arg1...,
 		)
 	})
 	return _c
@@ -1057,7 +1072,7 @@ func (_c *Collection_ListEncryptedIndexes_Call) Return(encryptedIndexDescription
 	return _c
 }
 
-func (_c *Collection_ListEncryptedIndexes_Call) RunAndReturn(run func(ctx context.Context) ([]client.EncryptedIndexDescription, error)) *Collection_ListEncryptedIndexes_Call {
+func (_c *Collection_ListEncryptedIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error)) *Collection_ListEncryptedIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }

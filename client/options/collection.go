@@ -433,3 +433,34 @@ func (b *AddEncryptedIndexOptionsBuilder) SetIdentity(id identity.Identity) *Add
 	})
 	return b
 }
+
+// CollectionListEncryptedIndexesOptions contains options for ListEncryptedIndexes operation.
+type CollectionListEncryptedIndexesOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *CollectionListEncryptedIndexesOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// CollectionListEncryptedIndexesOptionsBuilder is a builder for CollectionListEncryptedIndexesOptions.
+type CollectionListEncryptedIndexesOptionsBuilder struct {
+	enumerableBuilder[CollectionListEncryptedIndexesOptions]
+}
+
+// CollectionListEncryptedIndexes creates a new CollectionListEncryptedIndexesOptionsBuilder instance.
+func CollectionListEncryptedIndexes() *CollectionListEncryptedIndexesOptionsBuilder {
+	return &CollectionListEncryptedIndexesOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *CollectionListEncryptedIndexesOptionsBuilder) SetIdentity(
+	id identity.Identity,
+) *CollectionListEncryptedIndexesOptionsBuilder {
+	b.append(func(opts *CollectionListEncryptedIndexesOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}

@@ -140,7 +140,10 @@ type Collection interface {
 	DeleteEncryptedIndex(ctx context.Context, fieldName string) error
 
 	// ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
-	ListEncryptedIndexes(ctx context.Context) ([]EncryptedIndexDescription, error)
+	ListEncryptedIndexes(
+		ctx context.Context,
+		opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+	) ([]EncryptedIndexDescription, error)
 
 	// Truncate this collection, permanently deleting all document state on this node.
 	//

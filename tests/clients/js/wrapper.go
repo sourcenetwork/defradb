@@ -626,6 +626,9 @@ func (w *Wrapper) VerifySignature(
 
 func (w *Wrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	return w.node.DB.ListAllEncryptedIndexes(ctx)
+	opt := utils.NewOptions(opts...)
+	ctx = ctxWithOptIdentity(ctx, opt)
+	return w.node.DB.ListAllEncryptedIndexes(ctx, opts...)
 }

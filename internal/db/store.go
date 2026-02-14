@@ -137,9 +137,16 @@ func (db *DB) GetAllIndexes(
 // ListAllEncryptedIndexes gets all the encrypted indexes in the database.
 func (db *DB) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexListAllPerm); err != nil {
+		return nil, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {

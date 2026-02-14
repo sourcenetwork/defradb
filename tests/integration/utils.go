@@ -1412,10 +1412,17 @@ func listEncryptedIndexes(
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, nodeID := range nodeIDs {
 		collections := s.Nodes[nodeID].Collections
+
+		opts := options.CollectionListEncryptedIndexes()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
 		err := withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
-				actualIndexes, err := collections[action.CollectionID].ListEncryptedIndexes(s.Ctx)
+				actualIndexes, err := collections[action.CollectionID].ListEncryptedIndexes(s.Ctx, opts)
 				if err != nil {
 					return err
 				}
@@ -1445,10 +1452,16 @@ func listAllEncryptedIndexes(
 
 	nodeIDs, _ := getNodesWithIDs(action.NodeID, s.Nodes)
 	for _, nodeID := range nodeIDs {
+		opts := options.ListAllEncryptedIndexes()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
 		err := withRetryOnNode(
 			s.Nodes[nodeID],
 			func() error {
-				allActualIndexes, err := s.Nodes[nodeID].ListAllEncryptedIndexes(s.Ctx)
+				allActualIndexes, err := s.Nodes[nodeID].ListAllEncryptedIndexes(s.Ctx, opts)
 				if err != nil {
 					return err
 				}

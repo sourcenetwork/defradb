@@ -390,7 +390,9 @@ func (c *clientCollection) listEncryptedIndexes(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	desc, err := c.col.ListEncryptedIndexes(ctx)
+	opt := options.CollectionListEncryptedIndexes()
+	setOptIdentity(opt, args, 0)
+	desc, err := c.col.ListEncryptedIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

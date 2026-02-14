@@ -255,7 +255,9 @@ func (c *Client) listAllEncryptedIndexes(this js.Value, args []js.Value) (js.Val
 	if err != nil {
 		return js.Undefined(), err
 	}
-	indexes, err := c.node.DB.ListAllEncryptedIndexes(ctx)
+	opt := options.ListAllEncryptedIndexes()
+	setOptIdentity(opt, args, 0)
+	indexes, err := c.node.DB.ListAllEncryptedIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

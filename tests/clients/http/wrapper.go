@@ -356,8 +356,9 @@ func (w *Wrapper) GetAllIndexes(
 
 func (w *Wrapper) ListAllEncryptedIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.ListAllEncryptedIndexesOptions],
 ) (map[client.CollectionName][]client.EncryptedIndexDescription, error) {
-	return w.client.ListAllEncryptedIndexes(ctx)
+	return w.client.ListAllEncryptedIndexes(ctx, opts...)
 }
 
 func (w *Wrapper) ExecRequest(
