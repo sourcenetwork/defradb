@@ -508,9 +508,20 @@ func (c *collection) ListEncryptedIndexes(
 //
 // The encrypted index will be removed from the system store.
 // All SE artifacts on remote nodes will become inaccessible for queries.
-func (c *collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *collection) DeleteEncryptedIndex(
+	ctx context.Context,
+	fieldName string,
+	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexDeletePerm); err != nil {
+		return err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {

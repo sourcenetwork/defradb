@@ -137,7 +137,11 @@ type Collection interface {
 	) (EncryptedIndexDescription, error)
 
 	// DeleteEncryptedIndex deletes an encrypted index from the collection.
-	DeleteEncryptedIndex(ctx context.Context, fieldName string) error
+	DeleteEncryptedIndex(
+		ctx context.Context,
+		fieldName string,
+		opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+	) error
 
 	// ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
 	ListEncryptedIndexes(

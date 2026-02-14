@@ -488,7 +488,14 @@ func (c *Collection) ListEncryptedIndexes(
 	return indexes, nil
 }
 
-func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *Collection) DeleteEncryptedIndex(
+	ctx context.Context,
+	fieldName string,
+	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes", fieldName)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), nil)

@@ -381,7 +381,9 @@ func (c *clientCollection) deleteEncryptedIndex(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.col.DeleteEncryptedIndex(ctx, fieldName)
+	opt := options.DeleteEncryptedIndex()
+	setOptIdentity(opt, args, 1)
+	err = c.col.DeleteEncryptedIndex(ctx, fieldName, opt)
 	return js.Undefined(), err
 }
 

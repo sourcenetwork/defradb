@@ -384,7 +384,9 @@ func (h *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *ht
 		return
 	}
 
-	err := col.DeleteEncryptedIndex(req.Context(), fieldName)
+	opts := options.WithIdentity(options.DeleteEncryptedIndex(), identity.FromContext(req.Context()))
+
+	err := col.DeleteEncryptedIndex(req.Context(), fieldName, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

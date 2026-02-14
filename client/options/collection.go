@@ -464,3 +464,32 @@ func (b *CollectionListEncryptedIndexesOptionsBuilder) SetIdentity(
 	})
 	return b
 }
+
+// DeleteEncryptedIndexOptions contains options for DeleteEncryptedIndex operation.
+type DeleteEncryptedIndexOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *DeleteEncryptedIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// DeleteEncryptedIndexOptionsBuilder is a builder for DeleteEncryptedIndexOptions.
+type DeleteEncryptedIndexOptionsBuilder struct {
+	enumerableBuilder[DeleteEncryptedIndexOptions]
+}
+
+// DeleteEncryptedIndex creates a new DeleteEncryptedIndexOptionsBuilder instance.
+func DeleteEncryptedIndex() *DeleteEncryptedIndexOptionsBuilder {
+	return &DeleteEncryptedIndexOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *DeleteEncryptedIndexOptionsBuilder) SetIdentity(id identity.Identity) *DeleteEncryptedIndexOptionsBuilder {
+	b.append(func(opts *DeleteEncryptedIndexOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}

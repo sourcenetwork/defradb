@@ -1500,10 +1500,16 @@ func deleteEncryptedIndex(
 			s.T.Fatalf("fieldName is required for deleting encrypted index")
 		}
 
+		opts := options.DeleteEncryptedIndex()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
 		err := withRetryOnNode(
 			node,
 			func() error {
-				return collection.DeleteEncryptedIndex(s.Ctx, action.FieldName)
+				return collection.DeleteEncryptedIndex(s.Ctx, action.FieldName, opts)
 			},
 		)
 		if AssertError(s.T, err, action.ExpectedError) {

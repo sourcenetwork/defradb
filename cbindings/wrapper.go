@@ -36,7 +36,7 @@ extern Result NodeIdentity(uintptr_t nodePtr);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result EncryptedIndexAdd(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
-extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result LensSet(uintptr_t nodePtr, uintptr_t identity, char* src, char* dst, char* cfg);
 extern Result LensAdd(uintptr_t nodePtr, uintptr_t identityPtr, char* cfg);
 extern Result LensList(uintptr_t nodePtr, uintptr_t identityPtr);

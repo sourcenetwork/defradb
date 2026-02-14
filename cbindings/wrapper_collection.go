@@ -30,7 +30,7 @@ extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t 
 extern Result IndexDrop(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
 extern Result EncryptedIndexAdd(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
-extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result CollectionTruncate(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern void IdentityFree(uintptr_t identityPtr);
 */
@@ -711,16 +711,24 @@ func (c *Collection) AddEncryptedIndex(
 	return retRes, nil
 }
 
-func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *Collection) DeleteEncryptedIndex(
+	ctx context.Context,
+	fieldName string,
+	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+) error {
 	name := C.CString(c.def.Name)
 	cFieldName := C.CString(fieldName)
 	defer C.free(unsafe.Pointer(name))
 	defer C.free(unsafe.Pointer(cFieldName))
 
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	res := ConvertAndFreeCResult(C.EncryptedIndexDelete(
 		C.uintptr_t(c.w.handle),
 		name,
 		cFieldName,
+		cIdentity,
 	))
 
 	if res.Status != 0 {

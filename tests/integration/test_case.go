@@ -414,6 +414,11 @@ type DeleteEncryptedIndex struct {
 	// If a value is not provided the index will be dropped on all nodes.
 	NodeID immutable.Option[int]
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The collection for which this index should be dropped.
 	CollectionID int
 

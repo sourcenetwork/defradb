@@ -487,10 +487,17 @@ func (c *Collection) ListEncryptedIndexes(
 }
 
 // DeleteEncryptedIndex implements client.Collection.
-func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *Collection) DeleteEncryptedIndex(
+	ctx context.Context,
+	fieldName string,
+	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+) error {
 	args := []string{"client", "encrypted-index", "delete"}
 	args = append(args, "--collection", c.Version().Name)
 	args = append(args, "--field", fieldName)
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	_, err := c.cmd.execute(ctx, args)
 	return err

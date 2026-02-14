@@ -350,7 +350,15 @@ func (c *Collection) ListEncryptedIndexes(ctx context.Context, opts ...options.E
 	return out, nil
 }
 
-func (c *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *Collection) DeleteEncryptedIndex(
+	ctx context.Context,
+	fieldName string,
+	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+	if opt != nil {
+		ctx = ctxWithOptIdentity(ctx, opt)
+	}
 	_, err := execute(ctx, c.client, "deleteEncryptedIndex", fieldName)
 	return err
 }

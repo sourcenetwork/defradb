@@ -471,16 +471,22 @@ func (_c *Collection_Delete_Call) RunAndReturn(run func(ctx context.Context, doc
 }
 
 // DeleteEncryptedIndex provides a mock function for the type Collection
-func (_mock *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
-	ret := _mock.Called(ctx, fieldName)
+func (_mock *Collection) DeleteEncryptedIndex(ctx context.Context, fieldName string, opts ...options.Enumerable[options.DeleteEncryptedIndexOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, fieldName, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, fieldName)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteEncryptedIndex")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, fieldName)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.DeleteEncryptedIndexOptions]) error); ok {
+		r0 = returnFunc(ctx, fieldName, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -495,11 +501,13 @@ type Collection_DeleteEncryptedIndex_Call struct {
 // DeleteEncryptedIndex is a helper method to define mock.On call
 //   - ctx context.Context
 //   - fieldName string
-func (_e *Collection_Expecter) DeleteEncryptedIndex(ctx interface{}, fieldName interface{}) *Collection_DeleteEncryptedIndex_Call {
-	return &Collection_DeleteEncryptedIndex_Call{Call: _e.mock.On("DeleteEncryptedIndex", ctx, fieldName)}
+//   - opts ...options.Enumerable[options.DeleteEncryptedIndexOptions]
+func (_e *Collection_Expecter) DeleteEncryptedIndex(ctx interface{}, fieldName interface{}, opts ...interface{}) *Collection_DeleteEncryptedIndex_Call {
+	return &Collection_DeleteEncryptedIndex_Call{Call: _e.mock.On("DeleteEncryptedIndex",
+		append([]interface{}{ctx, fieldName}, opts...)...)}
 }
 
-func (_c *Collection_DeleteEncryptedIndex_Call) Run(run func(ctx context.Context, fieldName string)) *Collection_DeleteEncryptedIndex_Call {
+func (_c *Collection_DeleteEncryptedIndex_Call) Run(run func(ctx context.Context, fieldName string, opts ...options.Enumerable[options.DeleteEncryptedIndexOptions])) *Collection_DeleteEncryptedIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -509,9 +517,16 @@ func (_c *Collection_DeleteEncryptedIndex_Call) Run(run func(ctx context.Context
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 []options.Enumerable[options.DeleteEncryptedIndexOptions]
+		var variadicArgs []options.Enumerable[options.DeleteEncryptedIndexOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.DeleteEncryptedIndexOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -522,7 +537,7 @@ func (_c *Collection_DeleteEncryptedIndex_Call) Return(err error) *Collection_De
 	return _c
 }
 
-func (_c *Collection_DeleteEncryptedIndex_Call) RunAndReturn(run func(ctx context.Context, fieldName string) error) *Collection_DeleteEncryptedIndex_Call {
+func (_c *Collection_DeleteEncryptedIndex_Call) RunAndReturn(run func(ctx context.Context, fieldName string, opts ...options.Enumerable[options.DeleteEncryptedIndexOptions]) error) *Collection_DeleteEncryptedIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
