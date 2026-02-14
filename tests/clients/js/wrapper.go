@@ -147,7 +147,7 @@ func (w *Wrapper) ListP2PDocuments(ctx context.Context, opts ...options.Enumerab
 	panic("not implemented")
 }
 
-func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+func (w *Wrapper) SyncDocuments(ctx context.Context, collectionName string, docIDs []string, opts ...options.Enumerable[options.SyncDocumentsOptions]) error {
 	panic("not implemented")
 }
 

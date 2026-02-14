@@ -3158,16 +3158,22 @@ func (_c *Txn_SyncCollectionVersions_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // SyncDocuments provides a mock function for the type Txn
-func (_mock *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
-	ret := _mock.Called(ctx, collectionName, docIDs)
+func (_mock *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string, opts ...options.Enumerable[options.SyncDocumentsOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, collectionName, docIDs, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, collectionName, docIDs)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for SyncDocuments")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) error); ok {
-		r0 = returnFunc(ctx, collectionName, docIDs)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string, ...options.Enumerable[options.SyncDocumentsOptions]) error); ok {
+		r0 = returnFunc(ctx, collectionName, docIDs, opts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -3183,11 +3189,13 @@ type Txn_SyncDocuments_Call struct {
 //   - ctx context.Context
 //   - collectionName string
 //   - docIDs []string
-func (_e *Txn_Expecter) SyncDocuments(ctx interface{}, collectionName interface{}, docIDs interface{}) *Txn_SyncDocuments_Call {
-	return &Txn_SyncDocuments_Call{Call: _e.mock.On("SyncDocuments", ctx, collectionName, docIDs)}
+//   - opts ...options.Enumerable[options.SyncDocumentsOptions]
+func (_e *Txn_Expecter) SyncDocuments(ctx interface{}, collectionName interface{}, docIDs interface{}, opts ...interface{}) *Txn_SyncDocuments_Call {
+	return &Txn_SyncDocuments_Call{Call: _e.mock.On("SyncDocuments",
+		append([]interface{}{ctx, collectionName, docIDs}, opts...)...)}
 }
 
-func (_c *Txn_SyncDocuments_Call) Run(run func(ctx context.Context, collectionName string, docIDs []string)) *Txn_SyncDocuments_Call {
+func (_c *Txn_SyncDocuments_Call) Run(run func(ctx context.Context, collectionName string, docIDs []string, opts ...options.Enumerable[options.SyncDocumentsOptions])) *Txn_SyncDocuments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3201,10 +3209,17 @@ func (_c *Txn_SyncDocuments_Call) Run(run func(ctx context.Context, collectionNa
 		if args[2] != nil {
 			arg2 = args[2].([]string)
 		}
+		var arg3 []options.Enumerable[options.SyncDocumentsOptions]
+		var variadicArgs []options.Enumerable[options.SyncDocumentsOptions]
+		if len(args) > 3 {
+			variadicArgs = args[3].([]options.Enumerable[options.SyncDocumentsOptions])
+		}
+		arg3 = variadicArgs
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3...,
 		)
 	})
 	return _c
@@ -3215,7 +3230,7 @@ func (_c *Txn_SyncDocuments_Call) Return(err error) *Txn_SyncDocuments_Call {
 	return _c
 }
 
-func (_c *Txn_SyncDocuments_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docIDs []string) error) *Txn_SyncDocuments_Call {
+func (_c *Txn_SyncDocuments_Call) RunAndReturn(run func(ctx context.Context, collectionName string, docIDs []string, opts ...options.Enumerable[options.SyncDocumentsOptions]) error) *Txn_SyncDocuments_Call {
 	_c.Call.Return(run)
 	return _c
 }

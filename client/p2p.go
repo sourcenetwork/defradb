@@ -106,7 +106,12 @@ type P2P interface {
 	// and synchronizes their DAGs locally. It doesn't automatically subscribe
 	// to the documents or their collection for future updates.
 	// context.WithTimeout can be used to set a timeout for the operation.
-	SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error
+	SyncDocuments(
+		ctx context.Context,
+		collectionName string,
+		docIDs []string,
+		opts ...options.Enumerable[options.SyncDocumentsOptions],
+	) error
 
 	// SyncCollectionVersions synchronizes the given collection versions to local node.
 	//

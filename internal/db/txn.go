@@ -421,9 +421,14 @@ func (txn *Txn) ListP2PDocuments(
 	return txn.db.ListP2PDocuments(ctx, opts...)
 }
 
-func (txn *Txn) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+func (txn *Txn) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
+) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.SyncDocuments(ctx, collectionName, docIDs)
+	return txn.db.SyncDocuments(ctx, collectionName, docIDs, opts...)
 }
 
 func (txn *Txn) SyncCollectionVersions(

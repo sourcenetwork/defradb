@@ -648,6 +648,11 @@ type SyncDocs struct {
 	// NodeID holds the ID (index) of a node to execute the sync on.
 	NodeID int
 
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The collection containing the documents to sync.
 	CollectionID int
 

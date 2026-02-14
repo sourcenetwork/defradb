@@ -448,3 +448,32 @@ func (b *ListP2PDocumentsOptionsBuilder) SetIdentity(id identity.Identity) *List
 	})
 	return b
 }
+
+// SyncDocumentsOptions contains options for SyncDocuments operation.
+type SyncDocumentsOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *SyncDocumentsOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// SyncDocumentsOptionsBuilder is a builder for SyncDocumentsOptions.
+type SyncDocumentsOptionsBuilder struct {
+	enumerableBuilder[SyncDocumentsOptions]
+}
+
+// SyncDocuments creates a new SyncDocumentsOptionsBuilder instance.
+func SyncDocuments() *SyncDocumentsOptionsBuilder {
+	return &SyncDocumentsOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *SyncDocumentsOptionsBuilder) SetIdentity(id identity.Identity) *SyncDocumentsOptionsBuilder {
+	b.append(func(opts *SyncDocumentsOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}

@@ -285,8 +285,12 @@ func (w *Wrapper) SyncDocuments(
 	ctx context.Context,
 	collectionName string,
 	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
 ) error {
 	args := []string{"client", "p2p", "document", "sync"}
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	deadline, hasDeadline := ctx.Deadline()
 	if hasDeadline {

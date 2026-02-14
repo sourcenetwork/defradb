@@ -294,7 +294,8 @@ func P2PdocumentSync(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = node.DB.SyncDocuments(ctx, C.GoString(collection), docArgs)
+	syncOpts := options.WithIdentity(options.SyncDocuments(), acpIdentity.FromContext(ctx))
+	err = node.DB.SyncDocuments(ctx, C.GoString(collection), docArgs, syncOpts)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

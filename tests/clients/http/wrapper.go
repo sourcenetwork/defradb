@@ -155,8 +155,9 @@ func (w *Wrapper) SyncDocuments(
 	ctx context.Context,
 	collectionName string,
 	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
 ) error {
-	return w.client.SyncDocuments(ctx, collectionName, docIDs)
+	return w.client.SyncDocuments(ctx, collectionName, docIDs, opts...)
 }
 
 func (w *Wrapper) SyncCollectionVersions(

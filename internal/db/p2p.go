@@ -339,7 +339,20 @@ func (db *DB) ListP2PDocuments(
 // context.WithTimeout can be used to set a timeout for the operation.
 //
 // WARNING: This function does not respect transactions.
-func (db *DB) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
+func (db *DB) SyncDocuments(
+	ctx context.Context,
+	collectionName string,
+	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
+) error {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PSyncDocumentsPerm); err != nil {
+		return err
+	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	if db.p2p == nil {
 		return ErrNoP2P
 	}

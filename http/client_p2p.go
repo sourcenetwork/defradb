@@ -302,7 +302,11 @@ func (c *Client) SyncDocuments(
 	ctx context.Context,
 	collectionName string,
 	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
 ) error {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("p2p", "documents", "sync")
 
 	req := map[string]any{
@@ -324,7 +328,7 @@ func (c *Client) SyncDocuments(
 	// We add buffer time to account for HTTP overhead and response transmission.
 	// This is necessary because the node handling this request will usually wait whole timeout
 	// duration as it might receive responses from multiple peers.
-	httpCtx := context.Background()
+	httpCtx := identity.WithContext(context.Background(), opt.GetIdentity())
 	if hasDeadline {
 		var cancel context.CancelFunc
 		httpCtx, cancel = context.WithTimeout(httpCtx, time.Until(deadline)+500*time.Millisecond)

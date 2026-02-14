@@ -259,7 +259,8 @@ func (h *p2pHandler) SyncDocuments(rw http.ResponseWriter, req *http.Request) {
 		defer cancel()
 	}
 
-	err := db.SyncDocuments(ctx, reqBody.CollectionName, reqBody.DocIDs)
+	opts := options.WithIdentity(options.SyncDocuments(), identity.FromContext(ctx))
+	err := db.SyncDocuments(ctx, reqBody.CollectionName, reqBody.DocIDs, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return

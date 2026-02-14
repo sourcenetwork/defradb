@@ -326,7 +326,12 @@ func (w *CWrapper) SyncDocuments(
 	ctx context.Context,
 	collectionName string,
 	docIDs []string,
+	opts ...options.Enumerable[options.SyncDocumentsOptions],
 ) error {
+	opt := utils.NewOptions(opts...)
+	cIdentity := optionToUintptr(opt.GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	docs := C.CString(strings.Join(docIDs, ","))
 	defer C.free(unsafe.Pointer(docs))
 
@@ -341,7 +346,7 @@ func (w *CWrapper) SyncDocuments(
 	defer C.free(unsafe.Pointer(cCollectionName))
 
 	res := ConvertAndFreeCResult(C.P2PdocumentSync(
-		C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr, C.uintptr_t(0)))
+		C.uintptr_t(w.handle), cCollectionName, docs, cTimerStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)

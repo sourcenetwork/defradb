@@ -113,6 +113,7 @@ const (
 	NodeP2PDocumentAddPerm
 	NodeP2PDocumentDeletePerm
 	NodeP2PDocumentListPerm
+	NodeP2PSyncDocumentsPerm
 	NodeP2PSyncCollectionVersionsPerm
 	NodeP2PSyncBranchableCollectionPerm
 	NodeSignatureVerifyPerm
@@ -166,6 +167,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"p2p-document-add",
 	"p2p-document-delete",
 	"p2p-document-list",
+	"p2p-sync-documents",
 	"p2p-sync-collection-versions",
 	"p2p-sync-branchable-collection",
 	"signature-verify",
@@ -269,6 +271,8 @@ resources:
   - name: p2p-document-delete
     expr: admin
   - name: p2p-document-list
+    expr: admin
+  - name: p2p-sync-documents
     expr: admin
   - name: p2p-sync-collection-versions
     expr: admin
