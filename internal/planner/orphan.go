@@ -120,8 +120,52 @@ func (n *orphanNode) Next() (bool, error) {
 }
 
 // nextASC handles ASC ordering where orphans come first.
-// We must buffer all source docs, then fetch orphans, then yield orphans followed by buffered docs.
+//
+// For primary parents, orphans are self-identifying (FK IS NULL) so we can fetch them
+// upfront and then stream source docs — no buffering needed.
+//
+// For secondary parents, orphans can only be identified by exclusion (all docs minus
+// encountered IDs), so we must buffer all source docs first to build the exclusion set.
 func (n *orphanNode) nextASC() (bool, error) {
+	if n.join.parentSide.isPrimary() {
+		return n.nextASCPrimaryParent()
+	}
+	return n.nextASCSecondaryParent()
+}
+
+// nextASCPrimaryParent streams orphans first (via FK IS NULL query), then source docs.
+// No buffering required — orphans are self-identifying.
+func (n *orphanNode) nextASCPrimaryParent() (bool, error) {
+	if !n.orphansFetched {
+		if err := n.fetchOrphans(); err != nil {
+			return false, err
+		}
+		if len(n.orphanDocs) > 0 {
+			n.docsToYield = append(n.docsToYield, n.orphanDocs...)
+			n.orphanDocs = nil
+			return true, nil
+		}
+	}
+
+	if !n.sourceExhausted {
+		hasNext, err := n.source.Next()
+		if err != nil {
+			return false, err
+		}
+		if hasNext {
+			n.docsToYield = append(n.docsToYield, n.source.Value())
+			return true, nil
+		}
+		n.sourceExhausted = true
+	}
+
+	return false, nil
+}
+
+// nextASCSecondaryParent buffers all source docs, then fetches orphans by exclusion,
+// then yields orphans followed by buffered docs. This requires O(n) memory because
+// orphans can only be identified after all source docs are seen (to build the exclusion set).
+func (n *orphanNode) nextASCSecondaryParent() (bool, error) {
 	if n.sourceExhausted {
 		if !n.orphansFetched {
 			if err := n.fetchOrphans(); err != nil {
@@ -144,7 +188,7 @@ func (n *orphanNode) nextASC() (bool, error) {
 		}
 		if !hasNext {
 			n.sourceExhausted = true
-			return n.nextASC()
+			return n.nextASCSecondaryParent()
 		}
 		n.bufferedDocs = append(n.bufferedDocs, n.source.Value())
 	}
