@@ -192,8 +192,83 @@ func (f *subQueryFetcher) fetchAllExcluding(
 	return f.collectAllDocsExcluding(fetch, shortID, excludeIDs)
 }
 
-// addNullFilterOnField adds a filter condition that checks if the field is NULL.
-func addNullFilterOnField(f *mapper.Filter, propIndex int) *mapper.Filter {
+// fetchOrphansByParentConstraint fetches orphan documents for a specific parent.
+// It first fetches all primary docs that reference the given secondary doc (parent constraint),
+// then filters to only return those that are not already in existingIDs and have a NULL relation field
+// (i.e., orphans without the ordering relation).
+func (f *subQueryFetcher) fetchOrphansByParentConstraint(
+	baseFilter *mapper.Filter,
+	relIDFieldMapIndex int,
+	relFieldIndex int,
+	parentDocID string,
+	relationIDFieldName string,
+	existingIDs map[string]struct{},
+) (docs []core.Doc, err error) {
+	txn := datastore.CtxMustGetTxn(f.ctx)
+
+	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	parentFilter := addFilterOnField(baseFilter, relIDFieldMapIndex, parentDocID)
+
+	result := selectIndex(selectIndexOptions{
+		collection:          f.col,
+		filter:              parentFilter,
+		relationIDFieldName: relationIDFieldName,
+		docMapping:          f.docMapping,
+	})
+
+	fetch := f.createFetcher()
+	defer func() {
+		err = errors.Join(err, fetch.Close())
+	}()
+
+	err = fetch.Init(
+		f.ctx,
+		f.identity,
+		txn,
+		f.nodeACP,
+		f.documentACP,
+		result.index,
+		f.col,
+		f.fields,
+		parentFilter,
+		nil, // no ordering for orphan scan
+		f.docMapping,
+		false, // showDeleted
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	prefix := keys.DataStoreKey{CollectionShortID: shortID}
+	err = fetch.Start(f.ctx, prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	allDocs, err := f.collectAllDocs(fetch, shortID)
+	if err != nil {
+		return nil, err
+	}
+
+	orphanDocs := make([]core.Doc, 0)
+	for _, doc := range allDocs {
+		if _, exists := existingIDs[doc.GetID()]; exists {
+			continue
+		}
+		if doc.Fields[relFieldIndex] == nil {
+			orphanDocs = append(orphanDocs, doc)
+		}
+	}
+
+	return orphanDocs, nil
+}
+
+// addFilterOnField adds a filter condition that checks if the field equals the given value.
+func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter {
 	if f == nil {
 		f = mapper.NewFilter()
 	}
@@ -201,13 +276,18 @@ func addNullFilterOnField(f *mapper.Filter, propIndex int) *mapper.Filter {
 	propertyIndex := &mapper.PropertyIndex{Index: propIndex}
 	filterConditions := map[connor.FilterKey]any{
 		propertyIndex: map[connor.FilterKey]any{
-			mapper.FilterEqOp: nil, // NULL check
+			mapper.FilterEqOp: value,
 		},
 	}
 
 	filter.RemoveField(f, mapper.Field{Index: propIndex})
 	f.Conditions = filter.MergeConditions(f.Conditions, filterConditions)
 	return f
+}
+
+// addNullFilterOnField adds a filter condition that checks if the field is NULL.
+func addNullFilterOnField(f *mapper.Filter, propIndex int) *mapper.Filter {
+	return addFilterOnField(f, propIndex, nil)
 }
 
 // collectAllDocs fetches all documents from the fetcher.

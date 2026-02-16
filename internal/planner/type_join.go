@@ -18,7 +18,6 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
-	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -664,7 +663,7 @@ func (r *primaryObjectsRetriever) collectDocsWithLimit(numDocs int, removeLimit 
 func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	r.primaryScan.addField(r.relIDFieldDef)
 
-	r.primaryScan.filter = addFilterOnIDField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
+	r.primaryScan.filter = addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
 		r.targetSecondaryDoc.GetID())
 
 	oldFetcher := r.primaryScan.fetcher
@@ -781,73 +780,42 @@ func (r *primaryObjectsRetriever) isOrderingByRelation() bool {
 
 // mergeOrphanDocs fetches orphan documents (those without the ordering relation)
 // and merges them with the provided docs based on sort direction.
-// Orphans are found by fetching all primary docs for this secondary doc and
-// excluding those already in docs.
+// Orphans are found by using a subQueryFetcher to independently fetch all primary docs
+// for this secondary doc and filtering to those with a NULL relation field.
 func (r *primaryObjectsRetriever) mergeOrphanDocs(docs []core.Doc) ([]core.Doc, error) {
 	direction, relFieldIndex := r.getOrderingInfo()
 	if direction == nil {
 		return docs, nil
 	}
 
-	// Build a set of IDs that are already in docs (from the ordered fetch)
 	existingIDs := make(map[string]struct{}, len(docs))
 	for _, doc := range docs {
 		existingIDs[doc.GetID()] = struct{}{}
 	}
 
-	// Filter to only get documents for this secondary doc (parent constraint)
-	parentFilter := addFilterOnIDField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
-		r.targetSecondaryDoc.GetID())
+	fetcher := newSubQueryFetcher(
+		r.primaryScan.p.ctx,
+		r.primaryScan.p.identity,
+		r.primaryScan.p.nodeACP,
+		r.primaryScan.p.documentACP,
+		r.primarySide.col,
+		r.primaryScan.documentMapping,
+		r.primaryScan.p.lensStore,
+		r.primaryScan.fields,
+		&r.primaryScan.execInfo.fetches,
+	)
 
-	oldFetcher := r.primaryScan.fetcher
-	oldIndex := r.primaryScan.index
-	oldOrdering := r.primaryScan.ordering
-	oldFilter := r.primaryScan.filter
-
-	r.primaryScan.filter = parentFilter
-	// Select index for the parent constraint only
-	result := selectIndex(selectIndexOptions{
-		collection:          r.primaryScan.col,
-		filter:              parentFilter,
-		relationIDFieldName: r.relIDFieldDef.Name,
-		docMapping:          r.primaryScan.documentMapping,
-	})
-	r.primaryScan.index = result.index
-	r.primaryScan.ordering = nil // No ordering needed for orphans
-
-	r.primaryScan.initFetcher(immutable.None[string]())
-
-	// Collect docs directly from the scanNode to avoid the plan's join logic
-	allDocs, err := r.collectDocsFromScan()
-
-	r.primaryScan.fetcher.Close()
-
-	r.primaryScan.fetcher = oldFetcher
-	r.primaryScan.index = oldIndex
-	r.primaryScan.ordering = oldOrdering
-	r.primaryScan.filter = oldFilter
-
+	orphanDocs, err := fetcher.fetchOrphansByParentConstraint(
+		r.filter,
+		r.primarySide.relIDFieldMapIndex.Value(),
+		relFieldIndex,
+		r.targetSecondaryDoc.GetID(),
+		r.relIDFieldDef.Name,
+		existingIDs,
+	)
 	if err != nil {
 		return nil, err
 	}
-
-	// Find orphan docs - those that don't already exist in the ordered results
-	// AND are not already included in the ordered results.
-	// A doc is an orphan if it wasn't already fetched via the inverted join.
-	// We need to check if it has the relation field populated to determine orphan status.
-	orphanDocs := make([]core.Doc, 0)
-	for _, doc := range allDocs {
-		// Skip docs already in the ordered results
-		if _, exists := existingIDs[doc.GetID()]; exists {
-			continue
-		}
-		// Check if this doc is an orphan (relation field is nil/empty)
-		relField := doc.Fields[relFieldIndex]
-		if relField == nil {
-			orphanDocs = append(orphanDocs, doc)
-		}
-	}
-
 
 	// Merge orphans based on sort direction:
 	// ASC: orphans (NULL) come first
@@ -856,32 +824,6 @@ func (r *primaryObjectsRetriever) mergeOrphanDocs(docs []core.Doc) ([]core.Doc, 
 		return append(orphanDocs, docs...), nil
 	}
 	return append(docs, orphanDocs...), nil
-}
-
-// collectDocsFromScan collects documents directly from the scanNode,
-// bypassing any join logic in the plan.
-func (r *primaryObjectsRetriever) collectDocsFromScan() ([]core.Doc, error) {
-	if err := r.primaryScan.Init(); err != nil {
-		return nil, NewErrSubTypeInit(err)
-	}
-
-	docs := make([]core.Doc, 0)
-
-	for {
-		hasValue, err := r.primaryScan.Next()
-
-		if err != nil {
-			return nil, err
-		}
-
-		if !hasValue {
-			break
-		}
-
-		docs = append(docs, r.primaryScan.Value())
-	}
-
-	return docs, nil
 }
 
 // getOrderingInfo returns the sort direction and relation field index if the ordering involves a relation field.
@@ -1099,23 +1041,6 @@ func (join *invertibleTypeJoin) invertJoinDirectionWithIndex(
 
 	join.childSide.isFirst = join.parentSide.isFirst
 	join.parentSide.isFirst = !join.parentSide.isFirst
-}
-
-func addFilterOnIDField(f *mapper.Filter, propIndex int, docID string) *mapper.Filter {
-	if f == nil {
-		f = mapper.NewFilter()
-	}
-
-	propertyIndex := &mapper.PropertyIndex{Index: propIndex}
-	filterConditions := map[connor.FilterKey]any{
-		propertyIndex: map[connor.FilterKey]any{
-			mapper.FilterEqOp: docID,
-		},
-	}
-
-	filter.RemoveField(f, mapper.Field{Index: propIndex})
-	f.Conditions = filter.MergeConditions(f.Conditions, filterConditions)
-	return f
 }
 
 func getNode[T planNode](plan planNode) T {
