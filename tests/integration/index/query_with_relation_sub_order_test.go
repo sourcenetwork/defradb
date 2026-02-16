@@ -881,8 +881,9 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryASC_ShouldIn
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Secondary parent: join fetches 1 publisher + 1 book, orphanNode scans 2 books to find orphans
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(4),
+				// Secondary parent: orphanNode scans books to find orphans, join fetches publisher + book
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
+					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
 		},
 	}
@@ -938,8 +939,9 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryDESC_ShouldI
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Secondary parent: join fetches 1 publisher + 1 book, orphanNode scans 2 books to find orphans
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(4),
+				// Secondary parent: orphanNode scans books to find orphans, join fetches publisher + book
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
+					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
 		},
 	}
@@ -997,8 +999,9 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryASC_ShouldIncl
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Primary parent: join fetches 1 book + 1 publisher, orphanNode uses index to find 1 orphan
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3).WithDocFetches(3),
+				// Primary parent: orphanNode uses index to find orphan, join fetches book + publisher
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(1).
+					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
 		},
 	}
@@ -1056,8 +1059,9 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryDESC_ShouldInc
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Primary parent: join fetches 1 book + 1 publisher, orphanNode uses index to find 1 orphan
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(3).WithDocFetches(3),
+				// Primary parent: orphanNode uses index to find orphan, join fetches book + publisher
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(1).
+					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
 		},
 	}
@@ -1114,7 +1118,8 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ExcludesOrphans(t 
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// Without @exhaustive: join fetches 1 publisher + 1 book, no orphan scanning
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(1).WithDocFetches(2),
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
+					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
 		},
 	}
@@ -1173,7 +1178,8 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ExcludesOrphans(t *t
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// Without @exhaustive: join fetches 1 book + 1 publisher, no orphan scanning
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2).WithDocFetches(2),
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(1).
+					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
 		},
 	}
@@ -1282,9 +1288,14 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_ExcludesOrphans(t 
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// The index on Publisher.establishedYear is used by the nested Book->Publisher join.
-				// With recursive aggregation, the indexFetches from the Publisher scanNode are now included.
-				Asserter: testUtils.NewExplainAsserter().WithIndexFetches(2),
+				// Outer typeJoinMany: Author(root) -> Book(subType)
+				// Inner typeJoinOne: Book(root) -> Publisher(subType)
+				// root: 1 Author scanned (no index)
+				// subType/root: 2 Books fetched (limit 2, orphan excluded)
+				// subType/subType: 2 Publishers fetched via index on establishedYear
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
+					WithLevel("subType", "root").WithDocFetches(2).WithIndexFetches(0).
+					WithLevel("subType", "subType").WithDocFetches(2).WithIndexFetches(2),
 			},
 		},
 	}
@@ -1399,9 +1410,72 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// docFetches: 1 author + 2 books + 2 publishers = 5 (recursively aggregated)
-				// indexFetches: 2 from Publisher index (recursively aggregated from nested join)
-				Asserter: testUtils.NewExplainAsserter().WithDocFetches(5).WithIndexFetches(2),
+				// Outer typeJoinMany: Author(root) -> Book(subType)
+				// Inner typeJoinOne: Book(root) -> Publisher(subType)
+				// root: 1 Author scanned (no index)
+				// subType/root: 2 Books fetched (limit 2, OrphanBook excluded without @exhaustive)
+				// subType/subType: 2 Publishers fetched via index on establishedYear
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
+					WithLevel("subType", "root").WithDocFetches(2).WithIndexFetches(0).
+					WithLevel("subType", "subType").WithDocFetches(2).WithIndexFetches(2),
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldIncludeAll(t *testing.T) {
+	req := `query @exhaustive {
+		Book(order: {publisher: {year: ASC}}) {
+			name
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						name: String
+						publisher: Publisher
+					}
+					type Publisher {
+						year: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "Book1"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "Book2"}`, // No publisher - orphan
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"year": 2020,
+					"book": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{"name": "Book2"}, // null year first in ASC
+						{"name": "Book1"},
+					},
+				},
+			},
+			&action.Request{
+				Request: makeExplainQuery(req),
+				// Secondary parent with @exhaustive: orphanNode wraps typeJoinOne
+				// root: 1 Book scanned from inverted join (via Publisher index)
+				// subType: 1 Publisher fetched via index on year
+				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
+					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
 		},
 	}
