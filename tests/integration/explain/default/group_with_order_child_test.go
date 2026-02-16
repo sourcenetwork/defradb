@@ -29,7 +29,7 @@ func TestDefaultExplainRequestWithDescendingOrderOnInnerGroupSelection(t *testin
 				Request: `query @explain {
 					Author(groupBy: [name]) {
 						name
-						_group (order: {age: DESC}){
+						GROUP (order: {age: DESC}){
 							age
 						}
 					}
@@ -79,7 +79,7 @@ func TestDefaultExplainRequestWithAscendingOrderOnInnerGroupSelection(t *testing
 				Request: `query @explain {
 					Author(groupBy: [name]) {
 						name
-						_group (order: {age: ASC}){
+						GROUP (order: {age: ASC}){
 							age
 						}
 					}
@@ -129,12 +129,12 @@ func TestDefaultExplainRequestWithOrderOnNestedParentGroupByAndOnNestedParentsIn
 				Request: `query @explain {
 					Author(groupBy: [name]) {
 						name
-						_group (
+						GROUP (
 							groupBy: [verified],
 							order: {verified: ASC}
 						){
 							verified
-							_group (order: {age: DESC}) {
+							GROUP (order: {age: DESC}) {
 								age
 							}
 						}

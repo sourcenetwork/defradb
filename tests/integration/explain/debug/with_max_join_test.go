@@ -48,7 +48,7 @@ func TestDebugExplainRequest_WithMaxOnOneToManyJoinedField_Succeeds(t *testing.T
 					Author {
 						name
 						_docID
-						MaxPages: _max(
+						MaxPages: MAX(
 							books: {field: pages}
 						)
 					}
@@ -73,7 +73,7 @@ func TestDebugExplainRequest_WithMaxOnOneToManyJoinedFieldWithFilter_Succeeds(t 
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						MaxPages: _max(
+						MaxPages: MAX(
 							articles: {
 								field: pages,
 								filter: {
@@ -105,7 +105,7 @@ func TestDebugExplainRequest_WithMaxOnOneToManyJoinedFieldWithManySources_Succee
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						MaxPages: _max(
+						MaxPages: MAX(
 							books: {field: pages},
 							articles: {field: pages}
 						)

@@ -33,7 +33,7 @@ func TestExecuteExplainRequest_WithMinOfInlineArrayField_Succeeds(t *testing.T) 
 				Request: `query @explain(type: execute) {
 					Book {
 						name
-						MinChapterPages: _min(chapterPages: {})
+						MinChapterPages: MIN(chapterPages: {})
 					}
 				}`,
 
@@ -84,7 +84,7 @@ func TestExecuteExplainRequest_MinOfRelatedOneToManyField_Succeeds(t *testing.T)
 				Request: `query @explain(type: execute) {
 					Author {
 						name
-						MinPages: _min(
+						MinPages: MIN(
 							articles: {
 								field: pages,
 							}

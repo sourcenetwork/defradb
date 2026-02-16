@@ -38,7 +38,7 @@ func TestQuerySimpleWithSumWithOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _sum(HeightM: {}, Age: {})
+						total: SUM(HeightM: {}, Age: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -57,7 +57,7 @@ func TestQuerySimpleWithSumWithOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _sum(HeightM: {}, Age: {})
+						total: SUM(HeightM: {}, Age: {})
 					}
 				}`,
 				Results: map[string]any{

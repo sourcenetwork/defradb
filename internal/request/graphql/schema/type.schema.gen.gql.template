@@ -43,14 +43,14 @@ input  {TYPE_NAME}FilterBaseArg {
 
 # Having arguments
 input {TYPE_NAME}HavingArg {
-    _count: {TYPE_NAME}HavingBlock
-    _min: {TYPE_NAME}HavingBlock
-    _max: {TYPE_NAME}HavingBlock
-    _sum: {TYPE_NAME}HavingBlock
-    _avg: {TYPE_NAME}HavingBlock
+    COUNT: {TYPE_NAME}HavingBlock
+    MIN: {TYPE_NAME}HavingBlock
+    MAX: {TYPE_NAME}HavingBlock
+    SUM: {TYPE_NAME}HavingBlock
+    AVG: {TYPE_NAME}HavingBlock
 }
 
-# // @todo: _count supports no selection set, so the input type for Having should match.
+# // @todo: COUNT supports no selection set, so the input type for Having should match.
 input {TYPE_NAME}HavingBlock {
     {FOR field in TYPE_NAME}
         {if field is scalar}

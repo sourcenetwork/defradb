@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -25,11 +26,11 @@ const (
 )
 
 var (
-	lensType db.LensRuntimeType
+	lensType options.NodeLensRuntimeType
 )
 
 func init() {
-	lensType = db.LensRuntimeType(os.Getenv(lensTypeEnvName))
+	lensType = options.NodeLensRuntimeType(os.Getenv(lensTypeEnvName))
 }
 
 // ConfigureMigration is a test action which will configure a Lens migration using the
@@ -75,5 +76,5 @@ func configureMigration(
 	// After setting migration the collection's Version.Previous.Value().Transform should be set.
 	// that's why we need to refresh collections, so that the in-memory collection versions are updated.
 	// Originally was added for [CreateIndex] to be able to index docs with migrated values.
-	refreshCollections(s, action.TransactionID)
+	refreshCollections(s, action.TransactionID, immutable.None[state.Identity]())
 }

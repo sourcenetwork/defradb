@@ -15,14 +15,17 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
-func MakeP2PDocumentRemoveCommand(ctx context.Context) *cobra.Command {
+func MakeP2PDocumentCreateCommand(ctx context.Context) *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "remove [docIDs]",
-		Short: "Remove P2P documents",
-		Long: `Remove P2P documents from the followed pubsub topics.
-The removed documents will no longer be synchronized between nodes.`,
+		Use:   "create [docIDs]",
+		Short: "Create P2P documents",
+		Long: `Create P2P documents to the synchronized pubsub topics.
+The documents are synchronized between nodes of a pubsub network.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -36,15 +39,16 @@ The removed documents will no longer be synchronized between nodes.`,
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return cliClient.RemoveP2PDocuments(cmd.Context(), collectionIDs...)
+			opt := options.WithIdentity(options.CreateP2PDocuments(), identity.FromContext(cmd.Context()))
+			return cliClient.CreateP2PDocuments(cmd.Context(), collectionIDs, opt)
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "remove single document",
-		`defradb client p2p document remove bae123`)
+	EmbedCLIExample(ctx, cmd, "create single document",
+		`defradb client p2p document create bae123`)
 
-	EmbedCLIExample(ctx, cmd, "remove multiple documents",
-		`defradb client p2p document remove bae123,bae456`)
+	EmbedCLIExample(ctx, cmd, "create multiple documents",
+		`defradb client p2p document create bae123,bae456`)
 
 	return cmd
 }

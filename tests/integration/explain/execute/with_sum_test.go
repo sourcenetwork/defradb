@@ -33,7 +33,7 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 				Request: `query @explain(type: execute) {
 					Book {
 						name
-						NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: _sum(chapterPages: {})
+						NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: SUM(chapterPages: {})
 					}
 				}`,
 
@@ -84,7 +84,7 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 				Request: `query @explain(type: execute) {
 					Author {
 						name
-						TotalPages: _sum(
+						TotalPages: SUM(
 							articles: {
 								field: pages,
 							}

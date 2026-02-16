@@ -21,9 +21,9 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -53,17 +53,19 @@ func setupNode(
 	s *state.State,
 	identity immutable.Option[acpIdentity.Identity],
 	testCase TestCase,
-	opts ...node.Option,
+	opts *options.NodeOptionsBuilder,
 ) (*state.NodeState, error) {
-	opts = append(defaultNodeOpts(), opts...)
-	opts = append(opts, db.WithEnabledSigning(testCase.EnableSigning))
+	if opts == nil {
+		opts = defaultNodeOpts()
+	}
+	opts.DB().SetEnableSigning(testCase.EnableSigning)
 
 	if s.EnableSearchableEncryption {
 		seKey, err := crypto.GenerateAES256()
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate searchable encryption key: %w", err)
 		}
-		opts = append(opts, db.WithSearchableEncryptionKey(seKey))
+		opts.DB().SetSearchableEncryptionKey(seKey)
 	}
 
 	err := createBadgerEncryptionKey()
@@ -71,23 +73,19 @@ func setupNode(
 		return nil, err
 	}
 	if badgerEncryption && encryptionKey != nil {
-		opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
+		opts.Store().SetBadgerEncryptionKey(encryptionKey)
 	}
 
 	switch s.DocumentACPType {
 	case state.LocalDocumentACPType:
-		opts = append(opts, node.WithDocumentACPType(node.LocalDocumentACPType))
+		opts.DocumentACP().SetType(options.NodeLocalDocumentACPType)
 
 	case state.SourceHubDocumentACPType:
-		if len(s.DocumentACPOptions) == 0 {
+		if s.DocumentACPOptions == nil {
 			s.DocumentACPOptions, err = setupSourceHub(s, testCase)
 			require.NoError(s.T, err)
 		}
-
-		opts = append(opts, node.WithDocumentACPType(node.SourceHubDocumentACPType))
-		for _, opt := range s.DocumentACPOptions {
-			opts = append(opts, opt)
-		}
+		opts.DocumentACP().SetAll(*s.DocumentACPOptions)
 
 	default:
 		// no-op, use the `node` package default
@@ -105,70 +103,74 @@ func setupNode(
 			// default test case
 			path = s.T.TempDir()
 		}
-		opts = append(opts,
-			node.WithStorePath(path),
-			node.WithDocumentACPPath(path),
-			node.WithNodeACPPath(path),
-		)
+		opts.Store().SetPath(path).
+			DocumentACP().SetPath(path).
+			NodeACP().SetPath(path)
 	}
 
 	switch s.DbType {
 	case BadgerFileType:
-		opts = append(opts, node.WithStoreType(node.BadgerStore))
+		opts.Store().SetType(options.NodeBadgerStore)
 
 	case BadgerIMType:
-		opts = append(opts, node.WithStoreType(node.BadgerStore), node.WithBadgerInMemory(true))
+		opts.Store().SetType(options.NodeBadgerStore).SetBadgerInMemory(true)
 
 	case DefraIMType:
-		opts = append(opts, node.WithStoreType(node.MemoryStore))
+		opts.Store().SetType(options.NodeMemoryStore)
 
 	case LevelStoreType:
-		opts = append(opts, node.WithStoreType(node.LevelStore))
+		opts.Store().SetType(options.NodeStoreType("level"))
 
 	default:
 		return nil, fmt.Errorf("invalid database type: %v", s.DbType)
 	}
 
 	if s.KMS == PubSubKMSType {
-		opts = append(opts, node.WithKMS(kms.PubSubServiceType))
+		opts.SetKMS(options.NodeKMSType(kms.PubSubServiceType))
 	}
-
-	netOpts := getP2POptions(opts)
 
 	if s.IsNetworkEnabled {
-		opts = append(opts, node.WithDisableP2P(false))
+		opts.SetDisableP2P(false)
 	}
 
-	nodeObj, err := node.New(s.Ctx, opts...)
+	nodeObj, err := node.New(s.Ctx, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	s.Ctx = acpIdentity.WithContext(s.Ctx, identity)
-	err = nodeObj.Start(s.Ctx)
+	ctx := acpIdentity.WithContext(s.Ctx, identity)
+	err = nodeObj.Start(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
 	c, err := setupClient(s, nodeObj)
-
-	resetStateContext(s)
 	require.Nil(s.T, err)
 
 	eventState, err := state.NewEventState(c.Events())
 	require.NoError(s.T, err)
 
 	st := &state.NodeState{
-		Client:  c,
-		Event:   eventState,
-		P2P:     state.NewP2PState(),
-		DbPath:  path,
-		NetOpts: netOpts,
+		Client: c,
+		Event:  eventState,
+		P2P:    state.NewP2PState(),
+		DbPath: path,
 	}
 
-	addresses, err := nodeObj.DB.PeerInfo()
+	var addresses []string
+
+	// Inject node identity to bypass NAC inorder to be able to call [PeerInfo] operation,
+	// otherwise when NAC is enabled, we will get authorization error.
+	nodeIdentity := NodeIdentity(s.CurrentSetupNodeID)
+	peerInfoOpts := options.PeerInfo()
+	identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, s.CurrentSetupNodeID)
+	if identOption.HasValue() {
+		peerInfoOpts.SetIdentity(identOption.Value())
+	}
+	addresses, err = nodeObj.DB.PeerInfo(s.Ctx, peerInfoOpts)
 	require.NoError(s.T, err)
+
 	// The addresses returned by PeerInfo include the /p2p/<peerID> part, but
 	// the libp2p.ListenAddrStrings cannot include it, so we need to remove it
 	// before caching the addresses on the state.

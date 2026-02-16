@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
@@ -473,7 +474,11 @@ func (p *Planner) SelectFromSource(
 	}
 
 	if fromCollection {
-		col, err := p.db.GetCollectionByName(p.ctx, selectReq.Name)
+		col, err := p.db.GetCollectionByName(
+			p.ctx,
+			selectReq.Name,
+			options.WithIdentity(options.GetCollectionByName(), p.identity),
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -515,7 +520,11 @@ func (p *Planner) SelectFromSource(
 
 // SelectEncrypted constructs a plan for searchable encryption queries
 func (p *Planner) SelectEncrypted(selectReq *mapper.Select) (planNode, error) {
-	col, err := p.db.GetCollectionByName(p.ctx, selectReq.CollectionName)
+	col, err := p.db.GetCollectionByName(
+		p.ctx,
+		selectReq.CollectionName,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return nil, err
 	}

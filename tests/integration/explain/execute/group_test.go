@@ -31,7 +31,7 @@ func TestExecuteExplainRequestWithGroup(t *testing.T) {
 				Request: `query @explain(type: execute) {
 					ContactAddress(groupBy: [country]) {
 						country
-						_group {
+						GROUP {
 							city
 						}
 					}

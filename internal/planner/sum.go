@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -80,7 +81,11 @@ func (p *Planner) isValueFloat(
 	}
 
 	if !source.ChildTarget.HasValue {
-		parentCol, err := p.db.GetCollectionByName(p.ctx, parent.CollectionName)
+		parentCol, err := p.db.GetCollectionByName(
+			p.ctx,
+			parent.CollectionName,
+			options.WithIdentity(options.GetCollectionByName(), p.identity),
+		)
 		if err != nil {
 			return false, err
 		}
@@ -131,7 +136,11 @@ func (p *Planner) isValueFloat(
 		return false, nil
 	}
 
-	childCol, err := p.db.GetCollectionByName(p.ctx, child.CollectionName)
+	childCol, err := p.db.GetCollectionByName(
+		p.ctx,
+		child.CollectionName,
+		options.WithIdentity(options.GetCollectionByName(), p.identity),
+	)
 	if err != nil {
 		return false, err
 	}

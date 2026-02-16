@@ -17,9 +17,7 @@ import (
 	"testing"
 	"time"
 
-	lensNode "github.com/sourcenetwork/lens/host-go/node"
-
-	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
 	"github.com/sourcenetwork/defradb/tests/state"
@@ -75,58 +73,59 @@ func init() {
 	}
 }
 
-func defaultNodeOpts() []node.Option {
-	return []node.Option{
-		db.WithLensOpts(
-			lensNode.WithPoolSize(lensPoolSize),
-		),
-		db.WithLensRuntime(lensType),
+func defaultNodeOpts() *options.NodeOptionsBuilder {
+	opt := options.Node().
 		// The test framework sets this up elsewhere when required so that it may be wrapped
 		// into a [client.TxnStore].
-		node.WithDisableAPI(true),
+		SetDisableAPI(true).
 		// The p2p is configured in the tests by [ConfigureNode] actions, we disable it here
 		// to keep the tests as lightweight as possible.
-		node.WithDisableP2P(true),
+		SetDisableP2P(true)
+
+	opt.DB().
+		SetLensPoolSize(lensPoolSize).
+		SetLensRuntime(lensType).
 		// The default is 5 and that is never going to be needed in a testing scenario where all the
 		// nodes are on the same machine with no network latency.
-		db.WithP2PBlockSyncTimeout(1 * time.Second),
-	}
+		SetP2PBlockSyncTimeout(1 * time.Second)
+
+	return opt
 }
 
 func NewBadgerMemoryDB(ctx context.Context) (node.DB, error) {
-	opts := []node.Option{
-		node.WithDisableP2P(true),
-		node.WithDisableAPI(true),
-		node.WithBadgerInMemory(true),
-	}
+	opts := options.Node().
+		SetDisableP2P(true).
+		SetDisableAPI(true).
+		Store().SetBadgerInMemory(true).
+		Node()
 
-	node, err := node.New(ctx, opts...)
+	n, err := node.New(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
-	err = node.Start(ctx)
+	err = n.Start(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return node.DB, err
+	return n.DB, err
 }
 
 func NewBadgerFileDB(ctx context.Context, t testing.TB) (node.DB, error) {
 	path := t.TempDir()
 
-	opts := []node.Option{
-		node.WithDisableP2P(true),
-		node.WithDisableAPI(true),
-		node.WithStorePath(path),
-	}
+	opts := options.Node().
+		SetDisableP2P(true).
+		SetDisableAPI(true).
+		Store().SetPath(path).
+		Node()
 
-	node, err := node.New(ctx, opts...)
+	n, err := node.New(ctx, opts)
 	if err != nil {
 		return nil, err
 	}
-	err = node.Start(ctx)
+	err = n.Start(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return node.DB, err
+	return n.DB, err
 }

@@ -40,10 +40,10 @@ func TestQuerySimpleWithCountWithFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_count(Users: {filter: {Age: {_gt: 26}}})
+					COUNT(Users: {filter: {Age: {_gt: 26}}})
 				}`,
 				Results: map[string]any{
-					"_count": 2,
+					"COUNT": 2,
 				},
 			},
 		},
@@ -78,10 +78,10 @@ func TestQuerySimpleWithCountWithDateTimeFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_count(Users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56-05:00"}}})
+					COUNT(Users: {filter: {CreatedAt: {_gt: "2017-08-23T03:46:56-05:00"}}})
 				}`,
 				Results: map[string]any{
-					"_count": 2,
+					"COUNT": 2,
 				},
 			},
 		},

@@ -15,10 +15,9 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/engine/module"
-	lens "github.com/sourcenetwork/lens/host-go/node"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	intOpts "github.com/sourcenetwork/defradb/internal/options"
 )
 
 const (
@@ -26,104 +25,22 @@ const (
 	updateEventBufferSize = 100
 )
 
-type dbOptions struct {
-	maxTxnRetries           immutable.Option[int]
-	identity                immutable.Option[identity.Identity]
-	disableSigning          bool
-	searchableEncryptionKey []byte
-	p2p                     immutable.Option[client.Host]
-	retryIntervals          []time.Duration
-	// timeout duration for syncing block links.
-	p2pBlockSyncTimeout time.Duration
-	LensRuntimeType     LensRuntimeType
-	LensOptions         []lens.Option
-	ChunkSize           immutable.Option[int]
-}
-
-func defaultDBOptions() *dbOptions {
-	return &dbOptions{
-		maxTxnRetries: immutable.Some(defaultMaxTxnRetries),
-		retryIntervals: []time.Duration{
-			// exponential backoff retry intervals
-			time.Second * 30,
-			time.Minute,
-			time.Minute * 2,
-			time.Minute * 4,
-			time.Minute * 8,
-			time.Minute * 16,
-			time.Minute * 32,
+func defaultDBConfig() intOpts.DBOptions {
+	return intOpts.DBOptions{
+		NodeDBOptions: options.NodeDBOptions{
+			MaxTxnRetries: immutable.Some(defaultMaxTxnRetries),
+			EnableSigning: true,
+			RetryIntervals: []time.Duration{
+				time.Second * 30,
+				time.Minute,
+				time.Minute * 2,
+				time.Minute * 4,
+				time.Minute * 8,
+				time.Minute * 16,
+				time.Minute * 32,
+			},
+			P2PBlockSyncTimeout: time.Second * 5,
 		},
-		p2pBlockSyncTimeout: time.Second * 5,
-		LensRuntimeType:     DefaultLens,
-		LensOptions:         []lens.Option{},
-	}
-}
-
-// Option is a funtion that sets a config value on the db.
-type Option func(*dbOptions)
-
-// WithMaxRetries sets the maximum number of retries per transaction.
-func WithMaxRetries(num int) Option {
-	return func(opts *dbOptions) {
-		opts.maxTxnRetries = immutable.Some(num)
-	}
-}
-
-func WithNodeIdentity(ident identity.Identity) Option {
-	return func(opts *dbOptions) {
-		opts.identity = immutable.Some(ident)
-	}
-}
-
-// WithEnabledSigning sets the signing algorithm to use for DAG blocks.
-// If false, block signing is disabled. By default, block signing is enabled.
-func WithEnabledSigning(value bool) Option {
-	return func(opts *dbOptions) {
-		opts.disableSigning = !value
-	}
-}
-
-// WithSearchableEncryptionKey sets the key used for searchable encryption.
-// This key is used to generate search tags for encrypted fields.
-func WithSearchableEncryptionKey(key []byte) Option {
-	return func(opts *dbOptions) {
-		opts.searchableEncryptionKey = key
-	}
-}
-
-func WithRetryInterval(interval []time.Duration) Option {
-	return func(opt *dbOptions) {
-		if len(interval) > 0 {
-			opt.retryIntervals = interval
-		}
-	}
-}
-
-func WithP2P(host client.Host) Option {
-	return func(opts *dbOptions) {
-		opts.p2p = immutable.Some(host)
-	}
-}
-
-func WithP2PBlockSyncTimeout(timeout time.Duration) Option {
-	return func(opt *dbOptions) {
-		opt.p2pBlockSyncTimeout = timeout
-	}
-}
-
-func WithLensOpts(opts ...lens.Option) Option {
-	return func(dbOpt *dbOptions) {
-		dbOpt.LensOptions = append(dbOpt.LensOptions, opts...)
-	}
-}
-
-// WithBlockstoreChunkSize will wrap the blockstore in a chunkstore with the given chunksize.
-//
-// This allows the store to hold values of indefinite size, even if the underlying
-// corekv store does not support it (such as badger in-memory store).
-func WithBlockStoreChunkSize(chunkSize int) Option {
-	return func(opts *dbOptions) {
-		opts.ChunkSize = immutable.Some(chunkSize)
 	}
 }
 
@@ -147,11 +64,5 @@ func newLensRuntime(runtimeType LensRuntimeType) (module.Runtime, error) {
 		return runtimeConstructor(), nil
 	} else {
 		return nil, NewErrLensRuntimeNotSupported(runtimeType)
-	}
-}
-
-func WithLensRuntime(runtime LensRuntimeType) Option {
-	return func(o *dbOptions) {
-		o.LensRuntimeType = runtime
 	}
 }

@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -80,7 +81,15 @@ var templateDataGenerators = map[string]func(*state.State, int) map[string]strin
 	"PeerAddresses": func(s *state.State, nodeID int) map[string]string {
 		res := map[string]string{}
 		for i, node := range s.Nodes {
-			addresses, err := node.PeerInfo()
+			// Inject node's identity into the context while generating templates, to bypass NAC for
+			// the gated [PeerInfo] operation, otherwise due to lack of authorization(s) we might not
+			// be able to see the peer addresses at all.
+			opts := options.PeerInfo()
+			identOption := getIdentityForRequestSpecificToNode(s, NodeIdentity(i), i)
+			if identOption.HasValue() {
+				opts.SetIdentity(identOption.Value())
+			}
+			addresses, err := node.PeerInfo(s.Ctx, opts)
 			require.NoError(s.T, err)
 
 			for j, address := range addresses {

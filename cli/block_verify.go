@@ -15,6 +15,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 )
 
@@ -39,7 +41,8 @@ Notes:
 			if err != nil {
 				return err
 			}
-			err = cliClient.VerifySignature(cmd.Context(), args[1], pubKey)
+			opt := options.WithIdentity(options.VerifySignature(), identity.FromContext(cmd.Context()))
+			err = cliClient.VerifySignature(cmd.Context(), args[1], pubKey, opt)
 			if err != nil {
 				return err
 			}

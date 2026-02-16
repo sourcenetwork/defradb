@@ -48,7 +48,7 @@ func TestDebugExplainRequestWithSumOnOneToManyJoinedField(t *testing.T) {
 					Author {
 						name
 						_docID
-						TotalPages: _sum(
+						TotalPages: SUM(
 							books: {field: pages}
 						)
 					}
@@ -73,7 +73,7 @@ func TestDebugExplainRequestWithSumOnOneToManyJoinedFieldWithFilter(t *testing.T
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						TotalPages: _sum(
+						TotalPages: SUM(
 							articles: {
 								field: pages,
 								filter: {
@@ -105,7 +105,7 @@ func TestDebugExplainRequestWithSumOnOneToManyJoinedFieldWithManySources(t *test
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						TotalPages: _sum(
+						TotalPages: SUM(
 							books: {field: pages},
 							articles: {field: pages}
 						)

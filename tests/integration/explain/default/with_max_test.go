@@ -45,7 +45,7 @@ func TestDefaultExplainRequest_WithMaxOnInlineArrayField_ChildFieldWillBeEmpty(t
 				Request: `query @explain {
 					Book {
 						name
-						MaxChapterPages: _max(chapterPages: {})
+						MaxChapterPages: MAX(chapterPages: {})
 					}
 				}`,
 

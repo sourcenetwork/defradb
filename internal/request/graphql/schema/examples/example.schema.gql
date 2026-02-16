@@ -79,11 +79,11 @@ input BookFilterBaseArg {
 
 # Having arguments
 input BookHavingArg {
-    _count: BookHavingBlock
-    _min: BookHavingBlock
-    _max: BookHavingBlock
-    _sum: BookHavingBlock
-    _avg: BookHavingBlock
+    COUNT: BookHavingBlock
+    MIN: BookHavingBlock
+    MAX: BookHavingBlock
+    SUM: BookHavingBlock
+    AVG: BookHavingBlock
 }
 
 input BookHavingBlock {
@@ -129,11 +129,11 @@ input AuthorFilterBaseArg {
 
 # Having arguments
 input AuthorHavingArg {
-    _count: AuthorHavingBlock
-    _min: AuthorHavingBlock
-    _max: AuthorHavingBlock
-    _sum: AuthorHavingBlock
-    _avg: AuthorHavingBlock
+    COUNT: AuthorHavingBlock
+    MIN: AuthorHavingBlock
+    MAX: AuthorHavingBlock
+    SUM: AuthorHavingBlock
+    AVG: AuthorHavingBlock
 }
 
 input AuthorHavingArg {

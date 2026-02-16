@@ -15,6 +15,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeP2PCollectionCreateCommand(ctx context.Context) *cobra.Command {
@@ -28,7 +31,7 @@ The collections are synchronized between nodes of a pubsub network.`,
 			cliClient := mustGetContextCLIClient(cmd)
 
 			var collectionNames []string
-			for _, id := range strings.Split(args[0], ",") {
+			for id := range strings.SplitSeq(args[0], ",") {
 				id = strings.TrimSpace(id)
 				if id == "" {
 					continue
@@ -36,7 +39,8 @@ The collections are synchronized between nodes of a pubsub network.`,
 				collectionNames = append(collectionNames, id)
 			}
 
-			return cliClient.CreateP2PCollections(cmd.Context(), collectionNames...)
+			opt := options.WithIdentity(options.CreateP2PCollections(), identity.FromContext(cmd.Context()))
+			return cliClient.CreateP2PCollections(cmd.Context(), collectionNames, opt)
 		},
 	}
 

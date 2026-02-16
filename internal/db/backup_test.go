@@ -528,7 +528,7 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 
 	key1, err := client.NewDocIDFromString(addressID)
 	require.NoError(t, err)
-	_, err = col1.Get(ctx, key1, false)
+	_, err = col1.Get(ctx, key1)
 	require.NoError(t, err)
 
 	col2, err = db.getCollectionByName(ctx, "User")
@@ -536,12 +536,12 @@ func TestBasicImport_WithMultipleCollectionsAndObjects_NoError(t *testing.T) {
 
 	key2, err := client.NewDocIDFromString(bobID)
 	require.NoError(t, err)
-	_, err = col2.Get(ctx, key2, false)
+	_, err = col2.Get(ctx, key2)
 	require.NoError(t, err)
 
 	key3, err := client.NewDocIDFromString(johnID)
 	require.NoError(t, err)
-	_, err = col2.Get(ctx, key3, false)
+	_, err = col2.Get(ctx, key3)
 	require.NoError(t, err)
 }
 

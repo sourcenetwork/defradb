@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -28,6 +29,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/planner"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 func (db *DB) addView(
@@ -97,9 +99,7 @@ func (db *DB) addView(
 
 	for _, view := range returnDescriptions {
 		if view.Query.HasValue() && view.IsMaterialized {
-			err := db.refreshViews(ctx, client.CollectionFetchOptions{
-				VersionID: immutable.Some(view.VersionID),
-			})
+			err := db.refreshViews(ctx, utils.NewOptions(options.GetCollections().SetVersionID(view.VersionID)))
 			if err != nil {
 				return nil, err
 			}
@@ -109,7 +109,7 @@ func (db *DB) addView(
 	return returnDescriptions, nil
 }
 
-func (db *DB) refreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+func (db *DB) refreshViews(ctx context.Context, opts *options.GetCollectionsOptions) error {
 	// For now, we only support user-cache management of views, not all collections
 	cols, err := db.getViews(ctx, opts)
 	if err != nil {
@@ -139,7 +139,7 @@ func (db *DB) refreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	return nil
 }
 
-func (db *DB) getViews(ctx context.Context, opts client.CollectionFetchOptions) ([]client.CollectionVersion, error) {
+func (db *DB) getViews(ctx context.Context, opts *options.GetCollectionsOptions) ([]client.CollectionVersion, error) {
 	cols, err := db.getCollections(ctx, opts)
 	if err != nil {
 		return nil, err

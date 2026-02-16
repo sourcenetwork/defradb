@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimitGreaterThanLength(t 
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {offset: 1, limit: 3})
+						COUNT(favouriteIntegers: {offset: 1, limit: 3})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 2,
+							"name":  "Shahzad",
+							"COUNT": 2,
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineIntegerArrayWithCountWithOffsetWithLimit(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {offset: 1, limit: 3})
+						COUNT(favouriteIntegers: {offset: 1, limit: 3})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 3,
+							"name":  "Shahzad",
+							"COUNT": 3,
 						},
 					},
 				},

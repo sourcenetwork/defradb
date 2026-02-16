@@ -49,18 +49,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumWithL
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_sum(_group: {field: Age, offset: 1, limit: 2})
+						SUM(GROUP: {field: Age, offset: 1, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_sum": int64(60),
+							"SUM":  int64(60),
 						},
 						{
 							"Name": "Alice",
-							"_sum": int64(0),
+							"SUM":  int64(0),
 						},
 					},
 				},

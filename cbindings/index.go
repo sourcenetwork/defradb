@@ -20,7 +20,9 @@ import (
 	"context"
 	"strings"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	defraOpts "github.com/sourcenetwork/defradb/client/options"
 )
 
 //export IndexCreate
@@ -75,11 +77,14 @@ func IndexCreate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	col, err := store.GetCollectionByName(ctx, collectionName)
+	ident := acpIdentity.FromContext(ctx)
+	col, err := store.GetCollectionByName(ctx, collectionName,
+		defraOpts.WithIdentity(defraOpts.GetCollectionByName(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	descWithID, err := col.CreateIndex(ctx, desc)
+	descWithID, err := col.CreateIndex(ctx, desc,
+		defraOpts.WithIdentity(defraOpts.CollectionCreateIndex(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -100,22 +105,26 @@ func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.u
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
+	ident := acpIdentity.FromContext(ctx)
 	collectionName := C.GoString(options.name)
 	switch {
 	// Get the indices associated with a given collection
 	case collectionName != "":
-		col, err := store.GetCollectionByName(ctx, collectionName)
+		col, err := store.GetCollectionByName(ctx, collectionName,
+			defraOpts.WithIdentity(defraOpts.GetCollectionByName(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		indices, err := col.GetIndexes(ctx)
+		indices, err := col.GetIndexes(ctx,
+			defraOpts.WithIdentity(defraOpts.CollectionGetIndexes(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		return returnC(marshalJSONToGoCResult(indices))
 	// Get all of the indices, because no collection was specified
 	default:
-		indices, err := store.GetAllIndexes(ctx)
+		indices, err := store.GetAllIndexes(ctx,
+			defraOpts.WithIdentity(defraOpts.GetAllIndexes(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -141,11 +150,14 @@ func IndexDrop(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	col, err := store.GetCollectionByName(ctx, collectionName)
+	ident := acpIdentity.FromContext(ctx)
+	col, err := store.GetCollectionByName(ctx, collectionName,
+		defraOpts.WithIdentity(defraOpts.GetCollectionByName(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = col.DropIndex(ctx, C.GoString(indexName))
+	err = col.DropIndex(ctx, C.GoString(indexName),
+		defraOpts.WithIdentity(defraOpts.CollectionDropIndex(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

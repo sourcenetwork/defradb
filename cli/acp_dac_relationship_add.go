@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeDocumentACPRelationshipAddCommand(ctx context.Context) *cobra.Command {
@@ -53,6 +56,7 @@ Notes:
 				docIDArg,
 				relationArg,
 				targetActorArg,
+				options.WithIdentity(options.AddDACActorRelationship(), identity.FromContext(cmd.Context())),
 			)
 
 			if err != nil {

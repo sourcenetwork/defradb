@@ -19,7 +19,7 @@ An optional set of field-orders which may be used to sort the results. An
 An optional set of fields for which to group the contents of this field by.
  If this argument is provided, only fields used to group may be rendered in
  the immediate child selector.  Additional fields may be selected by using
- the '_group' selector within the immediate child selector. If an empty set
+ the 'GROUP' selector within the immediate child selector. If an empty set
  is provided, the restrictions mentioned still apply, although all results
  will appear within the same group.
 `

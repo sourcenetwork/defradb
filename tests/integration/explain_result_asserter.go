@@ -11,6 +11,8 @@
 package tests
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,16 +26,34 @@ const (
 	docFetchesProp   = "docFetches"
 	fieldFetchesProp = "fieldFetches"
 	indexFetchesProp = "indexFetches"
+
+	explainProp          = "explain"
+	executionSuccessProp = "executionSuccess"
+	sizeOfResultProp     = "sizeOfResult"
+	planExecutionsProp   = "planExecutions"
+	operationNodeProp    = "operationNode"
+	filterMatchesProp    = "filterMatches"
+
+	selectTopNodeProp = "selectTopNode"
+	selectNodeProp    = "selectNode"
+	scanNodeProp      = "scanNode"
+	limitNodeProp     = "limitNode"
+	orderNodeProp     = "orderNode"
+	typeIndexJoinProp = "typeIndexJoin"
+	typeJoinManyProp  = "typeJoinMany"
+	typeJoinOneProp   = "typeJoinOne"
+	orphanNodeProp    = "orphanNode"
+	rootProp          = "root"
+	subTypeProp       = "subType"
 )
 
 type dataMap = map[string]any
 
 // ExplainAsserter is a helper for asserting the result of an explain query.
-// It can assert on aggregated metrics across all nodes, or on specific levels
-// of the explain tree using path navigation.
+// It asserts on metrics at specific levels of the explain tree using path navigation.
 //
-// When path is empty (NewExplainAsserter), metrics are aggregated across all scan nodes.
-// When path is set (NewLevelAsserter), metrics are read from the specific level.
+// For simple queries without joins, use NewExplainAsserter() without path.
+// For queries with joins, you must specify the path (e.g., "root" or "subType").
 type ExplainAsserter struct {
 	path           []string
 	iterations     immutable.Option[int]
@@ -43,15 +63,16 @@ type ExplainAsserter struct {
 	filterMatches  immutable.Option[int]
 	sizeOfResults  immutable.Option[int]
 	planExecutions immutable.Option[uint64]
+	nextLevel      *ExplainAsserter
 }
 
 // NewExplainAsserter creates an asserter for explain query results.
 //
-// When called without arguments, metrics are aggregated across all scan nodes:
+// For simple queries (no joins):
 //
 //	testUtils.NewExplainAsserter().WithIndexFetches(4)
 //
-// When called with path arguments, metrics are read from that specific level:
+// For queries with joins, specify the path to the level:
 //
 //	testUtils.NewExplainAsserter("root").WithIndexFetches(0)
 //	testUtils.NewExplainAsserter("subType").WithIndexFetches(4)
@@ -97,112 +118,98 @@ func (a *ExplainAsserter) WithPlanExecutions(planExecutions uint64) *ExplainAsse
 	return a
 }
 
-// Deprecated: WithOrder is kept for backward compatibility but no longer affects assertion behavior.
-// The new recursive assertion automatically handles orderNode wrappers.
-func (a *ExplainAsserter) WithOrder() *ExplainAsserter {
-	return a
-}
-
-// Deprecated: WithLimit is kept for backward compatibility but no longer affects assertion behavior.
-// The new recursive assertion automatically handles limitNode wrappers.
-func (a *ExplainAsserter) WithLimit() *ExplainAsserter {
-	return a
-}
-
-// WithLevel adds another level assertion and returns a MultiLevelAsserter.
+// WithLevel adds another level assertion.
 // This allows chaining multiple level assertions:
 //
-//	testUtils.NewLevelAsserter("root").WithIndexFetches(0).
+//	testUtils.NewExplainAsserter("root").WithIndexFetches(0).
 //		WithLevel("subType").WithIndexFetches(4)
-func (a *ExplainAsserter) WithLevel(path ...string) *MultiLevelAsserter {
-	return &MultiLevelAsserter{
-		levels:  []*ExplainAsserter{a},
-		current: &ExplainAsserter{path: path},
+func (a *ExplainAsserter) WithLevel(path ...string) *ExplainAsserter {
+	next := &ExplainAsserter{path: path}
+	current := a
+	for current.nextLevel != nil {
+		current = current.nextLevel
 	}
+	current.nextLevel = next
+	return next
 }
 
 // Assert validates metrics in the explain result.
-// If path is empty, aggregates metrics across all scan nodes.
-// If path is set, reads metrics from the specific level.
+// For simple queries, reads from scanNode directly.
+// For join queries, navigates to the specified path level.
 func (a *ExplainAsserter) Assert(t testing.TB, result map[string]any) {
-	explainNode, ok := result["explain"].(dataMap)
+	explainNode, ok := result[explainProp].(dataMap)
 	require.True(t, ok, "Expected explain node")
 
-	assert.Equal(t, true, explainNode["executionSuccess"], "Expected executionSuccess property")
+	assert.Equal(t, true, explainNode[executionSuccessProp], "Expected executionSuccess property")
 
 	if a.sizeOfResults.HasValue() {
-		actual := explainNode["sizeOfResult"]
-		assert.Equal(t, a.sizeOfResults.Value(), actual,
+		actual := toUint64(explainNode[sizeOfResultProp])
+		assert.Equal(t, uint64(a.sizeOfResults.Value()), actual,
 			"Expected %d sizeOfResult, got %d", a.sizeOfResults.Value(), actual)
 	}
 	if a.planExecutions.HasValue() {
-		actual := explainNode["planExecutions"]
+		actual := toUint64(explainNode[planExecutionsProp])
 		assert.Equal(t, a.planExecutions.Value(), actual,
 			"Expected %d planExecutions, got %d", a.planExecutions.Value(), actual)
 	}
 
-	operationNode := ConvertToArrayOfMaps(t, explainNode["operationNode"])
+	operationNode := ConvertToArrayOfMaps(t, explainNode[operationNodeProp])
 	require.Len(t, operationNode, 1)
 
-	node, ok := operationNode[0]["selectTopNode"].(dataMap)
+	node, ok := operationNode[0][selectTopNodeProp].(dataMap)
 	require.True(t, ok, "Expected selectTopNode")
 
 	selectNode := navigateToSelectNode(t, node)
 
 	if a.filterMatches.HasValue() {
-		filterMatches, hasFilterMatches := selectNode["filterMatches"]
+		filterMatches, hasFilterMatches := selectNode[filterMatchesProp]
 		require.True(t, hasFilterMatches, "Expected filterMatches property")
-		assert.Equal(t, uint64(a.filterMatches.Value()), filterMatches,
+		assert.Equal(t, uint64(a.filterMatches.Value()), toUint64(filterMatches),
 			"Expected %d filterMatches, got %d", a.filterMatches.Value(), filterMatches)
 	}
 
-	// Determine how to get metrics based on whether path is set
-	if len(a.path) == 0 {
-		// Aggregate mode: sum metrics across all scan nodes
-		a.assertAggregatedMetrics(t, selectNode)
-	} else {
-		// Level mode: get metrics from specific level
-		a.assertLevelMetrics(t, selectNode)
+	scanNode := a.findScanNode(t, selectNode)
+	a.assertMetrics(t, func(prop string) uint64 {
+		return getMetric(scanNode, prop)
+	}, a.path)
+
+	if a.nextLevel != nil {
+		a.nextLevel.assertLevelOnly(t, selectNode)
 	}
 }
 
-func (a *ExplainAsserter) assertAggregatedMetrics(t testing.TB, selectNode dataMap) {
-	_, hasScanNode := selectNode["scanNode"].(dataMap)
-	if indexJoin, isJoin := selectNode["typeIndexJoin"].(dataMap); isJoin {
-		_, hasScanNode = findScanNodeInJoin(indexJoin)
-	}
-	require.True(t, hasScanNode, "Expected scanNode")
+func (a *ExplainAsserter) assertLevelOnly(t testing.TB, selectNode dataMap) {
+	scanNode := a.findScanNode(t, selectNode)
+	a.assertMetrics(t, func(prop string) uint64 {
+		return getMetric(scanNode, prop)
+	}, a.path)
 
-	if a.iterations.HasValue() {
-		actual := aggregateMetricFromNode(selectNode, iterationsProp)
-		assert.Equal(t, uint64(a.iterations.Value()), actual,
-			"Expected %d iterations, got %d", a.iterations.Value(), actual)
-	}
-	if a.docFetches.HasValue() {
-		actual := aggregateMetricFromNode(selectNode, docFetchesProp)
-		assert.Equal(t, uint64(a.docFetches.Value()), actual,
-			"Expected %d docFetches, got %d", a.docFetches.Value(), actual)
-	}
-	if a.fieldFetches.HasValue() {
-		actual := aggregateMetricFromNode(selectNode, fieldFetchesProp)
-		assert.Equal(t, uint64(a.fieldFetches.Value()), actual,
-			"Expected %d fieldFetches, got %d", a.fieldFetches.Value(), actual)
-	}
-	if a.indexFetches.HasValue() {
-		actual := aggregateMetricFromNode(selectNode, indexFetchesProp)
-		assert.Equal(t, uint64(a.indexFetches.Value()), actual,
-			"Expected %d indexFetches, got %d", a.indexFetches.Value(), actual)
+	if a.nextLevel != nil {
+		a.nextLevel.assertLevelOnly(t, selectNode)
 	}
 }
 
-func (a *ExplainAsserter) assertLevelMetrics(t testing.TB, selectNode dataMap) {
-	indexJoin, hasJoin := selectNode["typeIndexJoin"].(dataMap)
+func (a *ExplainAsserter) findScanNode(t testing.TB, selectNode dataMap) dataMap {
+	if scanNode, has := selectNode[scanNodeProp].(dataMap); has {
+		if len(a.path) > 0 {
+			require.Fail(t, "Path specified but no typeIndexJoin found")
+		}
+		return scanNode
+	}
+
+	indexJoin, hasJoin := selectNode[typeIndexJoinProp].(dataMap)
 	if !hasJoin {
-		require.Fail(t, "Expected typeIndexJoin for level assertion")
+		require.Fail(t, "Expected scanNode or typeIndexJoin")
+		return nil
 	}
 
-	if orphanNode, hasOrphan := indexJoin["orphanNode"].(dataMap); hasOrphan {
-		indexJoin = orphanNode
+	if len(a.path) == 0 {
+		require.Fail(t, "Query has typeIndexJoin - must specify path (e.g., \"root\" or \"subType\")")
+		return nil
+	}
+
+	if orphan, hasOrphan := indexJoin[orphanNodeProp].(dataMap); hasOrphan {
+		indexJoin = orphan
 	}
 
 	targetNode := navigateToLevel(indexJoin, a.path)
@@ -211,78 +218,53 @@ func (a *ExplainAsserter) assertLevelMetrics(t testing.TB, selectNode dataMap) {
 	scanNode := findScanNodeAtLevel(targetNode)
 	require.NotNil(t, scanNode, "No scanNode found at level: %v", a.path)
 
+	return scanNode
+}
+
+func (a *ExplainAsserter) assertMetrics(t testing.TB, getMetricFn func(string) uint64, path []string) {
+	levelInfo := ""
+	if len(path) > 0 {
+		levelInfo = " at level " + formatPath(path)
+	}
+
 	if a.iterations.HasValue() {
-		actual := getMetric(scanNode, iterationsProp)
+		actual := getMetricFn(iterationsProp)
 		assert.Equal(t, uint64(a.iterations.Value()), actual,
-			"Expected %d iterations at level %v, got %d", a.iterations.Value(), a.path, actual)
+			"Expected %d iterations%s, got %d", a.iterations.Value(), levelInfo, actual)
 	}
 	if a.docFetches.HasValue() {
-		actual := getMetric(scanNode, docFetchesProp)
+		actual := getMetricFn(docFetchesProp)
 		assert.Equal(t, uint64(a.docFetches.Value()), actual,
-			"Expected %d docFetches at level %v, got %d", a.docFetches.Value(), a.path, actual)
+			"Expected %d docFetches%s, got %d", a.docFetches.Value(), levelInfo, actual)
 	}
 	if a.fieldFetches.HasValue() {
-		actual := getMetric(scanNode, fieldFetchesProp)
+		actual := getMetricFn(fieldFetchesProp)
 		assert.Equal(t, uint64(a.fieldFetches.Value()), actual,
-			"Expected %d fieldFetches at level %v, got %d", a.fieldFetches.Value(), a.path, actual)
+			"Expected %d fieldFetches%s, got %d", a.fieldFetches.Value(), levelInfo, actual)
 	}
 	if a.indexFetches.HasValue() {
-		actual := getMetric(scanNode, indexFetchesProp)
+		actual := getMetricFn(indexFetchesProp)
 		assert.Equal(t, uint64(a.indexFetches.Value()), actual,
-			"Expected %d indexFetches at level %v, got %d", a.indexFetches.Value(), a.path, actual)
+			"Expected %d indexFetches%s, got %d", a.indexFetches.Value(), levelInfo, actual)
 	}
 }
 
-// MultiLevelAsserter allows asserting on multiple levels in a single assertion.
-type MultiLevelAsserter struct {
-	levels  []*ExplainAsserter
-	current *ExplainAsserter
-}
-
-func (m *MultiLevelAsserter) WithIterations(iterations int) *MultiLevelAsserter {
-	m.current.iterations = immutable.Some(iterations)
-	return m
-}
-
-func (m *MultiLevelAsserter) WithDocFetches(docFetches int) *MultiLevelAsserter {
-	m.current.docFetches = immutable.Some(docFetches)
-	return m
-}
-
-func (m *MultiLevelAsserter) WithFieldFetches(fieldFetches int) *MultiLevelAsserter {
-	m.current.fieldFetches = immutable.Some(fieldFetches)
-	return m
-}
-
-func (m *MultiLevelAsserter) WithIndexFetches(indexFetches int) *MultiLevelAsserter {
-	m.current.indexFetches = immutable.Some(indexFetches)
-	return m
-}
-
-// WithLevel adds another level assertion.
-func (m *MultiLevelAsserter) WithLevel(path ...string) *MultiLevelAsserter {
-	m.levels = append(m.levels, m.current)
-	m.current = &ExplainAsserter{path: path}
-	return m
-}
-
-// Assert validates metrics at all specified levels of the explain result.
-func (m *MultiLevelAsserter) Assert(t testing.TB, result map[string]any) {
-	allLevels := append(m.levels, m.current)
-	for _, level := range allLevels {
-		level.Assert(t, result)
+func formatPath(path []string) string {
+	if len(path) == 0 {
+		return ""
 	}
+	var result strings.Builder
+	result.WriteString(path[0])
+	for i := 1; i < len(path); i++ {
+		result.WriteString("/" + path[i])
+	}
+	return result.String()
 }
 
 // navigateToSelectNode finds the selectNode, handling orderNode and limitNode wrappers.
 func navigateToSelectNode(t testing.TB, node dataMap) dataMap {
-	if limitNode, has := node["limitNode"].(dataMap); has {
-		node = limitNode
-	}
-	if orderNode, has := node["orderNode"].(dataMap); has {
-		node = orderNode
-	}
-	selectNode, ok := node["selectNode"].(dataMap)
+	node = unwrapNode(node, limitNodeProp, orderNodeProp)
+	selectNode, ok := node[selectNodeProp].(dataMap)
 	require.True(t, ok, "Expected selectNode")
 	return selectNode
 }
@@ -292,25 +274,18 @@ func navigateToLevel(node dataMap, path []string) dataMap {
 	current := node
 
 	for _, step := range path {
-		var joinNode dataMap
-		if jm, has := current["typeJoinMany"].(dataMap); has {
-			joinNode = jm
-		} else if jo, has := current["typeJoinOne"].(dataMap); has {
-			joinNode = jo
-		} else {
-			joinNode = current
-		}
+		joinNode := getJoinNode(current)
 
 		switch step {
-		case "root":
-			if root, has := joinNode["root"].(dataMap); has {
+		case rootProp:
+			if root, has := joinNode[rootProp].(dataMap); has {
 				current = root
 			} else {
 				return nil
 			}
-		case "subType":
-			if subType, has := joinNode["subType"].(dataMap); has {
-				current = navigateThroughSelectTop(subType)
+		case subTypeProp:
+			if sub, has := joinNode[subTypeProp].(dataMap); has {
+				current = navigateThroughSelectTop(sub)
 			} else {
 				return nil
 			}
@@ -328,35 +303,50 @@ func navigateToLevel(node dataMap, path []string) dataMap {
 
 // navigateThroughSelectTop handles the selectTopNode -> selectNode -> typeIndexJoin chain.
 func navigateThroughSelectTop(node dataMap) dataMap {
-	if selectTop, has := node["selectTopNode"].(dataMap); has {
-		node = selectTop
-	}
-	if limitNode, has := node["limitNode"].(dataMap); has {
-		node = limitNode
-	}
-	if orderNode, has := node["orderNode"].(dataMap); has {
-		node = orderNode
-	}
-	if selectNode, has := node["selectNode"].(dataMap); has {
-		node = selectNode
-	}
-	if indexJoin, has := node["typeIndexJoin"].(dataMap); has {
+	node = unwrapNode(node, selectTopNodeProp, limitNodeProp, orderNodeProp, selectNodeProp)
+	if indexJoin, has := node[typeIndexJoinProp].(dataMap); has {
 		return indexJoin
+	}
+	return node
+}
+
+// unwrapNode navigates through wrapper nodes in order.
+func unwrapNode(node dataMap, wrappers ...string) dataMap {
+	for _, wrapper := range wrappers {
+		if inner, has := node[wrapper].(dataMap); has {
+			node = inner
+		}
+	}
+	return node
+}
+
+// getJoinNode returns the typeJoinMany or typeJoinOne node, or the node itself.
+func getJoinNode(node dataMap) dataMap {
+	if jm, has := node[typeJoinManyProp].(dataMap); has {
+		return jm
+	}
+	if jo, has := node[typeJoinOneProp].(dataMap); has {
+		return jo
 	}
 	return node
 }
 
 // findScanNodeAtLevel finds the scanNode at the current level (not recursively).
 func findScanNodeAtLevel(node dataMap) dataMap {
-	if scanNode, has := node["scanNode"].(dataMap); has {
-		return scanNode
+	if scan, has := node[scanNodeProp].(dataMap); has {
+		return scan
 	}
-	for _, joinType := range []string{"typeJoinMany", "typeJoinOne"} {
-		if joinNode, has := node[joinType].(dataMap); has {
-			if root, hasRoot := joinNode["root"].(dataMap); hasRoot {
-				if scanNode, hasScan := root["scanNode"].(dataMap); hasScan {
-					return scanNode
-				}
+	if jm, has := node[typeJoinManyProp].(dataMap); has {
+		if root, has := jm[rootProp].(dataMap); has {
+			if scan, has := root[scanNodeProp].(dataMap); has {
+				return scan
+			}
+		}
+	}
+	if jo, has := node[typeJoinOneProp].(dataMap); has {
+		if root, has := jo[rootProp].(dataMap); has {
+			if scan, has := root[scanNodeProp].(dataMap); has {
+				return scan
 			}
 		}
 	}
@@ -365,89 +355,22 @@ func findScanNodeAtLevel(node dataMap) dataMap {
 
 // getMetric extracts a metric value from a node.
 func getMetric(node dataMap, prop string) uint64 {
-	if val, has := node[prop]; has {
-		if num, ok := val.(uint64); ok {
-			return num
-		}
-	}
-	return 0
+	return toUint64(node[prop])
 }
 
-// findScanNodeInJoin finds a scanNode within a join structure (for validation).
-func findScanNodeInJoin(indexJoin dataMap) (dataMap, bool) {
-	// Check for orphanNode wrapper
-	if orphanNode, hasOrphan := indexJoin["orphanNode"].(dataMap); hasOrphan {
-		indexJoin = orphanNode
+// toUint64 converts a value to uint64.
+// It handles both uint64 (Go embedded client) and float64 (HTTP/CLI/JS/C clients
+// where JSON numbers are deserialized as float64).
+func toUint64(val any) uint64 {
+	switch v := val.(type) {
+	case uint64:
+		return v
+	case json.Number:
+		n, _ := v.Int64()
+		return uint64(n)
+	case float64:
+		return uint64(v)
+	default:
+		return 0
 	}
-
-	for _, joinType := range []string{"typeJoinMany", "typeJoinOne"} {
-		if joinNode, has := indexJoin[joinType].(dataMap); has {
-			if root, hasRoot := joinNode["root"].(dataMap); hasRoot {
-				if scanNode, hasScan := root["scanNode"].(dataMap); hasScan {
-					return scanNode, true
-				}
-			}
-		}
-	}
-	return nil, false
-}
-
-// aggregateMetricFromNode recursively sums a metric from all scanNodes in the tree.
-func aggregateMetricFromNode(node dataMap, prop string) uint64 {
-	var total uint64
-
-	// Check if this node has the metric directly (scanNode)
-	if scanNode, has := node["scanNode"].(dataMap); has {
-		if val, hasVal := scanNode[prop]; hasVal {
-			if num, ok := val.(uint64); ok {
-				total += num
-			}
-		}
-	}
-
-	// Check for typeIndexJoin
-	if indexJoin, has := node["typeIndexJoin"].(dataMap); has {
-		total += aggregateMetricFromNode(indexJoin, prop)
-	}
-
-	// Check for orphanNode
-	if orphanNode, has := node["orphanNode"].(dataMap); has {
-		total += aggregateMetricFromNode(orphanNode, prop)
-	}
-
-	// Check for join types
-	for _, joinType := range []string{"typeJoinMany", "typeJoinOne"} {
-		if joinNode, has := node[joinType].(dataMap); has {
-			// Process root
-			if root, hasRoot := joinNode["root"].(dataMap); hasRoot {
-				total += aggregateMetricFromNode(root, prop)
-			}
-			// Process subType
-			if subType, hasSubType := joinNode["subType"].(dataMap); hasSubType {
-				total += aggregateMetricFromNode(subType, prop)
-			}
-		}
-	}
-
-	// Handle selectTopNode wrapper
-	if selectTop, has := node["selectTopNode"].(dataMap); has {
-		total += aggregateMetricFromNode(selectTop, prop)
-	}
-
-	// Handle limitNode wrapper
-	if limitNode, has := node["limitNode"].(dataMap); has {
-		total += aggregateMetricFromNode(limitNode, prop)
-	}
-
-	// Handle orderNode wrapper
-	if orderNode, has := node["orderNode"].(dataMap); has {
-		total += aggregateMetricFromNode(orderNode, prop)
-	}
-
-	// Handle selectNode wrapper
-	if selectNode, has := node["selectNode"].(dataMap); has {
-		total += aggregateMetricFromNode(selectNode, prop)
-	}
-
-	return total
 }

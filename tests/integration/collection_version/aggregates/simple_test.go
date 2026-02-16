@@ -53,10 +53,10 @@ func TestSchemaAggregateSimpleCreatesUsersCount(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
-										"name": "_group",
+										"name": "GROUP",
 										"type": map[string]any{
 											"name": "Users__CountSelector",
 											"inputFields": []any{
@@ -241,12 +241,12 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 										},
 									},
 								},
-								"name": "_group",
+								"name": "GROUP",
 							},
 							map[string]any{
 								"args": []any{
 									map[string]any{
-										"name": "_group",
+										"name": "GROUP",
 										"type": map[string]any{
 											"inputFields": []any{
 												map[string]any{
@@ -298,7 +298,7 @@ func TestSchemaAggregateSimpleCreatesUsersSum(t *testing.T) {
 										},
 									},
 								},
-								"name": "_sum",
+								"name": "SUM",
 							},
 						},
 						"name": "Users",
@@ -343,10 +343,10 @@ func TestSchemaAggregateSimpleCreatesUsersAverage(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_avg",
+								"name": "AVG",
 								"args": []any{
 									map[string]any{
-										"name": "_group",
+										"name": "GROUP",
 										"type": map[string]any{
 											"name": "Users__NumericSelector",
 											"inputFields": []any{

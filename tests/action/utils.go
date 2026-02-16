@@ -20,6 +20,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/clients"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -46,12 +47,16 @@ func refreshCollections(
 	nodeIDs, nodes := getNodesWithIDs(immutable.None[int](), s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		// Inject node's identity into the context while refreshing so the [GetCollections] call
+		// Inject node's identity into the context and options while refreshing so the [GetCollections] call
 		// doesn't fail due to lack of authorization(s) if NAC is enabled.
 		nodeIdentity := NodeIdentity(nodeID)
 		node.Collections = make([]client.Collection, len(s.CollectionNames))
-		ctx := getContextWithIdentity(s.Ctx, s, nodeIdentity, nodeID)
-		allCollections, err := node.GetCollections(ctx, client.CollectionFetchOptions{})
+		identOption := getIdentityForRequestSpecificToNode(s, nodeIdentity, nodeID)
+		opts := options.GetCollections()
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		allCollections, err := node.GetCollections(s.Ctx, opts)
 		require.Nil(s.T, err)
 
 		for i, collectionName := range s.CollectionNames {

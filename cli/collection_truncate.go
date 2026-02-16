@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
@@ -29,7 +32,8 @@ func MakeCollectionTruncateCommand(ctx context.Context) *cobra.Command {
 				return cmd.Usage()
 			}
 
-			return col.Truncate(cmd.Context())
+			opt := options.WithIdentity(options.CollectionTruncate(), identity.FromContext(cmd.Context()))
+			return col.Truncate(cmd.Context(), opt)
 		},
 	}
 	return cmd

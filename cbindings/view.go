@@ -19,9 +19,8 @@ import "C"
 import (
 	"context"
 
-	"github.com/sourcenetwork/immutable"
-
-	"github.com/sourcenetwork/defradb/client"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 //export ViewAdd
@@ -38,10 +37,10 @@ func ViewAdd(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	var transformCID immutable.Option[string]
+	opts := options.WithIdentity(options.AddView(), acpIdentity.FromContext(ctx))
 	transformCIDValue := C.GoString(transformCIDStr)
 	if transformCIDValue != "" {
-		transformCID = immutable.Some(transformCIDValue)
+		opts.SetTransformCID(transformCIDValue)
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -49,7 +48,7 @@ func ViewAdd(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), transformCID)
+	defs, err := store.AddView(ctx, C.GoString(query), C.GoString(sdl), opts)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -73,18 +72,18 @@ func ViewRefresh(nodePtr C.uintptr_t,
 	collectionID := C.GoString(cOptions.collectionID)
 	versionID := C.GoString(cOptions.version)
 
-	options := client.CollectionFetchOptions{}
+	opt := options.WithIdentity(options.RefreshViews(), acpIdentity.FromContext(ctx))
 	if versionID != "" {
-		options.VersionID = immutable.Some(versionID)
+		opt.SetVersionID(versionID)
 	}
 	if collectionID != "" {
-		options.CollectionID = immutable.Some(collectionID)
+		opt.SetCollectionID(collectionID)
 	}
 	if viewName != "" {
-		options.Name = immutable.Some(viewName)
+		opt.SetCollectionName(viewName)
 	}
 	if cOptions.getInactive != 0 {
-		options.IncludeInactive = immutable.Some(true)
+		opt.SetIncludeInactive(true)
 	}
 
 	store, err := getStoreFromPointer(nodePtr)
@@ -92,7 +91,7 @@ func ViewRefresh(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	err = store.RefreshViews(ctx, options)
+	err = store.RefreshViews(ctx, opt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

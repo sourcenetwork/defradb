@@ -62,7 +62,7 @@ func TestNAC_GatesP2PDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T)
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -71,7 +71,7 @@ func TestNAC_GatesP2PDocumentDelete_AuthorizedIdentity_AllowAccess(t *testing.T)
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -125,7 +125,7 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -134,7 +134,7 @@ func TestNAC_GatesP2PDocumentDelete_NoIdentity_NotAuthorizedError(t *testing.T) 
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				Identity: testUtils.NoIdentity(),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -189,7 +189,7 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(1),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -198,7 +198,7 @@ func TestNAC_GatesP2PDocumentDelete_WrongIdentity_NotAuthorizedError(t *testing.
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				Identity: testUtils.ClientIdentity(2),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{

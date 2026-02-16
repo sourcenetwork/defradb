@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -99,25 +100,29 @@ nodeLoop:
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
 		txn := a.getTransaction(node)
-		ctx := getContextWithIdentity(db.InitContext(a.s.Ctx, txn), a.s, a.Identity, nodeID)
+		ctx := db.InitContext(a.s.Ctx, txn)
 
-		var options []client.RequestOption
+		reqOption := options.ExecRequest()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			reqOption.SetIdentity(identOption.Value())
+		}
 		if a.OperationName.HasValue() {
-			options = append(options, client.WithOperationName(a.OperationName.Value()))
+			reqOption.SetOperationName(a.OperationName.Value())
 		}
 		if a.Variables.HasValue() {
-			options = append(options, client.WithVariables(a.Variables.Value()))
+			reqOption.SetVariables(a.Variables.Value())
 		}
 
 		if !a.DoNotRefreshViews && !expectedErrorRaised {
-			expectedErrorRaised = refreshViews(a.s, node, a.ExpectedError)
+			expectedErrorRaised = refreshViews(a.s, node, identOption, a.ExpectedError)
 			if expectedErrorRaised {
 				continue nodeLoop
 			}
 		}
 
 		request := replace(a.s, nodeID, a.Request)
-		result := node.ExecRequest(ctx, request, options...)
+		result := node.ExecRequest(ctx, request, reqOption)
 
 		expectedErrorRaised = assertRequestResults(
 			a.s,

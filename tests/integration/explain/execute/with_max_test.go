@@ -33,7 +33,7 @@ func TestExecuteExplainRequest_WithMaxOfInlineArrayField_Succeeds(t *testing.T) 
 				Request: `query @explain(type: execute) {
 					Book {
 						name
-						MaxChapterPages: _max(chapterPages: {})
+						MaxChapterPages: MAX(chapterPages: {})
 					}
 				}`,
 
@@ -84,7 +84,7 @@ func TestExecuteExplainRequest_MaxOfRelatedOneToManyField_Succeeds(t *testing.T)
 				Request: `query @explain(type: execute) {
 					Author {
 						name
-						MaxPages: _max(
+						MaxPages: MAX(
 							articles: {
 								field: pages,
 							}

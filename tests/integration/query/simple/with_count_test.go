@@ -22,7 +22,7 @@ func TestQuerySimpleWithCountOnUndefined(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_count
+					COUNT
 				}`,
 				ExpectedError: "aggregate must be provided with a property to aggregate",
 			},
@@ -37,10 +37,10 @@ func TestQuerySimpleWithCountOnEmptyCollection(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_count(Users: {})
+					COUNT(Users: {})
 				}`,
 				Results: map[string]any{
-					"_count": 0,
+					"COUNT": 0,
 				},
 			},
 		},
@@ -66,10 +66,10 @@ func TestQuerySimpleWithCount(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_count(Users: {})
+					COUNT(Users: {})
 				}`,
 				Results: map[string]any{
-					"_count": 2,
+					"COUNT": 2,
 				},
 			},
 		},
@@ -83,7 +83,7 @@ func TestQuerySimple_WithAliasedCount_OnEmptyCollection_Succeeds(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					number: _count(Users: {})
+					number: COUNT(Users: {})
 				}`,
 				Results: map[string]any{
 					"number": 0,

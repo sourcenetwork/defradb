@@ -16,26 +16,26 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-func TestWithBadgerInMemory(t *testing.T) {
-	options := &StoreOptions{}
-	WithBadgerInMemory(true)(options)
-	assert.Equal(t, true, options.badgerInMemory)
+func TestSetBadgerInMemory(t *testing.T) {
+	opts := utils.NewOptions(options.Node().Store().SetBadgerInMemory(true).Node())
+	assert.Equal(t, true, opts.Store.BadgerInMemory)
 }
 
-func TestWithBadgerFileSize(t *testing.T) {
-	options := &StoreOptions{}
-	WithBadgerFileSize(int64(5 << 30))(options)
-	assert.Equal(t, int64(5<<30), options.badgerFileSize)
+func TestSetBadgerFileSize(t *testing.T) {
+	opts := utils.NewOptions(options.Node().Store().SetBadgerFileSize(int64(5 << 30)).Node())
+	assert.Equal(t, int64(5<<30), opts.Store.BadgerFileSize)
 }
 
-func TestWithBadgerEncryptionKey(t *testing.T) {
+func TestSetBadgerEncryptionKey(t *testing.T) {
 	encryptionKey := make([]byte, 32)
 	_, err := rand.Read(encryptionKey)
 	require.NoError(t, err)
 
-	options := &StoreOptions{}
-	WithBadgerEncryptionKey(encryptionKey)(options)
-	assert.Equal(t, encryptionKey, options.badgerEncryptionKey)
+	opts := utils.NewOptions(options.Node().Store().SetBadgerEncryptionKey(encryptionKey).Node())
+	assert.Equal(t, encryptionKey, opts.Store.BadgerEncryptionKey)
 }

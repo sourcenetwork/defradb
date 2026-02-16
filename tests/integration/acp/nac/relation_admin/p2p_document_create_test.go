@@ -64,7 +64,7 @@ func TestNAC_AdminRelation_CanP2PDocumentCreate(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(2),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{
@@ -82,7 +82,7 @@ func TestNAC_AdminRelation_CanP2PDocumentCreate(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.SubscribeToDocument{
+			testUtils.CreateDocumentSubscription{
 				Identity: testUtils.ClientIdentity(2),
 				NodeID:   1,
 				DocIDs: []state.ColDocIndex{

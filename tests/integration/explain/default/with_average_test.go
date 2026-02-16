@@ -49,7 +49,7 @@ func TestDefaultExplainRequestWithAverageOnArrayField(t *testing.T) {
 				Request: `query @explain {
 					Book {
 						name
-						_avg(chapterPages: {})
+						AVG(chapterPages: {})
 					}
 				}`,
 

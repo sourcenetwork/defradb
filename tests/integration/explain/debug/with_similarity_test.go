@@ -56,7 +56,7 @@ func TestDebugExplainRequestWith_WithSimilarity(t *testing.T) {
 				Request: `query @explain(type: debug) {
 					User {
 						name
-						_similarity(pointsList: {vector: [1, 2, 0]})
+						SIMILARITY(pointsList: {vector: [1, 2, 0]})
 					}
 				}`,
 

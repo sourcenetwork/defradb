@@ -70,7 +70,7 @@ func (a *WaitForPeersEvents) Execute() {
 		}
 		for _, peerNodeID := range peerNodeIDs {
 			targetNode := a.s.Nodes[peerNodeID]
-			targetAddresses, err := targetNode.PeerInfo()
+			targetAddresses, err := targetNode.PeerInfo(a.s.Ctx)
 			require.NoError(a.s.T, err)
 			require.NotEmpty(a.s.T, targetAddresses, "target node %d has no addresses", peerNodeID)
 

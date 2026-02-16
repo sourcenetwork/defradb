@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
@@ -50,9 +51,7 @@ func TestColVersionUpdateCopyName(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("Books"),
-				},
+				FilterOptions: options.GetCollections().SetCollectionName("Books"),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Books",

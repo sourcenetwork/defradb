@@ -55,10 +55,10 @@ func TestSchemaAggregateInlineArrayCreatesUsersCount(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
-										"name": "_group",
+										"name": "GROUP",
 										"type": map[string]any{
 											"name": "Users__CountSelector",
 											"inputFields": []any{
@@ -179,7 +179,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_sum",
+								"name": "SUM",
 								"args": []any{
 									map[string]any{
 										"name": "FavouriteFloats",
@@ -214,7 +214,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersSum(t *testing.T) {
 										},
 									},
 									map[string]any{
-										"name": "_group",
+										"name": "GROUP",
 										"type": map[string]any{
 											"name": "Users__NumericSelector",
 											"inputFields": []any{
@@ -301,10 +301,10 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_avg",
+								"name": "AVG",
 								"args": []any{
 									map[string]any{
-										"name": "_group",
+										"name": "GROUP",
 										"type": map[string]any{
 											"inputFields": []any{
 												map[string]any{
@@ -387,7 +387,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersAverage(t *testing.T) {
 
 func aggregateGroupArg(fieldType string) map[string]any {
 	return map[string]any{
-		"name": "_group",
+		"name": "GROUP",
 		"type": map[string]any{
 			"name": "Users__CountSelector",
 			"inputFields": []any{
@@ -521,7 +521,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableBooleanCountFilter(t *tes
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
 										"name": "Favourites",
@@ -647,7 +647,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersBooleanCountFilter(t *testing.T) 
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
 										"name": "Favourites",
@@ -773,7 +773,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableIntegerCountFilter(t *tes
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
 										"name": "Favourites",
@@ -923,7 +923,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersIntegerCountFilter(t *testing.T) 
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
 										"name": "Favourites",
@@ -1073,7 +1073,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableFloatCountFilter(t *testi
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
 										"name": "Favourites",
@@ -1223,7 +1223,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersFloatCountFilter(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
 										"name": "Favourites",
@@ -1373,7 +1373,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersNillableStringCountFilter(t *test
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
 										"name": "Favourites",
@@ -1523,7 +1523,7 @@ func TestSchemaAggregateInlineArrayCreatesUsersStringCountFilter(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_count",
+								"name": "COUNT",
 								"args": []any{
 									map[string]any{
 										"name": "Favourites",

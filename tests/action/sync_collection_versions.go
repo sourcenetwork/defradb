@@ -13,6 +13,11 @@ package action
 import (
 	"context"
 	"time"
+
+	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/tests/state"
 )
 
 // SyncCollectionVersions is an action that will sync the given collection versions to the local node.
@@ -21,6 +26,11 @@ type SyncCollectionVersions struct {
 
 	// NodeID holds the ID (index) of a node to sync collections to.
 	NodeID int
+
+	// The identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
 
 	// VersionIDs to pass into the `SyncCollectionVersions` call.
 	VersionIDs []string
@@ -42,14 +52,24 @@ func (a *SyncCollectionVersions) Execute() {
 		versionIDs[i] = replacedVersionIDs[originalID]
 	}
 
+	opts := options.SyncCollectionVersions()
+	identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, a.NodeID)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
+	}
+
 	ctx, cancel := context.WithTimeout(a.s.Ctx, 5*time.Second)
 	defer cancel()
 
 	node := a.s.Nodes[a.NodeID]
-	err := node.SyncCollectionVersions(ctx, versionIDs...)
+	err := node.SyncCollectionVersions(ctx, versionIDs, opts)
 
 	expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)
+
+	if expectedErrorRaised {
+		return
+	}
 
 	// If the schema was updated we need to refresh the collection definitions.
 	refreshCollections(a.s)
