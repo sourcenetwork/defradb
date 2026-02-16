@@ -23,6 +23,9 @@ import (
 // BadgerStore specifies the badger datastore
 const BadgerStore = StoreType("badger")
 
+// rawBadgerDB holds a reference to the underlying Badger DB instance
+var rawBadgerDB *badgerds.DB
+
 func init() {
 	constructor := func(ctx context.Context, options *StoreOptions) (corekv.TxnStore, error) {
 		var path string
@@ -59,7 +62,13 @@ func init() {
 			badgerOpts.NumLevelZeroTablesStall = options.badgerNumLevelZeroTablesStall
 		}
 
-		return badger.NewDatastore(path, badgerOpts)
+		badgerOpts.Logger = nil
+		db, err := badgerds.Open(badgerOpts)
+		if err != nil {
+			return nil, err
+		}
+		rawBadgerDB = db
+		return badger.NewDatastoreFrom(db), nil
 	}
 	purge := func(ctx context.Context, options *StoreOptions) error {
 		store, err := constructor(ctx, options)

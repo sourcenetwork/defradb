@@ -266,6 +266,27 @@ func (c *Collection) DeleteWithFilter(
 	return &result, nil
 }
 
+func (c *Collection) PurgeByDocIDs(
+	ctx context.Context,
+	docIDs []string,
+	pruneHistory bool,
+) (*client.PurgeResult, error) {
+	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "purge-by-ids")
+	body, err := json.Marshal(docIDs)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, methodURL.String(), bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+	var result client.PurgeResult
+	if err := c.http.requestJson(req, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,

@@ -107,6 +107,21 @@ func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 	responseJSON(rw, http.StatusOK, result)
 }
 
+func (h *collectionHandler) PurgeByDocIDs(rw http.ResponseWriter, req *http.Request) {
+	col := mustGetContextClientCollection(req)
+	var docIDs []string
+	if err := requestJSON(req, &docIDs); err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	result, err := col.PurgeByDocIDs(req.Context(), docIDs, true)
+	if err != nil {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
+		return
+	}
+	responseJSON(rw, http.StatusOK, result)
+}
+
 func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
 
@@ -630,4 +645,32 @@ func (h *collectionHandler) bindRoutes(router *Router) {
 	router.AddRoute("/collections/{name}/encrypted-indexes/{field}", http.MethodDelete, deleteEncryptedIndex,
 		h.DeleteEncryptedIndex)
 	router.AddRoute("/collections/{name}/truncate", http.MethodDelete, truncate, h.Truncate)
+
+	purgeResultSchema := &openapi3.SchemaRef{
+		Ref: "#/components/schemas/purge_result",
+	}
+	docIDArraySchema := openapi3.NewArraySchema()
+	docIDArraySchema.Items = openapi3.NewSchemaRef("", openapi3.NewStringSchema())
+
+	collectionPurgeByIDsRequest := openapi3.NewRequestBody().
+		WithRequired(true).
+		WithContent(openapi3.NewContentWithJSONSchema(docIDArraySchema))
+	collectionPurgeByIDsResponse := openapi3.NewResponse().
+		WithDescription("Purge results").
+		WithJSONSchemaRef(purgeResultSchema)
+
+	collectionPurgeByIDs := openapi3.NewOperation()
+	collectionPurgeByIDs.OperationID = "collection_purge_by_doc_ids"
+	collectionPurgeByIDs.Description = "Permanently purge (hard-delete) documents by their docIDs. " +
+		"Unlike delete, this truly removes all storage including blocks and headstore entries. " +
+		"This is a local-only operation and does not propagate to other Defra nodes."
+	collectionPurgeByIDs.Tags = []string{"collection"}
+	collectionPurgeByIDs.AddParameter(collectionNamePathParam)
+	collectionPurgeByIDs.RequestBody = &openapi3.RequestBodyRef{
+		Value: collectionPurgeByIDsRequest,
+	}
+	collectionPurgeByIDs.AddResponse(200, collectionPurgeByIDsResponse)
+	collectionPurgeByIDs.Responses.Set("400", errorResponse)
+
+	router.AddRoute("/collections/{name}/purge-by-ids", http.MethodDelete, collectionPurgeByIDs, h.PurgeByDocIDs)
 }

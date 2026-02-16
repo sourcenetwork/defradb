@@ -613,7 +613,6 @@ func (w *Wrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 }
 
 func (w *Wrapper) NewBlindWriteTxn() (client.Txn, error) {
-	// Fallback to NewTxn
 	return w.NewTxn(false)
 }
 

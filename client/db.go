@@ -48,9 +48,7 @@ type TxnStore interface {
 	// It skips the Has() check before Set(). Not threadsafe.
 	NewBlindWriteTxn() (Txn, error)
 
-	// InitContext returns a new context with all caches initialized and linked to
-	// the given transaction. This must be called after creating a transaction
-	// to ensure subsequent operations use the correct transaction.
+	// InitContext returns a new context with all caches initialized and linked to the given transaction.
 	InitContext(ctx context.Context, txn Txn) context.Context
 }
 

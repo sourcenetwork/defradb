@@ -965,7 +965,6 @@ func (w *CWrapper) NewConcurrentTxn(readOnly bool) (client.Txn, error) {
 }
 
 func (w *CWrapper) NewBlindWriteTxn() (client.Txn, error) {
-	// Fallback to NewTxn
 	return w.NewTxn(false)
 }
 

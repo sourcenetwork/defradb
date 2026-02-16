@@ -212,6 +212,26 @@ func (c *Collection) DeleteWithFilter(
 	return &out, nil
 }
 
+func (c *Collection) PurgeByDocIDs(
+	ctx context.Context,
+	docIDs []string,
+	pruneHistory bool,
+) (*client.PurgeResult, error) {
+	docIDsVal, err := goji.MarshalJS(docIDs)
+	if err != nil {
+		return nil, err
+	}
+	res, err := execute(ctx, c.client, "purgeByDocIDs", docIDsVal)
+	if err != nil {
+		return nil, err
+	}
+	var out client.PurgeResult
+	if err := goji.UnmarshalJS(res[0], &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,

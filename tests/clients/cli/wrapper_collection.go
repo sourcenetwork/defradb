@@ -239,6 +239,29 @@ func (c *Collection) DeleteWithFilter(
 	return &res, nil
 }
 
+func (c *Collection) PurgeByDocIDs(
+	ctx context.Context,
+	docIDs []string,
+	pruneHistory bool,
+) (*client.PurgeResult, error) {
+	args := []string{"client", "collection", "purge"}
+	args = append(args, "--name", c.Version().Name)
+	docIDsJSON, err := json.Marshal(docIDs)
+	if err != nil {
+		return nil, err
+	}
+	args = append(args, "--doc-ids", string(docIDsJSON))
+	data, err := c.cmd.execute(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	var res client.PurgeResult
+	if err := json.Unmarshal(data, &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,

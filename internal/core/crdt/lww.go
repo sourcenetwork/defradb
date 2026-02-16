@@ -124,7 +124,6 @@ func (l *LWW) Merge(ctx context.Context, delta Delta) error {
 func (l *LWW) setValue(ctx context.Context, val []byte, priority uint64) error {
 	key := l.key.WithValueFlag()
 
-	// Skip all reads since we know there's no existing data to check against
 	if !IsNewDocCreateMode(ctx) {
 		curPrio, err := getPriority(ctx, l.store, l.key)
 		if err != nil {

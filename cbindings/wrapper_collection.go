@@ -422,6 +422,14 @@ func (c *Collection) DeleteWithFilter(
 	return &deleteRes, nil
 }
 
+func (c *Collection) PurgeByDocIDs(
+	ctx context.Context,
+	docIDs []string,
+	pruneHistory bool,
+) (*client.PurgeResult, error) {
+	return nil, errors.New("PurgeByDocIDs is not implemented in cbindings")
+}
+
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,

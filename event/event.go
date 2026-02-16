@@ -190,8 +190,6 @@ type TopicPeerEvent struct {
 }
 
 // P2PNoPeers is an event that is published when no peers are available for pubsub publishing.
-// Applications should subscribe to this event and trigger reconnection logic.
 type P2PNoPeers struct {
-	// DroppedBatchSize is the number of messages that were dropped due to no peers.
 	DroppedBatchSize int
 }

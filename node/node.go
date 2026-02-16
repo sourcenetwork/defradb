@@ -118,6 +118,31 @@ func (n *Node) Start(ctx context.Context) error {
 	return n.startAPI(ctx)
 }
 
+// CompactStorage forces full LSM compaction of the underlying Badger storage.
+func (n *Node) CompactStorage(workers int) error {
+	if rawBadgerDB == nil {
+		return nil
+	}
+	if workers <= 0 {
+		workers = 4
+	}
+	return rawBadgerDB.Flatten(workers)
+}
+
+// RunStorageGC runs Badger value log garbage collection to reclaim disk space
+// from deleted/overwritten entries.
+func (n *Node) RunStorageGC() error {
+	if rawBadgerDB == nil {
+		return nil
+	}
+	for {
+		err := rawBadgerDB.RunValueLogGC(0.5)
+		if err != nil {
+			return nil // ErrNoRewrite means nothing left to GC
+		}
+	}
+}
+
 // Close stops the node sub-systems.
 func (n *Node) Close(ctx context.Context) error {
 	var err error

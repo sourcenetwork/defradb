@@ -1,4 +1,4 @@
-// Copyright 2025 Democratized Data Foundation
+// Copyright 2026 Democratized Data Foundation
 //
 // Use of this software is governed by the Business Source License
 // included in the file licenses/BSL.txt.
@@ -19,7 +19,6 @@ import (
 )
 
 // BatchCIDCollector collects CIDs during batch operations for later signing.
-// Use NewBatchCIDCollector to create a new collector.
 type BatchCIDCollector = coreblock.BatchCIDCollector
 
 // BatchSignature contains a signature over a batch of block CIDs.
@@ -31,8 +30,6 @@ func NewBatchCIDCollector() *BatchCIDCollector {
 }
 
 // ContextWithBatchSigning returns a context with batch signing mode enabled.
-// In batch signing mode, individual block signing is skipped and CIDs are
-// collected for later batch signing.
 func ContextWithBatchSigning(ctx context.Context, collector *BatchCIDCollector) context.Context {
 	return coreblock.ContextWithBatchSigning(ctx, collector)
 }

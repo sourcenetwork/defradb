@@ -231,8 +231,7 @@ func (db *DB) WrapCorekvTxn(txn corekv.Txn) client.Txn {
 	return wrapCorekvTxn(txn, db)
 }
 
-// InitContext returns a new context with all caches initialized and linked to
-// the given transaction.
+// InitContext returns a new context with all caches initialized and linked to the given transaction.
 func (db *DB) InitContext(ctx context.Context, txn client.Txn) context.Context {
 	return InitContext(ctx, txn)
 }

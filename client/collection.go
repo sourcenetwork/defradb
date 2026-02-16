@@ -125,6 +125,15 @@ type Collection interface {
 		filter any,
 	) (*DeleteResult, error)
 
+	// PurgeByDocIDs permanently removes all documents with the given docIDs.
+	//
+	// This call will lock the collection, and no other read or write document operations on this
+	// collection will progress whilst this is executing.
+	// If pruneHistory is true, block DAG chains are fully walked and deleted (2-3x slower).
+	// If false, only head blocks referenced by headstore entries are deleted (fast but may leak
+	// old blocks for updated documents).
+	PurgeByDocIDs(ctx context.Context, docIDs []string, pruneHistory bool) (*PurgeResult, error)
+
 	// Get returns the document with the given DocID.
 	//
 	// Returns an ErrDocumentNotFound if a document matching the given DocID is not found.
@@ -191,6 +200,14 @@ type DeleteResult struct {
 	// Count contains the number of documents deleted by the delete call.
 	Count int64
 	// DocIDs contains the DocIDs of all the documents deleted by the delete call.
+	DocIDs []string
+}
+
+// PurgeResult wraps the result of a purge call.
+type PurgeResult struct {
+	// Count contains the number of documents purged by the purge call.
+	Count int64
+	// DocIDs contains the DocIDs of all the documents purged by the purge call.
 	DocIDs []string
 }
 

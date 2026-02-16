@@ -57,16 +57,16 @@ type (
 
 const (
 	networkRequestTimeout = 10 * time.Second
-	// pubsubBatchSize is the number of pubsub messages to batch before publishing.
-	pubsubBatchSize = 25
-	// pubsubBatchTimeout is the maximum time to wait for a pubsub batch to fill.
-	pubsubBatchTimeout = 200 * time.Millisecond
 	// maxPubsubMessageSize is the maximum size of a pubsub message (libp2p default is 1MB).
 	maxPubsubMessageSize = 1000 * 1024
-	// dagSyncWorkers limits the number of concurrent DAG sync workers.
-	dagSyncWorkers = 32
+	// pubsubBatchSize is the number of pubsub messages to batch before publishing.
+	pubsubBatchSize = 50
+	// pubsubBatchTimeout is the maximum time to wait for a pubsub batch to fill.
+	pubsubBatchTimeout = 100 * time.Millisecond
 	// pubsubBatchWorkers is the number of concurrent pubsub batch workers.
 	pubsubBatchWorkers = 32
+	// dagSyncWorkers limits the number of concurrent DAG sync workers.
+	dagSyncWorkers = 32
 )
 
 // PushToReplicatorsHandler is called when documents are pushed to replicators.

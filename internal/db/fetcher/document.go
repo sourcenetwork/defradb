@@ -98,13 +98,14 @@ type keyValue struct {
 
 func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 	if f.nextKV.HasValue() {
-		docID := f.nextKV.Value().Key.DocID
-		f.currentKV = f.nextKV.Value()
-
+		kv := f.nextKV.Value()
 		f.nextKV = immutable.None[keyValue]()
-		f.execInfo.DocsFetched++
 
-		return immutable.Some(docID), nil
+		if kv.Key.CollectionShortID != 0 && kv.Key.DocID != "" {
+			f.currentKV = kv
+			f.execInfo.DocsFetched++
+			return immutable.Some(kv.Key.DocID), nil
+		}
 	}
 
 	for {
@@ -113,9 +114,14 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 			return immutable.None[string](), err
 		}
 
-		dsKey, err := keys.NewDataStoreKey(string(f.iter.Key()))
+		rawKey := f.iter.Key()
+		dsKey, err := keys.NewDataStoreKey(string(rawKey))
 		if err != nil {
 			return immutable.None[string](), err
+		}
+
+		if dsKey.CollectionShortID == 0 || dsKey.DocID == "" {
+			continue
 		}
 
 		var value []byte
@@ -143,6 +149,10 @@ func (f *documentFetcher) NextDoc() (immutable.Option[string], error) {
 }
 
 func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error) {
+	if f.currentKV.Key.CollectionShortID == 0 || f.currentKV.Key.DocID == "" {
+		return immutable.None[EncodedDocument](), nil
+	}
+
 	doc := encodedDocument{}
 	doc.id = []byte(f.currentKV.Key.DocID)
 	doc.status = f.status
@@ -162,9 +172,14 @@ func (f *documentFetcher) GetFields() (immutable.Option[EncodedDocument], error)
 			break
 		}
 
-		dsKey, err := keys.NewDataStoreKey(string(f.iter.Key()))
+		rawKey := f.iter.Key()
+		dsKey, err := keys.NewDataStoreKey(string(rawKey))
 		if err != nil {
 			return immutable.None[EncodedDocument](), err
+		}
+
+		if dsKey.CollectionShortID == 0 || dsKey.DocID == "" {
+			continue
 		}
 
 		var value []byte
@@ -200,8 +215,12 @@ func (f *documentFetcher) appendKV(doc *encodedDocument, kv keyValue) error {
 		return nil
 	}
 
-	// we have to skip the object marker
-	if bytes.Equal(kv.Value, []byte{base.ObjectMarker}) {
+	if bytes.Equal(kv.Value, []byte{base.ObjectMarker}) ||
+		bytes.Equal(kv.Value, []byte{base.DeletedObjectMarker}) {
+		return nil
+	}
+
+	if kv.Key.FieldID == "" {
 		return nil
 	}
 
