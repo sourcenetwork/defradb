@@ -438,9 +438,17 @@ func (c *collection) GetIndexes(
 func (c *collection) CreateEncryptedIndex(
 	ctx context.Context,
 	createRequest client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexCreatePerm); err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {

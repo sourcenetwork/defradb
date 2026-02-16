@@ -1378,10 +1378,16 @@ func createEncryptedIndex(
 			Type:      client.EncryptedIndexType(action.Type),
 		}
 
+		opts := options.CreateEncryptedIndex()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
 		err := withRetryOnNode(
 			node,
 			func() error {
-				_, err := collection.CreateEncryptedIndex(s.Ctx, indexDesc)
+				_, err := collection.CreateEncryptedIndex(s.Ctx, indexDesc, opts)
 				return err
 			},
 		)

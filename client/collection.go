@@ -130,7 +130,11 @@ type Collection interface {
 	) ([]IndexDescription, error)
 
 	// CreateEncryptedIndex creates a new encrypted index on the collection.
-	CreateEncryptedIndex(context.Context, EncryptedIndexDescription) (EncryptedIndexDescription, error)
+	CreateEncryptedIndex(
+		ctx context.Context,
+		desc EncryptedIndexDescription,
+		opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
+	) (EncryptedIndexDescription, error)
 
 	// DeleteEncryptedIndex deletes an encrypted index from the collection.
 	DeleteEncryptedIndex(ctx context.Context, fieldName string) error

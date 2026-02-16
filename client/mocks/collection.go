@@ -156,8 +156,14 @@ func (_c *Collection_Create_Call) RunAndReturn(run func(ctx context.Context, doc
 }
 
 // CreateEncryptedIndex provides a mock function for the type Collection
-func (_mock *Collection) CreateEncryptedIndex(context1 context.Context, encryptedIndexDescription client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error) {
-	ret := _mock.Called(context1, encryptedIndexDescription)
+func (_mock *Collection) CreateEncryptedIndex(ctx context.Context, desc client.EncryptedIndexDescription, opts ...options.Enumerable[options.CreateEncryptedIndexOptions]) (client.EncryptedIndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, desc, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, desc)
+	}
+	ret := tmpRet
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateEncryptedIndex")
@@ -165,16 +171,16 @@ func (_mock *Collection) CreateEncryptedIndex(context1 context.Context, encrypte
 
 	var r0 client.EncryptedIndexDescription
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error)); ok {
-		return returnFunc(context1, encryptedIndexDescription)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexDescription, ...options.Enumerable[options.CreateEncryptedIndexOptions]) (client.EncryptedIndexDescription, error)); ok {
+		return returnFunc(ctx, desc, opts...)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexDescription) client.EncryptedIndexDescription); ok {
-		r0 = returnFunc(context1, encryptedIndexDescription)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, client.EncryptedIndexDescription, ...options.Enumerable[options.CreateEncryptedIndexOptions]) client.EncryptedIndexDescription); ok {
+		r0 = returnFunc(ctx, desc, opts...)
 	} else {
 		r0 = ret.Get(0).(client.EncryptedIndexDescription)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, client.EncryptedIndexDescription) error); ok {
-		r1 = returnFunc(context1, encryptedIndexDescription)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, client.EncryptedIndexDescription, ...options.Enumerable[options.CreateEncryptedIndexOptions]) error); ok {
+		r1 = returnFunc(ctx, desc, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -187,13 +193,15 @@ type Collection_CreateEncryptedIndex_Call struct {
 }
 
 // CreateEncryptedIndex is a helper method to define mock.On call
-//   - context1 context.Context
-//   - encryptedIndexDescription client.EncryptedIndexDescription
-func (_e *Collection_Expecter) CreateEncryptedIndex(context1 interface{}, encryptedIndexDescription interface{}) *Collection_CreateEncryptedIndex_Call {
-	return &Collection_CreateEncryptedIndex_Call{Call: _e.mock.On("CreateEncryptedIndex", context1, encryptedIndexDescription)}
+//   - ctx context.Context
+//   - desc client.EncryptedIndexDescription
+//   - opts ...options.Enumerable[options.CreateEncryptedIndexOptions]
+func (_e *Collection_Expecter) CreateEncryptedIndex(ctx interface{}, desc interface{}, opts ...interface{}) *Collection_CreateEncryptedIndex_Call {
+	return &Collection_CreateEncryptedIndex_Call{Call: _e.mock.On("CreateEncryptedIndex",
+		append([]interface{}{ctx, desc}, opts...)...)}
 }
 
-func (_c *Collection_CreateEncryptedIndex_Call) Run(run func(context1 context.Context, encryptedIndexDescription client.EncryptedIndexDescription)) *Collection_CreateEncryptedIndex_Call {
+func (_c *Collection_CreateEncryptedIndex_Call) Run(run func(ctx context.Context, desc client.EncryptedIndexDescription, opts ...options.Enumerable[options.CreateEncryptedIndexOptions])) *Collection_CreateEncryptedIndex_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -203,20 +211,27 @@ func (_c *Collection_CreateEncryptedIndex_Call) Run(run func(context1 context.Co
 		if args[1] != nil {
 			arg1 = args[1].(client.EncryptedIndexDescription)
 		}
+		var arg2 []options.Enumerable[options.CreateEncryptedIndexOptions]
+		var variadicArgs []options.Enumerable[options.CreateEncryptedIndexOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.CreateEncryptedIndexOptions])
+		}
+		arg2 = variadicArgs
 		run(
 			arg0,
 			arg1,
+			arg2...,
 		)
 	})
 	return _c
 }
 
-func (_c *Collection_CreateEncryptedIndex_Call) Return(encryptedIndexDescription1 client.EncryptedIndexDescription, err error) *Collection_CreateEncryptedIndex_Call {
-	_c.Call.Return(encryptedIndexDescription1, err)
+func (_c *Collection_CreateEncryptedIndex_Call) Return(encryptedIndexDescription client.EncryptedIndexDescription, err error) *Collection_CreateEncryptedIndex_Call {
+	_c.Call.Return(encryptedIndexDescription, err)
 	return _c
 }
 
-func (_c *Collection_CreateEncryptedIndex_Call) RunAndReturn(run func(context1 context.Context, encryptedIndexDescription client.EncryptedIndexDescription) (client.EncryptedIndexDescription, error)) *Collection_CreateEncryptedIndex_Call {
+func (_c *Collection_CreateEncryptedIndex_Call) RunAndReturn(run func(ctx context.Context, desc client.EncryptedIndexDescription, opts ...options.Enumerable[options.CreateEncryptedIndexOptions]) (client.EncryptedIndexDescription, error)) *Collection_CreateEncryptedIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -353,7 +353,9 @@ func (h *collectionHandler) CreateEncryptedIndex(rw http.ResponseWriter, req *ht
 		return
 	}
 
-	index, err := col.CreateEncryptedIndex(req.Context(), indexDesc)
+	opts := options.WithIdentity(options.CreateEncryptedIndex(), identity.FromContext(req.Context()))
+
+	index, err := col.CreateEncryptedIndex(req.Context(), indexDesc, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

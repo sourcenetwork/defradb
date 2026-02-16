@@ -447,11 +447,14 @@ func (c *Collection) GetIndexes(
 func (c *Collection) CreateEncryptedIndex(
 	ctx context.Context,
 	indexDesc client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
 ) (index client.EncryptedIndexDescription, err error) {
 	args := []string{"client", "encrypted-index", "create"}
 	args = append(args, "--collection", c.Version().Name)
-
 	args = append(args, "--field", indexDesc.FieldName)
+
+	opt := utils.NewOptions(opts...)
+	args = appendIdentityArg(args, opt.GetIdentity())
 
 	data, err := c.cmd.execute(ctx, args)
 	if err != nil {
