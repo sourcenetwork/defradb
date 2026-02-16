@@ -311,8 +311,10 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[o
 	return w.client.RefreshViews(ctx, opts...)
 }
 
-func (w *Wrapper) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
-	return w.client.SetMigration(ctx, config)
+func (w *Wrapper) SetMigration(
+	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
+	return w.client.SetMigration(ctx, config, opts...)
 }
 
 func (w *Wrapper) AddLens(

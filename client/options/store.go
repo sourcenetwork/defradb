@@ -720,3 +720,32 @@ func (b *ListLensesOptionsBuilder) SetIdentity(id identity.Identity) *ListLenses
 	})
 	return b
 }
+
+// SetMigrationOptions contains options for SetMigration operation.
+type SetMigrationOptions struct {
+	// Identity is the identity of the actor performing the operation.
+	Identity immutable.Option[identity.Identity]
+}
+
+// GetIdentity returns the identity for the operation.
+func (o *SetMigrationOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+// SetMigrationOptionsBuilder is a builder for SetMigrationOptions.
+type SetMigrationOptionsBuilder struct {
+	enumerableBuilder[SetMigrationOptions]
+}
+
+// SetMigration creates a new SetMigrationOptionsBuilder instance.
+func SetMigration() *SetMigrationOptionsBuilder {
+	return &SetMigrationOptionsBuilder{}
+}
+
+// SetIdentity sets the identity for the operation.
+func (b *SetMigrationOptionsBuilder) SetIdentity(id identity.Identity) *SetMigrationOptionsBuilder {
+	b.append(func(opts *SetMigrationOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}

@@ -255,9 +255,20 @@ func (db *DB) SetActiveCollectionVersion(
 	return txn.Commit()
 }
 
-func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
+func (db *DB) SetMigration(
+	ctx context.Context,
+	cfg client.LensConfig,
+	opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeMigrationSetPerm); err != nil {
+		return "", err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {

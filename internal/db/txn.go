@@ -247,9 +247,11 @@ func (txn *Txn) RefreshViews(ctx context.Context, opts ...options.Enumerable[opt
 	return txn.db.RefreshViews(ctx, opts...)
 }
 
-func (txn *Txn) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+func (txn *Txn) SetMigration(
+	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.SetMigration(ctx, config)
+	return txn.db.SetMigration(ctx, config, opts...)
 }
 
 func (txn *Txn) AddLens(

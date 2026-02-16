@@ -153,8 +153,10 @@ func (txn *Transaction) RefreshViews(
 	return txn.CWrapper.RefreshViews(ctx, opts...)
 }
 
-func (txn *Transaction) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
-	return txn.CWrapper.SetMigration(ctx, config)
+func (txn *Transaction) SetMigration(
+	ctx context.Context, config client.LensConfig, opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
+	return txn.CWrapper.SetMigration(ctx, config, opts...)
 }
 
 func (txn *Transaction) AddLens(

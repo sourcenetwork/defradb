@@ -42,6 +42,11 @@ type ConfigureMigration struct {
 	// Used to identify the transaction for this to run against. Optional.
 	TransactionID immutable.Option[int]
 
+	// Identity is the identity of this request. Optional.
+	//
+	// If node acp is enabled, identity will be used to check if this operation can be performed.
+	Identity immutable.Option[state.Identity]
+
 	// The configuration to use.
 	//
 	// Paths to WASM Lens modules may be found in: github.com/sourcenetwork/defradb/tests/lenses
@@ -60,12 +65,20 @@ func configureMigration(
 ) {
 	var lensID string
 
-	_, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
-	for _, node := range nodes {
+	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
+	for index, node := range nodes {
+		nodeID := nodeIDs[index]
+
+		migrationOpts := options.SetMigration()
+		identOption := getIdentityForRequestSpecificToNode(s, action.Identity, nodeID)
+		if identOption.HasValue() {
+			migrationOpts.SetIdentity(identOption.Value())
+		}
+
 		txn := getTransaction(s, node.Client, action.TransactionID, action.ExpectedError)
 		ctx := db.InitContext(s.Ctx, txn)
 		var err error
-		lensID, err = node.SetMigration(ctx, action.LensConfig)
+		lensID, err = node.SetMigration(ctx, action.LensConfig, migrationOpts)
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

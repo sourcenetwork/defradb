@@ -267,7 +267,14 @@ func (c *Client) RefreshViews(ctx context.Context, opts ...options.Enumerable[op
 	return err
 }
 
-func (c *Client) SetMigration(ctx context.Context, config client.LensConfig) (string, error) {
+func (c *Client) SetMigration(
+	ctx context.Context,
+	config client.LensConfig,
+	opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
+
 	methodURL := c.http.apiURL.JoinPath("collections", "migrations")
 
 	body, err := json.Marshal(config)
