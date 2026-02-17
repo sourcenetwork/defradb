@@ -15,10 +15,10 @@ defradb client p2p document add [docIDs] [flags]
 
 ```
 add single document:  
-  defradb client p2p document create bae123
+  defradb client p2p document add bae123
 
 add multiple documents:  
-  defradb client p2p document create bae123,bae456
+  defradb client p2p document add bae123,bae456
 ```
 
 ### Options

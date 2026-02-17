@@ -45,10 +45,10 @@ The documents are synchronized between nodes of a pubsub network.`,
 	}
 
 	EmbedCLIExample(ctx, cmd, "add single document",
-		`defradb client p2p document create bae123`)
+		`defradb client p2p document add bae123`)
 
 	EmbedCLIExample(ctx, cmd, "add multiple documents",
-		`defradb client p2p document create bae123,bae456`)
+		`defradb client p2p document add bae123,bae456`)
 
 	return cmd
 }
