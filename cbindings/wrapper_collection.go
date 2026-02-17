@@ -28,7 +28,7 @@ extern Result IndexCreate(uintptr_t nodePtr, char* indexName, char* fieldsStr, i
 CollectionOptions options, uintptr_t identityPtr);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result IndexDrop(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
-extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result CollectionTruncate(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
@@ -683,16 +683,21 @@ func (c *Collection) GetIndexes(
 func (c *Collection) CreateEncryptedIndex(
 	ctx context.Context,
 	req client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	name := C.CString(c.def.Name)
 	fieldName := C.CString(req.FieldName)
 	defer C.free(unsafe.Pointer(name))
 	defer C.free(unsafe.Pointer(fieldName))
 
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	res := ConvertAndFreeCResult(C.EncryptedIndexCreate(
 		C.uintptr_t(c.w.handle),
 		name,
 		fieldName,
+		cIdentity,
 	))
 
 	if res.Status != 0 {

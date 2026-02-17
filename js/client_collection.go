@@ -363,7 +363,9 @@ func (c *clientCollection) createEncryptedIndex(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	desc, err := c.col.CreateEncryptedIndex(ctx, request)
+	opt := options.CreateEncryptedIndex()
+	setOptIdentity(opt, args, 1)
+	desc, err := c.col.CreateEncryptedIndex(ctx, request, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

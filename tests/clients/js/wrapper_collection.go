@@ -315,7 +315,12 @@ func (c *Collection) GetIndexes(ctx context.Context, opts ...options.Enumerable[
 func (c *Collection) CreateEncryptedIndex(
 	ctx context.Context,
 	req client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	if opt != nil {
+		ctx = ctxWithOptIdentity(ctx, opt)
+	}
 	indexDescVal, err := goji.MarshalJS(req)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err

@@ -19,7 +19,9 @@ import "C"
 import (
 	"context"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 //export EncryptedIndexCreate
@@ -27,8 +29,13 @@ func EncryptedIndexCreate(
 	nodePtr C.uintptr_t,
 	collectionName *C.char,
 	fieldName *C.char,
+	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 
 	desc := client.EncryptedIndexDescription{
 		FieldName: C.GoString(fieldName),
@@ -38,11 +45,14 @@ func EncryptedIndexCreate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName))
+	getColOpt := options.WithIdentity(options.GetCollectionByName(), acpIdentity.FromContext(ctx))
+	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName), getColOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	descWithID, err := col.CreateEncryptedIndex(ctx, desc)
+
+	createOpt := options.WithIdentity(options.CreateEncryptedIndex(), acpIdentity.FromContext(ctx))
+	descWithID, err := col.CreateEncryptedIndex(ctx, desc, createOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

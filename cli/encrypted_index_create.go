@@ -15,7 +15,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeEncryptedIndexCreateCommand(ctx context.Context) *cobra.Command {
@@ -38,12 +40,14 @@ Currently only "equality" type is supported.`,
 				FieldName: fieldArg,
 				Type:      client.EncryptedIndexType(typeArg),
 			}
-			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
+			opt := options.WithIdentity(options.GetCollectionByName(), acpIdentity.FromContext(cmd.Context()))
+			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg, opt)
 			if err != nil {
 				return err
 			}
 
-			descWithID, err := col.CreateEncryptedIndex(cmd.Context(), createReq)
+			createOpt := options.WithIdentity(options.CreateEncryptedIndex(), acpIdentity.FromContext(cmd.Context()))
+			descWithID, err := col.CreateEncryptedIndex(cmd.Context(), createReq, createOpt)
 			if err != nil {
 				return err
 			}

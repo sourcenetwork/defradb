@@ -409,3 +409,27 @@ func (b *CollectionTruncateOptionsBuilder) SetIdentity(id identity.Identity) *Co
 	})
 	return b
 }
+
+// CreateEncryptedIndexOptions contains options for CreateEncryptedIndex operation.
+type CreateEncryptedIndexOptions struct {
+	Identity immutable.Option[identity.Identity]
+}
+
+func (o *CreateEncryptedIndexOptions) GetIdentity() immutable.Option[identity.Identity] {
+	return o.Identity
+}
+
+type CreateEncryptedIndexOptionsBuilder struct {
+	enumerableBuilder[CreateEncryptedIndexOptions]
+}
+
+func CreateEncryptedIndex() *CreateEncryptedIndexOptionsBuilder {
+	return &CreateEncryptedIndexOptionsBuilder{}
+}
+
+func (b *CreateEncryptedIndexOptionsBuilder) SetIdentity(id identity.Identity) *CreateEncryptedIndexOptionsBuilder {
+	b.append(func(opts *CreateEncryptedIndexOptions) {
+		opts.Identity = immutable.Some(id)
+	})
+	return b
+}

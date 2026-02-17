@@ -449,7 +449,10 @@ func (c *Collection) GetIndexes(
 func (c *Collection) CreateEncryptedIndex(
 	ctx context.Context,
 	indexDesc client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 	methodURL := c.http.apiURL.JoinPath("collections", c.Version().Name, "encrypted-indexes")
 
 	body, err := json.Marshal(&indexDesc)
