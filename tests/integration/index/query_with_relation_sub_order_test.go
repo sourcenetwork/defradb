@@ -514,9 +514,9 @@ func TestQueryWithOrderOnOneToMany_WithSubFilterAndOrderAndRelationIndex_ShouldF
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// sub-filter uses rating index: 4 books for John (3 match, 1 filtered out) + 0 for Fred = 4 indexFetches.
-				// DESC instructs the index to iterate in reverse order, so no in-memory sort needed.
-				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(4),
+				// sub-filter uses rating index: 4 books for John + 2 for Fred = 6 indexFetches.
+				// Books are fetched per author. DESC uses reverse index iteration, no in-memory sort needed.
+				Asserter: testUtils.NewExplainAsserter("subType").WithIndexFetches(6),
 			},
 		},
 	}

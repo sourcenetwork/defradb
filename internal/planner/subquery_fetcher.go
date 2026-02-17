@@ -84,68 +84,12 @@ func (f *subQueryFetcher) createFetcher() fetcher.Fetcher {
 	return lens.NewFetcher(baseFetcher, f.lensStore)
 }
 
-// fetchOrphans fetches documents where the relation ID field is NULL.
-// These are "orphan" documents that don't have a related document on the other side.
-// This is useful for queries that order by a relation field - orphans have NULL values
-// and should be included in the results.
-func (f *subQueryFetcher) fetchOrphans(
-	relIDFieldName string,
-	relIDFieldMapIndex int,
+// fetchDocs runs a full fetch pipeline: selectIndex → Init → Start → collect.
+// The filter and relationIDFieldName control index selection. excludeIDs filters out
+// documents by ID during collection.
+func (f *subQueryFetcher) fetchDocs(
 	filter *mapper.Filter,
-) (docs []core.Doc, err error) {
-	txn := datastore.CtxMustGetTxn(f.ctx)
-
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
-	if err != nil {
-		return nil, err
-	}
-
-	filterWithNull := addNullFilterOnField(filter, relIDFieldMapIndex)
-
-	result := selectIndex(selectIndexOptions{
-		collection:          f.col,
-		filter:              filterWithNull,
-		relationIDFieldName: relIDFieldName,
-		docMapping:          f.docMapping,
-	})
-
-	fetch := f.createFetcher()
-	defer func() {
-		err = errors.Join(err, fetch.Close())
-	}()
-
-	err = fetch.Init(
-		f.ctx,
-		f.identity,
-		txn,
-		f.nodeACP,
-		f.documentACP,
-		result.index,
-		f.col,
-		f.fields,
-		filterWithNull,
-		nil, // no ordering for orphans - they all have NULL values
-		f.docMapping,
-		false, // showDeleted
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	prefix := keys.DataStoreKey{CollectionShortID: shortID}
-	err = fetch.Start(f.ctx, prefix)
-	if err != nil {
-		return nil, err
-	}
-
-	return f.collectAllDocs(fetch, shortID)
-}
-
-// fetchAllExcluding fetches all documents from the collection, excluding those with IDs in excludeIDs.
-// This is used to find "orphan" documents when the collection doesn't have a foreign key field
-// (i.e., the collection is on the secondary side of a relation).
-func (f *subQueryFetcher) fetchAllExcluding(
-	filter *mapper.Filter,
+	relationIDFieldName string,
 	excludeIDs []string,
 ) (docs []core.Doc, err error) {
 	txn := datastore.CtxMustGetTxn(f.ctx)
@@ -156,67 +100,8 @@ func (f *subQueryFetcher) fetchAllExcluding(
 	}
 
 	result := selectIndex(selectIndexOptions{
-		collection: f.col,
-		filter:     filter,
-		docMapping: f.docMapping,
-	})
-
-	fetch := f.createFetcher()
-	defer func() {
-		err = errors.Join(err, fetch.Close())
-	}()
-
-	err = fetch.Init(
-		f.ctx,
-		f.identity,
-		txn,
-		f.nodeACP,
-		f.documentACP,
-		result.index,
-		f.col,
-		f.fields,
-		filter,
-		nil, // no ordering
-		f.docMapping,
-		false, // showDeleted
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	prefix := keys.DataStoreKey{CollectionShortID: shortID}
-	err = fetch.Start(f.ctx, prefix)
-	if err != nil {
-		return nil, err
-	}
-
-	return f.collectAllDocsExcluding(fetch, shortID, excludeIDs)
-}
-
-// fetchOrphansByParentConstraint fetches orphan documents for a specific parent.
-// It first fetches all primary docs that reference the given secondary doc (parent constraint),
-// then filters to only return those that are not already in existingIDs and have a NULL relation field
-// (i.e., orphans without the ordering relation).
-func (f *subQueryFetcher) fetchOrphansByParentConstraint(
-	baseFilter *mapper.Filter,
-	relIDFieldMapIndex int,
-	relFieldIndex int,
-	parentDocID string,
-	relationIDFieldName string,
-	existingIDs map[string]struct{},
-) (docs []core.Doc, err error) {
-	txn := datastore.CtxMustGetTxn(f.ctx)
-
-	shortID, err := id.GetShortCollectionID(f.ctx, f.col.Version().CollectionID)
-	if err != nil {
-		return nil, err
-	}
-
-	parentFilter := addFilterOnField(baseFilter, relIDFieldMapIndex, parentDocID)
-
-	result := selectIndex(selectIndexOptions{
 		collection:          f.col,
-		filter:              parentFilter,
+		filter:              filter,
 		relationIDFieldName: relationIDFieldName,
 		docMapping:          f.docMapping,
 	})
@@ -235,10 +120,10 @@ func (f *subQueryFetcher) fetchOrphansByParentConstraint(
 		result.index,
 		f.col,
 		f.fields,
-		parentFilter,
-		nil, // no ordering for orphan scan
+		filter,
+		nil,
 		f.docMapping,
-		false, // showDeleted
+		false,
 	)
 	if err != nil {
 		return nil, err
@@ -250,7 +135,40 @@ func (f *subQueryFetcher) fetchOrphansByParentConstraint(
 		return nil, err
 	}
 
-	allDocs, err := f.collectAllDocs(fetch, shortID)
+	return f.collectDocs(fetch, shortID, excludeIDs)
+}
+
+// fetchOrphans fetches documents where the relation ID field is NULL.
+func (f *subQueryFetcher) fetchOrphans(
+	relIDFieldName string,
+	relIDFieldMapIndex int,
+	filter *mapper.Filter,
+) ([]core.Doc, error) {
+	filterWithNull := addNullFilterOnField(filter, relIDFieldMapIndex)
+	return f.fetchDocs(filterWithNull, relIDFieldName, nil)
+}
+
+// fetchAllExcluding fetches all documents from the collection, excluding those with IDs in excludeIDs.
+func (f *subQueryFetcher) fetchAllExcluding(
+	filter *mapper.Filter,
+	excludeIDs []string,
+) ([]core.Doc, error) {
+	return f.fetchDocs(filter, "", excludeIDs)
+}
+
+// fetchOrphansByParentConstraint fetches orphan documents for a specific parent.
+// It fetches all primary docs matching the parent constraint, then filters to only those
+// not in existingIDs and with a NULL relation field.
+func (f *subQueryFetcher) fetchOrphansByParentConstraint(
+	baseFilter *mapper.Filter,
+	relIDFieldMapIndex int,
+	relFieldIndex int,
+	parentDocID string,
+	relationIDFieldName string,
+	existingIDs map[string]struct{},
+) ([]core.Doc, error) {
+	parentFilter := addFilterOnField(baseFilter, relIDFieldMapIndex, parentDocID)
+	allDocs, err := f.fetchDocs(parentFilter, relationIDFieldName, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -274,6 +192,7 @@ func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter
 	result := mapper.NewFilter()
 	if f != nil {
 		maps.Copy(result.Conditions, f.Conditions)
+		result.ExternalConditions = f.ExternalConditions
 	}
 
 	propertyIndex := &mapper.PropertyIndex{Index: propIndex}
@@ -293,13 +212,8 @@ func addNullFilterOnField(f *mapper.Filter, propIndex int) *mapper.Filter {
 	return addFilterOnField(f, propIndex, nil)
 }
 
-// collectAllDocs fetches all documents from the fetcher.
-func (f *subQueryFetcher) collectAllDocs(fetch fetcher.Fetcher, shortID uint32) ([]core.Doc, error) {
-	return f.collectAllDocsExcluding(fetch, shortID, nil)
-}
-
-// collectAllDocsExcluding fetches all documents from the fetcher, excluding those with IDs in the excludeIDs list.
-func (f *subQueryFetcher) collectAllDocsExcluding(fetch fetcher.Fetcher, shortID uint32, excludeIDs []string) ([]core.Doc, error) {
+// collectDocs fetches all documents from the fetcher, optionally excluding those with IDs in excludeIDs.
+func (f *subQueryFetcher) collectDocs(fetch fetcher.Fetcher, shortID uint32, excludeIDs []string) ([]core.Doc, error) {
 	var docs []core.Doc
 
 	excludeSet := make(map[string]struct{}, len(excludeIDs))
