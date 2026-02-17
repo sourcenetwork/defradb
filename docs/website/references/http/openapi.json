@@ -151,6 +151,23 @@
                 },
                 "type": "object"
             },
+            "add_replicator_params": {
+                "properties": {
+                    "Addresses": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "Collections": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
             "add_view_request": {
                 "properties": {
                     "Query": {
@@ -350,23 +367,6 @@
                     "filter": {},
                     "updater": {
                         "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "add_replicator_params": {
-                "properties": {
-                    "Addresses": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
-                    "Collections": {
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
                     }
                 },
                 "type": "object"

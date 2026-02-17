@@ -1,31 +1,30 @@
-## defradb client p2p replicator create
+## defradb client p2p document add
 
-Create replicator(s) and start synchronization
+Add P2P documents
 
 ### Synopsis
 
-Create replicator(s) and start synchronization.
-A replicator synchronizes one or all collection(s) from this instance to another.
+Add P2P documents to the synchronized pubsub topics.
+The documents are synchronized between nodes of a pubsub network.
 
 ```
-defradb client p2p replicator create [-c, --collection] <addresses...> [flags]
+defradb client p2p document add [docIDs] [flags]
 ```
 
 ### Examples
 
 ```
-Create a replicator to replicate the "Users" collection to a peer:  
-  defradb client p2p replicator create -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko...
+add single document:  
+  defradb client p2p document create bae123
 
-Create a replicator to replicate the "Orders" collection to multiple peers:  
-  defradb client p2p replicator create -c Orders /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko... /ip4/0.0.0.0/tcp/9172/p2p/1543LK...
+add multiple documents:  
+  defradb client p2p document create bae123,bae456
 ```
 
 ### Options
 
 ```
-  -c, --collection strings   Collection(s) to replicate
-  -h, --help                 help for create
+  -h, --help   help for add
 ```
 
 ### Options inherited from parent commands
@@ -52,5 +51,5 @@ Create a replicator to replicate the "Orders" collection to multiple peers:
 
 ### SEE ALSO
 
-* [defradb client p2p replicator](defradb_client_p2p_replicator.md)	 - Configure the replicator system
+* [defradb client p2p document](defradb_client_p2p_document.md)	 - Configure the P2P document system
 

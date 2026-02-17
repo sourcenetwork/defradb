@@ -1,30 +1,30 @@
-## defradb client p2p collection create
+## defradb client p2p collection add
 
-Create P2P collections
+Add P2P collections
 
 ### Synopsis
 
-Create P2P collections to the synchronized pubsub topics.
+Add P2P collections to the synchronized pubsub topics.
 The collections are synchronized between nodes of a pubsub network.
 
 ```
-defradb client p2p collection create [collectionNames] [flags]
+defradb client p2p collection add [collectionNames] [flags]
 ```
 
 ### Examples
 
 ```
-create single collection:  
-  defradb client p2p collection create User
+add single collection:  
+  defradb client p2p collection add User
 
-create multiple collections:  
-  defradb client p2p collection create User,Address
+add multiple collections:  
+  defradb client p2p collection add User,Address
 ```
 
 ### Options
 
 ```
-  -h, --help   help for create
+  -h, --help   help for add
 ```
 
 ### Options inherited from parent commands
