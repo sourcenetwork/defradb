@@ -32,14 +32,14 @@ func TestQueryInlineNillableFloatArray_WithDocIDAndMin_Succeeds(t *testing.T) {
 				Request: `query {
 					Users(docID: "bae-234d84a8-37f9-57ea-9c53-34c247f3b272") {
 						name
-						_min(pageRatings: {})
+						MIN(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": float64(0.00000000001),
+							"MIN":  float64(0.00000000001),
 						},
 					},
 				},

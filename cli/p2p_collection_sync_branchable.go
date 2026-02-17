@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeP2PCollectionSyncBranchableCommand(ctx context.Context) *cobra.Command {
@@ -37,7 +40,8 @@ to the collection for future updates.`,
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.SyncBranchableCollection(ctx, collectionID)
+			opt := options.WithIdentity(options.SyncBranchableCollection(), identity.FromContext(cmd.Context()))
+			return cliClient.SyncBranchableCollection(ctx, collectionID, opt)
 		},
 	}
 

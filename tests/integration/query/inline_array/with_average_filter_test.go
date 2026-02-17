@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArrayWithAverageWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(favouriteIntegers: {filter: {_gt: 0}})
+						AVG(favouriteIntegers: {filter: {_gt: 0}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_avg": float64(1.5),
+							"AVG":  float64(1.5),
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineNillableIntegerArrayWithAverageWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(testScores: {filter: {_gt: -1}})
+						AVG(testScores: {filter: {_gt: -1}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(6.5),
+							"AVG":  float64(6.5),
 						},
 					},
 				},
@@ -92,14 +92,14 @@ func TestQueryInlineFloatArrayWithAverageWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(favouriteFloats: {filter: {_lt: 9}})
+						AVG(favouriteFloats: {filter: {_lt: 9}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_avg": 3.5,
+							"AVG":  3.5,
 						},
 					},
 				},
@@ -123,14 +123,14 @@ func TestQueryInlineNillableFloatArrayWithAverageWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(pageRatings: {filter: {_lt: 9}})
+						AVG(pageRatings: {filter: {_lt: 9}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_avg": 3.5,
+							"AVG":  3.5,
 						},
 					},
 				},

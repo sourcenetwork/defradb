@@ -16,6 +16,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeDocumentACPPolicyAddCommand(ctx context.Context) *cobra.Command {
@@ -66,9 +69,11 @@ Notes:
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
+			ctx := cmd.Context()
 			policyResult, err := cliClient.AddDACPolicy(
-				cmd.Context(),
+				ctx,
 				policy,
+				options.WithIdentity(options.AddDACPolicy(), identity.FromContext(ctx)),
 			)
 
 			if err != nil {

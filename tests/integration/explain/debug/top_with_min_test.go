@@ -48,7 +48,7 @@ func TestDebugExplain_TopLevelMinRequest_Succeeds(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					_min(
+					MIN(
 						Author: {
 							field: age
 						}
@@ -72,7 +72,7 @@ func TestDebugExplain_TopLevelMinRequestWithFilter_Succeeds(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					_min(
+					MIN(
 						Author: {
 							field: age,
 							filter: {

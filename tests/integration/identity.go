@@ -11,7 +11,6 @@
 package tests
 
 import (
-	"context"
 	"strconv"
 
 	"github.com/stretchr/testify/require"
@@ -114,18 +113,6 @@ func getIdentityForRequestSpecificToNode(
 		return acpIdentity.None
 	}
 	return immutable.Some(getIdentityForRequest(s, identity.Value(), nodeIndex))
-}
-
-// getContextWithIdentity returns a context with the identity for the given reference and node index.
-// If the identity does not exist, it will be generated.
-// The identity added to the context is prepared for a request, i.e. its [Identity.BearerToken] is set.
-func getContextWithIdentity(
-	ctx context.Context,
-	s *state.State,
-	identity immutable.Option[state.Identity],
-	nodeIndex int,
-) context.Context {
-	return acpIdentity.WithContext(ctx, getIdentityForRequestSpecificToNode(s, identity, nodeIndex))
 }
 
 func getIdentityDID(s *state.State, identity immutable.Option[state.Identity]) string {

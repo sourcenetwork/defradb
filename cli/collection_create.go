@@ -17,7 +17,9 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeCollectionCreateCommand(ctx context.Context) *cobra.Command {
@@ -71,25 +73,28 @@ Options:
 				return cmd.Usage()
 			}
 
-			createOpts := []client.DocCreateOption{
-				client.CreateDocEncrypted(shouldEncryptDoc),
-				client.CreateDocWithEncryptedFields(encryptedFields),
-			}
-
 			ctx := cmd.Context()
+
+			createOpt := options.WithIdentity(
+				options.CollectionCreate().
+					SetEncryptDoc(shouldEncryptDoc).
+					SetEncryptedFields(encryptedFields),
+				identity.FromContext(ctx),
+			)
+
 			if client.IsJSONArray(docData) {
 				docs, err := client.NewDocsFromJSON(ctx, docData, col.Version())
 				if err != nil {
 					return err
 				}
-				return col.CreateMany(ctx, docs, createOpts...)
+				return col.CreateMany(ctx, docs, createOpt)
 			}
 
 			doc, err := client.NewDocFromJSON(ctx, docData, col.Version())
 			if err != nil {
 				return err
 			}
-			return col.Create(cmd.Context(), doc, createOpts...)
+			return col.Create(cmd.Context(), doc, createOpt)
 		},
 	}
 

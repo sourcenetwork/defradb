@@ -119,18 +119,18 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithAndWithoutFilter(t *tes
 				Request: `query {
 						Author {
 							name
-							_sum(books: {field: score, filter: {score: {_gt: 3}}}, articles: {field: rating})
+							SUM(books: {field: score, filter: {score: {_gt: 3}}}, articles: {field: rating})
 						}
 					}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
 							"name": "John Grisham",
-							"_sum": int64(3),
+							"SUM":  int64(3),
 						},
 						{
 							"name": "Cornelia Funke",
-							"_sum": int64(7),
+							"SUM":  int64(7),
 						},
 					},
 				},
@@ -244,18 +244,18 @@ func TestQueryOneToManyMultipleWithSumOnMultipleJoinsWithFilters(t *testing.T) {
 				Request: `query {
 						Author {
 							name
-							_sum(books: {field: score, filter: {score: {_gt: 3}}}, articles: {field: rating, filter: {rating: {_lt: 3}}})
+							SUM(books: {field: score, filter: {score: {_gt: 3}}}, articles: {field: rating, filter: {rating: {_lt: 3}}})
 						}
 					}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
 							"name": "John Grisham",
-							"_sum": int64(0),
+							"SUM":  int64(0),
 						},
 						{
 							"name": "Cornelia Funke",
-							"_sum": int64(7),
+							"SUM":  int64(7),
 						},
 					},
 				},

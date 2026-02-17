@@ -17,11 +17,11 @@ import (
 	"strings"
 
 	"github.com/sourcenetwork/corekv"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -35,6 +35,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/encryption"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.Collection = (*collection)(nil)
@@ -91,7 +92,7 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 		return nil, ErrCollectionNameEmpty
 	}
 
-	cols, err := db.getCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+	cols, err := db.getCollections(ctx, utils.NewOptions(options.GetCollections().SetCollectionName(name)))
 	if err != nil {
 		return nil, err
 	}
@@ -111,27 +112,31 @@ func (db *DB) getCollectionByName(ctx context.Context, name string) (client.Coll
 // is provided.
 func (db *DB) getCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts *options.GetCollectionsOptions,
 ) ([]client.Collection, error) {
+	if opts == nil {
+		opts = &options.GetCollectionsOptions{}
+	}
+
 	var cols []client.CollectionVersion
 	switch {
-	case options.Name.HasValue() && !options.IncludeInactive.Value():
-		col, err := description.GetCollectionByName(ctx, options.Name.Value())
+	case opts.CollectionName.HasValue() && !opts.IncludeInactive.Value():
+		col, err := description.GetCollectionByName(ctx, opts.CollectionName.Value())
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return nil, err
 		}
 		cols = append(cols, col)
 
-	case options.VersionID.HasValue():
-		col, err := description.GetCollectionByID(ctx, options.VersionID.Value())
+	case opts.VersionID.HasValue():
+		col, err := description.GetCollectionByID(ctx, opts.VersionID.Value())
 		if err != nil {
 			return nil, err
 		}
 		cols = append(cols, col)
 
-	case options.CollectionID.HasValue():
+	case opts.CollectionID.HasValue():
 		var err error
-		cols, err = description.GetCollectionsByCollectionID(ctx, options.CollectionID.Value())
+		cols, err = description.GetCollectionsByCollectionID(ctx, opts.CollectionID.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -141,10 +146,10 @@ func (db *DB) getCollections(
 	// in this being called, and so for now we tolerate a full scan plus filter instead of maintaining
 	// and index. The commented out case below, highlights its omission - if we want to index it in the
 	// future it should be uncommented and handled.
-	// case options.CollectionSetID.HasValue():
+	// case opts.CollectionSetID.HasValue():
 
 	default:
-		if options.IncludeInactive.HasValue() && options.IncludeInactive.Value() {
+		if opts.IncludeInactive.HasValue() && opts.IncludeInactive.Value() {
 			var err error
 			cols, err = description.GetCollections(ctx)
 			if err != nil {
@@ -161,29 +166,29 @@ func (db *DB) getCollections(
 
 	collections := []client.Collection{}
 	for _, col := range cols {
-		if options.VersionID.HasValue() {
-			if col.VersionID != options.VersionID.Value() {
+		if opts.VersionID.HasValue() {
+			if col.VersionID != opts.VersionID.Value() {
 				continue
 			}
 		}
 
-		if options.Name.HasValue() {
-			if col.Name != options.Name.Value() {
+		if opts.CollectionName.HasValue() {
+			if col.Name != opts.CollectionName.Value() {
 				continue
 			}
 		}
 
 		// By default, we don't return inactive collections unless a specific version is requested.
-		if !options.IncludeInactive.Value() && !col.IsActive && !options.VersionID.HasValue() {
+		if !opts.IncludeInactive.Value() && !col.IsActive && !opts.VersionID.HasValue() {
 			continue
 		}
 
-		if options.CollectionSetID.HasValue() {
+		if opts.CollectionSetID.HasValue() {
 			if !col.CollectionSet.HasValue() {
 				continue
 			}
 
-			if col.CollectionSet.Value().CollectionSetID != options.CollectionSetID.Value() {
+			if col.CollectionSet.Value().CollectionSetID != opts.CollectionSetID.Value() {
 				continue
 			}
 		}
@@ -204,13 +209,19 @@ func (db *DB) getCollections(
 // it hits every key and will cause Tx conflicts for concurrent Txs
 func (c *collection) GetAllDocIDs(
 	ctx context.Context,
+	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
 ) (<-chan client.DocIDResult, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return nil, err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
+
 	return c.getAllDocIDsChan(ctx)
 }
 
@@ -326,14 +337,18 @@ func (c *collection) CollectionID() string {
 func (c *collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -345,7 +360,7 @@ func (c *collection) Create(
 		return err
 	}
 
-	err = c.create(ctx, doc, opts)
+	err = c.create(ctx, doc, opt)
 	if err != nil {
 		return err
 	}
@@ -358,14 +373,18 @@ func (c *collection) Create(
 func (c *collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -378,7 +397,7 @@ func (c *collection) CreateMany(
 	}
 
 	for _, doc := range docs {
-		err = c.create(ctx, doc, opts)
+		err = c.create(ctx, doc, opt)
 		if err != nil {
 			return err
 		}
@@ -410,7 +429,7 @@ func (c *collection) getDocIDAndPrimaryKeyFromDoc(
 func (c *collection) create(
 	ctx context.Context,
 	doc *client.Document,
-	opts []client.DocCreateOption,
+	opt *options.CollectionCreateOptions,
 ) error {
 	err := c.setEmbedding(ctx, doc, true)
 	if err != nil {
@@ -455,7 +474,7 @@ func (c *collection) create(
 		}
 	}
 
-	ctx = setContextDocEncryption(ctx, opts)
+	ctx = setContextDocEncryption(ctx, opt)
 	ctx = coreblock.ContextWithNewDocCreateMode(ctx)
 	ctx = crdt.ContextWithNewDocCreateMode(ctx)
 
@@ -473,13 +492,14 @@ func (c *collection) create(
 	return c.registerDocWithACP(ctx, doc.ID().String())
 }
 
-func setContextDocEncryption(ctx context.Context, opts []client.DocCreateOption) context.Context {
-	createOptions := client.DocCreateOptions{}
-	createOptions.Apply(opts)
-	if !createOptions.EncryptDoc && len(createOptions.EncryptedFields) == 0 {
+func setContextDocEncryption(
+	ctx context.Context,
+	opt *options.CollectionCreateOptions,
+) context.Context {
+	if !opt.EncryptDoc && len(opt.EncryptedFields) == 0 {
 		return ctx
 	}
-	ctx = encryption.SetContextConfigFromParams(ctx, createOptions.EncryptDoc, createOptions.EncryptedFields)
+	ctx = encryption.SetContextConfigFromParams(ctx, opt.EncryptDoc, opt.EncryptedFields)
 	return ctx
 }
 
@@ -489,13 +509,18 @@ func setContextDocEncryption(ctx context.Context, opts []client.DocCreateOption)
 func (c *collection) Update(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -566,14 +591,18 @@ func (c *collection) update(
 func (c *collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentUpdatePerm); err != nil {
 		return err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -599,7 +628,7 @@ func (c *collection) Save(
 	if exists {
 		err = c.update(ctx, doc)
 	} else {
-		err = c.create(ctx, doc, opts)
+		err = c.create(ctx, doc, opt)
 	}
 	if err != nil {
 		return err
@@ -612,14 +641,18 @@ func (c *collection) Save(
 func (c *collection) SaveMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentUpdatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentDeletePerm); err != nil {
 		return err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -645,7 +678,7 @@ func (c *collection) SaveMany(
 		if exists {
 			err = c.update(ctx, doc)
 		} else {
-			err = c.create(ctx, doc, opts)
+			err = c.create(ctx, doc, opt)
 		}
 		if err != nil {
 			return err
@@ -880,13 +913,18 @@ func (c *collection) save(
 func (c *collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentDeletePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentDeletePerm); err != nil {
 		return false, err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -915,13 +953,18 @@ func (c *collection) Delete(
 func (c *collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeDocumentReadPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeDocumentReadPerm); err != nil {
 		return false, err
 	}
+
+	ctx = identity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {

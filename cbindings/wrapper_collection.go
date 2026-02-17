@@ -28,7 +28,7 @@ extern Result IndexCreate(uintptr_t nodePtr, char* indexName, char* fieldsStr, i
 CollectionOptions options, uintptr_t identityPtr);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
 extern Result IndexDrop(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
-extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName);
+extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result CollectionTruncate(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
@@ -45,6 +45,8 @@ import (
 	"unsafe"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 var _ client.Collection = (*Collection)(nil)
@@ -73,15 +75,22 @@ func (c *Collection) CollectionID() string {
 func (c *Collection) Create(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
-	isEncrypted := isEncryptedFromDocCreateOption(opts)
-	encryptedFields := encryptedFieldsFromDocCreateOptions(opts)
+	createOpts := utils.NewOptions(opts...)
+	isEncrypted := 0
+	if createOpts.EncryptDoc {
+		isEncrypted = 1
+	}
+	encryptedFields := C.CString("")
+	if len(createOpts.EncryptedFields) > 0 {
+		encryptedFields = C.CString(strings.Join(createOpts.EncryptedFields, ","))
+	}
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(createOpts.GetIdentity())
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
@@ -104,7 +113,7 @@ func (c *Collection) Create(
 	res := ConvertAndFreeCResult(C.CollectionCreate(
 		C.uintptr_t(c.w.handle),
 		cJSON,
-		isEncrypted,
+		C.int(isEncrypted),
 		encryptedFields,
 		copts,
 		cIdentity,
@@ -121,15 +130,22 @@ func (c *Collection) Create(
 func (c *Collection) CreateMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) error {
-	isEncrypted := isEncryptedFromDocCreateOption(opts)
-	encryptedFields := encryptedFieldsFromDocCreateOptions(opts)
+	createOpts := utils.NewOptions(opts...)
+	isEncrypted := 0
+	if createOpts.EncryptDoc {
+		isEncrypted = 1
+	}
+	encryptedFields := C.CString("")
+	if len(createOpts.EncryptedFields) > 0 {
+		encryptedFields = C.CString(strings.Join(createOpts.EncryptedFields, ","))
+	}
 
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(createOpts.GetIdentity())
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
@@ -160,7 +176,7 @@ func (c *Collection) CreateMany(
 	res := ConvertAndFreeCResult(C.CollectionCreate(
 		C.uintptr_t(c.w.handle),
 		cJSON,
-		isEncrypted,
+		C.int(isEncrypted),
 		encryptedFields,
 		copts,
 		cIdentity,
@@ -178,6 +194,7 @@ func (c *Collection) CreateMany(
 func (c *Collection) Update(
 	ctx context.Context,
 	doc *client.Document,
+	opts ...options.Enumerable[options.CollectionUpdateOptions],
 ) error {
 	docID := C.CString(doc.ID().String())
 	filter := C.CString("")
@@ -190,7 +207,7 @@ func (c *Collection) Update(
 	cVersion := C.CString("")
 	cCollectionID := C.CString(c.CollectionID())
 	cName := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
@@ -223,11 +240,20 @@ func (c *Collection) Update(
 func (c *Collection) Save(
 	ctx context.Context,
 	doc *client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
-	_, err := c.Get(ctx, doc.ID(), true)
+	saveOpt := utils.NewOptions(opts...)
+	getOpts := options.CollectionGet().SetShowDeleted(true)
+	if saveOpt.Identity.HasValue() {
+		getOpts.SetIdentity(saveOpt.Identity.Value())
+	}
+	_, err := c.Get(ctx, doc.ID(), getOpts)
 	if err == nil {
-		return c.Update(ctx, doc)
+		updateOpts := options.CollectionUpdate()
+		if saveOpt.Identity.HasValue() {
+			updateOpts.SetIdentity(saveOpt.Identity.Value())
+		}
+		return c.Update(ctx, doc, updateOpts)
 	}
 	if strings.Contains(err.Error(), client.ErrDocumentNotFoundOrNotAuthorized.Error()) {
 		return c.Create(ctx, doc, opts...)
@@ -238,7 +264,7 @@ func (c *Collection) Save(
 func (c *Collection) SaveMany(
 	ctx context.Context,
 	docs []*client.Document,
-	opts ...client.DocCreateOption,
+	opts ...options.Enumerable[options.CollectionSaveOptions],
 ) error {
 	for _, doc := range docs {
 		if err := c.Save(ctx, doc, opts...); err != nil {
@@ -251,6 +277,7 @@ func (c *Collection) SaveMany(
 func (c *Collection) Delete(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...options.Enumerable[options.CollectionDeleteOptions],
 ) (bool, error) {
 	docIDStr := C.CString(docID.String())
 	filter := C.CString("")
@@ -258,7 +285,7 @@ func (c *Collection) Delete(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(filter))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -289,6 +316,7 @@ func (c *Collection) Delete(
 func (c *Collection) Exists(
 	ctx context.Context,
 	docID client.DocID,
+	opts ...options.Enumerable[options.CollectionExistsOptions],
 ) (bool, error) {
 	docIDStr := C.CString(docID.String())
 	cShowDeleted := C.int(0)
@@ -296,7 +324,7 @@ func (c *Collection) Exists(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
@@ -327,6 +355,7 @@ func (c *Collection) UpdateWithFilter(
 	ctx context.Context,
 	filter any,
 	updater string,
+	opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 ) (*client.UpdateResult, error) {
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
@@ -338,7 +367,7 @@ func (c *Collection) UpdateWithFilter(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filterStr))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -377,6 +406,7 @@ func (c *Collection) UpdateWithFilter(
 func (c *Collection) DeleteWithFilter(
 	ctx context.Context,
 	filter any,
+	opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 ) (*client.DeleteResult, error) {
 	docID := C.CString("")
 	filterJSON, err := json.Marshal(filter)
@@ -388,7 +418,7 @@ func (c *Collection) DeleteWithFilter(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.def.Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(docID))
 	defer C.free(unsafe.Pointer(filterStr))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -433,10 +463,11 @@ func (c *Collection) PurgeByDocIDs(
 func (c *Collection) Get(
 	ctx context.Context,
 	docID client.DocID,
-	showDeleted bool,
+	opts ...options.Enumerable[options.CollectionGetOptions],
 ) (*client.Document, error) {
+	opt := utils.NewOptions(opts...)
 	var cShowDeleted C.int = 0
-	if showDeleted {
+	if opt.ShowDeleted {
 		cShowDeleted = 1
 	}
 
@@ -444,7 +475,7 @@ func (c *Collection) Get(
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString(c.Version().Name)
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(opt.GetIdentity())
 	defer C.free(unsafe.Pointer(docIDStr))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
@@ -484,11 +515,12 @@ func (c *Collection) Get(
 
 func (c *Collection) GetAllDocIDs(
 	ctx context.Context,
+	opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
 ) (<-chan client.DocIDResult, error) {
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cName := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
 	defer C.free(unsafe.Pointer(cName))
@@ -542,12 +574,13 @@ func (c *Collection) GetAllDocIDs(
 func (c *Collection) CreateIndex(
 	ctx context.Context,
 	indexDesc client.IndexCreateRequest,
+	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
 ) (client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cIndexDescName := C.CString(indexDesc.Name)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -597,12 +630,16 @@ func (c *Collection) CreateIndex(
 	return retRes, nil
 }
 
-func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
+func (c *Collection) DropIndex(
+	ctx context.Context,
+	indexName string,
+	opts ...options.Enumerable[options.CollectionDropIndexOptions],
+) error {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString(indexName)
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -629,12 +666,15 @@ func (c *Collection) DropIndex(ctx context.Context, indexName string) error {
 	return nil
 }
 
-func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
+func (c *Collection) GetIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.CollectionGetIndexesOptions],
+) ([]client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString("")
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
@@ -664,16 +704,21 @@ func (c *Collection) GetIndexes(ctx context.Context) ([]client.IndexDescription,
 func (c *Collection) CreateEncryptedIndex(
 	ctx context.Context,
 	req client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	name := C.CString(c.def.Name)
 	fieldName := C.CString(req.FieldName)
 	defer C.free(unsafe.Pointer(name))
 	defer C.free(unsafe.Pointer(fieldName))
 
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
+	defer C.IdentityFree(cIdentity)
+
 	res := ConvertAndFreeCResult(C.EncryptedIndexCreate(
 		C.uintptr_t(c.w.handle),
 		name,
 		fieldName,
+		cIdentity,
 	))
 
 	if res.Status != 0 {
@@ -722,12 +767,14 @@ func (c *Collection) ListEncryptedIndexes(ctx context.Context) ([]client.Encrypt
 	return retRes, nil
 }
 
-func (c *Collection) Truncate(ctx context.Context) error {
+func (c *Collection) Truncate(
+	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
+) error {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString("")
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
-	cIdentity := identityFromContext(ctx)
+	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
 
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))

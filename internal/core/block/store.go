@@ -117,9 +117,8 @@ func AddDelta(
 		return link, b, err
 	}
 
-	// Normal signing mode
-	if EnabledSigningFromContext(ctx) {
-		err = signBlock(ctx, txn.Blockstore(), dagBlock)
+	if ok, ident := EnabledSigningFromContext(ctx); ok && ident.HasValue() {
+		err = signBlock(ctx, txn.Blockstore(), dagBlock, ident.Value())
 		if err != nil {
 			return cidlink.Link{}, nil, err
 		}

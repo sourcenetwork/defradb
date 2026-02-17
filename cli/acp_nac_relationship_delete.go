@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeNodeACPRelationshipDeleteCommand(ctx context.Context) *cobra.Command {
@@ -44,6 +47,7 @@ Notes:
 				cmd.Context(),
 				relationArg,
 				targetActorArg,
+				options.WithIdentity(options.DeleteNACActorRelationship(), identity.FromContext(cmd.Context())),
 			)
 
 			if err != nil {

@@ -21,7 +21,9 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/encryption"
 )
 
@@ -58,10 +60,12 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 		encConf.EncryptedFields = strings.Split(q.Get(docEncryptFieldsParam), ",")
 	}
 
-	createOpts := []client.DocCreateOption{
-		client.CreateDocEncrypted(encConf.IsDocEncrypted),
-		client.CreateDocWithEncryptedFields(encConf.EncryptedFields),
-	}
+	createOpt := options.WithIdentity(
+		options.CollectionCreate().
+			SetEncryptDoc(encConf.IsDocEncrypted).
+			SetEncryptedFields(encConf.EncryptedFields),
+		identity.FromContext(ctx),
+	)
 
 	switch {
 	case client.IsJSONArray(data):
@@ -71,7 +75,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := col.CreateMany(ctx, docList, createOpts...); err != nil {
+		if err := col.CreateMany(ctx, docList, createOpt); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -82,7 +86,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		if err := col.Create(ctx, doc, createOpts...); err != nil {
+		if err := col.Create(ctx, doc, createOpt); err != nil {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
@@ -92,6 +96,7 @@ func (h *collectionHandler) Create(rw http.ResponseWriter, req *http.Request) {
 
 func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
+	ctx := req.Context()
 
 	var request CollectionDeleteRequest
 	if err := requestJSON(req, &request); err != nil {
@@ -99,7 +104,9 @@ func (h *collectionHandler) DeleteWithFilter(rw http.ResponseWriter, req *http.R
 		return
 	}
 
-	result, err := col.DeleteWithFilter(req.Context(), request.Filter)
+	deleteOpt := options.WithIdentity(options.CollectionDeleteWithFilter(), identity.FromContext(ctx))
+
+	result, err := col.DeleteWithFilter(ctx, request.Filter, deleteOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -124,6 +131,7 @@ func (h *collectionHandler) PurgeByDocIDs(rw http.ResponseWriter, req *http.Requ
 
 func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
+	ctx := req.Context()
 
 	var request CollectionUpdateRequest
 	if err := requestJSON(req, &request); err != nil {
@@ -131,7 +139,9 @@ func (h *collectionHandler) UpdateWithFilter(rw http.ResponseWriter, req *http.R
 		return
 	}
 
-	result, err := col.UpdateWithFilter(req.Context(), request.Filter, request.Updater)
+	updateOpt := options.WithIdentity(options.CollectionUpdateWithFilter(), identity.FromContext(ctx))
+
+	result, err := col.UpdateWithFilter(ctx, request.Filter, request.Updater, updateOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -149,7 +159,12 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	doc, err := col.Get(req.Context(), docID, true)
+	getOpt := options.WithIdentity(
+		options.CollectionGet().SetShowDeleted(true),
+		identity.FromContext(ctx),
+	)
+
+	doc, err := col.Get(ctx, docID, getOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -169,7 +184,10 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	err = col.Update(req.Context(), doc)
+
+	updateOpt := options.WithIdentity(options.CollectionUpdate(), identity.FromContext(ctx))
+
+	err = col.Update(ctx, doc, updateOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -179,6 +197,7 @@ func (h *collectionHandler) Update(rw http.ResponseWriter, req *http.Request) {
 
 func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
+	ctx := req.Context()
 
 	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
 	if err != nil {
@@ -186,7 +205,9 @@ func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	_, err = col.Delete(req.Context(), docID)
+	deleteOpt := options.WithIdentity(options.CollectionDelete(), identity.FromContext(ctx))
+
+	_, err = col.Delete(ctx, docID, deleteOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -196,6 +217,7 @@ func (h *collectionHandler) Delete(rw http.ResponseWriter, req *http.Request) {
 
 func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
+	ctx := req.Context()
 	showDeleted, _ := strconv.ParseBool(req.URL.Query().Get("show_deleted"))
 
 	docID, err := client.NewDocIDFromString(chi.URLParam(req, "docID"))
@@ -204,7 +226,12 @@ func (h *collectionHandler) Get(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	doc, err := col.Get(req.Context(), docID, showDeleted)
+	getOpt := options.WithIdentity(
+		options.CollectionGet().SetShowDeleted(showDeleted),
+		identity.FromContext(ctx),
+	)
+
+	doc, err := col.Get(ctx, docID, getOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -230,6 +257,7 @@ type DocIDResult struct {
 
 func (h *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
+	ctx := req.Context()
 
 	flusher, ok := rw.(http.Flusher)
 	if !ok {
@@ -237,7 +265,9 @@ func (h *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	docIDsResult, err := col.GetAllDocIDs(req.Context())
+	getAllOpt := options.WithIdentity(options.CollectionGetAllDocIDs(), identity.FromContext(ctx))
+
+	docIDsResult, err := col.GetAllDocIDs(ctx, getAllOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -271,6 +301,7 @@ func (h *collectionHandler) GetAllDocIDs(rw http.ResponseWriter, req *http.Reque
 
 func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
+	ctx := req.Context()
 
 	var indexDesc client.IndexDescription
 	if err := requestJSON(req, &indexDesc); err != nil {
@@ -282,7 +313,10 @@ func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 		Fields: indexDesc.Fields,
 		Unique: indexDesc.Unique,
 	}
-	index, err := col.CreateIndex(req.Context(), descWithoutID)
+
+	createIndexOpt := options.WithIdentity(options.CollectionCreateIndex(), identity.FromContext(ctx))
+
+	index, err := col.CreateIndex(ctx, descWithoutID, createIndexOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -292,13 +326,18 @@ func (h *collectionHandler) CreateIndex(rw http.ResponseWriter, req *http.Reques
 
 func (h *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request) {
 	db := mustGetContextClientDB(req)
+	ctx := req.Context()
 	name := chi.URLParam(req, "name")
-	col, err := db.GetCollectionByName(req.Context(), name)
+	ident := identity.FromContext(ctx)
+	col, err := db.GetCollectionByName(ctx, name, options.WithIdentity(options.GetCollectionByName(), ident))
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
 	}
-	indexes, err := col.GetIndexes(req.Context())
+
+	getIndexesOpt := options.WithIdentity(options.CollectionGetIndexes(), ident)
+
+	indexes, err := col.GetIndexes(ctx, getIndexesOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusInternalServerError, errorResponse{err})
 		return
@@ -308,8 +347,11 @@ func (h *collectionHandler) GetIndexes(rw http.ResponseWriter, req *http.Request
 
 func (h *collectionHandler) DropIndex(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
+	ctx := req.Context()
 
-	err := col.DropIndex(req.Context(), chi.URLParam(req, "index"))
+	dropIndexOpt := options.WithIdentity(options.CollectionDropIndex(), identity.FromContext(ctx))
+
+	err := col.DropIndex(ctx, chi.URLParam(req, "index"), dropIndexOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -326,7 +368,9 @@ func (h *collectionHandler) CreateEncryptedIndex(rw http.ResponseWriter, req *ht
 		return
 	}
 
-	index, err := col.CreateEncryptedIndex(req.Context(), indexDesc)
+	opts := options.WithIdentity(options.CreateEncryptedIndex(), identity.FromContext(req.Context()))
+
+	index, err := col.CreateEncryptedIndex(req.Context(), indexDesc, opts)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return
@@ -364,8 +408,11 @@ func (h *collectionHandler) DeleteEncryptedIndex(rw http.ResponseWriter, req *ht
 
 func (h *collectionHandler) Truncate(rw http.ResponseWriter, req *http.Request) {
 	col := mustGetContextClientCollection(req)
+	ctx := req.Context()
 
-	err := col.Truncate(req.Context())
+	truncateOpt := options.WithIdentity(options.CollectionTruncate(), identity.FromContext(ctx))
+
+	err := col.Truncate(ctx, truncateOpt)
 	if err != nil {
 		responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 		return

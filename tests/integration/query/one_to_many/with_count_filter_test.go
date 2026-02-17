@@ -64,18 +64,18 @@ func TestQueryOneToManyWithCountWithFilter(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_count(published: {filter: {rating: {_gt: 4.8}}})
+						COUNT(published: {filter: {rating: {_gt: 4.8}}})
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 1,
+							"name":  "John Grisham",
+							"COUNT": 1,
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 0,
+							"name":  "Cornelia Funke",
+							"COUNT": 0,
 						},
 					},
 				},
@@ -141,7 +141,7 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_count(published: {filter: {rating: {_neq: null}}})
+						COUNT(published: {filter: {rating: {_neq: null}}})
 						published(filter: {rating: {_neq: null}}){
 							name
 						}
@@ -150,8 +150,8 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 2,
+							"name":  "John Grisham",
+							"COUNT": 2,
 							"published": []map[string]any{
 								{
 									"name": "Painted House",
@@ -162,8 +162,8 @@ func TestQueryOneToManyWithCountWithFilterAndChildFilter(t *testing.T) {
 							},
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 1,
+							"name":  "Cornelia Funke",
+							"COUNT": 1,
 							"published": []map[string]any{
 								{
 									"name": "Theif Lord",
@@ -247,13 +247,13 @@ func TestQueryOneToMany_WithCountWithJSONFilterAndChildFilter_Succeeds(t *testin
 			},
 			&action.Request{
 				Request: `query {
-					_count(Author: {filter: {
+					COUNT(Author: {filter: {
 						metadata: {yearOfBirth: {_eq: 1958}},
 						published: {name: {_ilike: "%lord%"}}
 					}})
 				}`,
 				Results: map[string]any{
-					"_count": 1,
+					"COUNT": 1,
 				},
 			},
 		},

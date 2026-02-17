@@ -12,37 +12,9 @@ package client
 
 import (
 	"context"
+
+	"github.com/sourcenetwork/defradb/client/options"
 )
-
-// DocCreateOption is a functional option for creating a document.
-type DocCreateOption func(*DocCreateOptions)
-
-// DocCreateOptions contains options for creating a document.
-type DocCreateOptions struct {
-	EncryptDoc      bool
-	EncryptedFields []string
-}
-
-// Apply applies the given DocCreateOptions to the DocCreateOptions receiver.
-func (o *DocCreateOptions) Apply(opts []DocCreateOption) {
-	for _, opt := range opts {
-		opt(o)
-	}
-}
-
-// CreateDocEncrypted enables or disables document encryption when creating a document.
-func CreateDocEncrypted(encryptDoc bool) DocCreateOption {
-	return func(opts *DocCreateOptions) {
-		opts.EncryptDoc = encryptDoc
-	}
-}
-
-// CreateDocWithEncryptedFields specifies a list of fields to be encrypted when creating a document.
-func CreateDocWithEncryptedFields(encryptedFields []string) DocCreateOption {
-	return func(opts *DocCreateOptions) {
-		opts.EncryptedFields = encryptedFields
-	}
-}
 
 // Collection represents a defradb collection.
 //
@@ -66,12 +38,12 @@ type Collection interface {
 	// Create a new document.
 	//
 	// Will verify the DocID/CID to ensure that the new document is correctly formatted.
-	Create(ctx context.Context, doc *Document, opts ...DocCreateOption) error
+	Create(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionCreateOptions]) error
 
 	// CreateMany new documents.
 	//
 	// Will verify the DocIDs/CIDs to ensure that the new documents are correctly formatted.
-	CreateMany(ctx context.Context, docs []*Document, opts ...DocCreateOption) error
+	CreateMany(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.CollectionCreateOptions]) error
 
 	// Update an existing document with the new values.
 	//
@@ -79,19 +51,19 @@ type Collection interface {
 	// Any field that is nil/empty that hasn't called Clear will be ignored.
 	//
 	// Will return a ErrDocumentNotFound error if the given document is not found.
-	Update(ctx context.Context, docs *Document) error
+	Update(ctx context.Context, docs *Document, opts ...options.Enumerable[options.CollectionUpdateOptions]) error
 
 	// Save the given document in the database.
 	//
 	// If a document exists with the given DocID it will update it. Otherwise a new document
 	// will be created.
-	Save(ctx context.Context, doc *Document, opts ...DocCreateOption) error
+	Save(ctx context.Context, doc *Document, opts ...options.Enumerable[options.CollectionSaveOptions]) error
 
 	// SaveMany saves multiple documents in a single transaction.
 	//
 	// For each document, if it exists with the given DocID it will be updated.
 	// Otherwise a new document will be created.
-	SaveMany(ctx context.Context, docs []*Document, opts ...DocCreateOption) error
+	SaveMany(ctx context.Context, docs []*Document, opts ...options.Enumerable[options.CollectionSaveOptions]) error
 
 	// Delete will attempt to delete a document by DocID.
 	//
@@ -99,12 +71,12 @@ type Collection interface {
 	// if it cannot. If the document doesn't exist, then it will return false and a ErrDocumentNotFound error.
 	// This operation will hard-delete all state relating to the given DocID.
 	// This includes data, block, and head storage.
-	Delete(ctx context.Context, docID DocID) (bool, error)
+	Delete(ctx context.Context, docID DocID, opts ...options.Enumerable[options.CollectionDeleteOptions]) (bool, error)
 
 	// Exists checks if a given document exists with supplied DocID.
 	//
 	// Will return true if a matching document exists, otherwise will return false.
-	Exists(ctx context.Context, docID DocID) (bool, error)
+	Exists(ctx context.Context, docID DocID, opts ...options.Enumerable[options.CollectionExistsOptions]) (bool, error)
 
 	// UpdateWithFilter updates using a filter to target documents for update.
 	//
@@ -114,6 +86,7 @@ type Collection interface {
 		ctx context.Context,
 		filter any,
 		updater string,
+		opts ...options.Enumerable[options.CollectionUpdateWithFilterOptions],
 	) (*UpdateResult, error)
 
 	// DeleteWithFilter deletes documents matching the given filter.
@@ -123,6 +96,7 @@ type Collection interface {
 	DeleteWithFilter(
 		ctx context.Context,
 		filter any,
+		opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions],
 	) (*DeleteResult, error)
 
 	// PurgeByDocIDs permanently removes all documents with the given docIDs.
@@ -140,11 +114,14 @@ type Collection interface {
 	Get(
 		ctx context.Context,
 		docID DocID,
-		showDeleted bool,
+		opts ...options.Enumerable[options.CollectionGetOptions],
 	) (*Document, error)
 
 	// GetAllDocIDs returns all the document IDs that exist in the collection.
-	GetAllDocIDs(ctx context.Context) (<-chan DocIDResult, error)
+	GetAllDocIDs(
+		ctx context.Context,
+		opts ...options.Enumerable[options.CollectionGetAllDocIDsOptions],
+	) (<-chan DocIDResult, error)
 
 	// CreateIndex creates a new index on the collection.
 	// `IndexDescription` contains the description of the index to be created.
@@ -152,16 +129,27 @@ type Collection interface {
 	// only contain letters, numbers, and underscores.
 	// If the name of the index is not provided, it will be generated.
 	// WARNING: This method can not create index for a collection that has a policy.
-	CreateIndex(context.Context, IndexCreateRequest) (IndexDescription, error)
+	CreateIndex(
+		context.Context,
+		IndexCreateRequest,
+		...options.Enumerable[options.CollectionCreateIndexOptions],
+	) (IndexDescription, error)
 
 	// DropIndex drops an index from the collection.
-	DropIndex(ctx context.Context, indexName string) error
+	DropIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDropIndexOptions]) error
 
 	// GetIndexes returns all the indexes that exist on the collection.
-	GetIndexes(ctx context.Context) ([]IndexDescription, error)
+	GetIndexes(
+		ctx context.Context,
+		opts ...options.Enumerable[options.CollectionGetIndexesOptions],
+	) ([]IndexDescription, error)
 
 	// CreateEncryptedIndex creates a new encrypted index on the collection.
-	CreateEncryptedIndex(context.Context, EncryptedIndexDescription) (EncryptedIndexDescription, error)
+	CreateEncryptedIndex(
+		ctx context.Context,
+		desc EncryptedIndexDescription,
+		opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
+	) (EncryptedIndexDescription, error)
 
 	// DeleteEncryptedIndex deletes an encrypted index from the collection.
 	DeleteEncryptedIndex(ctx context.Context, fieldName string) error
@@ -176,7 +164,7 @@ type Collection interface {
 	//
 	// This call will lock the collection, and no other read or write document operations on this collection
 	// will progress whilst this is executing.
-	Truncate(ctx context.Context) error
+	Truncate(ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions]) error
 }
 
 // DocIDResult wraps the result of an attempt at a DocID retrieval operation.

@@ -40,10 +40,10 @@ func TestQuerySimple_WithMinFilter_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_min(Users: {field: Age, filter: {Age: {_gt: 21}}})
+					MIN(Users: {field: Age, filter: {Age: {_gt: 21}}})
 				}`,
 				Results: map[string]any{
-					"_min": int64(30),
+					"MIN": int64(30),
 				},
 			},
 		},

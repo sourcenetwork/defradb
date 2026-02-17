@@ -13,10 +13,9 @@ package test_acp_nac
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -41,11 +40,8 @@ func TestNAC_GatesCollectionGetByName_AuthorizedIdentity_AllowAccess(t *testing.
 
 			// This should work as the identity is authorized.
 			&action.GetCollections{
-				Identity: testUtils.ClientIdentity(1),
-				FilterOptions: client.CollectionFetchOptions{
-					Name:            immutable.Some("Users"),
-					IncludeInactive: immutable.Some(false),
-				},
+				Identity:      testUtils.ClientIdentity(1),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -78,11 +74,8 @@ func TestNAC_GatesCollectionGetByName_NoIdentity_NotAuthorizedError(t *testing.T
 
 			// We haven't authorized non-identities. So, this should error.
 			&action.GetCollections{
-				Identity: testUtils.NoIdentity(),
-				FilterOptions: client.CollectionFetchOptions{
-					Name:            immutable.Some("Users"),
-					IncludeInactive: immutable.Some(false),
-				},
+				Identity:      testUtils.NoIdentity(),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
@@ -103,11 +96,8 @@ func TestNAC_GatesCollectionGetByName_WrongIdentity_NotAuthorizedError(t *testin
 
 			// Wrong user/identity will also not be authorized.
 			&action.GetCollections{
-				Identity: testUtils.ClientIdentity(2),
-				FilterOptions: client.CollectionFetchOptions{
-					Name:            immutable.Some("Users"),
-					IncludeInactive: immutable.Some(false),
-				},
+				Identity:      testUtils.ClientIdentity(2),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},

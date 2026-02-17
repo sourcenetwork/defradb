@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -57,8 +58,14 @@ func (a *PatchCollection) Execute() {
 	nodeIDs, nodes := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
-		err := node.PatchCollection(ctx, patch, a.Lens)
+
+		opts := options.PatchCollection()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
+		err := node.PatchCollection(a.s.Ctx, patch, a.Lens, opts)
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 
 		assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

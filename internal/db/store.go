@@ -17,14 +17,25 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
+	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // ExecRequest executes a request against the database.
-func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.RequestOption) *client.RequestResult {
+func (db *DB) ExecRequest(
+	ctx context.Context,
+	request string, opts ...options.Enumerable[options.ExecRequestOptions],
+) *client.RequestResult {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+	if opt.Identity.HasValue() {
+		ctx = identity.WithContext(ctx, opt.Identity)
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -40,12 +51,13 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.Re
 		return res
 	}
 
-	options := &client.GQLOptions{}
-	for _, o := range opts {
-		o(options)
+	gqlOpts := &client.GQLOptions{}
+	if opt.OperationName.HasValue() {
+		gqlOpts.OperationName = opt.OperationName.Value()
 	}
+	gqlOpts.Variables = opt.Variables
 
-	res := db.execRequest(ctx, request, options)
+	res := db.execRequest(ctx, request, gqlOpts)
 	if len(res.GQL.Errors) > 0 {
 		return res
 	}
@@ -59,11 +71,17 @@ func (db *DB) ExecRequest(ctx context.Context, request string, opts ...client.Re
 }
 
 // GetCollectionByName returns an existing collection within the database.
-func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Collection, error) {
+func (db *DB) GetCollectionByName(
+	ctx context.Context,
+	name string,
+	opts ...options.Enumerable[options.GetCollectionByNameOptions],
+) (client.Collection, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionGetPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
 	}
 
@@ -79,12 +97,14 @@ func (db *DB) GetCollectionByName(ctx context.Context, name string) (client.Coll
 // GetCollections gets all the currently defined collections.
 func (db *DB) GetCollections(
 	ctx context.Context,
-	options client.CollectionFetchOptions,
+	opts ...options.Enumerable[options.GetCollectionsOptions],
 ) ([]client.Collection, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionGetPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionGetPerm); err != nil {
 		return nil, err
 	}
 
@@ -94,17 +114,20 @@ func (db *DB) GetCollections(
 	}
 	defer txn.Discard()
 
-	return db.getCollections(ctx, options)
+	return db.getCollections(ctx, opt)
 }
 
 // GetAllIndexes gets all the indexes in the database.
 func (db *DB) GetAllIndexes(
 	ctx context.Context,
+	opts ...options.Enumerable[options.GetAllIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeIndexListPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
 	}
 
@@ -138,11 +161,17 @@ func (db *DB) ListAllEncryptedIndexes(
 //
 // All schema types provided must not exist prior to calling this, and they may not reference existing
 // types previously defined.
-func (db *DB) AddSchema(ctx context.Context, schemaString string) ([]client.CollectionVersion, error) {
+func (db *DB) AddSchema(
+	ctx context.Context,
+	schemaString string,
+	opts ...options.Enumerable[options.AddSchemaOptions],
+) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return nil, err
 	}
 
@@ -179,11 +208,14 @@ func (db *DB) PatchCollection(
 	ctx context.Context,
 	patchString string,
 	migration immutable.Option[model.Lens],
+	opts ...options.Enumerable[options.PatchCollectionOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
 	}
 
@@ -201,11 +233,17 @@ func (db *DB) PatchCollection(
 	return txn.Commit()
 }
 
-func (db *DB) SetActiveCollectionVersion(ctx context.Context, collectionVersionID string) error {
+func (db *DB) SetActiveCollectionVersion(
+	ctx context.Context,
+	collectionVersionID string,
+	opts ...options.Enumerable[options.SetActiveCollectionVersionOptions],
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeCollectionPatchPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
 		return err
 	}
 
@@ -223,9 +261,20 @@ func (db *DB) SetActiveCollectionVersion(ctx context.Context, collectionVersionI
 	return txn.Commit()
 }
 
-func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) (string, error) {
+func (db *DB) SetMigration(
+	ctx context.Context,
+	cfg client.LensConfig,
+	opts ...options.Enumerable[options.SetMigrationOptions],
+) (string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeMigrationSetPerm); err != nil {
+		return "", err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -246,11 +295,18 @@ func (db *DB) SetMigration(ctx context.Context, cfg client.LensConfig) (string, 
 	return lensID, nil
 }
 
-func (db *DB) AddLens(ctx context.Context, lens model.Lens) (string, error) {
+func (db *DB) AddLens(
+	ctx context.Context,
+	lens model.Lens,
+	opts ...options.Enumerable[options.AddLensOptions],
+) (string, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeLensCreatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensCreatePerm); err != nil {
 		return "", err
 	}
 
@@ -273,11 +329,17 @@ func (db *DB) AddLens(ctx context.Context, lens model.Lens) (string, error) {
 	return lensID, nil
 }
 
-func (db *DB) ListLenses(ctx context.Context) (map[string]model.Lens, error) {
+func (db *DB) ListLenses(
+	ctx context.Context,
+	opts ...options.Enumerable[options.ListLensesOptions],
+) (map[string]model.Lens, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := db.checkNodeAccess(ctx, acpTypes.NodeLensListPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	if err := db.checkNodeAccess(ctx, ident, acpTypes.NodeLensListPerm); err != nil {
 		return nil, err
 	}
 
@@ -294,10 +356,18 @@ func (db *DB) AddView(
 	ctx context.Context,
 	query string,
 	sdl string,
-	transformCID immutable.Option[string],
+	opts ...options.Enumerable[options.AddViewOptions],
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeViewAddPerm); err != nil {
+		return nil, err
+	}
+
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -305,7 +375,7 @@ func (db *DB) AddView(
 	}
 	defer txn.Discard()
 
-	defs, err := db.addView(ctx, query, sdl, transformCID)
+	defs, err := db.addView(ctx, query, sdl, opt.TransformCID)
 	if err != nil {
 		return nil, err
 	}
@@ -318,9 +388,17 @@ func (db *DB) AddView(
 	return defs, nil
 }
 
-func (db *DB) RefreshViews(ctx context.Context, opts client.CollectionFetchOptions) error {
+func (db *DB) RefreshViews(ctx context.Context, opts ...options.Enumerable[options.RefreshViewsOptions]) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+
+	if err := db.checkNodeAccess(ctx, opt.GetIdentity(), acpTypes.NodeViewRefreshPerm); err != nil {
+		return err
+	}
+
+	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	ctx, txn, err := ensureContextTxn(ctx, db, false)
 	if err != nil {
@@ -328,7 +406,7 @@ func (db *DB) RefreshViews(ctx context.Context, opts client.CollectionFetchOptio
 	}
 	defer txn.Discard()
 
-	err = db.refreshViews(ctx, opts)
+	err = db.refreshViews(ctx, opt)
 	if err != nil {
 		return err
 	}
@@ -362,15 +440,28 @@ func (db *DB) BasicImport(ctx context.Context, filepath string) error {
 }
 
 // BasicExport exports the current data or subset of data to file in json format.
-func (db *DB) BasicExport(ctx context.Context, config *client.BackupConfig) error {
+func (db *DB) BasicExport(
+	ctx context.Context,
+	filepath string,
+	opts ...options.Enumerable[options.BasicExportOptions],
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
 
 	ctx, txn, err := ensureContextTxn(ctx, db, true)
 	if err != nil {
 		return err
 	}
 	defer txn.Discard()
+
+	config := &client.BackupConfig{
+		Filepath:    filepath,
+		Format:      opt.Format,
+		Pretty:      opt.Pretty,
+		Collections: opt.Collections,
+	}
 
 	err = db.basicExport(ctx, config)
 	if err != nil {

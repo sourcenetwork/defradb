@@ -54,7 +54,7 @@ func TestDebugExplainTopLevelAverageRequest(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					_avg(
+					AVG(
 						Author: {
 							field: age
 						}
@@ -78,7 +78,7 @@ func TestDebugExplainTopLevelAverageRequestWithFilter(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					_avg(
+					AVG(
 						Author: {
 							field: age,
 							filter: {

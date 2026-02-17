@@ -22,7 +22,7 @@ func TestQuerySimpleWithSumOnUndefinedObject(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_sum
+					SUM
 				}`,
 				ExpectedError: "aggregate must be provided with a property to aggregate",
 			},
@@ -37,7 +37,7 @@ func TestQuerySimpleWithSumOnUndefinedField(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_sum(Users: {})
+					SUM(Users: {})
 				}`,
 				ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
 			},
@@ -52,10 +52,10 @@ func TestQuerySimpleWithSumOnEmptyCollection(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_sum(Users: {field: Age})
+					SUM(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_sum": int64(0),
+					"SUM": int64(0),
 				},
 			},
 		},
@@ -81,10 +81,10 @@ func TestQuerySimpleWithSum(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_sum(Users: {field: Age})
+					SUM(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_sum": int64(51),
+					"SUM": int64(51),
 				},
 			},
 		},

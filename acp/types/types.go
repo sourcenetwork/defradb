@@ -97,8 +97,10 @@ const (
 	NodeIndexListPerm
 	NodeIndexCreatePerm
 	NodeIndexDropPerm
+	NodeEncryptedIndexCreatePerm
 	NodeP2PPeerInfo
 	NodeP2PPeerConnectPerm
+	NodeP2PPeerActivePerm
 	NodeP2PReplicatorCreatePerm
 	NodeP2PReplicatorDeletePerm
 	NodeP2PReplicatorListPerm
@@ -108,9 +110,14 @@ const (
 	NodeP2PDocumentCreatePerm
 	NodeP2PDocumentDeletePerm
 	NodeP2PDocumentListPerm
+	NodeP2PSyncCollectionVersionsPerm
+	NodeP2PSyncBranchableCollectionPerm
 	NodeSignatureVerifyPerm
 	NodeLensCreatePerm
 	NodeLensListPerm
+	NodeViewRefreshPerm
+	NodeViewAddPerm
+	NodeMigrationSetPerm
 )
 
 // RequiredResourcePermissionsForNode lists all valid resource interface permissions for
@@ -140,8 +147,10 @@ var RequiredResourcePermissionsForNode = []string{
 	"index-list",
 	"index-create",
 	"index-drop",
+	"encrypted-index-create",
 	"p2p-peer-info",
 	"p2p-peer-connect",
+	"p2p-peer-active",
 	"p2p-replicator-create",
 	"p2p-replicator-delete",
 	"p2p-replicator-list",
@@ -151,9 +160,14 @@ var RequiredResourcePermissionsForNode = []string{
 	"p2p-document-create",
 	"p2p-document-delete",
 	"p2p-document-list",
+	"p2p-sync-collection-versions",
+	"p2p-sync-branchable-collection",
 	"signature-verify",
 	"lens-create",
 	"lens-list",
+	"view-refresh",
+	"view-add",
+	"migration-set",
 }
 
 const NodeACPObject = "NodeObject"
@@ -217,9 +231,14 @@ resources:
   - name: index-drop
     expr: admin
 
+  - name: encrypted-index-create
+    expr: admin
+
   - name: p2p-peer-info
     expr: admin
   - name: p2p-peer-connect
+    expr: admin
+  - name: p2p-peer-active
     expr: admin
   - name: p2p-replicator-create
     expr: admin
@@ -239,6 +258,10 @@ resources:
     expr: admin
   - name: p2p-document-list
     expr: admin
+  - name: p2p-sync-collection-versions
+    expr: admin
+  - name: p2p-sync-branchable-collection
+    expr: admin
 
   - name: signature-verify
     expr: admin
@@ -246,6 +269,18 @@ resources:
   - name: lens-create
     expr: admin
   - name: lens-list
+    expr: admin
+  - name: view-refresh
+    expr: admin
+  - name: view-add
+    expr: admin
+
+  - name: view-refresh
+    expr: admin
+  - name: view-add
+    expr: admin
+
+  - name: migration-set
     expr: admin
 
   relations:

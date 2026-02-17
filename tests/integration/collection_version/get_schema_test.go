@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -24,9 +25,7 @@ func TestGetSchema_GivenNonExistantCollectionVersionID_Errors(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					VersionID: immutable.Some("does not exist"),
-				},
+				FilterOptions: options.GetCollections().SetVersionID("does not exist"),
 				ExpectedError: "key not found",
 			},
 		},
@@ -51,9 +50,7 @@ func TestGetSchema_GivenNoSchemaGivenUnknownRoot(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					CollectionID: immutable.Some("does not exist"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionID("does not exist"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -66,9 +63,7 @@ func TestGetSchema_GivenNoSchemaGivenUnknownName(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name: immutable.Some("does not exist"),
-				},
+				FilterOptions:   options.GetCollections().SetCollectionName("does not exist"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
@@ -99,9 +94,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-				},
+				FilterOptions: options.GetCollections().SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Books",
@@ -178,10 +171,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-					CollectionID:    immutable.Some(usersSchemaVersion1ID),
-				},
+				FilterOptions: options.GetCollections().SetIncludeInactive(true).SetCollectionID(usersSchemaVersion1ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -248,10 +238,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					Name:            immutable.Some("Users"),
-					IncludeInactive: immutable.Some(true),
-				},
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

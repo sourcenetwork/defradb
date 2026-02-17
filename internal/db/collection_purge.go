@@ -18,7 +18,9 @@ import (
 
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corelog"
+	"github.com/sourcenetwork/immutable"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/internal/db/id"
@@ -34,7 +36,7 @@ func (c *collection) PurgeByDocIDs(ctx context.Context, docIDs []string, pruneHi
 		return &client.PurgeResult{Count: 0}, nil
 	}
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeCollectionTruncatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, immutable.None[acpIdentity.Identity](), acpTypes.NodeCollectionTruncatePerm); err != nil {
 		return nil, err
 	}
 

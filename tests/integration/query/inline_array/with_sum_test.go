@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArrayWithSumAndNullArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteIntegers: {})
+						SUM(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_sum": int64(0),
+							"SUM":  int64(0),
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineIntegerArrayWithSumAndEmptyArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteIntegers: {})
+						SUM(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_sum": int64(0),
+							"SUM":  int64(0),
 						},
 					},
 				},
@@ -92,14 +92,14 @@ func TestQueryInlineIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteIntegers: {})
+						SUM(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_sum": int64(1),
+							"SUM":  int64(1),
 						},
 					},
 				},
@@ -123,14 +123,14 @@ func TestQueryInlineNillableIntegerArrayWithSumAndPopulatedArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(testScores: {})
+						SUM(testScores: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_sum": int64(2),
+							"SUM":  int64(2),
 						},
 					},
 				},
@@ -154,14 +154,14 @@ func TestQueryInlineFloatArrayWithSumAndNullArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteFloats: {})
+						SUM(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_sum": float64(0),
+							"SUM":  float64(0),
 						},
 					},
 				},
@@ -185,14 +185,14 @@ func TestQueryInlineFloatArrayWithSumAndEmptyArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteFloats: {})
+						SUM(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_sum": float64(0),
+							"SUM":  float64(0),
 						},
 					},
 				},
@@ -216,14 +216,14 @@ func TestQueryInlineFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteFloats: {})
+						SUM(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_sum": float64(13.14250000001),
+							"SUM":  float64(13.14250000001),
 						},
 					},
 				},
@@ -247,14 +247,14 @@ func TestQueryInlineNillableFloatArrayWithSumAndPopulatedArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(pageRatings: {})
+						SUM(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_sum": float64(13.14250000001),
+							"SUM":  float64(13.14250000001),
 						},
 					},
 				},

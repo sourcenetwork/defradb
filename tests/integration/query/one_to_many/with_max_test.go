@@ -64,7 +64,7 @@ func TestQueryOneToMany_WithMaxAliasFilter_ShouldMatchAll(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {maxRating: {_gt: 0}}}) {
 						name
-						maxRating: _max(published: {field: rating})
+						maxRating: MAX(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{
@@ -134,7 +134,7 @@ func TestQueryOneToMany_WithMaxAliasFilter_ShouldMatchOne(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {maxRating: {_gt: 4.8}}}) {
 						name
-						maxRating: _max(published: {field: rating})
+						maxRating: MAX(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{

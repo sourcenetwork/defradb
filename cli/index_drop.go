@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeIndexDropCommand(ctx context.Context) *cobra.Command {
@@ -27,11 +30,13 @@ func MakeIndexDropCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg)
+			colOpt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(cmd.Context()))
+			col, err := cliClient.GetCollectionByName(cmd.Context(), collectionArg, colOpt)
 			if err != nil {
 				return err
 			}
-			return col.DropIndex(cmd.Context(), nameArg)
+			opt := options.WithIdentity(options.CollectionDropIndex(), identity.FromContext(cmd.Context()))
+			return col.DropIndex(cmd.Context(), nameArg, opt)
 		},
 	}
 

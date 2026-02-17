@@ -28,7 +28,7 @@ func TestDebugExplainRequestWithOnlyLimitOnRelatedChildWithCount(t *testing.T) {
 
 				Request: `query @explain(type: debug) {
 					Author {
-						numberOfArts: _count(articles: {})
+						numberOfArts: COUNT(articles: {})
 						articles(limit: 2) {
 							name
 						}
@@ -78,7 +78,7 @@ func TestDebugExplainRequestWithLimitArgsOnParentAndRelatedChildWithCount(t *tes
 
 				Request: `query @explain(type: debug) {
 					Author(limit: 3, offset: 1) {
-						numberOfArts: _count(articles: {})
+						numberOfArts: COUNT(articles: {})
 						articles(limit: 2) {
 							name
 						}

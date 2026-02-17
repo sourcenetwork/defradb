@@ -43,7 +43,7 @@ func TestNAC_Disabled_WithDACEnabled_AccessByEmptyUser_PrivateDocumentOwnedByNod
 				Doc:          `{ "name": "Shahzad" }`,
 			},
 
-			// Temporarily disable NAC to test the behavior when NAC is temporarily disbaled.
+			// Temporarily disable NAC to test the behavior when NAC is temporarily disabled.
 			testUtils.DisableNAC{
 				Identity: testUtils.ClientIdentity(1),
 			},

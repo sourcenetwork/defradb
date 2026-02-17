@@ -21,7 +21,6 @@ import (
 	"github.com/sourcenetwork/corekv/badger"
 	"github.com/sourcenetwork/corelog"
 
-	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/errors"
 	httpapi "github.com/sourcenetwork/defradb/http"
@@ -58,7 +57,7 @@ func start(ctx context.Context) (*defraInstance, error) {
 	if err != nil {
 		return nil, errors.Wrap("failed to setup node access control info", err)
 	}
-	db, err := db.NewDB(ctx, rootstore, adminInfo, dac.NoDocumentACP)
+	db, err := db.NewDB(ctx, rootstore, adminInfo)
 	if err != nil {
 		return nil, errors.Wrap("failed to create a database", err)
 	}

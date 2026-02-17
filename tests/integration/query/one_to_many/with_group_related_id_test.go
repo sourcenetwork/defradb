@@ -96,7 +96,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 				Request: `query {
 					Book(groupBy: [_authorID]) {
 						_authorID
-						_group {
+						GROUP {
 							name
 							rating
 							author {
@@ -110,7 +110,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 					"Book": []map[string]any{
 						{
 							"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Candide",
 									"rating": 4.95,
@@ -131,7 +131,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 						},
 						{
 							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Painted House",
 									"rating": 4.9,
@@ -160,7 +160,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDFromManySide(t *testing.T
 						},
 						{
 							"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 									"rating": 2.0,
@@ -260,7 +260,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 				Request: `query {
 					Book(groupBy: [_authorID]) {
 						_authorID
-						_group {
+						GROUP {
 							name
 							rating
 							author {
@@ -274,7 +274,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 					"Book": []map[string]any{
 						{
 							"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Candide",
 									"rating": 4.95,
@@ -295,7 +295,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 						},
 						{
 							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Painted House",
 									"rating": 4.9,
@@ -324,7 +324,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeIDWithIDSelectionFromManySi
 						},
 						{
 							"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 									"rating": 2.0,
@@ -423,7 +423,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSide(t *testing.T
 			&action.Request{
 				Request: `query {
 					Author(groupBy: [_publishedID]) {
-						_group {
+						GROUP {
 							name
 							published {
 								name
@@ -519,7 +519,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 				Request: `query {
 					Author(groupBy: [_publishedID]) {
 						_publishedID
-						_group {
+						GROUP {
 							name
 							published {
 								name

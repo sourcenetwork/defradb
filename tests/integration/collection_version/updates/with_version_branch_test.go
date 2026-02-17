@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -64,9 +65,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 			},
 			&action.GetCollections{
 				// The second schema version is present in the system, with the email field
-				FilterOptions: client.CollectionFetchOptions{
-					VersionID: immutable.Some(schemaVersion2ID),
-				},
+				FilterOptions: options.GetCollections().SetVersionID(schemaVersion2ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -111,9 +110,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 			},
 			&action.GetCollections{
 				// The third schema version is present in the system, with the phone field
-				FilterOptions: client.CollectionFetchOptions{
-					VersionID: immutable.Some(schemaVersion3ID),
-				},
+				FilterOptions: options.GetCollections().SetVersionID(schemaVersion3ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -145,9 +142,7 @@ func TestSchemaUpdates_WithBranchingSchema(t *testing.T) {
 				},
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-				},
+				FilterOptions: options.GetCollections().SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						// The original collection version is present, it has no source and is inactive (has no name).
@@ -240,9 +235,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 			},
 			&action.GetCollections{
 				// The fourth schema version is present in the system, with the phone and discordName field
-				FilterOptions: client.CollectionFetchOptions{
-					VersionID: immutable.Some(schemaVersion4ID),
-				},
+				FilterOptions: options.GetCollections().SetVersionID(schemaVersion4ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -279,9 +272,7 @@ func TestSchemaUpdates_WithPatchOnBranchedSchema(t *testing.T) {
 				},
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-				},
+				FilterOptions: options.GetCollections().SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						// The collection version for schema version 4 is present and is active, it also has the third collection
@@ -389,9 +380,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranch(t *tes
 				ExpectedError: `Cannot query field "phone" on type "Users".`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-				},
+				FilterOptions: options.GetCollections().SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						// The original collection version is present, it has no source and is inactive.
@@ -489,9 +478,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 			},
 			&action.GetCollections{
 				// The fourth schema version is present in the system, with the email and discordName field
-				FilterOptions: client.CollectionFetchOptions{
-					VersionID: immutable.Some(schemaVersion4ID),
-				},
+				FilterOptions: options.GetCollections().SetVersionID(schemaVersion4ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -528,9 +515,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndSetActiveSchemaToOtherBranchThenPat
 				},
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					IncludeInactive: immutable.Some(true),
-				},
+				FilterOptions: options.GetCollections().SetIncludeInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						// The collection version for schema version 4 is present and is active, it also has the second collection
@@ -601,9 +586,7 @@ func TestSchemaUpdates_WithBranchingSchemaAndGetCollectionAtVersion(t *testing.T
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: client.CollectionFetchOptions{
-					VersionID: immutable.Some(schemaVersion1ID),
-				},
+				FilterOptions: options.GetCollections().SetVersionID(schemaVersion1ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						// The original collection version is present, it has no source and is inactive.

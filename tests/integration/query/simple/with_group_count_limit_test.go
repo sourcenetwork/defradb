@@ -42,18 +42,18 @@ func TestQuerySimpleWithGroupByNumberWithoutRenderedGroupAndChildCountWithLimit(
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_count(_group: {limit: 1})
+						COUNT(GROUP: {limit: 1})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":    int64(32),
-							"_count": 1,
+							"Age":   int64(32),
+							"COUNT": 1,
 						},
 						{
-							"Age":    int64(19),
-							"_count": 1,
+							"Age":   int64(19),
+							"COUNT": 1,
 						},
 					},
 				},
@@ -95,8 +95,8 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_count(_group: {limit: 1})
-						_group (limit: 2) {
+						COUNT(GROUP: {limit: 1})
+						GROUP (limit: 2) {
 							Name
 						}
 					}
@@ -104,9 +104,9 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":    int64(32),
-							"_count": 1,
-							"_group": []map[string]any{
+							"Age":   int64(32),
+							"COUNT": 1,
+							"GROUP": []map[string]any{
 								{
 									"Name": "Bob",
 								},
@@ -116,9 +116,9 @@ func TestQuerySimpleWithGroupByNumberWithRenderedGroupWithLimitAndChildCountWith
 							},
 						},
 						{
-							"Age":    int64(19),
-							"_count": 1,
-							"_group": []map[string]any{
+							"Age":   int64(19),
+							"COUNT": 1,
+							"GROUP": []map[string]any{
 								{
 									"Name": "Alice",
 								},

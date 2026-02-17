@@ -59,10 +59,10 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfCount_Succeed
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_max(_group: {field: _count})
-						_group (groupBy: [Verified]){
+						MAX(GROUP: {field: COUNT})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_count(_group: {})
+							COUNT(GROUP: {})
 						}
 					}
 				}`,
@@ -70,35 +70,35 @@ func TestQuerySimple_WithGroupByStringWithInnerGroupBooleanAndMaxOfCount_Succeed
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_max": int64(2),
-							"_group": []map[string]any{
+							"MAX":  int64(2),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_count":   int(2),
+									"COUNT":    int(2),
 								},
 								{
 									"Verified": false,
-									"_count":   int(1),
+									"COUNT":    int(1),
 								},
 							},
 						},
 						{
 							"Name": "Alice",
-							"_max": int64(1),
-							"_group": []map[string]any{
+							"MAX":  int64(1),
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
-									"_count":   int(1),
+									"COUNT":    int(1),
 								},
 							},
 						},
 						{
 							"Name": "Carlo",
-							"_max": int64(1),
-							"_group": []map[string]any{
+							"MAX":  int64(1),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_count":   int(1),
+									"COUNT":    int(1),
 								},
 							},
 						},

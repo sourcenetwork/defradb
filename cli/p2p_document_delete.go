@@ -15,6 +15,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeP2PDocumentDeleteCommand(ctx context.Context) *cobra.Command {
@@ -36,7 +39,8 @@ The removed documents will no longer be synchronized between nodes.`,
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return cliClient.DeleteP2PDocuments(cmd.Context(), collectionIDs...)
+			opt := options.WithIdentity(options.DeleteP2PDocuments(), identity.FromContext(cmd.Context()))
+			return cliClient.DeleteP2PDocuments(cmd.Context(), collectionIDs, opt)
 		},
 	}
 

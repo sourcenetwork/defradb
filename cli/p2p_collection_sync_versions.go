@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeP2PCollectionSyncVersionsCommand(ctx context.Context) *cobra.Command {
@@ -35,7 +38,8 @@ Older versions of a requested collection will also be synchronized.
 			}
 
 			cliClient := mustGetContextCLIClient(cmd)
-			return cliClient.SyncCollectionVersions(ctx, args...)
+			opt := options.WithIdentity(options.SyncCollectionVersions(), identity.FromContext(cmd.Context()))
+			return cliClient.SyncCollectionVersions(ctx, args, opt)
 		},
 	}
 

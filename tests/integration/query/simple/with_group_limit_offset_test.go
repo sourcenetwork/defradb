@@ -42,7 +42,7 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimitAndOffset(t *testing.T) {
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_group(limit: 1, offset: 1) {
+						GROUP(limit: 1, offset: 1) {
 							Name
 						}
 					}
@@ -51,15 +51,15 @@ func TestQuerySimpleWithGroupByNumberWithGroupLimitAndOffset(t *testing.T) {
 					"Users": []map[string]any{
 						{
 							"Age": int64(32),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Name": "Bob",
 								},
 							},
 						},
 						{
-							"Age":    int64(19),
-							"_group": []map[string]any{},
+							"Age":   int64(19),
+							"GROUP": []map[string]any{},
 						},
 					},
 				},
@@ -96,7 +96,7 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndOffsetAndWithGroupLimitAndOffse
 				Request: `query {
 					Users(groupBy: [Age], limit: 1, offset: 1) {
 						Age
-						_group(limit: 1, offset: 1) {
+						GROUP(limit: 1, offset: 1) {
 							Name
 						}
 					}
@@ -104,8 +104,8 @@ func TestQuerySimpleWithGroupByNumberWithLimitAndOffsetAndWithGroupLimitAndOffse
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":    int64(19),
-							"_group": []map[string]any{},
+							"Age":   int64(19),
+							"GROUP": []map[string]any{},
 						},
 					},
 				},

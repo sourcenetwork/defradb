@@ -39,7 +39,7 @@ func TestQueryInlineIntegerArray_WithSumAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _sum(testScores: {}, pageRatings: {})
+						total: SUM(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -58,7 +58,7 @@ func TestQueryInlineIntegerArray_WithSumAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _sum(testScores: {}, pageRatings: {})
+						total: SUM(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -100,7 +100,7 @@ func TestQueryInlineIntegerArray_WithNullAndSumAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _sum(testScores: {}, pageRatings: {})
+						total: SUM(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -119,7 +119,7 @@ func TestQueryInlineIntegerArray_WithNullAndSumAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _sum(testScores: {}, pageRatings: {})
+						total: SUM(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{

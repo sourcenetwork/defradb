@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -45,8 +46,8 @@ func reEnableNAC(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := node.ReEnableNAC(ctx)
+		opt := options.WithIdentity(options.ReEnableNAC(), getIdentityForRequestSpecificToNode(s, action.Identity, nodeID))
+		err := node.ReEnableNAC(s.Ctx, opt)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -83,8 +84,9 @@ func disableNAC(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
-		ctx := getContextWithIdentity(s.Ctx, s, action.Identity, nodeID)
-		err := node.DisableNAC(ctx)
+		opt := options.WithIdentity(options.DisableNAC(),
+			getIdentityForRequestSpecificToNode(s, action.Identity, nodeID))
+		err := node.DisableNAC(s.Ctx, opt)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)
@@ -134,11 +136,14 @@ func addNACActorRelationship(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+		opt := options.WithIdentity(options.AddNACActorRelationship(),
+			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 
 		addActorRelationshipResult, err := node.AddNACActorRelationship(
-			getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID),
+			s.Ctx,
 			action.Relation,
 			getIdentityDID(s, action.TargetIdentity),
+			opt,
 		)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
@@ -192,11 +197,14 @@ func deleteNACActorRelationship(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+		opt := options.WithIdentity(options.DeleteNACActorRelationship(),
+			getIdentityForRequestSpecificToNode(s, action.RequestorIdentity, nodeID))
 
 		deleteActorRelationshipResult, err := node.DeleteNACActorRelationship(
-			getContextWithIdentity(s.Ctx, s, action.RequestorIdentity, nodeID),
+			s.Ctx,
 			action.Relation,
 			getIdentityDID(s, action.TargetIdentity),
+			opt,
 		)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
@@ -237,10 +245,10 @@ func getNACStatus(
 	nodeIDs, nodes := getNodesWithIDs(action.NodeID, s.Nodes)
 	for index, node := range nodes {
 		nodeID := nodeIDs[index]
+		opt := options.WithIdentity(options.GetNACStatus(),
+			getIdentityForRequestSpecificToNode(s, action.Identity, nodeID))
 
-		statusNACResult, err := node.GetNACStatus(
-			getContextWithIdentity(s.Ctx, s, action.Identity, nodeID),
-		)
+		statusNACResult, err := node.GetNACStatus(s.Ctx, opt)
 
 		expectedErrorRaised := AssertError(s.T, err, action.ExpectedError)
 		assertExpectedErrorRaised(s.T, action.ExpectedError, expectedErrorRaised)

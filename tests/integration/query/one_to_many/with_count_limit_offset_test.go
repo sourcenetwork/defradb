@@ -80,7 +80,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_count(published: {})
+						COUNT(published: {})
 						published(limit: 2, offset: 1) {
 							name
 						}
@@ -89,8 +89,8 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 4,
+							"name":  "John Grisham",
+							"COUNT": 4,
 							"published": []map[string]any{
 								{
 									"name": "The Pelican Brief",
@@ -102,7 +102,7 @@ func TestQueryOneToManyWithCountAndLimitAndOffset(t *testing.T) {
 						},
 						{
 							"name":      "Cornelia Funke",
-							"_count":    1,
+							"COUNT":     1,
 							"published": []map[string]any{},
 						},
 					},
@@ -170,7 +170,7 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_count(published: {offset: 1, limit: 2})
+						COUNT(published: {offset: 1, limit: 2})
 						published(limit: 2) {
 							name
 						}
@@ -179,8 +179,8 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 2,
+							"name":  "John Grisham",
+							"COUNT": 2,
 							"published": []map[string]any{
 								{
 									"name": "A Time for Mercy",
@@ -191,8 +191,8 @@ func TestQueryOneToManyWithCountAndDifferentOffsets(t *testing.T) {
 							},
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 0,
+							"name":  "Cornelia Funke",
+							"COUNT": 0,
 							"published": []map[string]any{
 								{
 									"name": "Theif Lord",
@@ -256,18 +256,18 @@ func TestQueryOneToManyWithCountWithLimitWithOffset(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_count(published: {offset: 1, limit: 1})
+						COUNT(published: {offset: 1, limit: 1})
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 1,
+							"name":  "John Grisham",
+							"COUNT": 1,
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 0,
+							"name":  "Cornelia Funke",
+							"COUNT": 0,
 						},
 					},
 				},

@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/acp/identity"
+	"github.com/sourcenetwork/defradb/client/options"
 )
 
 func MakeP2PDocumentListCommand(ctx context.Context) *cobra.Command {
@@ -26,7 +29,8 @@ This is the list of documents of the node that are synchronized on the pubsub ne
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			cols, err := cliClient.ListP2PDocuments(cmd.Context())
+			opt := options.WithIdentity(options.ListP2PDocuments(), identity.FromContext(cmd.Context()))
+			cols, err := cliClient.ListP2PDocuments(cmd.Context(), opt)
 			if err != nil {
 				return err
 			}
