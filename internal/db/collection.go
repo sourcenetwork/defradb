@@ -120,7 +120,7 @@ func (db *DB) getCollections(
 
 	var cols []client.CollectionVersion
 	switch {
-	case opts.CollectionName.HasValue() && !opts.IncludeInactive.Value():
+	case opts.CollectionName.HasValue() && !opts.GetInactive.Value():
 		col, err := description.GetCollectionByName(ctx, opts.CollectionName.Value())
 		if err != nil && !errors.Is(err, corekv.ErrNotFound) {
 			return nil, err
@@ -149,7 +149,7 @@ func (db *DB) getCollections(
 	// case opts.CollectionSetID.HasValue():
 
 	default:
-		if opts.IncludeInactive.HasValue() && opts.IncludeInactive.Value() {
+		if opts.GetInactive.HasValue() && opts.GetInactive.Value() {
 			var err error
 			cols, err = description.GetCollections(ctx)
 			if err != nil {
@@ -179,7 +179,7 @@ func (db *DB) getCollections(
 		}
 
 		// By default, we don't return inactive collections unless a specific version is requested.
-		if !opts.IncludeInactive.Value() && !col.IsActive && !opts.VersionID.HasValue() {
+		if !opts.GetInactive.Value() && !col.IsActive && !opts.VersionID.HasValue() {
 			continue
 		}
 

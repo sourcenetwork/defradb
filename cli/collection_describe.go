@@ -43,7 +43,7 @@ func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 				opt.SetCollectionName(name)
 			}
 			if getInactive {
-				opt.SetIncludeInactive(getInactive)
+				opt.SetGetInactive(getInactive)
 			}
 
 			cols, err := cliClient.GetCollections(

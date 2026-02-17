@@ -66,7 +66,7 @@ func TestSyncColVersion_WithInitialColVersion(t *testing.T) {
 				},
 			},
 			&action.GetCollections{
-				FilterOptions: options.GetCollections().SetIncludeInactive(true),
+				FilterOptions: options.GetCollections().SetGetInactive(true),
 				NodeID:        immutable.Some(1),
 				ExpectedResults: []client.CollectionVersion{
 					{

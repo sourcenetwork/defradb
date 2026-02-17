@@ -94,7 +94,7 @@ func TestGetSchema_ReturnsAllSchema(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: options.GetCollections().SetIncludeInactive(true),
+				FilterOptions: options.GetCollections().SetGetInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Books",
@@ -171,7 +171,7 @@ func TestGetSchema_ReturnsSchemaForGivenRoot(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: options.GetCollections().SetIncludeInactive(true).SetCollectionID(usersSchemaVersion1ID),
+				FilterOptions: options.GetCollections().SetGetInactive(true).SetCollectionID(usersSchemaVersion1ID),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",
@@ -238,7 +238,7 @@ func TestGetSchema_ReturnsSchemaForGivenName(t *testing.T) {
 				`,
 			},
 			&action.GetCollections{
-				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(true),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetGetInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

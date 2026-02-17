@@ -253,8 +253,8 @@ func (c *Client) RefreshViews(ctx context.Context, opts ...options.Enumerable[op
 	if opt.CollectionID.HasValue() {
 		params.Add("collection_id", opt.CollectionID.Value())
 	}
-	if opt.IncludeInactive.HasValue() {
-		params.Add("get_inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
+	if opt.GetInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(opt.GetInactive.Value()))
 	}
 	methodURL.RawQuery = params.Encode()
 
@@ -385,8 +385,8 @@ func (c *Client) GetCollections(
 	if opt.CollectionID.HasValue() {
 		params.Add("collection_id", opt.CollectionID.Value())
 	}
-	if opt.IncludeInactive.HasValue() {
-		params.Add("get_inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
+	if opt.GetInactive.HasValue() {
+		params.Add("get_inactive", strconv.FormatBool(opt.GetInactive.Value()))
 	}
 	methodURL.RawQuery = params.Encode()
 

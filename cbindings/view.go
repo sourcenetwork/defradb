@@ -83,7 +83,7 @@ func ViewRefresh(nodePtr C.uintptr_t,
 		opt.SetCollectionName(viewName)
 	}
 	if cOptions.getInactive != 0 {
-		opt.SetIncludeInactive(true)
+		opt.SetGetInactive(true)
 	}
 
 	store, err := getStoreFromPointer(nodePtr)

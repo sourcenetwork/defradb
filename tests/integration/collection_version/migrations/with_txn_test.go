@@ -46,7 +46,7 @@ func TestSchemaMigrationGetMigrationsWithTxn(t *testing.T) {
 			},
 			&action.GetCollections{
 				TransactionID: immutable.Some(0),
-				FilterOptions: options.GetCollections().SetIncludeInactive(true),
+				FilterOptions: options.GetCollections().SetGetInactive(true),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						VersionID:      "also does not exist",

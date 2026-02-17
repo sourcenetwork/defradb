@@ -47,7 +47,7 @@ items from that cache.`,
 				opt.SetCollectionName(name)
 			}
 			if getInactive {
-				opt.SetIncludeInactive(getInactive)
+				opt.SetGetInactive(getInactive)
 			}
 
 			return cliClient.RefreshViews(
