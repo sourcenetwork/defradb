@@ -504,7 +504,7 @@ func DeleteCollection(
 		return err
 	}
 
-	if len(versions) == 0 {
+	if len(versions) == 1 {
 		// Only delete the collection short ID if this was the last local version
 		err = id.DeleteShortCollectionID(ctx, version.CollectionID)
 		if err != nil {
