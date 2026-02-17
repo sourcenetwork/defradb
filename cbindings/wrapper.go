@@ -45,9 +45,9 @@ extern Result NodeClose(uintptr_t nodePtr);
 extern Result P2PInfo(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PActivePeers(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2PreplicatorList(uintptr_t nodePtr, uintptr_t identity);
-extern Result P2PreplicatorCreate(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
+extern Result P2PreplicatorAdd(uintptr_t nodePtr, char* collections, char* addresses, uintptr_t identity);
 extern Result P2PreplicatorDelete(uintptr_t nodePtr, char* collections, char* id, uintptr_t identity);
-extern Result P2PcollectionCreate(uintptr_t nodePtr, char* collections, uintptr_t identity);
+extern Result P2PcollectionAdd(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionDelete(uintptr_t nodePtr, char* collections, uintptr_t identity);
 extern Result P2PcollectionList(uintptr_t nodePtr, uintptr_t identity);
 extern Result P2Pconnect(uintptr_t nodePtr, char* peerAddresses, uintptr_t identity);
@@ -165,7 +165,7 @@ func (w *CWrapper) AddReplicator(
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
 
-	res := ConvertAndFreeCResult(C.P2PreplicatorCreate(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PreplicatorAdd(C.uintptr_t(w.handle), colStr, addrStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
@@ -222,7 +222,7 @@ func (w *CWrapper) AddP2PCollections(
 	colStr := C.CString(strings.Join(collectionIDs, ","))
 	defer C.free(unsafe.Pointer(colStr))
 	defer C.IdentityFree(cIdentity)
-	res := ConvertAndFreeCResult(C.P2PcollectionCreate(C.uintptr_t(w.handle), colStr, cIdentity))
+	res := ConvertAndFreeCResult(C.P2PcollectionAdd(C.uintptr_t(w.handle), colStr, cIdentity))
 
 	if res.Status != 0 {
 		return errors.New(res.Error)
