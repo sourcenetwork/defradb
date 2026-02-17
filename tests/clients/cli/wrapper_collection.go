@@ -364,7 +364,7 @@ func (c *Collection) CreateIndex(
 	indexDesc client.IndexCreateRequest,
 	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
 ) (index client.IndexDescription, err error) {
-	args := []string{"client", "index", "add"}
+	args := []string{"client", "index", "create"}
 	args = append(args, "--collection", c.Version().Name)
 	if indexDesc.Name != "" {
 		args = append(args, "--name", indexDesc.Name)
