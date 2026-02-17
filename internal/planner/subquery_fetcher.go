@@ -13,6 +13,7 @@ package planner
 import (
 	"context"
 	"errors"
+	"maps"
 
 	"github.com/sourcenetwork/immutable"
 
@@ -267,10 +268,12 @@ func (f *subQueryFetcher) fetchOrphansByParentConstraint(
 	return orphanDocs, nil
 }
 
-// addFilterOnField adds a filter condition that checks if the field equals the given value.
+// addFilterOnField returns a new filter with a condition that checks if the field equals the given value.
+// It does not mutate the input filter.
 func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter {
-	if f == nil {
-		f = mapper.NewFilter()
+	result := mapper.NewFilter()
+	if f != nil {
+		maps.Copy(result.Conditions, f.Conditions)
 	}
 
 	propertyIndex := &mapper.PropertyIndex{Index: propIndex}
@@ -280,9 +283,9 @@ func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter
 		},
 	}
 
-	filter.RemoveField(f, mapper.Field{Index: propIndex})
-	f.Conditions = filter.MergeConditions(f.Conditions, filterConditions)
-	return f
+	filter.RemoveField(result, mapper.Field{Index: propIndex})
+	result.Conditions = filter.MergeConditions(result.Conditions, filterConditions)
+	return result
 }
 
 // addNullFilterOnField adds a filter condition that checks if the field is NULL.
