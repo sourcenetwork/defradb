@@ -336,7 +336,7 @@ func (n *dagScanNode) dagBlockToNodeDoc(block *coreblock.Block) (core.Doc, error
 
 	cols, err := n.planner.db.GetCollections(
 		n.planner.ctx,
-		options.GetCollections().SetIncludeInactive(true).SetVersionID(collectionVersionId),
+		options.GetCollections().SetGetInactive(true).SetVersionID(collectionVersionId),
 	)
 	if err != nil {
 		return core.Doc{}, err

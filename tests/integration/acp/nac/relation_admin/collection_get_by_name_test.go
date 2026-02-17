@@ -41,7 +41,7 @@ func TestNAC_AdminRelation_CanCollectionGetByName(t *testing.T) {
 			// This user, can not perform this gated operation yet.
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetGetInactive(false),
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
@@ -56,7 +56,7 @@ func TestNAC_AdminRelation_CanCollectionGetByName(t *testing.T) {
 			// This user, can now perform this gated operation.
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				FilterOptions: options.GetCollections().SetCollectionName("Users").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetCollectionName("Users").SetGetInactive(false),
 				ExpectedResults: []client.CollectionVersion{
 					{
 						Name:           "Users",

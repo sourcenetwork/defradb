@@ -379,8 +379,8 @@ type GetCollectionsOptions struct {
 	CollectionSetID immutable.Option[string]
 	// If provided, only collections with this name will be returned.
 	CollectionName immutable.Option[string]
-	// If IncludeInactive is true, then inactive collections will also be returned.
-	IncludeInactive immutable.Option[bool]
+	// If GetInactive is true, then inactive collections will also be returned.
+	GetInactive immutable.Option[bool]
 }
 
 // GetIdentity returns the identity for the operation.
@@ -438,10 +438,10 @@ func (b *GetCollectionsOptionsBuilder) SetCollectionName(name string) *GetCollec
 	return b
 }
 
-// SetIncludeInactive sets whether to include inactive collections.
-func (b *GetCollectionsOptionsBuilder) SetIncludeInactive(includeInactive bool) *GetCollectionsOptionsBuilder {
+// SetGetInactive sets whether to include inactive collections.
+func (b *GetCollectionsOptionsBuilder) SetGetInactive(getInactive bool) *GetCollectionsOptionsBuilder {
 	b.append(func(opts *GetCollectionsOptions) {
-		opts.IncludeInactive = immutable.Some(includeInactive)
+		opts.GetInactive = immutable.Some(getInactive)
 	})
 	return b
 }

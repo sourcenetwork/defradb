@@ -107,10 +107,10 @@ func (c *Client) addView(this js.Value, args []js.Value) (js.Value, error) {
 
 // collectionFetchOptions is a local type for JSON serialization from the JS client.
 type collectionFetchOptions struct {
-	CollectionName  immutable.Option[string]
-	VersionID       immutable.Option[string]
-	CollectionID    immutable.Option[string]
-	IncludeInactive immutable.Option[bool]
+	CollectionName immutable.Option[string]
+	VersionID      immutable.Option[string]
+	CollectionID   immutable.Option[string]
+	GetInactive    immutable.Option[bool]
 }
 
 func (c *Client) refreshViews(this js.Value, args []js.Value) (js.Value, error) {
@@ -230,8 +230,8 @@ func collectionFetchOptionsToGetCollectionsOptions(input collectionFetchOptions)
 	if input.CollectionName.HasValue() {
 		opt.SetCollectionName(input.CollectionName.Value())
 	}
-	if input.IncludeInactive.HasValue() {
-		opt.SetIncludeInactive(input.IncludeInactive.Value())
+	if input.GetInactive.HasValue() {
+		opt.SetGetInactive(input.GetInactive.Value())
 	}
 	return opt
 }
