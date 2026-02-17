@@ -345,14 +345,14 @@ func performAction(
 	case ConnectPeers:
 		connectPeers(s, action)
 
-	case CreateReplicator:
-		createReplicator(s, action)
+	case AddReplicator:
+		addReplicator(s, action)
 
 	case DeleteReplicator:
 		deleteReplicator(s, action)
 
-	case CreateCollectionSubscription:
-		createCollectionSubscription(s, action)
+	case AddCollectionSubscription:
+		addCollectionSubscription(s, action)
 
 	case DeleteCollectionSubscription:
 		deleteCollectionSubscription(s, action)
@@ -360,8 +360,8 @@ func performAction(
 	case ListP2PCollections:
 		listP2PCollections(s, action)
 
-	case CreateDocumentSubscription:
-		createDocumentSubscription(s, action)
+	case AddDocumentSubscription:
+		addDocumentSubscription(s, action)
 
 	case DeleteDocumentSubscription:
 		deleteDocumentSubscription(s, action)

@@ -354,7 +354,7 @@
                 },
                 "type": "object"
             },
-            "create_replicator_params": {
+            "add_replicator_params": {
                 "properties": {
                     "Addresses": {
                         "items": {
@@ -2200,8 +2200,8 @@
                 ]
             },
             "post": {
-                "description": "Create peer collections",
-                "operationId": "peer_collections_create",
+                "description": "Add peer collections",
+                "operationId": "peer_collections_add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2396,8 +2396,8 @@
                 ]
             },
             "post": {
-                "description": "Create peer documents",
-                "operationId": "peer_documents_create",
+                "description": "Add peer documents",
+                "operationId": "peer_documents_add",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -2564,7 +2564,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/create_replicator_params"
+                                "$ref": "#/components/schemas/add_replicator_params"
                             }
                         }
                     },

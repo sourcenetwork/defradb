@@ -24,9 +24,15 @@ type BuilderWithIdentity[T any, B any] interface {
 	SetIdentity(id identity.Identity) B
 }
 
+// IdentitySetter is the constraint for WithIdentity. It only requires SetIdentity
+// so that the single type parameter B can be inferred from the builder argument.
+type IdentitySetter[B any] interface {
+	SetIdentity(id identity.Identity) B
+}
+
 // WithIdentity sets the identity on a builder if the identity is present.
 // Returns the builder for chaining.
-func WithIdentity[T any, B BuilderWithIdentity[T, B]](builder B, ident immutable.Option[identity.Identity]) B {
+func WithIdentity[B IdentitySetter[B]](builder B, ident immutable.Option[identity.Identity]) B {
 	if ident.HasValue() {
 		return builder.SetIdentity(ident.Value())
 	}

@@ -19,14 +19,14 @@ import (
 	"github.com/sourcenetwork/immutable"
 )
 
-// CreateReplicator configures a directional replicator relationship between
+// AddReplicator configures a directional replicator relationship between
 // two nodes.
 //
 // All document changes made in the source node will be synced to the target node.
 // New documents created in the target node will not be synced to the source node,
 // however updates in the target node to documents synced from the source node will
 // be synced back to the source node.
-type CreateReplicator struct {
+type AddReplicator struct {
 	// SourceNodeID is the node ID (index) of the node from which data should be replicated.
 	//
 	// Note: The request will use identity (if specified) of the Source Node.
@@ -96,14 +96,14 @@ type ListReplicators struct {
 	ExpectedError string
 }
 
-// createReplicator configures a replicator relationship between two existing, started, nodes.
+// addReplicator configures a replicator relationship between two existing, started, nodes.
 // It returns a channel that will receive an empty struct upon sync completion of all expected
 // replicator-sync events.
 //
 // Any errors generated whilst configuring the peers or waiting on sync will result in a test failure.
-func createReplicator(
+func addReplicator(
 	s *state.State,
-	cfg CreateReplicator,
+	cfg AddReplicator,
 ) {
 	sourceNode := s.Nodes[cfg.SourceNodeID]
 	targetNode := s.Nodes[cfg.TargetNodeID]
@@ -120,9 +120,9 @@ func createReplicator(
 	targetAddresses, err := targetNode.PeerInfo(s.Ctx, peerInfoOpts)
 	require.NoError(s.T, err)
 
-	opt := options.WithIdentity(options.CreateReplicator(),
+	opt := options.WithIdentity(options.AddReplicator(),
 		getIdentityForRequestSpecificToNode(s, cfg.Identity, cfg.SourceNodeID))
-	err = sourceNode.CreateReplicator(s.Ctx, targetAddresses, nil, opt)
+	err = sourceNode.AddReplicator(s.Ctx, targetAddresses, nil, opt)
 
 	expectedErrorRaised := AssertError(s.T, err, cfg.ExpectedError)
 	assertExpectedErrorRaised(s.T, cfg.ExpectedError, expectedErrorRaised)

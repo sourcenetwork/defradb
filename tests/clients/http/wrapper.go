@@ -82,12 +82,12 @@ func (w *Wrapper) Connect(
 	return w.client.Connect(ctx, addresses, opts...)
 }
 
-func (w *Wrapper) CreateReplicator(
+func (w *Wrapper) AddReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Enumerable[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.AddReplicatorOptions],
 ) error {
-	return w.client.CreateReplicator(ctx, addresses, opts...)
+	return w.client.AddReplicator(ctx, addresses, opts...)
 }
 
 func (w *Wrapper) DeleteReplicator(
@@ -105,12 +105,12 @@ func (w *Wrapper) ListReplicators(
 	return w.client.ListReplicators(ctx, opts...)
 }
 
-func (w *Wrapper) CreateP2PCollections(
+func (w *Wrapper) AddP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 ) error {
-	return w.client.CreateP2PCollections(ctx, collectionIDs, opts...)
+	return w.client.AddP2PCollections(ctx, collectionIDs, opts...)
 }
 
 func (w *Wrapper) DeleteP2PCollections(
@@ -128,12 +128,12 @@ func (w *Wrapper) ListP2PCollections(
 	return w.client.ListP2PCollections(ctx, opts...)
 }
 
-func (w *Wrapper) CreateP2PDocuments(
+func (w *Wrapper) AddP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 ) error {
-	return w.client.CreateP2PDocuments(ctx, docIDs, opts...)
+	return w.client.AddP2PDocuments(ctx, docIDs, opts...)
 }
 
 func (w *Wrapper) DeleteP2PDocuments(

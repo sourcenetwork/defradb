@@ -25,8 +25,8 @@ import (
 
 var _ client.P2P = (*Client)(nil)
 
-// CreateReplicatorParams contains the replicator fields that can be modified by the user.
-type CreateReplicatorParams struct {
+// AddReplicatorParams contains the replicator fields that can be modified by the user.
+type AddReplicatorParams struct {
 	// Addresses list of peer addresses.
 	Addresses []string
 	// Collections is the list of collection names to replicate.
@@ -100,17 +100,17 @@ func (c *Client) Connect(
 	return err
 }
 
-func (c *Client) CreateReplicator(
+func (c *Client) AddReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Enumerable[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.AddReplicatorOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
 
 	methodURL := c.http.apiURL.JoinPath("p2p", "replicators")
 
-	body, err := json.Marshal(CreateReplicatorParams{
+	body, err := json.Marshal(AddReplicatorParams{
 		Addresses:   addresses,
 		Collections: opt.CollectionNames,
 	})
@@ -170,10 +170,10 @@ func (c *Client) ListReplicators(
 	return reps, nil
 }
 
-func (c *Client) CreateP2PCollections(
+func (c *Client) AddP2PCollections(
 	ctx context.Context,
 	collectionIDs []string,
-	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())
@@ -234,10 +234,10 @@ func (c *Client) ListP2PCollections(
 	return cols, nil
 }
 
-func (c *Client) CreateP2PDocuments(
+func (c *Client) AddP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 ) error {
 	opt := utils.NewOptions(opts...)
 	ctx = identity.WithContext(ctx, opt.GetIdentity())

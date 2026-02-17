@@ -48,7 +48,7 @@ func TestP2PDocument_AddSingle_ShouldSync(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -125,7 +125,7 @@ func TestP2PDocument_AddSingleErroneousDocID_ShouldNotSync(t *testing.T) {
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID:        1,
 				DocIDs:        []state.ColDocIndex{state.NewColDocIndex(0, testUtils.NonExistentDocID)},
 				ExpectedError: "malformed document ID, missing either version or cid",

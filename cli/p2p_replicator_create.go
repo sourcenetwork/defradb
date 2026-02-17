@@ -19,31 +19,31 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 )
 
-func MakeP2PReplicatorCreateCommand(ctx context.Context) *cobra.Command {
+func MakeP2PReplicatorAddCommand(ctx context.Context) *cobra.Command {
 	var collections []string
 	var cmd = &cobra.Command{
-		Use:   "create [-c, --collection] <addresses...>",
-		Short: "Create replicator(s) and start synchronization",
-		Long: `Create replicator(s) and start synchronization.
+		Use:   "add [-c, --collection] <addresses...>",
+		Short: "Add replicator(s) and start synchronization",
+		Long: `Add replicator(s) and start synchronization.
 A replicator synchronizes one or all collection(s) from this instance to another.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 			opt := options.WithIdentity(
-				options.CreateReplicator().SetCollectionNames(collections),
+				options.AddReplicator().SetCollectionNames(collections),
 				identity.FromContext(cmd.Context()),
 			)
-			return cliClient.CreateReplicator(cmd.Context(), args, opt)
+			return cliClient.AddReplicator(cmd.Context(), args, opt)
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "Create a replicator to replicate the \"Users\" collection to a peer",
-		`defradb client p2p replicator create -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko...`)
+	EmbedCLIExample(ctx, cmd, "Add a replicator to replicate the \"Users\" collection to a peer",
+		`defradb client p2p replicator add -c Users /ip4/0.0.0.0/tcp/9171/p2p/12D3Ko...`)
 
 	EmbedCLIExample(
 		ctx,
 		cmd,
-		"Create a replicator to replicate the \"Orders\" collection to multiple peers",
-		`defradb client p2p replicator create -c Orders `+
+		"Add a replicator to replicate the \"Orders\" collection to multiple peers",
+		`defradb client p2p replicator add -c Orders `+
 			`/ip4/0.0.0.0/tcp/9171/p2p/12D3Ko... `+
 			`/ip4/0.0.0.0/tcp/9172/p2p/1543LK...`,
 	)

@@ -35,7 +35,7 @@ type CLI interface {
 func NewDefraCommand(ctx context.Context) *cobra.Command {
 	p2p_collection := MakeP2PCollectionCommand(ctx)
 	p2p_collection.AddCommand(
-		MakeP2PCollectionCreateCommand(ctx),
+		MakeP2PCollectionAddCommand(ctx),
 		MakeP2PCollectionDeleteCommand(ctx),
 		MakeP2PCollectionListCommand(ctx),
 		MakeP2PCollectionSyncVersionsCommand(ctx),
@@ -44,7 +44,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 
 	p2p_document := MakeP2PDocumentCommand(ctx)
 	p2p_document.AddCommand(
-		MakeP2PDocumentCreateCommand(ctx),
+		MakeP2PDocumentAddCommand(ctx),
 		MakeP2PDocumentDeleteCommand(ctx),
 		MakeP2PDocumentListCommand(ctx),
 		MakeP2PDocumentSyncCommand(ctx),
@@ -53,7 +53,7 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 	p2p_replicator := MakeP2PReplicatorCommand(ctx)
 	p2p_replicator.AddCommand(
 		MakeP2PReplicatorListCommand(ctx),
-		MakeP2PReplicatorCreateCommand(ctx),
+		MakeP2PReplicatorAddCommand(ctx),
 		MakeP2PReplicatorDeleteCommand(ctx),
 	)
 

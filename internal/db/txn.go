@@ -342,13 +342,13 @@ func (txn *Txn) Connect(
 	return txn.db.Connect(ctx, addresses, opts...)
 }
 
-func (txn *Txn) CreateReplicator(
+func (txn *Txn) AddReplicator(
 	ctx context.Context,
 	addresses []string,
-	opts ...options.Enumerable[options.CreateReplicatorOptions],
+	opts ...options.Enumerable[options.AddReplicatorOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.CreateReplicator(ctx, addresses, opts...)
+	return txn.db.AddReplicator(ctx, addresses, opts...)
 }
 
 func (txn *Txn) DeleteReplicator(
@@ -368,13 +368,13 @@ func (txn *Txn) ListReplicators(
 	return txn.db.ListReplicators(ctx, opts...)
 }
 
-func (txn *Txn) CreateP2PCollections(
+func (txn *Txn) AddP2PCollections(
 	ctx context.Context,
 	collectionNames []string,
-	opts ...options.Enumerable[options.CreateP2PCollectionsOptions],
+	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.CreateP2PCollections(ctx, collectionNames, opts...)
+	return txn.db.AddP2PCollections(ctx, collectionNames, opts...)
 }
 
 func (txn *Txn) DeleteP2PCollections(
@@ -394,13 +394,13 @@ func (txn *Txn) ListP2PCollections(
 	return txn.db.ListP2PCollections(ctx, opts...)
 }
 
-func (txn *Txn) CreateP2PDocuments(
+func (txn *Txn) AddP2PDocuments(
 	ctx context.Context,
 	docIDs []string,
-	opts ...options.Enumerable[options.CreateP2PDocumentsOptions],
+	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 ) error {
 	ctx = InitContext(ctx, txn)
-	return txn.db.CreateP2PDocuments(ctx, docIDs, opts...)
+	return txn.db.AddP2PDocuments(ctx, docIDs, opts...)
 }
 
 func (txn *Txn) DeleteP2PDocuments(
