@@ -86,8 +86,8 @@ func P2PreplicatorList(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 	return returnC(marshalJSONToGoCResult(reps))
 }
 
-//export P2PreplicatorCreate
-func P2PreplicatorCreate(nodePtr C.uintptr_t,
+//export P2PreplicatorAdd
+func P2PreplicatorAdd(nodePtr C.uintptr_t,
 	collections *C.char,
 	addresses *C.char,
 	identityPtr C.uintptr_t) C.Result {
@@ -138,8 +138,8 @@ func P2PreplicatorDelete(nodePtr C.uintptr_t, collections *C.char, id *C.char, i
 	return returnC(returnGoC(0, "", ""))
 }
 
-//export P2PcollectionCreate
-func P2PcollectionCreate(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
+//export P2PcollectionAdd
+func P2PcollectionAdd(nodePtr C.uintptr_t, collections *C.char, identityPtr C.uintptr_t) C.Result {
 	ctx := context.Background()
 	ctx, err := contextWithIdentity(ctx, identityPtr)
 	if err != nil {
