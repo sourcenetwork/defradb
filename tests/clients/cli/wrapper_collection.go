@@ -115,7 +115,7 @@ func makeDocCreateArgs(
 	c *Collection,
 	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) []string {
-	args := []string{"client", "collection", "create"}
+	args := []string{"client", "collection", "add"}
 	args = append(args, "--name", c.Version().Name)
 
 	opt := utils.NewOptions(opts...)
@@ -364,7 +364,7 @@ func (c *Collection) CreateIndex(
 	indexDesc client.IndexCreateRequest,
 	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
 ) (index client.IndexDescription, err error) {
-	args := []string{"client", "index", "create"}
+	args := []string{"client", "index", "add"}
 	args = append(args, "--collection", c.Version().Name)
 	if indexDesc.Name != "" {
 		args = append(args, "--name", indexDesc.Name)

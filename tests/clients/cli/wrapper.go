@@ -128,7 +128,7 @@ func (w *Wrapper) AddReplicator(
 	addresses []string,
 	opts ...options.Enumerable[options.AddReplicatorOptions],
 ) error {
-	args := []string{"client", "p2p", "replicator", "create"}
+	args := []string{"client", "p2p", "replicator", "add"}
 
 	opt := utils.NewOptions(opts...)
 	if len(opt.CollectionNames) > 0 {
@@ -186,7 +186,7 @@ func (w *Wrapper) AddP2PCollections(
 	collectionIDs []string,
 	opts ...options.Enumerable[options.AddP2PCollectionsOptions],
 ) error {
-	args := []string{"client", "p2p", "collection", "create"}
+	args := []string{"client", "p2p", "collection", "add"}
 	args = append(args, strings.Join(collectionIDs, ","))
 
 	opt := utils.NewOptions(opts...)
@@ -236,7 +236,7 @@ func (w *Wrapper) AddP2PDocuments(
 	docIDs []string,
 	opts ...options.Enumerable[options.AddP2PDocumentsOptions],
 ) error {
-	args := []string{"client", "p2p", "document", "create"}
+	args := []string{"client", "p2p", "document", "add"}
 	args = append(args, strings.Join(docIDs, ","))
 
 	opt := utils.NewOptions(opts...)

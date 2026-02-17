@@ -34,7 +34,7 @@ type P2PReplicatorCreate struct {
 var _ Action = (*P2PReplicatorCreate)(nil)
 
 func (a *P2PReplicatorCreate) Execute() {
-	args := []string{"client", "p2p", "replicator", "create"}
+	args := []string{"client", "p2p", "replicator", "add"}
 
 	if a.Collections != nil {
 		args = append(args, "-c")
