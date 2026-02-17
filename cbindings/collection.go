@@ -55,7 +55,7 @@ func parseCollectionOptionsToGetCollectionsOptions(
 		opt.SetCollectionName(name)
 	}
 	if getInactive {
-		opt.SetIncludeInactive(getInactive)
+		opt.SetGetInactive(getInactive)
 	}
 	return opt
 }

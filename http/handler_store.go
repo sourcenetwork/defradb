@@ -246,7 +246,7 @@ func (h *storeHandler) GetCollection(rw http.ResponseWriter, req *http.Request) 
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		opt.SetIncludeInactive(getInactive)
+		opt.SetGetInactive(getInactive)
 	}
 
 	cols, err := db.GetCollections(ctx, opt)
@@ -281,7 +281,7 @@ func (h *storeHandler) RefreshViews(rw http.ResponseWriter, req *http.Request) {
 			responseJSON(rw, http.StatusBadRequest, errorResponse{err})
 			return
 		}
-		opt.SetIncludeInactive(getInactive)
+		opt.SetGetInactive(getInactive)
 	}
 
 	err := db.RefreshViews(req.Context(), opt)
