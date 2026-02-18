@@ -68,13 +68,17 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeDescDirec
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// @exhaustive is needed because subquery ordering is on a relation field (publisher.yearOpened).
+// When the secondary-index multiplier adds an index on yearOpened, the planner inverts the join
+// and orphan parents (books without publishers) are excluded.
+// Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirections(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
 			&action.Request{
-				Request: `query {
+				Request: `query @exhaustive {
 					Author {
 						name
 						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: ASC}}, limit: 2})
@@ -122,13 +126,17 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeAscDirect
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// @exhaustive is needed because subquery ordering is on a relation field (publisher.yearOpened).
+// When the secondary-index multiplier adds an index on yearOpened, the planner inverts the join
+// and orphan parents (books without publishers) are excluded.
+// Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
 			&action.Request{
-				Request: `query {
+				Request: `query @exhaustive {
 					Author {
 						name
 						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
@@ -163,13 +171,17 @@ func TestOneToManyToOneWithSumOfDeepOrderBySubTypeOfBothDescAndAsc(t *testing.T)
 	testUtils.ExecuteTestCase(t, test)
 }
 
+// @exhaustive is needed because subquery ordering is on a relation field (publisher.yearOpened).
+// When the secondary-index multiplier adds an index on yearOpened, the planner inverts the join
+// and orphan parents (books without publishers) are excluded.
+// Without @exhaustive, this test would need MultiplierExcludes for secondary-index.
 func TestOneToManyToOneWithSumOfDeepOrderBySubTypeAndDeepOrderBySubtypeOppositeDirections(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
 			&action.Request{
-				Request: `query {
+				Request: `query @exhaustive {
 					Author {
 						name
 						s1: SUM(book: {field: rating, order: {publisher: {yearOpened: DESC}}, limit: 2})
