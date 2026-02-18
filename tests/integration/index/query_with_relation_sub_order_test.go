@@ -1424,6 +1424,220 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *
 	testUtils.ExecuteTestCase(t, test)
 }
 
+func TestQueryWithNestedOrderByRelationField_ExhaustiveWithASCAndLimit_ShouldIncludeOrphansFirst(t *testing.T) {
+	req := `query @exhaustive {
+		Author {
+			name
+			published(order: {publisher: {establishedYear: ASC}}, limit: 2) {
+				title
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+						published: [Book]
+					}
+					type Book {
+						title: String
+						author: Author
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						establishedYear: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2020",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2010",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2000",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "OrphanBook",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2020",
+					"establishedYear": 2020,
+					"book":            testUtils.NewDocIndex(1, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2010",
+					"establishedYear": 2010,
+					"book":            testUtils.NewDocIndex(1, 1),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2000",
+					"establishedYear": 2000,
+					"book":            testUtils.NewDocIndex(1, 2),
+				},
+			},
+			// ASC + @exhaustive: OrphanBook comes first (null), then Book2000 (earliest year).
+			// Limit 2 is respected after orphan merging.
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John",
+							"published": []map[string]any{
+								{"title": "OrphanBook"},
+								{"title": "Book2000"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
+func TestQueryWithNestedOrderByRelationField_ExhaustiveWithDESCAndLimit_ShouldAppendOrphansLast(t *testing.T) {
+	req := `query @exhaustive {
+		Author {
+			name
+			published(order: {publisher: {establishedYear: DESC}}, limit: 2) {
+				title
+			}
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Author {
+						name: String
+						published: [Book]
+					}
+					type Book {
+						title: String
+						author: Author
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						establishedYear: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"name": "John"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2020",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2010",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "Book2000",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"title":  "OrphanBook",
+					"author": testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2020",
+					"establishedYear": 2020,
+					"book":            testUtils.NewDocIndex(1, 0),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2010",
+					"establishedYear": 2010,
+					"book":            testUtils.NewDocIndex(1, 1),
+				},
+			},
+			&action.CreateDoc{
+				CollectionID: 2,
+				DocMap: map[string]any{
+					"name":            "Publisher2000",
+					"establishedYear": 2000,
+					"book":            testUtils.NewDocIndex(1, 2),
+				},
+			},
+			// DESC + @exhaustive: Book2020 first (latest year), then Book2010.
+			// Limit 2 is full from join results, orphan not needed.
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Author": []map[string]any{
+						{
+							"name": "John",
+							"published": []map[string]any{
+								{"title": "Book2020"},
+								{"title": "Book2010"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+
 func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldIncludeAll(t *testing.T) {
 	req := `query @exhaustive {
 		Book(order: {publisher: {year: ASC}}) {

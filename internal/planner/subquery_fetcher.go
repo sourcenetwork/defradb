@@ -156,36 +156,6 @@ func (f *subQueryFetcher) fetchAllExcluding(
 	return f.fetchDocs(filter, "", excludeIDs)
 }
 
-// fetchOrphansByParentConstraint fetches orphan documents for a specific parent.
-// It fetches all primary docs matching the parent constraint, then filters to only those
-// not in existingIDs and with a NULL relation field.
-func (f *subQueryFetcher) fetchOrphansByParentConstraint(
-	baseFilter *mapper.Filter,
-	relIDFieldMapIndex int,
-	relFieldIndex int,
-	parentDocID string,
-	relationIDFieldName string,
-	existingIDs map[string]struct{},
-) ([]core.Doc, error) {
-	parentFilter := addFilterOnField(baseFilter, relIDFieldMapIndex, parentDocID)
-	allDocs, err := f.fetchDocs(parentFilter, relationIDFieldName, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	orphanDocs := make([]core.Doc, 0)
-	for _, doc := range allDocs {
-		if _, exists := existingIDs[doc.GetID()]; exists {
-			continue
-		}
-		if doc.Fields[relFieldIndex] == nil {
-			orphanDocs = append(orphanDocs, doc)
-		}
-	}
-
-	return orphanDocs, nil
-}
-
 // addFilterOnField returns a new filter with a condition that checks if the field equals the given value.
 // It does not mutate the input filter.
 func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter {

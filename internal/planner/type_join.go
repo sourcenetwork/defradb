@@ -596,7 +596,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() e
 	return nil
 }
 
-func (r *primaryObjectsRetriever) collectDocs(removeLimit bool) ([]core.Doc, error) {
+func (r *primaryObjectsRetriever) collectDocs() ([]core.Doc, error) {
 	p := r.primarySide.plan
 	// If the primary side is a multiScanNode, we need to get the source node, as we are the only
 	// consumer (one, not multiple) of it.
@@ -604,23 +604,7 @@ func (r *primaryObjectsRetriever) collectDocs(removeLimit bool) ([]core.Doc, err
 		p = multiScan.Source()
 	}
 
-	// If removing limit, find and temporarily modify the limitNode
-	var limitN *limitNode
-	var oldLimit uint64
-	if removeLimit {
-		if selectTop, ok := p.(*selectTopNode); ok {
-			limitN = selectTop.limit
-			if limitN != nil {
-				oldLimit = limitN.limit
-				limitN.limit = ^uint64(0) // max uint64
-			}
-		}
-	}
-
 	if err := p.Init(); err != nil {
-		if limitN != nil {
-			limitN.limit = oldLimit
-		}
 		return nil, NewErrSubTypeInit(err)
 	}
 
@@ -630,9 +614,6 @@ func (r *primaryObjectsRetriever) collectDocs(removeLimit bool) ([]core.Doc, err
 		hasValue, err := p.Next()
 
 		if err != nil {
-			if limitN != nil {
-				limitN.limit = oldLimit
-			}
 			return nil, err
 		}
 
@@ -641,10 +622,6 @@ func (r *primaryObjectsRetriever) collectDocs(removeLimit bool) ([]core.Doc, err
 		}
 
 		docs = append(docs, p.Value())
-	}
-
-	if limitN != nil {
-		limitN.limit = oldLimit
 	}
 
 	return docs, nil
@@ -683,61 +660,148 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	var docs []core.Doc
 	var err error
 
-	// If exhaustive mode is enabled and ordering involves a relation field,
-	// we need to fetch all docs (without limit) to correctly identify orphans.
 	if r.exhaustive && r.isOrderingByRelation() {
-		originalLimit := r.getLimit()
-
-		docs, err = r.collectDocs(true)
-		if err != nil {
-			r.primaryScan.fetcher = oldFetcher
-			r.primaryScan.index = oldIndex
-			r.primaryScan.ordering = oldOrdering
-			return nil, errors.Join(err, r.primaryScan.fetcher.Close())
-		}
-
-		err = r.primaryScan.fetcher.Close()
-		if err != nil {
-			r.primaryScan.fetcher = oldFetcher
-			r.primaryScan.index = oldIndex
-			r.primaryScan.ordering = oldOrdering
-			return nil, err
-		}
-
-		docs, err = r.mergeOrphanDocs(docs)
-		if err != nil {
-			r.primaryScan.fetcher = oldFetcher
-			r.primaryScan.index = oldIndex
-			r.primaryScan.ordering = oldOrdering
-			return nil, err
-		}
-
-		if originalLimit > 0 && uint64(len(docs)) > originalLimit {
-			docs = docs[:originalLimit]
-		}
+		direction, _ := r.getOrderingInfo()
+		docs, err = r.collectDocsWithOrphans(*direction)
 	} else {
-		docs, err = r.collectDocs(false)
-		if err != nil {
-			r.primaryScan.fetcher = oldFetcher
-			r.primaryScan.index = oldIndex
-			r.primaryScan.ordering = oldOrdering
-			return nil, errors.Join(err, r.primaryScan.fetcher.Close())
-		}
-
-		err = r.primaryScan.fetcher.Close()
-		if err != nil {
-			r.primaryScan.fetcher = oldFetcher
-			r.primaryScan.index = oldIndex
-			r.primaryScan.ordering = oldOrdering
-			return nil, err
-		}
+		docs, err = r.collectDocs()
 	}
 
+	closeErr := r.primaryScan.fetcher.Close()
 	r.primaryScan.fetcher = oldFetcher
 	r.primaryScan.index = oldIndex
 	r.primaryScan.ordering = oldOrdering
 
-	return docs, nil
+	return docs, errors.Join(err, closeErr)
+}
+
+// collectDocsWithOrphans fetches docs from the inverted join and merges orphan docs
+// based on sort direction, respecting the limit.
+//
+// Two strategies are used depending on whether the ordering relation field stores the FK:
+//
+// Primary (stores FK, e.g. Book has publisher_id):
+//
+//	Orphans are self-identifying via FK IS NULL.
+//	ASC: fetch orphans first, fill remaining from join.
+//	DESC: fetch from join with limit, fill remaining with orphans.
+//
+// Secondary (no FK, e.g. Publisher stores book_id, not Book):
+//
+//	Orphans can only be identified by exclusion after seeing join results.
+//	Both ASC and DESC: collect join docs first, then fetch all docs for parent,
+//	exclude join doc IDs to find orphans.
+func (r *primaryObjectsRetriever) collectDocsWithOrphans(direction mapper.SortDirection) ([]core.Doc, error) {
+	limit := r.getLimit()
+
+	if r.orderingRelFieldIsPrimary() {
+		if direction == mapper.ASC {
+			return r.collectDocsASCWithOrphansByFK(limit)
+		}
+		return r.collectDocsDESCWithOrphansByFK(limit)
+	}
+	return r.collectDocsWithOrphansByExclusion(direction, limit)
+}
+
+// collectDocsASCWithOrphansByFK fetches orphans first via FK IS NULL (they sort before
+// non-null values), then fills remaining slots from the inverted join.
+// Only works when the primary doc stores the FK for the ordering relation.
+func (r *primaryObjectsRetriever) collectDocsASCWithOrphansByFK(limit uint64) ([]core.Doc, error) {
+	orphans, err := r.fetchOrphanDocsByFK()
+	if err != nil {
+		return nil, err
+	}
+
+	if limit > 0 && uint64(len(orphans)) >= limit {
+		return orphans[:limit], nil
+	}
+
+	remaining := limit
+	if remaining > 0 {
+		remaining -= uint64(len(orphans))
+		r.setLimit(remaining)
+	}
+
+	joinDocs, err := r.collectDocs()
+	if err != nil {
+		return nil, err
+	}
+
+	if limit > 0 {
+		r.setLimit(limit)
+	}
+
+	return append(orphans, joinDocs...), nil
+}
+
+// collectDocsDESCWithOrphansByFK fetches from the inverted join first (non-null values sort first),
+// then fills remaining slots with orphans identified via FK IS NULL.
+// Only works when the primary doc stores the FK for the ordering relation.
+func (r *primaryObjectsRetriever) collectDocsDESCWithOrphansByFK(limit uint64) ([]core.Doc, error) {
+	joinDocs, err := r.collectDocs()
+	if err != nil {
+		return nil, err
+	}
+
+	if limit > 0 && uint64(len(joinDocs)) >= limit {
+		return joinDocs, nil
+	}
+
+	orphans, err := r.fetchOrphanDocsByFK()
+	if err != nil {
+		return nil, err
+	}
+
+	if limit > 0 {
+		remaining := limit - uint64(len(joinDocs))
+		if uint64(len(orphans)) > remaining {
+			orphans = orphans[:remaining]
+		}
+	}
+
+	return append(joinDocs, orphans...), nil
+}
+
+// collectDocsWithOrphansByExclusion collects ALL join docs (ignoring limit) to build
+// a correct exclusion set, then identifies orphans as docs not in the join results.
+// The limit is temporarily removed and re-applied after merging.
+// Used when the primary doc does not store the FK for the ordering relation.
+func (r *primaryObjectsRetriever) collectDocsWithOrphansByExclusion(
+	direction mapper.SortDirection,
+	limit uint64,
+) ([]core.Doc, error) {
+	// Must remove limit to get all join docs for exclusion set.
+	if limit > 0 {
+		r.setLimit(0)
+	}
+
+	joinDocs, err := r.collectDocs()
+	if err != nil {
+		return nil, err
+	}
+
+	if limit > 0 {
+		r.setLimit(limit)
+	}
+
+	orphans, err := r.fetchOrphanDocsByExclusion(joinDocs)
+	if err != nil {
+		return nil, err
+	}
+
+	if direction == mapper.ASC {
+		result := append(orphans, joinDocs...)
+		if limit > 0 && uint64(len(result)) > limit {
+			result = result[:limit]
+		}
+		return result, nil
+	}
+
+	result := append(joinDocs, orphans...)
+	if limit > 0 && uint64(len(result)) > limit {
+		result = result[:limit]
+	}
+	return result, nil
 }
 
 // getLimit returns the limit from the primary side's plan, or 0 if no limit.
@@ -748,6 +812,15 @@ func (r *primaryObjectsRetriever) getLimit() uint64 {
 		}
 	}
 	return 0
+}
+
+// setLimit updates the limit on the primary side's plan.
+func (r *primaryObjectsRetriever) setLimit(limit uint64) {
+	if selectTop, ok := r.primarySide.plan.(*selectTopNode); ok {
+		if selectTop.limit != nil {
+			selectTop.limit.limit = limit
+		}
+	}
 }
 
 // isOrderingByRelation returns true if the ordering involves a relation field.
@@ -762,20 +835,38 @@ func (r *primaryObjectsRetriever) isOrderingByRelation() bool {
 	return false
 }
 
-// mergeOrphanDocs fetches orphan documents (those without the ordering relation)
-// and merges them with the provided docs based on sort direction.
-// Orphans are found by using a subQueryFetcher to independently fetch all primary docs
-// for this secondary doc and filtering to those with a NULL relation field.
-func (r *primaryObjectsRetriever) mergeOrphanDocs(docs []core.Doc) ([]core.Doc, error) {
-	direction, relFieldIndex := r.getOrderingInfo()
-	if direction == nil {
-		return docs, nil
+// orderingRelFieldIsPrimary returns true if the ordering relation field on the primary doc
+// stores the FK (IsPrimary). When true, orphans can be identified directly via FK IS NULL.
+// When false, orphans can only be identified by exclusion from join results.
+func (r *primaryObjectsRetriever) orderingRelFieldIsPrimary() bool {
+	_, relFieldIndex := r.getOrderingInfo()
+	fieldName, ok := r.primaryScan.documentMapping.TryToFindNameFromIndex(relFieldIndex)
+	if !ok {
+		return false
+	}
+	fieldDef, ok := r.primarySide.col.Version().GetFieldByName(fieldName)
+	if !ok {
+		return false
+	}
+	return fieldDef.IsPrimary
+}
+
+// fetchOrphanDocsByFK fetches orphan documents using FK IS NULL on the ordering
+// relation's FK field. Only works when the primary doc stores the FK for the
+// ordering relation (e.g., Book has publisher_id).
+func (r *primaryObjectsRetriever) fetchOrphanDocsByFK() ([]core.Doc, error) {
+	_, relFieldIndex := r.getOrderingInfo()
+	relFieldName, ok := r.primaryScan.documentMapping.TryToFindNameFromIndex(relFieldIndex)
+	if !ok {
+		return nil, nil
 	}
 
-	existingIDs := make(map[string]struct{}, len(docs))
-	for _, doc := range docs {
-		existingIDs[doc.GetID()] = struct{}{}
-	}
+	relIDFieldName := request.ToFieldID(relFieldName)
+	relIDFieldMapIndex := r.primaryScan.documentMapping.FirstIndexOfName(relIDFieldName)
+
+	// Build a filter that constrains to the current parent AND has NULL on the ordering FK.
+	parentFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
+		r.targetSecondaryDoc.GetID())
 
 	fetcher := newSubQueryFetcher(
 		r.primaryScan.p.ctx,
@@ -789,22 +880,29 @@ func (r *primaryObjectsRetriever) mergeOrphanDocs(docs []core.Doc) ([]core.Doc, 
 		&r.primaryScan.execInfo.fetches,
 	)
 
-	orphanDocs, err := fetcher.fetchOrphansByParentConstraint(
-		r.filter,
-		r.primarySide.relIDFieldMapIndex.Value(),
-		relFieldIndex,
-		r.targetSecondaryDoc.GetID(),
-		r.relIDFieldDef.Name,
-		existingIDs,
-	)
-	if err != nil {
-		return nil, err
-	}
+	return fetcher.fetchOrphans(relIDFieldName, relIDFieldMapIndex, parentFilter)
+}
 
-	if *direction == mapper.ASC {
-		return append(orphanDocs, docs...), nil
-	}
-	return append(docs, orphanDocs...), nil
+// fetchOrphanDocsByExclusion fetches all docs for the current parent and excludes
+// those present in joinDocs. Used when the primary doc does not store the FK for the
+// ordering relation, so orphans cannot be identified from the doc data alone.
+func (r *primaryObjectsRetriever) fetchOrphanDocsByExclusion(joinDocs []core.Doc) ([]core.Doc, error) {
+	fetcher := newSubQueryFetcher(
+		r.primaryScan.p.ctx,
+		r.primaryScan.p.identity,
+		r.primaryScan.p.nodeACP,
+		r.primaryScan.p.documentACP,
+		r.primarySide.col,
+		r.primaryScan.documentMapping,
+		r.primaryScan.p.lensStore,
+		r.primaryScan.fields,
+		&r.primaryScan.execInfo.fetches,
+	)
+
+	parentFilter := addFilterOnField(r.filter, r.primarySide.relIDFieldMapIndex.Value(),
+		r.targetSecondaryDoc.GetID())
+
+	return fetcher.fetchAllExcluding(parentFilter, docsToDocIDs(joinDocs))
 }
 
 // getOrderingInfo returns the sort direction and relation field index if the ordering involves a relation field.
