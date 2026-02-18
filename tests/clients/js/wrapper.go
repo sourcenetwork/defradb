@@ -20,11 +20,12 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/event"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/utils"
 	"github.com/sourcenetwork/defradb/js"
 	"github.com/sourcenetwork/defradb/node"
@@ -32,7 +33,7 @@ import (
 
 // identityProvider is any options struct that has a GetIdentity method.
 type identityProvider interface {
-	GetIdentity() immutable.Option[identity.Identity]
+	GetIdentity() immutable.Option[acpIdentity.Identity]
 }
 
 // ctxWithOptIdentity extracts identity from opts and puts it in context,
@@ -45,7 +46,7 @@ func ctxWithOptIdentity(ctx context.Context, opt identityProvider) context.Conte
 	}
 	ident := opt.GetIdentity()
 	if ident.HasValue() {
-		return identity.WithContext(ctx, ident)
+		return iIdentity.WithContext(ctx, ident)
 	}
 	return ctx
 }
@@ -599,14 +600,14 @@ func (w *Wrapper) Connect(ctx context.Context, addresses []string, opts ...optio
 	return w.node.DB.Connect(ctx, addresses, opts...)
 }
 
-func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+func (w *Wrapper) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdentity.PublicRawIdentity], error) {
 	res, err := execute(ctx, w.value, "getNodeIdentity")
 	if err != nil {
-		return immutable.None[identity.PublicRawIdentity](), err
+		return immutable.None[acpIdentity.PublicRawIdentity](), err
 	}
-	var out immutable.Option[identity.PublicRawIdentity]
+	var out immutable.Option[acpIdentity.PublicRawIdentity]
 	if err := goji.UnmarshalJS(res[0], &out); err != nil {
-		return immutable.None[identity.PublicRawIdentity](), err
+		return immutable.None[acpIdentity.PublicRawIdentity](), err
 	}
 	return out, nil
 }

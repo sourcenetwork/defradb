@@ -28,10 +28,11 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/graphql-go/language/ast"
 	"github.com/sourcenetwork/graphql-go/language/parser"
 	"github.com/sourcenetwork/graphql-go/language/source"
@@ -573,16 +574,16 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	return err
 }
 
-func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[identity.PublicRawIdentity], error) {
+func (c *Client) GetNodeIdentity(ctx context.Context) (immutable.Option[acpIdentity.PublicRawIdentity], error) {
 	methodURL := c.http.apiURL.JoinPath("node", "identity")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, methodURL.String(), nil)
 	if err != nil {
-		return immutable.None[identity.PublicRawIdentity](), err
+		return immutable.None[acpIdentity.PublicRawIdentity](), err
 	}
-	var ident immutable.Option[identity.PublicRawIdentity]
+	var ident immutable.Option[acpIdentity.PublicRawIdentity]
 	if err := c.http.requestJson(req, &ident); err != nil {
-		return immutable.None[identity.PublicRawIdentity](), err
+		return immutable.None[acpIdentity.PublicRawIdentity](), err
 	}
 	return ident, err
 }

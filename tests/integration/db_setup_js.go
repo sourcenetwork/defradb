@@ -17,6 +17,7 @@ import (
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/node"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
@@ -64,7 +65,7 @@ func setupNode(
 	if err != nil {
 		return nil, err
 	}
-	ctx := acpIdentity.WithContext(s.Ctx, identity)
+	ctx := iIdentity.WithContext(s.Ctx, identity)
 	err = nodeObj.Start(ctx)
 	if err != nil {
 		return nil, err

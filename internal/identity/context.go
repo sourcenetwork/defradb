@@ -13,6 +13,7 @@ package identity
 import (
 	"context"
 
+	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -22,18 +23,18 @@ type identityContextKey struct{}
 // FromContext returns the identity from the given context.
 //
 // If an identity does not exist `NoIdentity` is returned.
-func FromContext(ctx context.Context) immutable.Option[Identity] {
-	identity, ok := ctx.Value(identityContextKey{}).(Identity)
+func FromContext(ctx context.Context) immutable.Option[acpIdentity.Identity] {
+	identity, ok := ctx.Value(identityContextKey{}).(acpIdentity.Identity)
 	if ok {
 		return immutable.Some(identity)
 	}
-	return None
+	return acpIdentity.None
 }
 
 // WithContext returns a new context with the identity value set.
 //
 // This will overwrite any previously set identity value.
-func WithContext(ctx context.Context, identity immutable.Option[Identity]) context.Context {
+func WithContext(ctx context.Context, identity immutable.Option[acpIdentity.Identity]) context.Context {
 	if identity.HasValue() {
 		return context.WithValue(ctx, identityContextKey{}, identity.Value())
 	}
@@ -41,10 +42,10 @@ func WithContext(ctx context.Context, identity immutable.Option[Identity]) conte
 }
 
 // FullFromContext returns the FullIdentity from the given context.
-func FullFromContext(ctx context.Context) immutable.Option[FullIdentity] {
-	identity, ok := ctx.Value(identityContextKey{}).(FullIdentity)
+func FullFromContext(ctx context.Context) immutable.Option[acpIdentity.FullIdentity] {
+	identity, ok := ctx.Value(identityContextKey{}).(acpIdentity.FullIdentity)
 	if ok {
 		return immutable.Some(identity)
 	}
-	return immutable.None[FullIdentity]()
+	return immutable.None[acpIdentity.FullIdentity]()
 }

@@ -15,9 +15,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
@@ -32,7 +32,7 @@ func MakeCollectionDescribeCommand(ctx context.Context) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			opt := options.WithIdentity(options.GetCollections(), acpIdentity.FromContext(cmd.Context()))
+			opt := options.WithIdentity(options.GetCollections(), iIdentity.FromContext(cmd.Context()))
 			if versionID != "" {
 				opt.SetVersionID(versionID)
 			}

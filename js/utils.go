@@ -24,11 +24,11 @@ import (
 	"github.com/sourcenetwork/goji"
 	"github.com/sourcenetwork/immutable"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/db"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func stringArg(args []js.Value, index int, name string) (string, error) {
@@ -81,7 +81,7 @@ func contextArg(args []js.Value, index int, txns *sync.Map) (context.Context, er
 	if err != nil {
 		return ctx, err
 	}
-	ctx = acpIdentity.WithContext(ctx, identity)
+	ctx = iIdentity.WithContext(ctx, identity)
 	ctx = db.InitContext(ctx, txn)
 	return ctx, nil
 }
@@ -142,9 +142,8 @@ func setOptIdentity[B any](opt B, args []js.Value, argIndex int) {
 	}
 }
 
-
 // initKeypairAndGetIdentity initializes the keypair and gets an identity.
-func initKeypairAndGetIdentity() (identity.Identity, error) {
+func initKeypairAndGetIdentity() (acpIdentity.Identity, error) {
 	createKeyPairFunc := js.Global().Get("initKeypair")
 	if !createKeyPairFunc.Truthy() {
 		return nil, fmt.Errorf("initKeypair function not found")
@@ -160,7 +159,7 @@ func initKeypairAndGetIdentity() (identity.Identity, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create public key from hex: %w", err)
 	}
-	ident, err := identity.FromPublicKey(publicKey)
+	ident, err := acpIdentity.FromPublicKey(publicKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create identity from public key: %w", err)
 	}
