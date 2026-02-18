@@ -841,7 +841,7 @@ func (w *CWrapper) GetCollectionByName(
 // The caller is responsible for freeing the C strings (version, collectionID, name).
 func getCollectionsOptionsToCOptions(opts *options.GetCollectionsOptions) C.CollectionOptions {
 	var name, version, collectionID string
-	var includeInactive C.int = 0
+	var getInactive C.int = 0
 
 	if opts != nil {
 		if opts.CollectionName.HasValue() {
@@ -853,8 +853,8 @@ func getCollectionsOptionsToCOptions(opts *options.GetCollectionsOptions) C.Coll
 		if opts.CollectionID.HasValue() {
 			collectionID = opts.CollectionID.Value()
 		}
-		if opts.IncludeInactive.HasValue() && opts.IncludeInactive.Value() {
-			includeInactive = 1
+		if opts.GetInactive.HasValue() && opts.GetInactive.Value() {
+			getInactive = 1
 		}
 	}
 
@@ -862,7 +862,7 @@ func getCollectionsOptionsToCOptions(opts *options.GetCollectionsOptions) C.Coll
 	copts.version = C.CString(version)
 	copts.collectionID = C.CString(collectionID)
 	copts.name = C.CString(name)
-	copts.getInactive = includeInactive
+	copts.getInactive = getInactive
 	return copts
 }
 

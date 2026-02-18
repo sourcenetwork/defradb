@@ -16,6 +16,7 @@ import (
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/immutable"
 )
 
@@ -37,7 +38,7 @@ func EnabledSigningFromContext(ctx context.Context) (bool, immutable.Option[iden
 }
 
 func extractFullIdentity(ctx context.Context) immutable.Option[identity.FullIdentity] {
-	ident := identity.FromContext(ctx)
+	ident := iIdentity.FromContext(ctx)
 	if !ident.HasValue() {
 		return immutable.None[identity.FullIdentity]()
 	}

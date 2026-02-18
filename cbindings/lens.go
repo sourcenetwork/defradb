@@ -23,9 +23,9 @@ import (
 
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 //export LensSet

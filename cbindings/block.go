@@ -19,9 +19,9 @@ import "C"
 import (
 	"context"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 //export BlockVerifySignature
@@ -52,7 +52,7 @@ func BlockVerifySignature(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	verifyOpt := options.WithIdentity(options.VerifySignature(), acpIdentity.FromContext(ctx))
+	verifyOpt := options.WithIdentity(options.VerifySignature(), iIdentity.FromContext(ctx))
 	err = store.VerifySignature(ctx, C.GoString(cid), pubKey, verifyOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

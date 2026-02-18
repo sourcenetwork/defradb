@@ -33,7 +33,7 @@ func TestNAC_GatesCollectionGetByVersion_AuthorizedIdentity_AllowAccess(t *testi
 			// This should work as the identity is authorized.
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(1),
-				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetGetInactive(false),
 				ExpectedError: "key not found", // Note: it is authorized, just key not found.
 			},
 		},
@@ -55,7 +55,7 @@ func TestNAC_GatesCollectionGetByVersion_NoIdentity_NotAuthorizedError(t *testin
 			// We haven't authorized non-identities. So, this should error.
 			&action.GetCollections{
 				Identity:      testUtils.NoIdentity(),
-				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetGetInactive(false),
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},
@@ -77,7 +77,7 @@ func TestNAC_GatesCollectionGetByVersion_WrongIdentity_NotAuthorizedError(t *tes
 			// Wrong user/identity will also not be authorized.
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetGetInactive(false),
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 		},

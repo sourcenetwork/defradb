@@ -19,8 +19,8 @@ import "C"
 import (
 	"context"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 //export ViewAdd
@@ -83,7 +83,7 @@ func ViewRefresh(nodePtr C.uintptr_t,
 		opt.SetCollectionName(viewName)
 	}
 	if cOptions.getInactive != 0 {
-		opt.SetIncludeInactive(true)
+		opt.SetGetInactive(true)
 	}
 
 	store, err := getStoreFromPointer(nodePtr)

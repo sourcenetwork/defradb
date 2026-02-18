@@ -24,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/kms"
 	"github.com/sourcenetwork/defradb/node"
 	changeDetector "github.com/sourcenetwork/defradb/tests/change_detector"
@@ -138,7 +139,7 @@ func setupNode(
 		return nil, err
 	}
 
-	ctx := acpIdentity.WithContext(s.Ctx, identity)
+	ctx := iIdentity.WithContext(s.Ctx, identity)
 	err = nodeObj.Start(ctx)
 
 	if err != nil {

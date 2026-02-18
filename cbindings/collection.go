@@ -24,10 +24,10 @@ import (
 	"github.com/sourcenetwork/immutable"
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 type docIDResult struct {
@@ -55,7 +55,7 @@ func parseCollectionOptionsToGetCollectionsOptions(
 		opt.SetCollectionName(name)
 	}
 	if getInactive {
-		opt.SetIncludeInactive(getInactive)
+		opt.SetGetInactive(getInactive)
 	}
 	return opt
 }

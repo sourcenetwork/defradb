@@ -33,7 +33,7 @@ func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
 			// This user, can not perform this gated operation yet.
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetGetInactive(false),
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
@@ -48,7 +48,7 @@ func TestNAC_AdminRelation_CanCollectionGetByVersion(t *testing.T) {
 			// This user, can now perform this gated operation.
 			&action.GetCollections{
 				Identity:      testUtils.ClientIdentity(2),
-				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetIncludeInactive(false),
+				FilterOptions: options.GetCollections().SetVersionID("does not exist").SetGetInactive(false),
 				ExpectedError: "key not found", // Note: it is authorized, just key not found.
 			},
 		},

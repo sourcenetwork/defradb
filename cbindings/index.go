@@ -20,9 +20,9 @@ import (
 	"context"
 	"strings"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	defraOpts "github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 //export IndexCreate
@@ -77,7 +77,7 @@ func IndexCreate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ident := acpIdentity.FromContext(ctx)
+	ident := iIdentity.FromContext(ctx)
 	col, err := store.GetCollectionByName(ctx, collectionName,
 		defraOpts.WithIdentity(defraOpts.GetCollectionByName(), ident))
 	if err != nil {
@@ -105,7 +105,7 @@ func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.u
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ident := acpIdentity.FromContext(ctx)
+	ident := iIdentity.FromContext(ctx)
 	collectionName := C.GoString(options.name)
 	switch {
 	// Get the indices associated with a given collection
@@ -150,7 +150,7 @@ func IndexDrop(nodePtr C.uintptr_t,
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ident := acpIdentity.FromContext(ctx)
+	ident := iIdentity.FromContext(ctx)
 	col, err := store.GetCollectionByName(ctx, collectionName,
 		defraOpts.WithIdentity(defraOpts.GetCollectionByName(), ident))
 	if err != nil {

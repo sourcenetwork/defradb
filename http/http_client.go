@@ -20,6 +20,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 type httpClient struct {
@@ -51,7 +52,7 @@ func (c *httpClient) setDefaultHeaders(req *http.Request) error {
 	if ok {
 		req.Header.Set(txHeaderName, fmt.Sprintf("%d", txn.ID()))
 	}
-	id := identity.FromContext(req.Context())
+	id := iIdentity.FromContext(req.Context())
 	if !id.HasValue() {
 		return nil
 	}

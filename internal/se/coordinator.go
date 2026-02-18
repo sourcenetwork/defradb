@@ -27,6 +27,7 @@ import (
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	secore "github.com/sourcenetwork/defradb/internal/se/core"
 )
@@ -332,7 +333,7 @@ func (coordinator *Coordinator) generateSEArtifacts(
 	}
 
 	if coordinator.nodeIdentity.HasValue() {
-		ctx = acpIdentity.WithContext(ctx, coordinator.nodeIdentity)
+		ctx = iIdentity.WithContext(ctx, coordinator.nodeIdentity)
 	}
 
 	getOpt := options.WithIdentity(options.CollectionGet(), coordinator.nodeIdentity)

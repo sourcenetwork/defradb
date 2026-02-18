@@ -15,8 +15,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeViewRefreshCommand(ctx context.Context) *cobra.Command {
@@ -47,7 +47,7 @@ items from that cache.`,
 				opt.SetCollectionName(name)
 			}
 			if getInactive {
-				opt.SetIncludeInactive(getInactive)
+				opt.SetGetInactive(getInactive)
 			}
 
 			return cliClient.RefreshViews(

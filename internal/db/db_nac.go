@@ -26,6 +26,7 @@ import (
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
@@ -157,7 +158,7 @@ func (db *DB) AddNACActorRelationship(
 		return client.AddActorRelationshipResult{}, err
 	}
 
-	ctx = acpIdentity.WithContext(ctx, opt.Identity)
+	ctx = iIdentity.WithContext(ctx, opt.Identity)
 
 	return db.addNACActorRelationship(ctx, relation, targetActor)
 }
@@ -177,7 +178,7 @@ func (db *DB) DeleteNACActorRelationship(
 		return client.DeleteActorRelationshipResult{}, err
 	}
 
-	ctx = acpIdentity.WithContext(ctx, opt.Identity)
+	ctx = iIdentity.WithContext(ctx, opt.Identity)
 
 	return db.deleteNACActorRelationship(ctx, relation, targetActor)
 }
@@ -203,7 +204,7 @@ func (db *DB) addNACActorRelationship(
 		return client.AddActorRelationshipResult{}, client.ErrNACIsEnabledButIsMissingPolicyInfo
 	}
 
-	requestActor := acpIdentity.FromContext(ctx)
+	requestActor := iIdentity.FromContext(ctx)
 	if !requestActor.HasValue() || requestActor.Value() == nil || requestActor.Value().DID() == "" {
 		return client.AddActorRelationshipResult{}, ErrNACRelationshipOperationRequiresIdentity
 	}
@@ -246,7 +247,7 @@ func (db *DB) deleteNACActorRelationship(
 		return client.DeleteActorRelationshipResult{}, client.ErrNACIsEnabledButIsMissingPolicyInfo
 	}
 
-	requestActor := acpIdentity.FromContext(ctx)
+	requestActor := iIdentity.FromContext(ctx)
 	if !requestActor.HasValue() || requestActor.Value() == nil || requestActor.Value().DID() == "" {
 		return client.DeleteActorRelationshipResult{}, ErrNACRelationshipOperationRequiresIdentity
 	}
@@ -324,7 +325,7 @@ func (db *DB) initializeNodeACP(ctx context.Context, txn datastore.Txn) error {
 		return err
 	}
 
-	iden := acpIdentity.FromContext(ctx)
+	iden := iIdentity.FromContext(ctx)
 	hasIdentity := iden.HasValue()
 
 	// Was never setup before so start from scratch only if enabled in starting config and has identity.
@@ -456,7 +457,7 @@ func (db *DB) saveNodeACPDesc(ctx context.Context) error {
 // Note:
 // - This function should only be called when starting node acp from a clean state.
 func (db *DB) tryRegisterNACPolicy(ctx context.Context) error {
-	iden := acpIdentity.FromContext(ctx)
+	iden := iIdentity.FromContext(ctx)
 	if !iden.HasValue() {
 		return ErrNoIdentityInContext
 	}

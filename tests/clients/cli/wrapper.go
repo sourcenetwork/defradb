@@ -473,8 +473,8 @@ func (w *Wrapper) RefreshViews(ctx context.Context, opts ...options.Enumerable[o
 	if opt.CollectionID.HasValue() {
 		args = append(args, "--collection-id", opt.CollectionID.Value())
 	}
-	if opt.IncludeInactive.HasValue() {
-		args = append(args, "--get-inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
+	if opt.GetInactive.HasValue() {
+		args = append(args, "--get-inactive", strconv.FormatBool(opt.GetInactive.Value()))
 	}
 
 	args = appendIdentityArg(args, opt.GetIdentity())
@@ -589,8 +589,8 @@ func (w *Wrapper) GetCollections(
 	if opt.CollectionID.HasValue() {
 		args = append(args, "--collection-id", opt.CollectionID.Value())
 	}
-	if opt.IncludeInactive.HasValue() {
-		args = append(args, "--get-inactive", strconv.FormatBool(opt.IncludeInactive.Value()))
+	if opt.GetInactive.HasValue() {
+		args = append(args, "--get-inactive", strconv.FormatBool(opt.GetInactive.Value()))
 	}
 	args = appendIdentityArg(args, opt.GetIdentity())
 
