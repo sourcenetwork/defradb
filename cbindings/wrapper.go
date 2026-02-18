@@ -34,7 +34,7 @@ extern Result IdentityNew(char* keyType);
 extern void IdentityFree(uintptr_t identityPtr);
 extern Result NodeIdentity(uintptr_t nodePtr);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result EncryptedIndexCreate(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
+extern Result EncryptedIndexAdd(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName);
 extern Result LensSet(uintptr_t nodePtr, uintptr_t identity, char* src, char* dst, char* cfg);

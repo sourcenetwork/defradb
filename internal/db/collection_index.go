@@ -434,11 +434,11 @@ func (c *collection) GetIndexes(
 	return c.Version().Indexes, nil
 }
 
-// CreateEncryptedIndex creates a new encrypted index on the collection.
-func (c *collection) CreateEncryptedIndex(
+// AddEncryptedIndex adds a new encrypted index to the collection.
+func (c *collection) AddEncryptedIndex(
 	ctx context.Context,
-	createRequest client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
+	addRequest client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -446,7 +446,7 @@ func (c *collection) CreateEncryptedIndex(
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
-	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexCreatePerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexAddPerm); err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
 
@@ -456,14 +456,14 @@ func (c *collection) CreateEncryptedIndex(
 	}
 	defer txn.Discard()
 
-	index, err := c.createEncryptedIndex(ctx, createRequest)
+	index, err := c.addEncryptedIndex(ctx, addRequest)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
 	return index, txn.Commit()
 }
 
-func (c *collection) createEncryptedIndex(
+func (c *collection) addEncryptedIndex(
 	ctx context.Context,
 	encryptedIndex client.EncryptedIndexDescription,
 ) (client.EncryptedIndexDescription, error) {
@@ -571,7 +571,7 @@ func checkExistingFieldsAndAdjustRelFieldNames(
 	return nil
 }
 
-// validateNewEncryptedIndex validates, if encrypted index can be created on the given collection.
+// validateNewEncryptedIndex validates, if encrypted index can be added to the given collection.
 // It checks if the field exists in the collection schema and if an encrypted index already exists on the field.
 func validateNewEncryptedIndex(
 	definition client.CollectionVersion,

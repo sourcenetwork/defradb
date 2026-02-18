@@ -129,11 +129,11 @@ type Collection interface {
 		opts ...options.Enumerable[options.CollectionGetIndexesOptions],
 	) ([]IndexDescription, error)
 
-	// CreateEncryptedIndex creates a new encrypted index on the collection.
-	CreateEncryptedIndex(
+	// AddEncryptedIndex adds a new encrypted index to the collection.
+	AddEncryptedIndex(
 		ctx context.Context,
 		desc EncryptedIndexDescription,
-		opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
+		opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 	) (EncryptedIndexDescription, error)
 
 	// DeleteEncryptedIndex deletes an encrypted index from the collection.

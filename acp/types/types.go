@@ -97,7 +97,7 @@ const (
 	NodeIndexListPerm
 	NodeIndexCreatePerm
 	NodeIndexDropPerm
-	NodeEncryptedIndexCreatePerm
+	NodeEncryptedIndexAddPerm
 	NodeP2PPeerInfo
 	NodeP2PPeerConnectPerm
 	NodeP2PPeerActivePerm
@@ -147,7 +147,7 @@ var RequiredResourcePermissionsForNode = []string{
 	"index-list",
 	"index-create",
 	"index-drop",
-	"encrypted-index-create",
+	"encrypted-index-add",
 	"p2p-peer-info",
 	"p2p-peer-connect",
 	"p2p-peer-active",
@@ -231,7 +231,7 @@ resources:
   - name: index-drop
     expr: admin
 
-  - name: encrypted-index-create
+  - name: encrypted-index-add
     expr: admin
 
   - name: p2p-peer-info

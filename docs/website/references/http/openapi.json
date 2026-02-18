@@ -425,7 +425,7 @@
                 },
                 "type": "object"
             },
-            "encrypted_index_create": {
+            "encrypted_index_add": {
                 "properties": {
                     "FieldName": {
                         "type": "string"
@@ -1495,8 +1495,8 @@
                 ]
             },
             "post": {
-                "description": "Create an encrypted index",
-                "operationId": "encrypted_index_create",
+                "description": "Add an encrypted index",
+                "operationId": "encrypted_index_add",
                 "parameters": [
                     {
                         "description": "Collection name",
@@ -1512,7 +1512,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/encrypted_index_create"
+                                "$ref": "#/components/schemas/encrypted_index_add"
                             }
                         }
                     },

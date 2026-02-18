@@ -312,10 +312,10 @@ func (c *Collection) GetIndexes(ctx context.Context, opts ...options.Enumerable[
 	return out, nil
 }
 
-func (c *Collection) CreateEncryptedIndex(
+func (c *Collection) AddEncryptedIndex(
 	ctx context.Context,
 	req client.EncryptedIndexDescription,
-	opts ...options.Enumerable[options.CreateEncryptedIndexOptions],
+	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	if opt != nil {
@@ -325,7 +325,7 @@ func (c *Collection) CreateEncryptedIndex(
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
-	res, err := execute(ctx, c.client, "createEncryptedIndex", indexDescVal)
+	res, err := execute(ctx, c.client, "addEncryptedIndex", indexDescVal)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}

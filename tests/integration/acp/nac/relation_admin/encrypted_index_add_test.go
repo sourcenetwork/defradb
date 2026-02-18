@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_AdminRelation_CanCreateEncryptedIndex(t *testing.T) {
+func TestNAC_AdminRelation_CanAddEncryptedIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -44,11 +44,11 @@ func TestNAC_AdminRelation_CanCreateEncryptedIndex(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateEncryptedIndex{
+			testUtils.AddEncryptedIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeEncryptedIndexCreatePerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeEncryptedIndexAddPerm),
 			},
 			testUtils.AddNACActorRelationship{
 				RequestorIdentity: testUtils.ClientIdentity(1),
@@ -56,7 +56,7 @@ func TestNAC_AdminRelation_CanCreateEncryptedIndex(t *testing.T) {
 				Relation:          "admin",
 				ExpectedExistence: false,
 			},
-			testUtils.CreateEncryptedIndex{
+			testUtils.AddEncryptedIndex{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				FieldName:    "name",
@@ -66,7 +66,7 @@ func TestNAC_AdminRelation_CanCreateEncryptedIndex(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_AdminRelation_CLIandCandHTTPClient_CanCreateEncryptedIndex(t *testing.T) {
+func TestNAC_AdminRelation_CLIandCandHTTPClient_CanAddEncryptedIndex(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -91,7 +91,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanCreateEncryptedIndex(t *testi
 					}
 				`,
 			},
-			testUtils.CreateEncryptedIndex{
+			testUtils.AddEncryptedIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				CollectionID:  0,
 				FieldName:     "name",
@@ -103,7 +103,7 @@ func TestNAC_AdminRelation_CLIandCandHTTPClient_CanCreateEncryptedIndex(t *testi
 				Relation:          "admin",
 				ExpectedExistence: false,
 			},
-			testUtils.CreateEncryptedIndex{
+			testUtils.AddEncryptedIndex{
 				Identity:     testUtils.ClientIdentity(2),
 				CollectionID: 0,
 				FieldName:    "name",

@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestEncryptedIndexCreate_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *testing.T) {
+func TestEncryptedIndexAdd_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -60,7 +60,7 @@ func TestEncryptedIndexCreate_SchemaWithEncryptedIndex_ShouldNotHinderQuerying(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexCreate_AfterCreateRequest_ShouldNotHinderQuerying(t *testing.T) {
+func TestEncryptedIndexAdd_AfterCreateRequest_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -79,7 +79,7 @@ func TestEncryptedIndexCreate_AfterCreateRequest_ShouldNotHinderQuerying(t *test
 						"age":	21
 					}`,
 			},
-			testUtils.CreateEncryptedIndex{
+			testUtils.AddEncryptedIndex{
 				FieldName: "age",
 			},
 			&action.Request{
@@ -105,7 +105,7 @@ func TestEncryptedIndexCreate_AfterCreateRequest_ShouldNotHinderQuerying(t *test
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexCreate_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
+func TestEncryptedIndexAdd_IfNonExistentFieldIsGiven_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -116,7 +116,7 @@ func TestEncryptedIndexCreate_IfNonExistentFieldIsGiven_ReturnError(t *testing.T
 					}
 				`,
 			},
-			testUtils.CreateEncryptedIndex{
+			testUtils.AddEncryptedIndex{
 				FieldName:     "verified",
 				ExpectedError: db.NewErrEncryptedIndexOnNonExistentField("verified").Error(),
 			},
@@ -126,7 +126,7 @@ func TestEncryptedIndexCreate_IfNonExistentFieldIsGiven_ReturnError(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestEncryptedIndexCreate_IfIndexAlreadyExists_ShouldReturnError(t *testing.T) {
+func TestEncryptedIndexAdd_IfIndexAlreadyExists_ShouldReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -137,7 +137,7 @@ func TestEncryptedIndexCreate_IfIndexAlreadyExists_ShouldReturnError(t *testing.
 					}
 				`,
 			},
-			testUtils.CreateEncryptedIndex{
+			testUtils.AddEncryptedIndex{
 				FieldName:     "age",
 				ExpectedError: db.NewErrEncryptedIndexAlreadyExists("age").Error(),
 			},

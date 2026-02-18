@@ -48,7 +48,7 @@ func newCollection(col client.Collection, txns *sync.Map) js.Value {
 		"createIndex":          goji.Async(c.createIndex),
 		"dropIndex":            goji.Async(c.dropIndex),
 		"getIndexes":           goji.Async(c.getIndexes),
-		"createEncryptedIndex": goji.Async(c.createEncryptedIndex),
+		"addEncryptedIndex":    goji.Async(c.addEncryptedIndex),
 		"deleteEncryptedIndex": goji.Async(c.deleteEncryptedIndex),
 		"listEncryptedIndexes": goji.Async(c.listEncryptedIndexes),
 		"truncate":             goji.Async(c.truncate),
@@ -354,7 +354,7 @@ func (c *clientCollection) getIndexes(this js.Value, args []js.Value) (js.Value,
 	return goji.MarshalJS(desc)
 }
 
-func (c *clientCollection) createEncryptedIndex(this js.Value, args []js.Value) (js.Value, error) {
+func (c *clientCollection) addEncryptedIndex(this js.Value, args []js.Value) (js.Value, error) {
 	var request client.EncryptedIndexDescription
 	if err := structArg(args, 0, "request", &request); err != nil {
 		return js.Undefined(), err
@@ -363,9 +363,9 @@ func (c *clientCollection) createEncryptedIndex(this js.Value, args []js.Value) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.CreateEncryptedIndex()
+	opt := options.AddEncryptedIndex()
 	setOptIdentity(opt, args, 1)
-	desc, err := c.col.CreateEncryptedIndex(ctx, request, opt)
+	desc, err := c.col.AddEncryptedIndex(ctx, request, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

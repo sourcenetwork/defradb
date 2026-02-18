@@ -20,14 +20,14 @@ import (
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-func MakeEncryptedIndexCreateCommand(ctx context.Context) *cobra.Command {
+func MakeEncryptedIndexAddCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var fieldArg string
 	var typeArg string
 	var cmd = &cobra.Command{
-		Use:   "create -c --collection <collection> --field <field> [--type <type>]",
-		Short: "Creates an encrypted index on a collection's field",
-		Long: `Creates an encrypted index on a collection's field.
+		Use:   "add -c --collection <collection> --field <field> [--type <type>]",
+		Short: "Adds an encrypted index on a collection's field",
+		Long: `Adds an encrypted index on a collection's field.
 
 The --type flag is optional. If not provided, the default value will be "equality".
 
@@ -36,7 +36,7 @@ Currently only "equality" type is supported.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
 
-			createReq := client.EncryptedIndexDescription{
+			addReq := client.EncryptedIndexDescription{
 				FieldName: fieldArg,
 				Type:      client.EncryptedIndexType(typeArg),
 			}
@@ -46,8 +46,8 @@ Currently only "equality" type is supported.`,
 				return err
 			}
 
-			createOpt := options.WithIdentity(options.CreateEncryptedIndex(), iIdentity.FromContext(cmd.Context()))
-			descWithID, err := col.CreateEncryptedIndex(cmd.Context(), createReq, createOpt)
+			addOpt := options.WithIdentity(options.AddEncryptedIndex(), iIdentity.FromContext(cmd.Context()))
+			descWithID, err := col.AddEncryptedIndex(cmd.Context(), addReq, addOpt)
 			if err != nil {
 				return err
 			}
@@ -55,12 +55,12 @@ Currently only "equality" type is supported.`,
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "create an index for 'Users' collection on 'name' field",
-		`defradb client encrypted-index create --collection Users --field name`)
+	EmbedCLIExample(ctx, cmd, "add an index for 'Users' collection on 'name' field",
+		`defradb client encrypted-index add --collection Users --field name`)
 
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 	cmd.Flags().StringVar(&fieldArg, "field", "", "Field to index")
-	cmd.Flags().StringVar(&typeArg, "type", "", "Type of index to create")
+	cmd.Flags().StringVar(&typeArg, "type", "", "Type of index to add")
 
 	return cmd
 }

@@ -31,7 +31,7 @@ var openApiSchemas = map[string]any{
 	"index":                                    &client.IndexDescription{},
 	"index_create":                             &client.IndexCreateRequest{},
 	"encrypted_index":                          &client.EncryptedIndexDescription{},
-	"encrypted_index_create":                   &client.EncryptedIndexDescription{},
+	"encrypted_index_add":                      &client.EncryptedIndexDescription{},
 	"delete_result":                            &client.DeleteResult{},
 	"update_result":                            &client.UpdateResult{},
 	"lens_config":                              &client.LensConfig{},

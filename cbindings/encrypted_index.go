@@ -24,8 +24,8 @@ import (
 	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export EncryptedIndexCreate
-func EncryptedIndexCreate(
+//export EncryptedIndexAdd
+func EncryptedIndexAdd(
 	nodePtr C.uintptr_t,
 	collectionName *C.char,
 	fieldName *C.char,
@@ -51,8 +51,8 @@ func EncryptedIndexCreate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	createOpt := options.WithIdentity(options.CreateEncryptedIndex(), iIdentity.FromContext(ctx))
-	descWithID, err := col.CreateEncryptedIndex(ctx, desc, createOpt)
+	addOpt := options.WithIdentity(options.AddEncryptedIndex(), iIdentity.FromContext(ctx))
+	descWithID, err := col.AddEncryptedIndex(ctx, desc, addOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
