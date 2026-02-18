@@ -70,7 +70,7 @@ func TestNAC_AdminRelation_CanP2PDocumentCreate(t *testing.T) {
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
 				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentCreatePerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentAddPerm),
 			},
 
 			// Grant access to user.

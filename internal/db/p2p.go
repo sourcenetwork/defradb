@@ -171,7 +171,7 @@ func (db *DB) AddP2PCollections(
 ) error {
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PCollectionCreatePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PCollectionAddPerm); err != nil {
 		return err
 	}
 
@@ -257,7 +257,7 @@ func (db *DB) AddP2PDocuments(
 ) error {
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PDocumentCreatePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PDocumentAddPerm); err != nil {
 		return err
 	}
 

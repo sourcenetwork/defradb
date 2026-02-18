@@ -104,10 +104,10 @@ const (
 	NodeP2PReplicatorAddPerm
 	NodeP2PReplicatorDeletePerm
 	NodeP2PReplicatorListPerm
-	NodeP2PCollectionCreatePerm
+	NodeP2PCollectionAddPerm
 	NodeP2PCollectionDeletePerm
 	NodeP2PCollectionListPerm
-	NodeP2PDocumentCreatePerm
+	NodeP2PDocumentAddPerm
 	NodeP2PDocumentDeletePerm
 	NodeP2PDocumentListPerm
 	NodeP2PSyncCollectionVersionsPerm
