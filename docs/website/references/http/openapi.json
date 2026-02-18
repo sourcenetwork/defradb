@@ -2559,7 +2559,7 @@
             },
             "post": {
                 "description": "Add peer replicators",
-                "operationId": "peer_replicator_create",
+                "operationId": "peer_replicator_add",
                 "requestBody": {
                     "content": {
                         "application/json": {

@@ -55,7 +55,7 @@ type P2P interface {
 	// subscribed schemas.
 	ListReplicators(ctx context.Context, opts ...options.Enumerable[options.ListReplicatorsOptions]) ([]Replicator, error)
 
-	// AddP2PCollections creates the given collections to the P2P system and
+	// AddP2PCollections adds the given collections to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// collection names are invalid.
 	AddP2PCollections(

@@ -407,7 +407,7 @@ func (h *p2pHandler) bindRoutes(router *Router) {
 
 	addReplicator := openapi3.NewOperation()
 	addReplicator.Description = "Add peer replicators"
-	addReplicator.OperationID = "peer_replicator_create"
+	addReplicator.OperationID = "peer_replicator_add"
 	addReplicator.Tags = []string{"p2p"}
 	addReplicator.RequestBody = &openapi3.RequestBodyRef{
 		Value: addReplicatorRequest,

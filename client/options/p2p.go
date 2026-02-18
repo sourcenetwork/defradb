@@ -84,12 +84,12 @@ func (o *PeerInfoOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// AddReplicatorOptionsBuilder is a builder for SetReplicatorOptions.
+// PeerInfoOptionsBuilder is a builder for PeerInfoOptions.
 type PeerInfoOptionsBuilder struct {
 	enumerableBuilder[PeerInfoOptions]
 }
 
-// AddReplicator creates a new SetReplicatorOptionsBuilder instance.
+// AddReplicator creates a new AddReplicatorOptionsBuilder instance.
 func PeerInfo() *PeerInfoOptionsBuilder {
 	return &PeerInfoOptionsBuilder{}
 }
@@ -102,7 +102,7 @@ func (b *PeerInfoOptionsBuilder) SetIdentity(id identity.Identity) *PeerInfoOpti
 	return b
 }
 
-// AddReplicatorOptions contains options for SetReplicator operation.
+// AddReplicatorOptions contains options for AddReplicator operation.
 type AddReplicatorOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
@@ -115,12 +115,12 @@ func (o *AddReplicatorOptions) GetIdentity() immutable.Option[identity.Identity]
 	return o.Identity
 }
 
-// AddReplicatorOptionsBuilder is a builder for SetReplicatorOptions.
+// AddReplicatorOptionsBuilder is a builder for AddReplicatorOptions.
 type AddReplicatorOptionsBuilder struct {
 	enumerableBuilder[AddReplicatorOptions]
 }
 
-// AddReplicator creates a new SetReplicatorOptionsBuilder instance.
+// AddReplicator creates a new AddReplicatorOptionsBuilder instance.
 func AddReplicator() *AddReplicatorOptionsBuilder {
 	return &AddReplicatorOptionsBuilder{}
 }
