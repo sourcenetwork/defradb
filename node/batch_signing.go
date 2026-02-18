@@ -55,3 +55,8 @@ func ComputeMerkleRoot(cids []cid.Cid) []byte {
 func VerifyBatchSignature(batchSig *BatchSignature, cids []cid.Cid) (bool, error) {
 	return coreblock.VerifyBatchSignature(batchSig, cids)
 }
+
+// CollectDocumentCIDs retrieves all head block CIDs for the given documents from the headstore.
+func CollectDocumentCIDs(ctx context.Context, docIDs []string) ([]cid.Cid, error) {
+	return coreblock.CollectDocumentCIDs(ctx, docIDs)
+}

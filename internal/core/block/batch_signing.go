@@ -18,9 +18,12 @@ import (
 	"sync"
 
 	cid "github.com/ipfs/go-cid"
+	"github.com/sourcenetwork/corekv"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/crypto"
+	"github.com/sourcenetwork/defradb/internal/datastore"
+	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
 type batchSigningContextKey struct{}
@@ -205,4 +208,45 @@ func VerifyBatchSignature(batchSig *BatchSignature, cids []cid.Cid) (bool, error
 		return false, err
 	}
 	return verifySignature(pubKey, batchSig.MerkleRoot, batchSig.Value) == nil, nil
+}
+
+// CollectDocumentCIDs retrieves all head block CIDs for the given documents from the headstore.
+func CollectDocumentCIDs(ctx context.Context, docIDs []string) ([]cid.Cid, error) {
+	txn := datastore.CtxMustGetTxn(ctx)
+	var allCIDs []cid.Cid
+
+	for _, docID := range docIDs {
+		prefix := keys.HeadstoreDocKey{DocID: docID}
+		iter, err := txn.Headstore().Iterator(ctx, corekv.IterOptions{
+			Prefix: prefix.Bytes(),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		for {
+			hasNext, err := iter.Next()
+			if err != nil {
+				_ = iter.Close()
+				return nil, err
+			}
+			if !hasNext {
+				break
+			}
+
+			headKey, err := keys.NewHeadstoreDocKey(string(iter.Key()))
+			if err != nil {
+				_ = iter.Close()
+				return nil, err
+			}
+
+			allCIDs = append(allCIDs, headKey.GetCid())
+		}
+
+		if err := iter.Close(); err != nil {
+			return nil, err
+		}
+	}
+
+	return allCIDs, nil
 }
