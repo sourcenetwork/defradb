@@ -33,6 +33,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/encryption"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/lens"
 	"github.com/sourcenetwork/defradb/internal/utils"
@@ -220,7 +221,7 @@ func (c *collection) GetAllDocIDs(
 		return nil, err
 	}
 
-	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = iIdentity.WithContext(ctx, opt.Identity)
 
 	return c.getAllDocIDsChan(ctx)
 }
@@ -348,7 +349,7 @@ func (c *collection) Create(
 		return err
 	}
 
-	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = iIdentity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -380,7 +381,7 @@ func (c *collection) CreateMany(
 		return err
 	}
 
-	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = iIdentity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -510,7 +511,7 @@ func (c *collection) Update(
 		return err
 	}
 
-	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = iIdentity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -592,7 +593,7 @@ func (c *collection) Save(
 		return err
 	}
 
-	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = iIdentity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -676,9 +677,9 @@ func (c *collection) save(
 	}
 	txn := datastore.CtxMustGetTxn(ctx)
 
-	ident := identity.FromContext(ctx)
+	ident := iIdentity.FromContext(ctx)
 	if (!ident.HasValue() || !hasPrivateKey(ident.Value())) && c.db.nodeIdentity.HasValue() {
-		ctx = identity.WithContext(ctx, c.db.nodeIdentity)
+		ctx = iIdentity.WithContext(ctx, c.db.nodeIdentity)
 	}
 
 	if !c.db.signingDisabled {
@@ -840,7 +841,7 @@ func (c *collection) Delete(
 		return false, err
 	}
 
-	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = iIdentity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -880,7 +881,7 @@ func (c *collection) Exists(
 		return false, err
 	}
 
-	ctx = identity.WithContext(ctx, opt.Identity)
+	ctx = iIdentity.WithContext(ctx, opt.Identity)
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {

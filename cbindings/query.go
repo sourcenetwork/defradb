@@ -23,9 +23,9 @@ import (
 
 	"github.com/google/uuid"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 // We cannot return a channel to/from C, so instead we have a map of subscription IDs to
@@ -127,7 +127,7 @@ func ExecuteQuery(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	ident := acpIdentity.FromContext(ctx)
+	ident := iIdentity.FromContext(ctx)
 	if ident.HasValue() {
 		opt.SetIdentity(ident.Value())
 	}

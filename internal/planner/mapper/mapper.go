@@ -17,7 +17,6 @@ import (
 
 	"github.com/sourcenetwork/immutable"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
@@ -25,6 +24,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 const (
@@ -981,7 +981,7 @@ func getTopLevelInfo(
 		collection, err := store.GetCollectionByName(
 			ctx,
 			collectionName,
-			options.WithIdentity(options.GetCollectionByName(), acpIdentity.FromContext(ctx)),
+			options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(ctx)),
 		)
 		if err != nil {
 			return nil, client.CollectionVersion{}, err

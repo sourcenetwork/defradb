@@ -19,9 +19,9 @@ import "C"
 import (
 	"context"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 //export EncryptedIndexCreate
@@ -45,13 +45,13 @@ func EncryptedIndexCreate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	getColOpt := options.WithIdentity(options.GetCollectionByName(), acpIdentity.FromContext(ctx))
+	getColOpt := options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(ctx))
 	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName), getColOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	createOpt := options.WithIdentity(options.CreateEncryptedIndex(), acpIdentity.FromContext(ctx))
+	createOpt := options.WithIdentity(options.CreateEncryptedIndex(), iIdentity.FromContext(ctx))
 	descWithID, err := col.CreateEncryptedIndex(ctx, desc, createOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

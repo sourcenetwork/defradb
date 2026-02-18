@@ -19,9 +19,9 @@ import "C"
 import (
 	"context"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 //export ACPAddDACPolicy
@@ -38,7 +38,7 @@ func ACPAddDACPolicy(nodePtr C.uintptr_t, identityPtr C.uintptr_t, policy *C.cha
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	opt := options.WithIdentity(options.AddDACPolicy(), acpIdentity.FromContext(ctx))
+	opt := options.WithIdentity(options.AddDACPolicy(), iIdentity.FromContext(ctx))
 	policyResult, err := store.AddDACPolicy(ctx, C.GoString(policy), opt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -68,7 +68,7 @@ func ACPAddDACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	addOpt := options.WithIdentity(options.AddDACActorRelationship(), acpIdentity.FromContext(ctx))
+	addOpt := options.WithIdentity(options.AddDACActorRelationship(), iIdentity.FromContext(ctx))
 	result, err := store.AddDACActorRelationship(
 		ctx,
 		C.GoString(collection),
@@ -105,7 +105,7 @@ func ACPDeleteDACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	delOpt := options.WithIdentity(options.DeleteDACActorRelationship(), acpIdentity.FromContext(ctx))
+	delOpt := options.WithIdentity(options.DeleteDACActorRelationship(), iIdentity.FromContext(ctx))
 	result, err := store.DeleteDACActorRelationship(
 		ctx,
 		C.GoString(collection),
@@ -135,7 +135,7 @@ func ACPDisableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	disableOpt := options.WithIdentity(options.DisableNAC(), acpIdentity.FromContext(ctx))
+	disableOpt := options.WithIdentity(options.DisableNAC(), iIdentity.FromContext(ctx))
 	if err := store.DisableNAC(ctx, disableOpt); err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -157,7 +157,7 @@ func ACPReEnableNAC(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	reEnableOpt := options.WithIdentity(options.ReEnableNAC(), acpIdentity.FromContext(ctx))
+	reEnableOpt := options.WithIdentity(options.ReEnableNAC(), iIdentity.FromContext(ctx))
 	if err := store.ReEnableNAC(ctx, reEnableOpt); err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -184,7 +184,7 @@ func ACPAddNACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	addNACOpt := options.WithIdentity(options.AddNACActorRelationship(), acpIdentity.FromContext(ctx))
+	addNACOpt := options.WithIdentity(options.AddNACActorRelationship(), iIdentity.FromContext(ctx))
 	addNACActorRelationshipResult, err := store.AddNACActorRelationship(
 		ctx,
 		C.GoString(relation),
@@ -217,7 +217,7 @@ func ACPDeleteNACActorRelationship(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	delNACOpt := options.WithIdentity(options.DeleteNACActorRelationship(), acpIdentity.FromContext(ctx))
+	delNACOpt := options.WithIdentity(options.DeleteNACActorRelationship(), iIdentity.FromContext(ctx))
 	deleteNACActorRelationshipResult, err := store.DeleteNACActorRelationship(
 		ctx,
 		C.GoString(relation),
@@ -245,7 +245,7 @@ func ACPGetNACStatus(nodePtr C.uintptr_t, identityPtr C.uintptr_t) C.Result {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	getNACOpt := options.WithIdentity(options.GetNACStatus(), acpIdentity.FromContext(ctx))
+	getNACOpt := options.WithIdentity(options.GetNACStatus(), iIdentity.FromContext(ctx))
 	status, err := store.GetNACStatus(ctx, getNACOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))

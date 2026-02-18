@@ -13,9 +13,9 @@ package db
 import (
 	"context"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 // registerDocWithACP handles the registration of the document with acp.

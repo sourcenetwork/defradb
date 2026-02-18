@@ -22,11 +22,11 @@ import (
 	"github.com/go-chi/cors"
 	"golang.org/x/exp/slices"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 // CorsMiddleware handles cross origin request

@@ -19,8 +19,8 @@ import "C"
 import (
 	"context"
 
-	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client/options"
+	acpIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 //export ViewAdd
