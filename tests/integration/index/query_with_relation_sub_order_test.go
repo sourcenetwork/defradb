@@ -716,8 +716,7 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_RecursiveExplain(t
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// The index on Publisher.establishedYear is used by the nested Book->Publisher join.
-				// Publisher is at subType/subType (nested inside Book which is at subType).
+				// subType/subType=Publisher: 2 index fetches (via establishedYear).
 				Asserter: testUtils.NewExplainAsserter("subType", "subType").WithIndexFetches(2),
 			},
 		},
@@ -820,9 +819,9 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_RecursiveExplain(t 
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Author root: 1 docFetch
-				// Book (subType): 2 docFetches
-				// Publisher (subType/subType): 2 docFetches, 2 indexFetches
+				// root=Author: 1 doc.
+				// subType=Book: 2 docs.
+				// subType/subType=Publisher: 2 docs, 2 index (via establishedYear).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).
 					WithLevel("subType").WithDocFetches(2).
 					WithLevel("subType", "subType").WithDocFetches(2).WithIndexFetches(2),
@@ -881,7 +880,8 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryASC_ShouldIn
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// root: 1 docFetch (orphan scan, no index on Book). subType: 1 doc + 1 index (Publisher via year index).
+				// root=Book: 1 doc (orphan scan, no index).
+				// subType=Publisher: 1 doc, 1 index (via establishedYear).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
@@ -939,7 +939,8 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryDESC_ShouldI
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// root: 1 docFetch (orphan scan, no index on Book). subType: 1 doc + 1 index (Publisher via year index).
+				// root=Book: 1 doc (orphan scan, no index).
+				// subType=Publisher: 1 doc, 1 index (via establishedYear).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
@@ -999,7 +1000,8 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryASC_ShouldIncl
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// root: 1 doc + 1 index (orphan via book_id IS NULL). subType: 1 doc + 1 index (Book via rating index).
+				// root=Publisher: 1 doc, 1 index (orphan via book_id IS NULL).
+				// subType=Book: 1 doc, 1 index (via rating).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(1).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
@@ -1059,7 +1061,8 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryDESC_ShouldInc
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// root: 1 doc + 1 index (orphan via book_id IS NULL). subType: 1 doc + 1 index (Book via rating index).
+				// root=Publisher: 1 doc, 1 index (orphan via book_id IS NULL).
+				// subType=Book: 1 doc, 1 index (via rating).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(1).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
@@ -1117,7 +1120,7 @@ func TestQueryWithOrderByRelationField_WithParentSecondaryASC_ExcludesOrphans(t 
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Without @exhaustive: join fetches 1 publisher + 1 book, no orphan scanning
+				// root=Book: 1 doc, no index. subType=Publisher: 1 doc, 1 index (via establishedYear).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
@@ -1177,7 +1180,7 @@ func TestQueryWithOrderByRelationField_WithParentPrimaryASC_ExcludesOrphans(t *t
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Without @exhaustive: join fetches 1 book + 1 publisher, no orphan scanning
+				// root=Publisher: 1 doc, 1 index (via book_id). subType=Book: 1 doc, 1 index (via rating).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(1).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
@@ -1288,11 +1291,9 @@ func TestQueryWithNestedOrderByRelationField_WithDESCAndLimit_ExcludesOrphans(t 
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Outer typeJoinMany: Author(root) -> Book(subType)
-				// Inner typeJoinOne: Book(root) -> Publisher(subType)
-				// root: 1 Author scanned (no index)
-				// subType/root: 2 Books fetched (limit 2, orphan excluded)
-				// subType/subType: 2 Publishers fetched via index on establishedYear
+				// root=Author: 1 doc, no index.
+				// subType/root=Book: 2 docs (limit 2, orphan excluded).
+				// subType/subType=Publisher: 2 docs, 2 index (via establishedYear).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
 					WithLevel("subType", "root").WithDocFetches(2).WithIndexFetches(0).
 					WithLevel("subType", "subType").WithDocFetches(2).WithIndexFetches(2),
@@ -1410,11 +1411,9 @@ func TestQueryWithNestedOrderByRelationField_WithASCAndLimit_ExcludesOrphans(t *
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Outer typeJoinMany: Author(root) -> Book(subType)
-				// Inner typeJoinOne: Book(root) -> Publisher(subType)
-				// root: 1 Author scanned (no index)
-				// subType/root: 2 Books fetched (limit 2, OrphanBook excluded without @exhaustive)
-				// subType/subType: 2 Publishers fetched via index on establishedYear
+				// root=Author: 1 doc, no index.
+				// subType/root=Book: 2 docs (limit 2, orphan excluded).
+				// subType/subType=Publisher: 2 docs, 2 index (via establishedYear).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
 					WithLevel("subType", "root").WithDocFetches(2).WithIndexFetches(0).
 					WithLevel("subType", "subType").WithDocFetches(2).WithIndexFetches(2),
@@ -1471,9 +1470,8 @@ func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldInclude
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Secondary parent with @exhaustive: orphanNode wraps typeJoinOne
-				// root: 1 Book scanned from inverted join (via Publisher index)
-				// subType: 1 Publisher fetched via index on year
+				// root=Book: 1 doc, no index.
+				// subType=Publisher: 1 doc, 1 index (via establishedYear).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
