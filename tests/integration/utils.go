@@ -50,7 +50,6 @@ import (
 )
 
 func init() {
-	//os.Setenv(multipliersEnvName, "secondary-index")
 	multiplier.Init(multipliersEnvName)
 }
 

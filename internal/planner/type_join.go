@@ -374,8 +374,7 @@ func (p *Planner) newInvertableTypeJoin(
 		subFilter: childScan.filter,
 		// we store child's ordering to apply when fetching child documents
 		subOrdering: childScan.ordering,
-		// propagate exhaustive flag from top-level directive
-		exhaustive: p.exhaustive,
+		exhaustive:  p.exhaustive,
 	}
 
 	return join, nil
@@ -497,7 +496,6 @@ func (s *joinIterationState) reset() {
 type invertibleTypeJoin struct {
 	docMapper
 
-	// Configuration (set during construction, shouldn't change during iteration)
 	skipChild  bool
 	parentSide joinSide
 	childSide  joinSide

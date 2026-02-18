@@ -817,7 +817,6 @@ func (p *Planner) MakePlan(req *request.Request) (planNode, error) {
 		return nil, ErrMissingQueryOrMutation
 	}
 
-	// Set exhaustive flag from operation directives
 	p.exhaustive = operation.Directives.Exhaustive
 
 	m, err := mapper.ToOperation(p.ctx, p.db, operation)
