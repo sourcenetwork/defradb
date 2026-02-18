@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_GatesP2PCollectionCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
+func TestNAC_GatesP2PDocumentAdd_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -50,6 +50,12 @@ func TestNAC_GatesP2PCollectionCreate_AuthorizedIdentity_AllowAccess(t *testing.
 						name: String
 					}
 				`,
+			},
+			&action.CreateDoc{
+				Identity: testUtils.ClientIdentity(1),
+				DocMap: map[string]any{
+					"name": "Shahzad Lone",
+				},
 			},
 			testUtils.ConnectPeers{
 				Identity:     testUtils.ClientIdentity(1),
@@ -58,10 +64,12 @@ func TestNAC_GatesP2PCollectionCreate_AuthorizedIdentity_AllowAccess(t *testing.
 			},
 
 			// This should work as the identity is authorized.
-			testUtils.AddCollectionSubscription{
-				Identity:      testUtils.ClientIdentity(1),
-				NodeID:        1,
-				CollectionIDs: []int{0},
+			testUtils.AddDocumentSubscription{
+				Identity: testUtils.ClientIdentity(1),
+				NodeID:   1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
 			},
 		},
 	}
@@ -69,7 +77,7 @@ func TestNAC_GatesP2PCollectionCreate_AuthorizedIdentity_AllowAccess(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesP2PCollectionCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesP2PDocumentAdd_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -98,6 +106,12 @@ func TestNAC_GatesP2PCollectionCreate_NoIdentity_NotAuthorizedError(t *testing.T
 						name: String
 					}
 				`,
+			},
+			&action.CreateDoc{
+				Identity: testUtils.ClientIdentity(1),
+				DocMap: map[string]any{
+					"name": "Shahzad Lone",
+				},
 			},
 			testUtils.ConnectPeers{
 				Identity:     testUtils.ClientIdentity(1),
@@ -106,11 +120,13 @@ func TestNAC_GatesP2PCollectionCreate_NoIdentity_NotAuthorizedError(t *testing.T
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			testUtils.AddCollectionSubscription{
-				Identity:      testUtils.NoIdentity(),
-				NodeID:        1,
-				CollectionIDs: []int{0},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionAddPerm),
+			testUtils.AddDocumentSubscription{
+				Identity: testUtils.NoIdentity(),
+				NodeID:   1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentAddPerm),
 			},
 		},
 	}
@@ -118,7 +134,7 @@ func TestNAC_GatesP2PCollectionCreate_NoIdentity_NotAuthorizedError(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesP2PCollectionCreate_WrongIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesP2PDocumentAdd_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -148,6 +164,12 @@ func TestNAC_GatesP2PCollectionCreate_WrongIdentity_NotAuthorizedError(t *testin
 					}
 				`,
 			},
+			&action.CreateDoc{
+				Identity: testUtils.ClientIdentity(1),
+				DocMap: map[string]any{
+					"name": "Shahzad Lone",
+				},
+			},
 			testUtils.ConnectPeers{
 				Identity:     testUtils.ClientIdentity(1),
 				SourceNodeID: 1,
@@ -155,11 +177,13 @@ func TestNAC_GatesP2PCollectionCreate_WrongIdentity_NotAuthorizedError(t *testin
 			},
 
 			// Wrong user/identity will also not be authorized.
-			testUtils.AddCollectionSubscription{
-				Identity:      testUtils.ClientIdentity(2),
-				NodeID:        1,
-				CollectionIDs: []int{0},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionAddPerm),
+			testUtils.AddDocumentSubscription{
+				Identity: testUtils.ClientIdentity(2),
+				NodeID:   1,
+				DocIDs: []state.ColDocIndex{
+					state.NewColDocIndex(0, 0),
+				},
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentAddPerm),
 			},
 		},
 	}

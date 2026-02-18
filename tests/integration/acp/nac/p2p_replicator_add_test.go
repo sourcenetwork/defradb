@@ -20,7 +20,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_GatesP2PReplicatorCreate_AuthorizedIdentity_AllowAccess(t *testing.T) {
+func TestNAC_GatesP2PReplicatorAdd_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -53,7 +53,7 @@ func TestNAC_GatesP2PReplicatorCreate_AuthorizedIdentity_AllowAccess(t *testing.
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesP2PReplicatorCreate_NoIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesP2PReplicatorAdd_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Doing this in the beggining is important to start all nodes with NAC enabled.
@@ -79,7 +79,7 @@ func TestNAC_GatesP2PReplicatorCreate_NoIdentity_NotAuthorizedError(t *testing.T
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesP2PReplicatorCreate_WrongIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesP2PReplicatorAdd_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			// Doing this in the beggining is important to start all nodes with NAC enabled.

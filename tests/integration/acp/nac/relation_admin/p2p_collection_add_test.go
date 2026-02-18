@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_AdminRelation_CanP2PDocumentCreate(t *testing.T) {
+func TestNAC_AdminRelation_CanP2PCollectionAdd(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -51,12 +51,6 @@ func TestNAC_AdminRelation_CanP2PDocumentCreate(t *testing.T) {
 					}
 				`,
 			},
-			&action.CreateDoc{
-				Identity: testUtils.ClientIdentity(1),
-				DocMap: map[string]any{
-					"name": "Shahzad Lone",
-				},
-			},
 			testUtils.ConnectPeers{
 				Identity:     testUtils.ClientIdentity(1),
 				SourceNodeID: 1,
@@ -64,13 +58,11 @@ func TestNAC_AdminRelation_CanP2PDocumentCreate(t *testing.T) {
 			},
 
 			// This user, can not perform this gated operation yet.
-			testUtils.AddDocumentSubscription{
-				Identity: testUtils.ClientIdentity(2),
-				NodeID:   1,
-				DocIDs: []state.ColDocIndex{
-					state.NewColDocIndex(0, 0),
-				},
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PDocumentAddPerm),
+			testUtils.AddCollectionSubscription{
+				Identity:      testUtils.ClientIdentity(2),
+				NodeID:        1,
+				CollectionIDs: []int{0},
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeP2PCollectionAddPerm),
 			},
 
 			// Grant access to user.
@@ -82,12 +74,10 @@ func TestNAC_AdminRelation_CanP2PDocumentCreate(t *testing.T) {
 			},
 
 			// This user, can now perform this gated operation.
-			testUtils.AddDocumentSubscription{
-				Identity: testUtils.ClientIdentity(2),
-				NodeID:   1,
-				DocIDs: []state.ColDocIndex{
-					state.NewColDocIndex(0, 0),
-				},
+			testUtils.AddCollectionSubscription{
+				Identity:      testUtils.ClientIdentity(2),
+				NodeID:        1,
+				CollectionIDs: []int{0},
 			},
 		},
 	}
