@@ -151,13 +151,13 @@ var RequiredResourcePermissionsForNode = []string{
 	"p2p-peer-info",
 	"p2p-peer-connect",
 	"p2p-peer-active",
-	"p2p-replicator-create",
+	"p2p-replicator-add",
 	"p2p-replicator-delete",
 	"p2p-replicator-list",
-	"p2p-collection-create",
+	"p2p-collection-add",
 	"p2p-collection-delete",
 	"p2p-collection-list",
-	"p2p-document-create",
+	"p2p-document-add",
 	"p2p-document-delete",
 	"p2p-document-list",
 	"p2p-sync-collection-versions",
@@ -240,19 +240,19 @@ resources:
     expr: admin
   - name: p2p-peer-active
     expr: admin
-  - name: p2p-replicator-create
+  - name: p2p-replicator-add
     expr: admin
   - name: p2p-replicator-delete
     expr: admin
   - name: p2p-replicator-list
     expr: admin
-  - name: p2p-collection-create
+  - name: p2p-collection-add
     expr: admin
   - name: p2p-collection-delete
     expr: admin
   - name: p2p-collection-list
     expr: admin
-  - name: p2p-document-create
+  - name: p2p-document-add
     expr: admin
   - name: p2p-document-delete
     expr: admin
