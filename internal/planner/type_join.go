@@ -596,15 +596,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocsReferencingSecondaryDoc() e
 	return nil
 }
 
-func (r *primaryObjectsRetriever) collectDocs(numDocs int) ([]core.Doc, error) {
-	return r.collectDocsWithLimit(numDocs, false)
-}
-
-func (r *primaryObjectsRetriever) collectDocsUnlimited() ([]core.Doc, error) {
-	return r.collectDocsWithLimit(0, true)
-}
-
-func (r *primaryObjectsRetriever) collectDocsWithLimit(numDocs int, removeLimit bool) ([]core.Doc, error) {
+func (r *primaryObjectsRetriever) collectDocs(removeLimit bool) ([]core.Doc, error) {
 	p := r.primarySide.plan
 	// If the primary side is a multiScanNode, we need to get the source node, as we are the only
 	// consumer (one, not multiple) of it.
@@ -632,7 +624,7 @@ func (r *primaryObjectsRetriever) collectDocsWithLimit(numDocs int, removeLimit 
 		return nil, NewErrSubTypeInit(err)
 	}
 
-	docs := make([]core.Doc, 0, numDocs)
+	var docs []core.Doc
 
 	for {
 		hasValue, err := p.Next()
@@ -651,7 +643,6 @@ func (r *primaryObjectsRetriever) collectDocsWithLimit(numDocs int, removeLimit 
 		docs = append(docs, p.Value())
 	}
 
-	// Restore original limit
 	if limitN != nil {
 		limitN.limit = oldLimit
 	}
@@ -697,7 +688,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	if r.exhaustive && r.isOrderingByRelation() {
 		originalLimit := r.getLimit()
 
-		docs, err = r.collectDocsUnlimited()
+		docs, err = r.collectDocs(true)
 		if err != nil {
 			r.primaryScan.fetcher = oldFetcher
 			r.primaryScan.index = oldIndex
@@ -725,7 +716,7 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 			docs = docs[:originalLimit]
 		}
 	} else {
-		docs, err = r.collectDocs(0)
+		docs, err = r.collectDocs(false)
 		if err != nil {
 			r.primaryScan.fetcher = oldFetcher
 			r.primaryScan.index = oldIndex
