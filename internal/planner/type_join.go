@@ -18,6 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
+	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/keys"
@@ -694,17 +695,14 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 	// If exhaustive mode is enabled and ordering involves a relation field,
 	// we need to fetch all docs (without limit) to correctly identify orphans.
 	if r.exhaustive && r.isOrderingByRelation() {
-		// Get the original limit so we can re-apply it after merging orphans
 		originalLimit := r.getLimit()
 
-		// Fetch ALL docs with the ordering relation (no limit)
 		docs, err = r.collectDocsUnlimited()
 		if err != nil {
-			r.primaryScan.fetcher.Close()
 			r.primaryScan.fetcher = oldFetcher
 			r.primaryScan.index = oldIndex
 			r.primaryScan.ordering = oldOrdering
-			return nil, err
+			return nil, errors.Join(err, r.primaryScan.fetcher.Close())
 		}
 
 		err = r.primaryScan.fetcher.Close()
@@ -715,7 +713,6 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 			return nil, err
 		}
 
-		// Now fetch orphans and merge
 		docs, err = r.mergeOrphanDocs(docs)
 		if err != nil {
 			r.primaryScan.fetcher = oldFetcher
@@ -724,18 +721,16 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 			return nil, err
 		}
 
-		// Re-apply the limit
 		if originalLimit > 0 && uint64(len(docs)) > originalLimit {
 			docs = docs[:originalLimit]
 		}
 	} else {
 		docs, err = r.collectDocs(0)
 		if err != nil {
-			r.primaryScan.fetcher.Close()
 			r.primaryScan.fetcher = oldFetcher
 			r.primaryScan.index = oldIndex
 			r.primaryScan.ordering = oldOrdering
-			return nil, err
+			return nil, errors.Join(err, r.primaryScan.fetcher.Close())
 		}
 
 		err = r.primaryScan.fetcher.Close()
@@ -815,9 +810,6 @@ func (r *primaryObjectsRetriever) mergeOrphanDocs(docs []core.Doc) ([]core.Doc, 
 		return nil, err
 	}
 
-	// Merge orphans based on sort direction:
-	// ASC: orphans (NULL) come first
-	// DESC: orphans (NULL) come last
 	if *direction == mapper.ASC {
 		return append(orphanDocs, docs...), nil
 	}
@@ -828,7 +820,6 @@ func (r *primaryObjectsRetriever) mergeOrphanDocs(docs []core.Doc) ([]core.Doc, 
 func (r *primaryObjectsRetriever) getOrderingInfo() (*mapper.SortDirection, int) {
 	for _, order := range r.ordering {
 		if len(order.FieldIndexes) > 1 {
-			// First index is the relation field
 			return &order.Direction, order.FieldIndexes[0]
 		}
 	}
@@ -924,8 +915,8 @@ func (join *invertibleTypeJoin) Next() (bool, error) {
 	if firstSide.isPrimary() {
 		return join.fetchRelatedSecondaryDocWithChildren(firstSide.plan.Value())
 	} else {
-		primaryDocs, secondaryDoc, err := fetchPrimaryDocsReferencingSecondaryDoc(
-			join.getPrimarySide(), join.getSecondarySide(), firstSide.plan.Value(), join.subFilter, join.subOrdering, join.exhaustive)
+		primaryDocs, secondaryDoc, err := fetchPrimaryDocsReferencingSecondaryDoc(join.getPrimarySide(),
+			join.getSecondarySide(), firstSide.plan.Value(), join.subFilter, join.subOrdering, join.exhaustive)
 		if err != nil {
 			return false, err
 		}

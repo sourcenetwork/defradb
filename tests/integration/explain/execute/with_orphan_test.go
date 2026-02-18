@@ -108,7 +108,7 @@ func TestExecuteExplainWithOrphanNode_WithSecondaryParent_ReportsMetrics(t *test
 
 			&action.CreateDoc{
 				CollectionID: 0,
-				Doc: `{"title": "LinkedBook"}`,
+				Doc:          `{"title": "LinkedBook"}`,
 			},
 
 			&action.CreateDoc{
