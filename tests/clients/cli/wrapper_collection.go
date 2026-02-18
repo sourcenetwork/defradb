@@ -115,7 +115,7 @@ func makeDocCreateArgs(
 	c *Collection,
 	opts ...options.Enumerable[options.CollectionCreateOptions],
 ) []string {
-	args := []string{"client", "collection", "add"}
+	args := []string{"client", "collection", "create"}
 	args = append(args, "--name", c.Version().Name)
 
 	opt := utils.NewOptions(opts...)
