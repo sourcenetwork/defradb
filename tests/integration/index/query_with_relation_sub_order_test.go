@@ -881,7 +881,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryASC_ShouldIn
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Secondary parent: orphanNode scans books to find orphans, join fetches publisher + book
+				// root: 1 docFetch (orphan scan, no index on Book). subType: 1 doc + 1 index (Publisher via year index).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
@@ -939,7 +939,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentSecondaryDESC_ShouldI
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Secondary parent: orphanNode scans books to find orphans, join fetches publisher + book
+				// root: 1 docFetch (orphan scan, no index on Book). subType: 1 doc + 1 index (Publisher via year index).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
@@ -999,7 +999,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryASC_ShouldIncl
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Primary parent: orphanNode uses index to find orphan, join fetches book + publisher
+				// root: 1 doc + 1 index (orphan via book_id IS NULL). subType: 1 doc + 1 index (Book via rating index).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(1).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},
@@ -1059,7 +1059,7 @@ func TestQueryWithOrderByRelationField_ExhaustiveWithParentPrimaryDESC_ShouldInc
 			},
 			&action.Request{
 				Request: makeExplainQuery(req),
-				// Primary parent: orphanNode uses index to find orphan, join fetches book + publisher
+				// root: 1 doc + 1 index (orphan via book_id IS NULL). subType: 1 doc + 1 index (Book via rating index).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(1).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},

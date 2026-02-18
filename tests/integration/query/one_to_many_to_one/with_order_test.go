@@ -15,13 +15,10 @@ import (
 
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
-	"github.com/sourcenetwork/defradb/tests/multiplier"
 )
 
 func TestMultipleOrderByWithDepthGreaterThanOne(t *testing.T) {
 	test := testUtils.TestCase{
-		// With indexes, books without publishers are excluded because the join is inverted.
-		MultiplierExcludes: []multiplier.Name{multiplier.SecondaryIndex},
 		Actions: []any{
 			gqlSchemaOneToManyToOne(),
 			createDocsWith6BooksAnd5Publishers(),
