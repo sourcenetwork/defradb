@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// P2PReplicatorCreate executes the `client p2p replicator set` command.
-type P2PReplicatorCreate struct {
+// P2PReplicatorAdd executes the `client p2p replicator add` command.
+type P2PReplicatorAdd struct {
 	stateful
 	augmented
 
@@ -31,9 +31,9 @@ type P2PReplicatorCreate struct {
 	ExpectError string
 }
 
-var _ Action = (*P2PReplicatorCreate)(nil)
+var _ Action = (*P2PReplicatorAdd)(nil)
 
-func (a *P2PReplicatorCreate) Execute() {
+func (a *P2PReplicatorAdd) Execute() {
 	args := []string{"client", "p2p", "replicator", "add"}
 
 	if a.Collections != nil {

@@ -457,7 +457,7 @@ defradb client p2p info --url localhost:9182
 Set *nodeA* to actively replicate the Article collection to *nodeB*:
 
 ```shell
-defradb client p2p replicator create -c Article <nodeB_peer_info_json>
+defradb client p2p replicator add -c Article <nodeB_peer_info_json>
 ```
 
 As we add or update documents in the Article collection on *nodeA*, they will be actively pushed to *nodeB*. Note that changes to *nodeB* will still be passively published back to *nodeA*, via pubsub.

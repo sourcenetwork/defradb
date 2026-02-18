@@ -29,7 +29,7 @@ func TestReplicatorCreate_WithNonExistentCollection_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"Order"}, // Non-existent collection
 				ExpectError: "failed to get collections for replicator",
@@ -52,7 +52,7 @@ func TestReplicatorSet_WithInvalidPeerID_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addressWithInvalidPeerID},
 				Collections: []string{"User"},
 				ExpectError: "invalid value \"invalid-peer-id\" for protocol p2",
@@ -75,7 +75,7 @@ func TestReplicatorSet_WithInvalidIP_ShouldFail(t *testing.T) {
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addressWithInvalidIP},
 				Collections: []string{"User"},
 				ExpectError: "invalid value \"999.999.999.999\" for protocol ip4",
@@ -98,7 +98,7 @@ func TestReplicatorSet_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testin
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
@@ -124,7 +124,7 @@ func TestReplicatorSet_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *tes
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User", "Order"},
 			},
@@ -150,7 +150,7 @@ func TestReplicatorSet_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(t *
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},
