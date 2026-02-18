@@ -261,7 +261,11 @@ func (n *orphanNode) fetchOrphans() error {
 
 		orphans, err = fetcher.fetchOrphans(relIDFieldName, relIDFieldMapIndex, n.join.subFilter)
 	} else {
-		orphans, err = fetcher.fetchAllExcluding(n.join.subFilter, n.join.state.encounteredDocIDs)
+		excludeIDs := make([]string, 0, len(n.join.state.encounteredDocIDs))
+		for id := range n.join.state.encounteredDocIDs {
+			excludeIDs = append(excludeIDs, id)
+		}
+		orphans, err = fetcher.fetchAllExcluding(n.join.subFilter, excludeIDs)
 	}
 
 	if err != nil {

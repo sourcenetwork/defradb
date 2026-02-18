@@ -11,8 +11,6 @@
 package planner
 
 import (
-	"slices"
-
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
@@ -485,7 +483,7 @@ type joinIterationState struct {
 	docsToYield []core.Doc
 	// encounteredDocIDs tracks which secondary docs we've already processed
 	// to avoid yielding duplicates when multiple primary docs reference the same secondary.
-	encounteredDocIDs []string
+	encounteredDocIDs map[string]struct{}
 }
 
 // reset clears all iteration state for a fresh iteration.
@@ -802,10 +800,13 @@ func (join *invertibleTypeJoin) fetchRelatedSecondaryDocWithChildren(primaryDoc 
 	if secondSide.isParent {
 		// child primary docs reference the same secondary parent doc. So if we already encountered
 		// the secondary parent doc, we continue to the next primary doc.
-		if slices.Contains(join.state.encounteredDocIDs, secondaryDocID) {
+		if _, exists := join.state.encounteredDocIDs[secondaryDocID]; exists {
 			return join.Next()
 		}
-		join.state.encounteredDocIDs = append(join.state.encounteredDocIDs, secondaryDocID)
+		if join.state.encounteredDocIDs == nil {
+			join.state.encounteredDocIDs = make(map[string]struct{})
+		}
+		join.state.encounteredDocIDs[secondaryDocID] = struct{}{}
 	}
 
 	secondaryDocOpt, err := fetchDocWithIDAndItsSubDocs(secondSide.plan, secondaryDocID)
