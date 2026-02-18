@@ -61,9 +61,9 @@ const (
 	// maxPubsubMessageSize is the maximum size of a pubsub message (libp2p default is 1MB).
 	maxPubsubMessageSize = 1000 * 1024
 	// pubsubBatchSize is the number of pubsub messages to batch before publishing.
-	pubsubBatchSize = 50
+	pubsubBatchSize = 1
 	// pubsubBatchTimeout is the maximum time to wait for a pubsub batch to fill.
-	pubsubBatchTimeout = 100 * time.Millisecond
+	pubsubBatchTimeout = 10 * time.Millisecond
 	// pubsubBatchWorkers is the number of concurrent pubsub batch workers.
 	pubsubBatchWorkers = 32
 	// dagSyncWorkers limits the number of concurrent DAG sync workers.
@@ -228,7 +228,7 @@ func New(
 		retryIntervals:       db.RetryIntervals(),
 		syncBlockLinkTimeout: db.P2PBlockSyncTimeout(),
 		collectionCache:      make(map[string]*cachedCollection),
-		msgQueue:             make(chan *protocol.PushLogRequest, 5000),
+		msgQueue:             make(chan *protocol.PushLogRequest, 50000),
 		processQueue:         newProcessQueue(),
 	}
 
@@ -620,6 +620,10 @@ func (p *P2P) pubSubMessageHandler(from string, topic string, msg []byte) ([]byt
 	case <-p.ctx.Done():
 		return nil, p.ctx.Err()
 	default:
+		log.Info("Message queue full, dropping pushlog request",
+			corelog.String("CollectionID", req.CollectionID),
+			corelog.Int("QueueLen", len(p.msgQueue)),
+			corelog.Int("DocumentCount", len(req.Documents)))
 	}
 
 	return nil, nil
@@ -648,9 +652,9 @@ func (p *P2P) processDocuments(ctx context.Context, req *protocol.PushLogRequest
 		return ctx.Err()
 	}
 
-	log.Info("Processing pushlog request",
-		corelog.Int("DocumentCount", len(req.Documents)),
-		corelog.String("CollectionID", req.CollectionID))
+	// log.Info("Processing pushlog request",
+	// 	corelog.Int("DocumentCount", len(req.Documents)),
+	// 	corelog.String("CollectionID", req.CollectionID))
 
 	hasCollection, err := p.hasCollection(ctx, req.CollectionID)
 	if err != nil {
@@ -696,23 +700,21 @@ func (p *P2P) processMessageBatch(ctx context.Context, req *protocol.PushLogRequ
 	return nil
 }
 
+// parsedDocInfo holds pre-parsed CAR data for a document to avoid re-parsing on retry.
+type parsedDocInfo struct {
+	doc           *protocol.DocumentInfo
+	headCID       cid.Cid
+	regularBlocks []blocks.Block
+	encBlocks     []blocks.Block
+}
+
 // processCARBatch processes multiple CAR documents in a single transaction.
 func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest, docs []*protocol.DocumentInfo) error {
-	var allRegularBlocks []blocks.Block
-	var allEncBlocks []blocks.Block
-	var mergeEvts []event.Merge
-	var validDocs []*protocol.DocumentInfo
-
-	bstore := p.db.Multistore().Blockstore()
-
+	var allParsed []parsedDocInfo
 	for _, doc := range docs {
 		headCID, err := cid.Cast(doc.CID)
 		if err != nil {
 			log.ErrorE("Failed to parse CID", err, corelog.String("DocID", doc.DocID))
-			continue
-		}
-
-		if isMerged, err := bstore.IsMerged(ctx, headCID); err == nil && isMerged {
 			continue
 		}
 
@@ -722,23 +724,82 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 			continue
 		}
 
-		allRegularBlocks = append(allRegularBlocks, parsed.regularBlocks...)
-		allEncBlocks = append(allEncBlocks, parsed.encBlocks...)
-
-		mergeEvts = append(mergeEvts, event.Merge{
-			DocID:        doc.DocID,
-			ByPeer:       req.SenderID,
-			FromPeer:     req.Creator,
-			Cid:          headCID,
-			CollectionID: req.CollectionID,
+		allParsed = append(allParsed, parsedDocInfo{
+			doc:           doc,
+			headCID:       headCID,
+			regularBlocks: parsed.regularBlocks,
+			encBlocks:     parsed.encBlocks,
 		})
-		validDocs = append(validDocs, doc)
 	}
 
-	if len(mergeEvts) == 0 {
+	if len(allParsed) == 0 {
 		return nil
 	}
 
+	bstore := p.db.Multistore().Blockstore()
+	maxRetries := p.db.MaxTxnRetries()
+	var lastErr error
+
+	for attempt := range maxRetries {
+		// Re-check IsMerged on each retry. Docs merged by concurrent
+		// transactions since the last attempt should be skipped.
+		var regularBlocks []blocks.Block
+		var encBlocks []blocks.Block
+		var mergeEvts []event.Merge
+		var validDocs []*protocol.DocumentInfo
+
+		for _, pd := range allParsed {
+			if isMerged, err := bstore.IsMerged(ctx, pd.headCID); err == nil && isMerged {
+				continue
+			}
+			regularBlocks = append(regularBlocks, pd.regularBlocks...)
+			encBlocks = append(encBlocks, pd.encBlocks...)
+			mergeEvts = append(mergeEvts, event.Merge{
+				DocID:        pd.doc.DocID,
+				ByPeer:       req.SenderID,
+				FromPeer:     req.Creator,
+				Cid:          pd.headCID,
+				CollectionID: req.CollectionID,
+			})
+			validDocs = append(validDocs, pd.doc)
+		}
+
+		if len(mergeEvts) == 0 {
+			return nil
+		}
+
+		lastErr = p.tryProcessCARBatch(ctx, req, regularBlocks, encBlocks, mergeEvts, validDocs)
+		if lastErr == nil {
+			return nil
+		}
+		if errors.Is(lastErr, corekv.ErrTxnConflict) || strings.Contains(lastErr.Error(), "transaction conflict") {
+			if attempt < maxRetries-1 {
+				backoff := time.Duration(10*(1<<attempt)) * time.Millisecond
+				log.Info("Retrying batch merge after transaction conflict",
+					corelog.Int("attempt", attempt+1),
+					corelog.Int("maxRetries", maxRetries),
+					corelog.String("backoff", backoff.String()))
+				time.Sleep(backoff)
+			}
+			continue
+		}
+		// Non-retryable error
+		return lastErr
+	}
+
+	log.ErrorE("Batch merge failed after all retries", lastErr)
+	return lastErr
+}
+
+// tryProcessCARBatch attempts a single transaction for CAR batch processing.
+func (p *P2P) tryProcessCARBatch(
+	ctx context.Context,
+	req *protocol.PushLogRequest,
+	allRegularBlocks []blocks.Block,
+	allEncBlocks []blocks.Block,
+	mergeEvts []event.Merge,
+	validDocs []*protocol.DocumentInfo,
+) error {
 	headsCtx := coreblock.InitHeadsCache(ctx)
 
 	txn := p.db.Rootstore().NewTxn(false)
@@ -780,15 +841,14 @@ func (p *P2P) processCARBatch(ctx context.Context, req *protocol.PushLogRequest,
 
 	postCommit, err := p.db.MergeBatchWithTxn(wrappedCtx, mergeEvts)
 	if err != nil {
-		log.ErrorE("Batch merge failed", err)
 		return err
 	}
 
 	if err := txn.Commit(); err != nil {
-		if !strings.Contains(err.Error(), "discarded") {
-			log.ErrorE("Batch commit failed", err)
-			return err
+		if strings.Contains(err.Error(), "discarded") {
+			return nil
 		}
+		return err
 	}
 
 	if postCommit != nil {
@@ -857,11 +917,6 @@ func (p *P2P) processDocument(
 		return err
 	}
 
-	txn := p.db.Rootstore().NewTxn(false)
-	defer txn.Discard()
-
-	txnCtx := corekv.SetCtxTxn(ctx, txn)
-
 	mergeEvt := event.Merge{
 		DocID:        doc.DocID,
 		ByPeer:       req.SenderID,
@@ -870,37 +925,74 @@ func (p *P2P) processDocument(
 		CollectionID: req.CollectionID,
 	}
 
-	wrappedTxn := p.db.WrapCorekvTxn(txn)
-	wrappedCtx := p.db.InitContext(txnCtx, wrappedTxn)
+	maxRetries := p.db.MaxTxnRetries()
+	var lastErr error
 
-	postCommit, err := p.db.MergeBatchWithTxn(wrappedCtx, []event.Merge{mergeEvt})
-	if err != nil {
-		return err
-	}
-
-	if err := txn.Commit(); err != nil {
-		if !strings.Contains(err.Error(), "discarded") {
-			return err
+	for attempt := range maxRetries {
+		// Re-check IsMerged on retry — a concurrent transaction may have
+		// merged this document since the last attempt.
+		if attempt > 0 {
+			if isMerged, err := p.db.Multistore().Blockstore().IsMerged(ctx, headCID); err == nil && isMerged {
+				return nil
+			}
 		}
+
+		lastErr = func() error {
+			txn := p.db.Rootstore().NewTxn(false)
+			defer txn.Discard()
+
+			txnCtx := corekv.SetCtxTxn(ctx, txn)
+			wrappedTxn := p.db.WrapCorekvTxn(txn)
+			wrappedCtx := p.db.InitContext(txnCtx, wrappedTxn)
+
+			postCommit, err := p.db.MergeBatchWithTxn(wrappedCtx, []event.Merge{mergeEvt})
+			if err != nil {
+				return err
+			}
+
+			if err := txn.Commit(); err != nil {
+				if strings.Contains(err.Error(), "discarded") {
+					return nil
+				}
+				return err
+			}
+
+			if postCommit != nil {
+				postCommit()
+			}
+
+			updateEvt := event.Update{
+				DocID:        doc.DocID,
+				Cid:          headCID,
+				CollectionID: req.CollectionID,
+				Block:        doc.Block,
+				IsRelay:      true,
+			}
+			p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
+			if err := p.SendUpdate(updateEvt); err != nil {
+				log.ErrorE("Failed to send update after sync", err)
+			}
+			return nil
+		}()
+
+		if lastErr == nil {
+			return nil
+		}
+		if errors.Is(lastErr, corekv.ErrTxnConflict) || strings.Contains(lastErr.Error(), "transaction conflict") {
+			if attempt < maxRetries-1 {
+				backoff := time.Duration(10*(1<<attempt)) * time.Millisecond
+				log.Info("Retrying document merge after transaction conflict",
+					corelog.Int("attempt", attempt+1),
+					corelog.String("DocID", doc.DocID),
+					corelog.String("backoff", backoff.String()))
+				time.Sleep(backoff)
+			}
+			continue
+		}
+		return lastErr
 	}
 
-	if postCommit != nil {
-		postCommit()
-	}
-
-	updateEvt := event.Update{
-		DocID:        doc.DocID,
-		Cid:          headCID,
-		CollectionID: req.CollectionID,
-		Block:        doc.Block,
-		IsRelay:      true,
-	}
-	p.db.Events().Publish(event.NewMessage(event.UpdateName, updateEvt))
-	if err := p.SendUpdate(updateEvt); err != nil {
-		log.ErrorE("Failed to send update after sync", err)
-	}
-
-	return nil
+	return lastErr
 }
 
 // processDocumentsAsReplicator processes documents from a replicator request.
