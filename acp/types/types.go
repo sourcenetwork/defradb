@@ -101,7 +101,7 @@ const (
 	NodeP2PPeerInfo
 	NodeP2PPeerConnectPerm
 	NodeP2PPeerActivePerm
-	NodeP2PReplicatorCreatePerm
+	NodeP2PReplicatorAddPerm
 	NodeP2PReplicatorDeletePerm
 	NodeP2PReplicatorListPerm
 	NodeP2PCollectionCreatePerm

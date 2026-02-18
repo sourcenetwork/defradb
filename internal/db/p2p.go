@@ -67,7 +67,7 @@ func (db *DB) AddReplicator(
 ) error {
 	opt := utils.NewOptions(opts...)
 
-	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PReplicatorCreatePerm); err != nil {
+	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeP2PReplicatorAddPerm); err != nil {
 		return err
 	}
 

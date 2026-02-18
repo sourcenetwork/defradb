@@ -80,7 +80,7 @@ type P2P interface {
 		opts ...options.Enumerable[options.ListP2PCollectionsOptions],
 	) ([]string, error)
 
-	// AddP2PDocuments creates the given docIDs to the P2P system and
+	// AddP2PDocuments adds the given docIDs to the P2P system and
 	// subscribes to their topics. It will error if any of the provided
 	// docIDs are invalid.
 	AddP2PDocuments(
