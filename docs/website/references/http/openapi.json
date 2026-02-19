@@ -1671,7 +1671,7 @@
         "/collections/{name}/indexes/{index}": {
             "delete": {
                 "description": "Delete a secondary index",
-                "operationId": "index_drop",
+                "operationId": "index_delete",
                 "parameters": [
                     {
                         "description": "Collection name",

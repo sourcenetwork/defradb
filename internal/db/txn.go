@@ -288,12 +288,12 @@ func (txn *Txn) GetCollections(
 	return txn.db.GetCollections(ctx, opts...)
 }
 
-func (txn *Txn) GetAllIndexes(
+func (txn *Txn) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx = InitContext(ctx, txn)
-	return txn.db.GetAllIndexes(ctx, opts...)
+	return txn.db.ListIndexes(ctx, opts...)
 }
 
 func (txn *Txn) ListAllEncryptedIndexes(

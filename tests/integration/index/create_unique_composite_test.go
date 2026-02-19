@@ -54,7 +54,7 @@ func TestCreateUniqueCompositeIndex_IfFieldValuesAreNotUnique_ReturnError(t *tes
 				Unique:        true,
 				ExpectedError: "can not index a doc's field(s) that violates unique index.",
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -146,7 +146,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreUnique_Succeed(t *testing.T)
 				IndexName:    "name_age_unique_index",
 				Unique:       true,
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -218,7 +218,7 @@ func TestUniqueCompositeIndexCreate_IfFieldValuesAreOrdered_Succeed(t *testing.T
 				IndexName: "name_age_unique_index",
 				Unique:    true,
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{

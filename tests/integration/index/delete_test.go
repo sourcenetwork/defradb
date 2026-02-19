@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
+func TestIndexDelete_ShouldNotHinderQuerying(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -37,7 +37,7 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			&action.DropIndex{
+			&action.DeleteIndex{
 				IndexName: "User_name_ASC",
 			},
 			&action.Request{
@@ -63,7 +63,7 @@ func TestIndexDrop_ShouldNotHinderQuerying(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
+func TestIndexDelete_ShouldRemoveIndexFromCollection(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -82,10 +82,10 @@ func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			&action.DropIndex{
+			&action.DeleteIndex{
 				IndexName: "User_age_ASC",
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -97,10 +97,10 @@ func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
 					},
 				},
 			},
-			&action.DropIndex{
+			&action.DeleteIndex{
 				IndexName: "User_name_ASC",
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID:    0,
 				ExpectedIndexes: []client.IndexDescription{},
 			},
@@ -110,7 +110,7 @@ func TestIndexDrop_ShouldRemoveIndexFromCollection(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
+func TestIndexDelete_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -129,7 +129,7 @@ func TestIndexDrop_IfIndexDoesNotExist_ReturnError(t *testing.T) {
 						"age":	21
 					}`,
 			},
-			&action.DropIndex{
+			&action.DeleteIndex{
 				CollectionID:  0,
 				IndexName:     "non_existing_index",
 				ExpectedError: "index with name doesn't exists. Name: non_existing_index",

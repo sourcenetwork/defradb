@@ -35,8 +35,8 @@ import (
 	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
-// getAllIndexDescriptions returns all the index descriptions in the database.
-func (db *DB) getAllIndexDescriptions(
+// listIndexDescriptions returns all the index descriptions in the database.
+func (db *DB) listIndexDescriptions(
 	ctx context.Context,
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	collections, err := description.GetCollections(ctx)
@@ -353,22 +353,22 @@ func (c *collection) indexExistingDocs(
 	})
 }
 
-// DropIndex removes an index from the collection.
+// DeleteIndex removes an index from the collection.
 //
 // The index will be removed from the system store.
 //
 // All index artifacts for existing documents related the index will be removed.
-func (c *collection) DropIndex(
+func (c *collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDropIndexOptions],
+	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
 	opt := utils.NewOptions(opts...)
 
-	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexDropPerm); err != nil {
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexDeletePerm); err != nil {
 		return err
 	}
 
@@ -378,14 +378,14 @@ func (c *collection) DropIndex(
 	}
 	defer txn.Discard()
 
-	err = c.dropIndex(ctx, indexName)
+	err = c.deleteIndex(ctx, indexName)
 	if err != nil {
 		return err
 	}
 	return txn.Commit()
 }
 
-func (c *collection) dropIndex(ctx context.Context, indexName string) error {
+func (c *collection) deleteIndex(ctx context.Context, indexName string) error {
 	var didFind bool
 	for i := range c.indexes {
 		if c.indexes[i].Name() == indexName {
@@ -420,10 +420,10 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 	return nil
 }
 
-// GetIndexes returns all indexes for the collection.
-func (c *collection) GetIndexes(
+// ListIndexes returns all indexes for the collection.
+func (c *collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetIndexesOptions],
+	opts ...options.Enumerable[options.CollectionListIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 

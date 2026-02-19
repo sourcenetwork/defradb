@@ -21,12 +21,12 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// GetIndexes will attempt to get the indexes from the given collection
+// ListIndexes will attempt to list the indexes from the given collection
 // using the collection api.
-type GetIndexes struct {
+type ListIndexes struct {
 	stateful
 
-	// NodeID may hold the ID (index) of a node to get the indexes from.
+	// NodeID may hold the ID (index) of a node to list the indexes from.
 	//
 	// If a value is not provided the indexes will be retrieved from the first node.
 	NodeID immutable.Option[int]
@@ -49,10 +49,10 @@ type GetIndexes struct {
 	ExpectedError string
 }
 
-var _ Action = (*GetIndexes)(nil)
-var _ Stateful = (*GetIndexes)(nil)
+var _ Action = (*ListIndexes)(nil)
+var _ Stateful = (*ListIndexes)(nil)
 
-func (a *GetIndexes) Execute() {
+func (a *ListIndexes) Execute() {
 	if len(a.s.Nodes) == 0 {
 		return
 	}
@@ -63,13 +63,13 @@ func (a *GetIndexes) Execute() {
 	for _, nodeID := range nodeIDs {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
 
-		opts := options.CollectionGetIndexes()
+		opts := options.CollectionListIndexes()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		actualIndexes, err := collection.GetIndexes(a.s.Ctx, opts)
+		actualIndexes, err := collection.ListIndexes(a.s.Ctx, opts)
 
 		if assertError(a.s.T, err, a.ExpectedError) {
 			expectedErrorRaised = true

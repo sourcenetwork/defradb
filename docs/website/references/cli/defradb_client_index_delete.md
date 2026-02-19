@@ -1,27 +1,27 @@
-## defradb client index drop
+## defradb client index delete
 
-Drop a collection's secondary index
+Delete a collection's secondary index
 
 ### Synopsis
 
-Drop a collection's secondary index.
+Delete a collection's secondary index.
 
 ```
-defradb client index drop -c --collection <collection> -n --name <name> [flags]
+defradb client index delete -c --collection <collection> -n --name <name> [flags]
 ```
 
 ### Examples
 
 ```
-drop the index 'UsersByName' for 'Users' collection:  
-  defradb client index drop --collection Users --name UsersByName
+delete the index 'UsersByName' for 'Users' collection:  
+  defradb client index delete --collection Users --name UsersByName
 ```
 
 ### Options
 
 ```
   -c, --collection string   Collection name
-  -h, --help                help for drop
+  -h, --help                help for delete
   -n, --name string         Index name
 ```
 

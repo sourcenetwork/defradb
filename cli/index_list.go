@@ -39,15 +39,15 @@ Otherwise, all indexes in the database will be shown.`,
 				if err != nil {
 					return err
 				}
-				indOpt := options.WithIdentity(options.CollectionGetIndexes(), identity.FromContext(cmd.Context()))
-				indexes, err := col.GetIndexes(cmd.Context(), indOpt)
+				indOpt := options.WithIdentity(options.CollectionListIndexes(), identity.FromContext(cmd.Context()))
+				indexes, err := col.ListIndexes(cmd.Context(), indOpt)
 				if err != nil {
 					return err
 				}
 				return writeJSON(cmd, indexes)
 			default:
-				opt := options.WithIdentity(options.GetAllIndexes(), identity.FromContext(cmd.Context()))
-				indexes, err := cliClient.GetAllIndexes(cmd.Context(), opt)
+				opt := options.WithIdentity(options.ListIndexes(), identity.FromContext(cmd.Context()))
+				indexes, err := cliClient.ListIndexes(cmd.Context(), opt)
 				if err != nil {
 					return err
 				}

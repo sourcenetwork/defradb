@@ -27,19 +27,19 @@ func TestHasIndexActions_WithCreateIndex_ReturnsTrue(t *testing.T) {
 	assert.True(t, hasIndexActions(actions))
 }
 
-func TestHasIndexActions_WithDropIndex_ReturnsTrue(t *testing.T) {
+func TestHasIndexActions_WithDeleteIndex_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
-		&action.DropIndex{CollectionID: 0, IndexName: "User_name_idx"},
+		&action.DeleteIndex{CollectionID: 0, IndexName: "User_name_idx"},
 	}
 
 	assert.True(t, hasIndexActions(actions))
 }
 
-func TestHasIndexActions_WithGetIndexes_ReturnsTrue(t *testing.T) {
+func TestHasIndexActions_WithListIndexes_ReturnsTrue(t *testing.T) {
 	actions := action.Actions{
 		&action.AddSchema{Schema: "type User { name: String }"},
-		&action.GetIndexes{CollectionID: 0},
+		&action.ListIndexes{CollectionID: 0},
 	}
 
 	assert.True(t, hasIndexActions(actions))

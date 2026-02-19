@@ -291,17 +291,17 @@ func (c *Collection) CreateIndex(
 	return indexDescOut, nil
 }
 
-func (c *Collection) DropIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDropIndexOptions]) error {
+func (c *Collection) DeleteIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDeleteIndexOptions]) error {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	_, err := execute(ctx, c.client, "dropIndex", indexName)
+	_, err := execute(ctx, c.client, "deleteIndex", indexName)
 	return err
 }
 
-func (c *Collection) GetIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionGetIndexesOptions]) ([]client.IndexDescription, error) {
+func (c *Collection) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionListIndexesOptions]) ([]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, c.client, "getIndexes")
+	res, err := execute(ctx, c.client, "listIndexes")
 	if err != nil {
 		return nil, err
 	}

@@ -18,7 +18,7 @@ import (
 	"github.com/sourcenetwork/defradb/client"
 )
 
-func TestIndexDrop_WithExistingIndex_ShouldSucceed(t *testing.T) {
+func TestIndexDelete_WithExistingIndex_ShouldSucceed(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.SchemaAdd{
@@ -47,7 +47,7 @@ func TestIndexDrop_WithExistingIndex_ShouldSucceed(t *testing.T) {
 					},
 				},
 			},
-			&action.IndexDrop{
+			&action.IndexDelete{
 				Collection: "User",
 				Name:       "UsersByName",
 			},
@@ -61,10 +61,10 @@ func TestIndexDrop_WithExistingIndex_ShouldSucceed(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexDrop_WithUnknownCollection_ShouldReturnError(t *testing.T) {
+func TestIndexDelete_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.IndexDrop{
+			&action.IndexDelete{
 				Collection:  "NonExistentCollection",
 				Name:        "SomeIndex",
 				ExpectError: "collection not found",
@@ -75,10 +75,10 @@ func TestIndexDrop_WithUnknownCollection_ShouldReturnError(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexDrop_WithoutCollection_ShouldReturnError(t *testing.T) {
+func TestIndexDelete_WithoutCollection_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
-			&action.IndexDrop{
+			&action.IndexDelete{
 				// Collection is empty
 				Name:        "SomeIndex",
 				ExpectError: "collection not found",
@@ -89,7 +89,7 @@ func TestIndexDrop_WithoutCollection_ShouldReturnError(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexDrop_WithoutName_ShouldReturnError(t *testing.T) {
+func TestIndexDelete_WithoutName_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.SchemaAdd{
@@ -99,7 +99,7 @@ func TestIndexDrop_WithoutName_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexDrop{
+			&action.IndexDelete{
 				Collection: "User",
 				// Name is empty
 				ExpectError: "malformed document ID",
@@ -110,7 +110,7 @@ func TestIndexDrop_WithoutName_ShouldReturnError(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexDrop_WithNonExistentIndex_ShouldReturnError(t *testing.T) {
+func TestIndexDelete_WithNonExistentIndex_ShouldReturnError(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.SchemaAdd{
@@ -121,7 +121,7 @@ func TestIndexDrop_WithNonExistentIndex_ShouldReturnError(t *testing.T) {
 					}
 				`,
 			},
-			&action.IndexDrop{
+			&action.IndexDelete{
 				Collection:  "User",
 				Name:        "NonExistentIndex",
 				ExpectError: "index with name doesn't exists",
@@ -132,7 +132,7 @@ func TestIndexDrop_WithNonExistentIndex_ShouldReturnError(t *testing.T) {
 	test.Execute(t)
 }
 
-func TestIndexDrop_WithMultipleIndexes_ShouldDropOnlySpecified(t *testing.T) {
+func TestIndexDelete_WithMultipleIndexes_ShouldDropOnlySpecified(t *testing.T) {
 	test := &integration.Test{
 		Actions: []action.Action{
 			&action.SchemaAdd{
@@ -188,8 +188,8 @@ func TestIndexDrop_WithMultipleIndexes_ShouldDropOnlySpecified(t *testing.T) {
 					},
 				},
 			},
-			// Drop one index
-			&action.IndexDrop{
+			// Delete one index
+			&action.IndexDelete{
 				Collection: "User",
 				Name:       "UsersByAge",
 			},

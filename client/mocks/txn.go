@@ -1677,83 +1677,6 @@ func (_c *Txn_ExecRequest_Call) RunAndReturn(run func(ctx context.Context, reque
 	return _c
 }
 
-// GetAllIndexes provides a mock function for the type Txn
-func (_mock *Txn) GetAllIndexes(ctx context.Context, opts ...options.Enumerable[options.GetAllIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error) {
-	var tmpRet mock.Arguments
-	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, opts)
-	} else {
-		tmpRet = _mock.Called(ctx)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAllIndexes")
-	}
-
-	var r0 map[client.CollectionName][]client.IndexDescription
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.GetAllIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error)); ok {
-		return returnFunc(ctx, opts...)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.GetAllIndexesOptions]) map[client.CollectionName][]client.IndexDescription); ok {
-		r0 = returnFunc(ctx, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[client.CollectionName][]client.IndexDescription)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.GetAllIndexesOptions]) error); ok {
-		r1 = returnFunc(ctx, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Txn_GetAllIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllIndexes'
-type Txn_GetAllIndexes_Call struct {
-	*mock.Call
-}
-
-// GetAllIndexes is a helper method to define mock.On call
-//   - ctx context.Context
-//   - opts ...options.Enumerable[options.GetAllIndexesOptions]
-func (_e *Txn_Expecter) GetAllIndexes(ctx interface{}, opts ...interface{}) *Txn_GetAllIndexes_Call {
-	return &Txn_GetAllIndexes_Call{Call: _e.mock.On("GetAllIndexes",
-		append([]interface{}{ctx}, opts...)...)}
-}
-
-func (_c *Txn_GetAllIndexes_Call) Run(run func(ctx context.Context, opts ...options.Enumerable[options.GetAllIndexesOptions])) *Txn_GetAllIndexes_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []options.Enumerable[options.GetAllIndexesOptions]
-		var variadicArgs []options.Enumerable[options.GetAllIndexesOptions]
-		if len(args) > 1 {
-			variadicArgs = args[1].([]options.Enumerable[options.GetAllIndexesOptions])
-		}
-		arg1 = variadicArgs
-		run(
-			arg0,
-			arg1...,
-		)
-	})
-	return _c
-}
-
-func (_c *Txn_GetAllIndexes_Call) Return(vToIndexDescriptions map[client.CollectionName][]client.IndexDescription, err error) *Txn_GetAllIndexes_Call {
-	_c.Call.Return(vToIndexDescriptions, err)
-	return _c
-}
-
-func (_c *Txn_GetAllIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.GetAllIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error)) *Txn_GetAllIndexes_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetCollectionByName provides a mock function for the type Txn
 func (_mock *Txn) GetCollectionByName(ctx context.Context, name client.CollectionName, opts ...options.Enumerable[options.GetCollectionByNameOptions]) (client.Collection, error) {
 	var tmpRet mock.Arguments
@@ -2166,6 +2089,83 @@ func (_c *Txn_ListAllEncryptedIndexes_Call) Return(vToEncryptedIndexDescriptions
 }
 
 func (_c *Txn_ListAllEncryptedIndexes_Call) RunAndReturn(run func(context1 context.Context, vs ...options.Enumerable[options.ListAllEncryptedIndexesOptions]) (map[client.CollectionName][]client.EncryptedIndexDescription, error)) *Txn_ListAllEncryptedIndexes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListIndexes provides a mock function for the type Txn
+func (_mock *Txn) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListIndexes")
+	}
+
+	var r0 map[client.CollectionName][]client.IndexDescription
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error)); ok {
+		return returnFunc(ctx, opts...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.ListIndexesOptions]) map[client.CollectionName][]client.IndexDescription); ok {
+		r0 = returnFunc(ctx, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[client.CollectionName][]client.IndexDescription)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.ListIndexesOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Txn_ListIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListIndexes'
+type Txn_ListIndexes_Call struct {
+	*mock.Call
+}
+
+// ListIndexes is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts ...options.Enumerable[options.ListIndexesOptions]
+func (_e *Txn_Expecter) ListIndexes(ctx interface{}, opts ...interface{}) *Txn_ListIndexes_Call {
+	return &Txn_ListIndexes_Call{Call: _e.mock.On("ListIndexes",
+		append([]interface{}{ctx}, opts...)...)}
+}
+
+func (_c *Txn_ListIndexes_Call) Run(run func(ctx context.Context, opts ...options.Enumerable[options.ListIndexesOptions])) *Txn_ListIndexes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []options.Enumerable[options.ListIndexesOptions]
+		var variadicArgs []options.Enumerable[options.ListIndexesOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Enumerable[options.ListIndexesOptions])
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Txn_ListIndexes_Call) Return(vToIndexDescriptions map[client.CollectionName][]client.IndexDescription, err error) *Txn_ListIndexes_Call {
+	_c.Call.Return(vToIndexDescriptions, err)
+	return _c
+}
+
+func (_c *Txn_ListIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.ListIndexesOptions]) (map[client.CollectionName][]client.IndexDescription, error)) *Txn_ListIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -115,16 +115,16 @@ func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.u
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		indices, err := col.GetIndexes(ctx,
-			defraOpts.WithIdentity(defraOpts.CollectionGetIndexes(), ident))
+		indices, err := col.ListIndexes(ctx,
+			defraOpts.WithIdentity(defraOpts.CollectionListIndexes(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		return returnC(marshalJSONToGoCResult(indices))
 	// Get all of the indices, because no collection was specified
 	default:
-		indices, err := store.GetAllIndexes(ctx,
-			defraOpts.WithIdentity(defraOpts.GetAllIndexes(), ident))
+		indices, err := store.ListIndexes(ctx,
+			defraOpts.WithIdentity(defraOpts.ListIndexes(), ident))
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -132,8 +132,8 @@ func IndexList(nodePtr C.uintptr_t, options C.CollectionOptions, identityPtr C.u
 	}
 }
 
-//export IndexDrop
-func IndexDrop(nodePtr C.uintptr_t,
+//export IndexDelete
+func IndexDelete(nodePtr C.uintptr_t,
 	indexName *C.char,
 	options C.CollectionOptions,
 	identityPtr C.uintptr_t) C.Result {
@@ -156,8 +156,8 @@ func IndexDrop(nodePtr C.uintptr_t,
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = col.DropIndex(ctx, C.GoString(indexName),
-		defraOpts.WithIdentity(defraOpts.CollectionDropIndex(), ident))
+	err = col.DeleteIndex(ctx, C.GoString(indexName),
+		defraOpts.WithIdentity(defraOpts.CollectionDeleteIndex(), ident))
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

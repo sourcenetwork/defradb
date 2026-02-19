@@ -542,6 +542,78 @@ func (_c *Collection_DeleteEncryptedIndex_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// DeleteIndex provides a mock function for the type Collection
+func (_mock *Collection) DeleteIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDeleteIndexOptions]) error {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, indexName, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, indexName)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteIndex")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.CollectionDeleteIndexOptions]) error); ok {
+		r0 = returnFunc(ctx, indexName, opts...)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Collection_DeleteIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteIndex'
+type Collection_DeleteIndex_Call struct {
+	*mock.Call
+}
+
+// DeleteIndex is a helper method to define mock.On call
+//   - ctx context.Context
+//   - indexName string
+//   - opts ...options.Enumerable[options.CollectionDeleteIndexOptions]
+func (_e *Collection_Expecter) DeleteIndex(ctx interface{}, indexName interface{}, opts ...interface{}) *Collection_DeleteIndex_Call {
+	return &Collection_DeleteIndex_Call{Call: _e.mock.On("DeleteIndex",
+		append([]interface{}{ctx, indexName}, opts...)...)}
+}
+
+func (_c *Collection_DeleteIndex_Call) Run(run func(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDeleteIndexOptions])) *Collection_DeleteIndex_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []options.Enumerable[options.CollectionDeleteIndexOptions]
+		var variadicArgs []options.Enumerable[options.CollectionDeleteIndexOptions]
+		if len(args) > 2 {
+			variadicArgs = args[2].([]options.Enumerable[options.CollectionDeleteIndexOptions])
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_DeleteIndex_Call) Return(err error) *Collection_DeleteIndex_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Collection_DeleteIndex_Call) RunAndReturn(run func(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDeleteIndexOptions]) error) *Collection_DeleteIndex_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteWithFilter provides a mock function for the type Collection
 func (_mock *Collection) DeleteWithFilter(ctx context.Context, filter any, opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions]) (*client.DeleteResult, error) {
 	var tmpRet mock.Arguments
@@ -621,78 +693,6 @@ func (_c *Collection_DeleteWithFilter_Call) Return(deleteResult *client.DeleteRe
 }
 
 func (_c *Collection_DeleteWithFilter_Call) RunAndReturn(run func(ctx context.Context, filter any, opts ...options.Enumerable[options.CollectionDeleteWithFilterOptions]) (*client.DeleteResult, error)) *Collection_DeleteWithFilter_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DropIndex provides a mock function for the type Collection
-func (_mock *Collection) DropIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDropIndexOptions]) error {
-	var tmpRet mock.Arguments
-	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, indexName, opts)
-	} else {
-		tmpRet = _mock.Called(ctx, indexName)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for DropIndex")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...options.Enumerable[options.CollectionDropIndexOptions]) error); ok {
-		r0 = returnFunc(ctx, indexName, opts...)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Collection_DropIndex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DropIndex'
-type Collection_DropIndex_Call struct {
-	*mock.Call
-}
-
-// DropIndex is a helper method to define mock.On call
-//   - ctx context.Context
-//   - indexName string
-//   - opts ...options.Enumerable[options.CollectionDropIndexOptions]
-func (_e *Collection_Expecter) DropIndex(ctx interface{}, indexName interface{}, opts ...interface{}) *Collection_DropIndex_Call {
-	return &Collection_DropIndex_Call{Call: _e.mock.On("DropIndex",
-		append([]interface{}{ctx, indexName}, opts...)...)}
-}
-
-func (_c *Collection_DropIndex_Call) Run(run func(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDropIndexOptions])) *Collection_DropIndex_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 []options.Enumerable[options.CollectionDropIndexOptions]
-		var variadicArgs []options.Enumerable[options.CollectionDropIndexOptions]
-		if len(args) > 2 {
-			variadicArgs = args[2].([]options.Enumerable[options.CollectionDropIndexOptions])
-		}
-		arg2 = variadicArgs
-		run(
-			arg0,
-			arg1,
-			arg2...,
-		)
-	})
-	return _c
-}
-
-func (_c *Collection_DropIndex_Call) Return(err error) *Collection_DropIndex_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Collection_DropIndex_Call) RunAndReturn(run func(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDropIndexOptions]) error) *Collection_DropIndex_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -938,83 +938,6 @@ func (_c *Collection_GetAllDocIDs_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
-// GetIndexes provides a mock function for the type Collection
-func (_mock *Collection) GetIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionGetIndexesOptions]) ([]client.IndexDescription, error) {
-	var tmpRet mock.Arguments
-	if len(opts) > 0 {
-		tmpRet = _mock.Called(ctx, opts)
-	} else {
-		tmpRet = _mock.Called(ctx)
-	}
-	ret := tmpRet
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetIndexes")
-	}
-
-	var r0 []client.IndexDescription
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.CollectionGetIndexesOptions]) ([]client.IndexDescription, error)); ok {
-		return returnFunc(ctx, opts...)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.CollectionGetIndexesOptions]) []client.IndexDescription); ok {
-		r0 = returnFunc(ctx, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]client.IndexDescription)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.CollectionGetIndexesOptions]) error); ok {
-		r1 = returnFunc(ctx, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Collection_GetIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetIndexes'
-type Collection_GetIndexes_Call struct {
-	*mock.Call
-}
-
-// GetIndexes is a helper method to define mock.On call
-//   - ctx context.Context
-//   - opts ...options.Enumerable[options.CollectionGetIndexesOptions]
-func (_e *Collection_Expecter) GetIndexes(ctx interface{}, opts ...interface{}) *Collection_GetIndexes_Call {
-	return &Collection_GetIndexes_Call{Call: _e.mock.On("GetIndexes",
-		append([]interface{}{ctx}, opts...)...)}
-}
-
-func (_c *Collection_GetIndexes_Call) Run(run func(ctx context.Context, opts ...options.Enumerable[options.CollectionGetIndexesOptions])) *Collection_GetIndexes_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []options.Enumerable[options.CollectionGetIndexesOptions]
-		var variadicArgs []options.Enumerable[options.CollectionGetIndexesOptions]
-		if len(args) > 1 {
-			variadicArgs = args[1].([]options.Enumerable[options.CollectionGetIndexesOptions])
-		}
-		arg1 = variadicArgs
-		run(
-			arg0,
-			arg1...,
-		)
-	})
-	return _c
-}
-
-func (_c *Collection_GetIndexes_Call) Return(indexDescriptions []client.IndexDescription, err error) *Collection_GetIndexes_Call {
-	_c.Call.Return(indexDescriptions, err)
-	return _c
-}
-
-func (_c *Collection_GetIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.CollectionGetIndexesOptions]) ([]client.IndexDescription, error)) *Collection_GetIndexes_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // ListEncryptedIndexes provides a mock function for the type Collection
 func (_mock *Collection) ListEncryptedIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error) {
 	var tmpRet mock.Arguments
@@ -1088,6 +1011,83 @@ func (_c *Collection_ListEncryptedIndexes_Call) Return(encryptedIndexDescription
 }
 
 func (_c *Collection_ListEncryptedIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions]) ([]client.EncryptedIndexDescription, error)) *Collection_ListEncryptedIndexes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListIndexes provides a mock function for the type Collection
+func (_mock *Collection) ListIndexes(ctx context.Context, opts ...options.Enumerable[options.CollectionListIndexesOptions]) ([]client.IndexDescription, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, opts)
+	} else {
+		tmpRet = _mock.Called(ctx)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListIndexes")
+	}
+
+	var r0 []client.IndexDescription
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.CollectionListIndexesOptions]) ([]client.IndexDescription, error)); ok {
+		return returnFunc(ctx, opts...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ...options.Enumerable[options.CollectionListIndexesOptions]) []client.IndexDescription); ok {
+		r0 = returnFunc(ctx, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]client.IndexDescription)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, ...options.Enumerable[options.CollectionListIndexesOptions]) error); ok {
+		r1 = returnFunc(ctx, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Collection_ListIndexes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListIndexes'
+type Collection_ListIndexes_Call struct {
+	*mock.Call
+}
+
+// ListIndexes is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts ...options.Enumerable[options.CollectionListIndexesOptions]
+func (_e *Collection_Expecter) ListIndexes(ctx interface{}, opts ...interface{}) *Collection_ListIndexes_Call {
+	return &Collection_ListIndexes_Call{Call: _e.mock.On("ListIndexes",
+		append([]interface{}{ctx}, opts...)...)}
+}
+
+func (_c *Collection_ListIndexes_Call) Run(run func(ctx context.Context, opts ...options.Enumerable[options.CollectionListIndexesOptions])) *Collection_ListIndexes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []options.Enumerable[options.CollectionListIndexesOptions]
+		var variadicArgs []options.Enumerable[options.CollectionListIndexesOptions]
+		if len(args) > 1 {
+			variadicArgs = args[1].([]options.Enumerable[options.CollectionListIndexesOptions])
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
+	})
+	return _c
+}
+
+func (_c *Collection_ListIndexes_Call) Return(indexDescriptions []client.IndexDescription, err error) *Collection_ListIndexes_Call {
+	_c.Call.Return(indexDescriptions, err)
+	return _c
+}
+
+func (_c *Collection_ListIndexes_Call) RunAndReturn(run func(ctx context.Context, opts ...options.Enumerable[options.CollectionListIndexesOptions]) ([]client.IndexDescription, error)) *Collection_ListIndexes_Call {
 	_c.Call.Return(run)
 	return _c
 }

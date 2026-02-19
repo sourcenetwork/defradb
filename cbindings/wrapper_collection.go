@@ -27,7 +27,7 @@ char* updaterStr, CollectionOptions options, uintptr_t identityPtr);
 extern Result IndexCreate(uintptr_t nodePtr, char* indexName, char* fieldsStr, int isUnique,
 CollectionOptions options, uintptr_t identityPtr);
 extern Result IndexList(uintptr_t nodePtr, CollectionOptions options, uintptr_t identityPtr);
-extern Result IndexDrop(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
+extern Result IndexDelete(uintptr_t nodePtr, char* indexName, CollectionOptions options, uintptr_t identityPtr);
 extern Result EncryptedIndexAdd(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
 extern Result EncryptedIndexList(uintptr_t nodePtr, char* collectionName, uintptr_t identityPtr);
 extern Result EncryptedIndexDelete(uintptr_t nodePtr, char* collectionName, char* fieldName, uintptr_t identity);
@@ -609,10 +609,10 @@ func (c *Collection) CreateIndex(
 	return retRes, nil
 }
 
-func (c *Collection) DropIndex(
+func (c *Collection) DeleteIndex(
 	ctx context.Context,
 	indexName string,
-	opts ...options.Enumerable[options.CollectionDropIndexOptions],
+	opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
 ) error {
 	cName := C.CString(c.def.Name)
 	cIndexName := C.CString(indexName)
@@ -632,7 +632,7 @@ func (c *Collection) DropIndex(
 	copts.name = cName
 	copts.getInactive = 0
 
-	res := ConvertAndFreeCResult(C.IndexDrop(
+	res := ConvertAndFreeCResult(C.IndexDelete(
 		C.uintptr_t(c.w.handle),
 		cIndexName,
 		copts,
@@ -645,12 +645,11 @@ func (c *Collection) DropIndex(
 	return nil
 }
 
-func (c *Collection) GetIndexes(
+func (c *Collection) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.CollectionGetIndexesOptions],
+	opts ...options.Enumerable[options.CollectionListIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
-	cIndexName := C.CString("")
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
@@ -658,7 +657,6 @@ func (c *Collection) GetIndexes(
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cIndexName))
 	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
@@ -762,7 +760,6 @@ func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
 ) error {
 	cName := C.CString(c.def.Name)
-	cIndexName := C.CString("")
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
@@ -770,7 +767,6 @@ func (c *Collection) Truncate(
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cIndexName))
 	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
