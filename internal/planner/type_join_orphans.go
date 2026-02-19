@@ -152,21 +152,20 @@ func (r *primaryObjectsRetriever) collectDocsWithOrphansByExclusion(
 }
 
 // getLimit returns the limit from the primary side's plan, or 0 if no limit.
+// The primary side's plan is always a selectTopNode in this context.
 func (r *primaryObjectsRetriever) getLimit() uint64 {
-	if selectTop, ok := r.primarySide.plan.(*selectTopNode); ok {
-		if selectTop.limit != nil {
-			return selectTop.limit.limit
-		}
+	selectTop := r.primarySide.plan.(*selectTopNode)
+	if selectTop.limit != nil {
+		return selectTop.limit.limit
 	}
 	return 0
 }
 
 // setLimit updates the limit on the primary side's plan.
 func (r *primaryObjectsRetriever) setLimit(limit uint64) {
-	if selectTop, ok := r.primarySide.plan.(*selectTopNode); ok {
-		if selectTop.limit != nil {
-			selectTop.limit.limit = limit
-		}
+	selectTop := r.primarySide.plan.(*selectTopNode)
+	if selectTop.limit != nil {
+		selectTop.limit.limit = limit
 	}
 }
 
