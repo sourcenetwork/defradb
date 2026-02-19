@@ -12,11 +12,9 @@ package cbindings
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/sourcenetwork/defradb/acp/identity"
-	"github.com/sourcenetwork/defradb/client"
 )
 
 type GoCResult struct {
@@ -73,21 +71,4 @@ func splitCommaSeparatedString(baseStr string) []string {
 		retArr = []string{}
 	}
 	return retArr
-}
-
-// buildRequestOptions is a helper function that builds the RequestOption from an operation name,
-// and a set of variables (as strings)
-func buildRequestOptions(opName string, vars string) ([]client.RequestOption, error) {
-	var opts []client.RequestOption
-	if opName != "" {
-		opts = append(opts, client.WithOperationName(opName))
-	}
-	if vars != "" {
-		var variables map[string]any
-		if err := json.Unmarshal([]byte(vars), &variables); err != nil {
-			return nil, fmt.Errorf("invalid JSON in variables: %w", err)
-		}
-		opts = append(opts, client.WithVariables(variables))
-	}
-	return opts, nil
 }

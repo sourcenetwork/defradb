@@ -413,7 +413,7 @@ func (p *Planner) tryOptimizeJoinDirectionByFilter(node *invertibleTypeJoin, par
 // extractRelatedSubFilter extracts the sub filter from the parent filter.
 // Returns nil if the relation field doesn't exist in the document map.
 func extractRelatedSubFilter(f *mapper.Filter, docMap *core.DocumentMapping, relField mapper.Field) *mapper.Filter {
-	// In groupBy queries with _group filters, the docMap may not contain the relation field,
+	// In groupBy queries with GROUP filters, the docMap may not contain the relation field,
 	// so we check existence before accessing to avoid a panic.
 	indexes, ok := docMap.IndexesByName[relField.Name]
 	if !ok {

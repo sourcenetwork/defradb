@@ -684,7 +684,7 @@ func (db *DB) deleteCollectionVersion(
 		return err
 	}
 
-	err = description.DeleteCollection(ctx, version)
+	err = description.DeleteCollection(ctx, db.lockSet, version)
 	if err != nil {
 		return err
 	}

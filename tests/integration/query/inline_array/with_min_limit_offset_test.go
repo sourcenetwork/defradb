@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArray_WithMinWithOffsetWithLimit_Succeeds(t *testing.
 				Request: `query {
 					Users {
 						name
-						_min(favouriteIntegers: {offset: 1, limit: 2})
+						MIN(favouriteIntegers: {offset: 1, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": int64(2),
+							"MIN":  int64(2),
 						},
 					},
 				},

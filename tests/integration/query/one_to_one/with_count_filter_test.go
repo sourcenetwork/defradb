@@ -89,13 +89,13 @@ func TestQueryOneToOneWithCountWithCompoundOrFilterThatIncludesRelation(t *testi
 			},
 			&action.Request{
 				Request: `query {
-					_count(Book: {filter: {_or: [
+					COUNT(Book: {filter: {_or: [
 						{_not: {author: {age: {_lt: 65}}} },
 						{_not: {author: {age: {_gt: 30}}} }
 					]}})
 				}`,
 				Results: map[string]any{
-					"_count": int(2),
+					"COUNT": int(2),
 				},
 			},
 		},

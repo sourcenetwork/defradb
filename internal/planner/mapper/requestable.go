@@ -20,7 +20,7 @@ type Requestable interface {
 	GetIndex() int
 
 	// GetName returns the name of this item.  For example 'Age', or
-	// '_count'.
+	// 'COUNT'.
 	GetName() string
 
 	// AsTargetable tries to return the targetable component of this

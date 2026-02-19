@@ -38,7 +38,7 @@ func TestQueryInlineIntegerArray_WithMaxAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _max(testScores: {}, pageRatings: {})
+						total: MAX(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -57,7 +57,7 @@ func TestQueryInlineIntegerArray_WithMaxAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _max(testScores: {}, pageRatings: {})
+						total: MAX(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -98,7 +98,7 @@ func TestQueryInlineIntegerArray_WithNullAndMaxAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _max(testScores: {}, pageRatings: {})
+						total: MAX(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -117,7 +117,7 @@ func TestQueryInlineIntegerArray_WithNullAndMaxAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _max(testScores: {}, pageRatings: {})
+						total: MAX(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{

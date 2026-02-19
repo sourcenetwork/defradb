@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArrayWithCountAndNullArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {})
+						COUNT(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "John",
-							"_count": 0,
+							"name":  "John",
+							"COUNT": 0,
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineIntegerArrayWithCountAndEmptyArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {})
+						COUNT(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "John",
-							"_count": 0,
+							"name":  "John",
+							"COUNT": 0,
 						},
 					},
 				},
@@ -92,14 +92,14 @@ func TestQueryInlineIntegerArrayWithCountAndPopulatedArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(favouriteIntegers: {})
+						COUNT(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "Shahzad",
-							"_count": 5,
+							"name":  "Shahzad",
+							"COUNT": 5,
 						},
 					},
 				},
@@ -123,14 +123,14 @@ func TestQueryInlineNillableBoolArrayWithCountAndPopulatedArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_count(indexLikesDislikes: {})
+						COUNT(indexLikesDislikes: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"name":   "John",
-							"_count": 4,
+							"name":  "John",
+							"COUNT": 4,
 						},
 					},
 				},

@@ -19,9 +19,9 @@ import (
 
 	"slices"
 
-	"github.com/sourcenetwork/defradb/acp/identity"
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/datastore"
@@ -29,8 +29,10 @@ import (
 	"github.com/sourcenetwork/defradb/internal/db/fetcher"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/sequence"
+	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 	"github.com/sourcenetwork/defradb/internal/request/graphql/schema"
+	"github.com/sourcenetwork/defradb/internal/utils"
 )
 
 // getAllIndexDescriptions returns all the index descriptions in the database.
@@ -164,11 +166,14 @@ func (c *collection) deleteIndexedDocWithID(
 func (c *collection) CreateIndex(
 	ctx context.Context,
 	desc client.IndexCreateRequest,
+	opts ...options.Enumerable[options.CollectionCreateIndexOptions],
 ) (client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeIndexCreatePerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexCreatePerm); err != nil {
 		return client.IndexDescription{}, err
 	}
 
@@ -353,11 +358,17 @@ func (c *collection) indexExistingDocs(
 // The index will be removed from the system store.
 //
 // All index artifacts for existing documents related the index will be removed.
-func (c *collection) DropIndex(ctx context.Context, indexName string) error {
+func (c *collection) DropIndex(
+	ctx context.Context,
+	indexName string,
+	opts ...options.Enumerable[options.CollectionDropIndexOptions],
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeIndexDropPerm); err != nil {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexDropPerm); err != nil {
 		return err
 	}
 
@@ -410,21 +421,34 @@ func (c *collection) dropIndex(ctx context.Context, indexName string) error {
 }
 
 // GetIndexes returns all indexes for the collection.
-func (c *collection) GetIndexes(ctx context.Context) ([]client.IndexDescription, error) {
-	if err := c.db.checkNodeAccess(ctx, acpTypes.NodeIndexListPerm); err != nil {
+func (c *collection) GetIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.CollectionGetIndexesOptions],
+) ([]client.IndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+
+	if err := c.db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeIndexListPerm); err != nil {
 		return nil, err
 	}
 
 	return c.Version().Indexes, nil
 }
 
-// CreateEncryptedIndex creates a new encrypted index on the collection.
-func (c *collection) CreateEncryptedIndex(
+// AddEncryptedIndex adds a new encrypted index to the collection.
+func (c *collection) AddEncryptedIndex(
 	ctx context.Context,
-	createRequest client.EncryptedIndexDescription,
+	addRequest client.EncryptedIndexDescription,
+	opts ...options.Enumerable[options.AddEncryptedIndexOptions],
 ) (client.EncryptedIndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexAddPerm); err != nil {
+		return client.EncryptedIndexDescription{}, err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -432,14 +456,14 @@ func (c *collection) CreateEncryptedIndex(
 	}
 	defer txn.Discard()
 
-	index, err := c.createEncryptedIndex(ctx, createRequest)
+	index, err := c.addEncryptedIndex(ctx, addRequest)
 	if err != nil {
 		return client.EncryptedIndexDescription{}, err
 	}
 	return index, txn.Commit()
 }
 
-func (c *collection) createEncryptedIndex(
+func (c *collection) addEncryptedIndex(
 	ctx context.Context,
 	encryptedIndex client.EncryptedIndexDescription,
 ) (client.EncryptedIndexDescription, error) {
@@ -468,7 +492,15 @@ func (c *collection) createEncryptedIndex(
 }
 
 // ListEncryptedIndexes returns all the encrypted indexes that exist on the collection.
-func (c *collection) ListEncryptedIndexes(ctx context.Context) ([]client.EncryptedIndexDescription, error) {
+func (c *collection) ListEncryptedIndexes(
+	ctx context.Context,
+	opts ...options.Enumerable[options.CollectionListEncryptedIndexesOptions],
+) ([]client.EncryptedIndexDescription, error) {
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexListPerm); err != nil {
+		return nil, err
+	}
 	return c.Version().EncryptedIndexes, nil
 }
 
@@ -476,9 +508,20 @@ func (c *collection) ListEncryptedIndexes(ctx context.Context) ([]client.Encrypt
 //
 // The encrypted index will be removed from the system store.
 // All SE artifacts on remote nodes will become inaccessible for queries.
-func (c *collection) DeleteEncryptedIndex(ctx context.Context, fieldName string) error {
+func (c *collection) DeleteEncryptedIndex(
+	ctx context.Context,
+	fieldName string,
+	opts ...options.Enumerable[options.DeleteEncryptedIndexOptions],
+) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	opt := utils.NewOptions(opts...)
+	ident := opt.GetIdentity()
+
+	if err := c.db.checkNodeAccess(ctx, ident, acpTypes.NodeEncryptedIndexDeletePerm); err != nil {
+		return err
+	}
 
 	ctx, txn, err := ensureContextTxn(ctx, c.db, false)
 	if err != nil {
@@ -547,7 +590,7 @@ func checkExistingFieldsAndAdjustRelFieldNames(
 	return nil
 }
 
-// validateNewEncryptedIndex validates, if encrypted index can be created on the given collection.
+// validateNewEncryptedIndex validates, if encrypted index can be added to the given collection.
 // It checks if the field exists in the collection schema and if an encrypted index already exists on the field.
 func validateNewEncryptedIndex(
 	definition client.CollectionVersion,

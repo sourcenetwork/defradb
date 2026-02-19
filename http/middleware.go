@@ -23,8 +23,10 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 // CorsMiddleware handles cross origin request
@@ -87,7 +89,8 @@ func CollectionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		db := mustGetContextClientDB(req)
 
-		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"))
+		opt := options.WithIdentity(options.GetCollectionByName(), identity.FromContext(req.Context()))
+		col, err := db.GetCollectionByName(req.Context(), chi.URLParam(req, "name"), opt)
 		if err != nil {
 			if errors.Is(err, client.ErrNotAuthorizedToPerformOperation) {
 				rw.WriteHeader(http.StatusUnauthorized)

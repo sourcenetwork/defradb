@@ -42,7 +42,7 @@ func TestQuerySimpleWithGroupByWithGroupWithDocID(t *testing.T) {
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_group(docID: "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b") {
+						GROUP(docID: "bae-619ea0d2-35ba-5e8c-ac4d-2b769937213b") {
 							Name
 						}
 					}
@@ -50,12 +50,12 @@ func TestQuerySimpleWithGroupByWithGroupWithDocID(t *testing.T) {
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Age":    int64(32),
-							"_group": []map[string]any{},
+							"Age":   int64(32),
+							"GROUP": []map[string]any{},
 						},
 						{
 							"Age": int64(21),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"Name": "John",
 								},

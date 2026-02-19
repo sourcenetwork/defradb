@@ -15,6 +15,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeP2PDocumentAddCommand(ctx context.Context) *cobra.Command {
@@ -36,7 +39,8 @@ The documents are synchronized between nodes of a pubsub network.`,
 				collectionIDs = append(collectionIDs, id)
 			}
 
-			return cliClient.AddP2PDocuments(cmd.Context(), collectionIDs...)
+			opt := options.WithIdentity(options.AddP2PDocuments(), identity.FromContext(cmd.Context()))
+			return cliClient.AddP2PDocuments(cmd.Context(), collectionIDs, opt)
 		},
 	}
 

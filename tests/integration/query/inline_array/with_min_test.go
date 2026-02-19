@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteIntegers: {})
+						MIN(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": nil,
+							"MIN":  nil,
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineIntegerArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteIntegers: {})
+						MIN(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": nil,
+							"MIN":  nil,
 						},
 					},
 				},
@@ -92,14 +92,14 @@ func TestQueryInlineIntegerArray_WithMinAndPopulatedArray_Succeeds(t *testing.T)
 				Request: `query {
 					Users {
 						name
-						_min(favouriteIntegers: {})
+						MIN(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": int64(-1),
+							"MIN":  int64(-1),
 						},
 					},
 				},
@@ -123,14 +123,14 @@ func TestQueryInlineNillableIntegerArray_WithMinAndPopulatedArray_Succeeds(t *te
 				Request: `query {
 					Users {
 						name
-						_min(testScores: {})
+						MIN(testScores: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": int64(-1),
+							"MIN":  int64(-1),
 						},
 					},
 				},
@@ -154,14 +154,14 @@ func TestQueryInlineFloatArray_WithMinAndNullArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteFloats: {})
+						MIN(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": nil,
+							"MIN":  nil,
 						},
 					},
 				},
@@ -185,14 +185,14 @@ func TestQueryInlineFloatArray_WithMinAndEmptyArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteFloats: {})
+						MIN(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": nil,
+							"MIN":  nil,
 						},
 					},
 				},
@@ -216,14 +216,14 @@ func TestQueryInlineFloatArray_WithMinAndPopulatedArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteFloats: {})
+						MIN(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_min": float64(0.00000000001),
+							"MIN":  float64(0.00000000001),
 						},
 					},
 				},
@@ -247,14 +247,14 @@ func TestQueryInlineNillableFloatArray_WithMinAndPopulatedArray_Succeeds(t *test
 				Request: `query {
 					Users {
 						name
-						_min(pageRatings: {})
+						MIN(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": float64(0.00000000001),
+							"MIN":  float64(0.00000000001),
 						},
 					},
 				},

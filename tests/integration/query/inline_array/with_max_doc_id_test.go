@@ -32,14 +32,14 @@ func TestQueryInlineNillableFloatArray_WithDocIDAndMax_Succeeds(t *testing.T) {
 				Request: `query {
 					Users(docID: "bae-234d84a8-37f9-57ea-9c53-34c247f3b272") {
 						name
-						_max(pageRatings: {})
+						MAX(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_max": float64(10),
+							"MAX":  float64(10),
 						},
 					},
 				},

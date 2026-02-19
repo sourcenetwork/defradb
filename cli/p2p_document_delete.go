@@ -1,0 +1,54 @@
+// Copyright 2025 Democratized Data Foundation
+//
+// Use of this software is governed by the Business Source License
+// included in the file licenses/BSL.txt.
+//
+// As of the Change Date specified in that file, in accordance with
+// the Business Source License, use of this software will be governed
+// by the Apache License, Version 2.0, included in the file
+// licenses/APL.txt.
+
+package cli
+
+import (
+	"context"
+	"strings"
+
+	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/identity"
+)
+
+func MakeP2PDocumentDeleteCommand(ctx context.Context) *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "delete [docIDs]",
+		Short: "Delete P2P documents",
+		Long: `Delete P2P documents from the followed pubsub topics.
+The removed documents will no longer be synchronized between nodes.`,
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliClient := mustGetContextCLIClient(cmd)
+
+			var collectionIDs []string
+			for _, id := range strings.Split(args[0], ",") {
+				id = strings.TrimSpace(id)
+				if id == "" {
+					continue
+				}
+				collectionIDs = append(collectionIDs, id)
+			}
+
+			opt := options.WithIdentity(options.DeleteP2PDocuments(), identity.FromContext(cmd.Context()))
+			return cliClient.DeleteP2PDocuments(cmd.Context(), collectionIDs, opt)
+		},
+	}
+
+	EmbedCLIExample(ctx, cmd, "delete single document",
+		`defradb client p2p document delete bae123`)
+
+	EmbedCLIExample(ctx, cmd, "delete multiple documents",
+		`defradb client p2p document delete bae123,bae456`)
+
+	return cmd
+}

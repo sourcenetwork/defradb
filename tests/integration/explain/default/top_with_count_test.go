@@ -48,7 +48,7 @@ func TestDefaultExplainTopLevelCountRequest(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain {
-					_count(Author: {})
+					COUNT(Author: {})
 				}`,
 
 				ExpectedPatterns: topLevelCountPattern,
@@ -95,7 +95,7 @@ func TestDefaultExplainTopLevelCountRequestWithFilter(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain {
-					_count(
+					COUNT(
 						Author: {
 							filter: {
 								age: {

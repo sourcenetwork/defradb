@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_max(favouriteIntegers: {})
+						MAX(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": nil,
+							"MAX":  nil,
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineIntegerArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_max(favouriteIntegers: {})
+						MAX(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": nil,
+							"MAX":  nil,
 						},
 					},
 				},
@@ -92,14 +92,14 @@ func TestQueryInlineIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T)
 				Request: `query {
 					Users {
 						name
-						_max(favouriteIntegers: {})
+						MAX(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_max": int64(2),
+							"MAX":  int64(2),
 						},
 					},
 				},
@@ -123,14 +123,14 @@ func TestQueryInlineNillableIntegerArray_WithMaxAndPopulatedArray_Succeeds(t *te
 				Request: `query {
 					Users {
 						name
-						_max(testScores: {})
+						MAX(testScores: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_max": int64(2),
+							"MAX":  int64(2),
 						},
 					},
 				},
@@ -154,14 +154,14 @@ func TestQueryInlineFloatArray_WithMaxAndNullArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_max(favouriteFloats: {})
+						MAX(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": nil,
+							"MAX":  nil,
 						},
 					},
 				},
@@ -185,14 +185,14 @@ func TestQueryInlineFloatArray_WithMaxAndEmptyArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_max(favouriteFloats: {})
+						MAX(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": nil,
+							"MAX":  nil,
 						},
 					},
 				},
@@ -216,14 +216,14 @@ func TestQueryInlineFloatArray_WithMaxAndPopulatedArray_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_max(favouriteFloats: {})
+						MAX(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_max": float64(10),
+							"MAX":  float64(10),
 						},
 					},
 				},
@@ -247,14 +247,14 @@ func TestQueryInlineNillableFloatArray_WithMaxAndPopulatedArray_Succeeds(t *test
 				Request: `query {
 					Users {
 						name
-						_max(pageRatings: {})
+						MAX(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_max": float64(10),
+							"MAX":  float64(10),
 						},
 					},
 				},
@@ -278,14 +278,14 @@ func TestQueryInlineNillableFloatArray_WithDocIDMaxAndPopulatedArray_Succeeds(t 
 				Request: `query {
 					Users(docID: "bae-234d84a8-37f9-57ea-9c53-34c247f3b272") {
 						name
-						_max(pageRatings: {})
+						MAX(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_max": float64(10),
+							"MAX":  float64(10),
 						},
 					},
 				},

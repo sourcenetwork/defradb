@@ -71,7 +71,7 @@ func TestEncryptedIndexCreatePeer_AfterCreateRequest_ShouldGenerateGQL(t *testin
 					}
 				`,
 			},
-			testUtils.CreateEncryptedIndex{
+			testUtils.AddEncryptedIndex{
 				FieldName: "age",
 			},
 			&action.Request{

@@ -36,11 +36,11 @@ func TestPeerEvents_OnSubscribeToDocument_ShouldReceiveJoinEventOnDocumentTopic(
 					"name": "John",
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
@@ -82,14 +82,14 @@ func TestPeerEvents_OnSubscribeToMultipleDocuments_ShouldReceiveJoinEventsOnAllT
 					"name": "Alice",
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					{Col: 0, Doc: 0},
 					{Col: 0, Doc: 1},
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					{Col: 0, Doc: 0},
@@ -130,11 +130,11 @@ func TestPeerEvents_DocumentAndDocSyncTopics_ShouldReceiveJoinEventsOnBoth(t *te
 					"name": "John",
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
@@ -174,19 +174,19 @@ func TestPeerEvents_AllTopicTypes_ShouldReceiveJoinEventsOnAll(t *testing.T) {
 					"name": "John",
 				},
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        0,
 				CollectionIDs: []int{0},
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				NodeID:        1,
 				CollectionIDs: []int{0},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
@@ -229,11 +229,11 @@ func TestPeerEvents_OnUnsubscribeFromDocument_ShouldReceiveLeftEvent(t *testing.
 					"name": "John",
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
@@ -247,7 +247,7 @@ func TestPeerEvents_OnUnsubscribeFromDocument_ShouldReceiveLeftEvent(t *testing.
 					{Col: 0, Doc: 0}: {1},
 				},
 			},
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{{Col: 0, Doc: 0}},
 			},
@@ -286,14 +286,14 @@ func TestPeerEvents_OnUnsubscribeFromMultipleDocuments_ShouldReceiveLeftEvents(t
 					"name": "Alice",
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					{Col: 0, Doc: 0},
 					{Col: 0, Doc: 1},
 				},
 			},
-			testUtils.SubscribeToDocument{
+			testUtils.AddDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					{Col: 0, Doc: 0},
@@ -311,7 +311,7 @@ func TestPeerEvents_OnUnsubscribeFromMultipleDocuments_ShouldReceiveLeftEvents(t
 					{Col: 0, Doc: 1}: {1},
 				},
 			},
-			testUtils.UnsubscribeToDocument{
+			testUtils.DeleteDocumentSubscription{
 				NodeID: 1,
 				DocIDs: []state.ColDocIndex{
 					{Col: 0, Doc: 0},

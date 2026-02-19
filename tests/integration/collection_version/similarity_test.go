@@ -68,7 +68,7 @@ func TestSchemaInstrospection_SimilarityCapableFieldIntArray(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_similarity",
+								"name": "SIMILARITY",
 								"args": []any{
 									map[string]any{
 										"name": "someVector",
@@ -160,7 +160,7 @@ func TestSchemaInstrospection_SimilarityCapableFieldFloat32Array(t *testing.T) {
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_similarity",
+								"name": "SIMILARITY",
 								"args": []any{
 									map[string]any{
 										"name": "someVector",
@@ -254,7 +254,7 @@ func TestSchemaInstrospection_SimilarityCapableFieldsIntArrayAndFloat32Array(t *
 						"name": "Users",
 						"fields": []any{
 							map[string]any{
-								"name": "_similarity",
+								"name": "SIMILARITY",
 								"args": []any{
 									map[string]any{
 										"name": "someVectorFloat32",

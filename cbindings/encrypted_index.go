@@ -20,15 +20,22 @@ import (
 	"context"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
-//export EncryptedIndexCreate
-func EncryptedIndexCreate(
+//export EncryptedIndexAdd
+func EncryptedIndexAdd(
 	nodePtr C.uintptr_t,
 	collectionName *C.char,
 	fieldName *C.char,
+	identityPtr C.uintptr_t,
 ) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 
 	desc := client.EncryptedIndexDescription{
 		FieldName: C.GoString(fieldName),
@@ -38,11 +45,14 @@ func EncryptedIndexCreate(
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName))
+	getColOpt := options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(ctx))
+	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName), getColOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	descWithID, err := col.CreateEncryptedIndex(ctx, desc)
+
+	addOpt := options.WithIdentity(options.AddEncryptedIndex(), iIdentity.FromContext(ctx))
+	descWithID, err := col.AddEncryptedIndex(ctx, desc, addOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
@@ -51,8 +61,11 @@ func EncryptedIndexCreate(
 }
 
 //export EncryptedIndexList
-func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
-	ctx := context.Background()
+func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char, identityPtr C.uintptr_t) C.Result {
+	ctx, err := contextWithIdentity(context.Background(), identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
@@ -62,18 +75,27 @@ func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
 	switch {
 	// Get the encrypted indices associated with a given collection
 	case colName != "":
-		col, err := store.GetCollectionByName(ctx, colName)
+		getColOpt := options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(ctx))
+		col, err := store.GetCollectionByName(ctx, colName, getColOpt)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
-		indices, err := col.ListEncryptedIndexes(ctx)
+		opts := options.WithIdentity(
+			options.CollectionListEncryptedIndexes(),
+			iIdentity.FromContext(ctx),
+		)
+		indices, err := col.ListEncryptedIndexes(ctx, opts)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
 		return returnC(marshalJSONToGoCResult(indices))
 	// Get all of the encrypted indices, because no collection was specified
 	default:
-		indices, err := store.ListAllEncryptedIndexes(ctx)
+		opts := options.WithIdentity(
+			options.ListAllEncryptedIndexes(),
+			iIdentity.FromContext(ctx),
+		)
+		indices, err := store.ListAllEncryptedIndexes(ctx, opts)
 		if err != nil {
 			return returnC(returnGoC(1, err.Error(), ""))
 		}
@@ -82,19 +104,28 @@ func EncryptedIndexList(nodePtr C.uintptr_t, collectionName *C.char) C.Result {
 }
 
 //export EncryptedIndexDelete
-func EncryptedIndexDelete(nodePtr C.uintptr_t, collectionName *C.char, fieldName *C.char) C.Result {
+func EncryptedIndexDelete(
+	nodePtr C.uintptr_t, collectionName *C.char, fieldName *C.char, identityPtr C.uintptr_t,
+) C.Result {
 	ctx := context.Background()
+	ctx, err := contextWithIdentity(ctx, identityPtr)
+	if err != nil {
+		return returnC(returnGoC(1, err.Error(), ""))
+	}
 
 	store, err := getStoreFromPointer(nodePtr)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
 
-	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName))
+	getColOpt := options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(ctx))
+	col, err := store.GetCollectionByName(ctx, C.GoString(collectionName), getColOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	err = col.DeleteEncryptedIndex(ctx, C.GoString(fieldName))
+
+	deleteOpt := options.WithIdentity(options.DeleteEncryptedIndex(), iIdentity.FromContext(ctx))
+	err = col.DeleteEncryptedIndex(ctx, C.GoString(fieldName), deleteOpt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

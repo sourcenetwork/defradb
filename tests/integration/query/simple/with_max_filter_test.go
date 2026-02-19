@@ -40,10 +40,10 @@ func TestQuerySimple_WithMaxFilter_Succeeds(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_max(Users: {field: Age, filter: {Age: {_lt: 32}}})
+					MAX(Users: {field: Age, filter: {Age: {_lt: 32}}})
 				}`,
 				Results: map[string]any{
-					"_max": int64(30),
+					"MAX": int64(30),
 				},
 			},
 		},
