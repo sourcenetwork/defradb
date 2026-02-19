@@ -17,9 +17,9 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-// DropIndex will attempt to drop the given secondary index from the given collection
+// DeleteIndex will attempt to delete the given secondary index from the given collection
 // using the collection api.
-type DropIndex struct {
+type DeleteIndex struct {
 	stateful
 
 	// NodeID may hold the ID (index) of a node to delete the secondary index from.
@@ -45,23 +45,23 @@ type DropIndex struct {
 	ExpectedError string
 }
 
-var _ Action = (*DropIndex)(nil)
-var _ Stateful = (*DropIndex)(nil)
+var _ Action = (*DeleteIndex)(nil)
+var _ Stateful = (*DeleteIndex)(nil)
 
-func (a *DropIndex) Execute() {
+func (a *DeleteIndex) Execute() {
 	var expectedErrorRaised bool
 
 	nodeIDs, _ := getNodesWithIDs(a.NodeID, a.s.Nodes)
 	for _, nodeID := range nodeIDs {
 		collection := a.s.Nodes[nodeID].Collections[a.CollectionID]
 
-		opts := options.CollectionDropIndex()
+		opts := options.CollectionDeleteIndex()
 		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
 		if identOption.HasValue() {
 			opts.SetIdentity(identOption.Value())
 		}
 
-		err := collection.DropIndex(a.s.Ctx, a.IndexName, opts)
+		err := collection.DeleteIndex(a.s.Ctx, a.IndexName, opts)
 
 		expectedErrorRaised = assertError(a.s.T, err, a.ExpectedError)
 	}

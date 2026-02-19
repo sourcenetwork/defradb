@@ -348,11 +348,11 @@ func (w *Wrapper) GetCollections(
 	return w.client.GetCollections(ctx, opts...)
 }
 
-func (w *Wrapper) GetAllIndexes(
+func (w *Wrapper) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
-	return w.client.GetAllIndexes(ctx, opts...)
+	return w.client.ListIndexes(ctx, opts...)
 }
 
 func (w *Wrapper) ListAllEncryptedIndexes(

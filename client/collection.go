@@ -120,13 +120,17 @@ type Collection interface {
 		...options.Enumerable[options.CollectionCreateIndexOptions],
 	) (IndexDescription, error)
 
-	// DropIndex drops an index from the collection.
-	DropIndex(ctx context.Context, indexName string, opts ...options.Enumerable[options.CollectionDropIndexOptions]) error
-
-	// GetIndexes returns all the indexes that exist on the collection.
-	GetIndexes(
+	// DeleteIndex deletes an index from the collection.
+	DeleteIndex(
 		ctx context.Context,
-		opts ...options.Enumerable[options.CollectionGetIndexesOptions],
+		indexName string,
+		opts ...options.Enumerable[options.CollectionDeleteIndexOptions],
+	) error
+
+	// ListIndexes returns all the indexes that exist on the collection.
+	ListIndexes(
+		ctx context.Context,
+		opts ...options.Enumerable[options.CollectionListIndexesOptions],
 	) ([]IndexDescription, error)
 
 	// AddEncryptedIndex adds a new encrypted index to the collection.

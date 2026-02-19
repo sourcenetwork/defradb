@@ -19,13 +19,13 @@ import (
 	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
-func MakeIndexDropCommand(ctx context.Context) *cobra.Command {
+func MakeIndexDeleteCommand(ctx context.Context) *cobra.Command {
 	var collectionArg string
 	var nameArg string
 	var cmd = &cobra.Command{
-		Use:       "drop -c --collection <collection> -n --name <name>",
-		Short:     "Drop a collection's secondary index",
-		Long:      `Drop a collection's secondary index.`,
+		Use:       "delete -c --collection <collection> -n --name <name>",
+		Short:     "Delete a collection's secondary index",
+		Long:      `Delete a collection's secondary index.`,
 		ValidArgs: []string{"collection", "name"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliClient := mustGetContextCLIClient(cmd)
@@ -35,13 +35,13 @@ func MakeIndexDropCommand(ctx context.Context) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			opt := options.WithIdentity(options.CollectionDropIndex(), identity.FromContext(cmd.Context()))
-			return col.DropIndex(cmd.Context(), nameArg, opt)
+			opt := options.WithIdentity(options.CollectionDeleteIndex(), identity.FromContext(cmd.Context()))
+			return col.DeleteIndex(cmd.Context(), nameArg, opt)
 		},
 	}
 
-	EmbedCLIExample(ctx, cmd, "drop the index 'UsersByName' for 'Users' collection",
-		`defradb client index drop --collection Users --name UsersByName`)
+	EmbedCLIExample(ctx, cmd, "delete the index 'UsersByName' for 'Users' collection",
+		`defradb client index delete --collection Users --name UsersByName`)
 
 	cmd.Flags().StringVarP(&collectionArg, "collection", "c", "", "Collection name")
 	cmd.Flags().StringVarP(&nameArg, "name", "n", "", "Index name")

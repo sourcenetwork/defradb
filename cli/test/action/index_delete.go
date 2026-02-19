@@ -14,25 +14,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// IndexDrop executes the `client index drop` command.
-type IndexDrop struct {
+// IndexDelete executes the `client index delete` command.
+type IndexDelete struct {
 	stateful
 	augmented
 
 	// The collection name containing the index (required).
 	Collection string
 
-	// The name of the index to drop (required).
+	// The name of the index to delete (required).
 	Name string
 
 	// ExpectError is the expected error string. If empty, no error is expected.
 	ExpectError string
 }
 
-var _ Action = (*IndexDrop)(nil)
+var _ Action = (*IndexDelete)(nil)
 
-func (a *IndexDrop) Execute() {
-	args := []string{"client", "index", "drop"}
+func (a *IndexDelete) Execute() {
+	args := []string{"client", "index", "delete"}
 
 	if a.Collection != "" {
 		args = append(args, "--collection", a.Collection)

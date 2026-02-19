@@ -480,13 +480,13 @@ func (w *Wrapper) GetCollections(
 	return out, nil
 }
 
-func (w *Wrapper) GetAllIndexes(
+func (w *Wrapper) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	opt := utils.NewOptions(opts...)
 	ctx = ctxWithOptIdentity(ctx, opt)
-	res, err := execute(ctx, w.value, "getAllIndexes")
+	res, err := execute(ctx, w.value, "listIndexes")
 	if err != nil {
 		return nil, err
 	}

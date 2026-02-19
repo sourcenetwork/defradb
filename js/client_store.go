@@ -236,14 +236,14 @@ func collectionFetchOptionsToGetCollectionsOptions(input collectionFetchOptions)
 	return opt
 }
 
-func (c *Client) getAllIndexes(this js.Value, args []js.Value) (js.Value, error) {
+func (c *Client) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
 	ctx, err := contextArg(args, 0, c.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.GetAllIndexes()
+	opt := options.ListIndexes()
 	setOptIdentity(opt, args, 0)
-	indexes, err := c.node.DB.GetAllIndexes(ctx, opt)
+	indexes, err := c.node.DB.ListIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

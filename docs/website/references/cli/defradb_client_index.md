@@ -4,7 +4,7 @@ Manage collections' indexes of a running DefraDB instance
 
 ### Synopsis
 
-Manage (create, drop, or list) collection indexes on a DefraDB node.
+Manage (create, delete, or list) collection indexes on a DefraDB node.
 
 ### Options
 
@@ -38,6 +38,6 @@ Manage (create, drop, or list) collection indexes on a DefraDB node.
 
 * [defradb client](defradb_client.md)	 - Interact with a DefraDB node
 * [defradb client index create](defradb_client_index_create.md)	 - Creates a secondary index on a collection's field(s)
-* [defradb client index drop](defradb_client_index_drop.md)	 - Drop a collection's secondary index
+* [defradb client index delete](defradb_client_index_delete.md)	 - Delete a collection's secondary index
 * [defradb client index list](defradb_client_index_list.md)	 - Shows the list indexes in the database or for a specific collection
 

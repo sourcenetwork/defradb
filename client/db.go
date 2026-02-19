@@ -323,10 +323,10 @@ type Store interface {
 	// made via the returned [Collection]s will respect that transaction.
 	GetCollections(ctx context.Context, opts ...options.Enumerable[options.GetCollectionsOptions]) ([]Collection, error)
 
-	// GetAllIndexes returns all the indexes that currently exist within this [Store].
-	GetAllIndexes(
+	// ListIndexes returns all the indexes that currently exist within this [Store].
+	ListIndexes(
 		ctx context.Context,
-		opts ...options.Enumerable[options.GetAllIndexesOptions],
+		opts ...options.Enumerable[options.ListIndexesOptions],
 	) (map[CollectionName][]IndexDescription, error)
 
 	// ListAllEncryptedIndexes returns all the encrypted indexes that currently exist within this [Store].

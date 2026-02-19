@@ -48,7 +48,7 @@ func newTransaction(txn client.Txn, txns *sync.Map) js.Value {
 		"listLenses":                 goji.Async(wrapper.listLenses),
 		"getCollectionByName":        goji.Async(wrapper.getCollectionByName),
 		"getCollections":             goji.Async(wrapper.getCollections),
-		"getAllIndexes":              goji.Async(wrapper.getAllIndexes),
+		"listIndexes":                goji.Async(wrapper.listIndexes),
 		"listAllEncryptedIndexes":    goji.Async(wrapper.listAllEncryptedIndexes),
 		"execRequest":                goji.Async(wrapper.execRequest),
 		"addDACPolicy":               goji.Async(wrapper.addDACPolicy),
@@ -260,14 +260,14 @@ func (t *transaction) getCollections(this js.Value, args []js.Value) (js.Value, 
 	return js.ValueOf(wrappers), nil
 }
 
-func (t *transaction) getAllIndexes(this js.Value, args []js.Value) (js.Value, error) {
+func (t *transaction) listIndexes(this js.Value, args []js.Value) (js.Value, error) {
 	ctx, err := contextArg(args, 0, t.txns)
 	if err != nil {
 		return js.Undefined(), err
 	}
-	opt := options.GetAllIndexes()
+	opt := options.ListIndexes()
 	setOptIdentity(opt, args, 0)
-	indexes, err := t.txn.GetAllIndexes(ctx, opt)
+	indexes, err := t.txn.ListIndexes(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}

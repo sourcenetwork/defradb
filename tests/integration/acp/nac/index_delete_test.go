@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func TestNAC_GatesIndexDrop_AuthorizedIdentity_AllowAccess(t *testing.T) {
+func TestNAC_GatesIndexDelete_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	test := testUtils.TestCase{
 		SupportedClientTypes: immutable.Some(
 			[]state.ClientType{
@@ -50,7 +50,7 @@ func TestNAC_GatesIndexDrop_AuthorizedIdentity_AllowAccess(t *testing.T) {
 			},
 
 			// This should work as the identity is authorized.
-			&action.DropIndex{
+			&action.DeleteIndex{
 				Identity:  testUtils.ClientIdentity(1),
 				IndexName: "User_name_ASC",
 			},
@@ -60,7 +60,7 @@ func TestNAC_GatesIndexDrop_AuthorizedIdentity_AllowAccess(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesIndexDrop_NoIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesIndexDelete_NoIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -89,10 +89,10 @@ func TestNAC_GatesIndexDrop_NoIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			&action.DropIndex{
+			&action.DeleteIndex{
 				Identity:      testUtils.NoIdentity(),
 				IndexName:     "User_name_ASC",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexDropPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexDeletePerm),
 			},
 		},
 	}
@@ -100,7 +100,7 @@ func TestNAC_GatesIndexDrop_NoIdentity_NotAuthorizedError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesIndexDrop_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesIndexDelete_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -130,7 +130,7 @@ func TestNAC_GatesIndexDrop_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t
 			},
 
 			// We haven't authorized non-identities. So, this should error.
-			&action.DropIndex{
+			&action.DeleteIndex{
 				Identity:      testUtils.NoIdentity(),
 				IndexName:     "User_name_ASC",
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
@@ -141,7 +141,7 @@ func TestNAC_GatesIndexDrop_NoIdentity_CLIandCandHTTPClient_NotAuthorizedError(t
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesIndexDrop_WrongIdentity_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesIndexDelete_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -170,10 +170,10 @@ func TestNAC_GatesIndexDrop_WrongIdentity_NotAuthorizedError(t *testing.T) {
 			},
 
 			// Wrong user/identity will also not be authorized.
-			&action.DropIndex{
+			&action.DeleteIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				IndexName:     "User_name_ASC",
-				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexDropPerm),
+				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeIndexDeletePerm),
 			},
 		},
 	}
@@ -181,7 +181,7 @@ func TestNAC_GatesIndexDrop_WrongIdentity_NotAuthorizedError(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestNAC_GatesIndexDrop_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
+func TestNAC_GatesIndexDelete_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedError(t *testing.T) {
 	test := testUtils.TestCase{
 		// todo: Investigate and test this behavior across all client types when implementing granular NAC permissions.
 		// See: https://github.com/sourcenetwork/defradb/issues/4383
@@ -211,7 +211,7 @@ func TestNAC_GatesIndexDrop_WrongIdentity_CLIandCandHTTPClient_NotAuthorizedErro
 			},
 
 			// Wrong user/identity will also not be authorized.
-			&action.DropIndex{
+			&action.DeleteIndex{
 				Identity:      testUtils.ClientIdentity(2),
 				IndexName:     "User_name_ASC",
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),

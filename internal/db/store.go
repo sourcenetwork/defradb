@@ -111,10 +111,10 @@ func (db *DB) GetCollections(
 	return db.getCollections(ctx, opt)
 }
 
-// GetAllIndexes gets all the indexes in the database.
-func (db *DB) GetAllIndexes(
+// ListIndexes gets all the indexes in the database.
+func (db *DB) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
@@ -131,7 +131,7 @@ func (db *DB) GetAllIndexes(
 	}
 	defer txn.Discard()
 
-	return db.getAllIndexDescriptions(ctx)
+	return db.listIndexDescriptions(ctx)
 }
 
 // ListAllEncryptedIndexes gets all the encrypted indexes in the database.

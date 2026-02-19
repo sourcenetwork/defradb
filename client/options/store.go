@@ -446,30 +446,30 @@ func (b *GetCollectionsOptionsBuilder) SetGetInactive(getInactive bool) *GetColl
 	return b
 }
 
-// GetAllIndexesOptions contains options for GetAllIndexes operation.
-type GetAllIndexesOptions struct {
+// ListIndexesOptions contains options for ListIndexes operation.
+type ListIndexesOptions struct {
 	// Identity is the identity of the actor performing the operation.
 	Identity immutable.Option[identity.Identity]
 }
 
 // GetIdentity returns the identity for the operation.
-func (o *GetAllIndexesOptions) GetIdentity() immutable.Option[identity.Identity] {
+func (o *ListIndexesOptions) GetIdentity() immutable.Option[identity.Identity] {
 	return o.Identity
 }
 
-// GetAllIndexesOptionsBuilder is a builder for GetAllIndexesOptions.
-type GetAllIndexesOptionsBuilder struct {
-	enumerableBuilder[GetAllIndexesOptions]
+// ListIndexesOptionsBuilder is a builder for ListIndexesOptions.
+type ListIndexesOptionsBuilder struct {
+	enumerableBuilder[ListIndexesOptions]
 }
 
-// GetAllIndexes creates a new GetAllIndexesOptionsBuilder instance.
-func GetAllIndexes() *GetAllIndexesOptionsBuilder {
-	return &GetAllIndexesOptionsBuilder{}
+// ListIndexes creates a new ListIndexesOptionsBuilder instance.
+func ListIndexes() *ListIndexesOptionsBuilder {
+	return &ListIndexesOptionsBuilder{}
 }
 
 // SetIdentity sets the identity for the operation.
-func (b *GetAllIndexesOptionsBuilder) SetIdentity(id identity.Identity) *GetAllIndexesOptionsBuilder {
-	b.append(func(opts *GetAllIndexesOptions) {
+func (b *ListIndexesOptionsBuilder) SetIdentity(id identity.Identity) *ListIndexesOptionsBuilder {
+	b.append(func(opts *ListIndexesOptions) {
 		opts.Identity = immutable.Some(id)
 	})
 	return b

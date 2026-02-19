@@ -902,9 +902,9 @@ func (w *CWrapper) GetCollections(
 	return cols, nil
 }
 
-func (w *CWrapper) GetAllIndexes(
+func (w *CWrapper) ListIndexes(
 	ctx context.Context,
-	opts ...options.Enumerable[options.GetAllIndexesOptions],
+	opts ...options.Enumerable[options.ListIndexesOptions],
 ) (map[client.CollectionName][]client.IndexDescription, error) {
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
