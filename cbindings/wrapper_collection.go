@@ -650,7 +650,6 @@ func (c *Collection) GetIndexes(
 	opts ...options.Enumerable[options.CollectionGetIndexesOptions],
 ) ([]client.IndexDescription, error) {
 	cName := C.CString(c.def.Name)
-	cIndexName := C.CString("")
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
@@ -658,7 +657,6 @@ func (c *Collection) GetIndexes(
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cIndexName))
 	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
@@ -762,7 +760,6 @@ func (c *Collection) Truncate(
 	ctx context.Context, opts ...options.Enumerable[options.CollectionTruncateOptions],
 ) error {
 	cName := C.CString(c.def.Name)
-	cIndexName := C.CString("")
 	cVersion := C.CString("")
 	cCollectionID := C.CString("")
 	cIdentity := optionToUintptr(utils.NewOptions(opts...).GetIdentity())
@@ -770,7 +767,6 @@ func (c *Collection) Truncate(
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cVersion))
 	defer C.free(unsafe.Pointer(cCollectionID))
-	defer C.free(unsafe.Pointer(cIndexName))
 	defer C.IdentityFree(cIdentity)
 
 	var copts C.CollectionOptions
