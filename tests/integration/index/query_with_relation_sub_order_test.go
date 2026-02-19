@@ -1685,7 +1685,7 @@ func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldInclude
 			&action.Request{
 				Request: makeExplainQuery(req),
 				// root=Book: 1 doc, no index.
-				// subType=Publisher: 1 doc, 1 index (via establishedYear).
+				// subType=Publisher: 1 doc, 1 index (via year).
 				Asserter: testUtils.NewExplainAsserter("root").WithDocFetches(1).WithIndexFetches(0).
 					WithLevel("subType").WithDocFetches(1).WithIndexFetches(1),
 			},

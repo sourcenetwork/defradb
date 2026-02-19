@@ -799,12 +799,6 @@ func TestQueryWithIndexOnOneToMany_WithParentFilterOnRelationAndSubFilterOnNonIn
 				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
 					WithLevel("subType").WithIndexFetches(2),
 			},
-			&action.Request{
-				Request: makeExplainQuery(req),
-				// Level-specific: root (User) has no index, subType (Device) has 2 (manufacturer not indexed)
-				Asserter: testUtils.NewExplainAsserter("root").WithIndexFetches(0).
-					WithLevel("subType").WithIndexFetches(2),
-			},
 		},
 	}
 
