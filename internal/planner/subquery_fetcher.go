@@ -162,7 +162,8 @@ func addFilterOnField(f *mapper.Filter, propIndex int, value any) *mapper.Filter
 	result := mapper.NewFilter()
 	if f != nil {
 		maps.Copy(result.Conditions, f.Conditions)
-		result.ExternalConditions = f.ExternalConditions
+		result.ExternalConditions = make(map[string]any, len(f.ExternalConditions))
+		maps.Copy(result.ExternalConditions, f.ExternalConditions)
 	}
 
 	propertyIndex := &mapper.PropertyIndex{Index: propIndex}
