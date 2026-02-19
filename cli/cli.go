@@ -188,9 +188,9 @@ func NewDefraCommand(ctx context.Context) *cobra.Command {
 
 	keyring := MakeKeyringCommand(ctx)
 	keyring.AddCommand(
-		MakeKeyringGenerateCommand(ctx),
-		MakeKeyringImportCommand(ctx),
-		MakeKeyringExportCommand(ctx),
+		MakeKeyringNewCommand(ctx),
+		MakeKeyringAddCommand(ctx),
+		MakeKeyringGetCommand(ctx),
 		MakeKeyringListCommand(ctx),
 	)
 

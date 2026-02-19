@@ -1,10 +1,10 @@
-## defradb keyring import
+## defradb keyring add
 
-Import a private key
+Add a private key
 
 ### Synopsis
 
-Import a private key.
+Add a private key.
 Store an externally generated key in the keyring.
 
 The DEFRA_KEYRING_SECRET environment variable must be set to unlock the keyring.
@@ -12,20 +12,20 @@ This can also be done with a .env file in the working directory or at a path
 defined with the --secret-file flag.
 
 ```
-defradb keyring import <name> <private-key-hex> [flags]
+defradb keyring add <name> <private-key-hex> [flags]
 ```
 
 ### Examples
 
 ```
-Import encryption key:  
-  defradb keyring import encryption-key 0000000000000000
+Add encryption key:  
+  defradb keyring add encryption-key 0000000000000000
 ```
 
 ### Options
 
 ```
-  -h, --help   help for import
+  -h, --help   help for add
 ```
 
 ### Options inherited from parent commands

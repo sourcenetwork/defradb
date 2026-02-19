@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestKeyringExport(t *testing.T) {
+func TestKeyringGet(t *testing.T) {
 	rootdir := t.TempDir()
 	err := os.Setenv("DEFRA_KEYRING_SECRET", "password")
 	require.NoError(t, err)
@@ -34,14 +34,14 @@ func TestKeyringExport(t *testing.T) {
 	keyHex := hex.EncodeToString(keyBytes)
 
 	cmd := NewDefraCommand(context.Background())
-	cmd.SetArgs([]string{"keyring", "import", "--rootdir", rootdir, encryptionKeyName, keyHex})
+	cmd.SetArgs([]string{"keyring", "add", "--rootdir", rootdir, encryptionKeyName, keyHex})
 
 	err = cmd.Execute()
 	require.NoError(t, err)
 
 	var output bytes.Buffer
 	cmd.SetOut(&output)
-	cmd.SetArgs([]string{"keyring", "export", "--rootdir", rootdir, encryptionKeyName})
+	cmd.SetArgs([]string{"keyring", "get", "--rootdir", rootdir, encryptionKeyName})
 
 	err = cmd.Execute()
 	require.NoError(t, err)
