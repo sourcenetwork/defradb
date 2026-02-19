@@ -19,15 +19,16 @@ import (
 // collectDocsWithOrphans fetches docs from the inverted join and merges orphan docs
 // based on sort direction, respecting the limit.
 //
-// Two strategies are used depending on whether the ordering relation field stores the FK:
+// Two strategies are used depending on whether the fetched doc is the primary side
+// of the ordering relation (i.e. stores the FK for it):
 //
-// Primary (stores FK, e.g. Book has publisher_id):
+// Doc is primary (stores FK, e.g. Book has _publisherID):
 //
 //	Orphans are self-identifying via FK IS NULL.
 //	ASC: fetch orphans first, fill remaining from join.
 //	DESC: fetch from join with limit, fill remaining with orphans.
 //
-// Secondary (no FK, e.g. Publisher stores book_id, not Book):
+// Doc is secondary (no FK, e.g. Book ordered by author.name, but Author stores _bookID):
 //
 //	Orphans can only be identified by exclusion after seeing join results.
 //	Both ASC and DESC: collect join docs first, then fetch all docs for parent,
@@ -46,7 +47,8 @@ func (r *primaryObjectsRetriever) collectDocsWithOrphans(direction mapper.SortDi
 
 // collectDocsASCWithOrphansByFK fetches orphans first via FK IS NULL (they sort before
 // non-null values), then fills remaining slots from the inverted join.
-// Only works when the primary doc stores the FK for the ordering relation.
+// Only works when the fetched doc is the primary side of the ordering relation
+// (i.e. stores the FK).
 func (r *primaryObjectsRetriever) collectDocsASCWithOrphansByFK(limit uint64) ([]core.Doc, error) {
 	orphans, err := r.fetchOrphanDocsByFK()
 	if err != nil {
@@ -74,7 +76,8 @@ func (r *primaryObjectsRetriever) collectDocsASCWithOrphansByFK(limit uint64) ([
 
 // collectDocsDESCWithOrphansByFK fetches from the inverted join first (non-null values sort first),
 // then fills remaining slots with orphans identified via FK IS NULL.
-// Only works when the primary doc stores the FK for the ordering relation.
+// Only works when the fetched doc is the primary side of the ordering relation
+// (i.e. stores the FK).
 func (r *primaryObjectsRetriever) collectDocsDESCWithOrphansByFK(limit uint64) ([]core.Doc, error) {
 	joinDocs, err := r.collectDocs()
 	if err != nil {
@@ -103,7 +106,13 @@ func (r *primaryObjectsRetriever) collectDocsDESCWithOrphansByFK(limit uint64) (
 // collectDocsWithOrphansByExclusion collects ALL join docs (ignoring limit) to build
 // a correct exclusion set, then identifies orphans as docs not in the join results.
 // The limit is temporarily removed and re-applied after merging.
-// Used when the primary doc does not store the FK for the ordering relation.
+//
+// This is used when the fetched doc is the secondary side of the ordering relation
+// (i.e. does not store the FK for it). In that case, relation fields are populated by
+// joins at runtime and are not stored in the datastore, so there is no field on the doc
+// that can be checked to determine whether it is an orphan. The only way to identify
+// orphans is by exclusion: first see which docs the join produced, then fetch all docs
+// and subtract.
 func (r *primaryObjectsRetriever) collectDocsWithOrphansByExclusion(
 	direction mapper.SortDirection,
 	limit uint64,
@@ -173,9 +182,9 @@ func (r *primaryObjectsRetriever) isOrderingByRelation() bool {
 	return false
 }
 
-// orderingRelFieldIsPrimary returns true if the ordering relation field on the primary doc
-// stores the FK (IsPrimary). When true, orphans can be identified directly via FK IS NULL.
-// When false, orphans can only be identified by exclusion from join results.
+// orderingRelFieldIsPrimary returns true if the fetched doc is the primary side of the
+// ordering relation (i.e. stores the FK). When true, orphans can be identified directly
+// via FK IS NULL. When false, orphans can only be identified by exclusion from join results.
 func (r *primaryObjectsRetriever) orderingRelFieldIsPrimary() bool {
 	_, relFieldIndex := r.getOrderingInfo()
 	fieldName, ok := r.primaryScan.documentMapping.TryToFindNameFromIndex(relFieldIndex)
@@ -190,8 +199,8 @@ func (r *primaryObjectsRetriever) orderingRelFieldIsPrimary() bool {
 }
 
 // fetchOrphanDocsByFK fetches orphan documents using FK IS NULL on the ordering
-// relation's FK field. Only works when the primary doc stores the FK for the
-// ordering relation (e.g., Book has publisher_id).
+// relation's FK field. Only works when the fetched doc is the primary side of the
+// ordering relation (e.g., Book has _publisherID).
 func (r *primaryObjectsRetriever) fetchOrphanDocsByFK() ([]core.Doc, error) {
 	if !r.primarySide.relIDFieldMapIndex.HasValue() {
 		return nil, nil
@@ -225,8 +234,11 @@ func (r *primaryObjectsRetriever) fetchOrphanDocsByFK() ([]core.Doc, error) {
 }
 
 // fetchOrphanDocsByExclusion fetches all docs for the current parent and excludes
-// those present in joinDocs. Used when the primary doc does not store the FK for the
-// ordering relation, so orphans cannot be identified from the doc data alone.
+// those present in joinDocs. Used when the fetched doc is the secondary side of the
+// ordering relation (i.e. does not store the FK for it). In that case, relation fields
+// are populated by joins at runtime and not stored in the datastore, so there is no
+// field value that can distinguish an orphan from a non-orphan. The exclusion list
+// from the join results is the only way to identify them.
 func (r *primaryObjectsRetriever) fetchOrphanDocsByExclusion(joinDocs []core.Doc) ([]core.Doc, error) {
 	if !r.primarySide.relIDFieldMapIndex.HasValue() {
 		return nil, nil
