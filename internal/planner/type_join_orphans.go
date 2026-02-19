@@ -61,15 +61,12 @@ func (r *primaryObjectsRetriever) collectDocsASCWithOrphansByFK(limit uint64) ([
 	if remaining > 0 {
 		remaining -= uint64(len(orphans))
 		r.setLimit(remaining)
+		defer r.setLimit(limit)
 	}
 
 	joinDocs, err := r.collectDocs()
 	if err != nil {
 		return nil, err
-	}
-
-	if limit > 0 {
-		r.setLimit(limit)
 	}
 
 	return append(orphans, joinDocs...), nil
