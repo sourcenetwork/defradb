@@ -193,6 +193,10 @@ func (r *primaryObjectsRetriever) orderingRelFieldIsPrimary() bool {
 // relation's FK field. Only works when the primary doc stores the FK for the
 // ordering relation (e.g., Book has publisher_id).
 func (r *primaryObjectsRetriever) fetchOrphanDocsByFK() ([]core.Doc, error) {
+	if !r.primarySide.relIDFieldMapIndex.HasValue() {
+		return nil, nil
+	}
+
 	_, relFieldIndex := r.getOrderingInfo()
 	relFieldName, ok := r.primaryScan.documentMapping.TryToFindNameFromIndex(relFieldIndex)
 	if !ok {
@@ -224,6 +228,10 @@ func (r *primaryObjectsRetriever) fetchOrphanDocsByFK() ([]core.Doc, error) {
 // those present in joinDocs. Used when the primary doc does not store the FK for the
 // ordering relation, so orphans cannot be identified from the doc data alone.
 func (r *primaryObjectsRetriever) fetchOrphanDocsByExclusion(joinDocs []core.Doc) ([]core.Doc, error) {
+	if !r.primarySide.relIDFieldMapIndex.HasValue() {
+		return nil, nil
+	}
+
 	fetcher := newSubQueryFetcher(
 		r.primaryScan.p.ctx,
 		r.primaryScan.p.identity,
