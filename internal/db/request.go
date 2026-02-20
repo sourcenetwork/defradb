@@ -26,11 +26,18 @@ func (db *DB) execRequest(ctx context.Context, request string, options *client.G
 		res.GQL.Errors = append(res.GQL.Errors, err)
 		return res
 	}
-	if db.parser.IsIntrospection(ast) {
-		return db.parser.ExecuteIntrospection(ctx, request)
-	}
 
+	// Acquire a shared read lock while accessing the schema manager so that
+	// concurrent schema mutations cannot swap p.schemaManager mid-read.
+	db.gqlLock.RLock()
+	if db.parser.IsIntrospection(ast) {
+		result := db.parser.ExecuteIntrospection(ctx, request)
+		db.gqlLock.RUnlock()
+		return result
+	}
 	parsedRequest, errors := db.parser.Parse(ctx, ast, options)
+	db.gqlLock.RUnlock()
+
 	if len(errors) > 0 {
 		res.GQL.Errors = append(res.GQL.Errors, errors...)
 		return res

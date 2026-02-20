@@ -164,7 +164,9 @@ func (c *collection) makeSelectionPlan(
 			return nil, ErrInvalidFilter
 		}
 
+		c.db.gqlLock.RLock()
 		f, err = c.db.parser.NewFilterFromString(c.Name(), fval)
+		c.db.gqlLock.RUnlock()
 		if err != nil {
 			return nil, err
 		}

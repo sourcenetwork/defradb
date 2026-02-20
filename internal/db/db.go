@@ -69,6 +69,8 @@ type DB struct {
 	// SetActiveCollectionVersion, AddView, AddEncryptedIndex, DeleteEncryptedIndex)
 	// to prevent concurrent modifications from racing on loadSchema/SetSchema,
 	// which could cause the GQL type system to lose track of registered types.
+	// It is an RWMutex so that concurrent read-only paths (ExecRequest, filter parsing)
+	// can hold a shared read lock without blocking each other, while writes are exclusive.
 	gqlLock sync.RWMutex
 
 	rootstore corekv.TxnStore
