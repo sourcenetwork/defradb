@@ -443,6 +443,9 @@ func (c *collection) AddEncryptedIndex(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	c.db.gqlLock.Lock()
+	defer c.db.gqlLock.Unlock()
+
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()
 
@@ -515,6 +518,9 @@ func (c *collection) DeleteEncryptedIndex(
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	c.db.gqlLock.Lock()
+	defer c.db.gqlLock.Unlock()
 
 	opt := utils.NewOptions(opts...)
 	ident := opt.GetIdentity()

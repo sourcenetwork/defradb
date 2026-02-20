@@ -170,6 +170,9 @@ func (db *DB) AddSchema(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	db.gqlLock.Lock()
+	defer db.gqlLock.Unlock()
+
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
@@ -214,6 +217,9 @@ func (db *DB) PatchCollection(
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
+	db.gqlLock.Lock()
+	defer db.gqlLock.Unlock()
+
 	opt := utils.NewOptions(opts...)
 
 	if err := db.checkNodeAccess(ctx, opt.Identity, acpTypes.NodeCollectionPatchPerm); err != nil {
@@ -241,6 +247,9 @@ func (db *DB) SetActiveCollectionVersion(
 ) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	db.gqlLock.Lock()
+	defer db.gqlLock.Unlock()
 
 	opt := utils.NewOptions(opts...)
 
@@ -361,6 +370,9 @@ func (db *DB) AddView(
 ) ([]client.CollectionVersion, error) {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
+
+	db.gqlLock.Lock()
+	defer db.gqlLock.Unlock()
 
 	opt := utils.NewOptions(opts...)
 

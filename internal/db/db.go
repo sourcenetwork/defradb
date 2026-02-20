@@ -65,6 +65,12 @@ const (
 type DB struct {
 	glock sync.RWMutex
 
+	// gqlLock serializes schema-mutating operations (AddSchema, PatchCollection,
+	// SetActiveCollectionVersion, AddView, AddEncryptedIndex, DeleteEncryptedIndex)
+	// to prevent concurrent modifications from racing on loadSchema/SetSchema,
+	// which could cause the GQL type system to lose track of registered types.
+	gqlLock sync.RWMutex
+
 	rootstore corekv.TxnStore
 
 	events event.Bus
