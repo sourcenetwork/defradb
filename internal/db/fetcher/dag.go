@@ -112,7 +112,6 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 }
 
 func (hf *HeadFetcher) Close() error {
-
 	var firstErr error
 	for _, iter := range hf.kvIters {
 		if err := iter.Close(); err != nil && firstErr == nil {
