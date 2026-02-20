@@ -25,8 +25,8 @@ import (
 
 // HeadFetcher is a utility to incrementally fetch all the MerkleCRDT heads of a given doc/field.
 type HeadFetcher struct {
-	kvIters    []corekv.Iterator
-	iterIndex  int
+	kvIters   []corekv.Iterator
+	iterIndex int
 }
 
 // Start starts/initializes the fetcher, performing all the work it can do outside
@@ -104,14 +104,6 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 			return nil, err
 		}
 
-		// Skip non-commit keys (e.g. schema definitions) if they happen to be in the scan range.
-		// Normally the caller restricts the scan range to collection/doc commits,
-		// so this is just a defensive check.
-		switch headStoreKey.(type) {
-		case keys.HeadstoreFieldDefinition, keys.HeadstoreCollectionDefinition, keys.HeadstoreCollectionSetDefinition:
-			return hf.FetchNext()
-		}
-
 		cid := headStoreKey.GetCid()
 		return &cid, nil
 	}
@@ -120,9 +112,6 @@ func (hf *HeadFetcher) FetchNext() (*cid.Cid, error) {
 }
 
 func (hf *HeadFetcher) Close() error {
-	if len(hf.kvIters) == 0 {
-		return nil
-	}
 
 	var firstErr error
 	for _, iter := range hf.kvIters {
