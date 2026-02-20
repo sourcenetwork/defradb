@@ -21,17 +21,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/sourcenetwork/go-p2p"
-	"github.com/sourcenetwork/immutable"
-
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/cli/config"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/http"
-	"github.com/sourcenetwork/defradb/internal/db"
 	"github.com/sourcenetwork/defradb/internal/telemetry"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
@@ -51,8 +48,8 @@ const devModeBanner = `
 
 const developmentDescription = `Enables a set of features that make development easier but should not be enabled ` +
 	`in production:
- - allows purging of all persisted data 
- - generates temporary node identity if keyring is disabled`
+ - allows purging of all persisted data
+ - generates temporary node identity if one doesn't exist in the keyring`
 
 func MakeStartCommand(ctx context.Context) *cobra.Command {
 	var identity string
@@ -90,40 +87,39 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				replicatorRetryIntervals = append(replicatorRetryIntervals, time.Duration(interval)*time.Second)
 			}
 
-			opts := []node.Option{
-				node.WithEnableNodeACP(enableNAC),
-				node.WithDisableP2P(cfg.GetBool("net.p2pDisabled")),
-				node.WithSourceHubChainID(cfg.GetString("acp.document.sourceHub.ChainID")),
-				node.WithSourceHubGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")),
-				node.WithSourceHubCometRPCAddress(cfg.GetString("acp.document.sourceHub.CometRPCAddress")),
-				node.WithEnableDevelopment(cfg.GetBool("development")),
-				// store options
-				node.WithStorePath(cfg.GetString("datastore.badger.path")),
-				node.WithBadgerInMemory(cfg.GetString("datastore.store") == config.ConfigStoreMemory),
-				// db options
-				db.WithMaxRetries(cfg.GetInt("datastore.MaxTxnRetries")),
-				db.WithRetryInterval(replicatorRetryIntervals),
-				db.WithLensRuntime(db.LensRuntimeType(cfg.GetString("lens.runtime"))),
-				// net node options
-				p2p.WithListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...),
-				p2p.WithEnablePubSub(cfg.GetBool("net.pubSubEnabled")),
-				p2p.WithEnableRelay(cfg.GetBool("net.relayEnabled")),
-				p2p.WithBootstrapPeers(cfg.GetStringSlice("net.peers")...),
+			inMem := cfg.GetString("datastore.store") == config.ConfigStoreMemory
 
-				// http server options
-				http.WithAddress(cfg.GetString("api.address")),
-				http.WithAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...),
-				http.WithTLSCertPath(cfg.GetString("api.pubKeyPath")),
-				http.WithTLSKeyPath(cfg.GetString("api.privKeyPath")),
-			}
+			opts := options.Node().
+				SetEnableDevelopment(cfg.GetBool("development")).
+				SetDisableP2P(cfg.GetBool("net.p2pDisabled"))
+			opts.Store().
+				SetPath(cfg.GetString("datastore.badger.path")).
+				SetBadgerInMemory(inMem)
+			opts.DB().
+				SetMaxTxnRetries(cfg.GetInt("datastore.MaxTxnRetries")).
+				SetRetryIntervals(replicatorRetryIntervals).
+				SetLensRuntime(options.NodeLensRuntimeType(cfg.GetString("lens.runtime")))
+			opts.P2P().
+				SetListenAddresses(cfg.GetStringSlice("net.p2pAddresses")...).
+				SetEnablePubSub(cfg.GetBool("net.pubSubEnabled")).
+				SetEnableRelay(cfg.GetBool("net.relayEnabled")).
+				SetBootstrapPeers(cfg.GetStringSlice("net.peers")...)
+			opts.HTTP().
+				SetAddress(cfg.GetString("api.address")).
+				SetAllowedOrigins(cfg.GetStringSlice("api.allowed-origins")...).
+				SetCertPath(cfg.GetString("api.pubKeyPath")).
+				SetKeyPath(cfg.GetString("api.privKeyPath"))
+			opts.DocumentACP().
+				SetChainID(cfg.GetString("acp.document.sourceHub.ChainID")).
+				SetGRPCAddress(cfg.GetString("acp.document.sourceHub.GRPCAddress")).
+				SetCometRPCAddress(cfg.GetString("acp.document.sourceHub.CometRPCAddress"))
+			opts.NodeACP().
+				SetEnabled(enableNAC)
 
-			if cfg.GetString("datastore.store") != config.ConfigStoreMemory {
+			if !inMem {
 				rootDir := mustGetContextRootDir(cmd)
-				// TODO-ACP: Infuture when we add support for the --no-acp flag when node acp is implemented,
-				// we can allow starting of db without acp. Currently that can only be done programmatically.
-				// https://github.com/sourcenetwork/defradb/issues/2271
-				opts = append(opts, node.WithDocumentACPPath(rootDir))
-				opts = append(opts, node.WithNodeACPPath(rootDir))
+				opts.DocumentACP().SetPath(rootDir).
+					NodeACP().SetPath(rootDir)
 			}
 
 			if enableNAC && identity == "" {
@@ -132,7 +128,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 
 			documentACPType := cfg.GetString("acp.document.type")
 			if documentACPType != "" {
-				opts = append(opts, node.WithDocumentACPType(node.DocumentACPType(documentACPType)))
+				opts.DocumentACP().SetType(options.NodeDocumentACPType(documentACPType))
 			}
 
 			if !cfg.GetBool("keyring.disabled") {
@@ -140,29 +136,33 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				if err != nil {
 					return err
 				}
-				opts, err = getOrCreatePeerKey(kr, opts)
+				peerKey, err := getOrCreatePeerKey(kr)
 				if err != nil {
 					return err
 				}
+				opts.P2P().SetPrivateKey(peerKey)
 
 				if !cfg.GetBool("datastore.noencryption") {
-					opts, err = getOrCreateEncryptionKey(kr, opts)
+					encKey, err := getOrCreateEncryptionKey(kr)
 					if err != nil {
 						return err
 					}
+					opts.Store().SetBadgerEncryptionKey(encKey)
 				}
 
 				if !cfg.GetBool("datastore.nosearchableencryption") {
-					opts, err = getOrCreateSearchableEncryptionKey(kr, opts)
+					seKey, err := getOrCreateSearchableEncryptionKey(kr)
 					if err != nil {
 						return err
 					}
+					opts.DB().SetSearchableEncryptionKey(seKey)
 				}
 
-				opts, err = getOrCreateIdentity(kr, opts, cfg)
+				ident, err := getOrCreateIdentity(kr, cfg)
 				if err != nil {
 					return err
 				}
+				opts.DB().SetNodeIdentity(ident)
 
 				// setup the sourcehub transaction signer
 				sourceHubKeyName := cfg.GetString("acp.document.sourceHub.KeyName")
@@ -171,26 +171,23 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 					if err != nil {
 						return err
 					}
-					opts = append(opts, node.WithTxnSigner(immutable.Some[node.TxSigner](signer)))
+					opts.DocumentACP().SetTxnSigner(signer)
 				}
 			}
 
-			opts = append(opts, db.WithEnabledSigning(!cfg.GetBool("datastore.nosigning")))
+			opts.DB().SetEnableSigning(!cfg.GetBool("datastore.nosigning"))
 
 			isDevMode := cfg.GetBool("development")
 			http.IsDevMode = isDevMode
 			if isDevMode {
 				cmd.Printf(devModeBanner)
 				if cfg.GetBool("keyring.disabled") {
-					var err error
 					// Generate an ephemeral identity for the node
-					// TODO: we want to persist this identity so we can restart the node with the same identity
-					// even in development mode. https://github.com/sourcenetwork/defradb/issues/3148
 					ident, err := generateIdentity(cfg.GetString("datastore.defaultkeytype"))
 					if err != nil {
 						return err
 					}
-					opts = append(opts, db.WithNodeIdentity(ident))
+					opts.DB().SetNodeIdentity(ident)
 				}
 			}
 
@@ -208,7 +205,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 			signalCh := make(chan os.Signal, 1)
 			signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
-			n, err := node.New(cmd.Context(), opts...)
+			n, err := node.New(cmd.Context(), opts)
 			if err != nil {
 				return err
 			}
@@ -358,7 +355,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 	return cmd
 }
 
-func getOrCreateEncryptionKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
+func getOrCreateEncryptionKey(kr keyring.Keyring) ([]byte, error) {
 	encryptionKey, err := kr.Get(encryptionKeyName)
 	if err != nil {
 		if !errors.Is(err, keyring.ErrNotFound) {
@@ -374,13 +371,12 @@ func getOrCreateEncryptionKey(kr keyring.Keyring, opts []node.Option) ([]node.Op
 		}
 		log.Info("generated encryption key")
 	}
-	opts = append(opts, node.WithBadgerEncryptionKey(encryptionKey))
-	return opts, nil
+	return encryptionKey, nil
 }
 
 // getOrCreateSearchableEncryptionKey generates or retrieves the searchable encryption key
-// from the keyring and adds it to the node options.
-func getOrCreateSearchableEncryptionKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
+// from the keyring.
+func getOrCreateSearchableEncryptionKey(kr keyring.Keyring) ([]byte, error) {
 	seKey, err := kr.Get(searchableEncryptionKeyName)
 	if err != nil {
 		if !errors.Is(err, keyring.ErrNotFound) {
@@ -396,13 +392,10 @@ func getOrCreateSearchableEncryptionKey(kr keyring.Keyring, opts []node.Option) 
 		}
 		log.Info("generated searchable encryption key")
 	}
-
-	// Add the searchable encryption key to node options
-	opts = append(opts, db.WithSearchableEncryptionKey(seKey))
-	return opts, nil
+	return seKey, nil
 }
 
-func getOrCreatePeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, error) {
+func getOrCreatePeerKey(kr keyring.Keyring) ([]byte, error) {
 	peerKey, err := kr.Get(peerKeyName)
 	if err != nil && errors.Is(err, keyring.ErrNotFound) {
 		peerKey, err = crypto.GenerateEd25519()
@@ -417,10 +410,10 @@ func getOrCreatePeerKey(kr keyring.Keyring, opts []node.Option) ([]node.Option, 
 	} else if err != nil {
 		return nil, err
 	}
-	return append(opts, p2p.WithPrivateKey(peerKey)), nil
+	return peerKey, nil
 }
 
-func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Viper) ([]node.Option, error) {
+func getOrCreateIdentity(kr keyring.Keyring, cfg *viper.Viper) (identity.Identity, error) {
 	identityBytes, err := kr.Get(nodeIdentityKeyName)
 	if err != nil {
 		if !errors.Is(err, keyring.ErrNotFound) {
@@ -449,7 +442,7 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Vipe
 		if err != nil {
 			return nil, err
 		}
-		return getOrCreateIdentity(kr, opts, cfg)
+		return getOrCreateIdentity(kr, cfg)
 	}
 	keyType := string(identityBytes[:sepPos])
 	privateKey, err := crypto.PrivateKeyFromBytes(crypto.KeyType(keyType), identityBytes[sepPos+1:])
@@ -461,7 +454,7 @@ func getOrCreateIdentity(kr keyring.Keyring, opts []node.Option, cfg *viper.Vipe
 		return nil, err
 	}
 
-	return append(opts, db.WithNodeIdentity(ident)), nil
+	return ident, nil
 }
 
 func generateIdentity(keyType string) (identity.FullIdentity, error) {

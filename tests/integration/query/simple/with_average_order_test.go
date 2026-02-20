@@ -38,7 +38,7 @@ func TestQuerySimpleWithAverageWithOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _avg(HeightM: {}, Age: {})
+						total: AVG(HeightM: {}, Age: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -57,7 +57,7 @@ func TestQuerySimpleWithAverageWithOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _avg(HeightM: {}, Age: {})
+						total: AVG(HeightM: {}, Age: {})
 					}
 				}`,
 				Results: map[string]any{

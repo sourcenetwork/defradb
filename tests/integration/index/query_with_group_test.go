@@ -111,7 +111,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 				Request: `query {
 						Author (groupBy: [age]) {
 							age
-							_group (filter: {published: {rating: {_gt: 4.6}}}) {
+							GROUP (filter: {published: {rating: {_gt: 4.6}}}) {
 								name
 								published {
 									name
@@ -124,7 +124,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 					"Author": []map[string]any{
 						{
 							"age": int64(327),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Voltaire",
 									"published": []map[string]any{
@@ -142,7 +142,7 @@ func TestIndex_GroupByWithFilterOnIndexedRelation_ReturnsGroupByFieldValue(t *te
 						},
 						{
 							"age": int64(65),
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "John Grisham",
 									"published": []map[string]any{

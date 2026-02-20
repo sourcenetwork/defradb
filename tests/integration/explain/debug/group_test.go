@@ -47,7 +47,7 @@ func TestDebugExplainRequestWithGroupByOnParent(t *testing.T) {
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [age]) {
 						age
-						_group {
+						GROUP {
 							name
 						}
 					}
@@ -72,7 +72,7 @@ func TestDebugExplainRequestWithGroupByTwoFieldsOnParent(t *testing.T) {
 				Request: `query @explain(type: debug) {
 					Author (groupBy: [age, name]) {
 						age
-						_group {
+						GROUP {
 							name
 						}
 					}

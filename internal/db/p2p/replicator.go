@@ -25,9 +25,9 @@ import (
 	"github.com/sourcenetwork/corekv"
 	"github.com/sourcenetwork/corekv/blockstore"
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
@@ -35,6 +35,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/datastore"
 	"github.com/sourcenetwork/defradb/internal/db/id"
 	"github.com/sourcenetwork/defradb/internal/db/p2p/protocol"
+	"github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -44,7 +45,7 @@ const (
 	retryLoopInterval = 2 * time.Second
 )
 
-func (p *P2P) CreateReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
+func (p *P2P) AddReplicator(ctx context.Context, addresses []string, collectionNames ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 
@@ -79,7 +80,8 @@ func (p *P2P) CreateReplicator(ctx context.Context, addresses []string, collecti
 	case len(collectionNames) > 0:
 		// if specific collections are chosen get them by name
 		for _, name := range collectionNames {
-			cols, err := clientTxn.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+			opt := options.WithIdentity(options.GetCollections().SetCollectionName(name), identity.FromContext(ctx))
+			cols, err := clientTxn.GetCollections(ctx, opt)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
@@ -91,7 +93,8 @@ func (p *P2P) CreateReplicator(ctx context.Context, addresses []string, collecti
 		}
 
 	default:
-		fetchedCollections, err = clientTxn.GetCollections(ctx, client.CollectionFetchOptions{})
+		opt := options.WithIdentity(options.GetCollections(), identity.FromContext(ctx))
+		fetchedCollections, err = clientTxn.GetCollections(ctx, opt)
 		if err != nil {
 			return NewErrReplicatorCollections(err)
 		}
@@ -281,7 +284,8 @@ func (p *P2P) DeleteReplicator(ctx context.Context, id string, collectionNames .
 	if len(collectionNames) > 0 {
 		// if specific collections are chosen get them by name
 		for _, name := range collectionNames {
-			cols, err := clientTxn.GetCollections(ctx, client.CollectionFetchOptions{Name: immutable.Some(name)})
+			opt := options.WithIdentity(options.GetCollections().SetCollectionName(name), identity.FromContext(ctx))
+			cols, err := clientTxn.GetCollections(ctx, opt)
 			if err != nil {
 				return NewErrReplicatorCollections(err)
 			}
@@ -456,13 +460,13 @@ func (p *P2P) handleCompletedReplicatorRetry(ctx context.Context, peerID string,
 			}
 		} else {
 			// If there are more docs to retry, set the next retry time to be immediate.
-			err := createReplicatorNextRetry(ctx, peerID, []time.Duration{0}, p.db.Multistore().Peerstore())
+			err := addReplicatorNextRetry(ctx, peerID, []time.Duration{0}, p.db.Multistore().Peerstore())
 			if err != nil {
 				return err
 			}
 		}
 	} else {
-		err := createReplicatorNextRetry(ctx, peerID, p.retryIntervals, p.db.Multistore().Peerstore())
+		err := addReplicatorNextRetry(ctx, peerID, p.retryIntervals, p.db.Multistore().Peerstore())
 		if err != nil {
 			return err
 		}
@@ -599,7 +603,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 				continue
 			}
 
-			err = p.createReplicatorAsRetrying(ctx, key, rInfo)
+			err = p.addReplicatorAsRetrying(ctx, key, rInfo)
 			if err != nil {
 				log.ErrorContextE(ctx, "Failed to set replicator as retrying", err)
 				continue
@@ -609,7 +613,7 @@ func (p *P2P) retryReplicators(ctx context.Context) {
 	}
 }
 
-func (p *P2P) createReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRetryIDKey, rInfo retryInfo) error {
+func (p *P2P) addReplicatorAsRetrying(ctx context.Context, key keys.ReplicatorRetryIDKey, rInfo retryInfo) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -623,7 +627,7 @@ func (p *P2P) createReplicatorAsRetrying(ctx context.Context, key keys.Replicato
 	return p.db.Multistore().Peerstore().Set(ctx, key.Bytes(), b)
 }
 
-func createReplicatorNextRetry(
+func addReplicatorNextRetry(
 	ctx context.Context,
 	peerID string,
 	retryIntervals []time.Duration,

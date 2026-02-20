@@ -18,6 +18,9 @@ import "C"
 
 import (
 	"context"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 //export AddSchema
@@ -33,7 +36,8 @@ func AddSchema(nodePtr C.uintptr_t, schema *C.char, identityPtr C.uintptr_t) C.R
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}
-	collectionVersions, err := store.AddSchema(ctx, C.GoString(schema))
+	opt := options.WithIdentity(options.AddSchema(), iIdentity.FromContext(ctx))
+	collectionVersions, err := store.AddSchema(ctx, C.GoString(schema), opt)
 	if err != nil {
 		return returnC(returnGoC(1, err.Error(), ""))
 	}

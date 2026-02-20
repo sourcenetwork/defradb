@@ -107,7 +107,7 @@ var versionField = Field{
 }
 
 var groupField = Field{
-	"name": "_group",
+	"name": "GROUP",
 	"type": map[string]any{
 		"kind": "LIST",
 		"name": nil,
@@ -116,35 +116,35 @@ var groupField = Field{
 
 var aggregateFields = fields{
 	map[string]any{
-		"name": "_avg",
+		"name": "AVG",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
 		},
 	},
 	map[string]any{
-		"name": "_max",
+		"name": "MAX",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
 		},
 	},
 	map[string]any{
-		"name": "_min",
+		"name": "MIN",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
 		},
 	},
 	map[string]any{
-		"name": "_count",
+		"name": "COUNT",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Int",
 		},
 	},
 	map[string]any{
-		"name": "_sum",
+		"name": "SUM",
 		"type": map[string]any{
 			"kind": "SCALAR",
 			"name": "Float",
@@ -153,7 +153,7 @@ var aggregateFields = fields{
 }
 
 var similarityField = Field{
-	"name": "_similarity",
+	"name": "SIMILARITY",
 	"type": map[string]any{
 		"kind": "SCALAR",
 		"name": "Float",

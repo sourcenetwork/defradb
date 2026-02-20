@@ -46,7 +46,7 @@ func TestExecuteExplainTopLevelAverageRequest(t *testing.T) {
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					_avg(
+					AVG(
 						Author: {
 							field: age
 						}
@@ -134,7 +134,7 @@ func TestExecuteExplainTopLevelCountRequest(t *testing.T) {
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					_count(Author: {})
+					COUNT(Author: {})
 				}`,
 
 				ExpectedFullGraph: dataMap{
@@ -205,7 +205,7 @@ func TestExecuteExplainTopLevelSumRequest(t *testing.T) {
 
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
-					_sum(
+					SUM(
 						Author: {
 							field: age
 						}

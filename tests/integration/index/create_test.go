@@ -55,7 +55,7 @@ func TestIndexCreateWithCollection_ShouldNotHinderQuerying(t *testing.T) {
 					},
 				},
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name: "User_name_ASC",
@@ -113,7 +113,7 @@ func TestIndexCreate_ShouldNotHinderQuerying(t *testing.T) {
 					},
 				},
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				ExpectedIndexes: []client.IndexDescription{
 					{
 						Name: "some_index",

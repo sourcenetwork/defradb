@@ -45,7 +45,7 @@ func TestP2POneToOneReplicatorUpdate_PNCounter_NoError(t *testing.T) {
 					"points": 10
 				}`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},

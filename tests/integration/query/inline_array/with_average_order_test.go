@@ -38,7 +38,7 @@ func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _avg(testScores: {}, pageRatings: {})
+						total: AVG(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -57,7 +57,7 @@ func TestQueryInlineIntegerArrayWithAverageAndOrder_Succeeds(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _avg(testScores: {}, pageRatings: {})
+						total: AVG(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -98,7 +98,7 @@ func TestQueryInlineIntegerArrayWithNullWithAverageAndOrder_Succeeds(t *testing.
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: DESC}}) {
-						total: _avg(testScores: {}, pageRatings: {})
+						total: AVG(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -117,7 +117,7 @@ func TestQueryInlineIntegerArrayWithNullWithAverageAndOrder_Succeeds(t *testing.
 			&action.Request{
 				Request: `query {
 					Users(order: {_alias: {total: ASC}}) {
-						total: _avg(testScores: {}, pageRatings: {})
+						total: AVG(testScores: {}, pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{

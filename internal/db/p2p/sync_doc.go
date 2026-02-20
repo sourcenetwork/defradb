@@ -22,13 +22,14 @@ import (
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
 	"github.com/sourcenetwork/corelog"
-	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/event"
 	"github.com/sourcenetwork/defradb/internal/core"
 	coreblock "github.com/sourcenetwork/defradb/internal/core/block"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
@@ -60,9 +61,10 @@ type docSyncItem struct {
 func (p *P2P) SyncDocuments(ctx context.Context, collectionName string, docIDs []string) error {
 	cols, err := p.db.GetCollections(
 		ctx,
-		client.CollectionFetchOptions{
-			Name: immutable.Some(collectionName),
-		},
+		options.WithIdentity(
+			options.GetCollections().SetCollectionName(collectionName),
+			iIdentity.FromContext(ctx),
+		),
 	)
 	if err != nil {
 		return err

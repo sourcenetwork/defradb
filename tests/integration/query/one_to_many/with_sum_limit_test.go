@@ -72,7 +72,7 @@ func TestQueryOneToManyWithSumWithLimit(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_sum(published: {field: rating, limit: 2})
+						SUM(published: {field: rating, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
@@ -80,11 +80,11 @@ func TestQueryOneToManyWithSumWithLimit(t *testing.T) {
 						{
 							"name": "John Grisham",
 							// internal ordering selects "Painted House" (4.9) + "A Time for Mercy" (4.5) = 9.4
-							"_sum": 9.4,
+							"SUM": 9.4,
 						},
 						{
 							"name": "Cornelia Funke",
-							"_sum": 4.8,
+							"SUM":  4.8,
 						},
 					},
 				},

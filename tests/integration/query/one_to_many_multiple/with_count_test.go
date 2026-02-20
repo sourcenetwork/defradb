@@ -111,8 +111,8 @@ func TestQueryOneToManyMultipleWithCount(t *testing.T) {
 				Request: `query {
 						Author {
 							name
-							numberOfBooks: _count(books: {})
-							numberOfArticles: _count(articles: {})
+							numberOfBooks: COUNT(books: {})
+							numberOfArticles: COUNT(articles: {})
 						}
 					}`,
 				Results: map[string]any{
@@ -239,18 +239,18 @@ func TestQueryOneToManyMultipleWithCountOnMultipleJoins(t *testing.T) {
 				Request: `query {
 						Author {
 							name
-							_count(books: {}, articles: {})
+							COUNT(books: {}, articles: {})
 						}
 					}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 4,
+							"name":  "John Grisham",
+							"COUNT": 4,
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 3,
+							"name":  "Cornelia Funke",
+							"COUNT": 3,
 						},
 					},
 				},

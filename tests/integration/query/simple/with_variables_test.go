@@ -236,10 +236,10 @@ func TestQuerySimpleWithAggregateCountVariable(t *testing.T) {
 					},
 				}),
 				Request: `query($usersCount: Users__CountSelector) {
-					_count(Users: $usersCount)
+					COUNT(Users: $usersCount)
 				}`,
 				Results: map[string]any{
-					"_count": 1,
+					"COUNT": 1,
 				},
 			},
 		},

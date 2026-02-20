@@ -17,6 +17,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	acpIdentity "github.com/sourcenetwork/defradb/acp/identity"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 const (
@@ -49,7 +50,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := acpIdentity.WithContext(req.Context(), immutable.Some[acpIdentity.Identity](ident))
+		ctx := iIdentity.WithContext(req.Context(), immutable.Some[acpIdentity.Identity](ident))
 		next.ServeHTTP(rw, req.WithContext(ctx))
 	})
 }

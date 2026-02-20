@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -60,9 +61,12 @@ func (a *AddSchema) Execute() {
 
 		schema := replace(a.s, nodeID, a.Schema)
 
-		a.s.Ctx = getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
-		results, err := node.AddSchema(a.s.Ctx, schema)
-		resetStateContext(a.s)
+		opts := options.AddSchema()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+		results, err := node.AddSchema(a.s.Ctx, schema, opts)
 
 		for _, result := range results {
 			appendCollectionVersion(a.s, result.VersionID)

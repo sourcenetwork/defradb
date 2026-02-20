@@ -37,7 +37,7 @@ func TestExecuteExplainRequest_WithSimilarity(t *testing.T) {
 				Request: `query @explain(type: execute) {
 					User {
 						name
-						_similarity(pointsList: {vector: [1, 2, 0]})
+						SIMILARITY(pointsList: {vector: [1, 2, 0]})
 					}
 				}`,
 				ExpectedFullGraph: dataMap{

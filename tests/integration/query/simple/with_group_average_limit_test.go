@@ -49,18 +49,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageW
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age, limit: 2})
+						AVG(GROUP: {field: Age, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(33),
+							"AVG":  float64(33),
 						},
 						{
 							"Name": "Alice",
-							"_avg": float64(-19),
+							"AVG":  float64(-19),
 						},
 					},
 				},

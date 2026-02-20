@@ -11,6 +11,7 @@
 package node
 
 import (
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 )
 
@@ -28,10 +29,10 @@ var (
 	ErrNodeACPTypeNotSupported      = errors.New(errNodeACPTypeNotSupported)
 )
 
-func NewErrStoreTypeNotSupported(store StoreType) error {
+func NewErrStoreTypeNotSupported(store options.NodeStoreType) error {
 	return errors.New(errStoreTypeNotSupported, errors.NewKV("Store", store))
 }
 
-func NewErrACPTypeNotSupported(acp DocumentACPType) error {
+func NewErrACPTypeNotSupported(acp options.NodeDocumentACPType) error {
 	return errors.New(errACPTypeNotSupported, errors.NewKV("ACP", acp))
 }

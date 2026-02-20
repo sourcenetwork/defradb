@@ -36,7 +36,7 @@ func TestDocEncryptionPeer_WithSimpleRequest_ShouldFetchSuccessfully(t *testing.
 						verified: Boolean
 					}`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -87,7 +87,7 @@ func TestDocEncryptionPeer_WithMultipleEncryptedFields_QueryShouldSucceed(t *tes
 						verified: Boolean
 					}`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -171,7 +171,7 @@ func TestDocEncryptionPeer_WithMultipleDocs_ShouldFilterCorrectly(t *testing.T) 
 						verified: Boolean
 					}`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -349,7 +349,7 @@ func TestDocEncryptionPeer_WithQueryOnMultipleFields_ShouldReturnIntersection(t 
 						verified: Boolean
 					}`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},

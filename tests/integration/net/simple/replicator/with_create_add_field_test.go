@@ -40,7 +40,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToOlderSchemaVersion(t 
 					]
 				`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -94,7 +94,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToNewerSchemaVersion(t 
 					]
 				`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -146,7 +146,7 @@ func TestP2POneToOneReplicatorCreateWithNewFieldSyncsDocsToUpdatedSchemaVersion(
 					]
 				`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},

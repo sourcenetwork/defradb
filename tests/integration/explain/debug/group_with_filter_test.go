@@ -32,7 +32,7 @@ func TestDebugExplainRequestWithFilterOnGroupByParent(t *testing.T) {
 						filter: {age: {_gt: 63}}
 					) {
 						age
-						_group {
+						GROUP {
 							name
 						}
 					}

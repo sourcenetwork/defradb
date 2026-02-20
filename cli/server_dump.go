@@ -13,8 +13,8 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/sourcenetwork/defradb/acp/dac"
 	"github.com/sourcenetwork/defradb/cli/config"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/errors"
 	"github.com/sourcenetwork/defradb/internal/db"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
@@ -34,10 +34,7 @@ func MakeServerDumpCmd() *cobra.Command {
 				return errors.New("server-side dump is only supported for the Badger datastore")
 			}
 			badgerPath := cfg.GetString("datastore.badger.path")
-			storeOpts := []node.StoreOpt{
-				node.WithStorePath(badgerPath),
-			}
-			rootstore, _, err := node.NewStore(ctx, storeOpts...)
+			rootstore, _, err := node.NewStore(ctx, options.NodeStore().SetPath(badgerPath))
 			if err != nil {
 				return err
 			}
@@ -49,7 +46,6 @@ func MakeServerDumpCmd() *cobra.Command {
 				ctx,
 				rootstore,
 				nacInfo,
-				dac.NoDocumentACP,
 			)
 			if err != nil {
 				return errors.Wrap("failed to initialize database", err)

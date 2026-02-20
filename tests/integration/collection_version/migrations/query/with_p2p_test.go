@@ -62,7 +62,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtOlderSchemaVersion(t *testing
 					},
 				},
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -183,7 +183,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchOlderSchemaVersion(t *tes
 					},
 				},
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -277,7 +277,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtNewerSchemaVersion(t *testing
 					},
 				},
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -383,7 +383,7 @@ func TestSchemaMigrationQueryWithP2PReplicatedDocAtMuchNewerSchemaVersionWithSch
 					},
 				},
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},

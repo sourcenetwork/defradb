@@ -42,7 +42,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfig(t *testing
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -96,7 +96,7 @@ func TestP2POneToOneReplicatorUpdatesDocCreatedBeforeReplicatorConfigWithNodesIn
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
@@ -148,7 +148,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOffline_Sh
 					}
 				`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -229,7 +229,7 @@ func TestP2POneToOneReplicator_ManyDocsUpdateWithTargetNodeTemporarilyOfflineAft
 					}
 				`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},

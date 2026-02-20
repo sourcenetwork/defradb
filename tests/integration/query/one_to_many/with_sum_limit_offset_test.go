@@ -72,18 +72,18 @@ func TestQueryOneToManyWithSumWithLimitAndOffset(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_sum(published: {field: rating, offset: 1, limit: 2})
+						SUM(published: {field: rating, offset: 1, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
 							"name": "John Grisham",
-							"_sum": 9.100000000000001,
+							"SUM":  9.100000000000001,
 						},
 						{
 							"name": "Cornelia Funke",
-							"_sum": float64(0),
+							"SUM":  float64(0),
 						},
 					},
 				},

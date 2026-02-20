@@ -30,7 +30,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndSumOfUndefined(t *te
 				Request: `query {
 					Users (groupBy: [Name]) {
 						Name
-						_sum
+						SUM
 					}
 				}`,
 				ExpectedError: "aggregate must be provided with a property to aggregate",
@@ -48,7 +48,7 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSumOnEmp
 				Request: `query {
 					Users(groupBy: [Age]) {
 						Age
-						_sum(_group: {field: Age})
+						SUM(GROUP: {field: Age})
 					}
 				}`,
 				Results: map[string]any{
@@ -87,18 +87,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerSum(t *t
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_sum(_group: {field: Age})
+						SUM(GROUP: {field: Age})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_sum": int64(70),
+							"SUM":  int64(70),
 						},
 						{
 							"Name": "Alice",
-							"_sum": int64(-19),
+							"SUM":  int64(-19),
 						},
 					},
 				},
@@ -134,18 +134,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildNilSum(t *testi
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_sum(_group: {field: Age})
+						SUM(GROUP: {field: Age})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_sum": int64(32),
+							"SUM":  int64(32),
 						},
 						{
 							"Name": "Alice",
-							"_sum": int64(19),
+							"SUM":  int64(19),
 						},
 					},
 				},
@@ -198,10 +198,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_sum(_group: {field: _sum})
-						_group (groupBy: [Verified]){
+						SUM(GROUP: {field: SUM})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_sum(_group: {field: Age})
+							SUM(GROUP: {field: Age})
 						}
 					}
 				}`,
@@ -209,35 +209,35 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfInt(t *te
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_sum": int64(91),
-							"_group": []map[string]any{
+							"SUM":  int64(91),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_sum":     int64(57),
+									"SUM":      int64(57),
 								},
 								{
 									"Verified": false,
-									"_sum":     int64(34),
+									"SUM":      int64(34),
 								},
 							},
 						},
 						{
 							"Name": "Alice",
-							"_sum": int64(19),
-							"_group": []map[string]any{
+							"SUM":  int64(19),
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
-									"_sum":     int64(19),
+									"SUM":      int64(19),
 								},
 							},
 						},
 						{
 							"Name": "Carlo",
-							"_sum": int64(55),
-							"_group": []map[string]any{
+							"SUM":  int64(55),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_sum":     int64(55),
+									"SUM":      int64(55),
 								},
 							},
 						},
@@ -275,18 +275,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildEmptyFloatSum(t
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_sum(_group: {field: HeightM})
+						SUM(GROUP: {field: HeightM})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_sum": float64(3.71),
+							"SUM":  float64(3.71),
 						},
 						{
 							"Name": "Alice",
-							"_sum": float64(0),
+							"SUM":  float64(0),
 						},
 					},
 				},
@@ -322,18 +322,18 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildFloatSum(t *tes
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_sum(_group: {field: HeightM})
+						SUM(GROUP: {field: HeightM})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_sum": float64(3.71),
+							"SUM":  float64(3.71),
 						},
 						{
 							"Name": "Alice",
-							"_sum": float64(2.04),
+							"SUM":  float64(2.04),
 						},
 					},
 				},
@@ -386,10 +386,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_sum(_group: {field: _sum})
-						_group (groupBy: [Verified]){
+						SUM(GROUP: {field: SUM})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_sum(_group: {field: HeightM})
+							SUM(GROUP: {field: HeightM})
 						}
 					}
 				}`,
@@ -397,35 +397,35 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfFloat(t *
 					"Users": []map[string]any{
 						{
 							"Name": "Carlo",
-							"_sum": float64(1.74),
-							"_group": []map[string]any{
+							"SUM":  float64(1.74),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_sum":     float64(1.74),
+									"SUM":      float64(1.74),
 								},
 							},
 						},
 						{
 							"Name": "John",
-							"_sum": float64(5.65),
-							"_group": []map[string]any{
+							"SUM":  float64(5.65),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_sum":     float64(3.43),
+									"SUM":      float64(3.43),
 								},
 								{
 									"Verified": false,
-									"_sum":     float64(2.22),
+									"SUM":      float64(2.22),
 								},
 							},
 						},
 						{
 							"Name": "Alice",
-							"_sum": float64(2.04),
-							"_group": []map[string]any{
+							"SUM":  float64(2.04),
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
-									"_sum":     float64(2.04),
+									"SUM":      float64(2.04),
 								},
 							},
 						},
@@ -486,13 +486,13 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_sum(_group: {field: _sum})
-						_group (groupBy: [Verified]){
+						SUM(GROUP: {field: SUM})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_sum(_group: {field: HeightM})
-							_group (groupBy: [Age]){
+							SUM(GROUP: {field: HeightM})
+							GROUP (groupBy: [Age]){
 								Age
-								_sum(_group: {field: HeightM})
+								SUM(GROUP: {field: HeightM})
 							}
 						}
 					}
@@ -501,15 +501,15 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 					"Users": []map[string]any{
 						{
 							"Name": "Alice",
-							"_sum": float64(2.04),
-							"_group": []map[string]any{
+							"SUM":  float64(2.04),
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
-									"_sum":     float64(2.04),
-									"_group": []map[string]any{
+									"SUM":      float64(2.04),
+									"GROUP": []map[string]any{
 										{
-											"Age":  int64(19),
-											"_sum": float64(2.04),
+											"Age": int64(19),
+											"SUM": float64(2.04),
 										},
 									},
 								},
@@ -517,29 +517,29 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 						},
 						{
 							"Name": "John",
-							"_sum": float64(5.65),
-							"_group": []map[string]any{
+							"SUM":  float64(5.65),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_sum":     float64(3.43),
-									"_group": []map[string]any{
+									"SUM":      float64(3.43),
+									"GROUP": []map[string]any{
 										{
-											"Age":  int64(32),
-											"_sum": float64(1.61),
+											"Age": int64(32),
+											"SUM": float64(1.61),
 										},
 										{
-											"Age":  int64(25),
-											"_sum": float64(1.82),
+											"Age": int64(25),
+											"SUM": float64(1.82),
 										},
 									},
 								},
 								{
 									"Verified": false,
-									"_sum":     float64(2.22),
-									"_group": []map[string]any{
+									"SUM":      float64(2.22),
+									"GROUP": []map[string]any{
 										{
-											"Age":  int64(34),
-											"_sum": float64(2.22),
+											"Age": int64(34),
+											"SUM": float64(2.22),
 										},
 									},
 								},
@@ -547,15 +547,15 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfSumOfSumOfFloa
 						},
 						{
 							"Name": "Carlo",
-							"_sum": float64(1.74),
-							"_group": []map[string]any{
+							"SUM":  float64(1.74),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_sum":     float64(1.74),
-									"_group": []map[string]any{
+									"SUM":      float64(1.74),
+									"GROUP": []map[string]any{
 										{
-											"Age":  int64(55),
-											"_sum": float64(1.74),
+											"Age": int64(55),
+											"SUM": float64(1.74),
 										},
 									},
 								},

@@ -21,7 +21,7 @@ import (
 	"github.com/sourcenetwork/defradb/internal/keys"
 )
 
-func (p *P2P) CreateP2PDocuments(ctx context.Context, docIDs ...string) error {
+func (p *P2P) AddP2PDocuments(ctx context.Context, docIDs ...string) error {
 	ctx, span := tracer.Start(ctx)
 	defer span.End()
 

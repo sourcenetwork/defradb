@@ -28,9 +28,9 @@ func TestQuerySimple_WithSimilarityOnQuery_ShouldError(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_similarity
+					SIMILARITY
 				}`,
-				ExpectedError: "Cannot query field \"_similarity\" on type \"Query\".",
+				ExpectedError: "Cannot query field \"SIMILARITY\" on type \"Query\".",
 			},
 		},
 	}
@@ -49,10 +49,10 @@ func TestQuerySimple_WithSimilarityOnUndefinedField_ShouldError(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					User{
-						_similarity(pointsList: {vector: [1, 2, 3]})
+						SIMILARITY(pointsList: {vector: [1, 2, 3]})
 					}
 				}`,
-				ExpectedError: "Unknown argument \"pointsList\" on field \"_similarity\" of type \"User\".",
+				ExpectedError: "Unknown argument \"pointsList\" on field \"SIMILARITY\" of type \"User\".",
 			},
 		},
 	}
@@ -72,7 +72,7 @@ func TestQuerySimple_WithSimilarityAndWrongVectorValueType_ShouldError(t *testin
 			&action.Request{
 				Request: `query {
 					User{
-						_similarity(pointsList: {vector: [1.1, 1.2, 0.9]})
+						SIMILARITY(pointsList: {vector: [1.1, 1.2, 0.9]})
 					}
 				}`,
 				ExpectedError: "Argument \"pointsList\" has invalid value {vector: [1.1, 1.2, 0.9]}.\nIn field " +
@@ -97,11 +97,11 @@ func TestQuerySimple_WithSimilarityAndWrongFieldType_ShouldError(t *testing.T) {
 			&action.Request{
 				Request: `query {
 					User{
-						_similarity(pets: {vector: [1.1, 1.2, 0.9]})
+						SIMILARITY(pets: {vector: [1.1, 1.2, 0.9]})
 					}
 				}`,
-				// Not found on _similarity because it's not a supported type.
-				ExpectedError: "Unknown argument \"pets\" on field \"_similarity\" of type \"User\".",
+				// Not found on SIMILARITY because it's not a supported type.
+				ExpectedError: "Unknown argument \"pets\" on field \"SIMILARITY\" of type \"User\".",
 			},
 		},
 	}
@@ -121,7 +121,7 @@ func TestQuerySimple_WithSimilarityOnEmptyCollection_ShouldSucceed(t *testing.T)
 			&action.Request{
 				Request: `query {
 					User{
-						_similarity(pointsList: {vector: [1, 2, 3]})
+						SIMILARITY(pointsList: {vector: [1, 2, 3]})
 					}
 				}`,
 				Results: map[string]any{
@@ -153,14 +153,14 @@ func TestQuerySimple_WithIntSimilarity_ShouldSucceed(t *testing.T) {
 				Request: `query {
 					User{
 						name
-						_similarity(pointsList: {vector: [1, 2, 0]})
+						SIMILARITY(pointsList: {vector: [1, 2, 0]})
 					}
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name":        "John",
-							"_similarity": float64(10),
+							"name":       "John",
+							"SIMILARITY": float64(10),
 						},
 					},
 				},
@@ -190,7 +190,7 @@ func TestQuerySimple_WithIntSimilarityDifferentVectorLength_ShouldError(t *testi
 				Request: `query {
 					User{
 						name
-						_similarity(pointsList: {vector: [1, 2, 0, 1]})
+						SIMILARITY(pointsList: {vector: [1, 2, 0, 1]})
 					}
 				}`,
 				ExpectedError: "source and vector must be of the same length. Source: 3, Vector: 4",
@@ -220,14 +220,14 @@ func TestQuerySimple_WithFloat32Similarity_ShouldSucceed(t *testing.T) {
 				Request: `query {
 					User{
 						name
-						_similarity(pointsList: {vector: [1, 2, 0]})
+						SIMILARITY(pointsList: {vector: [1, 2, 0]})
 					}
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name":        "John",
-							"_similarity": float64(10),
+							"name":       "John",
+							"SIMILARITY": float64(10),
 						},
 					},
 				},
@@ -257,14 +257,14 @@ func TestQuerySimple_WithFloat64Similarity_ShouldSucceed(t *testing.T) {
 				Request: `query {
 					User{
 						name
-						_similarity(pointsList: {vector: [1, 2, 0]})
+						SIMILARITY(pointsList: {vector: [1, 2, 0]})
 					}
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name":        "John",
-							"_similarity": float64(10),
+							"name":       "John",
+							"SIMILARITY": float64(10),
 						},
 					},
 				},
@@ -294,14 +294,14 @@ func TestQuerySimple_WithJSONDocCreationSimilarity_ShouldSucceed(t *testing.T) {
 				Request: `query {
 					User{
 						name
-						_similarity(pointsList: {vector: [1, 2, 0]})
+						SIMILARITY(pointsList: {vector: [1, 2, 0]})
 					}
 				}`,
 				Results: map[string]any{
 					"User": []map[string]any{
 						{
-							"name":        "John",
-							"_similarity": float64(10),
+							"name":       "John",
+							"SIMILARITY": float64(10),
 						},
 					},
 				},
@@ -343,7 +343,7 @@ func TestQuerySimple_WithSimilarityAndFilteringOnSimilarityResult_ShouldSucceed(
 				Request: `query {
 					User(filter: {_alias: {sim: {_lt: 11}}}){
 						name
-						sim: _similarity(pointsList: {vector: [1, 2, 0]})
+						sim: SIMILARITY(pointsList: {vector: [1, 2, 0]})
 					}
 				}`,
 				Results: map[string]any{
@@ -396,7 +396,7 @@ func TestQuerySimple_WithSimilarityAndOrderingWithLimitOnSimilarityResult_Should
 				Request: `query {
 					User(order: {_alias: {sim: DESC}}, limit: 2){
 						name
-						sim: _similarity(pointsList: {vector: [1, 2, 0]})
+						sim: SIMILARITY(pointsList: {vector: [1, 2, 0]})
 					}
 				}`,
 				Results: map[string]any{
@@ -449,8 +449,8 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnSecond_ShouldSucceed(t *test
 				Request: `query {
 					User(filter: {_alias: {sim2: {_gt: 20}}}){
 						name
-						sim: _similarity(pointsList: {vector: [1, 2, 0]})
-						sim2: _similarity(pointsList: {vector: [2, 3, 0]})
+						sim: SIMILARITY(pointsList: {vector: [1, 2, 0]})
+						sim2: SIMILARITY(pointsList: {vector: [2, 3, 0]})
 					}
 				}`,
 				Results: map[string]any{
@@ -503,8 +503,8 @@ func TestQuerySimple_WithTwoSimilarityAndFilteringOnBoth_ShouldSucceed(t *testin
 				Request: `query {
 					User(filter: {_or: [{_alias: {sim2: {_gt: 20}}}, {_alias: {sim: {_lt: 10}}}]}){
 						name
-						sim: _similarity(pointsList: {vector: [1, 2, 0]})
-						sim2: _similarity(pointsList: {vector: [2, 3, 0]})
+						sim: SIMILARITY(pointsList: {vector: [1, 2, 0]})
+						sim2: SIMILARITY(pointsList: {vector: [2, 3, 0]})
 					}
 				}`,
 				Results: map[string]any{

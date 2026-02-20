@@ -18,6 +18,7 @@ import (
 	"syscall/js"
 
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/goji"
 )
@@ -31,7 +32,9 @@ func (c *Client) addDACPolicy(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.AddDACPolicy(ctx, policy)
+	opt := options.AddDACPolicy()
+	setOptIdentity(opt, args, 1)
+	res, err := c.node.DB.AddDACPolicy(ctx, policy, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -59,7 +62,9 @@ func (c *Client) addDACActorRelationship(this js.Value, args []js.Value) (js.Val
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	opt := options.AddDACActorRelationship()
+	setOptIdentity(opt, args, 4)
+	res, err := c.node.DB.AddDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -87,7 +92,9 @@ func (c *Client) deleteDACActorRelationship(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor)
+	opt := options.DeleteDACActorRelationship()
+	setOptIdentity(opt, args, 4)
+	res, err := c.node.DB.DeleteDACActorRelationship(ctx, collectionName, docID, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -147,7 +154,9 @@ func (c *Client) getNACStatus(this js.Value, args []js.Value) (js.Value, error) 
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.GetNACStatus(ctx)
+	opt := options.GetNACStatus()
+	setOptIdentity(opt, args, 0)
+	res, err := c.node.DB.GetNACStatus(ctx, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -159,7 +168,9 @@ func (c *Client) reEnableNAC(this js.Value, args []js.Value) (js.Value, error) {
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.node.DB.ReEnableNAC(ctx)
+	opt := options.ReEnableNAC()
+	setOptIdentity(opt, args, 0)
+	err = c.node.DB.ReEnableNAC(ctx, opt)
 	return js.Undefined(), err
 }
 
@@ -168,7 +179,9 @@ func (c *Client) disableNAC(this js.Value, args []js.Value) (js.Value, error) {
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.node.DB.DisableNAC(ctx)
+	opt := options.DisableNAC()
+	setOptIdentity(opt, args, 0)
+	err = c.node.DB.DisableNAC(ctx, opt)
 	return js.Undefined(), err
 }
 
@@ -185,7 +198,9 @@ func (c *Client) addNACActorRelationship(this js.Value, args []js.Value) (js.Val
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.AddNACActorRelationship(ctx, relation, targetActor)
+	opt := options.AddNACActorRelationship()
+	setOptIdentity(opt, args, 2)
+	res, err := c.node.DB.AddNACActorRelationship(ctx, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -205,7 +220,9 @@ func (c *Client) deleteNACActorRelationship(this js.Value, args []js.Value) (js.
 	if err != nil {
 		return js.Undefined(), err
 	}
-	res, err := c.node.DB.DeleteNACActorRelationship(ctx, relation, targetActor)
+	opt := options.DeleteNACActorRelationship()
+	setOptIdentity(opt, args, 2)
+	res, err := c.node.DB.DeleteNACActorRelationship(ctx, relation, targetActor, opt)
 	if err != nil {
 		return js.Undefined(), err
 	}
@@ -271,7 +288,9 @@ func (c *Client) verifySignature(this js.Value, args []js.Value) (js.Value, erro
 	if err != nil {
 		return js.Undefined(), err
 	}
-	err = c.node.DB.VerifySignature(ctx, blockCID, pubKey)
+	opt := options.VerifySignature()
+	setOptIdentity(opt, args, 3)
+	err = c.node.DB.VerifySignature(ctx, blockCID, pubKey, opt)
 	return js.Undefined(), err
 }
 

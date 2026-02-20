@@ -56,7 +56,7 @@ func TestNAC_GatesP2PCollectionDelete_AuthorizedIdentity_AllowAccess(t *testing.
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
@@ -109,7 +109,7 @@ func TestNAC_GatesP2PCollectionDelete_NoIdentity_NotAuthorizedError(t *testing.T
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},
@@ -163,7 +163,7 @@ func TestNAC_GatesP2PCollectionDelete_WrongIdentity_NotAuthorizedError(t *testin
 				SourceNodeID: 1,
 				TargetNodeID: 0,
 			},
-			testUtils.CreateCollectionSubscription{
+			testUtils.AddCollectionSubscription{
 				Identity:      testUtils.ClientIdentity(1),
 				NodeID:        1,
 				CollectionIDs: []int{0},

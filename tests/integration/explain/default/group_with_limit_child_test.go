@@ -29,7 +29,7 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnInnerGroupSelection(t *testing
 				Request: `query @explain {
 					Author(groupBy: [name]) {
 						name
-						_group(limit: 2, offset: 1) {
+						GROUP(limit: 2, offset: 1) {
 							age
 						}
 					}
@@ -77,10 +77,10 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnMultipleInnerGroupSelections(t
 				Request: `query @explain {
 					Author(groupBy: [name]) {
 						name
-						innerFirstGroup: _group(limit: 1, offset: 2) {
+						innerFirstGroup: GROUP(limit: 1, offset: 2) {
 							age
 						}
-						innerSecondGroup: _group(limit: 2) {
+						innerSecondGroup: GROUP(limit: 2) {
 							age
 						}
 					}

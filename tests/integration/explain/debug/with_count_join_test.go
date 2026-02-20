@@ -47,7 +47,7 @@ func TestDebugExplainRequestWithCountOnOneToManyJoinedField(t *testing.T) {
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						numberOfBooks: _count(books: {})
+						numberOfBooks: COUNT(books: {})
 					}
 				}`,
 
@@ -70,7 +70,7 @@ func TestDebugExplainRequestWithCountOnOneToManyJoinedFieldWithManySources(t *te
 				Request: `query @explain(type: debug) {
 					Author {
 						name
-						numberOfBooks: _count(
+						numberOfBooks: COUNT(
 							books: {}
 							articles: {}
 						)

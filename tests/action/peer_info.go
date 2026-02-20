@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
 )
@@ -49,8 +50,12 @@ var _ Stateful = (*PeerInfo)(nil)
 func (a *PeerInfo) Execute() {
 	node := a.s.Nodes[a.NodeID]
 
-	ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, a.NodeID)
-	peerInfos, err := node.PeerInfo(ctx)
+	opts := options.PeerInfo()
+	identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, a.NodeID)
+	if identOption.HasValue() {
+		opts.SetIdentity(identOption.Value())
+	}
+	peerInfos, err := node.PeerInfo(a.s.Ctx, opts)
 
 	expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 	assertExpectedErrorRaised(a.s.T, a.ExpectedError, expectedErrorRaised)

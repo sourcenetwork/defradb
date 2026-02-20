@@ -40,7 +40,7 @@ func TestNAC_AdminRelation_CanP2PReplicatorDelete(t *testing.T) {
 				Identity:  testUtils.ClientIdentity(1),
 				EnableNAC: true,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				Identity:     testUtils.ClientIdentity(1),
 				SourceNodeID: 1,
 				TargetNodeID: 0,

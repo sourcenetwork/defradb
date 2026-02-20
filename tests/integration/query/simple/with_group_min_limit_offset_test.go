@@ -49,18 +49,18 @@ func TestQuerySimple_WithGroupByStringWithoutRenderedGroupAndChildIntegerMinWith
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_min(_group: {field: Age, offset: 1, limit: 2})
+						MIN(GROUP: {field: Age, offset: 1, limit: 2})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_min": int64(28),
+							"MIN":  int64(28),
 						},
 						{
 							"Name": "Alice",
-							"_min": nil,
+							"MIN":  nil,
 						},
 					},
 				},

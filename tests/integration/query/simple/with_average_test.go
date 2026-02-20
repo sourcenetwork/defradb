@@ -22,7 +22,7 @@ func TestQuerySimpleWithAverageOnUndefinedObject(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_avg
+					AVG
 				}`,
 				ExpectedError: "aggregate must be provided with a property to aggregate",
 			},
@@ -37,7 +37,7 @@ func TestQuerySimpleWithAverageOnUndefinedField(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_avg(Users: {})
+					AVG(Users: {})
 				}`,
 				ExpectedError: "Argument \"Users\" has invalid value {}.\nIn field \"field\": Expected \"UsersNumericFieldsArg!\", found null.",
 			},
@@ -52,10 +52,10 @@ func TestQuerySimpleWithAverageOnEmptyCollection(t *testing.T) {
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					_avg(Users: {field: Age})
+					AVG(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_avg": float64(0),
+					"AVG": float64(0),
 				},
 			},
 		},
@@ -81,10 +81,10 @@ func TestQuerySimpleWithAverage(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_avg(Users: {field: Age})
+					AVG(Users: {field: Age})
 				}`,
 				Results: map[string]any{
-					"_avg": float64(29),
+					"AVG": float64(29),
 				},
 			},
 		},
@@ -98,7 +98,7 @@ func TestQuerySimple_WithAliasedAverage_OnEmptyCollection_Succeeds(t *testing.T)
 		Actions: []any{
 			&action.Request{
 				Request: `query {
-					average: _avg(Users: {field: Age})
+					average: AVG(Users: {field: Age})
 				}`,
 				Results: map[string]any{
 					"average": float64(0),

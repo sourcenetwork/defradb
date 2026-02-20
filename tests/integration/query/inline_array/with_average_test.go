@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArrayWithAverageAndNullArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(favouriteIntegers: {})
+						AVG(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(0),
+							"AVG":  float64(0),
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineIntegerArrayWithAverageAndEmptyArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(favouriteIntegers: {})
+						AVG(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(0),
+							"AVG":  float64(0),
 						},
 					},
 				},
@@ -92,14 +92,14 @@ func TestQueryInlineIntegerArrayWithAverageAndZeroArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(favouriteIntegers: {})
+						AVG(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(0),
+							"AVG":  float64(0),
 						},
 					},
 				},
@@ -123,14 +123,14 @@ func TestQueryInlineIntegerArrayWithAverageAndPopulatedArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(favouriteIntegers: {})
+						AVG(favouriteIntegers: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(2),
+							"AVG":  float64(2),
 						},
 					},
 				},
@@ -154,14 +154,14 @@ func TestQueryInlineNillableIntegerArrayWithAverageAndPopulatedArray(t *testing.
 				Request: `query {
 					Users {
 						name
-						_avg(testScores: {})
+						AVG(testScores: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(4),
+							"AVG":  float64(4),
 						},
 					},
 				},
@@ -185,14 +185,14 @@ func TestQueryInlineFloatArrayWithAverageAndNullArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(favouriteFloats: {})
+						AVG(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(0),
+							"AVG":  float64(0),
 						},
 					},
 				},
@@ -216,14 +216,14 @@ func TestQueryInlineFloatArrayWithAverageAndEmptyArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(favouriteFloats: {})
+						AVG(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(0),
+							"AVG":  float64(0),
 						},
 					},
 				},
@@ -247,7 +247,7 @@ func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(favouriteFloats: {})
+						AVG(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
@@ -255,7 +255,7 @@ func TestQueryInlineFloatArrayWithAverageAndZeroArray(t *testing.T) {
 						{
 
 							"name": "John",
-							"_avg": float64(0),
+							"AVG":  float64(0),
 						},
 					},
 				},
@@ -279,14 +279,14 @@ func TestQueryInlineFloatArrayWithAverageAndPopulatedArray(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_avg(favouriteFloats: {})
+						AVG(favouriteFloats: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(0.2),
+							"AVG":  float64(0.2),
 						},
 					},
 				},
@@ -310,14 +310,14 @@ func TestQueryInlineNillableFloatArrayWithAverageAndPopulatedArray(t *testing.T)
 				Request: `query {
 					Users {
 						name
-						_avg(pageRatings: {})
+						AVG(pageRatings: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "John",
-							"_avg": float64(0.2),
+							"AVG":  float64(0.2),
 						},
 					},
 				},

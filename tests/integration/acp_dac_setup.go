@@ -32,10 +32,11 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	tclog "github.com/testcontainers/testcontainers-go/log"
 
-	"github.com/sourcenetwork/defradb/keyring"
-	"github.com/sourcenetwork/defradb/node"
-	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/immutable"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/keyring"
+	"github.com/sourcenetwork/defradb/tests/state"
 	"github.com/sourcenetwork/sourcehub/sdk"
 )
 
@@ -50,7 +51,7 @@ const (
 	sourcehubTestChainID string = "sourcehub-dev"
 )
 
-func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, error) {
+func setupSourceHub(s *state.State, testCase TestCase) (*options.NodeDocumentACPOptions, error) {
 	var isDocumentACPTest bool
 	for _, a := range testCase.Actions {
 		switch a.(type) {
@@ -140,11 +141,12 @@ func setupSourceHub(s *state.State, testCase TestCase) ([]node.DocumentACPOpt, e
 		return nil, err
 	}
 
-	return []node.DocumentACPOpt{
-		node.WithTxnSigner(immutable.Some[node.TxSigner](signer)),
-		node.WithSourceHubChainID(sourcehubTestChainID),
-		node.WithSourceHubGRPCAddress(grpcEndpoint),
-		node.WithSourceHubCometRPCAddress(rpcEndpoint),
+	return &options.NodeDocumentACPOptions{
+		DocumentACPType:          options.NodeSourceHubDocumentACPType,
+		Signer:                   immutable.Some[options.NodeTxSigner](signer),
+		SourceHubChainID:         sourcehubTestChainID,
+		SourceHubGRPCAddress:     grpcEndpoint,
+		SourceHubCometRPCAddress: rpcEndpoint,
 	}, nil
 }
 

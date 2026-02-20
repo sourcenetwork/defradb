@@ -104,22 +104,22 @@ func TestOneToManyAscOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.T
 				Request: `query {
 					Author(order: {age: ASC}, filter: {age: {_gt: 8}}) {
 						name
-						_sum(published: {field: rating})
+						SUM(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
 							"name": "Cornelia Funke",
-							"_sum": 4.8,
+							"SUM":  4.8,
 						},
 						{
 							"name": "John Grisham",
-							"_sum": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
+							"SUM":  4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 						},
 						{
 							"name": "Not a Writer",
-							"_sum": 0.0,
+							"SUM":  0.0,
 						},
 					},
 				},
@@ -217,22 +217,22 @@ func TestOneToManyDescOrderAndFilterOnParentWithAggSumOnSubTypeField(t *testing.
 				Request: `query {
 					Author(order: {age: DESC}, filter: {age: {_gt: 8}}) {
 						name
-						_sum(published: {field: rating})
+						SUM(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
 							"name": "Not a Writer",
-							"_sum": 0.0,
+							"SUM":  0.0,
 						},
 						{
 							"name": "John Grisham",
-							"_sum": 4.9 + 4.5 + 4.2 + 3.2 + 4.0,
+							"SUM":  4.9 + 4.5 + 4.2 + 3.2 + 4.0,
 						},
 						{
 							"name": "Cornelia Funke",
-							"_sum": 4.8,
+							"SUM":  4.8,
 						},
 					},
 				},
@@ -330,8 +330,8 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithDescOrderingOnFieldWi
 				Request: `query {
 					Author {
 						name
-						sum1: _sum(published: {field: rating})
-						sum2: _sum(published: {field: rating, limit: 2, order: {rating: DESC}})
+						sum1: SUM(published: {field: rating})
+						sum2: SUM(published: {field: rating, limit: 2, order: {rating: DESC}})
 					}
 				}`,
 				Results: map[string]any{
@@ -452,8 +452,8 @@ func TestOnetoManySumBySubTypeFieldAndSumBySybTypeFieldWithAscOrderingOnFieldWit
 				Request: `query {
 					Author {
 						name
-						sum1: _sum(published: {field: rating})
-						sum2: _sum(published: {field: rating, limit: 2, order: {rating: ASC}})
+						sum1: SUM(published: {field: rating})
+						sum2: SUM(published: {field: rating, limit: 2, order: {rating: ASC}})
 					}
 				}`,
 				Results: map[string]any{
@@ -573,7 +573,7 @@ func TestOneToManyLimitAscOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *te
 			&action.Request{
 				Request: `query {
 					Author {
-						LimitOrderSum: _sum(published: {field: rating, limit: 2, order: {rating: ASC}})
+						LimitOrderSum: SUM(published: {field: rating, limit: 2, order: {rating: ASC}})
 						LimitOrderFields: published(order: {rating: ASC}, limit: 2) {
 							name
 						}
@@ -703,7 +703,7 @@ func TestOneToManyLimitDescOrderSumOfSubTypeAndLimitAscOrderFieldsOfSubtype(t *t
 			&action.Request{
 				Request: `query {
 					Author {
-						LimitOrderSum: _sum(published: {field: rating, limit: 2, order: {rating: DESC}})
+						LimitOrderSum: SUM(published: {field: rating, limit: 2, order: {rating: DESC}})
 						LimitOrderFields: published(order: {rating: DESC}, limit: 2) {
 							name
 						}

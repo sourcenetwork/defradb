@@ -40,10 +40,10 @@ func TestQuerySimpleWithAverageWithFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_avg(Users: {field: Age, filter: {Age: {_gt: 26}}})
+					AVG(Users: {field: Age, filter: {Age: {_gt: 26}}})
 				}`,
 				Results: map[string]any{
-					"_avg": float64(31),
+					"AVG": float64(31),
 				},
 			},
 		},
@@ -78,10 +78,10 @@ func TestQuerySimpleWithAverageWithDateTimeFilter(t *testing.T) {
 			},
 			&action.Request{
 				Request: `query {
-					_avg(Users: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56-05:00"}}})
+					AVG(Users: {field: Age, filter: {CreatedAt: {_gt: "2017-07-23T03:46:56-05:00"}}})
 				}`,
 				Results: map[string]any{
-					"_avg": float64(31),
+					"AVG": float64(31),
 				},
 			},
 		},

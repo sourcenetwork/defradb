@@ -64,7 +64,7 @@ func TestQueryOneToMany_WithCountAliasOrder_ShouldOrderResults(t *testing.T) {
 				Request: `query {
 					Author(order: {_alias: {publishedCount: DESC}}) {
 						name
-						publishedCount: _count(published: {})
+						publishedCount: COUNT(published: {})
 					}
 				}`,
 				Results: map[string]any{

@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArrayWithSumWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteIntegers: {filter: {_gt: 0}})
+						SUM(favouriteIntegers: {filter: {_gt: 0}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_sum": int64(3),
+							"SUM":  int64(3),
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineNillableIntegerArrayWithSumWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(testScores: {filter: {_gt: 0}})
+						SUM(testScores: {filter: {_gt: 0}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_sum": int64(3),
+							"SUM":  int64(3),
 						},
 					},
 				},
@@ -92,14 +92,14 @@ func TestQueryInlineFloatArrayWithSumWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(favouriteFloats: {filter: {_lt: 9}})
+						SUM(favouriteFloats: {filter: {_lt: 9}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_sum": 3.14250000001,
+							"SUM":  3.14250000001,
 						},
 					},
 				},
@@ -123,14 +123,14 @@ func TestQueryInlineNillableFloatArrayWithSumWithFilter(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_sum(pageRatings: {filter: {_lt: 9}})
+						SUM(pageRatings: {filter: {_lt: 9}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_sum": float64(3.14250000001),
+							"SUM":  float64(3.14250000001),
 						},
 					},
 				},

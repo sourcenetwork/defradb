@@ -33,7 +33,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdate(t *testing.T) {
 					}
 				`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -88,7 +88,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 					}
 				`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				SourceNodeID: 0,
 				TargetNodeID: 1,
 			},
@@ -105,7 +105,7 @@ func TestP2POneToOneReplicatorWithCreateWithUpdateOnRecipientNode(t *testing.T) 
 			// Wait for John to be synced to the target before attempting to update
 			// it.
 			testUtils.WaitForSync{},
-			testUtils.CreateDocumentSubscription{
+			testUtils.AddDocumentSubscription{
 				NodeID: 0,
 				DocIDs: []state.ColDocIndex{
 					state.NewColDocIndex(0, 0),
@@ -160,7 +160,7 @@ func TestP2POneToOneReplicatorDoesNotUpdateDocExistingOnlyOnTarget(t *testing.T)
 					"Age": 21
 				}`,
 			},
-			testUtils.CreateReplicator{
+			testUtils.AddReplicator{
 				// Replication must happen after creating documents
 				// on both nodes, or a race condition can occur
 				// on the second node when creating the document

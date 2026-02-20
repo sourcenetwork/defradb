@@ -63,7 +63,7 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 				Request: `query {
 					Book(groupBy: [_authorID]) {
 						_authorID
-						_group {
+						GROUP {
 							name
 						}
 					}
@@ -72,7 +72,7 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 					"Book": []map[string]any{
 						{
 							"_authorID": "bae-5181bbe5-c134-5e97-8928-30c33d3b83ad",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Painted House",
 								},
@@ -80,7 +80,7 @@ func TestQueryOneToOneWithGroupRelatedID(t *testing.T) {
 						},
 						{
 							"_authorID": "bae-b1a6f637-bbbb-59aa-8a54-938249e21cdd",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Go Guide for Rust developers",
 								},
@@ -282,7 +282,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 				Request: `query {
 					Book(groupBy: [_authorID]) {
 						_authorID
-						_group {
+						GROUP {
 							name
 						}
 					}
@@ -291,7 +291,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 					"Book": []map[string]any{
 						{
 							"_authorID": "bae-e4ab9b93-bc93-52ff-8429-d7032bb914ab",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Painted House",
 								},
@@ -299,7 +299,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroup(t *testing.T) {
 						},
 						{
 							"_authorID": "bae-b70527dd-79ff-5cba-bb4f-941fb4a902e4",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Go Guide for Rust developers",
 								},
@@ -364,7 +364,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testin
 						author {
 							name
 						}
-						_group {
+						GROUP {
 							name
 						}
 					}
@@ -376,7 +376,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testin
 							"author": map[string]any{
 								"name": "John Grisham",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Painted House",
 								},
@@ -387,7 +387,7 @@ func TestQueryOneToOneWithGroupRelatedIDFromSecondaryWithGroupWithJoin(t *testin
 							"author": map[string]any{
 								"name": "Andrew Lone",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name": "Go Guide for Rust developers",
 								},

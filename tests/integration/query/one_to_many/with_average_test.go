@@ -64,7 +64,7 @@ func TestQueryOneToMany_WithAverageAliasFilter_ShouldMatchAll(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {averageRating: {_gt: 0}}}) {
 						name
-						averageRating: _avg(published: {field: rating})
+						averageRating: AVG(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{
@@ -134,7 +134,7 @@ func TestQueryOneToMany_WithAverageAliasFilter_ShouldMatchOne(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {averageRating: {_lt: 4.8}}}) {
 						name
-						averageRating: _avg(published: {field: rating})
+						averageRating: AVG(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{

@@ -30,14 +30,14 @@ func TestQueryInlineIntegerArray_WithMinWithFilter_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteIntegers: {filter: {_gt: 0}})
+						MIN(favouriteIntegers: {filter: {_gt: 0}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": int64(1),
+							"MIN":  int64(1),
 						},
 					},
 				},
@@ -61,14 +61,14 @@ func TestQueryInlineNillableIntegerArray_WithMinWithFilter_Succeeds(t *testing.T
 				Request: `query {
 					Users {
 						name
-						_min(testScores: {filter: {_gt: 0}})
+						MIN(testScores: {filter: {_gt: 0}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": int64(1),
+							"MIN":  int64(1),
 						},
 					},
 				},
@@ -92,14 +92,14 @@ func TestQueryInlineFloatArray_WithMinWithFilter_Succeeds(t *testing.T) {
 				Request: `query {
 					Users {
 						name
-						_min(favouriteFloats: {filter: {_gt: 1}})
+						MIN(favouriteFloats: {filter: {_gt: 1}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": float64(3.1425),
+							"MIN":  float64(3.1425),
 						},
 					},
 				},
@@ -123,14 +123,14 @@ func TestQueryInlineNillableFloatArray_WithMinWithFilter_Succeeds(t *testing.T) 
 				Request: `query {
 					Users {
 						name
-						_min(pageRatings: {filter: {_gt: 1}})
+						MIN(pageRatings: {filter: {_gt: 1}})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"name": "Shahzad",
-							"_min": float64(3.1425),
+							"MIN":  float64(3.1425),
 						},
 					},
 				},

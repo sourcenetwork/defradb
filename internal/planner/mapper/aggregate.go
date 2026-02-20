@@ -17,7 +17,7 @@ type OptionalChildTarget struct {
 	// The field index of this target.
 	Index int
 
-	// The name of the target, for example '_sum' or 'Age'.
+	// The name of the target, for example 'SUM' or 'Age'.
 	Name string
 
 	// If true this child target exists and has been requested.

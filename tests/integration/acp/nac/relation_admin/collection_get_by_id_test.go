@@ -13,10 +13,9 @@ package test_acp_nac_relation_admin
 import (
 	"testing"
 
-	"github.com/sourcenetwork/immutable"
-
 	acpTypes "github.com/sourcenetwork/defradb/acp/types"
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/action"
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
@@ -33,10 +32,8 @@ func TestNAC_AdminRelation_CanCollectionGetByID(t *testing.T) {
 
 			// This user, can not perform this gated operation yet.
 			&action.GetCollections{
-				Identity: testUtils.ClientIdentity(2),
-				FilterOptions: client.CollectionFetchOptions{
-					CollectionID: immutable.Some("does not exist"),
-				},
+				Identity:      testUtils.ClientIdentity(2),
+				FilterOptions: options.GetCollections().SetCollectionID("does not exist"),
 				ExpectedError: testUtils.FormatExpectedErrorWithPermission(acpTypes.NodeCollectionGetPerm),
 			},
 
@@ -50,10 +47,8 @@ func TestNAC_AdminRelation_CanCollectionGetByID(t *testing.T) {
 
 			// This user, can now perform this gated operation.
 			&action.GetCollections{
-				Identity: testUtils.ClientIdentity(2),
-				FilterOptions: client.CollectionFetchOptions{
-					CollectionID: immutable.Some("does not exist"),
-				},
+				Identity:        testUtils.ClientIdentity(2),
+				FilterOptions:   options.GetCollections().SetCollectionID("does not exist"),
 				ExpectedResults: []client.CollectionVersion{},
 			},
 		},
