@@ -59,10 +59,10 @@ expect {
 }
 send "\r"
 
-# --- Step 8: Import existing keys prompt ---
+# --- Step 8: Add existing keys prompt ---
 expect {
-    -re ".*import.*" {}
-    timeout { puts "Timeout waiting for import keys prompt"; exit 1 }
+    -re ".*add.*" {}
+    timeout { puts "Timeout waiting for add keys prompt"; exit 1 }
 }
 send "j\r"
 
