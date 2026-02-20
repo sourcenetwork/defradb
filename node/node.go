@@ -12,6 +12,7 @@ package node
 
 import (
 	"context"
+	"io"
 	"time"
 
 	"github.com/sourcenetwork/corekv"
@@ -47,6 +48,9 @@ type DB interface {
 	PurgeDACState(ctx context.Context) error
 	PurgeNACState(ctx context.Context) error
 	GetNodeIdentityToken(ctx context.Context, audience immutable.Option[string]) ([]byte, error)
+	ExportDocKVs(ctx context.Context, collectionName string, docIDs []string, w io.Writer, datastoreOnly bool) (int, error)
+	ImportRawKVs(ctx context.Context, r io.Reader) (int, error)
+	RebuildCollectionIndexes(ctx context.Context, collectionName string) error
 	Close()
 }
 
