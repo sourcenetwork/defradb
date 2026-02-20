@@ -50,6 +50,11 @@ func (h *storeHandler) BasicImport(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h *storeHandler) BasicExport(rw http.ResponseWriter, req *http.Request) {
+	if !IsDevMode {
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.NewErrOperationRequiresDeveloperMode("BasicExport")})
+		return
+	}
+
 	db := mustGetContextClientDB(req)
 	ctx := req.Context()
 
