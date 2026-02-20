@@ -18,11 +18,13 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/client/request"
 	"github.com/sourcenetwork/defradb/internal/connor"
 	"github.com/sourcenetwork/defradb/internal/core"
 	"github.com/sourcenetwork/defradb/internal/db/description"
 	"github.com/sourcenetwork/defradb/internal/db/id"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 const (
@@ -976,7 +978,11 @@ func getTopLevelInfo(
 	}
 
 	if rootSelectType == ObjectSelection {
-		collection, err := store.GetCollectionByName(ctx, collectionName)
+		collection, err := store.GetCollectionByName(
+			ctx,
+			collectionName,
+			options.WithIdentity(options.GetCollectionByName(), iIdentity.FromContext(ctx)),
+		)
 		if err != nil {
 			return nil, client.CollectionVersion{}, err
 		}

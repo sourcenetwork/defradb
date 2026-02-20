@@ -11,10 +11,10 @@
 package tests
 
 import (
-	"github.com/sourcenetwork/defradb/node"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
-func setupSourceHub(s *state.State) ([]node.DocumentACPOpt, error) {
+func setupSourceHub(s *state.State) (*options.NodeDocumentACPOptions, error) {
 	return s.DocumentACPOptions, nil
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/sourcenetwork/defradb/crypto"
 	"github.com/sourcenetwork/defradb/http"
 	"github.com/sourcenetwork/defradb/internal/datastore"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/keyring"
 	"github.com/sourcenetwork/defradb/node"
 )
@@ -161,7 +162,7 @@ func setContextIdentity(cmd *cobra.Command, privateKeyHex string) error {
 		return err
 	}
 
-	ctx := acpIdentity.WithContext(cmd.Context(), immutable.Some[acpIdentity.Identity](ident))
+	ctx := iIdentity.WithContext(cmd.Context(), immutable.Some[acpIdentity.Identity](ident))
 	cmd.SetContext(ctx)
 	return nil
 }

@@ -33,7 +33,7 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 				Request: `query @explain(type: execute) {
 					Author {
 						name
-						numberOfBooks: _count(books: {})
+						numberOfBooks: COUNT(books: {})
 					}
 				}`,
 
@@ -52,17 +52,29 @@ func TestExecuteExplainRequestWithCountOnOneToManyRelation(t *testing.T) {
 											"filterMatches": uint64(2),
 											"typeIndexJoin": dataMap{
 												"iterations": uint64(3),
-												"scanNode": dataMap{
-													"iterations":   uint64(3),
-													"docFetches":   uint64(2),
-													"fieldFetches": uint64(8),
-													"indexFetches": uint64(0),
-												},
-												"subTypeScanNode": dataMap{
-													"iterations":   uint64(5),
-													"docFetches":   uint64(6),
-													"fieldFetches": uint64(22),
-													"indexFetches": uint64(0),
+												"typeJoinMany": dataMap{
+													"root": dataMap{
+														"scanNode": dataMap{
+															"iterations":   uint64(3),
+															"docFetches":   uint64(2),
+															"fieldFetches": uint64(8),
+															"indexFetches": uint64(0),
+														},
+													},
+													"subType": dataMap{
+														"selectTopNode": dataMap{
+															"selectNode": dataMap{
+																"iterations":    uint64(5),
+																"filterMatches": uint64(3),
+																"scanNode": dataMap{
+																	"iterations":   uint64(5),
+																	"docFetches":   uint64(6),
+																	"fieldFetches": uint64(22),
+																	"indexFetches": uint64(0),
+																},
+															},
+														},
+													},
 												},
 											},
 										},

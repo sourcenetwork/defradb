@@ -30,7 +30,7 @@ func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds
 				Request: `query {
 					Users {
 						name
-						_max(favouriteIntegers: {offset: 1, limit: 3, order: ASC})
+						MAX(favouriteIntegers: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -38,7 +38,7 @@ func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds
 						{
 							"name": "Shahzad",
 							// 0, 1, 2
-							"_max": int64(2),
+							"MAX": int64(2),
 						},
 					},
 				},
@@ -62,7 +62,7 @@ func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeed
 				Request: `query {
 					Users {
 						name
-						_max(favouriteIntegers: {offset: 1, limit: 3, order: DESC})
+						MAX(favouriteIntegers: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -70,7 +70,7 @@ func TestQueryInlineIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeed
 						{
 							"name": "Shahzad",
 							// 5, 2, 1
-							"_max": int64(5),
+							"MAX": int64(5),
 						},
 					},
 				},
@@ -94,7 +94,7 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_
 				Request: `query {
 					Users {
 						name
-						_max(testScores: {offset: 1, limit: 3, order: ASC})
+						MAX(testScores: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -102,7 +102,7 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderAsc_
 						{
 							"name": "Shahzad",
 							// 0, 1, 2
-							"_max": int64(2),
+							"MAX": int64(2),
 						},
 					},
 				},
@@ -126,7 +126,7 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc
 				Request: `query {
 					Users {
 						name
-						_max(testScores: {offset: 1, limit: 3, order: DESC})
+						MAX(testScores: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -134,7 +134,7 @@ func TestQueryInlineNillableIntegerArray_WithMaxWithOffsetWithLimitWithOrderDesc
 						{
 							"name": "Shahzad",
 							// 5, 2, 1
-							"_max": int64(5),
+							"MAX": int64(5),
 						},
 					},
 				},
@@ -158,7 +158,7 @@ func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t
 				Request: `query {
 					Users {
 						name
-						_max(favouriteFloats: {offset: 1, limit: 3, order: ASC})
+						MAX(favouriteFloats: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -166,7 +166,7 @@ func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Succeeds(t
 						{
 							"name": "Shahzad",
 							// 0.577, 2.718, 3.1425
-							"_max": float64(3.1425),
+							"MAX": float64(3.1425),
 						},
 					},
 				},
@@ -190,7 +190,7 @@ func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(
 				Request: `query {
 					Users {
 						name
-						_max(favouriteFloats: {offset: 1, limit: 3, order: DESC})
+						MAX(favouriteFloats: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -198,7 +198,7 @@ func TestQueryInlineFloatArray_WithMaxWithOffsetWithLimitWithOrderDesc_Succeeds(
 						{
 							"name": "Shahzad",
 							// 6.283, 3.1425, 2.718
-							"_max": float64(6.283),
+							"MAX": float64(6.283),
 						},
 					},
 				},
@@ -222,7 +222,7 @@ func TestQueryInlineNillableFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Su
 				Request: `query {
 					Users {
 						name
-						_max(pageRatings: {offset: 1, limit: 3, order: ASC})
+						MAX(pageRatings: {offset: 1, limit: 3, order: ASC})
 					}
 				}`,
 				Results: map[string]any{
@@ -230,7 +230,7 @@ func TestQueryInlineNillableFloatArray_WithMaxWithOffsetWithLimitWithOrderAsc_Su
 						{
 							"name": "Shahzad",
 							// 0.577, 2.718, 3.1425
-							"_max": float64(3.1425),
+							"MAX": float64(3.1425),
 						},
 					},
 				},
@@ -254,7 +254,7 @@ func TestQueryInlineNillableFloatArray_WithMaxWithOffsetWithLimitWithOrderDesc_S
 				Request: `query {
 					Users {
 						name
-						_max(pageRatings: {offset: 1, limit: 3, order: DESC})
+						MAX(pageRatings: {offset: 1, limit: 3, order: DESC})
 					}
 				}`,
 				Results: map[string]any{
@@ -262,7 +262,7 @@ func TestQueryInlineNillableFloatArray_WithMaxWithOffsetWithLimitWithOrderDesc_S
 						{
 							"name": "Shahzad",
 							// 6.283, 3.1425, 2.718
-							"_max": float64(6.283),
+							"MAX": float64(6.283),
 						},
 					},
 				},

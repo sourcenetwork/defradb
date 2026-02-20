@@ -25,7 +25,7 @@ type groupNode struct {
 
 	p *Planner
 
-	// The child select information.  Will be empty if there are no child `_group` items requested.
+	// The child select information.  Will be empty if there are no child `GROUP` items requested.
 	childSelects []*mapper.Select
 
 	// The fields to group by - this must be an ordered collection and
@@ -60,8 +60,8 @@ type groupExecInfo struct {
 
 // Creates a new group node.
 
-// The function is recursive and will construct the node-chain for any child (`_group`) collections.
-// `groupSelect` is optional and will typically be nil if the child `_group` is not requested.
+// The function is recursive and will construct the node-chain for any child (`GROUP`) collections.
+// `groupSelect` is optional and will typically be nil if the child `GROUP` is not requested.
 func (p *Planner) GroupBy(n *mapper.GroupBy, parsed *mapper.Select, childSelects []*mapper.Select) (*groupNode, error) {
 	if n == nil {
 		return nil, nil
@@ -73,7 +73,7 @@ func (p *Planner) GroupBy(n *mapper.GroupBy, parsed *mapper.Select, childSelects
 	if len(childSelects) == 0 {
 		dataSources = append(
 			dataSources,
-			// If there are no child selects, then we just take the first field index of name _group
+			// If there are no child selects, then we just take the first field index of name GROUP
 			newDataSource(parsed.DocumentMapping.FirstIndexOfName(request.GroupFieldName)),
 		)
 	}

@@ -18,7 +18,7 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
+func TestIndexList_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -29,7 +29,7 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 					}
 				`,
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -58,7 +58,7 @@ func TestIndexGet_ShouldReturnListOfExistingIndexes(t *testing.T) {
 	testUtils.ExecuteTestCase(t, test)
 }
 
-func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testing.T) {
+func TestIndexList_GetIndexesForACollection_ReturnCollectionSpecificList(t *testing.T) {
 	test := testUtils.TestCase{
 		Actions: []any{
 			&action.AddSchema{
@@ -74,7 +74,7 @@ func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testi
 					}
 				`,
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 0,
 				ExpectedIndexes: []client.IndexDescription{
 					{
@@ -90,7 +90,7 @@ func TestIndexGet_GetIndexesForACollection_ReturnCollectionSpecificList(t *testi
 					},
 				},
 			},
-			&action.GetIndexes{
+			&action.ListIndexes{
 				CollectionID: 1,
 				ExpectedIndexes: []client.IndexDescription{
 					{

@@ -301,27 +301,27 @@ func TestCreateIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 		f.users.Version().Indexes)
 }
 
-func TestCollectionGetIndexes_ShouldReturnIndexes(t *testing.T) {
+func TestCollectionListIndexes_ShouldReturnIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 
-	indexes, err := f.users.GetIndexes(f.ctx)
+	indexes, err := f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 
 	require.Equal(t, 1, len(indexes))
 	assert.Equal(t, testUsersColIndexName, indexes[0].Name)
 }
 
-func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
+func TestCollectionListIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 	f.createUserCollectionIndexOnAge()
 
-	indexes, err := f.users.GetIndexes(f.ctx)
+	indexes, err := f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	require.Len(t, indexes, 2)
 	require.ElementsMatch(t,
@@ -331,52 +331,52 @@ func TestCollectionGetIndexes_IfInvalidIndexIsStored_ReturnError(t *testing.T) {
 	require.ElementsMatch(t, []uint32{1, 2}, []uint32{indexes[0].ID, indexes[1].ID})
 }
 
-func TestCollectionGetIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T) {
+func TestCollectionListIndexes_IfIndexIsCreated_ReturnUpdateIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 
-	indexes, err := f.users.GetIndexes(f.ctx)
+	indexes, err := f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 1)
 
 	_, err = f.users.CreateIndex(f.ctx, getUsersIndexDescOnAge())
 	assert.NoError(t, err)
 
-	indexes, err = f.users.GetIndexes(f.ctx)
+	indexes, err = f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 2)
 }
 
-func TestCollectionGetIndexes_IfIndexIsDropped_ReturnUpdateIndexes(t *testing.T) {
+func TestCollectionListIndexes_IfIndexIsDeleted_ReturnUpdateIndexes(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	f.createUserCollectionIndexOnName()
 	f.createUserCollectionIndexOnAge()
 
-	indexes, err := f.users.GetIndexes(f.ctx)
+	indexes, err := f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 2)
 
-	err = f.users.DropIndex(f.ctx, testUsersColIndexName)
+	err = f.users.DeleteIndex(f.ctx, testUsersColIndexName)
 	assert.NoError(t, err)
 
-	indexes, err = f.users.GetIndexes(f.ctx)
+	indexes, err = f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 1)
 	assert.Equal(t, indexes[0].Name, testUsersColIndexAge)
 
-	err = f.users.DropIndex(f.ctx, testUsersColIndexAge)
+	err = f.users.DeleteIndex(f.ctx, testUsersColIndexAge)
 	assert.NoError(t, err)
 
-	indexes, err = f.users.GetIndexes(f.ctx)
+	indexes, err = f.users.ListIndexes(f.ctx)
 	assert.NoError(t, err)
 	assert.Len(t, indexes, 0)
 }
 
-func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
+func TestCollectionListIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 	f := newIndexTestFixtureBare(t)
 	const (
 		num             = 30
@@ -428,7 +428,7 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	indexes, err := collection.GetIndexes(f.ctx)
+	indexes, err := collection.ListIndexes(f.ctx)
 	require.NoError(t, err)
 	require.Len(t, indexes, num)
 
@@ -437,7 +437,7 @@ func TestCollectionGetIndexes_ShouldReturnIndexesInOrderedByName(t *testing.T) {
 	}
 }
 
-func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
+func TestDeleteIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 	txn := f.txn.(*Txn)
@@ -448,24 +448,24 @@ func TestDropIndex_ShouldUpdateCollectionsDescription(t *testing.T) {
 	require.NoError(t, err)
 	f.commitTxn()
 
-	err = f.users.DropIndex(f.ctx, testUsersColIndexName)
+	err = f.users.DeleteIndex(f.ctx, testUsersColIndexName)
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []client.IndexDescription{indOnAge},
 		f.users.Version().Indexes)
 
-	err = f.users.DropIndex(f.ctx, testUsersColIndexAge)
+	err = f.users.DeleteIndex(f.ctx, testUsersColIndexAge)
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, []client.IndexDescription{}, f.users.Version().Indexes)
 }
 
-func TestDropIndex_IfIndexWithNameDoesNotExist_ReturnError(t *testing.T) {
+func TestDeleteIndex_IfIndexWithNameDoesNotExist_ReturnError(t *testing.T) {
 	f := newIndexTestFixture(t)
 	defer f.db.Close()
 
 	const name = "not_existing_index"
-	err := f.users.DropIndex(f.ctx, name)
+	err := f.users.DeleteIndex(f.ctx, name)
 	require.ErrorIs(t, err, NewErrIndexWithNameDoesNotExists(name))
 }
 

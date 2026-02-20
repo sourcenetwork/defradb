@@ -59,10 +59,10 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_sum(_group: {field: _avg})
-						_group (groupBy: [Verified]){
+						SUM(GROUP: {field: AVG})
+						GROUP (groupBy: [Verified]){
 							Verified
-							_avg(_group: {field: Age})
+							AVG(GROUP: {field: Age})
 						}
 					}
 				}`,
@@ -70,35 +70,35 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_sum": float64(62.5),
-							"_group": []map[string]any{
+							"SUM":  float64(62.5),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_avg":     float64(28.5),
+									"AVG":      float64(28.5),
 								},
 								{
 									"Verified": false,
-									"_avg":     float64(34),
+									"AVG":      float64(34),
 								},
 							},
 						},
 						{
 							"Name": "Alice",
-							"_sum": float64(19),
-							"_group": []map[string]any{
+							"SUM":  float64(19),
+							"GROUP": []map[string]any{
 								{
 									"Verified": false,
-									"_avg":     float64(19),
+									"AVG":      float64(19),
 								},
 							},
 						},
 						{
 							"Name": "Carlo",
-							"_sum": float64(55),
-							"_group": []map[string]any{
+							"SUM":  float64(55),
+							"GROUP": []map[string]any{
 								{
 									"Verified": true,
-									"_avg":     float64(55),
+									"AVG":      float64(55),
 								},
 							},
 						},
@@ -112,8 +112,8 @@ func TestQuerySimpleWithGroupByStringWithInnerGroupBooleanAndSumOfCountOfInt(t *
 	executeTestCase(t, test)
 }
 
-// Note: this test should follow a different code path to `_avg` on it's own
-// utilising the existing `_sum` node instead of adding a new one.  This test cannot
+// Note: this test should follow a different code path to `AVG` on it's own
+// utilising the existing `SUM` node instead of adding a new one.  This test cannot
 // verify that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndSum(t *testing.T) {
@@ -142,21 +142,21 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageA
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age})
-						_sum(_group: {field: Age})
+						AVG(GROUP: {field: Age})
+						SUM(GROUP: {field: Age})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
 							"Name": "John",
-							"_avg": float64(35),
-							"_sum": int64(70),
+							"AVG":  float64(35),
+							"SUM":  int64(70),
 						},
 						{
 							"Name": "Alice",
-							"_avg": float64(-19),
-							"_sum": int64(-19),
+							"AVG":  float64(-19),
+							"SUM":  int64(-19),
 						},
 					},
 				},

@@ -51,7 +51,7 @@ func TestDefaultExplainRequestWithLimitAndOffsetOnParentGroupBy(t *testing.T) {
 						offset: 1
 					) {
 						name
-						_group {
+						GROUP {
 							age
 						}
 					}
@@ -100,7 +100,7 @@ func TestDefaultExplainRequestWithLimitOnParentGroupByAndInnerGroupSelection(t *
 						limit: 1
 					) {
 						name
-						_group(limit: 2) {
+						GROUP(limit: 2) {
 							age
 						}
 					}

@@ -48,7 +48,7 @@ func TestDebugExplain_TopLevelMaxRequest_Succeeds(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					_max(
+					MAX(
 						Author: {
 							field: age
 						}
@@ -72,7 +72,7 @@ func TestDebugExplain_TopLevelMaxRequestWithFilter_Succeeds(t *testing.T) {
 			&action.ExplainRequest{
 
 				Request: `query @explain(type: debug) {
-					_max(
+					MAX(
 						Author: {
 							field: age,
 							filter: {

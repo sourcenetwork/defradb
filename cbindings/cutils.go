@@ -27,6 +27,7 @@ import (
 
 	"github.com/sourcenetwork/defradb/acp/identity"
 	"github.com/sourcenetwork/defradb/client"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 	"github.com/sourcenetwork/defradb/node"
 
 	"github.com/sourcenetwork/immutable"
@@ -177,7 +178,7 @@ func contextWithIdentity(ctx context.Context, identityPtr C.uintptr_t) (context.
 	if ident == nil {
 		return ctx, nil
 	}
-	return identity.WithContext(ctx, immutable.Some[identity.Identity](ident)), nil
+	return iIdentity.WithContext(ctx, immutable.Some[identity.Identity](ident)), nil
 }
 
 // ConvertAndFreeCResult exists to convert C.Result to GoCResult for use in integration tests

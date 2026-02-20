@@ -14,6 +14,7 @@ import (
 	"github.com/sourcenetwork/immutable"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
 	"github.com/sourcenetwork/defradb/tests/state"
 )
 
@@ -85,8 +86,13 @@ func (a *CreateIndex) Execute() {
 
 		indexDesc.Unique = a.Unique
 
-		ctx := getContextWithIdentity(a.s.Ctx, a.s, a.Identity, nodeID)
-		_, err := collection.CreateIndex(ctx, indexDesc)
+		opts := options.CollectionCreateIndex()
+		identOption := getIdentityForRequestSpecificToNode(a.s, a.Identity, nodeID)
+		if identOption.HasValue() {
+			opts.SetIdentity(identOption.Value())
+		}
+
+		_, err := collection.CreateIndex(a.s.Ctx, indexDesc, opts)
 
 		expectedErrorRaised := assertError(a.s.T, err, a.ExpectedError)
 		if expectedErrorRaised {

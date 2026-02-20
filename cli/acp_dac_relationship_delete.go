@@ -14,6 +14,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+
+	"github.com/sourcenetwork/defradb/client/options"
+	"github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeDocumentACPRelationshipDeleteCommand(ctx context.Context) *cobra.Command {
@@ -53,6 +56,7 @@ Notes:
 				docIDArg,
 				relationArg,
 				targetActorArg,
+				options.WithIdentity(options.DeleteDACActorRelationship(), identity.FromContext(cmd.Context())),
 			)
 
 			if err != nil {

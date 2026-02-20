@@ -54,7 +54,7 @@ func TestSchemaAggregateTopLevelCreatesCountGivenSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "_count",
+									"name": "COUNT",
 									"args": []any{
 										map[string]any{
 											"name": "Users",
@@ -136,7 +136,7 @@ func TestSchemaAggregateTopLevelCreatesSumGivenSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "_sum",
+									"name": "SUM",
 									"args": []any{
 										map[string]any{
 											"name": "Users",
@@ -244,7 +244,7 @@ func TestSchemaAggregateTopLevelCreatesAverageGivenSchema(t *testing.T) {
 						"queryType": map[string]any{
 							"fields": []any{
 								map[string]any{
-									"name": "_avg",
+									"name": "AVG",
 									"args": []any{
 										map[string]any{
 											"name": "Users",

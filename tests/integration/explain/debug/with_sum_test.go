@@ -45,7 +45,7 @@ func TestDebugExplainRequestWithSumOnInlineArrayField_ChildFieldWillBeEmpty(t *t
 				Request: `query @explain(type: debug) {
 					Book {
 						name
-						NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: _sum(chapterPages: {})
+						NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: SUM(chapterPages: {})
 					}
 				}`,
 

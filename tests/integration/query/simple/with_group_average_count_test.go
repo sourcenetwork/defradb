@@ -17,8 +17,8 @@ import (
 	testUtils "github.com/sourcenetwork/defradb/tests/integration"
 )
 
-// Note: this test should follow a different code path to `_avg` on it's own
-// utilising the existing `_count` node instead of adding a new one.  This test cannot
+// Note: this test should follow a different code path to `AVG` on it's own
+// utilising the existing `COUNT` node instead of adding a new one.  This test cannot
 // verify that code path is taken, but it does verfiy that the correct result
 // is returned to the consumer in case the more efficient code path is taken.
 func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageAndCount(t *testing.T) {
@@ -46,21 +46,21 @@ func TestQuerySimpleWithGroupByStringWithoutRenderedGroupAndChildIntegerAverageA
 				Request: `query {
 					Users(groupBy: [Name]) {
 						Name
-						_avg(_group: {field: Age})
-						_count(_group: {})
+						AVG(GROUP: {field: Age})
+						COUNT(GROUP: {})
 					}
 				}`,
 				Results: map[string]any{
 					"Users": []map[string]any{
 						{
-							"Name":   "John",
-							"_avg":   float64(35),
-							"_count": int(2),
+							"Name":  "John",
+							"AVG":   float64(35),
+							"COUNT": int(2),
 						},
 						{
-							"Name":   "Alice",
-							"_avg":   float64(-19),
-							"_count": int(1),
+							"Name":  "Alice",
+							"AVG":   float64(-19),
+							"COUNT": int(1),
 						},
 					},
 				},

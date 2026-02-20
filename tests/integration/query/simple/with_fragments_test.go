@@ -243,10 +243,10 @@ func TestQuerySimple_WithFragmentWithAggregate_Succeeds(t *testing.T) {
 					...UserCount
 				}
 				fragment UserCount on Query {
-					_count(Users: {})
+					COUNT(Users: {})
 				}`,
 				Results: map[string]any{
-					"_count": int64(2),
+					"COUNT": int64(2),
 				},
 			},
 		},

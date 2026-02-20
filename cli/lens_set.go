@@ -22,6 +22,8 @@ import (
 	"github.com/sourcenetwork/lens/host-go/config/model"
 
 	"github.com/sourcenetwork/defradb/client"
+	"github.com/sourcenetwork/defradb/client/options"
+	iIdentity "github.com/sourcenetwork/defradb/internal/identity"
 )
 
 func MakeLensSetCommand(ctx context.Context) *cobra.Command {
@@ -74,7 +76,8 @@ Learn more about the DefraDB GraphQL Schema Language on https://docs.source.netw
 				Lens:                           lensCfg,
 			}
 
-			lensID, err := cliClient.SetMigration(cmd.Context(), migrationCfg)
+			setOpt := options.WithIdentity(options.SetMigration(), iIdentity.FromContext(cmd.Context()))
+			lensID, err := cliClient.SetMigration(cmd.Context(), migrationCfg, setOpt)
 			if err != nil {
 				return err
 			}

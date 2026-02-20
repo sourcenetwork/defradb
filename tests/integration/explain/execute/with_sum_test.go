@@ -33,7 +33,7 @@ func TestExecuteExplainRequestWithSumOfInlineArrayField(t *testing.T) {
 				Request: `query @explain(type: execute) {
 					Book {
 						name
-						NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: _sum(chapterPages: {})
+						NotSureWhySomeoneWouldSumTheChapterPagesButHereItIs: SUM(chapterPages: {})
 					}
 				}`,
 
@@ -84,7 +84,7 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 				Request: `query @explain(type: execute) {
 					Author {
 						name
-						TotalPages: _sum(
+						TotalPages: SUM(
 							articles: {
 								field: pages,
 							}
@@ -107,17 +107,29 @@ func TestExecuteExplainRequestSumOfRelatedOneToManyField(t *testing.T) {
 											"filterMatches": uint64(2),
 											"typeIndexJoin": dataMap{
 												"iterations": uint64(3),
-												"scanNode": dataMap{
-													"iterations":   uint64(3),
-													"docFetches":   uint64(2),
-													"fieldFetches": uint64(8),
-													"indexFetches": uint64(0),
-												},
-												"subTypeScanNode": dataMap{
-													"iterations":   uint64(5),
-													"docFetches":   uint64(6),
-													"fieldFetches": uint64(18),
-													"indexFetches": uint64(0),
+												"typeJoinMany": dataMap{
+													"root": dataMap{
+														"scanNode": dataMap{
+															"iterations":   uint64(3),
+															"docFetches":   uint64(2),
+															"fieldFetches": uint64(8),
+															"indexFetches": uint64(0),
+														},
+													},
+													"subType": dataMap{
+														"selectTopNode": dataMap{
+															"selectNode": dataMap{
+																"iterations":    uint64(5),
+																"filterMatches": uint64(3),
+																"scanNode": dataMap{
+																	"iterations":   uint64(5),
+																	"docFetches":   uint64(6),
+																	"fieldFetches": uint64(18),
+																	"indexFetches": uint64(0),
+																},
+															},
+														},
+													},
 												},
 											},
 										},

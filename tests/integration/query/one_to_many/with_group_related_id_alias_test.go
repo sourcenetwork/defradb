@@ -112,7 +112,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 				Request: `query {
 					Book(groupBy: [author]) {
 						_authorID
-						_group {
+						GROUP {
 							name
 							rating
 							author {
@@ -126,7 +126,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 					"Book": []map[string]any{
 						{
 							"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Candide",
 									"rating": 4.95,
@@ -147,7 +147,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 						},
 						{
 							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Painted House",
 									"rating": 4.9,
@@ -176,7 +176,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAlias(t *t
 						},
 						{
 							"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 									"rating": 2.0,
@@ -295,7 +295,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 							_docID
 							name
 						}
-						_group {
+						GROUP {
 							name
 							rating
 							author {
@@ -312,7 +312,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 								"name":   "Voltaire",
 								"_docID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Candide",
 									"rating": 4.95,
@@ -336,7 +336,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 								"name":   "John Grisham",
 								"_docID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Painted House",
 									"rating": 4.9,
@@ -368,7 +368,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromManySideUsingAliasAndRe
 								"name":   "Simon Pelloutier",
 								"_docID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 									"rating": 2.0,
@@ -484,7 +484,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 				Request: `query {
 					Book(groupBy: [author]) {
 						_authorID
-						_group {
+						GROUP {
 							name
 							rating
 							author {
@@ -498,7 +498,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 					"Book": []map[string]any{
 						{
 							"_authorID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Candide",
 									"rating": 4.95,
@@ -519,7 +519,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						},
 						{
 							"_authorID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Painted House",
 									"rating": 4.9,
@@ -548,7 +548,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 						},
 						{
 							"_authorID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 									"rating": 2.0,
@@ -668,7 +668,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 							_docID
 							name
 						}
-						_group {
+						GROUP {
 							name
 							rating
 							author {
@@ -686,7 +686,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 								"name":   "Voltaire",
 								"_docID": "bae-b9c6cd5a-a931-5984-994d-7c435baa9f32",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Candide",
 									"rating": 4.95,
@@ -711,7 +711,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 								"name":   "John Grisham",
 								"_docID": "bae-9d52c335-c8e3-5782-8daa-e359c106e0ab",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Painted House",
 									"rating": 4.9,
@@ -744,7 +744,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromManySide
 								"name":   "Simon Pelloutier",
 								"_docID": "bae-7687d0c1-91b0-519e-99e4-eb92887663dd",
 							},
-							"_group": []map[string]any{
+							"GROUP": []map[string]any{
 								{
 									"name":   "Histoiare des Celtes et particulierement des Gaulois et des Germains depuis les temps fabuleux jusqua la prise de Roze par les Gaulois",
 									"rating": 2.0,
@@ -843,7 +843,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeFromSingleSideUsingAlias(t 
 			&action.Request{
 				Request: `query {
 					Author(groupBy: [published]) {
-						_group {
+						GROUP {
 							name
 						}
 					}
@@ -935,7 +935,7 @@ func TestQueryOneToManyWithParentGroupByOnRelatedTypeWithIDSelectionFromSingleSi
 				Request: `query {
 					Author(groupBy: [published]) {
 						_publishedID
-						_group {
+						GROUP {
 							name
 						}
 					}

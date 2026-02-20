@@ -19,7 +19,6 @@ import (
 
 	"github.com/sourcenetwork/corekv/badger"
 
-	"github.com/sourcenetwork/defradb/acp/dac"
 	acpDB "github.com/sourcenetwork/defradb/internal/db/acp"
 )
 
@@ -33,7 +32,7 @@ func newBadgerDB(ctx context.Context) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newDB(ctx, rootstore, adminInfo, dac.NoDocumentACP)
+	return newDB(ctx, rootstore, adminInfo)
 }
 
 func TestNewDB(t *testing.T) {
@@ -44,6 +43,6 @@ func TestNewDB(t *testing.T) {
 	adminInfo, err := acpDB.NewNACInfo(ctx, "", false)
 	require.NoError(t, err)
 
-	_, err = NewDB(ctx, rootstore, adminInfo, dac.NoDocumentACP)
+	_, err = NewDB(ctx, rootstore, adminInfo)
 	require.NoError(t, err)
 }

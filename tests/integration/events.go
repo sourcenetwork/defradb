@@ -12,6 +12,7 @@ package tests
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -33,7 +34,7 @@ const eventTimeout = 1 * time.Second
 // replicator completed event on the local event bus.
 //
 // Expected document heads will be updated for the targeted node.
-func waitForReplicatorConfigureEvent(s *state.State, cfg CreateReplicator) {
+func waitForReplicatorConfigureEvent(s *state.State, cfg AddReplicator) {
 	select {
 	case _, ok := <-s.Nodes[cfg.SourceNodeID].Event.Replicator.Message():
 		if !ok {
@@ -73,11 +74,11 @@ func waitForReplicatorDeleteEvent(s *state.State, cfg DeleteReplicator) {
 	delete(s.Nodes[cfg.SourceNodeID].P2P.Replicators, cfg.TargetNodeID)
 }
 
-// waitForCreateCollectionSubscriptionEvent waits for a node to publish a
+// waitForAddCollectionSubscriptionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
 //
 // Expected document heads will be updated for the subscriber node.
-func waitForCreateCollectionSubscriptionEvent(s *state.State, action CreateCollectionSubscription) {
+func waitForAddCollectionSubscriptionEvent(s *state.State, action AddCollectionSubscription) {
 	// update peer collections of target node
 	for _, collectionIndex := range action.CollectionIDs {
 		if collectionIndex == NonExistentCollectionID {
@@ -98,11 +99,11 @@ func waitForDeleteCollectionSubscriptionEvent(s *state.State, action DeleteColle
 	}
 }
 
-// waitForCreateDocumentSubscriptionEvent waits for a node to publish a
+// waitForAddDocumentSubscriptionEvent waits for a node to publish a
 // p2p topic completed event on the local event bus.
 //
 // Expected document heads will be updated for the subscriber node.
-func waitForCreateDocumentSubscriptionEvent(s *state.State, action CreateDocumentSubscription) {
+func waitForAddDocumentSubscriptionEvent(s *state.State, action AddDocumentSubscription) {
 	// update peer documents of target node
 	for _, colDocIndex := range action.DocIDs {
 		if colDocIndex.Doc == NonExistentDocID {
@@ -293,7 +294,8 @@ func waitForSESync(s *state.State, action WaitForSESync) {
 				delete(expectedSyncs, evt.DocID)
 
 			case <-time.After(30 * eventTimeout):
-				require.Fail(s.T, "timeout waiting for SE sync complete event on node %d. Remaining: %v", nodeID, expectedSyncs)
+				require.Fail(s.T, fmt.Sprintf("timeout waiting for SE sync complete event on node %d. Remaining: %v",
+					nodeID, expectedSyncs))
 			}
 		}
 	}

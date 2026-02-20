@@ -13,6 +13,7 @@ package schema
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	gql "github.com/sourcenetwork/graphql-go"
@@ -1284,6 +1285,9 @@ func (g *Generator) genUserExplicitTypeFieldsEnum(obj *gql.Object) *gql.Enum {
 
 	for f, field := range obj.Fields() {
 		if strings.HasPrefix(field.Name, "_") {
+			continue
+		}
+		if slices.Contains(request.AggregateFields, field.Name) {
 			continue
 		}
 		enumFieldsCfg.Values[field.Name] = &gql.EnumValueConfig{Value: f}

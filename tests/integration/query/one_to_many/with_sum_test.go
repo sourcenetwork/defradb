@@ -64,7 +64,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchAll(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {totalRating: {_gt: 0}}}) {
 						name
-						totalRating: _sum(published: {field: rating})
+						totalRating: SUM(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{
@@ -134,7 +134,7 @@ func TestQueryOneToMany_WithSumAliasFilter_ShouldMatchOne(t *testing.T) {
 				Request: `query {
 					Author(filter: {_alias: {totalRating: {_gt: 5}}}) {
 						name
-						totalRating: _sum(published: {field: rating})
+						totalRating: SUM(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{
@@ -215,7 +215,7 @@ func TestQueryOneToMany_WithSumAliasFilterOnFloat32_ShouldMatchOne(t *testing.T)
 				Request: `query {
 					Author(filter: {_alias: {totalRating: {_gt: 5}}}) {
 						name
-						totalRating: _sum(published: {field: rating})
+						totalRating: SUM(published: {field: rating})
 					}
 				}`,
 				Results: map[string]any{

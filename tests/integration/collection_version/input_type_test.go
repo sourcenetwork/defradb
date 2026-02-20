@@ -74,7 +74,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasManyRelationType(t *testing.T) {
 								// Asserting only on group, because it is the field that contains `order` info we are
 								// looking for, additionally wanted to reduce the noise of other elements that were getting
 								// dumped out which made the entire output horrible.
-								"name": "_group",
+								"name": "GROUP",
 								"args": append(
 									trimFields(
 										fields{
@@ -172,7 +172,7 @@ func TestInputTypeOfOrderFieldWhereSchemaHasRelationType(t *testing.T) {
 								// Asserting only on group, because it is the field that contains `order` info we are
 								// looking for, additionally wanted to reduce the noise of other elements that were getting
 								// dumped out which made the entire output horrible.
-								"name": "_group",
+								"name": "GROUP",
 								"args": append(
 									defaultGroupArgsWithoutOrder,
 									map[string]any{

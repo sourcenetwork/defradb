@@ -64,7 +64,7 @@ func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_count(published: {})
+						COUNT(published: {})
 						published(limit: 1) {
 							name
 						}
@@ -73,8 +73,8 @@ func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 2,
+							"name":  "John Grisham",
+							"COUNT": 2,
 							"published": []map[string]any{
 								{
 									"name": "A Time for Mercy",
@@ -82,8 +82,8 @@ func TestQueryOneToManyWithCountAndLimit(t *testing.T) {
 							},
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 1,
+							"name":  "Cornelia Funke",
+							"COUNT": 1,
 							"published": []map[string]any{
 								{
 									"name": "Theif Lord",
@@ -155,7 +155,7 @@ func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_count(published: {limit: 2})
+						COUNT(published: {limit: 2})
 						published(limit: 1) {
 							name
 						}
@@ -164,8 +164,8 @@ func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 2,
+							"name":  "John Grisham",
+							"COUNT": 2,
 							"published": []map[string]any{
 								{
 									"name": "A Time for Mercy",
@@ -173,8 +173,8 @@ func TestQueryOneToManyWithCountAndDifferentLimits(t *testing.T) {
 							},
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 1,
+							"name":  "Cornelia Funke",
+							"COUNT": 1,
 							"published": []map[string]any{
 								{
 									"name": "Theif Lord",
@@ -238,18 +238,18 @@ func TestQueryOneToManyWithCountWithLimit(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_count(published: {limit: 1})
+						COUNT(published: {limit: 1})
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
-							"name":   "John Grisham",
-							"_count": 1,
+							"name":  "John Grisham",
+							"COUNT": 1,
 						},
 						{
-							"name":   "Cornelia Funke",
-							"_count": 1,
+							"name":  "Cornelia Funke",
+							"COUNT": 1,
 						},
 					},
 				},

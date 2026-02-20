@@ -36,7 +36,7 @@ func TestReplicatorList_WithSingleCollectionAndSinglePeer_ShouldSucceed(t *testi
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User"},
 			},
@@ -71,7 +71,7 @@ func TestReplicatorGetAll_WithMultipleCollectionsAndSinglePeer_ShouldSucceed(t *
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User", "Order"},
 			},
@@ -106,7 +106,7 @@ func TestReplicatorGetAll_WithMultipleCollectionsnAndDeleteACollection_ShouldRet
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   []string{addresses[0]},
 				Collections: []string{"User", "Order"},
 			},
@@ -145,7 +145,7 @@ func TestReplicatorGetAll_WithMultipleCollectionsAndMultiplePeers_ShouldSucceed(
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},
@@ -185,7 +185,7 @@ func TestReplicatorGetAll_WithMultiplePeersAndDeleteOfPeer_ShouldReturnOnePeer(t
 					}
 				`,
 			},
-			&action.P2PReplicatorCreate{
+			&action.P2PReplicatorAdd{
 				Addresses:   addresses,
 				Collections: []string{"User", "Order"},
 			},

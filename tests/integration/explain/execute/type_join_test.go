@@ -50,17 +50,29 @@ func TestExecuteExplainRequestWithAOneToOneJoin(t *testing.T) {
 										"filterMatches": uint64(2),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(8),
-												"indexFetches": uint64(0),
-											},
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(6),
-												"indexFetches": uint64(0),
+											"typeJoinOne": dataMap{
+												"root": dataMap{
+													"scanNode": dataMap{
+														"iterations":   uint64(3),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(8),
+														"indexFetches": uint64(0),
+													},
+												},
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"selectNode": dataMap{
+															"iterations":    uint64(2),
+															"filterMatches": uint64(2),
+															"scanNode": dataMap{
+																"iterations":   uint64(2),
+																"docFetches":   uint64(2),
+																"fieldFetches": uint64(6),
+																"indexFetches": uint64(0),
+															},
+														},
+													},
+												},
 											},
 										},
 									},
@@ -114,34 +126,58 @@ func TestExecuteExplainWithMultipleOneToOneJoins(t *testing.T) {
 											{
 												"typeIndexJoin": dataMap{
 													"iterations": uint64(3),
-													"scanNode": dataMap{
-														"iterations":   uint64(3),
-														"docFetches":   uint64(2),
-														"fieldFetches": uint64(8),
-														"indexFetches": uint64(0),
-													},
-													"subTypeScanNode": dataMap{
-														"iterations":   uint64(2),
-														"docFetches":   uint64(2),
-														"fieldFetches": uint64(6),
-														"indexFetches": uint64(0),
+													"typeJoinOne": dataMap{
+														"root": dataMap{
+															"scanNode": dataMap{
+																"iterations":   uint64(3),
+																"docFetches":   uint64(2),
+																"fieldFetches": uint64(8),
+																"indexFetches": uint64(0),
+															},
+														},
+														"subType": dataMap{
+															"selectTopNode": dataMap{
+																"selectNode": dataMap{
+																	"iterations":    uint64(2),
+																	"filterMatches": uint64(2),
+																	"scanNode": dataMap{
+																		"iterations":   uint64(2),
+																		"docFetches":   uint64(2),
+																		"fieldFetches": uint64(6),
+																		"indexFetches": uint64(0),
+																	},
+																},
+															},
+														},
 													},
 												},
 											},
 											{
 												"typeIndexJoin": dataMap{
 													"iterations": uint64(3),
-													"scanNode": dataMap{
-														"iterations":   uint64(3),
-														"docFetches":   uint64(2),
-														"fieldFetches": uint64(8),
-														"indexFetches": uint64(0),
-													},
-													"subTypeScanNode": dataMap{
-														"iterations":   uint64(2),
-														"docFetches":   uint64(2),
-														"fieldFetches": uint64(6),
-														"indexFetches": uint64(0),
+													"typeJoinOne": dataMap{
+														"root": dataMap{
+															"scanNode": dataMap{
+																"iterations":   uint64(3),
+																"docFetches":   uint64(2),
+																"fieldFetches": uint64(8),
+																"indexFetches": uint64(0),
+															},
+														},
+														"subType": dataMap{
+															"selectTopNode": dataMap{
+																"selectNode": dataMap{
+																	"iterations":    uint64(2),
+																	"filterMatches": uint64(2),
+																	"scanNode": dataMap{
+																		"iterations":   uint64(2),
+																		"docFetches":   uint64(2),
+																		"fieldFetches": uint64(6),
+																		"indexFetches": uint64(0),
+																	},
+																},
+															},
+														},
 													},
 												},
 											},
@@ -195,17 +231,50 @@ func TestExecuteExplainWithTwoLevelDeepNestedJoins(t *testing.T) {
 										"filterMatches": uint64(2),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(8),
-												"indexFetches": uint64(0),
-											},
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(2),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(6),
-												"indexFetches": uint64(0),
+											"typeJoinOne": dataMap{
+												"root": dataMap{
+													"scanNode": dataMap{
+														"iterations":   uint64(3),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(8),
+														"indexFetches": uint64(0),
+													},
+												},
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"selectNode": dataMap{
+															"iterations":    uint64(2),
+															"filterMatches": uint64(2),
+															"typeIndexJoin": dataMap{
+																"iterations": uint64(2),
+																"typeJoinOne": dataMap{
+																	"root": dataMap{
+																		"scanNode": dataMap{
+																			"iterations":   uint64(2),
+																			"docFetches":   uint64(2),
+																			"fieldFetches": uint64(6),
+																			"indexFetches": uint64(0),
+																		},
+																	},
+																	"subType": dataMap{
+																		"selectTopNode": dataMap{
+																			"selectNode": dataMap{
+																				"iterations":    uint64(2),
+																				"filterMatches": uint64(2),
+																				"scanNode": dataMap{
+																					"iterations":   uint64(2),
+																					"docFetches":   uint64(2),
+																					"fieldFetches": uint64(4),
+																					"indexFetches": uint64(0),
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
 											},
 										},
 									},
@@ -231,8 +300,6 @@ func TestExecuteExplain_WithOneToOneJoinFromSecondarySide_ShouldIncludeIndex(t *
 			create2AuthorContactDocuments(),
 			create2AuthorDocuments(),
 
-			// Query from ContactAddress (secondary side) to AuthorContact (primary side).
-			// This should use the unique index on AuthorContact._addressID to find the related contact.
 			&action.ExplainRequest{
 				Request: `query @explain(type: execute) {
 					ContactAddress {
@@ -256,19 +323,29 @@ func TestExecuteExplain_WithOneToOneJoinFromSecondarySide_ShouldIncludeIndex(t *
 										"filterMatches": uint64(2),
 										"typeIndexJoin": dataMap{
 											"iterations": uint64(3),
-											"scanNode": dataMap{
-												"iterations":   uint64(3),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(4),
-												"indexFetches": uint64(0),
-											},
-											// The subTypeScanNode uses the unique index (indexFetches: 2)
-											// to find AuthorContact documents by their _addressID field.
-											"subTypeScanNode": dataMap{
-												"iterations":   uint64(4),
-												"docFetches":   uint64(2),
-												"fieldFetches": uint64(6),
-												"indexFetches": uint64(2),
+											"typeJoinOne": dataMap{
+												"root": dataMap{
+													"scanNode": dataMap{
+														"iterations":   uint64(3),
+														"docFetches":   uint64(2),
+														"fieldFetches": uint64(4),
+														"indexFetches": uint64(0),
+													},
+												},
+												"subType": dataMap{
+													"selectTopNode": dataMap{
+														"selectNode": dataMap{
+															"iterations":    uint64(4),
+															"filterMatches": uint64(2),
+															"scanNode": dataMap{
+																"iterations":   uint64(4),
+																"docFetches":   uint64(2),
+																"fieldFetches": uint64(6),
+																"indexFetches": uint64(2),
+															},
+														},
+													},
+												},
 											},
 										},
 									},

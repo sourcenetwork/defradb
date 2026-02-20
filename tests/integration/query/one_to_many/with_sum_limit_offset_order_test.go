@@ -104,20 +104,20 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAsc(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-					_sum(published: {field: rating, offset: 1, limit: 2, order: {name: ASC}})
+					SUM(published: {field: rating, offset: 1, limit: 2, order: {name: ASC}})
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
 							"name": "Cornelia Funke",
-							"_sum": float64(0),
+							"SUM":  float64(0),
 						},
 						{
 							"name": "John Grisham",
 							// 4.9 + 3.2
 							// ...00001 is float math artifact
-							"_sum": 8.100000000000001,
+							"SUM": 8.100000000000001,
 						},
 					},
 				},
@@ -215,19 +215,19 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDesc(t *testing.T) {
 				Request: `query {
 					Author {
 						name
-						_sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
+						SUM(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
 					}
 				}`,
 				Results: map[string]any{
 					"Author": []map[string]any{
 						{
 							"name": "Cornelia Funke",
-							"_sum": float64(0),
+							"SUM":  float64(0),
 						},
 						{
 							"name": "John Grisham",
 							// 4.2 + 3.2
-							"_sum": 7.4,
+							"SUM": 7.4,
 						},
 					},
 				},
@@ -325,8 +325,8 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderAscAndDesc(t *testing.
 				Request: `query {
 					Author {
 						name
-						asc: _sum(published: {field: rating, offset: 1, limit: 2, order: {name: ASC}})
-						desc: _sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
+						asc: SUM(published: {field: rating, offset: 1, limit: 2, order: {name: ASC}})
+						desc: SUM(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
 					}
 				}`,
 				Results: map[string]any{
@@ -440,8 +440,8 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderOnDifferentFields(t *t
 				Request: `query {
 					Author {
 						name
-						byName: _sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
-						byRating: _sum(published: {field: rating, offset: 1, limit: 2, order: {rating: DESC}})
+						byName: SUM(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
+						byRating: SUM(published: {field: rating, offset: 1, limit: 2, order: {rating: DESC}})
 					}
 				}`,
 				Results: map[string]any{
@@ -554,7 +554,7 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildre
 				Request: `query {
 					Author {
 						name
-						_sum(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
+						SUM(published: {field: rating, offset: 1, limit: 2, order: {name: DESC}})
 						published(offset: 1, limit: 2, order: {name: ASC}) {
 							name
 						}
@@ -564,13 +564,13 @@ func TestQueryOneToManyWithSumWithLimitWithOffsetWithOrderDescAndRenderedChildre
 					"Author": []map[string]any{
 						{
 							"name":      "Cornelia Funke",
-							"_sum":      float64(0),
+							"SUM":       float64(0),
 							"published": []map[string]any{},
 						},
 						{
 							"name": "John Grisham",
 							// 4.2 + 3.2
-							"_sum": 7.4,
+							"SUM": 7.4,
 							"published": []map[string]any{
 								{
 									"name": "Painted House",
