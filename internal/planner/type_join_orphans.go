@@ -16,53 +16,20 @@ import (
 	"github.com/sourcenetwork/defradb/internal/planner/mapper"
 )
 
-// collectDocsWithOrphans fetches docs from the inverted join and merges orphan docs
-// based on sort direction, respecting the limit.
+// collectDocsWithOrphansByFK collects join docs and orphan docs (identified via FK IS NULL),
+// merging them based on sort direction and respecting the limit.
 //
-// Two strategies are used depending on whether the fetched doc is the primary side
-// of the ordering relation (i.e. stores the FK for it):
-//
-// Doc is primary (stores FK, e.g. Book has _publisherID):
-//
-//	Orphans are self-identifying via FK IS NULL.
-//	ASC: fetch orphans first, fill remaining from join.
-//	DESC: fetch from join with limit, fill remaining with orphans.
-//
-// Doc is secondary (no FK, e.g. Book ordered by author.name, but Author stores _bookID):
-//
-//	Orphans can only be identified by exclusion after seeing join results.
-//	Both ASC and DESC: collect join docs first, then fetch all docs for parent,
-//	exclude join doc IDs to find orphans.
-func (r *primaryObjectsRetriever) collectDocsWithOrphans(direction mapper.SortDirection) ([]core.Doc, error) {
-	limit := r.getLimit()
-
-	if r.orderingRelFieldIsPrimary() {
-		if direction == mapper.ASC {
-			return r.collectDocsASCWithOrphansByFK(limit)
-		}
-		return r.collectDocsDESCWithOrphansByFK(limit)
-	}
-	return r.collectDocsWithOrphansByExclusion(direction, limit)
-}
-
-// collectDocsASCWithOrphansByFK fetches orphans first via FK IS NULL (they sort before
-// non-null values), then fills remaining slots from the inverted join.
+// This removes the limit from the plan before collecting join docs so the limit applies
+// to the merged result (orphans + join docs) rather than just join docs.
 // Only works when the fetched doc is the primary side of the ordering relation
 // (i.e. stores the FK).
-func (r *primaryObjectsRetriever) collectDocsASCWithOrphansByFK(limit uint64) ([]core.Doc, error) {
-	orphans, err := r.fetchOrphanDocsByFK()
-	if err != nil {
-		return nil, err
-	}
+func (r *primaryObjectsRetriever) collectDocsWithOrphansByFK(direction mapper.SortDirection) ([]core.Doc, error) {
+	limit := r.getLimit()
 
-	if limit > 0 && uint64(len(orphans)) >= limit {
-		return orphans[:limit], nil
-	}
-
-	remaining := limit
-	if remaining > 0 {
-		remaining -= uint64(len(orphans))
-		r.setLimit(remaining)
+	// Remove limit so we collect all join docs. The limit will be applied
+	// to the merged result (orphans + join docs) at the end.
+	if limit > 0 {
+		r.setLimit(0)
 		defer r.setLimit(limit)
 	}
 
@@ -71,36 +38,22 @@ func (r *primaryObjectsRetriever) collectDocsASCWithOrphansByFK(limit uint64) ([
 		return nil, err
 	}
 
-	return append(orphans, joinDocs...), nil
-}
-
-// collectDocsDESCWithOrphansByFK fetches from the inverted join first (non-null values sort first),
-// then fills remaining slots with orphans identified via FK IS NULL.
-// Only works when the fetched doc is the primary side of the ordering relation
-// (i.e. stores the FK).
-func (r *primaryObjectsRetriever) collectDocsDESCWithOrphansByFK(limit uint64) ([]core.Doc, error) {
-	joinDocs, err := r.collectDocs()
-	if err != nil {
-		return nil, err
-	}
-
-	if limit > 0 && uint64(len(joinDocs)) >= limit {
-		return joinDocs, nil
-	}
-
 	orphans, err := r.fetchOrphanDocsByFK()
 	if err != nil {
 		return nil, err
 	}
 
-	if limit > 0 {
-		remaining := limit - uint64(len(joinDocs))
-		if uint64(len(orphans)) > remaining {
-			orphans = orphans[:remaining]
-		}
+	var result []core.Doc
+	if direction == mapper.ASC {
+		result = append(orphans, joinDocs...)
+	} else {
+		result = append(joinDocs, orphans...)
 	}
 
-	return append(joinDocs, orphans...), nil
+	if limit > 0 && uint64(len(result)) > limit {
+		result = result[:limit]
+	}
+	return result, nil
 }
 
 // collectDocsWithOrphansByExclusion collects ALL join docs (ignoring limit) to build

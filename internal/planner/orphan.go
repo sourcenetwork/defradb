@@ -27,42 +27,30 @@ type orphanExecInfo struct {
 	fetches fetcher.ExecInfo
 }
 
-// orphanNode handles fetching orphan parent documents (parents without children)
-// when a join is inverted for ordering. Orphan parents have NULL values for the
-// ordered field and must be included in results at the correct position:
-// - ASC ordering: orphans come first (NULL sorts first)
-// - DESC ordering: orphans come last (NULL sorts last)
+// orphanNode fetches orphan parent documents (parents without children) and yields
+// them one at a time. It uses subQueryFetcher to fetch all orphans on the first
+// Next() call, then yields them sequentially.
 //
-// This node wraps the join and manages the ordering of orphan documents relative
-// to the regular joined documents.
+// This node is used inside a sequenceNode to compose orphan results with regular
+// join results. The sequenceNode handles ordering (orphans first for ASC, last for DESC).
 type orphanNode struct {
 	docMapper
-
-	// source is the wrapped join node (typeJoinOne or typeJoinMany)
-	source planNode
 
 	// join provides access to the join internals for orphan fetching
 	join *invertibleTypeJoin
 
-	// orderDirection determines where orphans are placed in results
-	orderDirection mapper.SortDirection
-
-	// state for iteration
-	bufferedDocs    []core.Doc
-	orphanDocs      []core.Doc
-	docsToYield     []core.Doc
-	sourceExhausted bool
-	orphansFetched  bool
+	// iteration state
+	docs    []core.Doc
+	current int
+	fetched bool
 
 	execInfo orphanExecInfo
 }
 
-func newOrphanNode(source planNode, join *invertibleTypeJoin, orderDirection mapper.SortDirection) *orphanNode {
+func newOrphanNode(join *invertibleTypeJoin) *orphanNode {
 	return &orphanNode{
-		docMapper:      join.docMapper,
-		source:         source,
-		join:           join,
-		orderDirection: orderDirection,
+		docMapper: join.docMapper,
+		join:      join,
 	}
 }
 
@@ -71,161 +59,55 @@ func (n *orphanNode) Kind() string {
 }
 
 func (n *orphanNode) Init() error {
-	n.bufferedDocs = nil
-	n.orphanDocs = nil
-	n.docsToYield = nil
-	n.sourceExhausted = false
-	n.orphansFetched = false
-
-	return n.source.Init()
+	n.docs = nil
+	n.current = 0
+	n.fetched = false
+	return nil
 }
 
 func (n *orphanNode) Start() error {
-	return n.source.Start()
+	return nil
 }
 
 func (n *orphanNode) Prefixes(prefixes []keys.Walkable) {
-	n.source.Prefixes(prefixes)
+	// orphanNode fetches independently via subQueryFetcher, no prefixes needed
 }
 
 func (n *orphanNode) Source() planNode {
-	return n.source
+	return nil
 }
 
 func (n *orphanNode) Close() error {
-	return n.source.Close()
-}
-
-func (n *orphanNode) Value() core.Doc {
-	if len(n.docsToYield) == 0 {
-		return core.Doc{}
-	}
-	return n.docsToYield[0]
+	return nil
 }
 
 func (n *orphanNode) Next() (bool, error) {
 	n.execInfo.iterations++
 
-	if len(n.docsToYield) > 0 {
-		n.docsToYield = n.docsToYield[1:]
-		if len(n.docsToYield) > 0 {
-			return true, nil
-		}
-	}
-
-	if n.orderDirection == mapper.ASC {
-		return n.nextASC()
-	}
-	return n.nextDESC()
-}
-
-// nextASC handles ASC ordering where orphans come first.
-//
-// For primary parents, orphans are self-identifying (FK IS NULL) so we can fetch them
-// upfront and then stream source docs — no buffering needed.
-//
-// For secondary parents, orphans can only be identified by exclusion (all docs minus
-// encountered IDs), so we must buffer all source docs first to build the exclusion set.
-func (n *orphanNode) nextASC() (bool, error) {
-	if n.join.parentSide.isPrimary() {
-		return n.nextASCPrimaryParent()
-	}
-	return n.nextASCSecondaryParent()
-}
-
-// nextASCPrimaryParent streams orphans first (via FK IS NULL query), then source docs.
-// No buffering required — orphans are self-identifying.
-func (n *orphanNode) nextASCPrimaryParent() (bool, error) {
-	if !n.orphansFetched {
+	if !n.fetched {
 		if err := n.fetchOrphans(); err != nil {
 			return false, err
 		}
-		if len(n.orphanDocs) > 0 {
-			n.docsToYield = append(n.docsToYield, n.orphanDocs...)
-			n.orphanDocs = nil
-			return true, nil
-		}
 	}
 
-	if !n.sourceExhausted {
-		hasNext, err := n.source.Next()
-		if err != nil {
-			return false, err
-		}
-		if hasNext {
-			n.docsToYield = append(n.docsToYield, n.source.Value())
-			return true, nil
-		}
-		n.sourceExhausted = true
-	}
-
-	return false, nil
-}
-
-// nextASCSecondaryParent buffers all source docs, then fetches orphans by exclusion,
-// then yields orphans followed by buffered docs. This requires O(n) memory because
-// orphans can only be identified after all source docs are seen (to build the exclusion set).
-func (n *orphanNode) nextASCSecondaryParent() (bool, error) {
-	if n.sourceExhausted {
-		if !n.orphansFetched {
-			if err := n.fetchOrphans(); err != nil {
-				return false, err
-			}
-			n.docsToYield = append(n.orphanDocs, n.bufferedDocs...)
-			n.orphanDocs = nil
-			n.bufferedDocs = nil
-			if len(n.docsToYield) > 0 {
-				return true, nil
-			}
-		}
+	if n.current >= len(n.docs) {
 		return false, nil
 	}
 
-	for {
-		hasNext, err := n.source.Next()
-		if err != nil {
-			return false, err
-		}
-		if !hasNext {
-			n.sourceExhausted = true
-			return n.nextASCSecondaryParent()
-		}
-		n.bufferedDocs = append(n.bufferedDocs, n.source.Value())
-	}
+	n.current++
+	return true, nil
 }
 
-// nextDESC handles DESC ordering where orphans come last.
-// We yield source docs first, then fetch and yield orphans at the end.
-func (n *orphanNode) nextDESC() (bool, error) {
-	if !n.sourceExhausted {
-		hasNext, err := n.source.Next()
-		if err != nil {
-			return false, err
-		}
-		if hasNext {
-			n.docsToYield = append(n.docsToYield, n.source.Value())
-			return true, nil
-		}
-		n.sourceExhausted = true
+func (n *orphanNode) Value() core.Doc {
+	if n.current > 0 && n.current <= len(n.docs) {
+		return n.docs[n.current-1]
 	}
-
-	if !n.orphansFetched {
-		if err := n.fetchOrphans(); err != nil {
-			return false, err
-		}
-		if len(n.orphanDocs) > 0 {
-			n.docsToYield = append(n.docsToYield, n.orphanDocs...)
-			n.orphanDocs = nil
-			return true, nil
-		}
-	}
-
-	return false, nil
+	return core.Doc{}
 }
 
 // fetchOrphans fetches parent documents that have no related children.
 func (n *orphanNode) fetchOrphans() error {
-	n.orphansFetched = true
+	n.fetched = true
 
 	parentScan := getNode[*scanNode](n.join.parentSide.plan)
 	if parentScan == nil {
@@ -272,16 +154,12 @@ func (n *orphanNode) fetchOrphans() error {
 		return err
 	}
 
-	n.orphanDocs = orphans
+	n.docs = orphans
 	return nil
 }
 
 func (n *orphanNode) simpleExplain() (map[string]any, error) {
-	simpleExplainMap := map[string]any{}
-
-	simpleExplainMap["orderDirection"] = string(n.orderDirection)
-
-	return simpleExplainMap, nil
+	return map[string]any{}, nil
 }
 
 func (n *orphanNode) Explain(explainType request.ExplainType) (map[string]any, error) {
@@ -295,6 +173,167 @@ func (n *orphanNode) Explain(explainType request.ExplainType) (map[string]any, e
 			"docFetches":   n.execInfo.fetches.DocsFetched,
 			"fieldFetches": n.execInfo.fetches.FieldsFetched,
 			"indexFetches": n.execInfo.fetches.IndexesFetched,
+		}, nil
+
+	default:
+		return nil, ErrUnknownExplainRequestType
+	}
+}
+
+// orphanWrapperNode wraps a join source and an orphanNode for secondary parent queries
+// where orphans can only be identified by exclusion after the join runs. It buffers
+// source docs (for ASC) or yields them first (for DESC), then fetches orphans.
+//
+// For ASC: buffers all source docs, fetches orphans, yields orphans then source docs.
+// For DESC: yields source docs first, then fetches and yields orphans.
+type orphanWrapperNode struct {
+	docMapper
+
+	source         planNode
+	orphan         *orphanNode
+	orderDirection mapper.SortDirection
+
+	// state for iteration
+	docsToYield     []core.Doc
+	bufferedDocs    []core.Doc
+	sourceExhausted bool
+	orphansFetched  bool
+
+	execInfo orphanExecInfo
+}
+
+func newOrphanWrapperNode(source planNode, orphan *orphanNode, orderDirection mapper.SortDirection) *orphanWrapperNode {
+	return &orphanWrapperNode{
+		docMapper:      orphan.docMapper,
+		source:         source,
+		orphan:         orphan,
+		orderDirection: orderDirection,
+	}
+}
+
+func (n *orphanWrapperNode) Kind() string {
+	return "orphanNode"
+}
+
+func (n *orphanWrapperNode) Init() error {
+	n.docsToYield = nil
+	n.bufferedDocs = nil
+	n.sourceExhausted = false
+	n.orphansFetched = false
+	return n.source.Init()
+}
+
+func (n *orphanWrapperNode) Start() error {
+	return n.source.Start()
+}
+
+func (n *orphanWrapperNode) Prefixes(prefixes []keys.Walkable) {
+	n.source.Prefixes(prefixes)
+}
+
+func (n *orphanWrapperNode) Source() planNode {
+	return n.source
+}
+
+func (n *orphanWrapperNode) Close() error {
+	return n.source.Close()
+}
+
+func (n *orphanWrapperNode) Value() core.Doc {
+	if len(n.docsToYield) == 0 {
+		return core.Doc{}
+	}
+	return n.docsToYield[0]
+}
+
+func (n *orphanWrapperNode) Next() (bool, error) {
+	n.execInfo.iterations++
+
+	if len(n.docsToYield) > 0 {
+		n.docsToYield = n.docsToYield[1:]
+		if len(n.docsToYield) > 0 {
+			return true, nil
+		}
+	}
+
+	if n.orderDirection == mapper.ASC {
+		return n.nextASC()
+	}
+	return n.nextDESC()
+}
+
+// nextASC buffers all source docs, then fetches orphans by exclusion,
+// then yields orphans followed by buffered docs.
+func (n *orphanWrapperNode) nextASC() (bool, error) {
+	if n.sourceExhausted {
+		if !n.orphansFetched {
+			n.orphansFetched = true
+			if err := n.orphan.fetchOrphans(); err != nil {
+				return false, err
+			}
+			n.docsToYield = append(n.orphan.docs, n.bufferedDocs...)
+			n.orphan.docs = nil
+			n.bufferedDocs = nil
+			if len(n.docsToYield) > 0 {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+
+	for {
+		hasNext, err := n.source.Next()
+		if err != nil {
+			return false, err
+		}
+		if !hasNext {
+			n.sourceExhausted = true
+			return n.nextASC()
+		}
+		n.bufferedDocs = append(n.bufferedDocs, n.source.Value())
+	}
+}
+
+// nextDESC yields source docs first, then fetches and yields orphans.
+func (n *orphanWrapperNode) nextDESC() (bool, error) {
+	if !n.sourceExhausted {
+		hasNext, err := n.source.Next()
+		if err != nil {
+			return false, err
+		}
+		if hasNext {
+			n.docsToYield = append(n.docsToYield, n.source.Value())
+			return true, nil
+		}
+		n.sourceExhausted = true
+	}
+
+	if !n.orphansFetched {
+		n.orphansFetched = true
+		if err := n.orphan.fetchOrphans(); err != nil {
+			return false, err
+		}
+		if len(n.orphan.docs) > 0 {
+			n.docsToYield = append(n.docsToYield, n.orphan.docs...)
+			n.orphan.docs = nil
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (n *orphanWrapperNode) Explain(explainType request.ExplainType) (map[string]any, error) {
+	switch explainType {
+	case request.SimpleExplain:
+		return map[string]any{}, nil
+
+	case request.ExecuteExplain:
+		return map[string]any{
+			"iterations":   n.execInfo.iterations,
+			"docFetches":   n.orphan.execInfo.fetches.DocsFetched,
+			"fieldFetches": n.orphan.execInfo.fetches.FieldsFetched,
+			"indexFetches": n.orphan.execInfo.fetches.IndexesFetched,
 		}, nil
 
 	default:

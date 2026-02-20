@@ -43,6 +43,7 @@ const (
 	typeJoinManyProp  = "typeJoinMany"
 	typeJoinOneProp   = "typeJoinOne"
 	orphanNodeProp    = "orphanNode"
+	sequenceNodeProp  = "sequenceNode"
 	rootProp          = "root"
 	subTypeProp       = "subType"
 )
@@ -208,6 +209,11 @@ func (a *ExplainAsserter) findScanNode(t testing.TB, selectNode dataMap) dataMap
 		return nil
 	}
 
+	// sequenceNode wraps [joinNode, orphanNode] or [orphanNode, joinNode] for @exhaustive.
+	// Find the join child (non-orphan) in the array.
+	indexJoin = unwrapSequenceNode(indexJoin)
+
+	// orphanWrapperNode wraps the join for secondary parent @exhaustive queries.
 	if orphan, hasOrphan := indexJoin[orphanNodeProp].(dataMap); hasOrphan {
 		indexJoin = orphan
 	}
@@ -327,6 +333,30 @@ func getJoinNode(node dataMap) dataMap {
 	}
 	if jo, has := node[typeJoinOneProp].(dataMap); has {
 		return jo
+	}
+	return node
+}
+
+// unwrapSequenceNode finds the join child (non-orphan) inside a sequenceNode array.
+// Returns the original node if no sequenceNode is present.
+func unwrapSequenceNode(node dataMap) dataMap {
+	// Go client: []map[string]any
+	if seqArr, ok := node[sequenceNodeProp].([]map[string]any); ok {
+		for _, child := range seqArr {
+			if _, isOrphan := child[orphanNodeProp]; !isOrphan {
+				return child
+			}
+		}
+	}
+	// HTTP/CLI/JS clients: []any (JSON deserialization)
+	if seqArr, ok := node[sequenceNodeProp].([]any); ok {
+		for _, child := range seqArr {
+			if childMap, ok := child.(dataMap); ok {
+				if _, isOrphan := childMap[orphanNodeProp]; !isOrphan {
+					return childMap
+				}
+			}
+		}
 	}
 	return node
 }

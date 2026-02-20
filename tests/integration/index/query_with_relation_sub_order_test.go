@@ -1694,3 +1694,64 @@ func TestQueryWithOrderByRelationField_WithSomeDocsWithoutRelation_ShouldInclude
 
 	testUtils.ExecuteTestCase(t, test)
 }
+
+func TestQueryWithFilterOnNullRelation_SecondaryDocWithoutRelation_ShouldReturnOrphans(t *testing.T) {
+	// Book is the secondary side (Publisher stores _bookID via @primary).
+	// Querying with order on publisher.establishedYear + @exhaustive triggers orphan detection
+	// for Books that have no Publisher.
+	req := `query @exhaustive {
+		Book(order: {publisher: {establishedYear: ASC}}) {
+			title
+		}
+	}`
+	test := testUtils.TestCase{
+		Actions: []any{
+			&action.AddSchema{
+				Schema: `
+					type Book {
+						title: String
+						publisher: Publisher
+					}
+					type Publisher {
+						name: String
+						establishedYear: Int @index
+						book: Book @primary
+					}
+				`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"title": "Book With Publisher"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"title": "Orphan Book 1"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 0,
+				Doc:          `{"title": "Orphan Book 2"}`,
+			},
+			&action.CreateDoc{
+				CollectionID: 1,
+				DocMap: map[string]any{
+					"name":            "Publisher2020",
+					"establishedYear": 2020,
+					"book":            testUtils.NewDocIndex(0, 0),
+				},
+			},
+			&action.Request{
+				Request: req,
+				Results: map[string]any{
+					"Book": []map[string]any{
+						{"title": "Orphan Book 2"},
+						{"title": "Orphan Book 1"},
+						{"title": "Book With Publisher"},
+					},
+				},
+			},
+		},
+	}
+
+	testUtils.ExecuteTestCase(t, test)
+}
+

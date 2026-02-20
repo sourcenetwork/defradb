@@ -51,6 +51,7 @@ var (
 	_ explainablePlanNode = (*minNode)(nil)
 	_ explainablePlanNode = (*orderNode)(nil)
 	_ explainablePlanNode = (*orphanNode)(nil)
+	_ explainablePlanNode = (*orphanWrapperNode)(nil)
 	_ explainablePlanNode = (*scanNode)(nil)
 	_ explainablePlanNode = (*selectNode)(nil)
 	_ explainablePlanNode = (*selectTopNode)(nil)

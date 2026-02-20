@@ -168,8 +168,17 @@ func (n *typeIndexJoin) simpleExplain() (map[string]any, error) {
 
 	var err error
 	joinPlan := n.joinPlan
-	if orphan, ok := joinPlan.(*orphanNode); ok {
-		joinPlan = orphan.source
+	// Unwrap sequenceNode or orphanWrapperNode to find the actual join node.
+	if seq, ok := joinPlan.(*sequenceNode); ok {
+		for _, child := range seq.children {
+			if _, isOrphan := child.(*orphanNode); !isOrphan {
+				joinPlan = child
+				break
+			}
+		}
+	}
+	if wrapper, ok := joinPlan.(*orphanWrapperNode); ok {
+		joinPlan = wrapper.source
 	}
 	switch joinType := joinPlan.(type) {
 	case *typeJoinOne:
@@ -660,7 +669,11 @@ func (r *primaryObjectsRetriever) retrievePrimaryDocs() ([]core.Doc, error) {
 
 	if r.exhaustive && r.isOrderingByRelation() {
 		direction, _ := r.getOrderingInfo()
-		docs, err = r.collectDocsWithOrphans(*direction)
+		if r.orderingRelFieldIsPrimary() {
+			docs, err = r.collectDocsWithOrphansByFK(*direction)
+		} else {
+			docs, err = r.collectDocsWithOrphansByExclusion(*direction, r.getLimit())
+		}
 	} else {
 		docs, err = r.collectDocs()
 	}

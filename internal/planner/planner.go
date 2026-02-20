@@ -306,7 +306,20 @@ func (p *Planner) expandTypeIndexJoinPlan(plan *typeIndexJoin, parentPlan *selec
 			return err
 		}
 		if orderDir.HasValue() && p.exhaustive && !p.inNestedJoin {
-			plan.joinPlan = newOrphanNode(node, join, orderDir.Value())
+			orphan := newOrphanNode(join)
+			if join.parentSide.isPrimary() {
+				// Primary parent: orphans self-identify via FK IS NULL.
+				// Use sequenceNode for clean pipeline composition.
+				if orderDir.Value() == mapper.ASC {
+					plan.joinPlan = newSequenceNode(orphan, node)
+				} else {
+					plan.joinPlan = newSequenceNode(node, orphan)
+				}
+			} else {
+				// Secondary parent: orphans identified by exclusion after join runs.
+				// Wrap join with orphanNode that handles ordering internally.
+				plan.joinPlan = newOrphanWrapperNode(node, orphan, orderDir.Value())
+			}
 		}
 		return nil
 	}
@@ -351,8 +364,17 @@ func isOrderedByIndex(plan planNode) bool {
 	typeJoin := getNode[*typeIndexJoin](plan)
 	if typeJoin != nil {
 		joinPlan := typeJoin.joinPlan
-		if orphan, ok := joinPlan.(*orphanNode); ok {
-			joinPlan = orphan.source
+		// Unwrap sequenceNode or orphanWrapperNode to find the actual join node.
+		if seq, ok := joinPlan.(*sequenceNode); ok {
+			for _, child := range seq.children {
+				if _, isOrphan := child.(*orphanNode); !isOrphan {
+					joinPlan = child
+					break
+				}
+			}
+		}
+		if wrapper, ok := joinPlan.(*orphanWrapperNode); ok {
+			joinPlan = wrapper.source
 		}
 		if j, ok := joinPlan.(*typeJoinOne); ok {
 			scan = getNode[*scanNode](j.getFirstSide().plan)
