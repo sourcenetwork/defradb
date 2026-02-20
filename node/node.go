@@ -171,7 +171,7 @@ func (n *Node) Close(ctx context.Context) error {
 // its datastore, and restart.
 func (n *Node) PurgeAndRestart(ctx context.Context) error {
 	if !n.opts.EnableDevelopment {
-		return ErrPurgeWithDevModeDisabled
+		return client.ErrPurgeWithDevModeDisabled
 	}
 
 	// This will purge document acp state.

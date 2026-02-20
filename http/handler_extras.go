@@ -15,6 +15,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
+	"github.com/sourcenetwork/defradb/client"
 	"github.com/sourcenetwork/defradb/event"
 )
 
@@ -29,7 +30,7 @@ func (h *extrasHandler) Purge(rw http.ResponseWriter, req *http.Request) {
 		db := mustGetContextClientDB(req)
 		db.Events().Publish(event.NewMessage(event.PurgeName, nil))
 	} else {
-		responseJSON(rw, http.StatusBadRequest, errPurgeRequestNonDeveloperMode)
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrPurgeWithDevModeDisabled})
 	}
 }
 

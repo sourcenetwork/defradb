@@ -51,6 +51,7 @@ const (
 	errNACIsEnabledButInstanceIsNotAvailable string = "node acp is enabled, but the acp instance is not available"
 	errNACIsEnabledButIsMissingPolicyInfo    string = "node acp is enabled, but is missing policy info"
 	errNACNodeObjectToGateIsNotRegistered    string = "node acp is enabled, but object to gate must be registered"
+	errPurgeRequestNonDeveloperMode          string = "cannot purge database when development mode is disabled"
 )
 
 var (
@@ -98,6 +99,7 @@ var (
 	ErrNACIsEnabledButInstanceIsNotAvailable = errors.New(errNACIsEnabledButInstanceIsNotAvailable)
 	ErrNACIsEnabledButIsMissingPolicyInfo    = errors.New(errNACIsEnabledButIsMissingPolicyInfo)
 	ErrNACNodeObjectToGateIsNotRegistered    = errors.New(errNACNodeObjectToGateIsNotRegistered)
+	ErrPurgeWithDevModeDisabled              = errors.New(errPurgeRequestNonDeveloperMode)
 )
 
 // NewErrFieldNotExist returns an error indicating that the given field does not exist.

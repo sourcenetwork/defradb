@@ -19,12 +19,11 @@ import (
 )
 
 const (
-	errFailedToLoadKeys             string = "failed to load given keys"
-	errMethodIsNotImplemented       string = "the method is not implemented"
-	errFailedToGetContext           string = "failed to get context"
-	errPurgeRequestNonDeveloperMode string = "cannot purge database when development mode is disabled"
-	errMissingRequiredParameter     string = "required parameter %s is missing"
-	errCollectionNotFound           string = "collection not found"
+	errFailedToLoadKeys         string = "failed to load given keys"
+	errMethodIsNotImplemented   string = "the method is not implemented"
+	errFailedToGetContext       string = "failed to get context"
+	errMissingRequiredParameter string = "required parameter %s is missing"
+	errCollectionNotFound       string = "collection not found"
 )
 
 // Errors returnable from this package.
