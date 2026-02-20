@@ -238,7 +238,7 @@ func MakeStartCommand(ctx context.Context) *cobra.Command {
 				if err == nil {
 					goto RESTART
 				}
-				if errors.Is(err, client.ErrPurgeWithDevModeDisabled) {
+				if errors.Is(err, client.ErrOperationRequiresDeveloperMode) {
 					goto SELECT
 				}
 

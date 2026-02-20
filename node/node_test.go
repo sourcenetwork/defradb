@@ -39,7 +39,7 @@ func TestPurgeAndRestartWithDevModeDisabled(t *testing.T) {
 	require.NoError(t, err)
 
 	err = n.PurgeAndRestart(ctx)
-	require.ErrorIs(t, err, client.ErrPurgeWithDevModeDisabled)
+	require.ErrorIs(t, err, client.ErrOperationRequiresDeveloperMode)
 }
 
 func TestPurgeAndRestartWithDevModeEnabled(t *testing.T) {

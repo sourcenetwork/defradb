@@ -30,7 +30,7 @@ func (h *extrasHandler) Purge(rw http.ResponseWriter, req *http.Request) {
 		db := mustGetContextClientDB(req)
 		db.Events().Publish(event.NewMessage(event.PurgeName, nil))
 	} else {
-		responseJSON(rw, http.StatusBadRequest, errorResponse{client.ErrPurgeWithDevModeDisabled})
+		responseJSON(rw, http.StatusBadRequest, errorResponse{client.NewErrOperationRequiresDeveloperMode("Purge")})
 	}
 }
 
